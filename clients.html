@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Clients</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
+  --line:#EBECF1; --bg:#F4F5F8; --card:#FFFFFF;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --amber:#A16207; --amber-bg:#FBF3D9;
+  --red:#D63B33; --red-bg:#FCECEA;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+input{font-family:inherit}
+h1{font-family:'Sora',sans-serif}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+
+.app{display:flex;min-height:100vh}
+/* ============ SIDEBAR ============ */
+.sidebar{width:238px;background:#101216;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:11px;padding:24px 20px 20px;position:sticky;top:0;background:#101216;z-index:2}
+.brand .logo{width:36px;height:36px;border-radius:11px;background:var(--orange);display:grid;place-items:center}
+.brand .logo svg{width:20px;height:20px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.06rem;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;color:#585E6C;padding:12px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9.5px 12px;border-radius:10px;font-size:.9rem;font-weight:500;color:#AEB4C0;transition:.13s}
+.nav a:hover{background:#1B1E24;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600}
+.nav svg{width:17px;height:17px;flex:none;opacity:.9}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1F222A;margin-top:auto}
+.ph{border-radius:50%;background:#2A2E36;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+/* ============ TOPBAR ============ */
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 30px;position:sticky;top:0;z-index:50;background:rgba(244,245,248,.9);backdrop-filter:blur(12px)}
+.crumbs{font-size:.88rem;color:var(--muted)}
+.crumbs .cur{color:var(--ink);font-weight:600}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:18px;height:18px}
+.bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.top-user .ph{width:38px;height:38px;font-size:.78rem}
+
+.page{padding:4px 30px 90px;max-width:1400px}
+
+/* ============ BANDEAU ============ */
+.hero{position:relative;border-radius:20px;padding:24px 26px 24px 30px;margin-bottom:16px;overflow:hidden;
+  background:#FFFFFF;border:1px solid #F0F1F4;box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--orange)}
+.hero .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hero h1{font-size:1.55rem;font-weight:800;letter-spacing:-.4px}
+.count{font-family:'Sora';font-size:.72rem;font-weight:800;background:#F1F2F5;color:var(--ink-2);padding:5px 12px;border-radius:12px}
+.newbtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;font-weight:700;font-size:.84rem;padding:10px 16px;border-radius:11px;transition:.13s}
+.newbtn:hover{background:var(--orange-deep)}
+.newbtn svg{width:15px;height:15px}
+.hmeta{display:flex;gap:12px 36px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+.hm .k{display:block;font-size:.62rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.hm .v{font-family:'Sora';font-size:1.28rem;font-weight:800;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.hm .v.r{color:var(--red)}
+
+/* ============ FILTRES ============ */
+.toolrow{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 13px;flex:1;min-width:200px;max-width:340px}
+.search svg{width:15px;height:15px;stroke:var(--muted);flex:none}
+.search input{border:0;background:none;padding:11px 0;font-size:.86rem;width:100%;color:var(--ink)}
+.search input:focus{outline:none}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.fchip{font-size:.79rem;font-weight:600;padding:9px 15px;border-radius:11px;background:#fff;border:1px solid var(--line);color:var(--ink-2);transition:.13s}
+.fchip:hover{border-color:#D5D8DF}
+.fchip.on{background:var(--orange-soft);border-color:#FFD9C4;color:var(--orange-deep);font-weight:700}
+.fchip .c{font-size:.66rem;font-weight:800;background:#F1F2F5;color:var(--muted);border-radius:8px;padding:1px 7px;margin-left:5px}
+.fchip.on .c{background:#fff;color:var(--orange-deep)}
+
+/* ============ TABLE ============ */
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border:1px solid #F0F1F4;overflow:hidden}
+.dt{width:100%;border-collapse:collapse;font-size:.86rem}
+.dt th{text-align:left;font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;padding:13px 16px;border-bottom:1px solid var(--line);background:#FBFBFC;white-space:nowrap}
+.dt th.sort{cursor:pointer;user-select:none}
+.dt th.sort:hover{color:var(--ink)}
+.dt th .arr{font-size:.72rem}
+.dt td{padding:15px 16px;border-bottom:1px solid #F2F3F6;vertical-align:middle}
+.dt tbody tr{cursor:pointer;transition:background .12s}
+.dt tbody tr:hover{background:#FAFBFC}
+.dt tbody tr:hover .cl b{color:var(--orange-deep)}
+.dt tbody tr:hover .arrgo{color:var(--orange-deep)}
+.dt tbody tr:last-child td{border-bottom:0}
+.cl{display:flex;align-items:center;gap:12px;min-width:0}
+.cav{width:40px;height:40px;border-radius:11px;background:#F3F4F7;color:var(--ink-2);border:1px solid var(--line);display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:.72rem;flex:none}
+.cl b{display:block;font-size:.9rem;margin-bottom:1px}
+.cl small{color:var(--muted);font-size:.74rem}
+.typ{font-size:.7rem;font-weight:700;padding:4px 11px;border-radius:11px;background:#F1F2F5;color:var(--ink-2);white-space:nowrap}
+.amt{font-family:'Sora';font-weight:700;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.due{font-family:'Sora';font-weight:700;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;color:var(--red)}
+.due.zero{color:#C4C8D2;font-weight:600}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;padding:4px 11px;border-radius:13px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-actif{background:var(--green-bg);color:var(--green-d)}
+.st-retard{background:var(--red-bg);color:var(--red)}
+.st-attente{background:var(--amber-bg);color:var(--amber)}
+.st-inactif{background:#F1F2F5;color:var(--muted)}
+.arrgo{color:#C4C8D2}
+.empty{padding:34px;text-align:center;color:var(--muted);font-size:.9rem}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#171A20;color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ RESPONSIVE ============ */
+.bottomnav{display:none}
+@media(max-width:900px){
+  .dt th:nth-child(2),.dt td:nth-child(2),
+  .dt th:nth-child(3),.dt td:nth-child(3),
+  .dt th:nth-child(4),.dt td:nth-child(4){display:none}
+}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .top-user{display:none}
+  .page{padding:2px 13px calc(100px + var(--safe-b))}
+  .hero{padding:18px 16px 18px 20px;border-radius:17px}
+  .hero h1{font-size:1.2rem}
+  .newbtn{padding:9px 13px;font-size:.78rem}
+  .hmeta{gap:10px 0}
+  .hm{width:33.33%}
+  .hm .v{font-size:.92rem}
+  .dt th,.dt td{padding:12px 12px}
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:56;
+    background:rgba(255,255,255,.97);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:7px 4px calc(7px + var(--safe-b));align-items:flex-end}
+  .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:600;color:var(--muted);padding:4px 0}
+  .bn svg{width:21px;height:21px}
+  .bn.active{color:var(--orange)}
+  .bn-cta{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:700;color:var(--orange);margin-top:-26px}
+  .bn-cta .disc{width:56px;height:56px;border-radius:50%;background:var(--orange);
+    display:grid;place-items:center;box-shadow:0 4px 12px rgba(23,26,32,.18);border:4px solid var(--bg)}
+  .bn-cta .disc svg{width:24px;height:24px;stroke:#fff}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"/><path d="M9 11.5h6M10 15h4"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+<a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+<a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+<a href="#" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+<a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+<a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+<a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
+<a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+<a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+<a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+<a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <div class="crumbs">🏠 <span class="cur">Clients</span></div>
+    <div class="title-m">Clients</div>
+    <div class="spacer"></div>
+    <button class="bell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <span class="dot">2</span>
+    </button>
+    <div class="top-user"><span class="ph">TM</span></div>
+  </div>
+
+  <div class="page">
+
+    <!-- ===== BANDEAU ===== -->
+    <section class="hero">
+      <div class="row">
+        <h1>Clients</h1>
+        <span class="count" id="count">12</span>
+        <a class="newbtn" href="client-nouveau.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Nouveau client
+        </a>
+      </div>
+      <div class="hmeta">
+        <div class="hm"><span class="k">Clients actifs</span><span class="v">10</span></div>
+        <div class="hm"><span class="k">À encaisser</span><span class="v r">2 210 €</span></div>
+        <div class="hm"><span class="k">CA total 2026</span><span class="v">44 470 €</span></div>
+      </div>
+    </section>
+
+    <!-- ===== RECHERCHE + FILTRES ===== -->
+    <div class="toolrow">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="q" placeholder="Nom, ville, code postal…" oninput="render()">
+      </div>
+      <div class="chips">
+        <button class="fchip on" data-f="all" onclick="setFilter(this)">Tous <span class="c">12</span></button>
+        <button class="fchip" data-f="due" onclick="setFilter(this)">À encaisser <span class="c">3</span></button>
+        <button class="fchip" data-f="actif" onclick="setFilter(this)">Actifs <span class="c">10</span></button>
+        <button class="fchip" data-f="inactif" onclick="setFilter(this)">Inactifs <span class="c">1</span></button>
+      </div>
+    </div>
+
+    <!-- ===== LISTE ===== -->
+    <div class="card">
+      <table class="dt">
+        <thead><tr>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Contrats</th>
+          <th class="sort" onclick="sortCA()">CA total <span class="arr" id="arr">↓</span></th>
+          <th style="text-align:right">À encaisser</th>
+          <th>Statut</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none">Aucun client ne correspond à ta recherche.</div>
+    </div>
+
+  </div>
+
+  <!-- Bottom nav mobile -->
+  <nav class="bottomnav">
+    <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+    <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a class="bn-cta" href="devis.html"><span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Devis</a>
+    <a class="bn active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a class="bn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+const CLIENTS = [
+  {nom:"Ironwood Solutions",   ville:"Paris 11e",    cp:"75011", type:"Pro",         nb:1, ca:3840,  due:1250, st:"retard"},
+  {nom:"Syndic Foncia Lilas",  ville:"Paris 20e",    cp:"75020", type:"Pro",         nb:3, ca:11260, due:0,    st:"actif"},
+  {nom:"Hôtel du Parc",        ville:"Paris 17e",    cp:"75017", type:"Pro",         nb:2, ca:8450,  due:640,  st:"attente"},
+  {nom:"Entrepôt Central",     ville:"Gennevilliers",cp:"92230", type:"Pro",         nb:1, ca:5620,  due:0,    st:"actif"},
+  {nom:"Camping Val de Seine", ville:"Villeneuve",   cp:"78670", type:"Pro",         nb:1, ca:4100,  due:0,    st:"inactif"},
+  {nom:"Pharmacie Centrale",   ville:"Paris 15e",    cp:"75015", type:"Pro",         nb:1, ca:2980,  due:0,    st:"actif"},
+  {nom:"Restaurant Chez Marcel",ville:"Paris 19e",   cp:"75019", type:"Pro",         nb:1, ca:2310,  due:0,    st:"actif"},
+  {nom:"Boulangerie Dupont",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1940,  due:0,    st:"actif"},
+  {nom:"Crèche Les Lutins",    ville:"Montreuil",    cp:"93100", type:"Pro",         nb:1, ca:1720,  due:0,    st:"actif"},
+  {nom:"Tabac de la Mairie",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1280,  due:320,  st:"attente"},
+  {nom:"Mme Perrin",           ville:"Paris 13e",    cp:"75013", type:"Particulier", nb:0, ca:578,   due:0,    st:"actif"},
+  {nom:"M. Diallo",            ville:"Saint-Ouen",   cp:"93400", type:"Particulier", nb:0, ca:390,   due:0,    st:"actif"},
+];
+const STL = {actif:["st-actif","Actif"], retard:["st-retard","En retard"], attente:["st-attente","En attente"], inactif:["st-inactif","Inactif"]};
+let FILTER = "all", DESC = true;
+
+function euro(n){ return n.toLocaleString("fr-FR") + " €"; }
+function ini(nom){ return nom.split(" ").map(w=>w[0]).join("").replace(/[^A-ZÀ-Ü]/gi,"").slice(0,2).toUpperCase(); }
+
+function setFilter(btn){
+  document.querySelectorAll(".fchip").forEach(c=>c.classList.remove("on"));
+  btn.classList.add("on");
+  FILTER = btn.dataset.f;
+  render();
+}
+function sortCA(){
+  DESC = !DESC;
+  document.getElementById("arr").textContent = DESC ? "↓" : "↑";
+  render();
+}
+function render(){
+  const q = document.getElementById("q").value.toLowerCase().trim();
+  let list = CLIENTS.filter(c =>
+    (FILTER==="all" || (FILTER==="due" ? c.due>0 : FILTER==="inactif" ? c.st==="inactif" : c.st!=="inactif")) &&
+    (!q || c.nom.toLowerCase().includes(q) || c.ville.toLowerCase().includes(q) || c.cp.includes(q))
+  );
+  list.sort((a,b)=> DESC ? b.ca-a.ca : a.ca-b.ca);
+  document.getElementById("count").textContent = list.length;
+  document.getElementById("empty").style.display = list.length ? "none" : "block";
+  document.getElementById("rows").innerHTML = list.map(c=>{
+    const [cls,lbl] = STL[c.st];
+    return `<tr onclick="location.href='client.html'" title="Ouvrir la fiche client">
+      <td><span class="cl"><span class="cav">${ini(c.nom)}</span><span><b>${c.nom}</b><small>📍 ${c.cp} · ${c.ville}</small></span></span></td>
+      <td><span class="typ">${c.type}</span></td>
+      <td>${c.nb || "—"}</td>
+      <td class="amt">${euro(c.ca)}</td>
+      <td class="${c.due ? "due" : "due zero"}">${c.due ? euro(c.due) : "—"}</td>
+      <td><span class="st ${cls}">${lbl}</span></td>
+      <td><svg class="arrgo" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+    </tr>`;
+  }).join("");
+}
+function toast(msg){
+  let t = document.getElementById("toast");
+  if(!t){ t = document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+render();
+</script>
+</body>
+</html>
