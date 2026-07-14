@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Nouveau devis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F;
+  --orange-deep:#EA4A10;
+  --orange-soft:#FFF1EA;
+  --ink:#171A20;
+  --ink-2:#3D434E;
+  --muted:#878DA0;
+  --line:#EBECF1;
+  --bg:#F4F5F8;
+  --card:#FFFFFF;
+  --green:#149A4E; --green-d:#0E7A3D;
+  --blue:#2E5CE6;
+  --red:#E23A3A;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+input,select,textarea{font-family:inherit;font-size:.88rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid #FFD9C4;border-color:var(--orange)}
+ul{list-style:none}
+h1,h2,.num{font-family:'Sora',sans-serif}
+.app{display:flex;min-height:100vh}
+
+/* ============ SIDEBAR ============ */
+.sidebar{width:238px;background:#101216;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:11px;padding:24px 20px 20px;position:sticky;top:0;background:#101216;z-index:2}
+.brand .logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#FF7A45,#EA4A10);display:grid;place-items:center;box-shadow:0 4px 14px rgba(255,90,31,.4)}
+.brand .logo svg{width:20px;height:20px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.06rem;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;color:#585E6C;padding:12px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9.5px 12px;border-radius:10px;font-size:.9rem;font-weight:500;color:#AEB4C0;transition:.13s}
+.nav a:hover{background:#1B1E24;color:#fff}
+.nav a.active{background:linear-gradient(90deg,#FF5A1F,#FF7A45);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(255,90,31,.35)}
+.nav svg{width:17px;height:17px;flex:none;opacity:.9}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1F222A;margin-top:auto}
+.ph{border-radius:50%;background:linear-gradient(135deg,#FFB199,#FF5A1F);display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+/* ============ TOPBAR ============ */
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 30px;position:sticky;top:0;z-index:50;background:rgba(244,245,248,.9);backdrop-filter:blur(12px)}
+.back-m{display:none}
+.crumbs{font-size:.9rem;color:var(--muted)}
+.crumbs .cur{color:var(--ink);font-weight:600}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;font-size:.86rem;font-weight:600;transition:.15s;white-space:nowrap}
+.btn svg{width:16px;height:16px}
+.btn.outline{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.btn.outline:hover{border-color:#D5D8DF}
+.btn.primary{background:var(--orange);color:#fff;box-shadow:0 3px 10px rgba(255,90,31,.32)}
+.btn.primary:hover{background:var(--orange-deep)}
+
+.page{padding:8px 24px 90px;max-width:1500px}
+
+/* ============ LAYOUT 2 COLONNES ============ */
+.wrap{display:grid;grid-template-columns:minmax(430px,1fr) minmax(480px,1.05fr);gap:18px;align-items:start}
+
+/* Bascule mobile */
+.mtoggle{display:none}
+
+/* ============ FORMULAIRE ============ */
+.form{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:19px 20px;border:1px solid #F0F1F4}
+.card-h{display:flex;align-items:center;gap:10px;font-family:'Sora';font-weight:700;font-size:.96rem;margin-bottom:15px}
+.card-h .tick{width:4px;height:17px;border-radius:3px;background:linear-gradient(180deg,#FF7A45,#EA4A10);flex:none}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fgrid .full{grid-column:1/-1}
+label.lab{display:block;font-size:.76rem;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+
+/* Ligne de devis */
+.ligne{border:1px solid var(--line);border-radius:15px;padding:14px;margin-bottom:12px;background:#FCFCFD;position:relative}
+.ligne .lhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ligne .lnum{font-family:'Sora';font-weight:800;font-size:.78rem;background:var(--orange-soft);color:var(--orange-deep);width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none}
+.ligne .del{margin-left:auto;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--muted)}
+.ligne .del:hover{background:#FDEBEB;color:var(--red)}
+.ligne .del svg{width:15px;height:15px}
+.lrow{display:grid;grid-template-columns:96px 1fr;gap:12px}
+/* Photo */
+.photo{width:96px;height:96px;border:1.5px dashed #D6D9E1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--muted);font-size:.66rem;font-weight:600;cursor:pointer;overflow:hidden;background:#fff;text-align:center;padding:4px}
+.photo svg{width:19px;height:19px;stroke:var(--muted)}
+.photo img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.photo:hover{border-color:var(--orange);color:var(--orange-deep)}
+.photo input{display:none}
+.lfields{display:flex;flex-direction:column;gap:9px}
+.nums{display:grid;grid-template-columns:1fr 1fr 1fr 1.1fr;gap:9px}
+.nums .lab{font-size:.68rem}
+.ttcbox{background:var(--orange-soft);border:1px solid #FFD9C4;border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;justify-content:center}
+.ttcbox small{font-size:.66rem;font-weight:600;color:var(--orange-deep)}
+.ttcbox b{font-family:'Sora';font-size:.98rem}
+.addline{width:100%;padding:13px;border:1.5px dashed #D6D9E1;border-radius:13px;color:var(--ink-2);font-weight:600;font-size:.88rem;display:flex;align-items:center;justify-content:center;gap:8px;transition:.14s}
+.addline:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
+.addline svg{width:16px;height:16px}
+
+/* Totaux */
+.tots .trow{display:flex;justify-content:space-between;padding:8px 0;font-size:.9rem;border-bottom:1px dashed var(--line)}
+.tots .trow .k{color:var(--muted)}
+.tots .trow b{font-family:'Sora'}
+.tots .grand{border:0;padding-top:12px}
+.tots .grand .k{color:var(--ink);font-weight:700;font-size:1rem}
+.tots .grand b{font-size:1.35rem;color:var(--orange-deep)}
+
+/* ============ APERÇU PDF ============ */
+.preview{position:sticky;top:74px}
+.pbar{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.pbar b{font-family:'Sora';font-size:.94rem}
+.pbar .zoombtns{margin-left:auto;display:flex;gap:6px}
+.pbar .zoombtns button{width:32px;height:32px;border-radius:9px;background:#fff;border:1px solid var(--line);font-weight:700;color:var(--ink-2)}
+.pdfscroll{overflow:auto;max-height:calc(100vh - 150px);border-radius:14px;background:#E4E6EB;padding:20px;box-shadow:inset 0 2px 8px rgba(23,26,32,.08)}
+.a4{width:640px;min-height:905px;margin:0 auto;background:#fff;box-shadow:0 10px 40px -10px rgba(23,26,32,.3);padding:38px 42px;transform-origin:top center;font-size:12.5px;color:#1A1D23;display:flex;flex-direction:column}
+/* En-tête PDF */
+.p-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.p-brand{display:flex;align-items:center;gap:10px}
+.p-brand .lg{width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#FF7A45,#EA4A10);display:grid;place-items:center;color:#fff;font-family:'Sora';font-weight:800;font-size:15px}
+.p-brand b{font-family:'Sora';font-size:16px;display:block}
+.p-brand small{color:#878DA0;font-size:10.5px}
+.p-devnum{text-align:right}
+.p-devnum .t{font-family:'Sora';font-weight:800;font-size:21px;letter-spacing:.5px;color:#EA4A10}
+.p-devnum div{font-size:11px;color:#5B6170;margin-top:3px}
+.p-cols{display:flex;justify-content:space-between;gap:20px;margin-top:22px;font-size:11.5px;line-height:1.65}
+.p-cols .bloc b{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#878DA0;display:block;margin-bottom:4px}
+.p-title{margin-top:20px;background:#FFF1EA;border-left:4px solid #FF5A1F;border-radius:0 10px 10px 0;padding:11px 14px;font-family:'Sora';font-weight:700;font-size:14.5px}
+/* Table PDF */
+.p-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11.5px}
+.p-table th{background:#171A20;color:#fff;text-align:left;padding:8px 9px;font-weight:600;font-size:10px;letter-spacing:.05em;text-transform:uppercase}
+.p-table th:first-child{border-radius:8px 0 0 8px}
+.p-table th:last-child{border-radius:0 8px 8px 0;text-align:right}
+.p-table td{padding:10px 9px;border-bottom:1px solid #EEEFF3;vertical-align:top}
+.p-table td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+.p-table .pimg{width:52px;height:52px;object-fit:cover;border-radius:8px;display:block}
+.p-table .noimg{width:52px;height:52px;border-radius:8px;background:#F1F2F5;display:grid;place-items:center;color:#B9BEC9;font-size:9px}
+.p-table .des b{display:block;font-weight:700;margin-bottom:2px}
+.p-table .des span{color:#5B6170;font-size:10.5px;line-height:1.5}
+.p-table .c{text-align:center;white-space:nowrap}
+/* Totaux PDF */
+.p-tots{margin-top:14px;margin-left:auto;width:250px;font-size:12px}
+.p-tots .r{display:flex;justify-content:space-between;padding:5.5px 0;border-bottom:1px dashed #EEEFF3}
+.p-tots .r .k{color:#5B6170}
+.p-tots .g{border:0;background:#171A20;color:#fff;border-radius:10px;padding:10px 13px;margin-top:8px;font-family:'Sora';font-weight:700}
+.p-tots .g span:last-child{color:#FFB088}
+.p-foot{margin-top:auto;padding-top:22px}
+.p-cond{font-size:10px;color:#5B6170;line-height:1.7;border-top:1px solid #EEEFF3;padding-top:12px}
+.p-sign{display:flex;gap:14px;margin-top:14px}
+.p-sign .box{flex:1;border:1px dashed #D6D9E1;border-radius:10px;padding:9px 11px;min-height:64px;font-size:10px;color:#878DA0}
+
+/* ============ MODALE ENVOI ============ */
+.mailmodal{display:none;position:fixed;inset:0;z-index:90}
+.mailmodal.open{display:block}
+.mailmodal .veil{position:absolute;inset:0;background:rgba(10,12,16,.5)}
+.mpanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 24px));max-height:88vh;overflow-y:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:pop .2s ease}
+@keyframes pop{from{transform:translate(-50%,-48%);opacity:0}to{transform:translate(-50%,-50%);opacity:1}}
+.mhead{display:flex;align-items:center;margin-bottom:15px}
+.mhead b{font-family:'Sora';font-size:1.02rem}
+.mclose{margin-left:auto;width:34px;height:34px;border-radius:10px;color:var(--muted);font-size:1rem}
+.mclose:hover{background:#F1F2F5}
+.sigopt{margin-top:13px;border:1px solid #C9DAFB;background:#EBF1FE;border-radius:12px;padding:12px 13px}
+.mnote{margin-top:11px;font-size:.78rem;color:var(--ink-2);background:var(--orange-soft);border:1px solid #FFD9C4;border-radius:11px;padding:10px 12px}
+.macts{display:flex;gap:10px;margin-top:15px;justify-content:flex-end}
+@media(max-width:760px){
+  .mpanel{left:0;right:0;top:auto;bottom:0;transform:none;width:100%;border-radius:20px 20px 0 0;max-height:92vh;padding-bottom:calc(20px + var(--safe-b))}
+  @keyframes pop{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+  .macts .btn{flex:1;justify-content:center}
+}
+
+/* ============ IMPRESSION → PDF ============ */
+@media print{
+  body *{visibility:hidden}
+  .noprint{display:none!important}
+  .a4,.a4 *{visibility:visible}
+  .a4{position:absolute;left:0;top:0;width:100%;min-height:auto;box-shadow:none;padding:24px;transform:none!important}
+  @page{size:A4;margin:10mm}
+}
+
+/* ============ MOBILE ============ */
+.bottomnav{display:none}
+@media(max-width:1120px){
+  .wrap{grid-template-columns:1fr}
+  .preview{position:static}
+  .mtoggle{display:flex;gap:4px;background:#fff;border-radius:13px;padding:5px;margin-bottom:13px;box-shadow:var(--shadow)}
+  .mtoggle button{flex:1;padding:11px;border-radius:10px;font-size:.87rem;font-weight:600;color:var(--muted)}
+  .mtoggle button.on{background:var(--orange);color:#fff}
+  .hideM{display:none!important}
+}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px;gap:8px;flex-wrap:wrap}
+  .back-m{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:var(--ink)}
+  .back-m svg{width:21px;height:21px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .topbar .btn{padding:9px 12px;font-size:.78rem}
+  .page{padding:2px 12px calc(100px + var(--safe-b))}
+  .fgrid{grid-template-columns:1fr}
+  .nums{grid-template-columns:1fr 1fr}
+  .lrow{grid-template-columns:1fr}
+  .photo{width:100%;height:110px;flex-direction:row;gap:9px;font-size:.78rem}
+  .pdfscroll{padding:10px;max-height:none}
+  .a4{transform:scale(.56);transform-origin:top left;margin:0}
+  .pdfscroll .a4wrap{width:calc(640px * .56);height:calc(905px * .56);overflow:hidden}
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:56;
+    background:rgba(255,255,255,.97);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:7px 4px calc(7px + var(--safe-b));align-items:flex-end}
+  .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:600;color:var(--muted);padding:4px 0}
+  .bn svg{width:21px;height:21px}
+  .bn.active{color:var(--orange)}
+  .bn-cta{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:700;color:var(--orange);margin-top:-26px}
+  .bn-cta .disc{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#EA4A10);
+    display:grid;place-items:center;box-shadow:0 6px 18px rgba(255,90,31,.45);border:4px solid var(--bg)}
+  .bn-cta .disc svg{width:24px;height:24px;stroke:#fff}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"/><path d="M9 11.5h6M10 15h4"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="client.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+
+  <div class="topbar">
+    <button class="back-m" onclick="history.back()" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="crumbs"><span>Devis</span> › <span class="cur">Nouveau devis</span></div>
+    <div class="title-m">Nouveau devis</div>
+    <div class="spacer"></div>
+    <button class="btn outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Brouillon</button>
+    <button class="btn outline" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Télécharger le PDF</button>
+    <button class="btn primary" onclick="openMail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>Envoyer au client</button>
+  </div>
+
+  <div class="page">
+
+    <!-- Bascule mobile Formulaire / Aperçu -->
+    <div class="mtoggle">
+      <button class="on" onclick="mview('form',this)">✏️ Formulaire</button>
+      <button onclick="mview('prev',this)">📄 Aperçu PDF</button>
+    </div>
+
+    <div class="wrap">
+
+      <!-- ================= FORMULAIRE ================= -->
+      <div class="form" id="formcol">
+
+        <div class="card">
+          <div class="card-h"><span class="tick"></span>Informations du devis</div>
+          <div class="fgrid">
+            <div class="full">
+              <label class="lab">Titre du devis</label>
+              <input id="f-titre" value="Traitement punaises de lit — appartement T3" oninput="render()">
+            </div>
+            <div>
+              <label class="lab">Numéro de devis</label>
+              <input id="f-num" value="DEV-2026-01287" oninput="render()">
+            </div>
+            <div>
+              <label class="lab">Client</label>
+              <select id="f-client" onchange="render()">
+                <option>Ironwood Solutions</option>
+                <option>Boulangerie Dupont</option>
+                <option>Pharmacie Centrale</option>
+                <option>Nouveau client…</option>
+              </select>
+            </div>
+            <div>
+              <label class="lab">Adresse d'intervention</label>
+              <input id="f-adresse" value="12 rue de la République, 75011 Paris" oninput="render()">
+            </div>
+            <div>
+              <label class="lab">Date du devis</label>
+              <input id="f-date" type="date" value="2026-08-25" onchange="render()">
+            </div>
+            <div>
+              <label class="lab">Valable jusqu'au</label>
+              <input id="f-valid" type="date" value="2026-09-25" onchange="render()">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="tick"></span>Prestations
+            <select id="cat" style="margin-left:auto;width:auto;max-width:230px;font-size:.8rem;padding:8px 10px" onchange="addFromCat(this)">
+              <option value="">＋ Depuis le catalogue…</option>
+              <option value="0">Dératisation — appâtage sécurisé</option>
+              <option value="1">Destruction nid de guêpes / frelons</option>
+              <option value="2">Traitement cafards — gel + pulvérisation</option>
+              <option value="3">Punaises de lit — traitement 2 passages</option>
+              <option value="4">Désinfection locaux (norme NF)</option>
+              <option value="5">Dépigeonnage — pose de pics</option>
+              <option value="6">Forfait déplacement Île-de-France</option>
+            </select>
+          </div>
+          <div id="lignes"></div>
+          <button class="addline" onclick="addLigne()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Ajouter une prestation
+          </button>
+        </div>
+
+        <div class="card tots">
+          <div class="card-h"><span class="tick"></span>Totaux</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div><label class="lab">Remise commerciale (%)</label>
+              <input id="f-remise" type="number" min="0" max="100" step="0.5" value="0" oninput="render()"></div>
+            <div><label class="lab">Acompte à la signature (%)</label>
+              <input id="f-acompte" type="number" min="0" max="100" step="5" value="30" oninput="render()"></div>
+          </div>
+          <div class="trow"><span class="k">Total HT</span><b id="t-ht">0,00 €</b></div>
+          <div class="trow" id="t-remrow" style="display:none"><span class="k">Remise</span><b id="t-rem" style="color:var(--green-d)">0,00 €</b></div>
+          <div id="t-tvas"></div>
+          <div class="trow grand"><span class="k">Total TTC</span><b id="t-ttc">0,00 €</b></div>
+          <div class="trow" id="t-acrow" style="border:0;padding-top:4px"><span class="k">Acompte à la signature</span><b id="t-ac">0,00 €</b></div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="tick"></span>Conditions &amp; notes</div>
+          <textarea id="f-cond" rows="3" oninput="render()">Acompte de 30 % à la signature. Solde à la fin de l'intervention. Garantie de résultat 3 mois : nouvelle intervention offerte en cas de réinfestation. Produits certifiés Certibiocide.</textarea>
+        </div>
+
+      </div>
+
+      <!-- ================= APERÇU PDF ================= -->
+      <div class="preview hideM-target" id="prevcol">
+        <div class="pbar">
+          <b>Aperçu du PDF</b>
+          <div class="zoombtns">
+            <button onclick="pz(1.15)">+</button>
+            <button onclick="pz(1/1.15)">−</button>
+          </div>
+        </div>
+        <div class="pdfscroll">
+          <div class="a4wrap"><div class="a4" id="a4">
+
+            <div class="p-head">
+              <div class="p-brand">
+                <span class="lg">TF</span>
+                <div>
+                  <b>Tiger Hygiène 3D</b>
+                  <small>Dératisation · Désinsectisation · Désinfection<br>
+                  24 av. des Tilleuls, 75012 Paris · 01 84 25 36 47<br>
+                  SIRET 902 415 678 00021 · Certibiocide n° 123456</small>
+                </div>
+              </div>
+              <div class="p-devnum">
+                <div class="t">DEVIS</div>
+                <div><b id="p-num">DEV-2026-01287</b></div>
+                <div>Date : <span id="p-date">25/08/2026</span></div>
+                <div>Valable jusqu'au : <span id="p-valid">25/09/2026</span></div>
+              </div>
+            </div>
+
+            <div class="p-cols">
+              <div class="bloc">
+                <b>Client</b>
+                <span id="p-client">Ironwood Solutions</span><br>
+                <span id="p-adresse">12 rue de la République, 75011 Paris</span>
+              </div>
+              <div class="bloc" style="text-align:right">
+                <b>Votre contact</b>
+                Thomas Martin<br>
+                thomas@tiger-hygiene3d.fr<br>
+                06 12 34 56 78
+              </div>
+            </div>
+
+            <div class="p-title" id="p-titre">Traitement punaises de lit — appartement T3</div>
+
+            <table class="p-table">
+              <thead><tr>
+                <th style="width:58px">Photo</th><th>Désignation</th><th class="c">Qté</th><th class="c">PU HT</th><th class="c">TVA</th><th>Total TTC</th>
+              </tr></thead>
+              <tbody id="p-lignes"></tbody>
+            </table>
+
+            <div class="p-tots">
+              <div class="r"><span class="k">Total HT</span><span id="pt-ht">0,00 €</span></div>
+              <div id="pt-tvas"></div>
+              <div class="r g"><span>TOTAL TTC</span><span id="pt-ttc">0,00 €</span></div>
+              <div id="pt-ac" style="text-align:right;font-size:10.5px;color:#EA4A10;font-weight:700;margin-top:6px"></div>
+            </div>
+
+            <div class="p-foot">
+              <div class="p-cond" id="p-cond"></div>
+              <div class="p-sign">
+                <div class="box">
+                  <div style="display:flex;align-items:center;gap:8px">Bon pour accord — le client
+                    <button onclick="sigClear()" style="margin-left:auto;font-size:9px;color:#EA4A10;font-weight:700;text-decoration:underline" class="noprint">Effacer</button>
+                  </div>
+                  <canvas id="sig" width="440" height="110" style="width:100%;height:55px;touch-action:none;cursor:crosshair;display:block;margin-top:4px"></canvas>
+                  <em style="font-size:9px">Signez ici au doigt · date et « lu et approuvé »</em>
+                </div>
+                <div class="box">Pour Tiger Hygiène 3D<br><br><span style="font-family:'Sora';font-weight:700;color:#1A1D23;font-size:13px">Thomas Martin</span></div>
+              </div>
+            </div>
+
+          </div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ MODALE ENVOI AU CLIENT ============ -->
+  <div class="mailmodal" id="mailmodal">
+    <div class="veil" onclick="closeMail()"></div>
+    <div class="mpanel">
+      <div class="mhead">
+        <b>Envoyer le devis au client</b>
+        <button onclick="closeMail()" aria-label="Fermer" class="mclose">✕</button>
+      </div>
+
+      <label class="lab">Destinataire</label>
+      <input id="m-to" type="email" value="john.thompson@ironwood.com">
+
+      <label class="lab" style="margin-top:11px">Objet</label>
+      <input id="m-obj">
+
+      <label class="lab" style="margin-top:11px">Message <span style="font-weight:400;color:var(--muted)">— pré-rédigé, modifiable</span></label>
+      <textarea id="m-body" rows="12" style="font-size:.84rem;line-height:1.65"></textarea>
+
+      <div class="sigopt">
+        <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">
+          <input type="checkbox" id="m-esig" checked style="width:auto;margin-top:3px" onchange="buildMail()">
+          <span><b style="font-size:.86rem">Inclure un lien de signature électronique</b><br>
+          <small style="color:var(--muted);font-size:.76rem">Le client signe le devis à distance depuis son téléphone ou son ordinateur (type Yousign — valeur légale eIDAS). Nécessite l'activation du module signature.</small></span>
+        </label>
+      </div>
+
+      <div class="mnote">📎 Pense à joindre le PDF : bouton « Télécharger le PDF » d'abord, puis ajoute-le en pièce jointe dans Mail.</div>
+
+      <div class="macts">
+        <button class="btn outline" onclick="closeMail()">Annuler</button>
+        <button class="btn primary" onclick="sendMail()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+          Ouvrir dans Mail
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav mobile -->
+  <nav class="bottomnav">
+    <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+    <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <button class="bn-cta"><span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Planifier</button>
+    <a class="bn active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>Devis</a>
+    <a class="bn" href="client.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+/* ================= DONNÉES ================= */
+/* ================= ILLUSTRATIONS PAR DÉFAUT ================= */
+const svgU = v => "data:image/svg+xml;utf8," + encodeURIComponent(v);
+const ILL = {
+diag:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#FDF1DA"/><circle cx="52" cy="52" r="26" fill="#fff" stroke="#B45309" stroke-width="5"/><line x1="71" y1="71" x2="94" y2="94" stroke="#B45309" stroke-width="8" stroke-linecap="round"/><ellipse cx="52" cy="55" rx="9" ry="12" fill="#8A4B12"/><circle cx="52" cy="42" r="5" fill="#8A4B12"/><path d="M43 50l-7-4M43 60l-7 2M61 50l7-4M61 60l7 2" stroke="#8A4B12" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+spray:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#FDE8E8"/><rect x="34" y="46" width="27" height="47" rx="6" fill="#E23A3A"/><rect x="39" y="30" width="14" height="16" rx="3" fill="#B02A2A"/><rect x="49" y="23" width="17" height="10" rx="3" fill="#7E1E1E"/><circle cx="80" cy="30" r="3" fill="#EE9A9A"/><circle cx="89" cy="40" r="4" fill="#EE9A9A"/><circle cx="82" cy="51" r="3" fill="#EE9A9A"/><ellipse cx="86" cy="85" rx="13" ry="10" fill="#6B3A1F"/><circle cx="98" cy="80" r="5" fill="#6B3A1F"/><path d="M74 80l-8-3M74 88l-8 2M96 93l5 7M87 94l1 8" stroke="#6B3A1F" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+housse:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#EAF1FE"/><rect x="16" y="50" width="88" height="30" rx="9" fill="#fff" stroke="#2453C6" stroke-width="4"/><path d="M16 64h88" stroke="#C9DAFB" stroke-width="3"/><rect x="16" y="80" width="88" height="10" rx="4" fill="#2453C6" opacity=".25"/><path d="M80 26l13 5v9c0 9-5.5 14-13 16-7.5-2-13-7-13-16v-9z" fill="#2453C6"/><path d="M73 40l5 5 9-10" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+rat:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#EDF0F5"/><ellipse cx="56" cy="70" rx="30" ry="20" fill="#5B6170"/><circle cx="87" cy="62" r="12" fill="#5B6170"/><circle cx="92" cy="51" r="6" fill="#7A8090"/><circle cx="96" cy="61" r="2.2" fill="#171A20"/><path d="M26 74q-16 2-13 15" stroke="#5B6170" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M99 66l9 2M99 70l8 5" stroke="#5B6170" stroke-width="2" stroke-linecap="round"/><path d="M48 90l-2 9M66 90l2 9" stroke="#454B58" stroke-width="4" stroke-linecap="round"/></svg>`,
+guepe:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#FDF1DA"/><ellipse cx="60" cy="68" rx="20" ry="26" fill="#E8930C"/><path d="M42 58h36M40 70h40M44 82h32" stroke="#171A20" stroke-width="6"/><circle cx="60" cy="34" r="11" fill="#171A20"/><path d="M53 26l-5-9M67 26l5-9" stroke="#171A20" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="37" cy="48" rx="15" ry="7" fill="#fff" opacity=".85" transform="rotate(-28 37 48)"/><ellipse cx="83" cy="48" rx="15" ry="7" fill="#fff" opacity=".85" transform="rotate(28 83 48)"/><path d="M60 94v9" stroke="#171A20" stroke-width="4" stroke-linecap="round"/></svg>`,
+cafard:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#DFF6F6"/><ellipse cx="60" cy="66" rx="18" ry="28" fill="#8A4B12"/><path d="M60 40v52" stroke="#6B3A1F" stroke-width="3"/><circle cx="60" cy="33" r="9" fill="#6B3A1F"/><path d="M55 26l-7-11M65 26l7-11" stroke="#6B3A1F" stroke-width="2.5" stroke-linecap="round"/><path d="M44 52l-15-7M43 66l-16 1M46 80l-13 9M76 52l15-7M77 66l16 1M74 80l13 9" stroke="#6B3A1F" stroke-width="3" stroke-linecap="round"/></svg>`,
+punaise:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#FDE8E8"/><ellipse cx="60" cy="66" rx="24" ry="27" fill="#8A2E1F"/><path d="M38 58q22 11 44 0M40 74q20 9 40 0" stroke="#5E1D12" stroke-width="3" fill="none"/><circle cx="60" cy="33" r="8" fill="#5E1D12"/><path d="M40 50l-14-8M37 66h-15M42 80l-12 10M80 50l14-8M83 66h15M78 80l12 10" stroke="#5E1D12" stroke-width="3" stroke-linecap="round"/></svg>`,
+desinf:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="16" fill="#E3F6E9"/><path d="M60 22c14 18 22 30 22 42a22 22 0 11-44 0c0-12 8-24 22-42z" fill="#149A4E"/><path d="M50 66l7 7 14-16" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+};
+
+let LIGNES = [
+  {designation:"Diagnostic complet du logement", desc:"Inspection minutieuse literie, plinthes, mobilier. Rapport photographique remis au client.", qte:1, pu:90, tva:10, img:svgU(ILL.diag)},
+  {designation:"Traitement chimique — 2 passages", desc:"Pulvérisation insecticide certifié Certibiocide sur toutes zones infestées. 2ᵉ passage à J+15 inclus.", qte:1, pu:380, tva:10, img:svgU(ILL.punaise)},
+  {designation:"Housses anti-punaises (lit 140×190)", desc:"Fourniture et pose de housses intégrales certifiées, matelas + sommier.", qte:2, pu:45, tva:20, img:svgU(ILL.housse)},
+];
+
+const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
+const fdate = iso => { if(!iso) return ""; const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; };
+
+/* ================= RENDU FORMULAIRE ================= */
+function renderLignes(){
+  const box = document.getElementById('lignes');
+  box.innerHTML = LIGNES.map((l,i)=>`
+    <div class="ligne">
+      <div class="lhead">
+        <span class="lnum">${i+1}</span>
+        <b style="font-size:.86rem">Prestation ${i+1}</b>
+        <button class="del" style="margin-left:auto" onclick="dupLigne(${i})" aria-label="Dupliquer" title="Dupliquer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        </button>
+        <button class="del" style="margin-left:0" onclick="delLigne(${i})" aria-label="Supprimer" title="Supprimer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
+      <div class="lrow">
+        <label class="photo">
+          ${l.img ? `<img src="${l.img}" alt="">`
+                  : `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>Ajouter<br>une photo</span>`}
+          <input type="file" accept="image/*" onchange="setImg(${i},this)">
+        </label>
+        <div class="lfields">
+          <div>
+            <label class="lab">Désignation</label>
+            <input value="${l.designation.replace(/"/g,'&quot;')}" oninput="LIGNES[${i}].designation=this.value;renderPDF()">
+          </div>
+          <div>
+            <label class="lab">Description</label>
+            <textarea rows="2" oninput="LIGNES[${i}].desc=this.value;renderPDF()">${l.desc}</textarea>
+          </div>
+          <div class="nums">
+            <div><label class="lab">Quantité</label>
+              <input type="number" min="0" step="1" value="${l.qte}" oninput="LIGNES[${i}].qte=+this.value||0;render()"></div>
+            <div><label class="lab">PU HT (€)</label>
+              <input type="number" min="0" step="0.01" value="${l.pu}" oninput="LIGNES[${i}].pu=+this.value||0;render()"></div>
+            <div><label class="lab">TVA</label>
+              <select onchange="LIGNES[${i}].tva=+this.value;render()">
+                <option value="10" ${l.tva===10?'selected':''}>10 %</option>
+                <option value="20" ${l.tva===20?'selected':''}>20 %</option>
+                <option value="5.5" ${l.tva===5.5?'selected':''}>5,5 %</option>
+              </select></div>
+            <div class="ttcbox"><small>Total TTC</small><b>${eur(l.qte*l.pu*(1+l.tva/100))}</b></div>
+          </div>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function addLigne(){ LIGNES.push({designation:"",desc:"",qte:1,pu:0,tva:10,img:null}); render(); }
+function delLigne(i){ LIGNES.splice(i,1); render(); }
+function setImg(i,inp){
+  const f = inp.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e => { LIGNES[i].img = e.target.result; render(); };
+  r.readAsDataURL(f);
+}
+
+/* ================= CALCULS ================= */
+function calc(){
+  const rem = +document.getElementById('f-remise').value || 0;
+  const acp = +document.getElementById('f-acompte').value || 0;
+  const k = 1 - rem/100;
+  let ht=0, ttc=0, tvas={};
+  LIGNES.forEach(l=>{
+    const lht = l.qte*l.pu*k;
+    ht += lht;
+    tvas[l.tva] = (tvas[l.tva]||0) + lht*l.tva/100;
+    ttc += lht*(1+l.tva/100);
+  });
+  let brut=0; LIGNES.forEach(l=>brut+=l.qte*l.pu);
+  return {ht, tvas, ttc, remiseM: brut*rem/100, rem, acompteM: ttc*acp/100, acp};
+}
+
+/* ================= RENDU PDF + TOTAUX ================= */
+function renderPDF(){
+  const g = id => document.getElementById(id);
+  g('p-titre').textContent  = g('f-titre').value || "Devis";
+  g('p-client').textContent = g('f-client').value;
+  g('p-adresse').textContent= g('f-adresse').value;
+  g('p-date').textContent   = fdate(g('f-date').value);
+  g('p-valid').textContent  = fdate(g('f-valid').value);
+  g('p-cond').textContent   = g('f-cond').value;
+
+  g('p-lignes').innerHTML = LIGNES.map(l=>`
+    <tr>
+      <td>${l.img?`<img class="pimg" src="${l.img}">`:`<span class="noimg">—</span>`}</td>
+      <td class="des"><b>${l.designation||"—"}</b><span>${l.desc||""}</span></td>
+      <td class="c">${l.qte}</td>
+      <td class="c">${eur(l.pu)}</td>
+      <td class="c">${String(l.tva).replace('.',',')} %</td>
+      <td>${eur(l.qte*l.pu*(1+l.tva/100))}</td>
+    </tr>`).join("");
+
+  const {ht,tvas,ttc,remiseM,rem,acompteM,acp} = calc();
+  const tvaRows = Object.entries(tvas).sort((a,b)=>a[0]-b[0])
+    .map(([r,m])=>({r:String(r).replace('.',','),m}));
+
+  g('p-num').textContent = g('f-num').value;
+
+  g('t-ht').textContent  = eur(ht);
+  g('t-ttc').textContent = eur(ttc);
+  g('t-remrow').style.display = rem>0 ? '' : 'none';
+  g('t-rem').textContent = "− " + eur(remiseM);
+  g('t-ac').textContent  = eur(acompteM) + " (" + acp + " %)";
+  g('t-tvas').innerHTML  = tvaRows.map(t=>`<div class="trow"><span class="k">TVA ${t.r} %</span><b>${eur(t.m)}</b></div>`).join("");
+
+  g('pt-ht').textContent  = eur(ht);
+  g('pt-ttc').textContent = eur(ttc);
+  g('pt-tvas').innerHTML  = (rem>0?`<div class="r"><span class="k">Remise ${String(rem).replace('.',',')} %</span><span>− ${eur(remiseM)}</span></div>`:"")
+    + tvaRows.map(t=>`<div class="r"><span class="k">TVA ${t.r} %</span><span>${eur(t.m)}</span></div>`).join("");
+  g('pt-ac').textContent = acp>0 ? "Acompte à la signature ("+acp+" %) : "+eur(acompteM) : "";
+}
+
+function render(){ renderLignes(); renderPDF(); }
+
+/* ================= ZOOM PDF / BASCULE MOBILE ================= */
+let pscale = 1;
+function pz(k){
+  pscale = Math.min(1.6, Math.max(.4, pscale*k));
+  document.getElementById('a4').style.transform = "scale("+pscale+")";
+}
+function mview(which, btn){
+  document.querySelectorAll('.mtoggle button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('formcol').classList.toggle('hideM', which!=='form');
+  document.getElementById('prevcol').classList.toggle('hideM', which!=='prev');
+}
+/* Au chargement sur mobile : formulaire visible, aperçu masqué */
+if(window.matchMedia("(max-width:1120px)").matches){
+  document.getElementById('prevcol').classList.add('hideM');
+}
+
+/* ================= CATALOGUE / DUPLICATION ================= */
+const CATALOGUE = [
+  {designation:"Dératisation — appâtage sécurisé", desc:"Pose de postes d'appâtage sécurisés verrouillés, produits certifiés Certibiocide. Plan d'appâtage et registre fournis.", qte:1, pu:180, tva:10, img:()=>svgU(ILL.rat)},
+  {designation:"Destruction nid de guêpes / frelons", desc:"Neutralisation et retrait du nid, équipement de protection complet. Intervention garantie.", qte:1, pu:140, tva:10, img:()=>svgU(ILL.guepe)},
+  {designation:"Traitement cafards — gel + pulvérisation", desc:"Application de gel appât dans cuisine et pièces d'eau + pulvérisation des zones de passage. 2ᵉ passage à J+21 inclus.", qte:1, pu:220, tva:10, img:()=>svgU(ILL.cafard)},
+  {designation:"Punaises de lit — traitement 2 passages", desc:"Pulvérisation insecticide certifié sur toutes zones infestées, 2ᵉ passage à J+15 inclus. Consignes de préparation remises.", qte:1, pu:380, tva:10, img:()=>svgU(ILL.punaise)},
+  {designation:"Désinfection locaux (norme NF)", desc:"Désinfection par pulvérisation virucide / bactéricide conforme NF EN 14476. Attestation de passage remise.", qte:1, pu:160, tva:20, img:()=>svgU(ILL.desinf)},
+  {designation:"Dépigeonnage — pose de pics", desc:"Fourniture et pose de pics inox anti-pigeons sur corniches et rebords. Prix au mètre linéaire.", qte:10, pu:18, tva:20},
+  {designation:"Forfait déplacement Île-de-France", desc:"Déplacement aller-retour, petite fourniture incluse.", qte:1, pu:35, tva:20},
+];
+function addFromCat(sel){
+  if(sel.value==="") return;
+  const c = CATALOGUE[+sel.value];
+  LIGNES.push({...c, img: typeof c.img==='function' ? c.img() : null});
+  sel.value="";
+  render();
+}
+function dupLigne(i){ LIGNES.splice(i+1,0,{...LIGNES[i]}); render(); }
+
+/* ================= SIGNATURE AU DOIGT ================= */
+const sig = document.getElementById('sig');
+const sctx = sig.getContext('2d');
+sctx.lineWidth = 2.4; sctx.lineCap = "round"; sctx.strokeStyle = "#1A2B6B";
+let drawing = false;
+function sigPos(e){
+  const r = sig.getBoundingClientRect();
+  return {x:(e.clientX-r.left)*(sig.width/r.width), y:(e.clientY-r.top)*(sig.height/r.height)};
+}
+sig.addEventListener('pointerdown', e=>{ drawing=true; const p=sigPos(e); sctx.beginPath(); sctx.moveTo(p.x,p.y); e.preventDefault(); });
+sig.addEventListener('pointermove', e=>{ if(!drawing) return; const p=sigPos(e); sctx.lineTo(p.x,p.y); sctx.stroke(); e.preventDefault(); });
+['pointerup','pointerleave'].forEach(ev=>sig.addEventListener(ev, ()=>drawing=false));
+function sigClear(){ sctx.clearRect(0,0,sig.width,sig.height); }
+
+/* ================= ENVOI AU CLIENT (email pré-rédigé) ================= */
+function buildMail(){
+  const g = id => document.getElementById(id);
+  const {ttc, acompteM, acp} = calc();
+  const num    = g('f-num').value;
+  const titre  = g('f-titre').value;
+  const client = g('f-client').value;
+  const valid  = fdate(g('f-valid').value);
+  const esig   = g('m-esig').checked;
+
+  g('m-obj').value = `Votre devis ${num} — Tiger Hygiène 3D`;
+
+  let body = `Bonjour,
+
+Suite à notre échange, veuillez trouver ci-joint votre devis n° ${num} :
+
+  •  ${titre}
+  •  Montant : ${eur(ttc)} TTC${acp>0 ? `
+  •  Acompte à la signature : ${eur(acompteM)} (${acp} %)` : ""}
+  •  Valable jusqu'au ${valid}
+`;
+
+  if(esig){
+    body += `
+Pour accepter ce devis, il vous suffit de le signer électroniquement en cliquant sur ce lien sécurisé (2 minutes, depuis votre téléphone ou ordinateur) :
+
+👉  https://sign.tigerflow.fr/d/${num}
+
+La signature électronique a la même valeur légale qu'une signature manuscrite (règlement eIDAS).
+`;
+  } else {
+    body += `
+Pour accepter ce devis, retournez-nous le document signé avec la mention « Bon pour accord ».
+`;
+  }
+
+  body += `
+Nous restons à votre disposition pour toute question.
+
+Bien cordialement,
+
+Thomas Martin
+Tiger Hygiène 3D — Dératisation · Désinsectisation · Désinfection
+01 84 25 36 47 · thomas@tiger-hygiene3d.fr
+Certibiocide n° 123456`;
+
+  g('m-body').value = body;
+}
+function openMail(){ buildMail(); document.getElementById('mailmodal').classList.add('open'); }
+function closeMail(){ document.getElementById('mailmodal').classList.remove('open'); }
+function sendMail(){
+  const to  = document.getElementById('m-to').value;
+  const obj = encodeURIComponent(document.getElementById('m-obj').value);
+  const bd  = encodeURIComponent(document.getElementById('m-body').value);
+  window.location.href = `mailto:${to}?subject=${obj}&body=${bd}`;
+  closeMail();
+}
+
+render();
+</script>
+</body>
+</html>

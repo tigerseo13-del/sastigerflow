@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Fiche client · Ironwood Solutions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F;
+  --orange-deep:#EA4A10;
+  --orange-soft:#FFF1EA;
+  --orange-border:#FFD9C7;
+  --ink:#16181D;
+  --ink-2:#3D434E;
+  --muted:#8A8F9C;
+  --line:#ECEDF1;
+  --bg:#F5F6F8;
+  --card:#FFFFFF;
+  --green-bg:#E3F6E9;
+  --green-t:#1B8A46;
+  --red-bg:#FDE8E8;
+  --red-t:#DC2626;
+  --wa:#25A85C;
+  --r:14px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+ul{list-style:none}
+.app{display:flex;min-height:100vh}
+
+/* ================= SIDEBAR (desktop) ================= */
+.sidebar{width:238px;background:#0E0F12;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;position:sticky;top:0;background:#0E0F12;z-index:2}
+.brand svg.tiger{width:34px;height:34px;flex:none}
+.brand .name{font-weight:800;font-size:1.12rem;letter-spacing:.4px;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:#5A5F6B;padding:14px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9.5px 12px;border-radius:10px;font-size:.9rem;font-weight:500;color:#B4B9C4;transition:.13s}
+.nav a:hover{background:#1B1D22;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600}
+.nav svg{width:17px;height:17px;flex:none}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1E2026;margin-top:auto}
+.ph{border-radius:50%;background:linear-gradient(135deg,#FFB199,#FF5A1F);display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+.side-user .chev{margin-left:auto;color:#7E838F}
+.collapse{display:flex;align-items:center;gap:10px;padding:14px 22px 18px;font-size:.85rem;color:#8A8F9C}
+.collapse svg{width:15px;height:15px}
+
+/* ================= TOPBAR ================= */
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:15px 30px;position:sticky;top:0;z-index:50;background:rgba(245,246,248,.9);backdrop-filter:blur(12px)}
+.back-m{display:none}
+.crumbs{font-size:.9rem;color:var(--muted);display:flex;align-items:center;gap:9px;min-width:0}
+.crumbs .sep{color:#C4C8D0}
+.crumbs .cur{color:var(--ink);font-weight:600;white-space:nowrap}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.bell{position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:19px;height:19px}
+.bell .dot{position:absolute;top:2px;right:2px;background:var(--orange);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.top-user{display:flex;align-items:center;gap:10px}
+.top-user .ph{width:40px;height:40px;font-size:.8rem}
+.top-user b{font-size:.88rem;display:block}
+.top-user span{font-size:.74rem;color:var(--muted)}
+.top-user .chev{color:var(--muted)}
+
+.page{padding:6px 30px 90px;max-width:1340px}
+
+/* ================= EN-TÊTE CLIENT ================= */
+.hero{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:22px 26px;margin-bottom:16px}
+.hero-top{display:flex;gap:15px;flex-wrap:wrap;align-items:center}
+.cl-av{width:58px;height:58px;border-radius:50%;background:var(--orange);display:grid;place-items:center;color:#fff;font-weight:800;font-size:1.15rem;flex:none}
+.hero h1{font-size:1.5rem;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge-actif{font-size:.72rem;font-weight:700;padding:3.5px 11px;border-radius:20px;background:var(--green-bg);color:var(--green-t)}
+.hero .sub{font-size:.82rem;color:var(--muted);margin-top:4px}
+.hero-actions{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;font-size:.87rem;font-weight:600;transition:.15s}
+.btn svg{width:16px;height:16px}
+.btn.outline{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.btn.outline:hover{border-color:#D5D8DF}
+.btn.wa{background:#fff;border:1px solid #BFE6CE;color:var(--wa)}
+.btn.wa svg{stroke:var(--wa)}
+.btn.primary{background:var(--orange);color:#fff;box-shadow:0 3px 10px rgba(255,90,31,.32)}
+.btn.primary:hover{background:var(--orange-deep)}
+.btn.danger{background:var(--red-t);color:#fff}
+.divid{width:1px;height:26px;background:var(--line)}
+.kebab{display:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink-2);place-items:center}
+.kebab svg{width:19px;height:19px}
+
+/* ===== Bandeau infos 3 colonnes (photo 2) + carte À encaisser (photo 1) ===== */
+.infobar{display:grid;grid-template-columns:2.6fr 1.2fr;gap:14px;margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
+.info-cols{display:grid;grid-template-columns:1.25fr 1.15fr 1fr;gap:6px 20px}
+.kvline{display:flex;gap:7px;font-size:.85rem;padding:4.5px 0;align-items:baseline}
+.kvline .k{color:var(--muted);flex:none}
+.kvline .v{font-weight:600}
+.tagpill{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;padding:2.5px 9px;border-radius:16px;border:1px solid}
+.tagpill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.tp-orange{color:var(--orange-deep);border-color:var(--orange-border);background:var(--orange-soft)}
+.tp-green{color:var(--green-t);border-color:#BFE6CE;background:var(--green-bg)}
+.tp-red{color:var(--red-t);border-color:#F5C2C2;background:var(--red-bg)}
+/* Carte encaissement */
+.collect{background:linear-gradient(135deg,#E9F9EF,#DFF5E7);border:1px solid #BFE6CE;border-radius:13px;padding:15px 17px}
+.collect .k{display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;color:var(--green-t);margin-bottom:8px}
+.collect .k svg{width:15px;height:15px;stroke:var(--green-t)}
+.collect .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.collect .amount{font-size:1.6rem;font-weight:800;letter-spacing:-.4px}
+.collect .cta{margin-left:auto;background:var(--orange);color:#fff;font-weight:700;font-size:.82rem;padding:9px 15px;border-radius:10px;box-shadow:0 3px 9px rgba(255,90,31,.3)}
+.collect .meta{font-size:.79rem;color:var(--ink-2);margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* ===== KPI client ===== */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;border-top:1px solid var(--line);padding-top:16px}
+.kpi{display:flex;align-items:center;gap:11px;padding:11px 13px;background:#FAFBFC;border:1px solid var(--line);border-radius:12px}
+.kpi .ic{width:36px;height:36px;border-radius:10px;background:var(--orange-soft);display:grid;place-items:center;flex:none}
+.kpi .ic svg{width:16px;height:16px;stroke:var(--orange)}
+.kpi b{font-size:1.05rem;font-weight:800;display:block;letter-spacing:-.2px}
+.kpi small{font-size:.74rem;color:var(--muted);font-weight:500}
+.kpi.link b{color:var(--orange)}
+
+/* ================= ONGLETS avec badges (photo 2) ================= */
+.tabs{display:flex;gap:2px;background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:7px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:7px;padding:10px 15px;border-radius:10px;font-size:.87rem;font-weight:600;color:var(--muted);white-space:nowrap;position:relative;transition:.14s;flex:none}
+.tab.active{color:var(--orange)}
+.tab.active::after{content:"";position:absolute;left:14px;right:14px;bottom:2px;height:2.5px;border-radius:2px;background:var(--orange)}
+.tab .n{font-size:.66rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;background:var(--orange-soft);color:var(--orange-deep);display:grid;place-items:center;padding:0 5px}
+
+/* ================= CARTES ================= */
+.grid{display:grid;grid-template-columns:1fr 1.1fr;gap:16px;align-items:start}
+.card{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,20,30,.05);padding:20px}
+.card.full{grid-column:1/-1}
+.card-h{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.99rem;margin-bottom:15px}
+.card-h svg{width:18px;height:18px;stroke:var(--orange);flex:none}
+.card-h .more{margin-left:auto;font-size:.83rem;font-weight:600;color:var(--orange);display:inline-flex;align-items:center;gap:5px}
+.card-h .more svg{width:14px;height:14px}
+
+/* Contacts */
+.ct li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.ct li:last-child{border:0}
+.ct .av{width:44px;height:44px;border-radius:50%;background:var(--orange-soft);color:var(--orange-deep);display:grid;place-items:center;font-weight:700;font-size:.85rem;flex:none}
+.ct b{font-size:.9rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mainct{font-size:.66rem;font-weight:700;padding:2.5px 8px;border-radius:14px;background:var(--orange-soft);color:var(--orange-deep)}
+.ct small{display:block;color:var(--muted);font-size:.79rem;margin-top:2px}
+.ct .acts{margin-left:auto;display:flex;gap:7px}
+.rnd{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2);flex:none}
+.rnd svg{width:16px;height:16px}
+.rnd.wa{border-color:#BFE6CE;color:var(--wa)}
+.rnd.wa svg{stroke:var(--wa)}
+
+/* Notes */
+.notes textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:11px;padding:13px;font-family:inherit;font-size:.88rem;line-height:1.7;color:var(--ink-2);resize:vertical}
+.notes textarea:focus{outline:2px solid var(--orange-border);border-color:var(--orange)}
+.notes .meta{font-size:.78rem;color:var(--muted);margin-top:9px}
+
+/* Activité récente */
+.act li{display:grid;grid-template-columns:30px 1fr auto auto;gap:0 13px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.act li:last-child{border:0}
+.a-ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}
+.a-ic.ok{background:var(--green-bg)}.a-ic.ok svg{stroke:var(--green-t)}
+.a-ic.warn{background:var(--orange-soft)}.a-ic.warn svg{stroke:var(--orange-deep)}
+.a-ic svg{width:14px;height:14px}
+.act b{font-size:.89rem;display:block}
+.act .ref{font-size:.78rem;color:var(--muted)}
+.act .when{font-size:.79rem;color:var(--muted);white-space:nowrap}
+.act .go{color:var(--muted)}
+
+/* Devis (onglet) */
+.qt{width:100%;border-collapse:collapse;font-size:.87rem}
+.qt th{text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+.qt td{padding:12px 10px;border-bottom:1px solid var(--line)}
+.qt tr:last-child td{border:0}
+.qt .ref{font-weight:700}
+.qt .amt{font-weight:700}
+.qt .lien{color:var(--orange);font-weight:600;white-space:nowrap}
+.st-pill{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:14px}
+.st-actif{background:var(--green-bg);color:var(--green-t)}
+.st-accepte{background:#E7F0FE;color:#2453C6}
+.st-suspendu{background:#FDF1DA;color:#A8650A}
+
+/* État vide */
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty .eic{width:52px;height:52px;border-radius:15px;background:var(--orange-soft);display:grid;place-items:center;margin:0 auto 13px}
+.empty .eic svg{width:24px;height:24px;stroke:var(--orange)}
+.empty b{display:block;color:var(--ink);font-size:.95rem;margin-bottom:5px}
+.empty p{font-size:.85rem;max-width:340px;margin:0 auto}
+
+.bottomnav{display:none}
+.sheet{display:none;position:fixed;inset:0;z-index:80}
+.sheet.open{display:block}
+.sheet .veil{position:absolute;inset:0;background:rgba(10,12,16,.45)}
+.sheet .panel{position:absolute;left:12px;right:12px;bottom:calc(12px + var(--safe-b));background:#fff;border-radius:18px;padding:10px;box-shadow:0 -8px 40px rgba(0,0,0,.2);animation:up .22s ease}
+@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.sheet .panel button{display:flex;align-items:center;gap:13px;width:100%;padding:15px 14px;border-radius:12px;font-size:.95rem;font-weight:600;color:var(--ink)}
+.sheet .panel button:active{background:var(--orange-soft)}
+.sheet .panel button svg{width:19px;height:19px;stroke:var(--orange)}
+.sheet .panel button.del{color:var(--red-t)}
+.sheet .panel button.del svg{stroke:var(--red-t)}
+.sheet .panel .cancel{justify-content:center;color:var(--muted);border-top:1px solid var(--line);border-radius:0;margin-top:4px}
+
+/* ============================================================
+   MOBILE (≤ 760px)
+   ============================================================ */
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px;gap:8px;background:rgba(245,246,248,.94)}
+  .back-m{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:var(--ink)}
+  .back-m svg{width:21px;height:21px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .top-user{display:none}
+  .page{padding:2px 13px calc(100px + var(--safe-b))}
+
+  .hero{padding:16px;border-radius:15px}
+  .cl-av{width:48px;height:48px;font-size:1rem}
+  .hero h1{font-size:1.18rem}
+  /* Actions -> icônes rondes rapides + ⋯ */
+  .hero-actions{margin-left:auto;gap:8px}
+  .hero-actions .btn,.divid{display:none}
+  .qa{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-2)}
+  .qa svg{width:17px;height:17px}
+  .qa.wa{border-color:#BFE6CE;color:var(--wa)}
+  .qa.wa svg{stroke:var(--wa)}
+  .kebab{display:grid}
+
+  .infobar{grid-template-columns:1fr;gap:12px;margin-top:14px;padding-top:14px}
+  .collect{order:-1}
+  .info-cols{grid-template-columns:1fr;gap:0}
+  .kvline{padding:6px 0;border-bottom:1px dashed var(--line);justify-content:space-between}
+  .kvline:last-child{border:0}
+
+  .kpis{grid-template-columns:1fr 1fr;gap:9px;margin-top:12px;padding-top:12px}
+  .kpi{padding:10px 11px}
+  .kpi b{font-size:.95rem}
+
+  .tabs{position:sticky;top:60px;z-index:40;padding:6px;margin-bottom:13px}
+  .tab{padding:11px 14px;min-height:44px}
+
+  .grid{display:flex;flex-direction:column;gap:13px}
+  .card{border-radius:15px;padding:17px}
+  .ct .acts{gap:6px}
+  .rnd{width:40px;height:40px}
+  .act li{grid-template-columns:30px 1fr auto}
+  .act .ref{display:block}
+  .act .when{grid-column:2;font-size:.75rem;margin-top:2px}
+  .act .go{grid-row:1/3;align-self:center}
+  .qt th:nth-child(4),.qt td:nth-child(4){display:none}
+
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:56;
+    background:rgba(255,255,255,.97);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:7px 4px calc(7px + var(--safe-b));align-items:flex-end}
+  .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:600;color:var(--muted);padding:4px 0}
+  .bn svg{width:21px;height:21px}
+  .bn.active{color:var(--orange)}
+  .bn-cta{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:700;color:var(--orange);margin-top:-26px}
+  .bn-cta .disc{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#EA4A10);
+    display:grid;place-items:center;box-shadow:0 6px 18px rgba(255,90,31,.45);border:4px solid var(--bg)}
+  .bn-cta .disc svg{width:24px;height:24px;stroke:#fff}
+  .bn-cta:active .disc{transform:scale(.94)}
+}
+@media(min-width:761px){
+  .qa{display:none}
+  .sheet{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <svg class="tiger" viewBox="0 0 48 48" fill="none">
+      <path d="M8 10l6-4 3 5h14l3-5 6 4-2 9c2 3 2 7 0 11-3 6-8 10-14 10S13 36 10 30c-2-4-2-8 0-11z" fill="#FF5A1F"/>
+      <path d="M17 22l4 3-4 3zM31 22l-4 3 4 3z" fill="#0E0F12"/>
+      <path d="M21 33h6l-3 4z" fill="#0E0F12"/>
+      <path d="M14 15l4 2M34 15l-4 2" stroke="#0E0F12" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="#" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Équipe</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <div class="nav-label">Documents</div>
+  <nav class="nav">
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6"/></svg>Documents</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Modèles</a>
+  </nav>
+  <div class="nav-label">Paramètres</div>
+  <nav class="nav">
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1A1.7 1.7 0 008.9 19.4a1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1A1.7 1.7 0 004.6 8.9a1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9c.3.6.9 1 1.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Paramètres</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+    <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="collapse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Réduire le menu</div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+
+  <div class="topbar">
+    <button class="back-m" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="crumbs"><span>Clients</span><span class="sep">›</span><span class="cur">Ironwood Solutions</span></div>
+    <div class="title-m">Fiche client</div>
+    <div class="spacer"></div>
+    <button class="bell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <span class="dot">2</span>
+    </button>
+    <div class="top-user">
+      <span class="ph">TM</span>
+      <div><b>Thomas Martin</b><span>Administrateur</span></div>
+      <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- ===== EN-TÊTE CLIENT ===== -->
+    <section class="hero">
+      <div class="hero-top">
+        <span class="cl-av">IS</span>
+        <div>
+          <h1>Ironwood Solutions <span class="badge-actif">Actif</span></h1>
+          <div class="sub">Dernière modification le 12/12/2025 par Josh Thompson</div>
+        </div>
+        <div class="hero-actions">
+          <!-- Desktop -->
+          <button class="btn outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.8a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.8.7a2 2 0 011.7 2z"/></svg>Appeler</button>
+          <button class="btn outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>E-mail</button>
+          <button class="btn wa"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 01-12.4 7.5L3 21l2-5.4A8.5 8.5 0 1121 11.5z"/></svg>WhatsApp</button>
+          <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4z"/></svg>Modifier</button>
+          <span class="divid"></span>
+          <button class="btn danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6"/></svg>Supprimer</button>
+          <!-- Mobile : accès rapides -->
+          <a class="qa" href="tel:+33123456789" aria-label="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.8a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.8.7a2 2 0 011.7 2z"/></svg></a>
+          <a class="qa wa" href="#" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 01-12.4 7.5L3 21l2-5.4A8.5 8.5 0 1121 11.5z"/></svg></a>
+          <button class="kebab" onclick="document.getElementById('sheet').classList.add('open')" aria-label="Plus d'actions">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bandeau 3 colonnes + À encaisser -->
+      <div class="infobar">
+        <div class="info-cols">
+          <div>
+            <div class="kvline"><span class="k">ID :</span><span class="v">CLI-2026-00013</span></div>
+            <div class="kvline"><span class="k">Type :</span><span class="v">Professionnel</span></div>
+            <div class="kvline"><span class="k">Adresse :</span><span class="v">12 Rue des Lilas, 75020 Paris · <a href="https://maps.google.com/?q=12+Rue+des+Lilas+75020+Paris" style="color:#2563EB">Carte ↗</a></span></div>
+          </div>
+          <div>
+            <div class="kvline"><span class="k">Origine :</span><span class="tagpill tp-orange">Appel direct</span></div>
+            <div class="kvline"><span class="k">Solvabilité :</span><span class="tagpill tp-green">Bonne</span></div>
+            <div class="kvline"><span class="k">SIRET :</span><span class="v">812 345 678 00019</span></div>
+          </div>
+          <div>
+            <div class="kvline"><span class="k">Créé le :</span><span class="v">12/11/2026</span></div>
+            <div class="kvline"><span class="k">Modifié le :</span><span class="v">12/11/2026</span></div>
+          </div>
+        </div>
+        <div class="collect">
+          <div class="k"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>À encaisser</div>
+          <div class="row">
+            <span class="amount">1 250,00 €</span>
+            <button class="cta">Encaisser</button>
+          </div>
+          <div class="meta">Échéance : <b>03/12/2025</b> <span class="tagpill tp-red">En retard</span></div>
+        </div>
+      </div>
+
+      <!-- Chiffres clés du client -->
+      <div class="kpis">
+        <div class="kpi">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
+          <div><b>3 840 €</b><small>CA encaissé 2026</small></div>
+        </div>
+        <div class="kpi">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
+          <div><b>12</b><small>Interventions réalisées</small></div>
+        </div>
+        <div class="kpi">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>
+          <div><b>1</b><small>Contrat actif</small></div>
+        </div>
+        <a class="kpi link" href="index.html">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+          <div><b>22/07/2026</b><small>Prochaine visite · 08:00</small></div>
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== ONGLETS avec badges ===== -->
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="infos">Informations</button>
+      <button class="tab" data-tab="devis">Devis</button>
+      <button class="tab" data-tab="contrats">Contrats</button>
+      <button class="tab" data-tab="histjobs">Historique</button>
+      <button class="tab" data-tab="rapports">Rapports <span class="n">2</span></button>
+      <button class="tab" data-tab="equip">Équipements</button>
+      <button class="tab" data-tab="factures">Factures</button>
+      <button class="tab" data-tab="paiements">Paiements <span class="n">2</span></button>
+      <button class="tab" data-tab="docs">Documents</button>
+    </div>
+
+    <!-- ===== CONTENU ===== -->
+    <div class="grid">
+
+      <!-- Onglet Informations -->
+      <div class="card" data-tabs="infos">
+        <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>Contacts
+          <button class="more">+ Ajouter</button>
+        </div>
+        <ul class="ct">
+          <li>
+            <span class="av">IS</span>
+            <div>
+              <b>Ironwood Solutions <span class="mainct">Contact principal</span></b>
+              <small>(+33) 1 23 45 67 89 · ironwood.solutions@sample.com</small>
+            </div>
+            <span class="acts">
+              <a class="rnd" href="tel:+33123456789" aria-label="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.8a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.8.7a2 2 0 011.7 2z"/></svg></a>
+              <a class="rnd" href="mailto:ironwood.solutions@sample.com" aria-label="E-mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>
+              <a class="rnd wa" href="#" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 01-12.4 7.5L3 21l2-5.4A8.5 8.5 0 1121 11.5z"/></svg></a>
+            </span>
+          </li>
+          <li>
+            <span class="av" style="background:#EAF1FE;color:#2453C6">SL</span>
+            <div>
+              <b>Sophie Larson</b>
+              <small>(+33) 1 23 45 67 89 · sophie.larson@sample.net</small>
+            </div>
+            <span class="acts">
+              <a class="rnd" href="tel:+33123456789" aria-label="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.8a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.8.7a2 2 0 011.7 2z"/></svg></a>
+              <a class="rnd" href="mailto:sophie.larson@sample.net" aria-label="E-mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>
+              <a class="rnd wa" href="#" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 11.5a8.5 8.5 0 01-12.4 7.5L3 21l2-5.4A8.5 8.5 0 1121 11.5z"/></svg></a>
+            </span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card notes" data-tabs="infos">
+        <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8"/></svg>Notes
+          <button class="more">Enregistrer</button>
+        </div>
+        <textarea>• Client fidèle depuis 2024
+• Préfère les rendez-vous le matin
+• Accès : digicode 2548B
+• Horaires : 8h30 – 19h00</textarea>
+        <div class="meta">Modifié le 20/05/2024 par Thomas Martin</div>
+      </div>
+
+      <div class="card full" data-tabs="infos">
+        <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Activité récente
+          <a class="more" href="#">Tout voir <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        </div>
+        <ul class="act">
+          <li><span class="a-ic ok"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <div><b>Rendez-vous planifié</b><span class="ref">APT-001234</span></div>
+            <span class="when">12/06/2026 · 11:20</span><span class="go">→</span></li>
+          <li><span class="a-ic warn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg></span>
+            <div><b>Technicien arrivé sur site</b><span class="ref">TEC-229391</span></div>
+            <span class="when">12/06/2026 · 12:39</span><span class="go">→</span></li>
+          <li><span class="a-ic ok"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <div><b>Inspection du site terminée</b><span class="ref">—</span></div>
+            <span class="when">12/06/2026 · 11:20</span><span class="go">→</span></li>
+          <li><span class="a-ic ok"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <div><b>Plan de traitement approuvé</b><span class="ref">TRT-113302</span></div>
+            <span class="when">12/06/2026 · 11:20</span><span class="go">→</span></li>
+          <li><span class="a-ic warn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="13" r="6"/><path d="M12 7V4M8 8L6 6M16 8l2-2"/></svg></span>
+            <div><b>Activité de nuisibles détectée</b><span class="ref">—</span></div>
+            <span class="when">12/06/2026 · 12:39</span><span class="go">→</span></li>
+        </ul>
+      </div>
+
+      <!-- Onglet Devis -->
+      <div class="card full" data-tabs="devis" style="display:none">
+        <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6"/></svg>Devis du client
+          <button class="more">+ Créer un devis</button>
+        </div>
+        <table class="qt">
+          <thead><tr><th>Référence</th><th>Statut</th><th>Montant</th><th>Créé le</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="ref">DEV-2026-01264</td><td><span class="st-pill st-actif">Actif</span></td><td class="amt">754,90 €</td><td>12/11/2026</td><td><a class="lien" href="#">Voir →</a></td></tr>
+            <tr><td class="ref">DEV-2026-06147</td><td><span class="st-pill st-actif">Actif</span></td><td class="amt">964,87 €</td><td>23/04/2026</td><td><a class="lien" href="#">Voir →</a></td></tr>
+            <tr><td class="ref">DEV-2026-05438</td><td><span class="st-pill st-suspendu">Suspendu</span></td><td class="amt">147,65 €</td><td>07/09/2026</td><td><a class="lien" href="#">Voir →</a></td></tr>
+            <tr><td class="ref">DEV-2026-07629</td><td><span class="st-pill st-accepte">Accepté</span></td><td class="amt">500,00 €</td><td>15/08/2026</td><td><a class="lien" href="#">Voir →</a></td></tr>
+            <tr><td class="ref">DEV-2026-07384</td><td><span class="st-pill st-accepte">Accepté</span></td><td class="amt">9 640,87 €</td><td>21/07/2026</td><td><a class="lien" href="#">Voir →</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Onglet Contrats -->
+      <div class="card full" data-tabs="contrats" style="display:none">
+        <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats
+          <button class="more">+ Nouveau contrat</button>
+        </div>
+        <table class="qt">
+          <thead><tr><th>Référence</th><th>Statut</th><th>Montant</th><th>Échéance</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="ref">CTR-2026-04729</td><td><span class="st-pill st-actif">Actif</span></td><td class="amt">2 880,00 € TTC</td><td>12/07/2027</td><td><a class="lien" href="index.html">Voir →</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Onglets restants : états vides -->
+      <div class="card full" data-tabs="histjobs" style="display:none">
+        <div class="empty">
+          <span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></span>
+          <b>Aucune intervention passée</b>
+          <p>L'historique des interventions de ce client apparaîtra ici après la première visite.</p>
+        </div>
+      </div>
+      <div class="card full" data-tabs="rapports" style="display:none">
+        <div class="empty">
+          <span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
+          <b>2 rapports à valider</b>
+          <p>Les rapports d'intervention signés seront regroupés ici. Connectez la base de données pour les afficher.</p>
+        </div>
+      </div>
+      <div class="card full" data-tabs="equip" style="display:none">
+        <div class="card-h" style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:.99rem;margin-bottom:15px"><svg style="width:18px;height:18px;stroke:var(--orange)" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 20l-5.5-2.2a1 1 0 01-.5-.9V4.6a.6.6 0 01.8-.55L9 6.2m0 13.8l6-2.4m-6 2.4V6.2m6 11.4l5.2 2.1a.6.6 0 00.8-.56V7.7a1 1 0 00-.5-.87L15 4.6m0 13l-6-2.4M15 4.6L9 6.2m6-1.6v13"/></svg>Équipements installés</div>
+        <table class="qt">
+          <thead><tr><th>Site</th><th>Postes</th><th>Dernière relève</th><th>Statut</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="ref">Rue de la République — RDC</td><td>12 postes rongeurs + 2 détecteurs insectes</td><td>12/06/2026</td><td><span class="st-pill st-suspendu">1 à remplacer</span></td><td><a class="lien" href="plan-appatage.html">Voir le plan →</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card full" data-tabs="factures" style="display:none">
+        <div class="empty">
+          <span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
+          <b>Aucune facture</b>
+          <p>Créez une facture depuis un devis accepté ou un contrat actif.</p>
+        </div>
+      </div>
+      <div class="card full" data-tabs="paiements" style="display:none">
+        <div class="empty">
+          <span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
+          <b>2 paiements en attente</b>
+          <p>1 250,00 € à encaisser, échéance dépassée depuis le 03/12/2025. Utilisez le bouton « Encaisser » en haut de page.</p>
+        </div>
+      </div>
+      <div class="card full" data-tabs="docs" style="display:none">
+        <div class="empty">
+          <span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6"/></svg></span>
+          <b>Aucun document</b>
+          <p>Ajoutez ici les contrats signés, plans des locaux ou photos du site.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Action sheet ⋯ (mobile) -->
+  <div class="sheet" id="sheet">
+    <div class="veil" onclick="document.getElementById('sheet').classList.remove('open')"></div>
+    <div class="panel">
+      <button><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>Envoyer un e-mail</button>
+      <button><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4z"/></svg>Modifier la fiche client</button>
+      <button class="del"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6"/></svg>Supprimer le client</button>
+      <button class="cancel" onclick="document.getElementById('sheet').classList.remove('open')">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Bottom nav (mobile) -->
+  <nav class="bottomnav">
+    <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+    <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <button class="bn-cta">
+      <span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>
+      Planifier
+    </button>
+    <a class="bn active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a class="bn" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>Profil</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+const tabs = document.querySelectorAll('.tab');
+const cards = document.querySelectorAll('[data-tabs]');
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  const key = t.dataset.tab;
+  cards.forEach(c => { c.style.display = c.dataset.tabs.split(',').includes(key) ? '' : 'none'; });
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+</script>
+</body>
+</html>

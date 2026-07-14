@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Plan d'appâtage · Ironwood Solutions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F;
+  --orange-deep:#EA4A10;
+  --orange-soft:#FFF1EA;
+  --orange-border:#FFD9C7;
+  --ink:#16181D;
+  --ink-2:#3D434E;
+  --muted:#8A8F9C;
+  --line:#ECEDF1;
+  --bg:#F5F6F8;
+  --card:#FFFFFF;
+  --green:#1B8A46; --green-bg:#E3F6E9;
+  --amber:#B45309; --amber-bg:#FDF1DA;
+  --red:#DC2626;   --red-bg:#FDE8E8;
+  --blue:#2453C6;  --blue-bg:#EAF1FE;
+  --r:14px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+ul{list-style:none}
+.app{display:flex;min-height:100vh}
+
+/* ============ SIDEBAR ============ */
+.sidebar{width:238px;background:#0E0F12;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;position:sticky;top:0;background:#0E0F12;z-index:2}
+.brand svg.tiger{width:34px;height:34px;flex:none}
+.brand .name{font-weight:800;font-size:1.12rem;letter-spacing:.4px;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:#5A5F6B;padding:14px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9.5px 12px;border-radius:10px;font-size:.9rem;font-weight:500;color:#B4B9C4;transition:.13s}
+.nav a:hover{background:#1B1D22;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600}
+.nav svg{width:17px;height:17px;flex:none}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1E2026;margin-top:auto}
+.ph{border-radius:50%;background:linear-gradient(135deg,#FFB199,#FF5A1F);display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+/* ============ TOPBAR ============ */
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:15px 30px;position:sticky;top:0;z-index:50;background:rgba(245,246,248,.9);backdrop-filter:blur(12px)}
+.back-m{display:none}
+.crumbs{font-size:.9rem;color:var(--muted);display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+.crumbs .sep{color:#C4C8D0}
+.crumbs .cur{color:var(--ink);font-weight:600;white-space:nowrap}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.bell{position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:19px;height:19px}
+.bell .dot{position:absolute;top:2px;right:2px;background:var(--orange);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.top-user{display:flex;align-items:center;gap:10px}
+.top-user .ph{width:40px;height:40px;font-size:.8rem}
+.top-user b{font-size:.88rem;display:block}
+.top-user span{font-size:.74rem;color:var(--muted)}
+
+.page{padding:6px 30px 90px;max-width:1360px}
+
+/* ============ EN-TÊTE ============ */
+.head{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:20px 24px;margin-bottom:14px;display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.head .ic{width:52px;height:52px;border-radius:13px;background:var(--orange-soft);display:grid;place-items:center;flex:none}
+.head .ic svg{width:25px;height:25px;stroke:var(--orange)}
+.head h1{font-size:1.3rem;font-weight:800;letter-spacing:-.2px}
+.head .sub{font-size:.82rem;color:var(--muted);margin-top:3px}
+.head .actions{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;font-size:.87rem;font-weight:600;transition:.15s}
+.btn svg{width:16px;height:16px}
+.btn.outline{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.btn.outline:hover{border-color:#D5D8DF}
+.btn.primary{background:var(--orange);color:#fff;box-shadow:0 3px 10px rgba(255,90,31,.32)}
+.btn.primary:hover{background:var(--orange-deep)}
+
+/* Stats de relève */
+.relstats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.rs{background:var(--card);border-radius:13px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:14px 16px;display:flex;align-items:center;gap:12px;border-left:4px solid transparent}
+.rs b{font-size:1.35rem;font-weight:800;display:block;letter-spacing:-.3px}
+.rs small{font-size:.76rem;color:var(--muted);font-weight:500}
+.rs.ok{border-color:var(--green)} .rs.ok b{color:var(--green)}
+.rs.conso{border-color:var(--amber)} .rs.conso b{color:var(--amber)}
+.rs.alerte{border-color:var(--red)} .rs.alerte b{color:var(--red)}
+.rs.tot{border-color:var(--orange)} .rs.tot b{color:var(--orange)}
+
+/* ============ ZONE PLAN ============ */
+.wrap{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+.plancard{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,20,30,.05);padding:18px;position:relative}
+.plancard .bar{display:flex;align-items:center;gap:10px;margin-bottom:13px;flex-wrap:wrap}
+.plancard .bar b{font-size:.99rem}
+.filters{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap}
+.f{font-size:.76rem;font-weight:700;padding:7px 12px;border-radius:18px;border:1.5px solid var(--line);color:var(--muted);background:#fff}
+.f.on{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
+.zoom{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;gap:6px;z-index:5}
+.zoom button{width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:1.15rem;font-weight:700;color:var(--ink-2);box-shadow:0 2px 8px rgba(20,20,30,.1)}
+.planview{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#FBFBFC;max-height:560px}
+.planview svg{display:block;transform-origin:0 0;transition:transform .18s ease}
+
+/* Postes sur le plan */
+.poste{cursor:pointer}
+.poste circle.halo{fill:transparent;transition:.15s}
+.poste:hover circle.halo,.poste.sel circle.halo{fill:rgba(255,90,31,.14)}
+.poste.sel circle.core{stroke:#16181D;stroke-width:2.5}
+.poste text{font-family:'Inter';font-weight:800;font-size:10.5px;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.c-ok{fill:var(--green)} .c-conso{fill:#E8930C} .c-alerte{fill:var(--red)} .c-div{fill:var(--blue)}
+
+/* Légende */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:.79rem;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.pastille{width:13px;height:13px;border-radius:50%;display:inline-block}
+
+/* ============ PANNEAU DÉTAIL ============ */
+.detail{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,20,30,.05);padding:19px;position:sticky;top:76px}
+.detail .empty{text-align:center;color:var(--muted);padding:36px 12px}
+.detail .empty .eic{width:50px;height:50px;border-radius:14px;background:var(--orange-soft);display:grid;place-items:center;margin:0 auto 12px}
+.detail .empty svg{width:23px;height:23px;stroke:var(--orange)}
+.detail .empty b{display:block;color:var(--ink);margin-bottom:4px}
+.detail .empty p{font-size:.84rem}
+.d-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.d-num{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.95rem;flex:none}
+.d-head b{font-size:1.02rem;display:block}
+.d-head small{color:var(--muted);font-size:.79rem}
+.st-badge{margin-left:auto;font-size:.72rem;font-weight:700;padding:5px 11px;border-radius:16px}
+.sb-ok{background:var(--green-bg);color:var(--green)}
+.sb-conso{background:var(--amber-bg);color:var(--amber)}
+.sb-alerte{background:var(--red-bg);color:var(--red)}
+.sb-div{background:var(--blue-bg);color:var(--blue)}
+.d-rows{border-top:1px solid var(--line)}
+.d-row{display:flex;justify-content:space-between;gap:10px;padding:9.5px 0;border-bottom:1px dashed var(--line);font-size:.86rem}
+.d-row .k{color:var(--muted)}
+.d-row .v{font-weight:600;text-align:right}
+.conso-bar{height:8px;border-radius:5px;background:#F0F1F4;margin:8px 0 4px;overflow:hidden}
+.conso-bar i{display:block;height:100%;border-radius:5px}
+.d-hist{margin-top:14px}
+.d-hist .t{font-size:.8rem;font-weight:700;margin-bottom:8px}
+.d-hist li{display:flex;gap:9px;font-size:.8rem;padding:6.5px 0;border-bottom:1px dashed var(--line);align-items:baseline}
+.d-hist li:last-child{border:0}
+.d-hist .dte{color:var(--muted);flex:none;width:74px}
+.d-actions{display:flex;gap:9px;margin-top:14px}
+.d-actions .btn{flex:1;justify-content:center;padding:11px 8px;font-size:.83rem}
+
+/* ============ TABLE POSTES ============ */
+.tablecard{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,20,30,.05);padding:19px;margin-top:14px}
+.tablecard .card-h{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.99rem;margin-bottom:13px}
+.tablecard .card-h svg{width:18px;height:18px;stroke:var(--orange)}
+.pt{width:100%;border-collapse:collapse;font-size:.86rem}
+.pt th{text-align:left;font-size:.73rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+.pt td{padding:11px 10px;border-bottom:1px solid var(--line)}
+.pt tr:last-child td{border:0}
+.pt tr{cursor:pointer}
+.pt tr:hover td{background:#FBFBFC}
+.pt .num{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;color:#fff;font-weight:800;font-size:.72rem}
+.pt .ref{font-weight:700}
+
+/* Feuille mobile détail */
+.msheet{display:none}
+
+/* ============ MOBILE ============ */
+.bottomnav{display:none}
+@media(max-width:980px){
+  .wrap{grid-template-columns:1fr}
+  .detail{display:none}
+  .msheet{display:none;position:fixed;inset:0;z-index:80}
+  .msheet.open{display:block}
+  .msheet .veil{position:absolute;inset:0;background:rgba(10,12,16,.45)}
+  .msheet .panel{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + var(--safe-b));box-shadow:0 -8px 40px rgba(0,0,0,.22);animation:up .22s ease;max-height:78vh;overflow-y:auto}
+  @keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+  .msheet .grab{width:42px;height:4.5px;border-radius:3px;background:#DADDE3;margin:0 auto 14px}
+}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px;gap:8px}
+  .back-m{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:var(--ink)}
+  .back-m svg{width:21px;height:21px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .top-user{display:none}
+  .page{padding:2px 13px calc(100px + var(--safe-b))}
+  .head{padding:15px;gap:12px}
+  .head .ic{width:44px;height:44px}
+  .head h1{font-size:1.08rem}
+  .head .actions{width:100%;margin-left:0}
+  .head .actions .btn{flex:1;justify-content:center;font-size:.82rem;padding:11px 6px}
+  .relstats{grid-template-columns:1fr 1fr;gap:9px}
+  .rs{padding:11px 13px}
+  .rs b{font-size:1.15rem}
+  .planview{max-height:440px}
+  .pt th:nth-child(3),.pt td:nth-child(3){display:none}
+  .pt th:nth-child(5),.pt td:nth-child(5){display:none}
+
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:56;
+    background:rgba(255,255,255,.97);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:7px 4px calc(7px + var(--safe-b));align-items:flex-end}
+  .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:600;color:var(--muted);padding:4px 0}
+  .bn svg{width:21px;height:21px}
+  .bn.active{color:var(--orange)}
+  .bn-cta{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:700;color:var(--orange);margin-top:-26px}
+  .bn-cta .disc{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#EA4A10);
+    display:grid;place-items:center;box-shadow:0 6px 18px rgba(255,90,31,.45);border:4px solid var(--bg)}
+  .bn-cta .disc svg{width:24px;height:24px;stroke:#fff}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <svg class="tiger" viewBox="0 0 48 48" fill="none">
+      <path d="M8 10l6-4 3 5h14l3-5 6 4-2 9c2 3 2 7 0 11-3 6-8 10-14 10S13 36 10 30c-2-4-2-8 0-11z" fill="#FF5A1F"/>
+      <path d="M17 22l4 3-4 3zM31 22l-4 3 4 3z" fill="#0E0F12"/>
+      <path d="M21 33h6l-3 4z" fill="#0E0F12"/>
+      <path d="M14 15l4 2M34 15l-4 2" stroke="#0E0F12" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="client.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+
+  <div class="topbar">
+    <button class="back-m" onclick="history.back()" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="crumbs"><span>Clients</span><span class="sep">›</span><span>Ironwood Solutions</span><span class="sep">›</span><span class="cur">Plan d'appâtage</span></div>
+    <div class="title-m">Plan d'appâtage</div>
+    <div class="spacer"></div>
+    <button class="bell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <span class="dot">2</span>
+    </button>
+    <div class="top-user">
+      <span class="ph">TM</span>
+      <div><b>Thomas Martin</b><span>Administrateur</span></div>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- En-tête -->
+    <section class="head">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 20l-5.5-2.2a1 1 0 01-.5-.9V4.6a.6.6 0 01.8-.55L9 6.2m0 13.8l6-2.4m-6 2.4V6.2m6 11.4l5.2 2.1a.6.6 0 00.8-.56V7.7a1 1 0 00-.5-.87L15 4.6m0 13l-6-2.4M15 4.6L9 6.2m6-1.6v13"/></svg></span>
+      <div>
+        <h1>Plan d'appâtage — Site rue de la République</h1>
+        <div class="sub">Ironwood Solutions · Contrat CTR-2026-04729 · Dernière relève le 12/06/2026 par Marc Dupont</div>
+      </div>
+      <div class="actions">
+        <button class="btn outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export PDF (HACCP)</button>
+        <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Ajouter un poste</button>
+      </div>
+    </section>
+
+    <!-- Stats de relève -->
+    <div class="relstats">
+      <div class="rs tot"><div><b>14</b><small>Postes installés</small></div></div>
+      <div class="rs ok"><div><b>10</b><small>Conformes (RAS)</small></div></div>
+      <div class="rs conso"><div><b>3</b><small>Consommation constatée</small></div></div>
+      <div class="rs alerte"><div><b>1</b><small>À remplacer</small></div></div>
+    </div>
+
+    <!-- Plan + panneau détail -->
+    <div class="wrap">
+      <div class="plancard">
+        <div class="bar">
+          <b>Rez-de-chaussée · 240 m²</b>
+          <div class="filters" id="filters">
+            <button class="f on" data-f="all">Tous</button>
+            <button class="f" data-f="ok">RAS</button>
+            <button class="f" data-f="conso">Consommation</button>
+            <button class="f" data-f="alerte">Alerte</button>
+            <button class="f" data-f="div">Insectes</button>
+          </div>
+        </div>
+
+        <div class="planview" id="planview">
+          <svg id="plansvg" viewBox="0 0 900 620" width="900" height="620" xmlns="http://www.w3.org/2000/svg">
+            <!-- fond -->
+            <rect x="0" y="0" width="900" height="620" fill="#FBFBFC"/>
+            <!-- murs extérieurs -->
+            <rect x="30" y="30" width="840" height="560" fill="#FFFFFF" stroke="#3D434E" stroke-width="5"/>
+            <!-- cloisons -->
+            <line x1="360" y1="30" x2="360" y2="330" stroke="#3D434E" stroke-width="4"/>
+            <line x1="360" y1="330" x2="30" y2="330" stroke="#3D434E" stroke-width="4"/>
+            <line x1="360" y1="180" x2="620" y2="180" stroke="#3D434E" stroke-width="4"/>
+            <line x1="620" y1="30" x2="620" y2="180" stroke="#3D434E" stroke-width="4"/>
+            <line x1="620" y1="430" x2="870" y2="430" stroke="#3D434E" stroke-width="4"/>
+            <line x1="620" y1="430" x2="620" y2="590" stroke="#3D434E" stroke-width="4"/>
+            <!-- portes (ouvertures) -->
+            <line x1="360" y1="230" x2="360" y2="280" stroke="#FFFFFF" stroke-width="6"/>
+            <line x1="150" y1="330" x2="210" y2="330" stroke="#FFFFFF" stroke-width="6"/>
+            <line x1="480" y1="180" x2="540" y2="180" stroke="#FFFFFF" stroke-width="6"/>
+            <line x1="620" y1="90" x2="620" y2="140" stroke="#FFFFFF" stroke-width="6"/>
+            <line x1="700" y1="430" x2="760" y2="430" stroke="#FFFFFF" stroke-width="6"/>
+            <line x1="440" y1="590" x2="520" y2="590" stroke="#FFFFFF" stroke-width="8"/>
+            <text x="480" y="608" font-family="Inter" font-size="11" fill="#8A8F9C" text-anchor="middle">Entrée principale</text>
+
+            <!-- étiquettes pièces -->
+            <text x="195" y="120" font-family="Inter" font-weight="700" font-size="15" fill="#B4B9C4" text-anchor="middle">CUISINE</text>
+            <text x="195" y="460" font-family="Inter" font-weight="700" font-size="15" fill="#B4B9C4" text-anchor="middle">RÉSERVE SÈCHE</text>
+            <text x="490" y="110" font-family="Inter" font-weight="700" font-size="13" fill="#B4B9C4" text-anchor="middle">PLONGE</text>
+            <text x="745" y="105" font-family="Inter" font-weight="700" font-size="13" fill="#B4B9C4" text-anchor="middle">CHAMBRE FROIDE</text>
+            <text x="500" y="400" font-family="Inter" font-weight="700" font-size="15" fill="#B4B9C4" text-anchor="middle">SALLE</text>
+            <text x="745" y="520" font-family="Inter" font-weight="700" font-size="12" fill="#B4B9C4" text-anchor="middle">LOCAL POUBELLES</text>
+
+            <!-- Postes : générés en JS -->
+            <g id="postes"></g>
+          </svg>
+        </div>
+
+        <div class="legend">
+          <span><i class="pastille" style="background:var(--green)"></i>Poste rongeurs — RAS</span>
+          <span><i class="pastille" style="background:#E8930C"></i>Consommation constatée</span>
+          <span><i class="pastille" style="background:var(--red)"></i>À remplacer / manquant</span>
+          <span><i class="pastille" style="background:var(--blue)"></i>Détecteur insectes (DIV / UV)</span>
+        </div>
+
+        <div class="zoom">
+          <button onclick="zoom(1.2)" aria-label="Zoomer">+</button>
+          <button onclick="zoom(1/1.2)" aria-label="Dézoomer">−</button>
+        </div>
+      </div>
+
+      <!-- Panneau détail (desktop) -->
+      <aside class="detail" id="detail">
+        <div class="empty">
+          <span class="eic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+          <b>Sélectionnez un poste</b>
+          <p>Touchez un numéro sur le plan pour voir sa fiche : produit, relevés, consommation.</p>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Tableau des postes -->
+    <div class="tablecard">
+      <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Registre des postes — relève du 12/06/2026</div>
+      <table class="pt"><thead><tr>
+        <th>N°</th><th>Emplacement</th><th>Type</th><th>Statut</th><th>Consommation</th><th>Dernière relève</th>
+      </tr></thead><tbody id="tbody"></tbody></table>
+    </div>
+
+  </div>
+
+  <!-- Feuille détail mobile -->
+  <div class="msheet" id="msheet">
+    <div class="veil" onclick="closeSheet()"></div>
+    <div class="panel"><div class="grab"></div><div id="mdetail"></div></div>
+  </div>
+
+  <!-- Bottom nav mobile -->
+  <nav class="bottomnav">
+    <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+    <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <button class="bn-cta"><span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Planifier</button>
+    <a class="bn active" href="client.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a class="bn" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>Profil</a>
+  </nav>
+
+</div>
+</div>
+
+<script>
+/* ================= DONNÉES DES POSTES ================= */
+const POSTES = [
+  {id:"PA-01", x:55,  y:60,  type:"pa",  zone:"Cuisine — angle nord-ouest",       statut:"ok",     conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","RAS — bloc intact"],["12/05/26","RAS"],["12/04/26","RAS"]]},
+  {id:"PA-02", x:330, y:60,  type:"pa",  zone:"Cuisine — derrière piano",          statut:"conso",  conso:35, produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","Consommation 35 % — bloc remplacé"],["12/05/26","RAS"],["12/04/26","Consommation 10 %"]]},
+  {id:"PA-03", x:55,  y:300, type:"pa",  zone:"Cuisine — sous plan de travail",    statut:"ok",     conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","RAS"],["12/05/26","RAS"]]},
+  {id:"PA-04", x:55,  y:360, type:"pa",  zone:"Réserve sèche — entrée",            statut:"conso",  conso:60, produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","Consommation 60 % — bloc remplacé, passage renforcé"],["12/05/26","Consommation 20 %"],["12/04/26","RAS"]]},
+  {id:"PA-05", x:55,  y:560, type:"pa",  zone:"Réserve sèche — angle sud-ouest",   statut:"ok",     conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","RAS"],["12/05/26","RAS"]]},
+  {id:"PA-06", x:330, y:560, type:"pa",  zone:"Réserve sèche — près porte salle",  statut:"ok",     conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","RAS"],["12/05/26","RAS"]]},
+  {id:"PA-07", x:330, y:300, type:"pa",  zone:"Cuisine — passage plonge",          statut:"ok",     conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","RAS"]]},
+  {id:"PA-08", x:590, y:60,  type:"pa",  zone:"Plonge — sous évier",               statut:"alerte", conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","Poste endommagé (eau) — À REMPLACER"],["12/05/26","RAS"]]},
+  {id:"PA-09", x:845, y:60,  type:"pa",  zone:"Chambre froide — extérieur",        statut:"ok",     conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","RAS"]]},
+  {id:"PA-10", x:845, y:400, type:"pa",  zone:"Salle — angle nord-est",            statut:"ok",     conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","RAS"]]},
+  {id:"PA-11", x:845, y:560, type:"pa",  zone:"Local poubelles — angle",           statut:"conso",  conso:80, produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","Consommation 80 % — bloc remplacé, zone à surveiller"],["12/05/26","Consommation 45 %"],["12/04/26","Consommation 15 %"]]},
+  {id:"PA-12", x:590, y:560, type:"pa",  zone:"Salle — près entrée",               statut:"ok",     conso:0,  produit:"Bloc appât sécurisé 20 g", releve:"12/06/2026",
+   hist:[["12/06/26","RAS"]]},
+  {id:"DIV-1", x:195, y:180, type:"div", zone:"Cuisine — plafond central",         statut:"div",    conso:12, produit:"Lampe UV + plaque glue",   releve:"12/06/2026",
+   hist:[["12/06/26","12 captures (mouches) — plaque changée"],["12/05/26","8 captures"]]},
+  {id:"DIV-2", x:490, y:120, type:"div", zone:"Plonge — mur est",                  statut:"div",    conso:4,  produit:"Lampe UV + plaque glue",   releve:"12/06/2026",
+   hist:[["12/06/26","4 captures — RAS"],["12/05/26","6 captures"]]},
+];
+
+const CLS = {ok:"c-ok", conso:"c-conso", alerte:"c-alerte", div:"c-div"};
+const LBL = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Détecteur insectes"};
+const SB  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
+const HEX = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
+
+/* ================= PLAN : dessiner les postes ================= */
+const g = document.getElementById('postes');
+POSTES.forEach(p=>{
+  const grp = document.createElementNS("http://www.w3.org/2000/svg","g");
+  grp.setAttribute("class","poste");
+  grp.dataset.id = p.id; grp.dataset.st = p.statut;
+  grp.innerHTML = `
+    <circle class="halo" cx="${p.x}" cy="${p.y}" r="26"/>
+    <circle class="core ${CLS[p.statut]}" cx="${p.x}" cy="${p.y}" r="16" stroke="#fff" stroke-width="2.5"/>
+    <text x="${p.x}" y="${p.y}">${p.id.replace("PA-0","").replace("PA-","").replace("DIV-","D")}</text>`;
+  grp.addEventListener('click',()=>select(p.id));
+  g.appendChild(grp);
+});
+
+/* ================= FILTRES ================= */
+document.getElementById('filters').addEventListener('click',e=>{
+  const b = e.target.closest('.f'); if(!b) return;
+  document.querySelectorAll('.f').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const f = b.dataset.f;
+  document.querySelectorAll('.poste').forEach(el=>{
+    el.style.opacity = (f==="all" || el.dataset.st===f) ? "1" : ".14";
+    el.style.pointerEvents = (f==="all" || el.dataset.st===f) ? "auto" : "none";
+  });
+});
+
+/* ================= ZOOM ================= */
+let scale = 1;
+function zoom(k){
+  scale = Math.min(2.4, Math.max(.6, scale*k));
+  const svg = document.getElementById('plansvg');
+  svg.style.width  = (900*scale)+"px";
+  svg.style.height = (620*scale)+"px";
+}
+
+/* ================= DÉTAIL ================= */
+function detailHTML(p){
+  const consoRow = p.type==="div"
+    ? `<div class="d-row"><span class="k">Captures (30 j)</span><span class="v">${p.conso}</span></div>`
+    : `<div class="d-row" style="display:block">
+         <div style="display:flex;justify-content:space-between"><span class="k">Consommation d'appât</span><span class="v">${p.conso} %</span></div>
+         <div class="conso-bar"><i style="width:${p.conso}%;background:${p.conso>=50?'#DC2626':p.conso>0?'#E8930C':'#1B8A46'}"></i></div>
+       </div>`;
+  return `
+    <div class="d-head">
+      <span class="d-num" style="background:${HEX[p.statut]}">${p.id.split("-")[1]}</span>
+      <div><b>${p.id} — ${p.type==="div"?"Détecteur insectes":"Poste d'appâtage rongeurs"}</b>
+      <small>${p.zone}</small></div>
+      <span class="st-badge ${SB[p.statut]}">${LBL[p.statut]}</span>
+    </div>
+    <div class="d-rows">
+      <div class="d-row"><span class="k">Produit en place</span><span class="v">${p.produit}</span></div>
+      ${consoRow}
+      <div class="d-row"><span class="k">Dernière relève</span><span class="v">${p.releve} · Marc Dupont</span></div>
+      <div class="d-row"><span class="k">Fixation</span><span class="v">Vissé au sol, verrouillé à clé</span></div>
+    </div>
+    <div class="d-hist">
+      <div class="t">Historique des relèves</div>
+      <ul>${p.hist.map(h=>`<li><span class="dte">${h[0]}</span><span>${h[1]}</span></li>`).join("")}</ul>
+    </div>
+    <div class="d-actions">
+      <button class="btn outline">Relever</button>
+      <button class="btn primary">Signaler</button>
+    </div>`;
+}
+
+function select(id){
+  const p = POSTES.find(x=>x.id===id);
+  document.querySelectorAll('.poste').forEach(el=>el.classList.toggle('sel', el.dataset.id===id));
+  const html = detailHTML(p);
+  document.getElementById('detail').innerHTML = html;
+  if(window.matchMedia("(max-width:980px)").matches){
+    document.getElementById('mdetail').innerHTML = html;
+    document.getElementById('msheet').classList.add('open');
+  }
+}
+function closeSheet(){ document.getElementById('msheet').classList.remove('open'); }
+
+/* ================= TABLEAU ================= */
+document.getElementById('tbody').innerHTML = POSTES.map(p=>`
+  <tr onclick="select('${p.id}')">
+    <td><span class="num" style="background:${HEX[p.statut]}">${p.id.split("-")[1]}</span></td>
+    <td class="ref">${p.zone}</td>
+    <td>${p.type==="div"?"Détecteur insectes":"Poste rongeurs"}</td>
+    <td><span class="st-badge ${SB[p.statut]}">${LBL[p.statut]}</span></td>
+    <td>${p.type==="div" ? p.conso+" captures" : p.conso+" %"}</td>
+    <td>${p.releve}</td>
+  </tr>`).join("");
+</script>
+</body>
+</html>

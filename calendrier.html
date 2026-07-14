@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Calendrier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#878DA0;
+  --line:#EBECF1; --bg:#F4F5F8; --card:#FFFFFF;
+  --green:#149A4E; --green-d:#0E7A3D; --green-bg:#E3F6E9;
+  --blue:#2E5CE6; --blue-d:#2148C0; --blue-bg:#EBF1FE;
+  --amber:#B45309; --amber-bg:#FDF1DA;
+  --red:#E23A3A; --red-bg:#FDEBEB;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --hourh:64px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+ul{list-style:none}
+h1,.num{font-family:'Sora',sans-serif}
+.app{display:flex;min-height:100vh}
+
+/* ============ SIDEBAR ============ */
+.sidebar{width:238px;background:#101216;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:11px;padding:24px 20px 20px;position:sticky;top:0;background:#101216;z-index:2}
+.brand .logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#FF7A45,#EA4A10);display:grid;place-items:center;box-shadow:0 4px 14px rgba(255,90,31,.4)}
+.brand .logo svg{width:20px;height:20px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.06rem;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;color:#585E6C;padding:12px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9.5px 12px;border-radius:10px;font-size:.9rem;font-weight:500;color:#AEB4C0;transition:.13s}
+.nav a:hover{background:#1B1E24;color:#fff}
+.nav a.active{background:linear-gradient(90deg,#FF5A1F,#FF7A45);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(255,90,31,.35)}
+.nav svg{width:17px;height:17px;flex:none;opacity:.9}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1F222A;margin-top:auto}
+.ph{border-radius:50%;background:linear-gradient(135deg,#FFB199,#FF5A1F);display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+/* ============ TOPBAR ============ */
+.main{flex:1;margin-left:238px;min-width:0;display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:12px;padding:13px 24px;background:rgba(244,245,248,.9);backdrop-filter:blur(12px);flex-wrap:wrap}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.datenav{display:flex;align-items:center;gap:6px}
+.dnbtn{width:36px;height:36px;border-radius:11px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2);font-size:1rem;font-weight:700}
+.dnbtn:hover{border-color:#D5D8DF}
+.todaybtn{padding:8px 14px;border-radius:11px;background:#fff;border:1px solid var(--line);font-size:.82rem;font-weight:600;color:var(--ink-2)}
+.datetitle{font-family:'Sora';font-weight:800;font-size:1.12rem;letter-spacing:-.2px;margin-left:6px;text-transform:capitalize}
+.spacer{flex:1}
+.seg{display:flex;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px;gap:3px}
+.seg button{padding:7px 15px;border-radius:9px;font-size:.82rem;font-weight:600;color:var(--muted);transition:.13s}
+.seg button.on{background:var(--orange);color:#fff;box-shadow:0 2px 8px rgba(255,90,31,.35)}
+
+/* ============ FILTRES ============ */
+.filterbar{display:flex;align-items:center;gap:9px;padding:2px 24px 12px;flex-wrap:wrap}
+.tchips{display:flex;gap:7px;flex-wrap:wrap}
+.tchip{display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:22px;border:1.5px solid var(--line);background:#fff;font-size:.8rem;font-weight:600;color:var(--muted);transition:.14s}
+.tchip .av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.58rem;font-weight:700;font-family:'Sora'}
+.tchip.on{border-color:var(--orange);background:var(--orange-soft);color:var(--ink)}
+.tchip:not(.on) .av{opacity:.35;filter:grayscale(1)}
+.stseg{display:flex;background:#fff;border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;margin-left:auto}
+.stseg button{padding:6px 12px;border-radius:8px;font-size:.76rem;font-weight:700;color:var(--muted)}
+.stseg button.on{background:#171A20;color:#fff}
+
+/* ============ CALENDRIER ============ */
+.calzone{flex:1;overflow:hidden;padding:0 24px 20px;display:flex;flex-direction:column}
+.calcard{background:#fff;border-radius:18px;box-shadow:var(--shadow);border:1px solid #F0F1F4;flex:1;overflow:hidden;display:flex;flex-direction:column}
+.calscroll{flex:1;overflow:auto;overscroll-behavior:contain}
+
+/* ----- Vue JOUR ----- */
+.daygrid{display:flex;min-width:max-content}
+.gutter{width:54px;flex:none;position:sticky;left:0;background:#fff;z-index:5;border-right:1px solid var(--line)}
+.gutter .gh{height:52px;position:sticky;top:0;background:#fff;z-index:2;border-bottom:1px solid var(--line)}
+.gutter .gt{height:var(--hourh);font-size:.66rem;font-weight:600;color:#B9BEC9;text-align:right;padding-right:8px;transform:translateY(-6px)}
+.tcol{width:268px;flex:none;border-right:1px solid #F2F3F6}
+.tcol:last-child{border-right:0}
+.tcol-head{height:52px;position:sticky;top:0;z-index:4;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;padding:0 12px}
+.tcol-head .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.62rem;font-weight:700;font-family:'Sora';flex:none}
+.tcol-head b{font-size:.83rem;display:block;line-height:1.2}
+.tcol-head small{font-size:.68rem;color:var(--muted)}
+.tcol-body{position:relative;height:calc(var(--hourh) * 24);
+  background:repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hourh) - 1px), #F2F3F6 calc(var(--hourh) - 1px), #F2F3F6 var(--hourh));}
+.tcol-body.dropover{background-color:var(--orange-soft)}
+.nowline{position:absolute;left:0;right:0;height:2px;background:var(--orange);z-index:3;pointer-events:none}
+.nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--orange)}
+
+/* Cartouche */
+.ev{position:absolute;left:6px;right:6px;border-radius:13px;padding:8px 10px 8px 13px;overflow:hidden;
+  cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:2;
+  box-shadow:0 2px 8px -2px rgba(23,26,32,.14);transition:box-shadow .15s;border:1px solid rgba(0,0,0,.045)}
+.ev::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4.5px;border-radius:0 3px 3px 0;background:var(--evc)}
+.ev:hover{box-shadow:0 8px 20px -6px rgba(23,26,32,.28);z-index:3}
+.ev.dragging{opacity:.92;box-shadow:0 18px 40px -8px rgba(23,26,32,.45);z-index:20;cursor:grabbing;transform:scale(1.03)}
+.ev .l1{display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:800;color:var(--evc);letter-spacing:-.1px}
+.ev .l1 .ic{font-size:1.05rem;line-height:1;flex:none}
+.ev .l1 .tlbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .chk{margin-left:auto;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--evc);display:grid;place-items:center;font-size:.62rem;color:#fff;background:transparent;flex:none}
+.ev .zone2{font-size:.78rem;font-weight:700;color:var(--ink);margin-top:4px;line-height:1.35}
+.ev .meta{font-size:.7rem;font-weight:500;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.done{opacity:.55}
+.ev.done .chk{background:var(--evc);border-color:var(--evc)}
+.ev.done .tlbl{text-decoration:line-through;text-decoration-thickness:1.5px}
+
+/* ----- Vue SEMAINE ----- */
+.weekgrid{display:flex;min-width:max-content}
+.wcol{width:232px;flex:none;border-right:1px solid #F2F3F6;min-height:400px}
+.wcol:last-child{border-right:0}
+.wcol-head{position:sticky;top:0;z-index:4;background:#fff;border-bottom:1px solid var(--line);padding:10px 12px;cursor:pointer}
+.wcol-head b{font-family:'Sora';font-size:.86rem;text-transform:capitalize}
+.wcol-head small{color:var(--muted);font-size:.7rem;display:block}
+.wcol-head.today b{color:var(--orange-deep)}
+.wcol-head.today{box-shadow:inset 0 -3px 0 var(--orange)}
+.wbody{padding:9px 8px;display:flex;flex-direction:column;gap:7px}
+.wev{border-radius:11px;padding:7px 9px 7px 12px;position:relative;overflow:hidden;box-shadow:0 1px 5px -1px rgba(23,26,32,.12);border:1px solid rgba(0,0,0,.04)}
+.wev::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--evc)}
+.wev .l1{display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:800;color:var(--evc)}
+.wev .l1 .tlbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wev .tav{margin-left:auto;width:17px;height:17px;border-radius:50%;flex:none}
+.wev .z2{font-size:.72rem;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.35}
+.wev .c2{font-size:.67rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.wev.done{opacity:.5}
+.wev.done .tlbl{text-decoration:line-through}
+
+/* ----- Vue MOIS ----- */
+.monthwrap{padding:14px}
+.mhead7{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px}
+.mhead7 span{text-align:center;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.mcell{background:#FAFBFC;border:1px solid #F0F1F4;border-radius:13px;min-height:92px;padding:8px 9px;cursor:pointer;transition:.13s}
+.mcell:hover{border-color:#FFD9C4;background:var(--orange-soft)}
+.mcell.out{opacity:.35;cursor:default}
+.mcell .dnum{font-family:'Sora';font-weight:700;font-size:.82rem}
+.mcell.today .dnum{background:var(--orange);color:#fff;border-radius:8px;padding:1px 7px;display:inline-block}
+.mdots{display:flex;gap:3px;flex-wrap:wrap;margin-top:7px}
+.mdot{width:8px;height:8px;border-radius:50%}
+.mcount{font-size:.66rem;font-weight:700;color:var(--muted);margin-top:5px}
+.mcell.hasev .mcount{color:var(--ink-2)}
+
+/* Nuit / redimensionnement / badges temps réel */
+.night{position:absolute;left:0;right:0;background:rgba(23,26,32,.045);pointer-events:none;z-index:1}
+.rsz{position:absolute;left:0;right:0;bottom:0;height:15px;cursor:ns-resize;touch-action:none}
+.rsz::after{content:"";position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:26px;height:3.5px;border-radius:2px;background:var(--evc);opacity:.4}
+.ev:hover .rsz::after{opacity:.8}
+.lbadge{font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:9px;background:var(--blue-bg);color:var(--blue-d);letter-spacing:.02em;text-transform:uppercase}
+.lbadge.late{background:var(--red-bg);color:var(--red)}
+
+/* Conflits + charge */
+.ev.conflict{box-shadow:0 0 0 2px var(--red), 0 8px 20px -6px rgba(226,58,58,.35)}
+.load{height:5px;border-radius:3px;background:#F0F1F4;margin-top:4px;width:110px;overflow:hidden}
+.load i{display:block;height:100%;border-radius:3px}
+
+/* Modales agenda */
+.cmodal{display:none;position:fixed;inset:0;z-index:90}
+.cmodal.open{display:block}
+.cmodal .veil{position:absolute;inset:0;background:rgba(10,12,16,.5)}
+.cpanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100% - 24px));max-height:90vh;overflow-y:auto;background:#fff;border-radius:20px;padding:19px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.cph{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cph b{font-family:'Sora';font-size:1rem}
+.cph .ic{font-size:1.3rem}
+.cclose{margin-left:auto;width:34px;height:34px;border-radius:10px;color:var(--muted);font-size:1rem}
+.cclose:hover{background:#F1F2F5}
+.cf{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.cf .full{grid-column:1/-1}
+.cf label{display:block;font-size:.74rem;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.cf input,.cf select{font-family:inherit;font-size:.87rem;border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;background:#fff}
+.cf input:focus,.cf select:focus{outline:2px solid #FFD9C4;border-color:var(--orange)}
+.cbtns{display:flex;gap:9px;margin-top:15px}
+.cbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;font-size:.85rem;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink-2)}
+.cbtn.or{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 3px 10px rgba(255,90,31,.3)}
+.cbtn.gr{background:var(--green);border-color:var(--green);color:#fff}
+.cbtn.rd{color:var(--red);border-color:#F6C7C7}
+@media(max-width:760px){
+  .cpanel{left:0;right:0;top:auto;bottom:0;transform:none;width:100%;border-radius:20px 20px 0 0;padding-bottom:calc(19px + var(--safe-b))}
+}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#171A20;color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ MOBILE ============ */
+.bottomnav{display:none}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0;height:100dvh}
+  .topbar{padding:10px 13px;gap:8px}
+  .title-m{display:block}
+  .datetitle{font-size:.95rem;margin-left:2px}
+  .seg button{padding:7px 11px;font-size:.76rem}
+  .filterbar{padding:2px 13px 10px}
+  .stseg{margin-left:0;width:100%;justify-content:stretch}
+  .stseg button{flex:1}
+  .calzone{padding:0 10px calc(78px + var(--safe-b))}
+  .tcol{width:238px}
+  .wcol{width:206px}
+  .mcell{min-height:70px;padding:6px}
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:56;
+    background:rgba(255,255,255,.97);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:7px 4px calc(7px + var(--safe-b));align-items:flex-end}
+  .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:600;color:var(--muted);padding:4px 0}
+  .bn svg{width:21px;height:21px}
+  .bn.active{color:var(--orange)}
+  .bn-cta{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:700;color:var(--orange);margin-top:-26px}
+  .bn-cta .disc{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#EA4A10);
+    display:grid;place-items:center;box-shadow:0 6px 18px rgba(255,90,31,.45);border:4px solid var(--bg)}
+  .bn-cta .disc svg{width:24px;height:24px;stroke:#fff}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"/><path d="M9 11.5h6M10 15h4"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="#" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="client.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+
+  <div class="topbar">
+    <div class="title-m">Calendrier</div>
+    <div class="datenav">
+      <button class="dnbtn" onclick="navPrev()">‹</button>
+      <button class="dnbtn" onclick="navNext()">›</button>
+      <button class="todaybtn" onclick="goToday()">Aujourd'hui</button>
+    </div>
+    <div class="datetitle" id="datetitle">—</div>
+    <div class="spacer"></div>
+    <div class="seg">
+      <button id="v-day" class="on" onclick="setView('day')">Jour</button>
+      <button id="v-week" onclick="setView('week')">Semaine</button>
+      <button id="v-month" onclick="setView('month')">Mois</button>
+    </div>
+  </div>
+
+  <div class="filterbar">
+    <div class="tchips" id="tchips"></div>
+    <div class="stseg">
+      <button id="f-all" class="on" onclick="setStat('all')">Toutes</button>
+      <button id="f-todo" onclick="setStat('todo')">À faire</button>
+      <button id="f-done" onclick="setStat('done')">✓ Terminées</button>
+    </div>
+  </div>
+
+  <div class="calzone">
+    <div class="calcard">
+      <div class="calscroll" id="calscroll"></div>
+    </div>
+  </div>
+
+  <!-- Bottom nav mobile -->
+  <nav class="bottomnav">
+    <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+    <a class="bn active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <button class="bn-cta" onclick="openNew()"><span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Planifier</button>
+    <a class="bn" href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>Devis</a>
+    <a class="bn" href="client.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+  </nav>
+
+</div>
+</div>
+
+<!-- ============ FICHE INTERVENTION ============ -->
+<div class="cmodal" id="ivm">
+  <div class="veil" onclick="closeIv()"></div>
+  <div class="cpanel">
+    <div class="cph"><span class="ic" id="iv-ic">🐀</span><b id="iv-titre">—</b><button class="cclose" onclick="closeIv()">✕</button></div>
+    <div style="font-size:.86rem;color:var(--ink-2);margin-bottom:13px">
+      <b id="iv-client" style="color:var(--ink)">—</b><br>
+      📍 <span id="iv-loc">—</span>
+    </div>
+    <div class="cf">
+      <div><label>Heure</label><select id="iv-h" onchange="ivChange()"></select></div>
+      <div><label>Durée</label><select id="iv-dur" onchange="ivChange()">
+        <option value="1">1 h</option><option value="1.5">1 h 30</option><option value="2">2 h</option>
+        <option value="2.5">2 h 30</option><option value="3">3 h</option><option value="4">4 h</option></select></div>
+      <div class="full"><label>Technicien</label><select id="iv-tech" onchange="ivChange()"></select></div>
+    </div>
+    <div class="cbtns">
+      <a class="cbtn" id="iv-map" target="_blank">🧭 Itinéraire</a>
+      <button class="cbtn gr" id="iv-done" onclick="ivDone()">✓ Terminer</button>
+    </div>
+    <div class="cbtns">
+      <button class="cbtn rd" onclick="ivDelete()">🗑 Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ NOUVELLE INTERVENTION ============ -->
+<div class="cmodal" id="nvm">
+  <div class="veil" onclick="closeNew()"></div>
+  <div class="cpanel">
+    <div class="cph"><span class="ic">📅</span><b>Planifier une intervention</b><button class="cclose" onclick="closeNew()">✕</button></div>
+    <div class="cf">
+      <div class="full"><label>Type de nuisible</label><select id="nv-type"></select></div>
+      <div class="full"><label>Client</label><input id="nv-client" placeholder="Nom du client"></div>
+      <div><label>Code postal</label><input id="nv-cp" placeholder="75011"></div>
+      <div><label>Ville</label><input id="nv-ville" placeholder="Paris"></div>
+      <div><label>Date</label><input id="nv-date" type="date"></div>
+      <div><label>Heure</label><select id="nv-h"></select></div>
+      <div><label>Durée</label><select id="nv-dur">
+        <option value="1">1 h</option><option value="1.5">1 h 30</option><option value="2" selected>2 h</option>
+        <option value="2.5">2 h 30</option><option value="3">3 h</option></select></div>
+      <div><label>Technicien</label><select id="nv-tech"></select></div>
+      <div class="full"><label>Répétition <span style="font-weight:400;color:var(--muted)">— pour les contrats à passages réguliers</span></label>
+        <select id="nv-rep">
+          <option value="0">Une seule fois</option>
+          <option value="w4">🔁 Chaque semaine × 4</option>
+          <option value="m3">🔁 Chaque mois × 3</option>
+          <option value="m6">🔁 Chaque mois × 6</option>
+        </select></div>
+    </div>
+    <div class="cbtns">
+      <button class="cbtn" onclick="closeNew()">Annuler</button>
+      <button class="cbtn or" onclick="addIv()">✓ Planifier</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= TECHNICIENS ================= */
+const TECHS = [
+  {id:0, nom:"Marc Dupont",     ini:"MD", grad:"linear-gradient(135deg,#5B82F0,#2148C0)", c:"#2E5CE6", bg:"#EBF1FE"},
+  {id:1, nom:"Brahim Saïdi",    ini:"BS", grad:"linear-gradient(135deg,#2FC9B9,#0E8A7A)", c:"#0E8A7A", bg:"#E2F5F3"},
+  {id:2, nom:"Léa Arnault",     ini:"LA", grad:"linear-gradient(135deg,#9C63F2,#6425D0)", c:"#7B3BEA", bg:"#F2EBFD"},
+  {id:3, nom:"Karim Meziane",   ini:"KM", grad:"linear-gradient(135deg,#F2AE3C,#D07E0C)", c:"#C87B08", bg:"#FCF2DC"},
+  {id:4, nom:"Georges Lambert", ini:"GL", grad:"linear-gradient(135deg,#EE6A6A,#C22525)", c:"#D02F2F", bg:"#FDEAEA"},
+  {id:5, nom:"Julien Moreau",   ini:"JM", grad:"linear-gradient(135deg,#34C173,#0E7A3D)", c:"#128A46", bg:"#E4F6EC"},
+  {id:6, nom:"Fatou N'Diaye",   ini:"FN", grad:"linear-gradient(135deg,#F06AA8,#C21D63)", c:"#DB2777", bg:"#FDE9F3"},
+  {id:7, nom:"Antoine Petit",   ini:"AP", grad:"linear-gradient(135deg,#38BDD8,#0779A0)", c:"#0891B2", bg:"#E0F5FA"},
+  {id:8, nom:"Sofia Costa",     ini:"SC", grad:"linear-gradient(135deg,#FF8A55,#EA4A10)", c:"#EA4A10", bg:"#FFEFE7"},
+  {id:9, nom:"Yanis Bouzid",    ini:"YB", grad:"linear-gradient(135deg,#9CC94E,#5E8F0C)", c:"#65A30D", bg:"#F1F7E3"},
+];
+
+/* ================= TYPES DE NUISIBLES ================= */
+const TYPES = {
+  rongeur : {lbl:"Dératisation",       ic:"🐀", c:"#5B6170", bg:"#EFF1F5"},
+  cafard  : {lbl:"Cafards",            ic:"🪳", c:"#0E8A7A", bg:"#E2F5F3"},
+  punaise : {lbl:"Punaises de lit",    ic:"🛏️", c:"#D02F2F", bg:"#FDEAEA"},
+  guepe   : {lbl:"Guêpes / Frelons",   ic:"🐝", c:"#C87B08", bg:"#FCF2DC"},
+  chenille: {lbl:"Chenilles proc.",    ic:"🐛", c:"#7B3BEA", bg:"#F2EBFD"},
+  pigeon  : {lbl:"Dépigeonnage",       ic:"🕊️", c:"#64707E", bg:"#F0F2F5"},
+  desinf  : {lbl:"Désinfection",       ic:"🧴", c:"#128A46", bg:"#E4F6EC"},
+  fourmi  : {lbl:"Fourmis",            ic:"🐜", c:"#8A4B12", bg:"#F8EFE4"},
+};
+
+/* ================= INTERVENTIONS ================= */
+let NID = 0;
+const IV = (date,start,dur,tech,type,client,cp,ville,done=false)=>({id:NID++,date,start,dur,tech,type,client,cp,ville,done});
+const INTERVS = [
+  // Mardi 25/08 (aujourd'hui)
+  IV("2026-08-25", 8,   2, 0, "punaise", "John Thompson",      "75011","Paris"),
+  IV("2026-08-25", 11,  2, 0, "rongeur", "Raymond Berger",     "75011","Paris"),
+  IV("2026-08-25", 14.5,2, 0, "cafard",  "Roger Seguin",       "75012","Paris"),
+  IV("2026-08-25", 8,   2, 1, "rongeur", "Syndic Foncia",      "93100","Montreuil", true),
+  IV("2026-08-25", 16,  2, 1, "pigeon",  "Josette Blot",       "93300","Aubervilliers"),
+  IV("2026-08-25", 9,   2, 2, "punaise", "Sophie Larson",      "75009","Paris", true),
+  IV("2026-08-25", 11,  2, 2, "punaise", "Sophie Larson",      "75009","Paris"),
+  IV("2026-08-25", 15,  2, 2, "cafard",  "Awa Diallo",         "75018","Paris"),
+  // Lundi 24/08
+  IV("2026-08-24", 9,   2, 0, "rongeur", "Paul Martel",        "94200","Ivry-sur-Seine", true),
+  IV("2026-08-24", 14,  2, 1, "fourmi",  "Nadia Benali",       "75015","Paris", true),
+  IV("2026-08-24", 10,  2, 3, "guepe",   "M. Garnier",         "78600","Maisons-Laffitte", true),
+  // Mercredi 26/08
+  IV("2026-08-26", 8,   2, 0, "cafard",  "Awa Diallo",         "75018","Paris"),
+  IV("2026-08-26", 10.5,2, 1, "rongeur", "Josette Blot",       "93300","Aubervilliers"),
+  IV("2026-08-26", 14,  2, 2, "desinf",  "Nadia Benali",       "75015","Paris"),
+  // Jeudi 27/08
+  IV("2026-08-27", 9,   2, 3, "guepe",   "Mme Robert",         "95880","Enghien-les-Bains"),
+  IV("2026-08-27", 13,  2, 3, "chenille","Syndic Citya",       "94300","Vincennes"),
+  IV("2026-08-27", 8,   2, 0, "punaise", "Hôtel Rivoli",       "75004","Paris"),
+  IV("2026-08-27", 11,  2, 1, "pigeon",  "Copro. Voltaire",    "92110","Clichy"),
+  // Vendredi 28/08
+  IV("2026-08-28", 8,   2, 0, "rongeur", "Roger Seguin",       "75012","Paris"),
+  IV("2026-08-28", 10,  2, 2, "punaise", "Mme Lefèvre",        "75020","Paris"),
+  IV("2026-08-28", 15,  2, 1, "cafard",  "Kebab du Canal",     "93200","Saint-Denis"),
+  IV("2026-08-28", 9,   2, 3, "guepe",   "École J. Ferry",     "78100","Saint-Germain"),
+  // Samedi 29 + autres jours du mois
+  IV("2026-08-29", 9,   2, 0, "punaise", "M. Cohen",           "75003","Paris"),
+  IV("2026-08-19", 9,   2, 2, "desinf",  "Crèche Poussins",    "75015","Paris", true),
+  IV("2026-08-12", 14,  2, 0, "punaise", "Hôtel du Parc",      "75009","Paris", true),
+  IV("2026-08-05", 10,  2, 1, "pigeon",  "Entrepôt Central",   "93300","Aubervilliers", true),
+  // Équipe élargie — mardi 25/08
+  IV("2026-08-25", 8,   2, 4, "cafard",  "Brasserie Lipp",     "75006","Paris"),
+  IV("2026-08-25", 13,  2, 4, "rongeur", "Superette Bio+",     "75014","Paris"),
+  IV("2026-08-25", 9,   2, 5, "guepe",   "Mme Petit",          "92200","Neuilly-sur-Seine"),
+  IV("2026-08-25", 14,  2, 5, "rongeur", "Garage Renault",     "92110","Clichy", true),
+  IV("2026-08-25", 8,   2, 6, "desinf",  "EHPAD Les Roses",    "94120","Fontenay-sous-Bois", true),
+  IV("2026-08-25", 11,  2, 6, "punaise", "Foyer ADEF",         "93120","La Courneuve"),
+  IV("2026-08-25", 10,  2, 7, "pigeon",  "Lycée Pasteur",      "92300","Levallois-Perret"),
+  IV("2026-08-25", 15,  2, 7, "cafard",  "Sushi Yama",         "75017","Paris"),
+  IV("2026-08-25", 8.5, 2, 8, "punaise", "Airbnb Mme K.",      "75010","Paris"),
+  IV("2026-08-25", 15,  2, 8, "fourmi",  "Boulangerie Ange",   "95100","Argenteuil"),
+  IV("2026-08-25", 9,   2, 9, "chenille","Camping du Lac",     "77186","Noisiel"),
+  IV("2026-08-25", 14,  2, 9, "guepe",   "M. Silva",           "77500","Chelles"),
+  // Reste de la semaine
+  IV("2026-08-26", 9,   2, 4, "rongeur", "Halle Secrétan",     "75019","Paris"),
+  IV("2026-08-26", 11,  2, 6, "desinf",  "Cabinet dentaire",   "94300","Vincennes"),
+  IV("2026-08-26", 14,  2, 8, "punaise", "Hôtel Colette",      "75002","Paris"),
+  IV("2026-08-27", 10,  2, 5, "guepe",   "École Ste-Marie",    "92500","Rueil-Malmaison"),
+  IV("2026-08-27", 14,  2, 7, "pigeon",  "Parking Indigo",     "75015","Paris"),
+  IV("2026-08-27", 8,   2, 9, "chenille","Golf de Meaux",      "77100","Meaux"),
+  IV("2026-08-28", 11,  2, 4, "cafard",  "Tacos Avenue",       "93200","Saint-Denis"),
+  IV("2026-08-28", 14,  2, 6, "punaise", "Résidence Oasis",    "93130","Noisy-le-Sec"),
+];
+
+/* ================= ÉTAT ================= */
+const DAYSTART = 0, HOURS = 24;
+let VIEW = "day";
+let CUR = new Date("2026-08-25");
+const TODAYD = new Date("2026-08-25");
+let VIS = new Set(TECHS.map(t=>t.id));
+let FSTAT = "all";
+
+const JOURS = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+const JOURS_C = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const iso = d => d.toISOString().slice(0,10);
+const hstr = h => String(Math.floor(h)).padStart(2,"0") + ":" + (h%1 ? "30" : "00");
+
+function filtered(){
+  return INTERVS.filter(v =>
+    VIS.has(v.tech) &&
+    (FSTAT==="all" || (FSTAT==="done" ? v.done : !v.done))
+  );
+}
+
+/* ================= PUCES TECHNICIENS ================= */
+function renderChips(){
+  document.getElementById('tchips').innerHTML = TECHS.map(t=>`
+    <button class="tchip ${VIS.has(t.id)?'on':''}" onclick="toggleTech(${t.id})">
+      <span class="av" style="background:${t.grad}">${t.ini}</span>${t.nom}
+    </button>`).join("");
+}
+function toggleTech(id){
+  VIS.has(id) ? VIS.delete(id) : VIS.add(id);
+  renderChips(); render();
+}
+function setStat(sVal){
+  FSTAT = sVal;
+  ["all","todo","done"].forEach(x=>document.getElementById('f-'+x).classList.toggle('on', x===sVal));
+  render();
+}
+function setView(v){
+  VIEW = v;
+  ["day","week","month"].forEach(x=>document.getElementById('v-'+x).classList.toggle('on', x===v));
+  render();
+}
+function navPrev(){ shift(-1) }
+function navNext(){ shift(1) }
+function shift(k){
+  if(VIEW==="day")   CUR.setDate(CUR.getDate()+k);
+  if(VIEW==="week")  CUR.setDate(CUR.getDate()+7*k);
+  if(VIEW==="month") CUR.setMonth(CUR.getMonth()+k);
+  render();
+}
+function goToday(){ CUR = new Date(TODAYD); render(); }
+
+/* ================= VUE JOUR ================= */
+function renderDay(){
+  const d = iso(CUR);
+  document.getElementById('datetitle').textContent =
+    JOURS[CUR.getDay()] + " " + CUR.getDate() + " " + MOIS[CUR.getMonth()] + " " + CUR.getFullYear();
+
+  const techs = TECHS.filter(t=>VIS.has(t.id));
+  const evs = filtered().filter(v=>v.date===d);
+
+  let gut = `<div class="gutter"><div class="gh"></div>`;
+  for(let h=DAYSTART; h<DAYSTART+HOURS; h++) gut += `<div class="gt">${String(h).padStart(2,"0")}:00</div>`;
+  gut += `</div>`;
+
+  // Détection des chevauchements par technicien
+  const conf = new Set();
+  techs.forEach(t=>{
+    const m = evs.filter(v=>v.tech===t.id).sort((a,b)=>a.start-b.start);
+    for(let i=1;i<m.length;i++)
+      if(m[i].start < m[i-1].start + m[i-1].dur){ conf.add(m[i].id); conf.add(m[i-1].id); }
+  });
+
+  const isToday = d === iso(TODAYD);
+  const NOWH = 10.75;
+  const nightZones = `<div class="night" style="top:0;height:${7*64}px"></div>
+    <div class="night" style="top:${20*64}px;height:${4*64}px"></div>`;
+
+  const cols = techs.map(t=>{
+    const mine = evs.filter(v=>v.tech===t.id);
+    const totH = mine.reduce((sum,v)=>sum+v.dur,0);
+    const cards = mine.map(v=>{
+      const T = TYPES[v.type];
+      const TC = TECHS[v.tech];
+      const top = (v.start - DAYSTART) * 64;
+      const h = v.dur * 64 - 6;
+      let badge = "";
+      if(isToday && !v.done){
+        if(v.start <= NOWH && NOWH < v.start + v.dur) badge = `<span class="lbadge">En cours</span>`;
+        else if(v.start + v.dur <= NOWH) badge = `<span class="lbadge late">Retard</span>`;
+      }
+      return `<div class="ev ${v.done?'done':''} ${conf.has(v.id)?'conflict':''}" data-id="${v.id}"
+        style="--evc:${TC.c};background:${TC.bg};top:${top}px;height:${h}px">
+        <div class="l1"><span class="ic">${T.ic}</span><span class="tlbl">${T.lbl}</span>${conf.has(v.id)?'⚠️':''}${badge}
+          <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button></div>
+        <div class="zone2">📍 ${v.cp} · ${v.ville}</div>
+        <div class="meta">${hstr(v.start)} – ${hstr(v.start+v.dur)} · ${v.client}</div>
+        <div class="rsz"></div>
+      </div>`;
+    }).join("");
+    const now = (iso(CUR)===iso(TODAYD)) ? `<div class="nowline" style="top:${(10.75-DAYSTART)*64}px"></div>` : "";
+    return `<div class="tcol">
+      <div class="tcol-head"><span class="av" style="background:${t.grad}">${t.ini}</span>
+        <div><b>${t.nom}</b><small>${mine.length} interv. · ${totH%1?totH.toFixed(1).replace('.',','):totH} h</small>
+        <div class="load"><i style="width:${Math.min(100,totH/9*100)}%;background:${totH>=8?'#E23A3A':totH>=6?'#E8930C':'#149A4E'}"></i></div></div></div>
+      <div class="tcol-body" data-tech="${t.id}">${nightZones}${now}${cards}</div>
+    </div>`;
+  }).join("");
+
+  document.getElementById('calscroll').innerHTML = `<div class="daygrid">${gut}${cols}</div>`;
+}
+
+/* ================= VUE SEMAINE ================= */
+function renderWeek(){
+  const monday = new Date(CUR);
+  monday.setDate(CUR.getDate() - ((CUR.getDay()+6)%7));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  document.getElementById('datetitle').textContent =
+    monday.getDate() + " – " + sunday.getDate() + " " + MOIS[sunday.getMonth()] + " " + sunday.getFullYear();
+
+  let cols = "";
+  for(let i=0;i<7;i++){
+    const day = new Date(monday); day.setDate(monday.getDate()+i);
+    const dIso = iso(day);
+    const evs = filtered().filter(v=>v.date===dIso).sort((a,b)=>a.start-b.start);
+    const isT = dIso===iso(TODAYD);
+    cols += `<div class="wcol">
+      <div class="wcol-head ${isT?'today':''}" onclick="jumpDay('${dIso}')">
+        <b>${JOURS_C[day.getDay()]} ${day.getDate()}</b>
+        <small>${evs.length ? evs.length+" intervention"+(evs.length>1?"s":"") : "—"}</small>
+      </div>
+      <div class="wbody">${evs.map(v=>{
+        const T = TYPES[v.type], t = TECHS[v.tech];
+        const TC = TECHS[v.tech];
+        return `<div class="wev ${v.done?'done':''}" style="--evc:${TC.c};background:${TC.bg}">
+          <div class="l1"><span>${T.ic}</span><span class="tlbl">${T.lbl}</span><span class="tav" style="background:${t.grad}" title="${t.nom}"></span></div>
+          <div class="z2">📍 ${v.cp} · ${v.ville}</div>
+          <div class="c2">${hstr(v.start)} · ${v.client}</div>
+        </div>`;}).join("")}
+      </div>
+    </div>`;
+  }
+  document.getElementById('calscroll').innerHTML = `<div class="weekgrid">${cols}</div>`;
+}
+function jumpDay(dIso){ CUR = new Date(dIso); setView('day'); }
+
+/* ================= VUE MOIS ================= */
+function renderMonth(){
+  document.getElementById('datetitle').textContent = MOIS[CUR.getMonth()] + " " + CUR.getFullYear();
+  const first = new Date(CUR.getFullYear(), CUR.getMonth(), 1);
+  const startOff = (first.getDay()+6)%7;
+  const gridStart = new Date(first); gridStart.setDate(1-startOff);
+
+  let cells = "";
+  for(let i=0;i<42;i++){
+    const day = new Date(gridStart); day.setDate(gridStart.getDate()+i);
+    const dIso = iso(day);
+    const inM = day.getMonth()===CUR.getMonth();
+    const evs = filtered().filter(v=>v.date===dIso);
+    const dotTechs = [...new Set(evs.map(v=>v.tech))].slice(0,5);
+    cells += `<div class="mcell ${inM?'':'out'} ${dIso===iso(TODAYD)?'today':''} ${evs.length?'hasev':''}"
+      ${inM?`onclick="jumpDay('${dIso}')"`:""}>
+      <span class="dnum">${day.getDate()}</span>
+      <div class="mdots">${dotTechs.map(t=>`<span class="mdot" style="background:${TECHS[t].c}"></span>`).join("")}</div>
+      ${evs.length?`<div class="mcount">${evs.length} interv.</div>`:""}
+    </div>`;
+  }
+  document.getElementById('calscroll').innerHTML =
+    `<div class="monthwrap">
+      <div class="mhead7"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
+      <div class="mgrid">${cells}</div>
+    </div>`;
+}
+
+let lastKey = "";
+function render(){
+  if(VIEW==="day") renderDay();
+  else if(VIEW==="week") renderWeek();
+  else renderMonth();
+  const key = VIEW + iso(CUR);
+  if(key !== lastKey){
+    lastKey = key;
+    if(VIEW==="day") document.getElementById('calscroll').scrollTop = 6.5 * 64;
+    else document.getElementById('calscroll').scrollTop = 0;
+  }
+}
+
+/* ================= TERMINÉE ✓ ================= */
+function toggleDone(e,id){
+  e.stopPropagation(); e.preventDefault();
+  const v = INTERVS.find(x=>x.id===id);
+  v.done = !v.done;
+  render();
+  toast(v.done ? "✓ Intervention terminée — " + v.client : "Intervention rouverte — " + v.client);
+}
+
+/* ================= DRAG & DROP (tactile + souris) ================= */
+let drag = null;
+const scroller = document.getElementById('calscroll');
+
+scroller.addEventListener('pointerdown', e=>{
+  if(VIEW!=="day") return;
+  const el = e.target.closest('.ev');
+  if(!el || e.target.closest('.chk')) return;
+  const id = +el.dataset.id;
+  if(e.target.closest('.rsz')){
+    const v = INTERVS.find(x=>x.id===id);
+    drag = {resize:true, id, el, sy:e.clientY, od:v.dur, nd:null};
+    el.setPointerCapture(e.pointerId);
+    return;
+  }
+  const r = el.getBoundingClientRect();
+  drag = {id, el, offY:e.clientY-r.top, sx:e.clientX, sy:e.clientY, moved:false};
+  el.setPointerCapture(e.pointerId);
+});
+
+scroller.addEventListener('pointermove', e=>{
+  if(!drag) return;
+  if(drag.resize){
+    e.preventDefault();
+    const v = INTERVS.find(x=>x.id===drag.id);
+    let nd = Math.round((drag.od + (e.clientY - drag.sy)/64) * 2) / 2;
+    nd = Math.max(0.5, Math.min(DAYSTART + HOURS - v.start, nd));
+    drag.nd = nd;
+    drag.el.style.height = (nd*64 - 6) + "px";
+    return;
+  }
+  if(!drag.moved){
+    if(Math.abs(e.clientX-drag.sx)+Math.abs(e.clientY-drag.sy) < 7) return;
+    drag.moved = true;
+    drag.el.classList.add('dragging');
+  }
+  e.preventDefault();
+  const bodies = [...document.querySelectorAll('.tcol-body')];
+  let target = null;
+  bodies.forEach(b=>{
+    const r = b.getBoundingClientRect();
+    b.classList.remove('dropover');
+    if(e.clientX>=r.left && e.clientX<=r.right) target = {b, r};
+  });
+  if(!target) return;
+  target.b.classList.add('dropover');
+  // Accrochage à la demi-heure
+  const relY = e.clientY - target.r.top - drag.offY;
+  const v = INTERVS.find(x=>x.id===drag.id);
+  let h = DAYSTART + Math.round(relY/64*2)/2;
+  h = Math.max(DAYSTART, Math.min(DAYSTART+HOURS-v.dur, h));
+  drag.h = h;
+  drag.tech = +target.b.dataset.tech;
+  if(drag.el.parentElement !== target.b) target.b.appendChild(drag.el);
+  drag.el.style.top = ((h-DAYSTART)*64) + "px";
+});
+
+scroller.addEventListener('pointerup', e=>{
+  if(!drag) return;
+  if(drag.resize){
+    if(drag.nd != null && drag.nd !== drag.od){
+      const v = INTERVS.find(x=>x.id===drag.id);
+      v.dur = drag.nd;
+      suppressClick = true;
+      render();
+      toast("⏱ " + v.client + " — durée : " + (v.dur%1 ? Math.floor(v.dur)+" h 30" : v.dur+" h"));
+    }
+    suppressClick = true;
+    drag = null;
+    return;
+  }
+  document.querySelectorAll('.tcol-body').forEach(b=>b.classList.remove('dropover'));
+  if(drag.moved && drag.h!=null){
+    const v = INTERVS.find(x=>x.id===drag.id);
+    const oldTech = v.tech;
+    v.tech = drag.tech;
+    v.start = drag.h;
+    suppressClick = true;
+    render();
+    const t = TECHS[v.tech];
+    toast(oldTech!==v.tech
+      ? "↪ " + v.client + " → " + t.nom + " · " + hstr(v.start)
+      : "🕐 " + v.client + " déplacé à " + hstr(v.start));
+  } else {
+    drag.el.classList.remove('dragging');
+    openIv(drag.id);
+    suppressClick = true;
+  }
+  drag = null;
+});
+
+let suppressClick = false;
+scroller.addEventListener('click', e=>{
+  if(VIEW!=="day") return;
+  if(suppressClick){ suppressClick = false; return; }
+  if(e.target.closest('.ev') || e.target.closest('.chk')) return;
+  const b = e.target.closest('.tcol-body');
+  if(!b) return;
+  const r = b.getBoundingClientRect();
+  let h = DAYSTART + Math.floor((e.clientY - r.top)/64*2)/2;
+  h = Math.max(DAYSTART, Math.min(DAYSTART+HOURS-2, h));
+  openNew(+b.dataset.tech, h);
+});
+scroller.addEventListener('pointercancel', ()=>{
+  if(drag){ drag.el.classList.remove('dragging'); render(); drag = null; }
+});
+
+/* ================= TOAST ================= */
+function toast(msg){
+  let t = document.getElementById('toast');
+  if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ================= FICHE INTERVENTION ================= */
+let IVCUR = null;
+function hOptions(sel, val){
+  let o = "";
+  for(let h=DAYSTART; h<=DAYSTART+HOURS-1; h+=0.5)
+    o += `<option value="${h}" ${h===val?'selected':''}>${hstr(h)}</option>`;
+  document.getElementById(sel).innerHTML = o;
+}
+function openIv(id){
+  const v = INTERVS.find(x=>x.id===id);
+  IVCUR = v;
+  const T = TYPES[v.type];
+  document.getElementById('iv-ic').textContent = T.ic;
+  document.getElementById('iv-titre').textContent = T.lbl;
+  document.getElementById('iv-client').textContent = v.client;
+  document.getElementById('iv-loc').textContent = v.cp + " · " + v.ville;
+  hOptions('iv-h', v.start);
+  document.getElementById('iv-dur').value = v.dur;
+  document.getElementById('iv-tech').innerHTML = TECHS.map(t=>
+    `<option value="${t.id}" ${t.id===v.tech?'selected':''}>${t.nom}</option>`).join("");
+  document.getElementById('iv-map').href = "https://maps.apple.com/?q=" + encodeURIComponent(v.cp + " " + v.ville);
+  document.getElementById('iv-done').textContent = v.done ? "↩ Rouvrir" : "✓ Terminer";
+  document.getElementById('ivm').classList.add('open');
+}
+function closeIv(){ document.getElementById('ivm').classList.remove('open'); IVCUR = null; }
+function ivChange(){
+  if(!IVCUR) return;
+  IVCUR.start = +document.getElementById('iv-h').value;
+  IVCUR.dur   = +document.getElementById('iv-dur').value;
+  IVCUR.tech  = +document.getElementById('iv-tech').value;
+  render();
+}
+function ivDone(){
+  if(!IVCUR) return;
+  IVCUR.done = !IVCUR.done;
+  render(); closeIv();
+  toast(IVCUR.done ? "✓ Intervention terminée — " + IVCUR.client : "Intervention rouverte");
+}
+function ivDelete(){
+  if(!IVCUR) return;
+  if(!confirm("Supprimer l'intervention chez " + IVCUR.client + " ?")) return;
+  INTERVS.splice(INTERVS.indexOf(IVCUR), 1);
+  render(); closeIv();
+  toast("🗑 Intervention supprimée");
+}
+
+/* ================= NOUVELLE INTERVENTION ================= */
+function openNew(tech, h){
+  if(tech==null) tech = [...VIS][0] ?? 0;
+  if(h==null) h = 8;
+  document.getElementById('nv-type').innerHTML = Object.entries(TYPES).map(([k,T])=>
+    `<option value="${k}">${T.ic} ${T.lbl}</option>`).join("");
+  document.getElementById('nv-client').value = "";
+  document.getElementById('nv-cp').value = "";
+  document.getElementById('nv-ville').value = "";
+  document.getElementById('nv-date').value = iso(CUR);
+  hOptions('nv-h', h);
+  document.getElementById('nv-tech').innerHTML = TECHS.map(t=>
+    `<option value="${t.id}" ${t.id===tech?'selected':''}>${t.nom}</option>`).join("");
+  document.getElementById('nvm').classList.add('open');
+}
+function closeNew(){ document.getElementById('nvm').classList.remove('open'); }
+function addIv(){
+  const g = id => document.getElementById(id);
+  if(!g('nv-client').value.trim()){ toast("Indique le nom du client"); return; }
+  const mk = dt => INTERVS.push(IV(
+    iso(dt), +g('nv-h').value, +g('nv-dur').value, +g('nv-tech').value,
+    g('nv-type').value, g('nv-client').value.trim(),
+    g('nv-cp').value.trim() || "—", g('nv-ville').value.trim() || "—"
+  ));
+  const base = new Date(g('nv-date').value);
+  mk(base);
+  const rp = g('nv-rep').value;
+  let nb = 1;
+  if(rp==="w4"){ for(let k=1;k<4;k++){ const d2 = new Date(base); d2.setDate(base.getDate()+7*k); mk(d2); } nb = 4; }
+  if(rp==="m3"){ for(let k=1;k<3;k++){ const d2 = new Date(base); d2.setMonth(base.getMonth()+k); mk(d2); } nb = 3; }
+  if(rp==="m6"){ for(let k=1;k<6;k++){ const d2 = new Date(base); d2.setMonth(base.getMonth()+k); mk(d2); } nb = 6; }
+  CUR = new Date(base);
+  closeNew(); render();
+  toast(nb>1 ? "🔁 " + nb + " interventions planifiées — " + g('nv-client').value.trim()
+             : "📅 Intervention planifiée — " + g('nv-client').value.trim());
+}
+
+renderChips();
+render();
+</script>
+</body>
+</html>
