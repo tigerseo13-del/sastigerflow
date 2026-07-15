@@ -638,6 +638,7 @@ function saveInter(){
   const dt = new Date(fd.value + "T12:00:00");
   toast("✓ Intervention planifiée " + dt.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"}) + " · " + effSlot() + " — " + [...TECHS].map(t=>t.split(" ")[0]).join(" + "));
   /* Export vers l'agenda */
+  if(typeof sbNewInter === "function") sbNewInter();
   try{
     const P2K = {"Rongeurs":"rongeur","Punaises de lit":"punaise","Cafards":"cafard","Guêpes / Frelons":"guepe",
       "Chenilles processionnaires":"chenille","Pigeons":"pigeon","Désinfection":"desinf","Fourmis":"fourmi","Autre":"rongeur"};
@@ -658,7 +659,14 @@ function saveInter(){
       tech: [...TECHS][0] || "",
       note: noteEl ? noteEl.value.trim() : ""
     });
-    if(EDITRID != null || EDITUID){
+    if(EDITSB){
+      const x2 = inbox.pop();   /* la base est la source : ni ajout local ni mise à jour locale */
+      const slot2 = effSlot();
+      const mm2 = slot2.match(/(\d{1,2})[:h](\d{2})?\s*[–-]\s*(\d{1,2})[:h](\d{2})?/);
+      if(mm2){ x2.start = +mm2[1] + (+(mm2[2] || 0)) / 60; x2.dur = Math.max(.5, (+mm2[3] + (+(mm2[4] || 0)) / 60) - x2.start); }
+      if(typeof sbUpdInter === "function") sbUpdInter(EDITSB, x2);
+    }
+    else if(EDITRID != null || EDITUID){
       const x = inbox.pop();  /* en édition : pas d'ajout, une mise à jour */
       const slot2 = effSlot();
       const mm = slot2.match(/(\d{1,2})[:h](\d{2})?\s*[–-]\s*(\d{1,2})[:h](\d{2})?/);
@@ -764,12 +772,12 @@ function iDraftRestore(){
 try{ localStorage.removeItem(IKEY); }catch(e){}
 
 /* ===== MODE ÉDITION : arrivée depuis le bouton Modifier de l'agenda ===== */
-let EDITRID = null, EDITUID = null;
+let EDITRID = null, EDITUID = null, EDITSB = null;
 try{
   if(new URLSearchParams(location.search).get("edit") === "1"){
     const ed = JSON.parse(localStorage.getItem("tigerflow-edit-intervention") || "null");
     if(ed){
-      EDITRID = ed.rid; EDITUID = ed.uid || null;
+      EDITRID = ed.rid; EDITUID = ed.uid || null; EDITSB = ed.sb || null;
       /* client : retrouver l'option par son nom, sinon la créer */
       const sel = document.getElementById("f-client");
       let found = [...sel.options].find(o => o.text.split(" — ")[0].trim() === ed.client);
@@ -1009,6 +1017,50 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
     if(a.getAttribute("href") === p) a.classList.add("here");
   });
 })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+let SBFORM = false;
+sbSession().then(s => SBFORM = !!s);
+function _formPayload(){
+  const g = id => document.getElementById(id);
+  const slot = effSlot() || "";
+  const mm = slot.match(/(\d{1,2})[:h](\d{2})?\s*[–-]\s*(\d{1,2})[:h](\d{2})?/);
+  const start = mm ? +mm[1] + (+(mm[2] || 0)) / 60 : 9;
+  const dur = mm ? Math.max(.5, (+mm[3] + (+(mm[4] || 0)) / 60) - start) : 2;
+  const P2K = {"Rats / Souris":"rongeur","Cafards":"cafard","Punaises de lit":"punaise","Guêpes / Frelons":"guepe","Fourmis":"fourmi","Pigeons":"pigeon","Mites":"punaise","Autre":"rongeur"};
+  const noteEl = document.querySelector("textarea");
+  return {
+    client: (g("f-client").selectedOptions[0] || {text:""}).text.split(" — ")[0] || null,
+    cp: g("f-cp").value.trim(), ville: g("f-ville").value.trim(),
+    date: g("f-date").value || null, start_h: start, dur,
+    type: P2K[[...PESTS][0]] || "rongeur",
+    tech: [...TECHS][0] || null,
+    note: noteEl ? noteEl.value.trim() : ""
+  };
+}
+function sbNewInter(){
+  if(!SBFORM || EDITSB) return;   /* modification : gérée par sbUpdInter */
+  try{
+    SB.from("interventions").insert(_formPayload()).then(({error}) => {
+      if(!error && typeof toast === "function") toast("☁️ Intervention enregistrée dans la base");
+    });
+  }catch(e){}
+}
+function sbUpdInter(id, x){
+  if(!SBFORM) return;
+  try{
+    const p = _formPayload();
+    SB.from("interventions").update(p).eq("id", id).then(({error}) => {
+      if(!error && typeof toast === "function") toast("☁️ Intervention mise à jour dans la base");
+    });
+  }catch(e){}
+}
+
 </script>
 </body>
 </html>

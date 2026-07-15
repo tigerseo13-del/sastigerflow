@@ -834,5 +834,32 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+(async function(){
+  if(!await sbSession()) return;
+  async function load(){
+    try{
+      const {data, error} = await SB.from("factures").select("*").order("created_at", {ascending:false});
+      if(error || !data || !data.length) return;
+      DEVIS.length = 0;
+      data.forEach(f => DEVIS.push({
+        ref: f.numero || "FAC-????", client: f.client || "—", ct: "",
+        titre: f.titre || "—", montant: +f.montant || 0,
+        statut: f.statut || "brouillon",
+        date: (f.created_at || "").slice(0,10), valid: f.echeance || ""
+      }));
+      if(typeof render === "function") render();
+    }catch(e){}
+  }
+  await load();
+  SB.channel("factures-live").on("postgres_changes", {event:"*", schema:"public", table:"factures"}, () => load()).subscribe();
+})();
+
+</script>
 </body>
 </html>

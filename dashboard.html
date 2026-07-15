@@ -684,5 +684,27 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+(async function(){
+  if(!await sbSession()) return;
+  try{
+    const [c, d, i] = await Promise.all([
+      SB.from("clients").select("id", {count:"exact", head:true}),
+      SB.from("devis").select("montant_ttc").eq("statut", "envoye"),
+      SB.from("interventions").select("id", {count:"exact", head:true})
+    ]);
+    const kb = document.querySelectorAll(".kpis .kpi b");
+    if(kb[0] && c.count != null) kb[0].textContent = c.count;
+    if(kb[1] && d.data) kb[1].textContent = d.data.reduce((a, x) => a + (+x.montant_ttc || 0), 0).toLocaleString("fr-FR") + " €";
+    if(kb[3] && i.count != null) kb[3].textContent = i.count;
+  }catch(e){}
+})();
+
+</script>
 </body>
 </html>

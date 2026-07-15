@@ -730,5 +730,25 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+(async function(){
+  if(!await sbSession()) return;
+  try{
+    const {data} = await SB.from("contrats").select("*").eq("numero", "CTR-2026-04729").limit(1);
+    const c = data && data[0];
+    if(!c) return;
+    const eur2 = n => (+n).toLocaleString("fr-FR", {minimumFractionDigits:2}) + " €";
+    const bs = document.querySelectorAll(".hero .quick .q b");
+    if(bs[0]) bs[0].childNodes[0].nodeValue = eur2(c.montant_ttc) + " ";
+    if(bs[1]) bs[1].childNodes[0].nodeValue = c.passages_faits + " / " + c.passages_prevus + " ";
+  }catch(e){}
+})();
+
+</script>
 </body>
 </html>

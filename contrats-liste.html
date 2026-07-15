@@ -562,5 +562,32 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+(async function(){
+  if(!await sbSession()) return;
+  async function load(){
+    try{
+      const {data, error} = await SB.from("contrats").select("*").order("created_at", {ascending:false});
+      if(error || !data || !data.length) return;
+      CONTRATS.length = 0;
+      data.forEach(c => CONTRATS.push({
+        ref: c.numero || "CTR-????", client: c.client || "—", ct: "",
+        titre: c.titre || "—", montant: +c.montant_ttc || 0,
+        freq: c.frequence || "Mensuelle", statut: c.statut || "actif",
+        fin: c.date_fin || ""
+      }));
+      if(typeof render === "function") render();
+    }catch(e){}
+  }
+  await load();
+  SB.channel("contrats-live").on("postgres_changes", {event:"*", schema:"public", table:"contrats"}, () => load()).subscribe();
+})();
+
+</script>
 </body>
 </html>

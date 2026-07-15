@@ -1901,6 +1901,7 @@ scroller.addEventListener('pointerup', e=>{
       v.dur = drag.nd;
       suppressUntil = Date.now() + 450;
       render();
+      if(typeof sbPushInter === "function") sbPushInter(v);
       toast("⏱ " + v.client + " — durée : " + (v.dur%1 ? Math.floor(v.dur)+" h 30" : v.dur+" h"));
     }
     suppressUntil = Date.now() + 450;
@@ -1927,6 +1928,7 @@ scroller.addEventListener('pointerup', e=>{
     v.start = drag.h;
     suppressUntil = Date.now() + 450;
     render();
+    if(typeof sbPushInter === "function") sbPushInter(v);
     const t = TECHS[v.tech];
     toast(oldTech!==v.tech
       ? "↪ " + v.client + " → " + t.nom + " · " + hstr(v.start)
@@ -2053,7 +2055,7 @@ function editInt(id){
   if(!v) return;
   try{
     localStorage.setItem("tigerflow-edit-intervention", JSON.stringify({
-      rid: v.uid ? null : v.id, uid: v.uid || null, client: v.client, cp: v.cp, ville: v.ville, date: v.date,
+      rid: (v.uid || v.sb) ? null : v.id, uid: v.uid || null, sb: v.sb || null, client: v.client, cp: v.cp, ville: v.ville, date: v.date,
       start: v.start, dur: v.dur, type: v.type, tech: TECHS[v.tech] ? TECHS[v.tech].nom : "",
       note: v.note || "", mode: v.mode
     }));
@@ -2342,6 +2344,46 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
     if(a.getAttribute("href") === p) a.classList.add("here");
   });
 })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+let SBCAL = false;
+(async function(){
+  if(!await sbSession()) return;
+  SBCAL = true;
+  function clearSb(){ for(let i = INTERVS.length - 1; i >= 0; i--) if(INTERVS[i].sb) INTERVS.splice(i, 1); }
+  async function load(first){
+    try{
+      const {data, error} = await SB.from("interventions").select("*");
+      if(error || !data) return;
+      clearSb();
+      data.forEach(x => {
+        const ti = TECHS.findIndex(t => t.nom === x.tech);
+        if(ti < 0 || !x.date) return;
+        const v = IV(x.date, +x.start_h || 9, +x.dur || 2, ti, x.type || "rongeur", x.client || "—", x.cp || "", x.ville || "");
+        v.mode = x.mode || "devis"; v.note = x.note || ""; v.sb = x.id;
+        INTERVS.push(v);
+      });
+      render();
+      if(first && data.length) toast("☁️ " + data.length + " intervention" + (data.length > 1 ? "s" : "") + " chargée" + (data.length > 1 ? "s" : "") + " de la base");
+    }catch(e){}
+  }
+  await load(true);
+  SB.channel("interv-live").on("postgres_changes", {event:"*", schema:"public", table:"interventions"}, () => load(false)).subscribe();
+})();
+/* écrire les déplacements et redimensionnements en base */
+function sbPushInter(v){
+  if(!SBCAL || !v || !v.sb) return;
+  SB.from("interventions").update({
+    date: v.date, start_h: v.start, dur: v.dur,
+    tech: TECHS[v.tech] ? TECHS[v.tech].nom : null, note: v.note || ""
+  }).eq("id", v.sb).then(()=>{});
+}
+
 </script>
 </body>
 </html>

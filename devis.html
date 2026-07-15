@@ -393,7 +393,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
         <div class="rlinks">
           <button onclick="tplOpen()">⚡ Repartir d'un modèle</button>
           <button onclick="window.print()">⬇️ Télécharger le PDF</button>
-          <button onclick="toast('💾 Brouillon enregistré')">💾 Enregistrer le brouillon</button>
+          <button onclick="sbSaveDevis('brouillon')">💾 Enregistrer le brouillon</button>
           <a href="facture.html">🧾 Convertir en facture</a>
         </div>
       </div>
@@ -640,6 +640,7 @@ function sendMail(){
   const ttc = g("t-ttc").textContent;
   const obj = encodeURIComponent("Votre devis " + num + " — Tiger Hygiène 3D");
   const body = encodeURIComponent("Bonjour,\n\nVeuillez trouver votre devis " + num + " (" + g("f-titre").value + ") d'un montant de " + ttc + " TTC.\n\nVous pouvez le consulter, choisir votre créneau et le signer en ligne ici :\nhttps://tigerseo13-del.github.io/sastigerflow/devis-client.html\n\nValable jusqu'au " + new Date(g("f-valid").value + "T12:00:00").toLocaleDateString("fr-FR") + ".\n\nBien cordialement,\nThomas Martin — Tiger Hygiène 3D\n01 84 25 36 47");
+  sbSaveDevis("envoye", true);
   location.href = "mailto:" + c.mail + "?subject=" + obj + "&body=" + body;
   toast("✉️ Email prêt dans ta messagerie");
 }
@@ -858,6 +859,32 @@ render();
 <script>
 function bnvPlus(e){ e.preventDefault(); document.getElementById("bnvsheet").classList.add("open"); document.body.style.overflow = "hidden"; } /* bnvLock */
 document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s = document.getElementById("bnvsheet"); if(s){ s.classList.remove("open"); document.body.style.overflow = ""; } } });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+async function sbSaveDevis(statut, silent){
+  try{
+    if(!await sbSession()){ if(!silent) toast("💾 Brouillon local (connecte-toi pour enregistrer en base)"); return; }
+    const ttc = parseFloat((document.getElementById("t-ttc").textContent || "0").replace(/\s/g,"").replace(",",".")) || 0;
+    const {error} = await SB.from("devis").insert({
+      numero: document.getElementById("f-num").value,
+      client: document.getElementById("f-client").value || null,
+      titre: document.getElementById("f-titre").value || null,
+      montant_ttc: ttc,
+      statut,
+      lignes: LIGNES.map(l => ({d:l.designation, q:l.qte, pu:l.pu, tva:l.tva})),
+      date_validite: document.getElementById("f-valid").value || null
+    });
+    if(error) throw error;
+    if(!silent) toast("💾 Devis enregistré dans la base ✓");
+    else toast("📤 Devis « " + document.getElementById("f-num").value + " » enregistré en base");
+  }catch(e){ if(!silent) toast("⚠️ Enregistrement impossible : " + (e.message || "erreur")); }
+}
+
 </script>
 </body>
 </html>

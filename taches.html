@@ -991,5 +991,60 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+let SBTASK = false;
+(async function(){
+  if(!await sbSession()) return;
+  SBTASK = true;
+  async function load(){
+    try{
+      const {data, error} = await SB.from("taches").select("*").order("created_at", {ascending:false});
+      if(error || !data) return;
+      if(data.length){
+        TASKS.length = 0;
+        data.forEach(t => {
+          const o = TK(t.titre || "—", t.descr || "", t.who || "Thomas Martin", t.statut || "todo", t.prio || "Normale", t.due || "");
+          o.sb = t.id;
+          TASKS.push(o);
+        });
+        if(typeof render === "function") render();
+      }
+    }catch(e){}
+  }
+  await load();
+  SB.channel("taches-live").on("postgres_changes", {event:"*", schema:"public", table:"taches"}, p => {
+    load();
+    if(typeof toast === "function" && p.eventType === "INSERT") toast("🆕 Nouvelle tâche reçue");
+  }).subscribe();
+  /* la création écrit en base */
+  const _save = window.saveTask;
+  if(typeof _save === "function"){
+    window.saveTask = function(){
+      const before = TASKS.length;
+      _save();
+      const t = TASKS[0] && TASKS.length > before ? TASKS[0] : null;
+      if(t && !t.sb){
+        SB.from("taches").insert({titre:t.titre, descr:t.desc, who:t.who, statut:t.st, prio:t.prio, due:t.due || null})
+          .then(({error}) => { if(!error) toast("☁️ Tâche enregistrée en base"); });
+      }
+    };
+  }
+  /* le changement de statut écrit en base */
+  const _cycle = window.cycleSt;
+  if(typeof _cycle === "function"){
+    window.cycleSt = function(id){
+      _cycle(id);
+      const t = TASKS.find(x => x.id === id);
+      if(t && t.sb) SB.from("taches").update({statut:t.st}).eq("id", t.sb).then(()=>{});
+    };
+  }
+})();
+
+</script>
 </body>
 </html>

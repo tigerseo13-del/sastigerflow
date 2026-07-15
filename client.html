@@ -862,5 +862,29 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   });
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
+
+(async function(){
+  if(!await sbSession()) return;
+  const q = new URLSearchParams(location.search).get("c");
+  if(!q) return;
+  try{
+    const {data} = await SB.from("clients").select("*").eq("nom", q).limit(1);
+    const c = data && data[0];
+    if(!c) return;
+    const adr = document.getElementById("h-adr");
+    if(adr && (c.adresse || c.ville)) adr.textContent = "📍 " + [c.adresse, c.cp, c.ville].filter(Boolean).join(", ");
+    const tl = document.querySelector('.hero .actions a[href^="tel:"]');
+    if(tl && c.tel) tl.href = "tel:" + String(c.tel).replace(/\s/g, "");
+    const ml = document.querySelector('.hero .actions a[href^="mailto:"]');
+    if(ml && c.email) ml.href = "mailto:" + c.email;
+  }catch(e){}
+})();
+
+</script>
 </body>
 </html>
