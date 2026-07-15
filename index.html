@@ -738,14 +738,35 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
 
 (async function(){
   if(!await sbSession()) return;
+  const num = new URLSearchParams(location.search).get("n") || "CTR-2026-04729";
   try{
-    const {data} = await SB.from("contrats").select("*").eq("numero", "CTR-2026-04729").limit(1);
+    const {data} = await SB.from("contrats").select("*").eq("numero", num).limit(1);
     const c = data && data[0];
     if(!c) return;
     const eur2 = n => (+n).toLocaleString("fr-FR", {minimumFractionDigits:2}) + " €";
+    const dfr = d => d ? new Date(d + "T12:00:00").toLocaleDateString("fr-FR") : "—";
+    /* identité */
+    document.title = "TigerFlow — " + c.numero;
+    const cur = document.querySelector(".crumbs .cur");
+    if(cur) cur.textContent = c.numero;
+    const h1 = document.querySelector(".hero h1");
+    if(h1 && h1.childNodes.length) h1.childNodes[0].nodeValue = (c.client || "Contrat") + " ";
+    /* la ligne grise d'identifiants */
+    const ids = document.querySelector(".hids");
+    if(ids){
+      const ref = ids.querySelector(".copyref");
+      if(ref) ref.textContent = c.numero;
+      const spans = ids.querySelectorAll("span:not(.sep):not(.copyref)");
+      if(spans[0]) spans[0].textContent = c.titre || "Contrat";
+      const lk = ids.querySelector("a");
+      if(lk){ lk.textContent = (c.client || "") + " →"; lk.href = "client.html?c=" + encodeURIComponent(c.client || ""); }
+    }
+    /* les 4 signes vitaux */
     const bs = document.querySelectorAll(".hero .quick .q b");
     if(bs[0]) bs[0].childNodes[0].nodeValue = eur2(c.montant_ttc) + " ";
     if(bs[1]) bs[1].childNodes[0].nodeValue = c.passages_faits + " / " + c.passages_prevus + " ";
+    if(bs[2]) bs[2].childNodes[0].nodeValue = (c.frequence || "Mensuelle") + " ";
+    if(bs[3]) bs[3].childNodes[0].nodeValue = dfr(c.renouvellement) + " ";
   }catch(e){}
 })();
 

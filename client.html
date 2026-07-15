@@ -876,8 +876,21 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
     const {data} = await SB.from("clients").select("*").eq("nom", q).limit(1);
     const c = data && data[0];
     if(!c) return;
+    /* le nom et le titre suivent la base */
+    document.title = "TigerFlow — " + c.nom;
+    const cur = document.querySelector(".crumbs .cur");
+    if(cur) cur.textContent = c.nom;
+    const h1 = document.querySelector(".hero h1");
+    if(h1 && h1.childNodes.length) h1.childNodes[0].nodeValue = c.nom + " ";
     const adr = document.getElementById("h-adr");
-    if(adr && (c.adresse || c.ville)) adr.textContent = "📍 " + [c.adresse, c.cp, c.ville].filter(Boolean).join(", ");
+    if(adr) adr.textContent = (c.adresse || c.ville) ? "📍 " + [c.adresse, c.cp, c.ville].filter(Boolean).join(", ") : "📍 Adresse à compléter";
+    /* la ligne grise suit la base */
+    const ref = document.getElementById("h-ref");
+    if(ref) ref.textContent = "Client de la base";
+    const sir = document.getElementById("h-siret");
+    if(sir) sir.textContent = c.siret ? "SIRET " + c.siret : (c.type === "particulier" ? "Particulier" : "Professionnel");
+    const dep = document.getElementById("h-depuis");
+    if(dep && c.created_at) dep.textContent = "Client depuis " + new Date(c.created_at).toLocaleDateString("fr-FR", {month:"long", year:"numeric"});
     const tl = document.querySelector('.hero .actions a[href^="tel:"]');
     if(tl && c.tel) tl.href = "tel:" + String(c.tel).replace(/\s/g, "");
     const ml = document.querySelector('.hero .actions a[href^="mailto:"]');
