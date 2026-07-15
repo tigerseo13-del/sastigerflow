@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Rapports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
+  --line:#EBECF1; --bg:#F4F5F8; --card:#FFFFFF;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --amber:#A16207; --amber-bg:#FBF3D9;
+  --blue:#2E5CE6; --blue-bg:#EBF1FE;
+  --red:#D63B33; --red-bg:#FCECEA;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+h1{font-family:'Sora',sans-serif}
+button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+
+.app{display:flex;min-height:100vh}
+.sidebar{width:238px;background:#101216;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:11px;padding:24px 20px 20px;position:sticky;top:0;background:#101216;z-index:2}
+.brand .logo{width:36px;height:36px;border-radius:11px;background:var(--orange);display:grid;place-items:center}
+.brand .logo svg{width:20px;height:20px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.06rem;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;color:#585E6C;padding:12px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9.5px 12px;border-radius:10px;font-size:.9rem;font-weight:500;color:#AEB4C0;transition:.13s}
+.nav a:hover{background:#1B1E24;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600}
+.nav svg{width:17px;height:17px;flex:none;opacity:.9}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1F222A;margin-top:auto}
+.ph{border-radius:50%;background:#2A2E36;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 30px;position:sticky;top:0;z-index:50;background:rgba(244,245,248,.9);backdrop-filter:blur(12px)}
+.crumbs{font-size:.88rem;color:var(--muted)}
+.crumbs .cur{color:var(--ink);font-weight:600}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:18px;height:18px}
+.bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.top-user .ph{width:38px;height:38px;font-size:.78rem}
+.page{padding:4px 30px 90px;max-width:1400px}
+
+.hero{position:relative;border-radius:20px;padding:22px 26px 22px 30px;margin-bottom:16px;overflow:hidden;
+  background:#FFFFFF;border:1px solid #F0F1F4;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hero::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--orange)}
+.hero h1{font-size:1.55rem;font-weight:800;letter-spacing:-.4px}
+.hero .per{margin-left:auto;font-size:.82rem;color:var(--ink-2);font-weight:700;background:#fff;border:1px solid var(--line);padding:9px 34px 9px 13px;border-radius:11px;font-family:inherit;appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236C7285' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+.repgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rep{display:flex;align-items:flex-start;gap:13px;border:1px solid var(--line);border-radius:14px;padding:15px 16px;transition:.13s}
+.rep:hover{border-color:#FFD9C4;box-shadow:0 4px 14px -6px rgba(23,26,32,.12)}
+.rep .ric{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:1.2rem;flex:none}
+.rep b{font-size:.88rem;display:block;margin-bottom:3px}
+.rep small{font-size:.75rem;color:var(--muted);line-height:1.55;display:block}
+.rep small b{display:inline;font-size:.75rem;color:var(--ink-2)}
+.rep .gen{margin-left:auto;flex:none;padding:8px 14px;border-radius:10px;background:var(--orange);color:#fff;font-size:.76rem;font-weight:700;font-family:inherit;cursor:pointer;border:0;align-self:center}
+.rep .gen:hover{background:var(--orange-deep)}
+.cmp{width:100%;border-collapse:collapse;font-size:.85rem}
+.cmp th{font-size:.64rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+.cmp th.r,.cmp td.r{text-align:right}
+.cmp td{padding:11px 6px;border-bottom:1px dashed #F0F1F4;font-variant-numeric:tabular-nums}
+.cmp tr:last-child td{border-bottom:0}
+.cmp td:first-child{font-weight:600}
+.cmp .ev{font-weight:800;font-size:.78rem}
+.cmp .up{color:var(--green-d)} .cmp .dn{color:var(--red)}
+/* ===== Modale document ===== */
+.pmodal{display:none;position:fixed;inset:0;z-index:95}
+.pmodal.open{display:block}
+.pmodal .veil{position:absolute;inset:0;background:rgba(10,12,16,.55)}
+.pmodal .pwin{position:relative;max-width:880px;margin:3vh auto;max-height:94vh;display:flex;flex-direction:column;background:var(--bg);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.pmodal .pbar2{display:flex;align-items:center;gap:10px;padding:13px 18px;background:#fff;border-bottom:1px solid var(--line)}
+.pmodal .pbar2 b{font-family:'Sora';font-size:.95rem}
+.pmodal .pbar2 .x{margin-left:auto;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+.pmodal .pbar2 .pr{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:11px;background:var(--orange);color:#fff;font-weight:700;font-size:.8rem;border:0;cursor:pointer;font-family:inherit}
+.pmodal .pbar2 .pr:hover{background:var(--orange-deep)}
+.pscroll{overflow-y:auto;padding:20px}
+.psheet{background:#fff;border-radius:6px;box-shadow:0 4px 20px rgba(23,26,32,.12);padding:34px 38px;font-size:11.5px;color:#171A20;line-height:1.6}
+.ps-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding-bottom:14px;border-bottom:2.5px solid #171A20}
+.ps-brand{display:flex;align-items:center;gap:11px}
+.ps-brand .lg{width:40px;height:40px;border-radius:11px;background:#FF5A1F;display:grid;place-items:center;color:#fff;font-family:'Sora';font-weight:800;font-size:14px}
+.ps-brand b{font-family:'Sora';font-size:15px;display:block}
+.ps-brand small{display:block;color:#878DA0;font-size:9px;line-height:1.6}
+.ps-doc{text-align:right}
+.ps-doc .t{font-family:'Sora';font-weight:800;font-size:17px;letter-spacing:1.5px;text-transform:uppercase}
+.ps-doc div{font-size:10px;color:#5B6170;margin-top:2px}
+.ps-doc b{color:#171A20}
+.pstable{width:100%;border-collapse:collapse;margin-top:18px;font-size:10.5px}
+.pstable th{background:#171A20;color:#fff;text-align:left;padding:8px 10px;font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.pstable th.r,.pstable td.r{text-align:right}
+.pstable td{padding:8px 10px;border-bottom:1px solid #EEEFF3;font-variant-numeric:tabular-nums;vertical-align:top}
+.pstable tr:nth-child(even) td{background:#FAFBFC}
+.pstable .tot td{border-top:2px solid #171A20;border-bottom:0;font-weight:800;font-family:'Sora'}
+.ps-foot{margin-top:20px;padding-top:12px;border-top:1px solid #EEEFF3;font-size:8.5px;color:#A6ABBB;display:flex;justify-content:space-between;gap:14px}
+@media print{
+  body > .app, .bottomnav, .toast{display:none!important}
+  .pmodal{position:static}
+  .pmodal .veil, .pmodal .pbar2{display:none!important}
+  .pmodal .pwin{max-width:none;max-height:none;margin:0;box-shadow:none;border-radius:0;background:#fff}
+  .pscroll{padding:0;overflow:visible}
+  .psheet{box-shadow:none;border-radius:0;padding:10mm 12mm}
+  @page{size:A4 portrait;margin:8mm}
+}
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#171A20;color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+
+
+
+
+
+ 
+
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #F0F1F4;border-radius:18px;box-shadow:var(--shadow);padding:20px 22px}
+.card-h{display:flex;align-items:center;gap:10px;font-family:'Sora';font-weight:700;font-size:1rem;margin-bottom:16px}
+.card-h::before{content:"";width:4px;height:16px;border-radius:3px;background:var(--orange)}
+.card-h small{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:600}
+
+/* CA mensuel : barres verticales */
+
+
+
+
+
+
+
+
+/* Répartition nuisibles : barres horizontales */
+.hrow{margin-bottom:13px}
+.hrow:last-child{margin-bottom:0}
+.hrow .t{display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;margin-bottom:5px}
+.hrow .t b{font-variant-numeric:tabular-nums}
+.hrow .tr{height:9px;background:#F1F2F5;border-radius:5px;overflow:hidden}
+.hrow .fl{height:100%;border-radius:5px}
+
+/* Techniciens */
+
+
+
+
+
+
+
+
+/* Retards */
+
+
+
+
+
+
+
+.note{font-size:.74rem;color:var(--muted);text-align:center;margin-top:16px}
+
+.bottomnav{display:none}
+@media(max-width:1000px){
+  .grid2{grid-template-columns:1fr}
+  .repgrid{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .top-user{display:none}
+  .page{padding:2px 13px calc(100px + var(--safe-b))}
+  .hero{padding:17px 16px 17px 20px;border-radius:17px}
+  .hero h1{font-size:1.2rem}
+  
+  
+  
+  .card{padding:16px 15px;border-radius:15px}
+  
+  
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:56;
+    background:rgba(255,255,255,.97);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:7px 4px calc(7px + var(--safe-b));align-items:flex-end}
+  .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:600;color:var(--muted);padding:4px 0}
+  .bn svg{width:21px;height:21px}
+  .bn.active{color:var(--orange)}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"/><path d="M9 11.5h6M10 15h4"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+<a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+<a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+<a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+<a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+<a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+<a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
+<a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+<a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+<a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+<a href="rapports.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="crumbs">🏠 <span class="cur">Rapports</span></div>
+    <div class="title-m">Rapports</div>
+    <div class="spacer"></div>
+    <button class="bell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <span class="dot">2</span>
+    </button>
+    <div class="top-user"><span class="ph">TM</span></div>
+  </div>
+
+  <div class="page">
+
+    <section class="hero">
+      <h1>Rapports</h1>
+      <select class="per" id="per" onchange="setPer()">
+        <option value="mois">📅 Août 2026</option>
+        <option value="tri">📅 3ᵉ trimestre 2026</option>
+        <option value="an">📅 Année 2026</option>
+      </select>
+    </section>
+
+    <!-- ===== DOCUMENTS À GÉNÉRER ===== -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-h">Documents à générer<small>PDF prêts à envoyer ou archiver</small></div>
+      <div class="repgrid">
+        <div class="rep">
+          <span class="ric" style="background:var(--orange-soft)">🧪</span>
+          <div><b>Registre des biocides</b>
+          <small>Produits utilisés, quantités, lieux — traçabilité <b>Certibiocide obligatoire</b> en cas de contrôle.</small></div>
+          <button class="gen" onclick="gen('bio')">Générer</button>
+        </div>
+        <div class="rep">
+          <span class="ric" style="background:var(--blue-bg)">📋</span>
+          <div><b>Registre des interventions</b>
+          <small>Historique daté par site — le document que réclament vos clients <b>HACCP</b> (restaurants, agro).</small></div>
+          <button class="gen" onclick="gen('interv')">Générer</button>
+        </div>
+        <div class="rep">
+          <span class="ric" style="background:var(--green-bg)">💶</span>
+          <div><b>Journal des encaissements</b>
+          <small>Tous les paiements de la période, par mode — l'export à transmettre au <b>comptable</b>.</small></div>
+          <button class="gen" onclick="gen('encaiss')">Générer</button>
+        </div>
+        <div class="rep">
+          <span class="ric" style="background:var(--amber-bg)">📄</span>
+          <div><b>Rapport d'activité</b>
+          <small>La synthèse de la période : CA, interventions, devis — à archiver ou envoyer aux associés.</small></div>
+          <button class="gen" onclick="gen('activite')">Générer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <!-- ===== COMPARAISON DE PÉRIODE ===== -->
+      <div class="card">
+        <div class="card-h">Analyse comparée<small id="cmp-lbl">vs juillet 2026</small></div>
+        <table class="cmp">
+          <thead><tr><th></th><th class="r">Période</th><th class="r">Précédente</th><th class="r">Évolution</th></tr></thead>
+          <tbody id="cmp"></tbody>
+        </table>
+      </div>
+
+      <!-- ===== NUISIBLES ===== -->
+      <div class="card">
+        <div class="card-h">Répartition par nuisible<small>interventions de la période</small></div>
+        <div class="hrow"><div class="t"><span>🐀 Rongeurs</span><b>38 %</b></div><div class="tr"><div class="fl" style="width:38%;background:#FF5A1F"></div></div></div>
+        <div class="hrow"><div class="t"><span>🛏️ Punaises de lit</span><b>26 %</b></div><div class="tr"><div class="fl" style="width:26%;background:#2E5CE6"></div></div></div>
+        <div class="hrow"><div class="t"><span>🪳 Cafards</span><b>18 %</b></div><div class="tr"><div class="fl" style="width:18%;background:#0E8A68"></div></div></div>
+        <div class="hrow"><div class="t"><span>🐝 Guêpes / frelons</span><b>12 %</b></div><div class="tr"><div class="fl" style="width:12%;background:#D9A408"></div></div></div>
+        <div class="hrow"><div class="t"><span>🕊️ Pigeons &amp; autres</span><b>6 %</b></div><div class="tr"><div class="fl" style="width:6%;background:#6C7285"></div></div></div>
+        <p style="font-size:.76rem;color:var(--muted);margin-top:13px">💡 Les punaises progressent de <b>+8 pts</b> sur 6 mois — pensez au stock d'insecticide et à la formation détection canine.</p>
+      </div>
+    </div>
+
+    <p class="note">Données de démonstration — les rapports seront calculés en direct dès la connexion au serveur.</p>
+  </div>
+
+  <nav class="bottomnav">
+    <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+    <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a class="bn" href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a class="bn active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+    <a class="bn" href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+  </nav>
+
+</div>
+</div>
+<script>
+const PERS = {
+  mois: {lbl:"vs juillet 2026", rows:[
+    ["CA encaissé","12 480 €","10 940 €","+14 %",1],
+    ["Interventions","111","102","+9 %",1],
+    ["Devis envoyés","36","31","+16 %",1],
+    ["Devis signés","23 (64 %)","18 (58 %)","+6 pts",1],
+    ["Panier moyen","112 €","107 €","+4,7 %",1],
+    ["Nouveaux clients","9","12","−3",0]]},
+  tri: {lbl:"vs 2ᵉ trimestre 2026", rows:[
+    ["CA encaissé","37 060 €","31 200 €","+19 %",1],
+    ["Interventions","324","289","+12 %",1],
+    ["Devis envoyés","104","96","+8 %",1],
+    ["Devis signés","66 (63 %)","55 (57 %)","+6 pts",1],
+    ["Panier moyen","114 €","108 €","+5,6 %",1],
+    ["Nouveaux clients","31","28","+3",1]]},
+  an: {lbl:"vs 2025 (même période)", rows:[
+    ["CA encaissé","81 340 €","64 800 €","+26 %",1],
+    ["Interventions","702","598","+17 %",1],
+    ["Devis envoyés","231","204","+13 %",1],
+    ["Devis signés","144 (62 %)","112 (55 %)","+7 pts",1],
+    ["Panier moyen","116 €","104 €","+11 %",1],
+    ["Nouveaux clients","78","61","+17",1]]}
+};
+function setPer(){
+  const p = PERS[document.getElementById("per").value];
+  document.getElementById("cmp-lbl").textContent = p.lbl;
+  document.getElementById("cmp").innerHTML = p.rows.map(r=>
+    `<tr><td>${r[0]}</td><td class="r"><b>${r[1]}</b></td><td class="r" style="color:var(--muted)">${r[2]}</td>
+     <td class="r"><span class="ev ${r[4] ? "up" : "dn"}">${r[4] ? "▲" : "▼"} ${r[3]}</span></td></tr>`).join("");
+}
+/* ===== Génération des documents ===== */
+const PERLBL = {mois:"Août 2026", tri:"3ᵉ trimestre 2026", an:"Année 2026"};
+const DOCS = {
+  bio: {
+    titre:"Registre des produits biocides",
+    note:"Registre tenu conformément à l'obligation de traçabilité Certibiocide (art. L522-2 CE). À présenter en cas de contrôle.",
+    cols:["Date","Site / client","Produit biocide","N° AMM","Qté","Technicien"],
+    rows:[
+      ["04/08/2026","Ironwood Solutions — Paris 11ᵉ","Blocs bromadiolone 25 ppm","FR-2019-0042","12 blocs","Marc Dupont"],
+      ["06/08/2026","Boulangerie Dupont — Asnières","Gel anti-cafards (imidaclopride)","FR-2020-0117","2 cart.","Marc Dupont"],
+      ["08/08/2026","Hôtel du Parc — Vincennes","Insecticide punaises (pyrèthre)","FR-2021-0089","1,5 L","Sofia Leroy"],
+      ["12/08/2026","Pharmacie Centrale — Paris 15ᵉ","Blocs bromadiolone 25 ppm","FR-2019-0042","8 blocs","Marc Dupont"],
+      ["14/08/2026","Restaurant Le Baobab — Paris 18ᵉ","Gel anti-cafards (imidaclopride)","FR-2020-0117","3 cart.","Sofia Leroy"],
+      ["18/08/2026","Syndic Foncia — rue des Lilas","Blocs bromadiolone 25 ppm","FR-2019-0042","24 blocs","Karim Benali"],
+      ["21/08/2026","M. Diallo — pavillon Montreuil","Gel appât guêpes","FR-2022-0203","0,5 L","Karim Benali"],
+      ["24/08/2026","Entrepôt Central — Pantin","Blocs bromadiolone 25 ppm","FR-2019-0042","16 blocs","Karim Benali"]]
+  },
+  interv: {
+    titre:"Registre des interventions",
+    note:"Historique des passages par site — document de suivi sanitaire à joindre aux audits HACCP de vos clients.",
+    cols:["Date","Client / site","Nuisible","Action réalisée","Technicien","Statut"],
+    rows:[
+      ["04/08/2026","Ironwood Solutions","🐀 Rongeurs","Contrôle postes + réappâtage","Marc Dupont","Terminée"],
+      ["06/08/2026","Boulangerie Dupont","🪳 Cafards","Gel cuisine + plonge","Marc Dupont","Terminée"],
+      ["08/08/2026","Hôtel du Parc","🛏️ Punaises","Traitement 6 chambres (2ᵉ passage)","Sofia Leroy","Terminée"],
+      ["12/08/2026","Pharmacie Centrale","🐀 Rongeurs","Contrôle mensuel HACCP","Marc Dupont","Terminée"],
+      ["14/08/2026","Restaurant Le Baobab","🪳 Cafards","Traitement cuisine complet","Sofia Leroy","Terminée"],
+      ["18/08/2026","Syndic Foncia Lilas","🐀 Rongeurs","Dératisation 3 immeubles","Karim Benali","Terminée"],
+      ["21/08/2026","M. Diallo","🐝 Guêpes","Destruction nid sous toiture","Karim Benali","Terminée"],
+      ["24/08/2026","Entrepôt Central","🐀 Rongeurs","Pose 4 nouveaux postes","Karim Benali","Terminée"]]
+  },
+  encaiss: {
+    titre:"Journal des encaissements",
+    note:"Export comptable — tous les règlements clients reçus sur la période, par ordre chronologique.",
+    cols:["Date","Facture","Client","Mode",{t:"Montant",r:1}],
+    rows:[
+      ["05/08/2026","FAC-2026-00864","Restaurant Le Baobab","Carte bancaire",{t:"720,50 €",r:1}],
+      ["07/08/2026","FAC-2026-00859","Camping Val de Seine","Virement",{t:"1 890,00 €",r:1}],
+      ["11/08/2026","FAC-2026-00866","M. Diallo","Espèces",{t:"180,00 €",r:1}],
+      ["13/08/2026","FAC-2026-00867","Boulangerie Dupont","Chèque",{t:"447,00 €",r:1}],
+      ["17/08/2026","FAC-2026-00862","Syndic Foncia Lilas","Virement",{t:"2 340,00 €",r:1}],
+      ["20/08/2026","FAC-2026-00869","Pharmacie Centrale","Virement",{t:"312,50 €",r:1}],
+      ["22/08/2026","FAC-2026-00870","Hôtel du Parc (acompte)","Carte bancaire",{t:"798,00 €",r:1}]],
+    total:["","","","Total encaissé",{t:"6 688,00 €",r:1}]
+  },
+  activite: {
+    titre:"Rapport d'activité",
+    note:"Synthèse de la période comparée à la précédente — à archiver ou transmettre aux associés.",
+    cols:["Indicateur",{t:"Période",r:1},{t:"Précédente",r:1},{t:"Évolution",r:1}],
+    dyn:true
+  }
+};
+function cell(c){ return typeof c === "object" ? `<td class="r">${c.t}</td>` : `<td>${c}</td>`; }
+function hcell(c){ return typeof c === "object" ? `<th class="r">${c.t}</th>` : `<th>${c}</th>`; }
+function gen(type){
+  const d = DOCS[type];
+  if(!d) return;
+  const per = document.getElementById("per").value;
+  let rows = d.rows;
+  if(d.dyn) rows = PERS[per].rows.map(r=>[r[0], {t:r[1],r:1}, {t:r[2],r:1}, {t:(r[4]?"▲ ":"▼ ") + r[3], r:1}]);
+  document.getElementById("pm-title").textContent = d.titre;
+  document.getElementById("psheet").innerHTML = `
+    <div class="ps-head">
+      <div class="ps-brand">
+        <span class="lg">TF</span>
+        <div>
+          <b>Tiger Hygiène 3D</b>
+          <small>24 av. des Tilleuls, 75012 Paris · 01 84 25 36 47<br>SIRET 902 415 678 00021 · Certibiocide n° 123456</small>
+        </div>
+      </div>
+      <div class="ps-doc">
+        <div class="t">${d.titre}</div>
+        <div>Période : <b>${PERLBL[per]}</b></div>
+        <div>Édité le <b>25/08/2026</b> · ${rows.length} ligne${rows.length>1?"s":""}</div>
+      </div>
+    </div>
+    <p style="font-size:9.5px;color:#5B6170;margin-top:12px">${d.note}</p>
+    <table class="pstable">
+      <thead><tr>${d.cols.map(hcell).join("")}</tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr>${r.map(cell).join("")}</tr>`).join("")}
+        ${d.total ? `<tr class="tot">${d.total.map(cell).join("")}</tr>` : ""}
+      </tbody>
+    </table>
+    <div class="ps-foot">
+      <span>Tiger Hygiène 3D — document généré par TigerFlow</span>
+      <span>Signature du responsable : ______________________</span>
+    </div>`;
+  document.getElementById("pmodal").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function pClose(){
+  document.getElementById("pmodal").classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") pClose(); });
+function toast(msg){
+  let t = document.getElementById("toast");
+  if(!t){ t = document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+setPer();
+</script>
+<div class="pmodal" id="pmodal">
+  <div class="veil" onclick="pClose()"></div>
+  <div class="pwin">
+    <div class="pbar2">
+      <b id="pm-title">Document</b>
+      <button class="pr" onclick="window.print()">🖨️ Imprimer / PDF</button>
+      <button class="x" onclick="pClose()">✕</button>
+    </div>
+    <div class="pscroll"><div class="psheet" id="psheet"></div></div>
+  </div>
+</div>
+</body>
+</html>

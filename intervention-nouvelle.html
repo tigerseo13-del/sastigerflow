@@ -202,9 +202,9 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px #FCECEA}
 <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
 <a href="calendrier.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
 <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
-<a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+<a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
 <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
-<a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+<a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
   </nav>
   <div class="side-user">
     <span class="ph">TM</span>
@@ -370,6 +370,11 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px #FCECEA}
         <div class="pcard" data-v="Sans encaissement" onclick="pickPay(this)">
           <span class="pic">🚫</span>
           <span><b>Sans encaissement</b><small>Facturation ultérieure</small></span>
+          <span class="rdot"></span>
+        </div>
+        <div class="pcard" data-v="Retour de garantie" onclick="pickPay(this)">
+          <span class="pic">🛡️</span>
+          <span><b>Retour de garantie</b><small>Nouveau passage couvert — sans facturation</small></span>
           <span class="rdot"></span>
         </div>
       </div>
@@ -632,6 +637,7 @@ function saveInter(){
   }
   const dt = new Date(fd.value + "T12:00:00");
   toast("✓ Intervention planifiée " + dt.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"}) + " · " + effSlot() + " — " + [...TECHS].map(t=>t.split(" ")[0]).join(" + "));
+  try{ localStorage.removeItem(IKEY); }catch(e){}
   setTimeout(()=>{ location.href = "calendrier.html"; }, 1300);
 }
 function cancelGuard(){
@@ -673,6 +679,60 @@ document.getElementById("f-montant").addEventListener("blur", function(){
   dec = (dec || "").slice(0,2).padEnd(2, "0");
   this.value = Number(ent).toLocaleString("fr-FR") + "," + dec + " €";
 });
+
+/* ===== Brouillon automatique ===== */
+const IKEY = "tigerflow-intervention-brouillon";
+const PRESET_TECHS = ["Marc Dupont","Sofia Leroy","Karim Benali","Julie Moreau"];
+function iDraftSave(){
+  try{
+    const vals = [...document.querySelectorAll("input,select,textarea")].map(e=>e.value);
+    localStorage.setItem(IKEY, JSON.stringify({
+      vals, PESTS:[...PESTS], TECHS:[...TECHS], SLOT, CSLOT, PRIO, PAY
+    }));
+  }catch(e){}
+}
+function iDraftRestore(){
+  try{
+    const raw = localStorage.getItem(IKEY);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    // Techniciens ajoutés à la main : recréer leurs lignes
+    (d.TECHS || []).filter(n=>!PRESET_TECHS.includes(n)).forEach(nom=>{
+      const ini = nom.split(" ").map(w=>w[0]).join("").replace(/[^A-ZÀ-Ü]/gi,"").slice(0,2).toUpperCase();
+      const row = document.createElement("div");
+      row.className = "tech"; row.dataset.v = nom;
+      row.onclick = function(){ togTech(this); };
+      row.innerHTML = '<span class="tav">' + ini + '</span><span><b>' + nom + '</b><small>Ajouté manuellement</small></span><span class="tst dispo">Disponible</span><span class="chk"></span>';
+      kbd(row);
+      document.getElementById("techs").appendChild(row);
+    });
+    // Valeurs des champs
+    const els = [...document.querySelectorAll("input,select,textarea")];
+    (d.vals || []).forEach((v,i)=>{ if(els[i] && v) els[i].value = v; });
+    // Puces
+    (d.PESTS || []).forEach(p=>{
+      const c = document.querySelector('#pests .chip[data-v="' + p + '"]');
+      if(c){ c.classList.add("on"); PESTS.add(p); }
+    });
+    if(d.PRIO){ PRIO = d.PRIO;
+      document.querySelectorAll("#prio .chip").forEach(c=>c.classList.toggle("on", c.dataset.v === d.PRIO)); }
+    if(d.SLOT){ SLOT = d.SLOT; CSLOT = d.CSLOT || "";
+      document.querySelectorAll("#slots .chip").forEach(c=>c.classList.toggle("on", c.dataset.v === d.SLOT));
+      document.getElementById("g-cslot").style.display = d.SLOT === "Personnalisé" ? "" : "none"; }
+    if(d.PAY) pickPayByVal(d.PAY);
+    (d.TECHS || []).forEach(n=>{
+      const r = document.querySelector('#techs .tech[data-v="' + n + '"]');
+      if(r){ r.classList.add("on"); TECHS.add(n); }
+    });
+    resume();
+    if(d.vals && d.vals.some(v=>v) || (d.PESTS||[]).length) toast("📝 Brouillon restauré");
+  }catch(e){}
+}
+let _ih = null;
+const iTouch = ()=>{ clearTimeout(_ih); _ih = setTimeout(iDraftSave, 700); };
+document.addEventListener("input", iTouch);
+document.addEventListener("click", iTouch);
+iDraftRestore();
 
 /* Date du jour par défaut */
 (function(){

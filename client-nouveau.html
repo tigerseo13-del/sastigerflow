@@ -161,9 +161,9 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px #FCECEA}
 <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
 <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
 <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
-<a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+<a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
 <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
-<a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+<a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
   </nav>
   <div class="side-user">
     <span class="ph">TM</span>
@@ -414,6 +414,7 @@ function saveClient(){
   const nom = TYPE === "part"
     ? (document.getElementById("f-prenom").value.trim() + " " + document.getElementById("f-nomp").value.trim()).trim()
     : document.getElementById("f-nom").value.trim();
+  try{ localStorage.removeItem(CKEY); }catch(e){}
   toast("✓ Client « " + nom + " » créé");
   setTimeout(()=>{ location.href = "clients.html"; }, 1100);
 }
@@ -476,6 +477,44 @@ fcp.addEventListener("input", ()=>{
   }
 });
 fville.addEventListener("input", ()=>{ delete fville.dataset.auto; });
+
+/* ===== Brouillon automatique ===== */
+const CKEY = "tigerflow-client-brouillon";
+function cDraftSave(){
+  try{
+    const vals = [...document.querySelectorAll("input,select,textarea")].map(e=>e.value);
+    const revealed = ["more-contact","more-acces","more-note"].filter(id=>{
+      const el = document.getElementById(id);
+      return el && el.style.display !== "none";
+    });
+    localStorage.setItem(CKEY, JSON.stringify({vals, TYPE, revealed}));
+  }catch(e){}
+}
+function cDraftRestore(){
+  try{
+    const raw = localStorage.getItem(CKEY);
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    if(d.TYPE && d.TYPE !== TYPE){
+      const card = document.querySelector('.tcard[data-t="' + d.TYPE + '"]');
+      if(card) setType(card);
+    }
+    (d.revealed || []).forEach(id=>{
+      const el = document.getElementById(id);
+      if(el){ el.style.display = ""; }
+      const btn = [...document.querySelectorAll(".morelink")].find(b=>(b.getAttribute("onclick")||"").includes(id));
+      if(btn) btn.remove();
+    });
+    const els = [...document.querySelectorAll("input,select,textarea")];
+    (d.vals || []).forEach((v,i)=>{ if(els[i] && v) els[i].value = v; });
+    if((d.vals || []).some(v=>v)) toast("📝 Brouillon restauré");
+  }catch(e){}
+}
+let _ch = null;
+const cTouch = ()=>{ clearTimeout(_ch); _ch = setTimeout(cDraftSave, 700); };
+document.addEventListener("input", cTouch);
+document.addEventListener("click", cTouch);
+cDraftRestore();
 
 /* ===== Focus initial (ordinateur seulement) ===== */
 if(matchMedia("(min-width:761px)").matches){

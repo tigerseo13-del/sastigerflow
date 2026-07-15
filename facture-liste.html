@@ -110,6 +110,7 @@ h1,.num{font-family:'Sora',sans-serif}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:16px;white-space:nowrap}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .st-payee{background:var(--green-bg);color:var(--green-d)}
+.st-partiel{background:var(--amber-bg);color:var(--amber)}
 .st-retard{background:var(--red-bg);color:var(--red)}
 .st-attente{background:var(--amber-bg);color:var(--amber)}
 .st-brouillon{background:var(--gray-bg);color:var(--muted)}
@@ -192,6 +193,40 @@ h1,.num{font-family:'Sora',sans-serif}
   .bn-cta .disc svg{width:24px;height:24px;stroke:#fff}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ===== Panneau paiement ===== */
+.dveil{position:fixed;inset:0;background:rgba(16,18,22,.38);z-index:90;opacity:0;pointer-events:none;transition:.2s}
+.dveil.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:452px;max-width:100%;background:var(--bg);z-index:95;transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:-18px 0 50px rgba(16,18,22,.2);overflow-y:auto;padding:16px 16px 30px}
+.drawer.open{transform:none}
+.dcard{background:#fff;border:1px solid #F0F1F4;border-radius:17px;box-shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.1);padding:17px 18px;margin-bottom:13px}
+.dhead2{position:relative;overflow:hidden;padding-left:22px}
+.dhead2::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--orange)}
+.drow1{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.dclose{margin-left:auto;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:.9rem;cursor:pointer}
+.drawer h2{font-family:'Sora';font-size:1.14rem;font-weight:800;letter-spacing:-.3px}
+.dref2{font-size:.76rem;color:var(--muted);font-weight:600;margin:4px 0 2px}
+.dh{display:flex;align-items:center;gap:9px;font-family:'Sora';font-weight:700;font-size:.9rem;margin-bottom:13px}
+.dh::before{content:"";width:4px;height:15px;border-radius:3px;background:var(--orange);flex:none}
+.dkv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px dashed #F0F1F4;font-size:.83rem}
+.dkv:last-child{border-bottom:0}
+.dkv .k{color:var(--muted);font-weight:500}
+.dkv .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.solde{display:flex;align-items:baseline;gap:9px;margin:4px 0 2px}
+.solde b{font-family:'Sora';font-size:1.7rem;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.solde small{font-size:.74rem;color:var(--muted);font-weight:600}
+.payrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed #F0F1F4;font-size:.82rem}
+.payrow:last-child{border-bottom:0}
+.payrow .pm{font-weight:700}
+.payrow .pd{margin-left:auto;color:var(--muted);font-size:.75rem;white-space:nowrap}
+.rlab{display:block;font-size:.76rem;font-weight:700;color:var(--ink-2);margin:12px 0 6px}
+.rlab:first-child{margin-top:0}
+.drawer input,.drawer select{width:100%;font-family:inherit;font-size:.85rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFCFD;font-variant-numeric:tabular-nums}
+.drawer input:focus,.drawer select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px #FFE4D5}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dbig{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:12px;font-size:.86rem;font-weight:700;border:0;background:var(--orange);color:#fff;cursor:pointer;font-family:inherit;margin-top:13px}
+.dbig:hover{background:var(--orange-deep)}
+.dsec{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px;border-radius:12px;font-size:.82rem;font-weight:700;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer;font-family:inherit;margin-top:9px;text-decoration:none}
+@media(max-width:760px){.drawer{width:100%;padding:11px 12px calc(30px + env(safe-area-inset-bottom,0px))}.drawer input,.drawer select{font-size:16px}}
 </style>
 </head>
 <body>
@@ -212,9 +247,9 @@ h1,.num{font-family:'Sora',sans-serif}
     <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
     <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
     <a href="#" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
-    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
     <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
-    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+    <a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
   </nav>
   <div class="side-user">
     <span class="ph">TM</span>
@@ -317,7 +352,7 @@ const DEVIS = [
   {ref:"FAC-2026-00862", client:"Résidence Beau Site",  ct:"Syndic Citya",    titre:"Chenilles processionnaires — 4 pins",   montant:890.00,  statut:"payee",     date:"2026-06-15", valid:"2026-07-15"},
 ];
 
-const LBL = {payee:"Payée", retard:"En retard", attente:"En attente", brouillon:"Brouillon"};
+const LBL = {payee:"Payée", retard:"En retard", attente:"En attente", brouillon:"Brouillon", partiel:"Partielle"};
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
 const fdate = iso => { const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
@@ -380,7 +415,7 @@ function render(){
   if(sort==="echeance")  list.sort((a,b)=>a.valid.localeCompare(b.valid));
 
   document.getElementById('tbody').innerHTML = list.length ? list.map(d=>`
-    <tr onclick="location.href='facture.html'">
+    <tr onclick="${d.statut==='brouillon' ? "location.href='facture.html'" : `openFac('${d.ref}')`}">
       <td class="ref">${d.ref}</td>
       <td class="cl"><b>${d.client}</b><small>${d.ct}</small></td>
       <td>${d.titre}</td>
@@ -412,6 +447,78 @@ document.getElementById('chips').addEventListener('click', e=>{
 });
 
 /* ================= ACTIONS RAPIDES ================= */
+/* ===== Panneau facture + paiements ===== */
+const PAIEMENTS = {};
+function paidOf(ref){ return (PAIEMENTS[ref] || []).reduce((a,p)=>a + p.m, 0); }
+function openFac(ref){
+  const d = DATA.find(x=>x.ref===ref);
+  if(!d) return;
+  const paid = paidOf(ref);
+  const rest = Math.max(0, d.montant - paid);
+  const pays = PAIEMENTS[ref] || [];
+  document.getElementById("dbody").innerHTML = `
+    <div class="dcard dhead2">
+      <div class="drow1">
+        <span class="st st-${d.statut}">${LBL[d.statut]}</span>
+        <button class="dclose" onclick="closeFac()">✕</button>
+      </div>
+      <h2>${d.client}</h2>
+      <div class="dref2">${d.ref} · ${d.titre}</div>
+      <div class="solde">
+        <b>${rest > 0 ? eur(rest) : "0,00 €"}</b>
+        <small>${rest > 0 ? "restant à payer sur " + eur(d.montant) : "Facture soldée ✓"}</small>
+      </div>
+    </div>
+
+    <div class="dcard">
+      <div class="dh">Détails</div>
+      <div class="dkv"><span class="k">Montant total</span><span class="v">${eur(d.montant)}</span></div>
+      <div class="dkv"><span class="k">Déjà encaissé</span><span class="v" style="color:var(--green-d)">${eur(paid)}</span></div>
+      <div class="dkv"><span class="k">Émise le</span><span class="v">${fd(d.date)}</span></div>
+      <div class="dkv"><span class="k">Échéance</span><span class="v">${fd(d.valid)}</span></div>
+      <div class="dkv"><span class="k">Contact</span><span class="v">${d.ct}</span></div>
+    </div>
+
+    ${pays.length ? `<div class="dcard"><div class="dh">Paiements reçus</div>
+      ${pays.map(p=>`<div class="payrow"><span class="pm">${eur(p.m)}</span><span>${p.mode}</span><span class="pd">${fd(p.d)}</span></div>`).join("")}
+    </div>` : ""}
+
+    ${rest > 0 ? `<div class="dcard">
+      <div class="dh">💶 Ajouter un paiement</div>
+      <span class="rlab">Montant (€)</span>
+      <input id="pay-m" type="number" min="0.01" step="0.01" value="${rest.toFixed(2)}">
+      <div class="frow2">
+        <div><span class="rlab">Mode</span>
+          <select id="pay-mode"><option>Virement</option><option>Carte bancaire</option><option>Chèque</option><option>Espèces</option></select></div>
+        <div><span class="rlab">Date</span>
+          <input id="pay-d" type="date" value="2026-08-25"></div>
+      </div>
+      <button class="dbig" onclick="addPay('${d.ref}')">✓ Enregistrer le paiement</button>
+    </div>` : ""}
+    <a class="dsec" href="facture.html">📄 Ouvrir la facture</a>`;
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("dveil").classList.add("open");
+  document.body.style.overflow = "hidden";
+  document.getElementById("drawer").scrollTop = 0;
+}
+function closeFac(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("dveil").classList.remove("open");
+  document.body.style.overflow = "";
+}
+function addPay(ref){
+  const d = DATA.find(x=>x.ref===ref);
+  const m = +document.getElementById("pay-m").value;
+  if(!m || m <= 0){ toast("⚠️ Indique un montant"); return; }
+  if(!PAIEMENTS[ref]) PAIEMENTS[ref] = [];
+  PAIEMENTS[ref].push({m, mode: document.getElementById("pay-mode").value, d: document.getElementById("pay-d").value || "2026-08-25"});
+  const rest = d.montant - paidOf(ref);
+  d.statut = rest <= 0.01 ? "payee" : "partiel";
+  render(); openFac(ref);
+  toast(rest <= 0.01 ? "✓ Facture " + ref + " soldée 🎉" : "✓ Paiement enregistré — reste " + eur(rest));
+}
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") closeFac(); });
+
 function toast(msg){
   let t = document.getElementById('toast');
   if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
@@ -480,5 +587,7 @@ stats = function(){ _stats(); pipeline(); };
 stats();
 render();
 </script>
+<div class="dveil" id="dveil" onclick="closeFac()"></div>
+<aside class="drawer" id="drawer"><div id="dbody"></div></aside>
 </body>
 </html>

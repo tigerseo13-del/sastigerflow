@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Tâches</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
+  --line:#EBECF1; --bg:#F4F5F8; --card:#FFFFFF;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --amber:#A16207; --amber-bg:#FBF3D9;
+  --blue:#2E5CE6; --blue-bg:#EBF1FE;
+  --red:#D63B33; --red-bg:#FCECEA;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+h1{font-family:'Sora',sans-serif}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+
+.app{display:flex;min-height:100vh}
+/* ============ SIDEBAR ============ */
+.sidebar{width:238px;background:#101216;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:11px;padding:24px 20px 20px;position:sticky;top:0;background:#101216;z-index:2}
+.brand .logo{width:36px;height:36px;border-radius:11px;background:var(--orange);display:grid;place-items:center}
+.brand .logo svg{width:20px;height:20px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.06rem;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;color:#585E6C;padding:12px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9.5px 12px;border-radius:10px;font-size:.9rem;font-weight:500;color:#AEB4C0;transition:.13s}
+.nav a:hover{background:#1B1E24;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600}
+.nav svg{width:17px;height:17px;flex:none;opacity:.9}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1F222A;margin-top:auto}
+.ph{border-radius:50%;background:#2A2E36;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+/* ============ TOPBAR ============ */
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 30px;position:sticky;top:0;z-index:50;background:rgba(244,245,248,.9);backdrop-filter:blur(12px)}
+.crumbs{font-size:.88rem;color:var(--muted)}
+.crumbs .cur{color:var(--ink);font-weight:600}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:18px;height:18px}
+.bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.top-user .ph{width:38px;height:38px;font-size:.78rem}
+
+.page{padding:4px 30px 90px;max-width:1400px}
+
+/* ============ BANDEAU ============ */
+.hero{position:relative;border-radius:20px;padding:24px 26px 24px 30px;margin-bottom:16px;overflow:hidden;
+  background:#FFFFFF;border:1px solid #F0F1F4;box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--orange)}
+.hero .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.hero h1{font-size:1.55rem;font-weight:800;letter-spacing:-.4px}
+.count{font-family:'Sora';font-size:.72rem;font-weight:800;background:#F1F2F5;color:var(--ink-2);padding:5px 12px;border-radius:12px}
+.newbtn{margin-left:auto;display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;font-weight:700;font-size:.84rem;padding:10px 16px;border-radius:11px;transition:.13s;border:0;cursor:pointer;font-family:inherit}
+.newbtn:hover{background:var(--orange-deep)}
+.newbtn svg{width:15px;height:15px}
+.hmeta{display:flex;gap:12px 36px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+.hm{cursor:pointer;border-radius:10px;padding:2px 6px;margin:-2px -6px;transition:.12s}
+.hm:hover{background:#F7F8FA}
+.hm .k{display:block;font-size:.62rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.hm .v{font-family:'Sora';font-size:1.28rem;font-weight:800;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.hm .v.b{color:var(--blue)} .hm .v.a{color:var(--amber)} .hm .v.g{color:var(--green-d)}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:16px}
+.scard{border-radius:16px;padding:15px 18px;cursor:pointer;border:1px solid transparent;transition:.13s}
+.scard:hover{transform:translateY(-1px)}
+.scard .sk{display:block;font-size:.72rem;font-weight:700;margin-bottom:4px}
+.scard .sv{font-family:'Sora';font-size:1.5rem;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.scard.sb{background:var(--blue-bg);border-color:#D9E4FC;color:var(--blue)}
+.scard.sa{background:var(--amber-bg);border-color:#F0E2B8;color:var(--amber)}
+.scard.sg{background:var(--green-bg);border-color:#BFE5D8;color:var(--green-d)}
+.scard.off{opacity:.45}
+
+/* ============ OUTILS ============ */
+.toolrow{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.vseg{display:flex;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px}
+.vseg button{padding:8px 14px;border-radius:9px;font-size:.8rem;font-weight:600;color:var(--muted);transition:.13s}
+.vseg button.on{background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
+.search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 13px;flex:1;min-width:170px;max-width:300px}
+.search svg{width:15px;height:15px;stroke:var(--muted);flex:none}
+.search input{border:0;background:none;padding:11px 0;font-size:.86rem;width:100%;color:var(--ink);font-family:inherit}
+.search input:focus{outline:none}
+.fsel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 34px 10px 13px;font-size:.82rem;font-weight:600;color:var(--ink-2);font-family:inherit;appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236C7285' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+
+/* ============ TABLE ============ */
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border:1px solid #F0F1F4;overflow:hidden}
+.dt{width:100%;border-collapse:collapse;font-size:.86rem}
+.dt th{text-align:left;font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;padding:13px 16px;border-bottom:1px solid var(--line);background:#FBFBFC;white-space:nowrap}
+.dt td{padding:14px 16px;border-bottom:1px solid #F2F3F6;vertical-align:middle}
+.dt tbody tr{cursor:pointer;transition:background .12s}
+.dt tbody tr:hover{background:#FAFBFC}
+.dt tbody tr:hover .tt{color:var(--orange-deep)}
+.dt tbody tr:last-child td{border-bottom:0}
+.tt{font-weight:600;display:block}
+.tt small{display:block;font-weight:500;color:var(--muted);font-size:.74rem;margin-top:2px}
+.who{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.who .av{width:28px;height:28px;border-radius:9px;background:#F3F4F7;border:1px solid var(--line);color:var(--ink-2);display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:.6rem;flex:none}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;padding:4px 11px;border-radius:13px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-todo{background:var(--blue-bg);color:var(--blue)}
+.st-prog{background:var(--amber-bg);color:var(--amber)}
+.st-done{background:var(--green-bg);color:var(--green-d)}
+.pr{display:inline-flex;font-size:.7rem;font-weight:700;padding:4px 11px;border-radius:13px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap;gap:6px;align-items:center}
+.pr i{width:7px;height:7px;border-radius:50%;flex:none}
+.due{white-space:nowrap;font-variant-numeric:tabular-nums}
+.due small{display:block;color:var(--red);font-weight:700;font-size:.68rem}
+.lien{color:var(--orange-deep);font-weight:600;font-size:.8rem;white-space:nowrap}
+.rowdel{width:32px;height:32px;border-radius:9px;border:1px solid transparent;color:#C4C8D2;display:grid;place-items:center}
+.rowdel:hover{color:var(--red);border-color:#F3C4C0;background:#fff}
+.acticons{display:flex;gap:3px;justify-content:flex-end}
+.aic{width:31px;height:31px;border-radius:9px;border:1px solid transparent;color:#A6ABBB;display:grid;place-items:center;transition:.12s}
+.aic:hover{color:var(--ink-2);border-color:var(--line);background:#fff}
+.aic.del:hover{color:var(--red);border-color:#F3C4C0}
+.aic svg{width:14px;height:14px}
+.pager{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+.pager .pgb{padding:7px 13px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:.78rem;font-weight:600;color:var(--ink-2);font-family:inherit;cursor:pointer}
+.pager .pgb:disabled{opacity:.4;cursor:default}
+.pager .pgn{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-weight:700;font-size:.76rem;color:var(--ink-2);cursor:pointer}
+.pager .pgn.on{background:var(--orange);color:#fff}
+.pager .pp{margin-left:auto;display:flex;align-items:center;gap:7px}
+.pager .pp select{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-family:inherit;font-size:.76rem}
+.empty{padding:34px;text-align:center;color:var(--muted);font-size:.9rem}
+
+/* ============ KANBAN ============ */
+.kb{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}
+.kcol{background:#EFF0F4;border-radius:16px;padding:10px}
+.kh{display:flex;align-items:center;gap:8px;font-size:.76rem;font-weight:800;padding:6px 8px 10px;text-transform:uppercase;letter-spacing:.05em}
+.kh i{width:8px;height:8px;border-radius:50%}
+.kh .n{margin-left:auto;font-size:.68rem;background:#fff;border-radius:9px;padding:2px 8px;color:var(--muted)}
+.kcard{background:#fff;border:1px solid #F0F1F4;border-radius:13px;padding:12px 13px;margin-bottom:9px;cursor:pointer;transition:.13s;box-shadow:0 1px 2px rgba(23,26,32,.04)}
+.kcard:hover{border-color:#FFD9C4;transform:translateY(-1px)}
+.kcard .pr{margin-bottom:8px}
+.kcard b{font-size:.84rem;display:block;line-height:1.4}
+.kcard .km{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:.73rem;color:var(--muted);flex-wrap:wrap}
+.kcard .km .late{color:var(--red);font-weight:700}
+.kfoot{border-top:1px solid #F2F3F6;margin-top:10px;padding-top:7px}
+.kfoot .acticons{justify-content:space-between}
+
+/* ============ PANNEAU LATÉRAL ============ */
+.dveil{position:fixed;inset:0;background:rgba(16,18,22,.38);z-index:90;opacity:0;pointer-events:none;transition:.2s}
+.dveil.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:478px;max-width:100%;background:var(--bg);z-index:95;transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:-18px 0 50px rgba(16,18,22,.2);overflow-y:auto;padding:16px 16px 30px}
+.drawer.open{transform:none}
+.dcard{background:#fff;border:1px solid #F0F1F4;border-radius:17px;box-shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.1);padding:17px 18px;margin-bottom:13px}
+.dhead{position:relative;overflow:hidden;padding-left:22px}
+.dhead::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--orange)}
+.drow1{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.dclose{margin-left:auto;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:.9rem;cursor:pointer}
+.dclose:hover{color:var(--ink)}
+.drawer h2{font-family:'Sora';font-size:1.14rem;font-weight:800;letter-spacing:-.3px;line-height:1.35}
+.dref{font-size:.76rem;color:var(--muted);font-weight:600;margin:4px 0 12px}
+.dh{display:flex;align-items:center;gap:9px;font-family:'Sora';font-weight:700;font-size:.9rem;margin-bottom:13px}
+.dh::before{content:"";width:4px;height:15px;border-radius:3px;background:var(--orange);flex:none}
+.dkv{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px dashed #F0F1F4;font-size:.83rem}
+.dkv:last-child{border-bottom:0}
+.dkv .k{color:var(--muted);font-weight:500;flex:none}
+.dkv .v{font-weight:600;text-align:right}
+.dmain{display:flex;gap:8px;flex-wrap:wrap}
+.dbig{flex:1;min-width:130px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;font-size:.85rem;font-weight:700;border:0;background:var(--orange);color:#fff;cursor:pointer;font-family:inherit}
+.dbig:hover{background:var(--orange-deep)}
+.dbig.sec{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.dbig.sec:hover{border-color:#D5D8DF}
+.ddel{width:44px;border-radius:12px;border:1px solid #F3C4C0;background:#fff;color:#D63B33;cursor:pointer;font-size:.9rem}
+.ddel:hover{background:#FCECEA}
+.rchips{display:flex;gap:8px;flex-wrap:wrap}
+.rchip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:11px;padding:9px 14px;font-size:.8rem;font-weight:600;color:var(--ink-2);cursor:pointer;background:#fff;transition:.12s;user-select:none}
+.rchip.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
+.rlab{display:block;font-size:.76rem;font-weight:700;color:var(--ink-2);margin:14px 0 7px}
+.rlab:first-child{margin-top:0}
+.rlab .req{color:var(--red);font-weight:800}
+.drawer textarea,.drawer input,.drawer select{width:100%;font-family:inherit;font-size:.85rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFCFD}
+.drawer textarea:focus,.drawer input:focus,.drawer select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px #FFE4D5}
+.drawer textarea{resize:vertical;min-height:64px}
+.drawer input.err,.drawer select.err{border-color:var(--red);box-shadow:0 0 0 3px #FCECEA}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.strow{display:flex;gap:8px;margin-bottom:8px}
+.strow .px{width:36px;flex:none;border:1px solid #F3C4C0;background:#fff;color:#D63B33;border-radius:10px;cursor:pointer;font-family:inherit}
+.raddp{font-size:.78rem;font-weight:700;color:var(--orange-deep);background:none;border:0;cursor:pointer;font-family:inherit;padding:3px 0}
+.raddp:hover{text-decoration:underline}
+.ntdrop{border:1.5px dashed #D5D8DF;border-radius:12px;padding:16px;text-align:center;color:var(--muted);font-size:.78rem;cursor:pointer;transition:.13s}
+.ntdrop:hover{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
+.hrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed #F0F1F4;font-size:.8rem}
+.hrow:last-child{border-bottom:0}
+.hrow .hd{margin-left:auto;color:var(--muted);font-size:.74rem;white-space:nowrap}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#171A20;color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ RESPONSIVE ============ */
+.bottomnav{display:none}
+@media(max-width:1000px){
+  .dt th:nth-child(6),.dt td:nth-child(6){display:none}
+  .kb{grid-template-columns:1fr;gap:12px}
+}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .top-user{display:none}
+  .page{padding:2px 13px calc(100px + var(--safe-b))}
+  .hero{padding:18px 16px 18px 20px;border-radius:17px}
+  .hero h1{font-size:1.2rem}
+  .newbtn{padding:9px 13px;font-size:.78rem}
+  .hmeta{gap:10px 0}
+  .hm{width:33.33%}
+  .hm .v{font-size:1rem}
+  .dt th:nth-child(2),.dt td:nth-child(2),
+  .dt th:nth-child(4),.dt td:nth-child(4),
+  .dt th:nth-child(6),.dt td:nth-child(6){display:none}
+  .acticons .aic:nth-child(1),.acticons .aic:nth-child(2){display:none}
+  .statgrid{gap:9px}
+  .scard{padding:11px 12px;border-radius:13px}
+  .scard .sv{font-size:1.15rem}
+  .dt th,.dt td{padding:12px 12px}
+  .drawer{width:100%;padding:11px 12px calc(30px + var(--safe-b))}
+  .dcard{padding:15px 15px;border-radius:15px;margin-bottom:11px}
+  .drawer h2{font-size:1.02rem}
+  .dclose{width:38px;height:38px}
+  .dmain .dbig{min-width:calc(50% - 4px)}
+  .ddel{width:100%;padding:11px;order:9}
+  .rchip{padding:11px 14px}
+  .frow2{grid-template-columns:1fr}
+  .drawer textarea,.drawer input,.drawer select{font-size:16px}
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:56;
+    background:rgba(255,255,255,.97);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:7px 4px calc(7px + var(--safe-b));align-items:flex-end}
+  .bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:600;color:var(--muted);padding:4px 0}
+  .bn svg{width:21px;height:21px}
+  .bn.active{color:var(--orange)}
+  .bn-cta{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.62rem;font-weight:700;color:var(--orange);margin-top:-26px}
+  .bn-cta .disc{width:56px;height:56px;border-radius:50%;background:var(--orange);
+    display:grid;place-items:center;box-shadow:0 4px 12px rgba(23,26,32,.18);border:4px solid var(--bg)}
+  .bn-cta .disc svg{width:24px;height:24px;stroke:#fff}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;transform:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"/><path d="M9 11.5h6M10 15h4"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+<a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+<a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+<a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+<a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+<a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+<a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
+<a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+<a href="taches.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+<a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+<a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <div class="crumbs">🏠 <span class="cur">Tâches</span></div>
+    <div class="title-m">Tâches</div>
+    <div class="spacer"></div>
+    <button class="bell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <span class="dot">2</span>
+    </button>
+    <div class="top-user"><span class="ph">TM</span></div>
+  </div>
+
+  <div class="page">
+
+    <!-- ===== BANDEAU ===== -->
+    <section class="hero">
+      <div class="row">
+        <h1>Tâches</h1>
+        <span class="count" id="count">0</span>
+        <button class="newbtn" onclick="openNewTask()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Nouvelle tâche
+        </button>
+      </div>
+    </section>
+
+    <div class="statgrid">
+      <div class="scard sb" onclick="setStat('todo')"><span class="sk">À faire</span><span class="sv" id="n-todo">0</span></div>
+      <div class="scard sa" onclick="setStat('prog')"><span class="sk">En cours</span><span class="sv" id="n-prog">0</span></div>
+      <div class="scard sg" onclick="setStat('done')"><span class="sk">Terminées</span><span class="sv" id="n-done">0</span></div>
+    </div>
+
+    <!-- ===== OUTILS ===== -->
+    <div class="toolrow">
+      <div class="vseg">
+        <button id="v-list" class="on" onclick="setView('list')">☰ Liste</button>
+        <button id="v-kb" onclick="setView('kb')">▦ Colonnes</button>
+      </div>
+      <select class="fsel" id="f-stat" onchange="render()">
+        <option value="all">Tous les statuts</option>
+        <option value="todo">À faire</option>
+        <option value="prog">En cours</option>
+        <option value="done">Terminées</option>
+      </select>
+      <select class="fsel" id="f-prio" onchange="render()">
+        <option value="all">Toutes priorités</option>
+        <option>Urgente</option><option>Haute</option><option>Normale</option><option>Basse</option>
+      </select>
+      <select class="fsel" id="f-who" onchange="render()"><option value="all">Toute l'équipe</option></select>
+      <select class="fsel" id="f-lien" onchange="render()">
+        <option value="all">Tous les liens</option>
+        <option>Client</option><option>Devis</option><option>Contrat</option><option>Intervention</option><option>Facture</option>
+      </select>
+      <select class="fsel" id="f-sort" onchange="render()">
+        <option value="due">Trier : échéance</option>
+        <option value="prio">Trier : priorité</option>
+        <option value="created">Trier : création</option>
+      </select>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="q" placeholder="Rechercher une tâche…" oninput="render()">
+      </div>
+    </div>
+
+    <!-- ===== LISTE ===== -->
+    <div class="card" id="listwrap">
+      <table class="dt">
+        <thead><tr>
+          <th>Tâche</th><th>Assignée à</th><th>Statut</th><th>Priorité</th><th>Échéance</th><th>Créée le</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none">Aucune tâche ne correspond aux filtres.</div>
+      <div class="pager" id="pager"></div>
+    </div>
+
+    <!-- ===== KANBAN ===== -->
+    <div class="kb" id="kbwrap" style="display:none"></div>
+
+  </div>
+
+  <!-- Bottom nav mobile -->
+  <nav class="bottomnav">
+    <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+    <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a class="bn-cta" href="#" onclick="openNewTask();return false"><span class="disc"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Tâche</a>
+    <a class="bn active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a class="bn" href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+  </nav>
+
+</div>
+</div>
+
+<div class="dveil" id="dveil" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer"><div id="dbody"></div></aside>
+
+<script>
+/* ================= DONNÉES ================= */
+const TODAY = "2026-08-25";
+const EQUIPE = ["Thomas Martin","Marc Dupont","Sofia Leroy","Karim Benali","Julie Moreau"];
+const PRIOS = {Urgente:"#D63B33", Haute:"#D9A408", Normale:"#2E5CE6", Basse:"#A6ABBB"};
+const STATS = {todo:["st-todo","À faire"], prog:["st-prog","En cours"], done:["st-done","Terminée"]};
+let TID = 0;
+const TK = (titre,desc,who,st,prio,due,lienType,lienLbl,lienHref) => ({
+  id:TID++, titre, desc, who, st, prio, due, lien: lienType ? {t:lienType,l:lienLbl,h:lienHref} : null,
+  created:"2026-08-18", sub:[], note:"",
+  hist:[{s:st, d:"2026-08-18", u:"Thomas Martin"}]
+});
+const TASKS = [
+  TK("Relancer Ironwood — facture en retard","1 250 € échus depuis le 03/08. Relance par email faite le 20/08, appeler si sans réponse.","Thomas Martin","prog","Urgente","2026-08-24","Client","Ironwood Solutions","client.html"),
+  TK("Faire signer le devis punaises","DEV-2026-01287 envoyé le 18/08 — relancer pour signature.","Thomas Martin","todo","Haute","2026-08-26","Devis","DEV-2026-01287","devis.html"),
+  TK("Renouveler le contrat Hôtel du Parc","Le contrat arrive à échéance le 30/09 — proposer la revalorisation annuelle.","Julie Moreau","todo","Haute","2026-08-28","Client","Hôtel du Parc","clients.html"),
+  TK("Vérifier le stock de blocs bromadiolone","Inventaire avant les tournées de septembre — commander si < 200 blocs.","Marc Dupont","todo","Normale","2026-08-27",null,null,null),
+  TK("Envoyer le rapport à la Pharmacie Centrale","Rapport du contrôle mensuel du 12/08 à transmettre (HACCP).","Sofia Leroy","prog","Normale","2026-08-25","Intervention","INT-2026-1042","calendrier.html"),
+  TK("Planifier le contrôle trimestriel Foncia","3 immeubles rue des Lilas — caler avec le gardien.","Karim Benali","todo","Normale","2026-09-02","Client","Syndic Foncia Lilas","clients.html"),
+  TK("Commander des pièges mécaniques","Réassort 50 unités chez le fournisseur habituel.","Marc Dupont","done","Basse","2026-08-20",null,null,null),
+  TK("Rappeler M. Diallo — devis guêpes","Nid sous toiture, souhaite une intervention rapide.","Sofia Leroy","done","Haute","2026-08-21","Client","M. Diallo","clients.html"),
+  TK("Mettre à jour le plan d'appâtage Entrepôt","Ajouter les 4 nouveaux postes posés le 15/08 au plan.","Karim Benali","prog","Basse","2026-08-29","Client","Entrepôt Central","plan-appatage.html"),
+  TK("Préparer la facture Camping Val de Seine","Solde de fin de saison à facturer avant fermeture.","Thomas Martin","done","Normale","2026-08-19","Facture","FAC-2026-00901","facture.html"),
+];
+
+let VIEW = "list", FSTAT = "all", DID = null, PAGE = 1, PER = 10;
+const PRIORDER = {Urgente:0, Haute:1, Normale:2, Basse:3};
+
+/* ================= RENDU ================= */
+const fdate = iso => { const [y,m,d] = iso.split("-"); return d + "/" + m + "/" + y; };
+const isLate = t => t.st !== "done" && t.due < TODAY;
+const ini = n => n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+
+function filtered(){
+  const q = document.getElementById("q").value.toLowerCase().trim();
+  const pr = document.getElementById("f-prio").value;
+  const wh = document.getElementById("f-who").value;
+  const ln = document.getElementById("f-lien").value;
+  const sort = document.getElementById("f-sort").value;
+  const list = TASKS.filter(t =>
+    (FSTAT === "all" || t.st === FSTAT) &&
+    (pr === "all" || t.prio === pr) &&
+    (wh === "all" || t.who === wh) &&
+    (ln === "all" || (t.lien && t.lien.t === ln)) &&
+    (!q || t.titre.toLowerCase().includes(q) || (t.lien && t.lien.l.toLowerCase().includes(q)))
+  );
+  list.sort((a,b)=> sort === "prio" ? PRIORDER[a.prio] - PRIORDER[b.prio]
+    : sort === "created" ? b.created.localeCompare(a.created)
+    : a.due.localeCompare(b.due));
+  return list;
+}
+function render(){
+  document.getElementById("f-stat").value = FSTAT;
+  const list = filtered();
+  document.getElementById("count").textContent = list.length;
+  document.getElementById("n-todo").textContent = TASKS.filter(t=>t.st==="todo").length;
+  document.getElementById("n-prog").textContent = TASKS.filter(t=>t.st==="prog").length;
+  document.getElementById("n-done").textContent = TASKS.filter(t=>t.st==="done").length;
+
+  if(VIEW === "list"){
+    const pages = Math.max(1, Math.ceil(list.length / PER));
+    PAGE = Math.min(PAGE, pages);
+    const slice = list.slice((PAGE-1)*PER, PAGE*PER);
+    document.getElementById("rows").innerHTML = slice.map(t=>{
+      const [cls,lbl] = STATS[t.st];
+      return `<tr onclick="openTask(${t.id})">
+        <td><span class="tt">${t.titre}${t.lien ? `<small>→ ${t.lien.t} · ${t.lien.l}</small>` : ""}</span></td>
+        <td><span class="who"><span class="av">${ini(t.who)}</span>${t.who}</span></td>
+        <td><span class="st ${cls}">${lbl}</span></td>
+        <td><span class="pr"><i style="background:${PRIOS[t.prio]}"></i>${t.prio}</span></td>
+        <td class="due">${fdate(t.due)}${isLate(t) ? '<small>En retard</small>' : ''}</td>
+        <td class="due" style="color:var(--muted)">${fdate(t.created)}</td>
+        <td>${actIcons(t)}</td>
+      </tr>`;
+    }).join("");
+    document.getElementById("empty").style.display = list.length ? "none" : "block";
+    document.getElementById("pager").innerHTML = `
+      <button class="pgb" onclick="PAGE--;render()" ${PAGE<=1?'disabled':''}>← Précédent</button>
+      ${Array.from({length:pages},(_,i)=>`<span class="pgn ${PAGE===i+1?'on':''}" onclick="PAGE=${i+1};render()">${i+1}</span>`).join("")}
+      <button class="pgb" onclick="PAGE++;render()" ${PAGE>=pages?'disabled':''}>Suivant →</button>
+      <span class="pp">${list.length} tâche${list.length>1?'s':''} · Par page
+        <select onchange="PER=+this.value;PAGE=1;render()">
+          ${[5,10,20].map(n=>`<option ${PER===n?'selected':''}>${n}</option>`).join("")}
+        </select></span>`;
+  } else {
+    const col = (st, name, color) => {
+      const items = list.filter(t=>t.st===st);
+      return `<div class="kcol">
+        <div class="kh" style="color:${color}"><i style="background:${color}"></i>${name}<span class="n">${items.length}</span></div>
+        ${items.map(t=>`<div class="kcard" onclick="openTask(${t.id})">
+          <span class="pr"><i style="background:${PRIOS[t.prio]}"></i>${t.prio}</span>
+          <b>${t.titre}</b>
+          <div class="km"><span class="who"><span class="av" style="width:22px;height:22px;font-size:.52rem">${ini(t.who)}</span>${t.who.split(" ")[0]}</span>
+          · 📅 ${fdate(t.due)}${isLate(t) ? ' <span class="late">En retard</span>' : ''}</div>
+          <div class="kfoot">${actIcons(t)}</div>
+        </div>`).join("") || '<div style="padding:14px;text-align:center;color:var(--muted);font-size:.78rem">Aucune tâche</div>'}
+      </div>`;
+    };
+    document.getElementById("kbwrap").innerHTML =
+      col("todo","À faire","#2E5CE6") + col("prog","En cours","#D9A408") + col("done","Terminées","#0E8A68");
+  }
+}
+function setView(v){
+  VIEW = v;
+  document.getElementById("v-list").classList.toggle("on", v==="list");
+  document.getElementById("v-kb").classList.toggle("on", v==="kb");
+  document.getElementById("listwrap").style.display = v==="list" ? "" : "none";
+  document.getElementById("kbwrap").style.display = v==="kb" ? "" : "none";
+  render();
+}
+function setStat(s){
+  FSTAT = FSTAT === s ? "all" : s;
+  PAGE = 1;
+  document.querySelectorAll(".scard").forEach(c=>c.classList.remove("off"));
+  if(FSTAT !== "all"){
+    const map = {todo:"sb", prog:"sa", done:"sg"};
+    document.querySelectorAll(".scard").forEach(c=>{ if(!c.classList.contains(map[FSTAT])) c.classList.add("off"); });
+  }
+  render();
+}
+function actIcons(t){
+  return `<span class="acticons">
+    <a class="aic" href="tel:+33612345678" onclick="event.stopPropagation()" title="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
+    <a class="aic" href="https://wa.me/33612345678" onclick="event.stopPropagation()" title="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 01-12.3 7.4L3 21l2.1-5.6A8.5 8.5 0 1121 11.5z"/></svg></a>
+    <button class="aic" onclick="event.stopPropagation();cycleStat(${t.id})" title="Changer le statut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.5 9a9 9 0 0114.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0020.5 15"/></svg></button>
+    <button class="aic" onclick="event.stopPropagation();openTask(${t.id})" title="Voir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    <button class="aic del" onclick="delTask(event,${t.id})" title="Supprimer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+  </span>`;
+}
+function cycleStat(id){
+  const t = TASKS.find(x=>x.id===id);
+  const next = {todo:"prog", prog:"done", done:"todo"};
+  setTaskStatSilent(t, next[t.st]);
+  render();
+  toast("Statut → " + STATS[t.st][1]);
+}
+function setTaskStatSilent(t, st){
+  t.st = st;
+  t.hist.push({s:st, d:TODAY, u:"Thomas Martin"});
+}
+document.getElementById("f-stat").addEventListener("change", e=>{ FSTAT = e.target.value; render(); });
+
+/* ================= PANNEAU : FICHE TÂCHE ================= */
+function openTask(id){
+  DID = id;
+  renderTask();
+  openDrawer();
+}
+function renderTask(){
+  const t = TASKS.find(x=>x.id===DID);
+  if(!t) return closeDrawer();
+  const [cls,lbl] = STATS[t.st];
+  document.getElementById("dbody").innerHTML = `
+    <div class="dcard dhead">
+      <div class="drow1">
+        <span class="st ${cls}">${lbl}</span>
+        <span class="pr"><i style="background:${PRIOS[t.prio]}"></i>${t.prio}</span>
+        ${isLate(t) ? '<span class="st" style="background:var(--red-bg);color:var(--red)">En retard</span>' : ''}
+        <button class="dclose" onclick="closeDrawer()">✕</button>
+      </div>
+      <h2>${t.titre}</h2>
+      <div class="dref">TSK-2026-${String(100+t.id)} · créée le ${fdate(t.created)}</div>
+      <span class="rlab">Statut</span>
+      <div class="rchips">
+        ${Object.entries(STATS).map(([k,[c,l]])=>`<span class="rchip ${t.st===k?'on':''}" onclick="setTaskStat(${t.id},'${k}')">${l}</span>`).join("")}
+      </div>
+    </div>
+
+    <div class="dcard">
+      <div class="dh">Informations</div>
+      ${t.desc ? `<p style="font-size:.84rem;color:var(--ink-2);line-height:1.6;margin-bottom:11px">${t.desc}</p>` : ""}
+      <div class="dkv"><span class="k">Assignée à</span><span class="v">${t.who}</span></div>
+      <div class="dkv"><span class="k">Échéance</span><span class="v" ${isLate(t)?'style="color:var(--red)"':''}>${fdate(t.due)}${isLate(t)?' · En retard':''}</span></div>
+      <div class="dkv"><span class="k">Priorité</span><span class="v">${t.prio}</span></div>
+      ${t.lien ? `<div class="dkv"><span class="k">Liée à</span><span class="v"><a href="${t.lien.h}" style="color:var(--orange-deep)">${t.lien.t} · ${t.lien.l} →</a></span></div>` : ""}
+      ${t.note ? `<div class="dkv"><span class="k">Note interne</span><span class="v">${t.note}</span></div>` : ""}
+    </div>
+
+    ${t.sub.length ? `<div class="dcard"><div class="dh">Sous-tâches</div>
+      ${t.sub.map((s,j)=>`<div class="hrow" style="cursor:pointer" onclick="togSub(${t.id},${j})">
+        <span style="width:18px;height:18px;border-radius:6px;border:2px solid ${s.ok?'var(--green)':'#D5D8DF'};background:${s.ok?'var(--green)':'#fff'};color:#fff;display:grid;place-items:center;font-size:.62rem;font-weight:800;flex:none">${s.ok?'✓':''}</span>
+        <span style="${s.ok?'text-decoration:line-through;color:var(--muted)':''}">${s.t}</span>
+      </div>`).join("")}</div>` : ""}
+
+    <div class="dcard">
+      <div class="dh">Historique</div>
+      ${t.hist.slice().reverse().map(h=>{
+        const [c,l] = STATS[h.s];
+        return `<div class="hrow"><span class="st ${c}">${l}</span><span style="font-size:.78rem;color:var(--muted)">${h.u}</span><span class="hd">${fdate(h.d)}</span></div>`;
+      }).join("")}
+    </div>
+
+    <div class="dcard">
+      <div class="dh">Pièces jointes <button class="raddp" style="margin-left:auto" onclick="toast('📎 Téléversement — bientôt relié')">↑ Téléverser</button></div>
+      <p style="font-size:.8rem;color:var(--muted)">Aucun document joint.</p>
+    </div>
+
+    <div class="dmain">
+      <button class="dbig" onclick="openNewTask(${t.id})">✏️ Modifier</button>
+      <a class="dbig sec" href="https://wa.me/33612345678">WhatsApp</a>
+      <a class="dbig sec" href="tel:+33612345678">📞 Appeler</a>
+      <button class="ddel" onclick="delTask(event,${t.id})" title="Supprimer">🗑</button>
+    </div>`;
+}
+function setTaskStat(id, st){
+  const t = TASKS.find(x=>x.id===id);
+  if(t.st === st) return;
+  t.st = st;
+  t.hist.push({s:st, d:TODAY, u:"Thomas Martin"});
+  render(); renderTask();
+  toast(st === "done" ? "✓ Tâche terminée" : "Statut mis à jour — " + STATS[st][1]);
+}
+function togSub(id, j){
+  const t = TASKS.find(x=>x.id===id);
+  t.sub[j].ok = !t.sub[j].ok;
+  renderTask();
+}
+function delTask(e, id){
+  e.stopPropagation();
+  if(!confirm("Supprimer cette tâche ?")) return;
+  const i = TASKS.findIndex(x=>x.id===id);
+  if(i > -1) TASKS.splice(i, 1);
+  closeDrawer(); render();
+  toast("🗑 Tâche supprimée");
+}
+
+/* ================= PANNEAU : NOUVELLE TÂCHE ================= */
+let NPRIO = "Normale", NSUB = [], EDIT = null;
+function openNewTask(editId){
+  EDIT = (typeof editId === "number") ? TASKS.find(x=>x.id===editId) : null;
+  NPRIO = EDIT ? EDIT.prio : "Normale";
+  NSUB = EDIT ? EDIT.sub.map(x=>x.t) : [];
+  document.getElementById("dbody").innerHTML = `
+    <div class="dcard dhead">
+      <div class="drow1"><span class="st st-todo">${EDIT ? "Modification" : "Nouvelle tâche"}</span>
+        <button class="dclose" onclick="closeDrawer()">✕</button></div>
+      <h2>${EDIT ? "Modifier la tâche" : "Créer une tâche"}</h2>
+    </div>
+
+    <div class="dcard">
+      <span class="rlab">Titre <span class="req">*</span></span>
+      <input id="nt-titre" placeholder="Ex : Relancer le client pour la signature du devis" value="${EDIT ? EDIT.titre.replace(/"/g,'&quot;') : ""}">
+      <span class="rlab">Description</span>
+      <textarea id="nt-desc" placeholder="Contexte, consignes…">${EDIT ? EDIT.desc : ""}</textarea>
+      <div class="frow2">
+        <div>
+          <span class="rlab">Assignée à <span class="req">*</span></span>
+          <select id="nt-who">${EQUIPE.map(e=>`<option ${EDIT && EDIT.who===e ? "selected" : ""}>${e}</option>`).join("")}</select>
+        </div>
+        <div>
+          <span class="rlab">Échéance <span class="req">*</span></span>
+          <input id="nt-due" type="date" value="${EDIT ? EDIT.due : TODAY}">
+        </div>
+      </div>
+      <span class="rlab">Priorité</span>
+      <div class="rchips">${Object.keys(PRIOS).map(p=>`<span class="rchip ${p===NPRIO?'on':''}" onclick="nPrio('${p}',this)"><i style="width:7px;height:7px;border-radius:50%;background:${PRIOS[p]}"></i> ${p}</span>`).join("")}</div>
+    </div>
+
+    <div class="dcard">
+      <div class="dh">Liée à</div>
+      <div class="frow2">
+        <select id="nt-lt">${["","Client","Devis","Contrat","Intervention","Facture"].map(o=>`<option value="${o}" ${EDIT && EDIT.lien && EDIT.lien.t===o ? "selected" : ""}>${o || "Aucun lien"}</option>`).join("")}</select>
+        <input id="nt-ll" placeholder="Ex : Ironwood Solutions" value="${EDIT && EDIT.lien ? EDIT.lien.l : ""}">
+      </div>
+    </div>
+
+    <div class="dcard">
+      <div class="dh">Sous-tâches</div>
+      <div id="nt-subs"></div>
+      <button class="raddp" onclick="nAddSub()">+ Ajouter une sous-tâche</button>
+      <span class="rlab">Note interne</span>
+      <textarea id="nt-note" placeholder="Visible uniquement en interne…">${EDIT ? EDIT.note : ""}</textarea>
+    </div>
+
+    <div class="dcard">
+      <div class="dh">Pièces jointes</div>
+      <div class="ntdrop" onclick="toast('📎 Ajout de fichiers — bientôt relié')">📎 Glisse tes fichiers ici ou clique — PDF, JPG, PNG · 10 Mo max</div>
+    </div>
+
+    <div class="dmain">
+      <button class="dbig sec" onclick="${EDIT ? 'renderTask()' : 'closeDrawer()'}">Annuler</button>
+      <button class="dbig" onclick="saveTask()">✓ ${EDIT ? "Enregistrer" : "Créer la tâche"}</button>
+    </div>`;
+  nRenderSubs();
+  openDrawer();
+  if(matchMedia("(min-width:761px)").matches) document.getElementById("nt-titre").focus();
+}
+function nPrio(p, el){
+  NPRIO = p;
+  el.parentElement.querySelectorAll(".rchip").forEach(c=>c.classList.remove("on"));
+  el.classList.add("on");
+}
+function nAddSub(){
+  NSUB.push("");
+  nRenderSubs();
+}
+function nRenderSubs(){
+  document.getElementById("nt-subs").innerHTML = NSUB.map((v,j)=>`
+    <div class="strow">
+      <input value="${v.replace(/"/g,'&quot;')}" placeholder="Sous-tâche…" oninput="NSUB[${j}]=this.value">
+      <button class="px" onclick="NSUB.splice(${j},1);nRenderSubs()">✕</button>
+    </div>`).join("");
+}
+function saveTask(){
+  const titre = document.getElementById("nt-titre").value.trim();
+  if(!titre){
+    document.getElementById("nt-titre").classList.add("err");
+    toast("⚠️ Donne un titre à la tâche");
+    return;
+  }
+  const lt = document.getElementById("nt-lt").value;
+  const ll = document.getElementById("nt-ll").value.trim();
+  const subs = NSUB.filter(x=>x.trim());
+  if(EDIT){
+    EDIT.titre = titre;
+    EDIT.desc = document.getElementById("nt-desc").value.trim();
+    EDIT.who = document.getElementById("nt-who").value;
+    EDIT.prio = NPRIO;
+    EDIT.due = document.getElementById("nt-due").value || EDIT.due;
+    EDIT.lien = lt ? {t:lt, l:(ll || lt), h:"#"} : null;
+    EDIT.note = document.getElementById("nt-note").value.trim();
+    EDIT.sub = subs.map((x,i)=>({t:x.trim(), ok:EDIT.sub[i] ? EDIT.sub[i].ok : false}));
+    DID = EDIT.id;
+    render(); renderTask();
+    toast("✓ Tâche mise à jour");
+    return;
+  }
+  const t = TK(titre,
+    document.getElementById("nt-desc").value.trim(),
+    document.getElementById("nt-who").value,
+    "todo", NPRIO,
+    document.getElementById("nt-due").value || TODAY,
+    lt || null, lt ? (ll || lt) : null, lt ? "#" : null);
+  t.created = TODAY;
+  t.hist = [{s:"todo", d:TODAY, u:"Thomas Martin"}];
+  t.sub = subs.map(x=>({t:x.trim(), ok:false}));
+  t.note = document.getElementById("nt-note").value.trim();
+  TASKS.unshift(t);
+  closeDrawer(); FSTAT = "all"; PAGE = 1; render();
+  toast("✓ Tâche « " + (titre.length > 34 ? titre.slice(0,34) + "…" : titre) + " » créée");
+}
+
+/* ================= PANNEAU / DIVERS ================= */
+function openDrawer(){
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("dveil").classList.add("open");
+  document.body.style.overflow = "hidden";
+  document.getElementById("drawer").scrollTop = 0;
+}
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("dveil").classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") closeDrawer(); });
+function toast(msg){
+  let t = document.getElementById("toast");
+  if(!t){ t = document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove("show"), 2300);
+}
+/* Filtre équipe */
+document.getElementById("f-who").innerHTML = "<option value='all'>Toute l'équipe</option>" + EQUIPE.map(e=>`<option>${e}</option>`).join("");
+render();
+</script>
+</body>
+</html>
