@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Réglages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
+  --line:#EBECF1; --bg:#F4F5F8; --card:#FFFFFF;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --amber:#A16207; --amber-bg:#FBF3D9;
+  --blue:#2E5CE6; --blue-bg:#EBF1FE;
+  --red:#D63B33; --red-bg:#FCECEA;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+h1{font-family:'Sora',sans-serif}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+
+.app{display:flex;min-height:100vh}
+.sidebar{width:238px;background:#101216;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:11px;padding:24px 20px 20px;position:sticky;top:0;background:#101216;z-index:2}
+.brand .logo{width:36px;height:36px;border-radius:11px;background:var(--orange);display:grid;place-items:center}
+.brand .logo svg{width:20px;height:20px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.06rem;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;color:#585E6C;padding:12px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 12px 14px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9.5px 12px;border-radius:10px;font-size:.9rem;font-weight:500;color:#AEB4C0;transition:.13s}
+.nav a:hover{background:#1B1E24;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600}
+.nav svg{width:17px;height:17px;flex:none;opacity:.9}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1F222A;margin-top:auto}
+.ph{border-radius:50%;background:#2A2E36;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 30px;position:sticky;top:0;z-index:50;background:rgba(244,245,248,.9);backdrop-filter:blur(12px)}
+.crumbs{font-size:.88rem;color:var(--muted)}
+.crumbs .cur{color:var(--ink);font-weight:600}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:18px;height:18px}
+.bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.top-user .ph{width:38px;height:38px;font-size:.78rem}
+.page{padding:4px 30px 90px;max-width:1400px}
+
+.hero{position:relative;border-radius:20px;padding:22px 26px 22px 30px;margin-bottom:16px;overflow:hidden;
+  background:#FFFFFF;border:1px solid #F0F1F4;box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--orange)}
+.hero h1{font-size:1.55rem;font-weight:800;letter-spacing:-.4px}
+.hero p{font-size:.83rem;color:var(--muted);margin-top:4px}
+
+/* ===== disposition : sous-menu + panneau ===== */
+.lay{display:grid;grid-template-columns:236px minmax(0,1fr);gap:16px;align-items:start}
+.snav{background:#fff;border:1px solid #F0F1F4;border-radius:17px;box-shadow:var(--shadow);padding:12px 10px;position:sticky;top:74px}
+.snav .sl{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:11px 12px 5px;display:flex;align-items:center;gap:7px}
+.snav .sl::before{content:"";width:3px;height:11px;border-radius:2px;background:var(--orange)}
+.snav button{display:block;width:100%;text-align:left;padding:8.5px 12px;border-radius:10px;font-size:.84rem;font-weight:500;color:var(--ink-2);transition:.12s}
+.snav button:hover{background:#F7F8FA}
+.snav button.on{background:var(--orange);color:#fff;font-weight:700}
+
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border:1px solid #F0F1F4;padding:20px 22px;margin-bottom:14px}
+.card-h{display:flex;align-items:center;gap:10px;font-family:'Sora';font-weight:700;font-size:1.02rem;margin-bottom:16px;flex-wrap:wrap}
+.card-h::before{content:"";width:4px;height:16px;border-radius:3px;background:var(--orange)}
+.card-h .act{margin-left:auto;display:inline-flex;align-items:center;gap:7px;background:var(--orange);color:#fff;font-weight:700;font-size:.79rem;padding:9px 14px;border-radius:11px}
+.card-h .act:hover{background:var(--orange-deep)}
+
+.dt{width:100%;border-collapse:collapse;font-size:.85rem}
+.dt th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;padding:11px 12px;border-bottom:1px solid var(--line);background:#FBFBFC;white-space:nowrap}
+.dt td{padding:12px;border-bottom:1px solid #F2F3F6;vertical-align:middle}
+.dt tr:last-child td{border-bottom:0}
+.who{display:flex;align-items:center;gap:9px;white-space:nowrap}
+.who .av{width:30px;height:30px;border-radius:50%;color:#fff;display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:.58rem;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;padding:4px 11px;border-radius:12px;white-space:nowrap}
+.b-admin{background:var(--orange-soft);color:var(--orange-deep)}
+.b-gest{background:var(--blue-bg);color:var(--blue)}
+.b-tech{background:var(--green-bg);color:var(--green-d)}
+.b-on{background:var(--green-bg);color:var(--green-d)}
+.b-off{background:#F1F2F5;color:var(--muted)}
+.b-def{background:var(--green-bg);color:var(--green-d)}
+.acti{display:flex;gap:3px;justify-content:flex-end}
+.aic{width:30px;height:30px;border-radius:9px;border:1px solid transparent;color:#A6ABBB;display:grid;place-items:center;transition:.12s}
+.aic:hover{color:var(--ink-2);border-color:var(--line);background:#fff}
+.aic.del:hover{color:var(--red);border-color:#F3C4C0}
+.aic svg{width:14px;height:14px}
+
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.fgrid .full{grid-column:1/-1}
+.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+input,select,textarea{width:100%;font-family:inherit;font-size:.86rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFCFD}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px #FFE4D5}
+input[type=number]{font-variant-numeric:tabular-nums}
+input[type=color]{padding:3px;height:42px;width:56px;cursor:pointer}
+.savebar{display:flex;justify-content:flex-end;margin-top:15px}
+.savebtn{background:var(--orange);color:#fff;font-weight:700;font-size:.84rem;padding:11px 18px;border-radius:11px}
+.savebtn:hover{background:var(--orange-deep)}
+
+.rchips{display:flex;gap:8px;flex-wrap:wrap}
+.rchip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:11px;padding:9px 14px;font-size:.8rem;font-weight:600;color:var(--ink-2);cursor:pointer;background:#fff;transition:.12s;user-select:none}
+.rchip.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
+.hint{font-size:.74rem;color:var(--muted);margin-top:9px;line-height:1.6}
+
+/* matrice de permissions */
+.permh,.permrow{display:grid;grid-template-columns:1fr repeat(4,64px);gap:4px;align-items:center}
+.permh{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:center;padding:4px 0 7px;border-bottom:1px solid var(--line)}
+.permh span:first-child{text-align:left}
+.permrow{padding:7px 0;border-bottom:1px dashed #F0F1F4;font-size:.8rem;font-weight:600}
+.permrow:last-child{border-bottom:0}
+.pdot{width:19px;height:19px;border-radius:50%;border:2px solid #D5D8DF;margin:0 auto;cursor:pointer;transition:.12s}
+.pdot:hover{border-color:var(--orange)}
+.pdot.on{border-color:var(--orange);background:var(--orange);box-shadow:inset 0 0 0 3.5px #fff}
+.tgl{width:44px;height:25px;border-radius:13px;background:#D5D8DF;position:relative;cursor:pointer;transition:.15s;flex:none}
+.tgl::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tgl.on{background:var(--orange)}
+.tgl.on::after{left:22px}
+
+/* panneau latéral */
+.dveil{position:fixed;inset:0;background:rgba(16,18,22,.38);z-index:90;opacity:0;pointer-events:none;transition:.2s}
+.dveil.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:478px;max-width:100%;background:var(--bg);z-index:95;transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:-18px 0 50px rgba(16,18,22,.2);overflow-y:auto;padding:16px 16px 30px}
+.drawer.open{transform:none}
+.dcard{background:#fff;border:1px solid #F0F1F4;border-radius:17px;box-shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.1);padding:17px 18px;margin-bottom:13px}
+.dhead{position:relative;overflow:hidden;padding-left:22px}
+.dhead::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--orange)}
+.drow1{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.dclose{margin-left:auto;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:.9rem;cursor:pointer}
+.drawer h2{font-family:'Sora';font-size:1.14rem;font-weight:800;letter-spacing:-.3px}
+.dh{display:flex;align-items:center;gap:9px;font-family:'Sora';font-weight:700;font-size:.9rem;margin-bottom:13px}
+.dh::before{content:"";width:4px;height:15px;border-radius:3px;background:var(--orange);flex:none}
+.dh .dre{margin-left:auto;font-size:.74rem;font-weight:700;color:var(--orange-deep);background:none;border:0;cursor:pointer;font-family:inherit}
+.dh .dre:hover{text-decoration:underline}
+.dmain{display:flex;gap:8px}
+.dbig{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;font-size:.85rem;font-weight:700;border:0;background:var(--orange);color:#fff;cursor:pointer;font-family:inherit}
+.dbig:hover{background:var(--orange-deep)}
+.dbig.sec{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.rlab{display:block;font-size:.76rem;font-weight:700;color:var(--ink-2);margin:13px 0 6px}
+.rlab:first-child{margin-top:0}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.toast{position:fixed;left:50%;bottom:calc(30px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#171A20;color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:1000px){
+  .lay{grid-template-columns:1fr}
+  .snav{position:static;display:flex;overflow-x:auto;gap:4px;padding:8px;scrollbar-width:none}
+  .snav::-webkit-scrollbar{display:none}
+  .snav .sl{display:none}
+  .snav button{white-space:nowrap;width:auto}
+}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .top-user{display:none}
+  .page{padding:2px 13px calc(40px + var(--safe-b))}
+  .hero{padding:17px 16px 17px 20px;border-radius:17px}
+  .hero h1{font-size:1.2rem}
+  .card{padding:16px 15px;border-radius:15px}
+  .fgrid{grid-template-columns:1fr}
+  .dt th:nth-child(2),.dt td:nth-child(2),
+  .dt th:nth-child(4),.dt td:nth-child(4),
+  .dt th:nth-child(6),.dt td:nth-child(6){display:none}
+  .drawer{width:100%;padding:11px 12px calc(30px + var(--safe-b))}
+  .permh,.permrow{grid-template-columns:1fr repeat(4,46px)}
+  input,select,textarea{font-size:16px}
+  .frow2{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"/><path d="M9 11.5h6M10 15h4"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+<a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+<a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+<a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+<a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+<a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+<a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Interventions</a>
+<a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+<a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+<a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+<a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+<a href="reglages.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="crumbs">🏠 <span class="cur">Réglages</span></div>
+    <div class="title-m">Réglages</div>
+    <div class="spacer"></div>
+    <button class="bell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <span class="dot">2</span>
+    </button>
+    <div class="top-user"><span class="ph">TM</span></div>
+  </div>
+
+  <div class="page">
+
+    <section class="hero">
+      <h1>Réglages</h1>
+      <p>Configure ta société, ton catalogue et les préférences de la plateforme.</p>
+    </section>
+
+    <div class="lay">
+      <nav class="snav" id="snav">
+        <div class="sl">Équipe</div>
+        <button data-s="users" class="on">Utilisateurs &amp; droits</button>
+        <div class="sl">Catalogue</div>
+        <button data-s="cats">Catégories de services</button>
+        <button data-s="tva">Tarifs &amp; TVA</button>
+        <div class="sl">Planification</div>
+        <button data-s="cal">Jours &amp; horaires</button>
+        <div class="sl">Documents</div>
+        <button data-s="num">Numérotation</button>
+        <button data-s="tpl">Modèles</button>
+        <div class="sl">Société</div>
+        <button data-s="soc">Coordonnées légales</button>
+        <button data-s="brand">Personnalisation</button>
+      </nav>
+
+      <div id="panel"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="dveil" id="dveil" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer"><div id="dbody"></div></aside>
+
+<script>
+/* ================= DONNÉES ================= */
+const MODULES = ["Tableau de bord","Agenda","Clients","Devis","Factures","Paiements","Contrats","Tâches","Techniciens","Rapports"];
+const NIVEAUX = ["Aucun","Lecture","Édition","Total"];
+const ROLE_DEF = {
+  "Administrateur": MODULES.map(()=>3),
+  "Gestionnaire":   [3,3,3,3,3,3,2,3,1,2],
+  "Technicien":     [1,2,1,1,0,0,0,2,0,0]
+};
+const GRADS = ["linear-gradient(135deg,#FF5A1F,#FF8A5C)","linear-gradient(135deg,#2E5CE6,#6C8CFF)","linear-gradient(135deg,#0E8A68,#31B98F)","linear-gradient(135deg,#A16207,#D9A408)","linear-gradient(135deg,#9C63F2,#6425D0)","linear-gradient(135deg,#EE6A8A,#C2255C)"];
+let UID = 0;
+const U = (p,n,email,fonction,role,actif,login) => ({id:UID++, p, n, email, fonction, role, actif, login, perms:[...ROLE_DEF[role]]});
+const USERS = [
+  U("Thomas","Martin","thomas@tiger-hygiene3d.fr","Gérant","Administrateur",true,"2026-08-25"),
+  U("Julie","Moreau","julie@tiger-hygiene3d.fr","Assistante de gestion","Gestionnaire",true,"2026-08-25"),
+  U("Marc","Dupont","marc@tiger-hygiene3d.fr","Technicien 3D","Technicien",true,"2026-08-24"),
+  U("Sofia","Leroy","sofia@tiger-hygiene3d.fr","Technicienne 3D","Technicien",true,"2026-08-25"),
+  U("Karim","Benali","karim@tiger-hygiene3d.fr","Technicien 3D","Technicien",true,"2026-08-23"),
+  U("Léa","Petit","lea.petit@tiger-hygiene3d.fr","Stagiaire","Technicien",false,"2026-07-30"),
+];
+const CATS = [
+  {n:"Dératisation (rongeurs)", on:true,  items:6, maj:"2026-08-18"},
+  {n:"Punaises de lit",         on:true,  items:4, maj:"2026-08-12"},
+  {n:"Cafards / blattes",       on:true,  items:5, maj:"2026-08-05"},
+  {n:"Guêpes / frelons",        on:true,  items:3, maj:"2026-07-28"},
+  {n:"Dépigeonnage",            on:true,  items:4, maj:"2026-06-30"},
+  {n:"Puces / tiques",          on:false, items:2, maj:"2026-05-14"},
+  {n:"Désinfection",            on:true,  items:3, maj:"2026-08-01"},
+];
+const TPLS = [
+  {n:"Modèle de devis — standard",            def:true,  maj:"2026-08-10"},
+  {n:"Modèle de facture — standard",          def:true,  maj:"2026-08-10"},
+  {n:"Modèle d'avoir",                        def:true,  maj:"2026-06-02"},
+  {n:"Rapport d'intervention — 3 étapes",     def:true,  maj:"2026-08-20"},
+  {n:"Devis punaises de lit — 2 passages",    def:false, maj:"2026-07-15"},
+  {n:"Devis contrat annuel — syndics",        def:false, maj:"2026-07-02"},
+];
+const fd = iso => iso.split("-").reverse().join("/");
+const ini = u => (u.p[0] + u.n[0]).toUpperCase();
+let SEC = "users", EDITU = null, NPERMS = [], NACTIF = true;
+
+/* ================= RÉGLAGES PERSISTANTS ================= */
+const SKEY = "tigerflow-reglages";
+let CFG = {
+  jours:["Lun","Mar","Mer","Jeu","Ven"], hdeb:"08:00", hfin:"18:00",
+  feries:["01/01 — Jour de l'an","01/05 — Fête du travail","14/07 — Fête nationale","15/08 — Assomption","25/12 — Noël"],
+  devisPrefix:"DEV", devisNext:1288, factPrefix:"FAC", factNext:874,
+  soc:{nom:"Tiger Hygiène 3D", adr:"24 avenue des Tilleuls", cp:"75012", ville:"Paris", tel:"01 84 25 36 47",
+       email:"thomas@tiger-hygiene3d.fr", site:"https://tiger-hygiene3d.fr", siret:"902 415 678 00021",
+       tva:"FR 32 902415678", certi:"123456", banque:"BNP Paribas", iban:"FR76 3000 4028 3798 7654 3210 943", bic:"BNPAFRPP"},
+  c1:"#FF5A1F", c2:"#171A20"
+};
+try{ const raw = localStorage.getItem(SKEY); if(raw) CFG = Object.assign(CFG, JSON.parse(raw)); }catch(e){}
+function cfgSave(msg){
+  try{ localStorage.setItem(SKEY, JSON.stringify(CFG)); }catch(e){}
+  toast(msg || "✓ Réglages enregistrés");
+}
+
+/* ================= NAVIGATION ================= */
+document.getElementById("snav").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-s]");
+  if(!b) return;
+  SEC = b.dataset.s;
+  document.querySelectorAll("#snav button").forEach(x=>x.classList.toggle("on", x===b));
+  render();
+});
+function render(){
+  const P = document.getElementById("panel");
+  if(SEC === "users") P.innerHTML = secUsers();
+  else if(SEC === "cats") P.innerHTML = secCats();
+  else if(SEC === "tva") P.innerHTML = secTva();
+  else if(SEC === "cal") P.innerHTML = secCal();
+  else if(SEC === "num") P.innerHTML = secNum();
+  else if(SEC === "tpl") P.innerHTML = secTpl();
+  else if(SEC === "soc") P.innerHTML = secSoc();
+  else if(SEC === "brand") P.innerHTML = secBrand();
+}
+
+/* ================= UTILISATEURS ================= */
+const roleB = r => r === "Administrateur" ? "b-admin" : r === "Gestionnaire" ? "b-gest" : "b-tech";
+function secUsers(){
+  return `<div class="card">
+    <div class="card-h">Utilisateurs &amp; droits d'accès
+      <button class="act" onclick="openUser()">+ Nouvel utilisateur</button></div>
+    <table class="dt"><thead><tr>
+      <th>Nom</th><th>Email</th><th>Rôle</th><th>Fonction</th><th>Statut</th><th>Dernière connexion</th><th style="text-align:right">Actions</th>
+    </tr></thead><tbody>
+      ${USERS.map((u,i)=>`<tr>
+        <td><span class="who"><span class="av" style="background:${GRADS[i % GRADS.length]}">${ini(u)}</span><b>${u.p} ${u.n}</b></span></td>
+        <td style="color:var(--muted)">${u.email}</td>
+        <td><span class="bdg ${roleB(u.role)}">${u.role}</span></td>
+        <td>${u.fonction}</td>
+        <td><span class="bdg ${u.actif ? "b-on" : "b-off"}">${u.actif ? "Actif" : "Inactif"}</span></td>
+        <td style="font-variant-numeric:tabular-nums;color:var(--muted)">${fd(u.login)}</td>
+        <td><span class="acti">
+          <button class="aic" title="Modifier" onclick="openUser(${u.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>
+          <button class="aic del" title="Supprimer" onclick="delUser(${u.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+        </span></td>
+      </tr>`).join("")}
+    </tbody></table>
+    <p class="hint">💡 Le rôle pré-remplit les permissions ; tu peux ensuite les ajuster module par module dans la fiche de chaque utilisateur.</p>
+  </div>`;
+}
+function openUser(id){
+  EDITU = (typeof id === "number") ? USERS.find(x=>x.id===id) : null;
+  NPERMS = EDITU ? [...EDITU.perms] : [...ROLE_DEF["Technicien"]];
+  NACTIF = EDITU ? EDITU.actif : true;
+  document.getElementById("dbody").innerHTML = `
+    <div class="dcard dhead">
+      <div class="drow1"><span class="bdg b-admin">${EDITU ? "Modification" : "Nouvel utilisateur"}</span>
+        <button class="dclose" onclick="closeDrawer()">✕</button></div>
+      <h2>${EDITU ? EDITU.p + " " + EDITU.n : "Ajouter un utilisateur"}</h2>
+    </div>
+    <div class="dcard">
+      <div class="frow2">
+        <div><span class="rlab">Prénom <b style="color:var(--red)">*</b></span><input id="u-p" value="${EDITU ? EDITU.p : ""}"></div>
+        <div><span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="u-n" value="${EDITU ? EDITU.n : ""}"></div>
+      </div>
+      <span class="rlab">Email <b style="color:var(--red)">*</b></span>
+      <input id="u-e" type="email" value="${EDITU ? EDITU.email : ""}" placeholder="prenom@tiger-hygiene3d.fr">
+      <div class="frow2">
+        <div><span class="rlab">Fonction</span><input id="u-f" value="${EDITU ? EDITU.fonction : ""}" placeholder="Technicien 3D"></div>
+        <div><span class="rlab">Rôle</span>
+          <select id="u-r" onchange="rolePreset(this.value)">
+            ${Object.keys(ROLE_DEF).map(r=>`<option ${EDITU && EDITU.role===r ? "selected" : ""}>${r}</option>`).join("")}
+          </select></div>
+      </div>
+      <span class="rlab" style="display:flex;align-items:center;gap:12px">Compte actif
+        <span class="tgl ${NACTIF ? "on" : ""}" id="u-tgl" onclick="this.classList.toggle('on');NACTIF=!NACTIF"></span></span>
+    </div>
+    <div class="dcard">
+      <div class="dh">Permissions par module <button class="dre" onclick="rolePreset(document.getElementById('u-r').value)">↺ Réinitialiser</button></div>
+      <div class="permh"><span>Module</span><span>Aucun</span><span>Lecture</span><span>Édition</span><span>Total</span></div>
+      <div id="permbody">${permRows()}</div>
+    </div>
+    <div class="dmain">
+      <button class="dbig sec" onclick="closeDrawer()">Annuler</button>
+      <button class="dbig" onclick="saveUser()">✓ ${EDITU ? "Enregistrer" : "Créer l'utilisateur"}</button>
+    </div>`;
+  openDrawer();
+}
+function permRows(){
+  return MODULES.map((m,i)=>`<div class="permrow"><span>${m}</span>
+    ${[0,1,2,3].map(n=>`<span class="pdot ${NPERMS[i]===n ? "on" : ""}" onclick="setPerm(${i},${n},this)" title="${NIVEAUX[n]}"></span>`).join("")}
+  </div>`).join("");
+}
+function setPerm(i, n, el){
+  NPERMS[i] = n;
+  el.parentElement.querySelectorAll(".pdot").forEach(d=>d.classList.remove("on"));
+  el.classList.add("on");
+}
+function rolePreset(role){
+  NPERMS = [...ROLE_DEF[role]];
+  document.getElementById("permbody").innerHTML = permRows();
+}
+function saveUser(){
+  const p = document.getElementById("u-p").value.trim();
+  const n = document.getElementById("u-n").value.trim();
+  const e = document.getElementById("u-e").value.trim();
+  if(!p || !n || !e){ toast("⚠️ Prénom, nom et email sont requis"); return; }
+  const data = {p, n, email:e, fonction:document.getElementById("u-f").value.trim() || "—",
+    role:document.getElementById("u-r").value, actif:NACTIF, perms:[...NPERMS]};
+  if(EDITU) Object.assign(EDITU, data);
+  else USERS.push(Object.assign({id:UID++, login:"—"}, data, {login:"2026-08-25"}));
+  closeDrawer(); render();
+  toast(EDITU ? "✓ Utilisateur mis à jour" : "✓ " + p + " " + n + " ajouté à l'équipe");
+}
+function delUser(id){
+  const u = USERS.find(x=>x.id===id);
+  if(u.role === "Administrateur" && USERS.filter(x=>x.role==="Administrateur").length === 1){
+    toast("⚠️ Impossible : c'est le dernier administrateur"); return;
+  }
+  if(!confirm("Supprimer " + u.p + " " + u.n + " ?")) return;
+  USERS.splice(USERS.findIndex(x=>x.id===id), 1);
+  render(); toast("🗑 Utilisateur supprimé");
+}
+
+/* ================= CATÉGORIES ================= */
+function secCats(){
+  return `<div class="card">
+    <div class="card-h">Catégories de services
+      <button class="act" onclick="newCat()">+ Nouvelle catégorie</button></div>
+    <table class="dt"><thead><tr>
+      <th>Nom</th><th>Statut</th><th>Prestations</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th>
+    </tr></thead><tbody>
+      ${CATS.map((c,i)=>`<tr>
+        <td><b>${c.n}</b></td>
+        <td><span class="bdg ${c.on ? "b-on" : "b-off"}">${c.on ? "Active" : "Inactive"}</span></td>
+        <td style="font-variant-numeric:tabular-nums">${c.items}</td>
+        <td style="font-variant-numeric:tabular-nums;color:var(--muted)">${fd(c.maj)}</td>
+        <td><span class="acti">
+          <button class="aic" title="${c.on ? "Désactiver" : "Activer"}" onclick="CATS[${i}].on=!CATS[${i}].on;render();toast(CATS[${i}].on ? '✓ Catégorie activée' : 'Catégorie désactivée')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <button class="aic del" title="Supprimer" onclick="if(confirm('Supprimer cette catégorie ?')){CATS.splice(${i},1);render();toast('🗑 Catégorie supprimée')}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+        </span></td>
+      </tr>`).join("")}
+    </tbody></table>
+    <p class="hint">Les catégories alimentent les puces "nuisibles" des devis, des interventions et de l'agenda.</p>
+  </div>`;
+}
+function newCat(){
+  const n = prompt("Nom de la nouvelle catégorie :");
+  if(!n || !n.trim()) return;
+  CATS.unshift({n:n.trim(), on:true, items:0, maj:"2026-08-25"});
+  render(); toast("✓ Catégorie « " + n.trim() + " » créée");
+}
+
+/* ================= TVA ================= */
+function secTva(){
+  return `<div class="card">
+    <div class="card-h">Taux de TVA</div>
+    <table class="dt"><thead><tr><th>Taux</th><th>S'applique à</th><th>Par défaut</th></tr></thead><tbody>
+      <tr><td><b>10 %</b></td><td>Interventions dans les logements achevés depuis plus de 2 ans</td><td><span class="bdg b-def">Défaut interventions</span></td></tr>
+      <tr><td><b>20 %</b></td><td>Locaux professionnels, commerces, fournitures seules</td><td><span class="bdg b-off">—</span></td></tr>
+      <tr><td><b>5,5 %</b></td><td>Cas particuliers (locaux sociaux, certains travaux)</td><td><span class="bdg b-off">—</span></td></tr>
+    </tbody></table>
+    <p class="hint">⚖️ Le 10 % s'applique uniquement si le logement a plus de 2 ans — pense à l'attestation simplifiée signée par le client. Ces taux pré-remplissent les lignes de devis et factures.</p>
+  </div>
+  <div class="card">
+    <div class="card-h">Règles de tarification</div>
+    <div class="fgrid">
+      <div><label class="lab">Majoration urgence (même jour)</label><input type="number" value="30" min="0"> </div>
+      <div><label class="lab">Majoration soir / week-end (%)</label><input type="number" value="25" min="0"></div>
+      <div><label class="lab">Frais de déplacement au-delà de (km)</label><input type="number" value="20" min="0"></div>
+      <div><label class="lab">Tarif au km supplémentaire (€)</label><input type="number" value="0.80" step="0.10" min="0"></div>
+    </div>
+    <div class="savebar"><button class="savebtn" onclick="toast('✓ Règles de tarification enregistrées')">Enregistrer</button></div>
+  </div>`;
+}
+
+/* ================= CALENDRIER ================= */
+function secCal(){
+  const J = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+  const H = Array.from({length:15},(_,i)=>String(6+i).padStart(2,"0") + ":00");
+  return `<div class="card">
+    <div class="card-h">Jours travaillés</div>
+    <div class="rchips">${J.map(j=>`<span class="rchip ${CFG.jours.includes(j) ? "on" : ""}" onclick="togJour('${j}',this)">${j}</span>`).join("")}</div>
+    <div class="fgrid" style="margin-top:16px">
+      <div><label class="lab">Début de journée</label>
+        <select onchange="CFG.hdeb=this.value;cfgSave('✓ Horaires enregistrés')">${H.map(h=>`<option ${CFG.hdeb===h?"selected":""}>${h}</option>`).join("")}</select></div>
+      <div><label class="lab">Fin de journée</label>
+        <select onchange="CFG.hfin=this.value;cfgSave('✓ Horaires enregistrés')">${H.map(h=>`<option ${CFG.hfin===h?"selected":""}>${h}</option>`).join("")}</select></div>
+    </div>
+    <p class="hint">Ces horaires cadrent l'agenda et les créneaux proposés à la planification.</p>
+  </div>
+  <div class="card">
+    <div class="card-h">Jours fériés &amp; fermetures
+      <button class="act" onclick="addFerie()">+ Ajouter</button></div>
+    ${CFG.feries.map((f,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed #F0F1F4;font-size:.86rem">
+      <span>📅 ${f}</span>
+      <button class="aic del" style="margin-left:auto" onclick="CFG.feries.splice(${i},1);cfgSave('Jour retiré');render()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>`).join("")}
+  </div>`;
+}
+function togJour(j, el){
+  const i = CFG.jours.indexOf(j);
+  i > -1 ? CFG.jours.splice(i,1) : CFG.jours.push(j);
+  el.classList.toggle("on");
+  cfgSave("✓ Jours travaillés enregistrés");
+}
+function addFerie(){
+  const f = prompt("Jour à ajouter (ex : 11/11 — Armistice) :");
+  if(!f || !f.trim()) return;
+  CFG.feries.push(f.trim());
+  cfgSave("✓ Jour ajouté"); render();
+}
+
+/* ================= NUMÉROTATION ================= */
+function secNum(){
+  return `<div class="card">
+    <div class="card-h">Numérotation des documents</div>
+    <div class="fgrid">
+      <div><label class="lab">Préfixe des devis</label><input id="n-dp" value="${CFG.devisPrefix}"></div>
+      <div><label class="lab">Prochain numéro de devis</label><input id="n-dn" type="number" value="${CFG.devisNext}" min="1"></div>
+      <div><label class="lab">Préfixe des factures</label><input id="n-fp" value="${CFG.factPrefix}"></div>
+      <div><label class="lab">Prochain numéro de facture</label><input id="n-fn" type="number" value="${CFG.factNext}" min="1"></div>
+    </div>
+    <p class="hint" id="n-prev"></p>
+    <div class="savebar"><button class="savebtn" onclick="saveNum()">Enregistrer</button></div>
+  </div>
+  <div class="card">
+    <div class="card-h">Rappels légaux</div>
+    <p class="hint" style="margin-top:0">📌 La numérotation des <b>factures</b> doit être chronologique, continue et sans trou (art. 242 nonies A CGI). Les devis sont libres. En cas d'erreur sur une facture validée, on émet un <b>avoir</b>, on ne supprime jamais.</p>
+  </div>`;
+}
+function numPrev(){
+  const el = document.getElementById("n-prev");
+  if(!el) return;
+  el.innerHTML = "Aperçu : prochain devis <b>" + (document.getElementById("n-dp").value || "DEV") + "-2026-" + String(document.getElementById("n-dn").value).padStart(5,"0") + "</b> · prochaine facture <b>" + (document.getElementById("n-fp").value || "FAC") + "-2026-" + String(document.getElementById("n-fn").value).padStart(5,"0") + "</b>";
+}
+function saveNum(){
+  CFG.devisPrefix = document.getElementById("n-dp").value.trim() || "DEV";
+  CFG.devisNext = +document.getElementById("n-dn").value || 1;
+  CFG.factPrefix = document.getElementById("n-fp").value.trim() || "FAC";
+  CFG.factNext = +document.getElementById("n-fn").value || 1;
+  cfgSave("✓ Numérotation enregistrée");
+  numPrev();
+}
+document.addEventListener("input", e=>{ if(e.target.id && e.target.id.startsWith("n-")) numPrev(); });
+
+/* ================= MODÈLES ================= */
+function secTpl(){
+  return `<div class="card">
+    <div class="card-h">Modèles de documents
+      <button class="act" onclick="toast('📄 Éditeur de modèles — bientôt relié')">+ Nouveau modèle</button></div>
+    <table class="dt"><thead><tr>
+      <th>Nom</th><th>Par défaut</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th>
+    </tr></thead><tbody>
+      ${TPLS.map((t,i)=>`<tr>
+        <td><b>${t.n}</b></td>
+        <td>${t.def ? '<span class="bdg b-def">Défaut</span>' : '<span style="color:#C4C8D2">—</span>'}</td>
+        <td style="font-variant-numeric:tabular-nums;color:var(--muted)">${fd(t.maj)}</td>
+        <td><span class="acti">
+          ${t.def ? "" : `<button class="aic" title="Définir par défaut" onclick="setDefTpl(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></button>`}
+          <button class="aic" title="Modifier" onclick="toast('✏️ Éditeur de modèles — bientôt relié')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>
+          <button class="aic del" title="Supprimer" onclick="if(confirm('Supprimer ce modèle ?')){TPLS.splice(${i},1);render();toast('🗑 Modèle supprimé')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
+        </span></td>
+      </tr>`).join("")}
+    </tbody></table>
+    <p class="hint">Le modèle "par défaut" de chaque famille est celui qu'ouvrent les pages Devis, Facture et Rapport.</p>
+  </div>`;
+}
+function setDefTpl(i){
+  const fam = TPLS[i].n.split("—")[0].split(" ")[1] || "";
+  TPLS.forEach(t=>{ if(t.n.startsWith("Modèle de " + fam) || t.n.startsWith("Devis")) {} });
+  TPLS[i].def = true;
+  render(); toast("✓ « " + TPLS[i].n + " » est maintenant le modèle par défaut");
+}
+
+/* ================= SOCIÉTÉ ================= */
+function secSoc(){
+  const S = CFG.soc;
+  const F = (id, lab, val, full) => `<div class="${full ? "full" : ""}"><label class="lab">${lab}</label><input id="s-${id}" value="${val}"></div>`;
+  return `<div class="card">
+    <div class="card-h">Coordonnées légales &amp; bancaires</div>
+    <div class="fgrid">
+      ${F("nom","Raison sociale", S.nom, true)}
+      ${F("adr","Adresse", S.adr, true)}
+      ${F("cp","Code postal", S.cp)}
+      ${F("ville","Ville", S.ville)}
+      ${F("tel","Téléphone", S.tel)}
+      ${F("email","Email", S.email)}
+      ${F("site","Site web", S.site, true)}
+      ${F("siret","SIRET", S.siret)}
+      ${F("tva","N° TVA intracommunautaire", S.tva)}
+      ${F("certi","N° Certibiocide", S.certi)}
+      ${F("banque","Banque", S.banque)}
+      ${F("iban","IBAN", S.iban, true)}
+      ${F("bic","BIC / SWIFT", S.bic)}
+    </div>
+    <p class="hint">Ces informations alimentent l'en-tête et le pied de tes devis, factures et registres.</p>
+    <div class="savebar"><button class="savebtn" onclick="saveSoc()">Enregistrer</button></div>
+  </div>`;
+}
+function saveSoc(){
+  ["nom","adr","cp","ville","tel","email","site","siret","tva","certi","banque","iban","bic"].forEach(k=>{
+    CFG.soc[k] = document.getElementById("s-" + k).value.trim();
+  });
+  cfgSave("✓ Coordonnées de la société enregistrées");
+}
+
+/* ================= PERSONNALISATION ================= */
+function secBrand(){
+  return `<div class="card">
+    <div class="card-h">Personnalisation</div>
+    <span class="lab">Logo de la société</span>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <span id="b-logo" style="width:64px;height:64px;border-radius:16px;background:${CFG.c1};display:grid;place-items:center;color:#fff;font-family:'Sora';font-weight:800;font-size:1.3rem;overflow:hidden">TF</span>
+      <label class="rchip" style="cursor:pointer">↑ Téléverser un logo
+        <input type="file" accept="image/*" style="display:none" onchange="upLogo(this)"></label>
+    </div>
+    <div class="fgrid">
+      <div><label class="lab">Couleur principale</label>
+        <div style="display:flex;gap:9px;align-items:center">
+          <input type="color" id="b-c1" value="${CFG.c1}">
+          <input id="b-c1t" value="${CFG.c1}" style="max-width:130px;font-variant-numeric:tabular-nums">
+        </div></div>
+      <div><label class="lab">Couleur secondaire</label>
+        <div style="display:flex;gap:9px;align-items:center">
+          <input type="color" id="b-c2" value="${CFG.c2}">
+          <input id="b-c2t" value="${CFG.c2}" style="max-width:130px;font-variant-numeric:tabular-nums">
+        </div></div>
+    </div>
+    <p class="hint">🎨 Le logo et les couleurs habilleront tes documents PDF (devis, factures, rapports) — un réglage par entreprise cliente le jour du multi-comptes.</p>
+    <div class="savebar"><button class="savebtn" onclick="saveBrand()">Enregistrer</button></div>
+  </div>`;
+}
+function upLogo(inp){
+  const f = inp.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    document.getElementById("b-logo").innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover">';
+    toast("✓ Logo chargé (aperçu)");
+  };
+  r.readAsDataURL(f);
+}
+function saveBrand(){
+  CFG.c1 = document.getElementById("b-c1").value;
+  CFG.c2 = document.getElementById("b-c2").value;
+  cfgSave("✓ Personnalisation enregistrée");
+  render();
+}
+document.addEventListener("input", e=>{
+  if(e.target.id === "b-c1") document.getElementById("b-c1t").value = e.target.value;
+  if(e.target.id === "b-c2") document.getElementById("b-c2t").value = e.target.value;
+  if(e.target.id === "b-c1t") document.getElementById("b-c1").value = e.target.value;
+  if(e.target.id === "b-c2t") document.getElementById("b-c2").value = e.target.value;
+});
+
+/* ================= DIVERS ================= */
+function openDrawer(){
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("dveil").classList.add("open");
+  document.body.style.overflow = "hidden";
+  document.getElementById("drawer").scrollTop = 0;
+}
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("dveil").classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.addEventListener("keydown", e=>{ if(e.key === "Escape") closeDrawer(); });
+function toast(msg){
+  let t = document.getElementById("toast");
+  if(!t){ t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove("show"), 2400);
+}
+render();
+</script>
+</body>
+</html>
