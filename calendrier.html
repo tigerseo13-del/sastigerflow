@@ -505,6 +505,22 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .crumbs .cur{font-size:1.05rem;font-weight:700;letter-spacing:-.2px}
 .crumbs a{font-weight:600}
 .title-m{font-size:1.08rem}
+
+/* ===== Poignée de déplacement (mobile) ===== */
+.ev .grip{display:none}
+@media(pointer:coarse){
+  .ev .grip{display:grid;place-items:center;position:absolute;right:3px;top:3px;width:30px;height:30px;
+    border-radius:9px;background:rgba(255,255,255,.75);color:var(--evc,#EA4A10);font-size:.85rem;font-weight:800;
+    touch-action:none;z-index:3;box-shadow:0 1px 4px rgba(23,26,32,.15);line-height:1}
+  .ev.xs .grip,.ev.sm .grip{width:26px;height:26px;font-size:.72rem}
+}
+.ev.dragging .grip{background:#fff}
+@media(pointer:coarse){
+  .pcard{position:relative}
+  .pcard .grip{display:grid;place-items:center;position:absolute;right:5px;top:5px;width:30px;height:30px;
+    border-radius:9px;background:var(--orange-soft);color:var(--orange-deep);font-size:.85rem;font-weight:800;
+    touch-action:none;z-index:3;line-height:1}
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"><rect width="24" height="24" rx="6" fill="%23FF5A1F"/><path d="M12 4l6 3.4v4.3c0 3.8-2.5 6.4-6 7.7-3.5-1.3-6-3.9-6-7.7V7.4z" fill="none" stroke="%23fff" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.4 11.4h5.2M10 14h4" stroke="%23fff" stroke-width="1.9" stroke-linecap="round"/></svg>">
 </head>
@@ -874,7 +890,7 @@ function renderTray(){
   const list = [...PENDING].sort((a, b) => score(a) - score(b));
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
     const T = TYPES[p.type];
-    return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}" style="--evc:${T.c}">
+    return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}" style="--evc:${T.c}"><span class="grip" title="Glisser sur l'agenda">⠿</span>
       <div class="l1"><span>${T.ic}</span><span>${T.lbl}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">📵 À reprogrammer</span>':''}${p.suivi?'<span class="svb">🔁 Suivi</span>':''}${trayAge(p)}<span class="dur">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span></div>
       <div class="z">📍 ${p.cp} · ${p.ville}${p.rappel ? ' · <b style="color:#A16207">' + (p.suivi ? '📅 prévu ' : '📞 rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
       <div class="c">${p.client}</div>
@@ -1048,7 +1064,7 @@ function renderDay(){
         else if(v.start + v.dur <= NOWH) badge = `<span class="lbadge late">Retard</span>`;
       }
       return `<div class="ev ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
-        style="--evc:${TC.c};background:${TC.bg};top:${top}px;height:${h}px">
+        style="--evc:${TC.c};background:${TC.bg};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
         <div class="l1"><span class="cpv">📍 ${v.cp} · ${v.ville}</span>${conf.has(v.id)?'⚠️':''}${badge}${v.done ? (typeof REPORTS !== "undefined" && REPORTS[v.id] ? '<span class="repok ok">📋 ✓</span>' : '<span class="repok todo">📋 !</span>') : ''}
           <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button></div>
         <div class="ltype"><span class="ic">${T.ic}</span> ${T.lbl}</div>
@@ -1802,24 +1818,23 @@ scroller.addEventListener('pointerdown', e=>{
   }
   const beginDrag = () => {
     const r = el.getBoundingClientRect();
-    drag = {id, el, offY:e.clientY-r.top, sx:e.clientX, sy:e.clientY, moved:false,
-      bodies: [...document.querySelectorAll('.tcol-body')].map(b => ({b, r: b.getBoundingClientRect()})),
-      trayR: document.getElementById('tray').getBoundingClientRect(),
-      raf: null, lx:0, ly:0};
+    drag = {id, el, offY:e.clientY-r.top, sx:e.clientX, sy:e.clientY, moved:false, raf:null, lx:0, ly:0};
     try{ el.setPointerCapture(e.pointerId); }catch(err){}
   };
-  if(!matchMedia('(pointer:coarse)').matches){ beginDrag(); return; }
-  /* mobile : appui LONG (260 ms) pour saisir le bloc — sinon le doigt fait défiler */
-  pendDrag = {x:e.clientX, y:e.clientY, t:setTimeout(() => {
-    if(!pendDrag) return;
-    pendDrag = null;
+  if(matchMedia('(pointer:coarse)').matches){
+    /* mobile : on ne saisit QUE par la poignée ⠿ — le navigateur ne peut pas
+       déclencher de défilement depuis elle (touch-action:none), le geste est à nous */
+    if(!e.target.closest('.grip')) return;
+    e.preventDefault();
     beginDrag();
+    drag.moved = true;
     el.classList.add('dragging');
     if(navigator.vibrate) navigator.vibrate(12);
-  }, 260)};
+    return;
+  }
+  beginDrag();
 });
-let pendDrag = null;
-function pendCancel(){ if(pendDrag){ clearTimeout(pendDrag.t); pendDrag = null; } }
+function pendCancel(){}
 
 scroller.addEventListener('pointermove', e=>{
   if(pendDrag){
@@ -1849,12 +1864,15 @@ scroller.addEventListener('pointermove', e=>{
     if(!drag){ return; }
     drag.raf = null;
     const x = drag.lx, y = drag.ly;
+    /* positions mesurées À L'INSTANT du geste : le défilement ne fausse plus rien */
     let target = null;
-    drag.bodies.forEach(({b, r})=>{
+    document.querySelectorAll('.tcol-body').forEach(b=>{
       b.classList.remove('dropover');
+      const r = b.getBoundingClientRect();
       if(x >= r.left && x <= r.right) target = {b, r};
     });
-    const overTray = y >= drag.trayR.top && y <= drag.trayR.bottom;
+    const trayR = document.getElementById('tray').getBoundingClientRect();
+    const overTray = y >= trayR.top && y <= trayR.bottom;
     document.getElementById('tray').classList.toggle('dropover', overTray);
     drag.toTray = overTray;
     if(overTray){ drag.h = null; tipShow(x, y, "📥 Renvoyer au bac À planifier"); return; }
@@ -1933,7 +1951,10 @@ const trayEl = document.getElementById('traycards');
 trayEl.addEventListener('pointerdown', e=>{
   const card = e.target.closest('.pcard');
   if(!card) return;
+  /* mobile : saisie uniquement par la poignée ⠿ — le doigt libre fait défiler le bac */
+  if(matchMedia('(pointer:coarse)').matches && !e.target.closest('.grip')) return;
   if(VIEW!=="day"){ toast("Passe en vue Jour pour planifier 👆"); return; }
+  e.preventDefault();
   const pid = +card.dataset.pid;
   const r = card.getBoundingClientRect();
   const ghost = card.cloneNode(true);
@@ -1942,9 +1963,7 @@ trayEl.addEventListener('pointerdown', e=>{
   ghost.style.left = r.left+"px";
   ghost.style.top = r.top+"px";
   document.body.appendChild(ghost);
-  pdrag = {pid, ghost, offX:e.clientX-r.left, offY:e.clientY-r.top, col:null, h:null,
-    bodies: [...document.querySelectorAll('.tcol-body')].map(b => ({b, r: b.getBoundingClientRect()})),
-    raf: null, lx:0, ly:0};
+  pdrag = {pid, ghost, offX:e.clientX-r.left, offY:e.clientY-r.top, col:null, h:null, raf:null, lx:0, ly:0};
   card.setPointerCapture(e.pointerId);
 });
 trayEl.addEventListener('pointermove', e=>{
@@ -1959,7 +1978,9 @@ trayEl.addEventListener('pointermove', e=>{
     pdrag.ghost.style.left = (x - pdrag.offX) + "px";
     pdrag.ghost.style.top  = (y - pdrag.offY) + "px";
     pdrag.col = null;
-    pdrag.bodies.forEach(({b, r})=>{
+    /* positions mesurées en direct */
+    document.querySelectorAll('.tcol-body').forEach(b=>{
+      const r = b.getBoundingClientRect();
       b.classList.remove('dropover');
       if(x >= r.left && x <= r.right && y >= r.top && y <= r.bottom){
         b.classList.add('dropover');

@@ -364,10 +364,7 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
         <option>Urgente</option><option>Haute</option><option>Normale</option><option>Basse</option>
       </select>
       <select class="fsel" id="f-who" onchange="render()"><option value="all">Toute l'équipe</option></select>
-      <select class="fsel" id="f-lien" onchange="render()">
-        <option value="all">Tous les liens</option>
-        <option>Client</option><option>Devis</option><option>Contrat</option><option>Intervention</option><option>Facture</option>
-      </select>
+      
       <select class="fsel" id="f-sort" onchange="render()">
         <option value="due">Trier : échéance</option>
         <option value="prio">Trier : priorité</option>
@@ -464,13 +461,11 @@ function filtered(){
   const q = document.getElementById("q").value.toLowerCase().trim();
   const pr = document.getElementById("f-prio").value;
   const wh = document.getElementById("f-who").value;
-  const ln = document.getElementById("f-lien").value;
   const sort = document.getElementById("f-sort").value;
   const list = TASKS.filter(t =>
     (FSTAT === "all" || t.st === FSTAT) &&
     (pr === "all" || t.prio === pr) &&
     (wh === "all" || t.who === wh) &&
-    (ln === "all" || (t.lien && t.lien.t === ln)) &&
     (!q || t.titre.toLowerCase().includes(q) || (t.lien && t.lien.l.toLowerCase().includes(q)))
   );
   list.sort((a,b)=> sort === "prio" ? PRIORDER[a.prio] - PRIORDER[b.prio]
@@ -493,7 +488,7 @@ function render(){
     document.getElementById("rows").innerHTML = slice.map(t=>{
       const [cls,lbl] = STATS[t.st];
       return `<tr onclick="openTask(${t.id})">
-        <td><span class="tt">${t.titre}${t.lien ? `<small>→ ${t.lien.t} · ${t.lien.l}</small>` : ""}</span></td>
+        <td><span class="tt">${t.titre}</span></td>
         <td><span class="who"><span class="av">${ini(t.who)}</span>${t.who}</span></td>
         <td><span class="st ${cls}">${lbl}</span></td>
         <td><span class="pr"><i style="background:${PRIOS[t.prio]}"></i>${t.prio}</span></td>
@@ -601,7 +596,6 @@ function renderTask(){
       <div class="dkv"><span class="k">Assignée à</span><span class="v">${t.who}</span></div>
       <div class="dkv"><span class="k">Échéance</span><span class="v" ${isLate(t)?'style="color:var(--red)"':''}>${fdate(t.due)}${isLate(t)?' · En retard':''}</span></div>
       <div class="dkv"><span class="k">Priorité</span><span class="v">${t.prio}</span></div>
-      ${t.lien ? `<div class="dkv"><span class="k">Liée à</span><span class="v"><a href="${t.lien.h}" style="color:var(--orange-deep)">${t.lien.t} · ${t.lien.l} →</a></span></div>` : ""}
       ${t.note ? `<div class="dkv"><span class="k">Note interne</span><span class="v">${t.note}</span></div>` : ""}
     </div>
 
@@ -689,13 +683,7 @@ function openNewTask(editId){
       <div class="rchips">${Object.keys(PRIOS).map(p=>`<span class="rchip ${p===NPRIO?'on':''}" onclick="nPrio('${p}',this)"><i style="width:7px;height:7px;border-radius:50%;background:${PRIOS[p]}"></i> ${p}</span>`).join("")}</div>
     </div>
 
-    <div class="dcard">
-      <div class="dh">Liée à</div>
-      <div class="frow2">
-        <select id="nt-lt">${["","Client","Devis","Contrat","Intervention","Facture"].map(o=>`<option value="${o}" ${EDIT && EDIT.lien && EDIT.lien.t===o ? "selected" : ""}>${o || "Aucun lien"}</option>`).join("")}</select>
-        <input id="nt-ll" placeholder="Ex : Ironwood Solutions" value="${EDIT && EDIT.lien ? EDIT.lien.l : ""}">
-      </div>
-    </div>
+    
 
     <div class="dcard">
       <div class="dh">Sous-tâches</div>
@@ -741,16 +729,13 @@ function saveTask(){
     toast("⚠️ Donne un titre à la tâche");
     return;
   }
-  const lt = document.getElementById("nt-lt").value;
-  const ll = document.getElementById("nt-ll").value.trim();
-  const subs = NSUB.filter(x=>x.trim());
+    const subs = NSUB.filter(x=>x.trim());
   if(EDIT){
     EDIT.titre = titre;
     EDIT.desc = document.getElementById("nt-desc").value.trim();
     EDIT.who = document.getElementById("nt-who").value;
     EDIT.prio = NPRIO;
     EDIT.due = document.getElementById("nt-due").value || EDIT.due;
-    EDIT.lien = lt ? {t:lt, l:(ll || lt), h:"#"} : null;
     EDIT.note = document.getElementById("nt-note").value.trim();
     EDIT.sub = subs.map((x,i)=>({t:x.trim(), ok:EDIT.sub[i] ? EDIT.sub[i].ok : false}));
     DID = EDIT.id;
