@@ -131,6 +131,18 @@ label.lab{display:block;font-size:.76rem;font-weight:600;color:var(--ink-2);marg
   background:#FFFFFF;border:1px solid #F0F1F4;box-shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
   display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .hero::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--orange)}
+.hero.dark{background:#171A20;border-color:#171A20}
+.hero.dark::after{background:var(--orange)}
+.hero.dark h1{color:#fff}
+.hero.dark .dresume{color:#9BA1AE}
+.hnum{display:inline-flex;font-family:'Sora';font-weight:800;font-size:.72rem;letter-spacing:.08em;color:var(--orange);background:rgba(255,90,31,.12);border:1px solid rgba(255,90,31,.35);padding:4px 11px;border-radius:9px;margin-bottom:9px}
+.herotot{text-align:right;padding:0 18px;border-right:1px solid #2C3039;margin-right:4px}
+.herotot small{display:block;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#8B919E}
+.herotot b{display:block;font-family:'Sora';font-size:1.85rem;font-weight:800;letter-spacing:-.8px;color:var(--orange);font-variant-numeric:tabular-nums;line-height:1.15}
+.herotot span{font-size:.7rem;color:#8B919E;font-weight:600}
+.btn.hdark{border-color:#2C3039;background:#1F222A;color:#C7CBD4}
+.btn.hdark:hover{border-color:var(--orange);color:#fff}
+@media(max-width:760px){.herotot{border-right:0;text-align:left;padding:0}}
 .hero h1{font-family:'Sora';font-size:1.3rem;font-weight:800;letter-spacing:-.4px}
 .hero .acts{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 .dresume{font-size:.78rem;color:var(--muted);margin-top:4px;font-weight:500}
@@ -299,19 +311,29 @@ label.lab{display:block;font-size:.76rem;font-weight:600;color:var(--ink-2);marg
     <div class="crumbs"><span>Factures</span> › <span class="cur">Nouvelle facture</span></div>
     <div class="title-m">Nouvelle facture</div>
     <div class="spacer"></div>
+    <button class="gsbtn" onclick="gsOpen()" aria-label="Recherche globale">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+      <span>Rechercher…</span><kbd>⌘K</kbd>
+    </button>
   </div>
 
   <div class="page">
 
     <!-- ===== BANDEAU ===== -->
-    <section class="hero">
+    <section class="hero dark">
       <div>
+        <div class="hnum" id="h-num">FAC-2026-00873</div>
         <h1>Nouvelle facture</h1>
         <div class="dresume" id="dresume">Le résumé de la facture s'écrit ici au fur et à mesure</div>
       </div>
+      <div class="herotot">
+        <small>Total TTC</small>
+        <b id="hero-ttc">0,00 €</b>
+        <span id="hero-ac">—</span>
+      </div>
       <div class="acts">
         <span class="draftpill" id="draftpill">● Brouillon</span>
-        <button class="btn outline" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>PDF</button>
+        <button class="btn outline hdark" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>PDF</button>
         <button class="btn green" id="btn-valider" onclick="askValidate()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6L9 17l-5-5"/></svg>Valider la facture</button>
         <button class="btn primary disabled" id="btn-send" onclick="openMail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>Envoyer</button>
       </div>
@@ -747,6 +769,9 @@ function renderPDF(){
 
   g('t-ht').textContent  = eur(ht);
   g('t-ttc').textContent = eur(ttc);
+  rollTo(ttc);
+  g('hero-ac').textContent = acompteM > 0 ? "acompte déjà versé " + eur(acompteM) : "";
+  g('h-num').textContent = g('f-num').value || "FAC-2026-—";
   g('t-remrow').style.display = rem>0 ? '' : 'none';
   g('t-rem').textContent = "− " + eur(remiseM);
   g('t-ac').textContent  = "− " + eur(acompteM) + " (" + acp + " %)";
@@ -875,6 +900,25 @@ if(window.matchMedia("(max-width:1120px)").matches){
   document.getElementById('prevcol').classList.add('hideM');
 }
 
+let _roll = {cur:0, raf:null};
+function rollTo(target){
+  const el = document.getElementById('hero-ttc');
+  if(!el) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    el.textContent = eur(target); _roll.cur = target; return;
+  }
+  cancelAnimationFrame(_roll.raf);
+  const from = _roll.cur, t0 = performance.now(), DUR = 380;
+  const step = now => {
+    const p = Math.min(1, (now - t0) / DUR);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = eur(from + (target - from) * e);
+    if(p < 1) _roll.raf = requestAnimationFrame(step);
+    else _roll.cur = target;
+  };
+  _roll.raf = requestAnimationFrame(step);
+  _roll.cur = target;
+}
 /* ================= CATALOGUE / DUPLICATION ================= */
 const CATALOGUE = [
   {designation:"Dératisation — appâtage sécurisé", desc:"Pose de postes d'appâtage sécurisés verrouillés, produits certifiés Certibiocide. Plan d'appâtage et registre fournis.", qte:1, pu:180, tva:10, img:()=>svgU(ILL.rat)},
@@ -992,6 +1036,124 @@ function applyLock(){
 }
 
 render();
+</script>
+
+<!-- ===== Recherche globale (⌘K) ===== -->
+<style>
+.gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line,#EBECF1);color:var(--muted,#6C7285);font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit}
+.gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,#3D434E)}
+.gsbtn svg{width:15px;height:15px;flex:none}
+.gsbtn kbd{font-family:inherit;font-size:.66rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted,#6C7285)}
+.gs-veil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:120;backdrop-filter:blur(2px)}
+.gs-veil.open{display:block}
+.gs-pal{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 26px));background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);z-index:121;overflow:hidden;display:none}
+.gs-pal.open{display:block}
+.gs-in{display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid #EBECF1}
+.gs-in svg{width:18px;height:18px;stroke:#6C7285;flex:none}
+.gs-in input{flex:1;border:0;font-family:inherit;font-size:1rem;color:#171A20;background:none;padding:0}
+.gs-in input:focus{outline:none;box-shadow:none}
+.gs-res{max-height:52vh;overflow-y:auto;padding:8px}
+.gs-g{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#6C7285;padding:9px 12px 4px}
+.gs-r{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;cursor:pointer;font-size:.88rem}
+.gs-r:hover,.gs-r.sel{background:#FFF1EA}
+.gs-r .gi{width:32px;height:32px;border-radius:10px;background:#F1F2F5;display:grid;place-items:center;font-size:.95rem;flex:none}
+.gs-r b{display:block;font-weight:600;color:#171A20}
+.gs-r small{display:block;font-size:.73rem;color:#6C7285}
+.gs-r .go{margin-left:auto;font-size:.68rem;color:#C4C8D2;flex:none}
+.gs-r.sel .go{color:#EA4A10;font-weight:700}
+.gs-empty{padding:26px;text-align:center;color:#6C7285;font-size:.86rem}
+@media(max-width:760px){.gsbtn span,.gsbtn kbd{display:none}.gsbtn{width:40px;justify-content:center;padding:0}}
+</style>
+<div class="gs-veil" id="gs-veil" onclick="gsClose()"></div>
+<div class="gs-pal" id="gs-pal">
+  <div class="gs-in">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="gs-q" placeholder="Client, téléphone, devis, facture, page…" autocomplete="off">
+  </div>
+  <div class="gs-res" id="gs-res"></div>
+</div>
+<script>
+(function(){
+  var CL = [
+    {n:"Ironwood Solutions", s:"Paris 11e - 06 12 34 56 78", h:"client.html"},
+    {n:"Boulangerie Dupont", s:"Asnieres - 06 45 22 18 90", h:"clients.html"},
+    {n:"Pharmacie Centrale", s:"Paris 15e - 01 45 32 10 87", h:"clients.html"},
+    {n:"Hotel du Parc", s:"Vincennes - 01 43 28 55 12", h:"clients.html"},
+    {n:"Restaurant Le Baobab", s:"Paris 18e - 06 52 30 41 78", h:"clients.html"},
+    {n:"M. Diallo", s:"Saint-Ouen - 06 61 44 28 03", h:"clients.html"},
+    {n:"Mme Perrin", s:"Paris 13e - 06 78 12 45 66", h:"clients.html"},
+    {n:"Mme Ferreira", s:"Ivry - 06 33 90 71 25", h:"clients.html"},
+    {n:"Syndic Foncia Lilas", s:"Paris 20e - 01 40 31 62 00", h:"clients.html"},
+    {n:"Entrepot Central", s:"Pantin - 01 48 91 07 33", h:"clients.html"},
+    {n:"Camping Val de Seine", s:"Draveil - 01 69 03 88 21", h:"clients.html"}
+  ];
+  var DOC = [
+    {n:"DEV-2026-01287", s:"Devis - punaises de lit", h:"devis.html"},
+    {n:"FAC-2026-00873", s:"Facture - Ironwood Solutions", h:"facture.html"},
+    {n:"FAC-2026-00858", s:"Facture en retard - 1 250 EUR", h:"facture-liste.html"},
+    {n:"CTR-2026-04729", s:"Contrat annuel - Ironwood", h:"index.html"}
+  ];
+  var PG = [
+    {n:"Tableau de bord", i:"🏠", h:"dashboard.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},
+    {n:"Clients", i:"👥", h:"clients.html"},{n:"Nouveau client", i:"➕", h:"client-nouveau.html"},
+    {n:"Nouvelle intervention", i:"🗓️", h:"intervention-nouvelle.html"},{n:"Devis", i:"🧾", h:"devis-liste.html"},
+    {n:"Nouveau devis", i:"✏️", h:"devis.html"},{n:"Factures", i:"💶", h:"facture-liste.html"},
+    {n:"Taches", i:"✅", h:"taches.html"},{n:"Techniciens", i:"👷", h:"techniciens.html"},
+    {n:"Rapports", i:"📊", h:"rapports.html"},{n:"Reglages", i:"⚙️", h:"reglages.html"}
+  ];
+  var SEL = 0, RES = [];
+  var norm = function(x){ return x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\s.\-]/g,""); };
+  function search(q){
+    var nq = norm(q);
+    if(!nq) return [];
+    var out = [];
+    CL.forEach(function(c){ if(norm(c.n).indexOf(nq) > -1 || norm(c.s).indexOf(nq) > -1) out.push({g:"Clients", i:"👤", n:c.n, s:c.s, h:c.h}); });
+    DOC.forEach(function(d){ if(norm(d.n).indexOf(nq) > -1 || norm(d.s).indexOf(nq) > -1) out.push({g:"Documents", i:"📄", n:d.n, s:d.s, h:d.h}); });
+    PG.forEach(function(p){ if(norm(p.n).indexOf(nq) > -1) out.push({g:"Pages", i:p.i, n:p.n, s:"", h:p.h}); });
+    return out.slice(0, 9);
+  }
+  function draw(){
+    var box = document.getElementById("gs-res");
+    if(!RES.length){
+      var q = document.getElementById("gs-q").value.trim();
+      box.innerHTML = q ? '<div class="gs-empty">Aucun resultat pour « ' + q + ' »</div>'
+        : '<div class="gs-empty">Tape un nom de client, un numero de telephone,<br>une reference de devis/facture ou une page…</div>';
+      return;
+    }
+    var html = "", lastG = "";
+    RES.forEach(function(r, i){
+      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
+      html += '<div class="gs-r ' + (i === SEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsSel(' + i + ')">'
+        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
+        + '<span class="go">Entree ↵</span></div>';
+    });
+    box.innerHTML = html;
+  }
+  window.gsSel = function(i){ SEL = i; draw(); };
+  window.gsOpen = function(){
+    document.getElementById("gs-veil").classList.add("open");
+    document.getElementById("gs-pal").classList.add("open");
+    var inp = document.getElementById("gs-q");
+    inp.value = ""; RES = []; SEL = 0; draw();
+    setTimeout(function(){ inp.focus(); }, 30);
+  };
+  window.gsClose = function(){
+    document.getElementById("gs-veil").classList.remove("open");
+    document.getElementById("gs-pal").classList.remove("open");
+  };
+  document.getElementById("gs-q").addEventListener("input", function(){
+    RES = search(this.value); SEL = 0; draw();
+  });
+  document.addEventListener("keydown", function(e){
+    var open = document.getElementById("gs-pal").classList.contains("open");
+    if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); open ? gsClose() : gsOpen(); return; }
+    if(!open) return;
+    if(e.key === "Escape"){ gsClose(); }
+    else if(e.key === "ArrowDown"){ e.preventDefault(); SEL = Math.min(RES.length - 1, SEL + 1); draw(); }
+    else if(e.key === "ArrowUp"){ e.preventDefault(); SEL = Math.max(0, SEL - 1); draw(); }
+    else if(e.key === "Enter" && RES[SEL]){ location.href = RES[SEL].h; }
+  });
+})();
 </script>
 </body>
 </html>
