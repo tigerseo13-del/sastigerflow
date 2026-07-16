@@ -433,6 +433,13 @@ function saveClient(){
 }
 /* ===== Enregistrement Supabase (repli : mode démo si non connecté) ===== */
 const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+function inboxPush(row){
+  try{
+    const box = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]");
+    box.push(row);
+    localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(box));
+  }catch(e){}
+}
 async function sbSave(nom){
   const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
   const row = {
@@ -449,7 +456,8 @@ async function sbSave(nom){
   try{
     const {data:{session}} = await SB.auth.getSession();
     if(!session){
-      toast("✓ « " + nom + " » créé (mode démo — connecte-toi pour enregistrer en base)");
+      inboxPush(row);
+      toast("✓ « " + nom + " » créé — il sera versé dans la base à ta prochaine connexion");
       setTimeout(()=>{ location.href = "clients.html"; }, 1300);
       return;
     }
@@ -458,7 +466,9 @@ async function sbSave(nom){
     toast("✅ « " + nom + " » enregistré dans la base — visible sur tous vos appareils");
     setTimeout(()=>{ location.href = "clients.html"; }, 1300);
   }catch(e){
-    toast("⚠️ Enregistrement impossible : " + ((e && e.message) || "erreur réseau"));
+    inboxPush(row);
+    toast("⚠️ Base injoignable — « " + nom + " » gardé au chaud, il sera versé automatiquement");
+    setTimeout(()=>{ location.href = "clients.html"; }, 1600);
   }
 }
 function toast(msg){
@@ -731,7 +741,6 @@ if(matchMedia("(min-width:761px)").matches){
       <a href="facture-liste.html"><span class="i">&#128182;</span>Factures</a>
       <a href="taches.html"><span class="i">&#9989;</span>Tâches</a>
       <a href="techniciens.html"><span class="i">&#128295;</span>Techniciens</a>
-      <a href="plan-appatage.html"><span class="i">&#128205;</span>Plan d'appâtage</a>
       <a href="rapports.html"><span class="i">&#128202;</span>Rapports</a>
       <a href="reglages.html"><span class="i">&#9881;&#65039;</span>Réglages</a>
     </div>
