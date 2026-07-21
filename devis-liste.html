@@ -129,17 +129,6 @@ h1,.num{font-family:'Sora',sans-serif}
 .dcard .dte{margin-left:auto;font-size:.76rem;color:var(--muted)}
 
 /* Pipeline */
-.pipecard{background:var(--card);border-radius:16px;box-shadow:var(--shadow);border:1px solid #F0F1F4;padding:14px 17px;margin-bottom:14px}
-.pipe{display:flex;height:12px;border-radius:7px;overflow:hidden;gap:2px}
-.pipe i{display:block;height:100%;min-width:6px}
-.pipe .pg{background:#0E8A68}
-.pipe .pa{background:#D9A408}
-.pipe .pe{background:#2E5CE6}
-.pipe .pp{background:#D63B33}
-.pipe .px{background:#C6CCD8}
-.pipeleg{display:flex;gap:16px;flex-wrap:wrap;margin-top:9px;font-size:.76rem;color:var(--ink-2);font-weight:600}
-.pipeleg span{display:inline-flex;align-items:center;gap:6px}
-.pipeleg i{width:10px;height:10px;border-radius:3px;display:inline-block}
 
 /* Actions rapides */
 .acts{display:flex;gap:6px;justify-content:flex-end}
@@ -229,6 +218,72 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .crumbs a{font-weight:600}
 .title-m{font-size:1.08rem}
 .ref{font-family:ui-monospace,monospace;font-size:.68rem!important;color:#9CA1AD!important;white-space:nowrap}
+
+/* ===== recherche : champ visible + touche / ===== */
+@media(min-width:980px){
+  .gsbtn{min-width:250px;justify-content:flex-start;background:#fff}
+  .gsbtn span{flex:1;text-align:left}
+  .gsbtn kbd.slash{margin-left:0}
+}
+/* ===== tiroir aperçu ===== */
+.qveil{position:fixed;inset:0;background:rgba(16,18,22,.42);backdrop-filter:blur(2px);z-index:120;opacity:0;pointer-events:none;transition:.2s}
+.qveil.open{opacity:1;pointer-events:auto}
+.qdrawer{position:fixed;top:0;right:0;bottom:0;width:480px;max-width:100%;background:var(--bg);z-index:125;transform:translateX(105%);transition:transform .26s cubic-bezier(.2,.85,.25,1);overflow-y:auto;padding:12px 14px 24px}
+.qdrawer.open{transform:none}
+.qbar{position:sticky;top:-12px;z-index:5;display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #F0F1F4;border-left:5px solid var(--orange);border-radius:14px;padding:14px 16px;margin-bottom:11px;box-shadow:0 4px 14px -8px rgba(23,26,32,.14)}
+.qbar b{font-family:'Sora';font-size:1rem}
+.qx{width:36px;height:36px;border-radius:10px;background:var(--bg);border:0;cursor:pointer;font-size:.9rem;color:var(--ink-2)}
+.qcard{background:#fff;border:1px solid #F0F1F4;border-radius:15px;padding:17px 18px;margin-bottom:11px}
+.qcli{font-family:'Sora';font-weight:800;font-size:1.08rem}
+.qcli small{display:block;font-family:'Inter';font-weight:500;font-size:.74rem;color:var(--muted);margin-top:2px}
+.qobj{font-size:.85rem;color:var(--ink-2);margin:10px 0 4px}
+.qamt{font-family:'Sora';font-weight:800;font-size:1.7rem;letter-spacing:-.6px;color:var(--orange-deep);margin:6px 0 10px}
+.qamt small{font-size:.8rem;color:var(--muted);font-weight:600}
+.qrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.qkv{display:flex;justify-content:space-between;font-size:.8rem;padding:8px 0;border-bottom:1px dashed #F0F1F4}
+.qkv:last-child{border-bottom:0}
+.qkv span{color:var(--muted)}
+.qacts{display:flex;flex-direction:column;gap:8px}
+.qbig{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--orange);color:#fff;font-weight:700;font-size:.88rem;padding:13px;border-radius:12px;text-decoration:none;box-shadow:0 6px 16px -6px rgba(255,90,31,.5)}
+.qsec{display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1.5px solid var(--line);color:var(--ink-2);font-weight:600;font-size:.84rem;padding:12px;border-radius:12px;cursor:pointer;font-family:inherit}
+.qsec:hover{border-color:#D5D8DF}
+@media(max-width:760px){.qdrawer{width:100%}}
+
+/* ===== polissage UX transversal ===== */
+/* 1. focus clavier visible : accessibilité + navigation Tab */
+:focus-visible{outline:2.5px solid var(--orange,#FF5A1F);outline-offset:2px;border-radius:6px}
+button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
+/* 2. retour tactile universel : tout ce qui se presse se comprime */
+button:active, .chip:active, .fchip:active, .skchip:active, .rchip:active, .bcat:active,
+a.btn:active, .btn:active, .qbig:active, .qsec:active, .dbig:active, .addline:active{transform:scale(.97)}
+/* 3. les lignes cliquables se déclarent : curseur + fond au survol */
+tbody tr[onclick]{cursor:pointer;transition:background .12s}
+tbody tr[onclick]:hover{background:#FAFAFC}
+tbody tr[onclick]:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange,#FF5A1F)}
+/* 4. les chiffres s'alignent en colonnes (tableaux, montants, KPI) */
+td, .amt, .num, .qamt, .kpi, .dte{font-variant-numeric:tabular-nums}
+/* 5. pas de surlignage accidentel sur l'interactif */
+button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-select:none;user-select:none}
+/* sélection de texte aux couleurs de la maison */
+::selection{background:#FFD9C4;color:#171A20}
+/* 6. barres de défilement fines et discrètes partout */
+*{scrollbar-width:thin;scrollbar-color:#D8DAE1 transparent}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-thumb{background:#D8DAE1;border-radius:5px}
+*::-webkit-scrollbar-thumb:hover{background:#C2C6CE}
+*::-webkit-scrollbar-track{background:transparent}
+/* respect du mode « réduire les animations » du système */
+@media(prefers-reduced-motion:reduce){
+  *, *::before, *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+.qmenu{position:absolute;bottom:calc(100% + 6px);left:0;right:0;z-index:10;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 16px 44px -12px rgba(23,26,32,.3);padding:6px}
+.qmenu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;font-family:inherit;font-size:.83rem;font-weight:600;color:var(--ink-2);padding:10px 12px;border-radius:9px;cursor:pointer}
+.qmenu button:hover{background:var(--bg)}
+.qmenu .qdanger{color:var(--red)}
+.qsep{height:1px;background:var(--line);margin:5px 8px}
+.qnew{margin-left:auto;background:var(--green-bg);color:var(--green-d);font-size:.58rem;font-weight:800;padding:2px 8px;border-radius:7px;text-transform:uppercase}
+.navbot{margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}
+.side-user{margin-top:0!important}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"><rect width="24" height="24" rx="6" fill="%23FF5A1F"/><path d="M12 4l6 3.4v4.3c0 3.8-2.5 6.4-6 7.7-3.5-1.3-6-3.9-6-7.7V7.4z" fill="none" stroke="%23fff" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.4 11.4h5.2M10 14h4" stroke="%23fff" stroke-width="1.9" stroke-linecap="round"/></svg>">
 </head>
@@ -253,6 +308,8 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
     <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
     <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
     <a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <nav class="nav navbot">
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
   <div class="side-user">
@@ -269,7 +326,7 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
     <div class="spacer"></div>
     <button class="gsbtn" onclick="gsOpen()" aria-label="Recherche globale">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-      <span>Rechercher…</span><kbd>⌘K</kbd>
+      <span>Rechercher clients, pages, actions…</span><kbd class="slash">/</kbd><kbd>⌘K</kbd>
     </button>
     <button class="btn relbtn" onclick="relOpen()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.9-3L23 10M1 14l4.6 4a9 9 0 0014.9-3"/></svg>Relances auto <span class="relst" id="relst">ON</span></button>
     <a class="btn primary" href="devis.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Nouveau devis</a>
@@ -286,12 +343,7 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
     </div>
 
     <!-- Pipeline -->
-    <div class="pipecard">
-      <div class="pipe" id="pipe"></div>
-      <div class="pipeleg" id="pipeleg"></div>
-    </div>
-
-    <!-- Filtres -->
+<!-- Filtres -->
     <div class="filters">
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -480,7 +532,7 @@ function render(){
   if(sort==="recent")    list.sort((a,b)=>b.date.localeCompare(a.date));
 
   document.getElementById('tbody').innerHTML = list.length ? list.map(d=>`
-    <tr onclick="location.href='devis.html'">
+    <tr onclick="qv('${d.ref}')">
       <td class="cl"><b>${d.client}</b><small>${d.ct}</small></td>
       <td>${d.titre}</td>
       <td class="amt">${eur(d.montant)}</td>
@@ -565,10 +617,10 @@ function pipeline(){
     ["pg","Gagné",sum("gagne")], ["pa","En attente",sum("attente")],
     ["pe","Envoyé",sum("envoye")], ["pp","Perdu",sum("perdu")], ["px","Expiré",sum("expire")]
   ];
-  document.getElementById('pipe').innerHTML =
+  (document.getElementById('pipe') || {innerHTML:null,style:{}}).innerHTML =
     seg.filter(x=>x[2]>0).map(x=>`<i class="${x[0]}" style="width:${x[2]/tot*100}%" title="${x[1]}"></i>`).join("");
   const col = {pg:"#0E8A68",pa:"#E8930C",pe:"#2E5CE6",pp:"#D63B33",px:"#C6CCD8"};
-  document.getElementById('pipeleg').innerHTML =
+  (document.getElementById('pipeleg') || {innerHTML:null,style:{}}).innerHTML =
     seg.map(x=>`<span><i style="background:${col[x[0]]}"></i>${x[1]} · ${eur(x[2])}</span>`).join("");
 }
 const _stats = stats;
@@ -687,6 +739,11 @@ render();
   document.addEventListener("keydown", function(e){
     var open = document.getElementById("gs-pal").classList.contains("open");
     if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); open ? gsClose() : gsOpen(); return; }
+    if(e.key === "/" && !open){
+      const t = e.target;
+      if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      e.preventDefault(); gsOpen(); return;
+    }
     if(!open) return;
     if(e.key === "Escape"){ gsClose(); }
     else if(e.key === "ArrowDown"){ e.preventDefault(); SEL = Math.min(RES.length - 1, SEL + 1); draw(); }
@@ -804,6 +861,84 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
   }).subscribe();
 })();
 
+</script>
+<div class="qveil" id="qveil" onclick="if(event.target===this)qvClose()"></div>
+<aside class="qdrawer" id="qdrawer"><div id="qbody"></div></aside>
+<script>
+function qv(ref){
+  const d = DEVIS.find(x => x.ref === ref);
+  if(!d) return;
+  document.getElementById("qbody").innerHTML = `
+    <div class="qbar"><b>🧾 Aperçu du devis</b><button class="qx" onclick="qvClose()">✕</button></div>
+    <div class="qcard">
+      <div class="qcli">${d.client}<small>${d.ct} · ${d.pro ? "Professionnel" : "Particulier"}</small></div>
+      <div class="qobj">${d.titre}</div>
+      <div class="qamt">${eur(d.montant)} <small>TTC</small></div>
+      <div class="qrow"><span class="st st-${d.statut}">${LBL[d.statut]}</span>${relBadge(d)}${expChip(d)}</div>
+      <div class="qkv"><span>Créé le</span><b>${fdate(d.date)}</b></div>
+      <div class="qkv"><span>Valable jusqu'au</span><b>${fdate(d.valid)}</b></div>
+      <div class="qkv"><span>Référence</span><b style="font-family:ui-monospace,monospace;font-size:.74rem;color:var(--muted)">${d.ref}</b></div>
+    </div>
+    <div class="qacts">
+      <a class="qbig" href="devis.html">✏️ Ouvrir en grand</a>
+      ${d.statut === "envoye" || d.statut === "attente" ? `<button class="qsec" onclick="toast('📤 Relance envoyée à ' + '${d.client.replace(/'/g,"\\'")}')">📤 Relancer maintenant</button>` : ""}
+      ${d.statut !== "gagne" ? `<button class="qsec" onclick="qvGagne('${d.ref}')">🏆 Marquer gagné</button>` : ""}
+      <button class="qsec" onclick="qvDup('${d.ref}')">🔁 Dupliquer</button>
+      <div style="position:relative">
+        <button class="qsec" style="width:100%" onclick="qvMenu(event)">⋯ Plus d'actions</button>
+        <div class="qmenu" id="qmenu" style="display:none">
+          <button onclick="toast('⬇️ PDF du devis téléchargé')">📄 Télécharger le PDF</button>
+          <button onclick="toast('✉️ Devis envoyé par e-mail à ${d.client.replace(/'/g,"\\'")}')">✉️ Envoyer par e-mail</button>
+          <div class="qsep"></div>
+          ${d.statut === "gagne" ? `
+          <button onclick="toast('💶 Facture créée depuis ${d.ref} — dans l\\'onglet Factures')">💶 Transformer en facture</button>
+          <button onclick="toast('📄 Contrat récurrent proposé depuis ${d.ref} 🐯')">📄 Transformer en contrat <span class="qnew">malin</span></button>
+          <div class="qsep"></div>` : ""}
+          ${d.statut === "attente" || d.statut === "brouillon"
+            ? `<button class="qdanger" onclick="qvDel('${d.ref}')">🗑 Supprimer le brouillon</button>`
+            : `<button class="qdanger" onclick="qvCancel('${d.ref}')">✕ Annuler le devis</button>`}
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("qveil").classList.add("open");
+  document.getElementById("qdrawer").classList.add("open");
+}
+function qvClose(){
+  document.getElementById("qveil").classList.remove("open");
+  document.getElementById("qdrawer").classList.remove("open");
+}
+function qvGagne(ref){
+  const d = DEVIS.find(x => x.ref === ref);
+  if(d){ d.statut = "gagne"; render(); qv(ref); toast("🏆 " + d.client + " — devis gagné !"); }
+}
+function qvMenu(e){
+  e.stopPropagation();
+  const m = document.getElementById("qmenu");
+  m.style.display = m.style.display === "none" ? "block" : "none";
+}
+document.addEventListener("click", e => {
+  const m = document.getElementById("qmenu");
+  if(m && !e.target.closest(".qmenu") && !e.target.textContent.includes("Plus d'actions")) m.style.display = "none";
+});
+function qvDel(ref){
+  if(!confirm("Supprimer définitivement ce brouillon ?")) return;
+  const i = DEVIS.findIndex(x => x.ref === ref);
+  if(i > -1){ DEVIS.splice(i, 1); render(); qvClose(); toast("🗑 Brouillon supprimé"); }
+}
+function qvCancel(ref){
+  const d = DEVIS.find(x => x.ref === ref);
+  if(d){ d.statut = "perdu"; render(); qv(ref); toast("✕ Devis annulé (conservé pour la numérotation)"); }
+}
+function qvDup(ref){
+  const d = DEVIS.find(x => x.ref === ref);
+  if(!d) return;
+  const maxN = Math.max(...DEVIS.map(x => +x.ref.split("-")[2]));
+  const copy = {...d, ref:"DEV-2026-" + String(maxN + 1).padStart(5, "0"), statut:"attente", date:new Date().toISOString().slice(0,10)};
+  DEVIS.unshift(copy);
+  render(); qvClose();
+  toast("🔁 Devis dupliqué → " + copy.ref);
+}
+document.addEventListener("keydown", e => { if(e.key === "Escape") qvClose(); });
 </script>
 </body>
 </html>
