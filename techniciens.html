@@ -308,7 +308,6 @@ button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-sele
   <nav class="nav">
     <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
     <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
-    <a href="tournee.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-5.5-2.2V4l5.5 2.2L15 4l5.5 2.2V20L15 17.8zM9 6.2v13.8M15 4v13.8"/></svg>Tournées</a>
     <a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
     <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
     <a href="contrats-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
@@ -443,7 +442,7 @@ button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-sele
 
       <div class="sec">
         <h3><span class="tick"></span>Matériel attribué</h3>
-        <ul class="mat" id="d-mat"></ul>
+        <ul class="mat" id="d-matlist"></ul>
       </div>
 
     </div>
@@ -607,7 +606,6 @@ const TECHS = [
    certiExp:"2026-09-30", ctVeh:"2027-03-18",
    caCat:{"Guêpes / Frelons":1020,"Chenilles processionnaires":610,"Rongeurs":297.20},
    planning:[]},
-,
 {prenom:"Wissam", nom:"", tel:"06 71 20 84 46", mail:"wissam@tiger-hygiene3d.fr",
    veh:"Renault Kangoo", plaque:"GL-118-AD", certi:"356902", grad:"linear-gradient(135deg,#EE6A6A,#B52F28)",
    zones:["Paris","93 Seine-Saint-Denis"],
@@ -734,6 +732,7 @@ function render(){
 function openFiche(i){
   CUR = i;
   const t = TECHS[i];
+  if(!t) return;                       /* index inconnu : on ne crashe pas la page */
   const g = id => document.getElementById(id);
   g('d-av').textContent = t.prenom[0]+t.nom[0];
   g('d-av').style.background = t.grad;
@@ -746,6 +745,13 @@ function openFiche(i){
   g('d-plaque').textContent = t.plaque;
   g('d-certi').textContent = "n° "+t.certi;
   renderSkills(t);
+  const _ml = g('d-matlist');
+  if(_ml){
+    const _cm = (typeof skOf === "function" ? (skOf(t).mat || []) : (t.mat || []));
+    _ml.innerHTML = _cm.length
+      ? _cm.map(m => "<li>" + m + "</li>").join("")
+      : '<li style="color:var(--muted);list-style:none">Aucun matériel attribué</li>';
+  }
   g('d-interv').textContent = t.interv;
   g('d-taux').textContent = t.taux;
   g('d-ca').textContent = t.ca;
@@ -1020,7 +1026,6 @@ render();
   <div class="bnvcard">
     <h3>Toutes les sections</h3>
     <div class="bnvgrid">
-      <a href="tournee.html"><span class="i">&#128506;</span>Tournées</a>
       <a href="clients.html"><span class="i">&#128101;</span>Clients</a>
       <a href="contrats-liste.html"><span class="i">&#128196;</span>Contrats</a>
       <a href="facture-liste.html"><span class="i">&#128182;</span>Factures</a>
