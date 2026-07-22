@@ -1660,19 +1660,26 @@ function renderDetail(){
         </div>`;
   }
 
+  const FICHE = `
+    <div class="dcard">
+      <div class="dh">Détails de l'intervention</div>
+      <div class="dkv"><span class="k">Client</span><span class="v"><a class="vcli" href="#" onclick="cliPanel('${isIron ? 'client.html?panel=1' : 'client.html?c=' + encodeURIComponent(v.client) + '&panel=1'}');return false">${v.client} →</a></span></div>
+      <div class="dkv"><span class="k">Date planifiée</span><span class="v">${dateTxt} · ${hstr(v.start)} – ${hstr(v.start + v.dur)}</span></div>
+      <div class="dkv"><span class="k">Adresse</span><span class="v">📍 ${v.cp} · ${v.ville}</span></div>
+      <div class="dkv"><span class="k">Priorité</span><span class="v"><span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span></span></div>
+      <div class="dkv"><span class="k">Statut</span><span class="v"><span class="dst ${sc}" style="font-size:.62rem">${sl}</span></span></div>
+      <div class="dkv"><span class="k">Règlement</span><span class="v">${M.ic} ${M.lbl}</span></div>
+      <div class="dkv"><span class="k">Référence</span><span class="v"><span class="jref" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('📋 Référence copiée'))" title="Copier">${refInt(v.id)}</span></span></div>
+    </div>`;
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead">
-      <div class="drow1">
-        <span class="dst ${sc}">${sl}</span>
-        <span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span>
-        <span class="dmodeb">${M.ic} ${M.lbl}</span>
+      <div class="drow1" style="justify-content:flex-end">
         <button class="dclose" onclick="closeDetail()">✕</button>
       </div>
       <h2 id="dtitle">${v.titre || `${T.ic} ${T.lbl}`}
         <button class="tpen" onclick="editTitle(${v.id})" title="Personnaliser le titre">✏️</button>
         ${v.titre ? '<button class="tpen" onclick="resetTitle(' + v.id + ')" title="Revenir au titre automatique">↺</button>' : ''}</h2>
-      <div class="dref"><a class="vcli" href="#" style="font-weight:800" onclick="cliPanel('${isIron ? 'client.html?panel=1' : 'client.html?c=' + encodeURIComponent(v.client) + '&panel=1'}');return false">${v.client} →</a> · 📍 ${v.cp} ${v.ville} · ${dateTxt} · ${hstr(v.start)} – ${hstr(v.start + v.dur)}
-        <span class="jref" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('📋 Référence copiée'))" title="Copier la référence">${refInt(v.id)}</span></div>
+      
       <div class="dacts">
         <a class="dbtn wab" href="https://wa.me/33612345678">WhatsApp</a>
         <a class="dbtn" href="tel:+33612345678">📞 Appeler</a>
@@ -1687,7 +1694,7 @@ function renderDetail(){
           `<button class="dtab ${DTAB===k?'on':''}" onclick="setDTab('${k}')">${l}</button>`).join("")}
       </div>
     </div>
-    ${body}`;
+    ${FICHE}${body}`;
 }
 function standbyInt(id){
   const v = INTERVS.find(x=>x.id===id);
