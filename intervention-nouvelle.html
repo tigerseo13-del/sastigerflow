@@ -479,9 +479,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <span><b>Inclus au contrat</b><small>Passage couvert par le contrat</small></span>
           <span class="rdot"></span>
         </div>
-        <div class="pcard" data-v="Retour de garantie" onclick="pickPay(this)">
-          <span class="pic">🛡️</span>
-          <span><b>Retour de garantie</b><small>Nouveau passage couvert — sans facturation</small></span>
+        <div class="pcard" data-v="Suite de traitement" onclick="pickPay(this)">
+          <span class="pic">🔁</span>
+          <span><b>Passage inclus</b><small>2ᵉ passage ou garantie — solde éventuel</small></span>
           <span class="rdot"></span>
         </div>
       </div>
@@ -635,7 +635,12 @@ function pickPay(el){
   document.querySelectorAll(".pcard").forEach(c=>c.classList.remove("on"));
   el.classList.add("on");
   PAY = el.dataset.v;
-  document.getElementById("g-montant").style.display = PAY === "Encaissement sur place" ? "" : "none";
+  const showAmt = PAY === "Encaissement sur place" || PAY === "Suite de traitement";
+  document.getElementById("g-montant").style.display = showAmt ? "" : "none";
+  const lbl = document.querySelector("#g-montant label");
+  if(lbl) lbl.textContent = PAY === "Suite de traitement" ? "Solde restant à encaisser (0 si tout est réglé)" : "Montant à encaisser";
+  const inp = document.getElementById("f-montant");
+  if(inp) inp.placeholder = PAY === "Suite de traitement" ? "Ex : 437,50 € (solde après acompte)" : "Ex : 180,00 €";
   resume();
 }
 function pickPayByVal(v){
@@ -745,8 +750,7 @@ function saveInter(){
   try{
     const P2K = {"Rongeurs":"rongeur","Punaises de lit":"punaise","Cafards":"cafard","Guêpes / Frelons":"guepe",
       "Chenilles processionnaires":"chenille","Pigeons":"pigeon","Désinfection":"desinf","Fourmis":"fourmi","Autre":"rongeur"};
-    const PAY2M = {"Devis sur place":"devis","Encaissement sur place":"encais","Inclus au contrat":"ctr","Sans encaissement":"ctr",
-      "Sans encaissement":"gar","Retour de garantie":"gar"};
+    const PAY2M = {"Devis sur place":"devis","Encaissement sur place":"encais","Inclus au contrat":"ctr","Suite de traitement":"suite","Sans encaissement":"ctr","Retour de garantie":"gar"};
     const slot = effSlot();
     const start = parseInt(slot) || 9;
     const noteEl = document.querySelector("textarea");

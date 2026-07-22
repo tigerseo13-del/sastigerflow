@@ -265,8 +265,9 @@ h1,.num{font-family:'Sora',sans-serif}
 .ev .ltype{font-size:.71rem;font-weight:600;color:var(--ink-2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ev .lcli{font-size:.69rem;color:var(--muted);font-weight:500;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ev .lpay{display:flex;align-items:center;gap:6px;margin-top:6px;min-width:0}
-.ev.sm .lcli,.ev.sm .lpay{display:none}
-.ev.xs .ltype{display:none}
+.ev.sm .l1{display:none}                      /* 1h : type + client + heure */
+.ev.xs .l1,.ev.xs .lcli{display:none}         /* 30min : type + heure seulement */
+.ev.xs .ltype{font-size:.7rem}
 .mchip{font-size:.68rem;font-weight:800;padding:4px 10px;border-radius:10px;white-space:nowrap;letter-spacing:.02em}
 .m-encais{background:#FBF3D9;color:#A16207;border:1px solid #F0E2B8}
 .m-devis{background:#EBF1FE;color:#2E5CE6;border:1px solid #D9E4FC}
@@ -707,13 +708,14 @@ body.dragging .tcol-body{outline:1.5px dashed transparent;outline-offset:-3px;tr
 body.dragging .tcol-body:hover{background-color:#FFF4EE!important;outline-color:var(--orange-soft, #F8C6AE)}
 body.dragging{cursor:grabbing}
 
-/* ===== hiérarchie de lecture des blocs : client > type > heure > lieu ===== */
+/* ===== hiérarchie de lecture des blocs : TYPE (le quoi) > client · ville > badge + heure ===== */
 .ev{display:flex;flex-direction:column}
+.ev .ltype{order:1;font-weight:800;font-size:.78rem;letter-spacing:-.1px}
+.ev .lcli{order:2;font-weight:600;font-size:.72rem;opacity:.92}
 .ev .l1{order:3}
-.ev .lcli{order:1;font-weight:800;font-size:.8rem}
-.ev .ltype{order:2}
 .ev .lpay{order:4;margin-top:auto}
-.ev .cpv{font-size:.66rem;opacity:.75}
+.ev .cpv{font-size:.65rem;color:var(--ink-2)!important;opacity:.7}
+.ev .l1 svg, .ev .l1 .pin{opacity:.6}
 /* légende du langage couleur dans l'aide */
 .leg{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
 .leg span{display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--ink-2)}
@@ -721,6 +723,9 @@ body.dragging{cursor:grabbing}
 
 /* ===== anti-saut entre les pages : la gouttière de défilement est réservée ===== */
 html{overflow-y:scroll;scrollbar-gutter:stable}
+
+/* le rond de validation quitte les cartouches (l'action vit dans le tiroir de détail) */
+.ev .chk{display:none!important}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 </head>
@@ -934,10 +939,11 @@ const TYPES = {
 
 /* ================= INTERVENTIONS ================= */
 const MODES = {
-  devis :{lbl:"Devis sur place", ic:"🧾"},
-  encais:{lbl:"Encaissement",    ic:"💶"},
-  ctr   :{lbl:"Contrat",         ic:"📄"},
-  gar   :{lbl:"Garantie",        ic:"🛡️"},
+  devis :{lbl:"Devis sur place",  ic:"🧾"},
+  encais:{lbl:"Encaissement",     ic:"💶"},
+  ctr   :{lbl:"Contrat",          ic:"📄"},
+  suite :{lbl:"2ᵉ passage inclus", ic:"🔁"},
+  gar   :{lbl:"Garantie",         ic:"🛡️"},
 };
 const CLIENT_MODE = {
   "Ironwood Solutions":"ctr", "Syndic Foncia":"ctr", "Hôtel du Parc":"ctr",
@@ -948,7 +954,7 @@ let NID = 0;
 const PRIOS_I = {Urgente:"#D63B33", Haute:"#D9A408", Normale:"#2E5CE6", Basse:"#A6ABBB"};
 const IV = (date,start,dur,tech,type,client,cp,ville,done=false)=>({id:NID++,date,start,dur,tech,type,client,cp,ville,done,
   started:false, cancelled:false, note:"", prio:["Normale","Haute","Normale","Urgente","Basse","Normale","Haute"][NID % 7],
-  mode: CLIENT_MODE[client] || ["devis","encais","encais","gar"][NID % 4]});
+  mode: CLIENT_MODE[client] || ["devis","encais","suite","gar"][NID % 4]});
 const INTERVS = [
   // Mardi 25/08 (aujourd'hui)
   IV("2026-08-25", 8,   2, 0, "punaise", "John Thompson",      "75011","Paris"),
@@ -1550,16 +1556,6 @@ function renderDetail(){
 
     body = `
     <div class="dcard">
-      <div class="dh">Détails de l'intervention</div>
-      <div class="dkv"><span class="k">Client</span><span class="v"><a class="vcli" href="#" onclick="cliPanel('${isIron ? 'client.html?panel=1' : 'client.html?c=' + encodeURIComponent(v.client) + '&panel=1'}');return false">${v.client} →</a></span></div>
-      <div class="dkv"><span class="k">Date planifiée</span><span class="v">${dateTxt} · ${hstr(v.start)} – ${hstr(v.start + v.dur)}</span></div>
-      <div class="dkv"><span class="k">Type de service</span><span class="v">${T.ic} ${T.lbl}</span></div>
-      <div class="dkv"><span class="k">Adresse</span><span class="v">📍 ${v.cp} · ${v.ville}</span></div>
-      <div class="dkv"><span class="k">Priorité</span><span class="v"><span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span></span></div>
-      <div class="dkv"><span class="k">Statut</span><span class="v"><span class="dst ${sc}" style="font-size:.62rem">${sl}</span></span></div>
-    </div>
-
-    <div class="dcard">
       <div class="dh">Technicien <button class="dre" onclick="togReass()">${REASS ? "Annuler" : "Réaffecter"}</button></div>
       ${REASS
         ? TECHS.map((tt,j)=>`<div class="rpick ${j===v.tech?'cur':''}" onclick="reassignTo(${v.id},${j})">
@@ -1672,10 +1668,10 @@ function renderDetail(){
         <span class="dmodeb">${M.ic} ${M.lbl}</span>
         <button class="dclose" onclick="closeDetail()">✕</button>
       </div>
-      <h2 id="dtitle">${v.titre || `${v.cp} ${v.ville} · ${T.ic} ${T.lbl}`}
+      <h2 id="dtitle">${v.titre || `${T.ic} ${T.lbl}`}
         <button class="tpen" onclick="editTitle(${v.id})" title="Personnaliser le titre">✏️</button>
         ${v.titre ? '<button class="tpen" onclick="resetTitle(' + v.id + ')" title="Revenir au titre automatique">↺</button>' : ''}</h2>
-      <div class="dref"><b style="color:var(--ink-2)">${v.client}</b> · ${dateTxt} · ${hstr(v.start)} – ${hstr(v.start + v.dur)}
+      <div class="dref"><a class="vcli" href="#" style="font-weight:800" onclick="cliPanel('${isIron ? 'client.html?panel=1' : 'client.html?c=' + encodeURIComponent(v.client) + '&panel=1'}');return false">${v.client} →</a> · 📍 ${v.cp} ${v.ville} · ${dateTxt} · ${hstr(v.start)} – ${hstr(v.start + v.dur)}
         <span class="jref" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('📋 Référence copiée'))" title="Copier la référence">${refInt(v.id)}</span></div>
       <div class="dacts">
         <a class="dbtn wab" href="https://wa.me/33612345678">WhatsApp</a>
@@ -2793,14 +2789,22 @@ document.addEventListener("keydown", e => {
 });
 </script>
 <script>
-/* la légende du langage couleur, générée depuis TYPES */
+/* la légende des couleurs : sur l'agenda, une couleur = un technicien */
 (function(){
   const hp = document.getElementById("helppop");
-  if(!hp || typeof TYPES === "undefined") return;
-  hp.insertAdjacentHTML("beforeend",
-    '<b style="display:block;margin-top:10px">Code couleur des nuisibles</b>' +
-    '<div class="leg">' + Object.values(TYPES).map(t =>
-      '<span><i style="background:' + t.c + '"></i>' + t.lbl + '</span>').join("") + '</div>');
+  if(!hp) return;
+  let html = "";
+  if(typeof TECHS !== "undefined"){
+    html += '<b style="display:block;margin-top:10px">Sur l\'agenda : une couleur = un technicien</b>' +
+      '<div class="leg">' + TECHS.filter(Boolean).map(t =>
+        '<span><i style="background:' + (t.c || "#5B6170") + '"></i>' + t.nom + '</span>').join("") + '</div>';
+  }
+  if(typeof TYPES !== "undefined"){
+    html += '<b style="display:block;margin-top:10px">Dans le bac : la teinte suit le nuisible</b>' +
+      '<div class="leg">' + Object.values(TYPES).map(t =>
+        '<span><i style="background:' + t.c + '"></i>' + t.lbl + '</span>').join("") + '</div>';
+  }
+  hp.insertAdjacentHTML("beforeend", html);
 })();
 </script>
 </body>
