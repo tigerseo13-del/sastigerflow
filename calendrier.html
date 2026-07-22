@@ -1063,7 +1063,7 @@ try{
     inbox.forEach((x, k) => added.push({uid: Date.now() + "-" + k, ...x}));
     localStorage.setItem(ADDKEY, JSON.stringify(added));
     localStorage.removeItem("tigerflow-inbox-interventions");
-    setTimeout(()=>toast("📥 " + inbox.length + " intervention" + (inbox.length>1?"s":"") + " reçue" + (inbox.length>1?"s":"") + " du formulaire"), 500);
+    setTimeout(()=>toast("📥 " + inbox.length + " intervention" + (inbox.length>1?"s":"") + " ajoutée" + (inbox.length>1?"s":"") + " au bac À planifier — glisse-la sur un technicien"), 500);
   }
   /* 2. la mise à jour venue du bouton Modifier */
   const upd = JSON.parse(localStorage.getItem("tigerflow-update-intervention") || "null");
@@ -1100,14 +1100,12 @@ try{
   });
   /* 4. instancier les interventions ajoutées (à CHAQUE chargement) */
   added.forEach(x => {
-    const ti = TECHS.findIndex(t => t.nom === x.tech);
-    if(ti > -1 && x.date){
-      const v = IV(x.date, x.start, x.dur, ti, x.type, x.client, x.cp, x.ville);
-      v.mode = x.mode; v.note = x.note || ""; v.uid = x.uid;
-      INTERVS.push(v);
-    } else {
-      PENDING.push({pid:PID++, type:x.type, client:x.client, cp:x.cp, ville:x.ville, dur:x.dur});
-    }
+    /* règle simple : le formulaire alimente TOUJOURS le bac « À planifier » —
+       le drag sur un technicien reste le seul geste qui place sur l'agenda */
+    if(PENDING.some(p => p.client === x.client && p.cp === x.cp)) return;
+    PENDING.push({pid:PID++, type:x.type, client:x.client, cp:x.cp, ville:x.ville, dur:x.dur || 2,
+      since: (x.uid || "").split("-")[0] ? new Date(+(x.uid || "").split("-")[0]).toISOString().slice(0,10) : undefined,
+      note: x.note || "", wish: x.date ? (x.date + (x.start ? " · " + x.start + "h" : "")) : ""});
   });
   /* 5. après une modification : l'agenda SAUTE sur la date de l'intervention */
   if(JUMPDATE) CUR = new Date(JUMPDATE + "T12:00:00");

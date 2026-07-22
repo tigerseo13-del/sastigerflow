@@ -522,6 +522,18 @@ TASKS.forEach(t => {
     t.created = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
   }
 });
+/* ===== persistance des tâches créées à la main ===== */
+const PERSOK = "tigerflow-taches-perso";
+function persoSync(){
+  try{ localStorage.setItem(PERSOK, JSON.stringify(TASKS.filter(t => t.perso))); }catch(e){}
+}
+try{
+  JSON.parse(localStorage.getItem(PERSOK) || "[]").reverse().forEach(rec => {
+    rec.id = TID++;
+    rec.perso = true;
+    TASKS.unshift(rec);
+  });
+}catch(e){}
 let VIEW = "list", FSTAT = "all", DID = null, PAGE = 1, PER = 10;
 /* ===== Rappels reçus de l'agenda ===== */
 try{
@@ -658,6 +670,7 @@ function cycleStat(id){
 function setTaskStatSilent(t, st){
   t.st = st;
   t.hist.push({s:st, d:TODAY, u:"Thomas Martin"});
+  if(t.perso) persoSync();
 }
 document.getElementById("f-stat").addEventListener("change", e=>{ FSTAT = e.target.value; render(); });
 
@@ -728,6 +741,7 @@ function setTaskStat(id, st){
   t.st = st;
   if(st === "done" && t.iid) inboxRemove(t.iid);
   t.hist.push({s:st, d:TODAY, u:"Thomas Martin"});
+  if(t.perso) persoSync();
   render(); renderTask();
   toast(st === "done" ? "✓ Tâche terminée" : "Statut mis à jour — " + STATS[st][1]);
 }
@@ -742,7 +756,9 @@ function delTask(e, id){
   const i = TASKS.findIndex(x=>x.id===id);
   if(i > -1){
     if(TASKS[i].iid) inboxRemove(TASKS[i].iid);
+    const wasPerso = TASKS[i].perso;
     TASKS.splice(i, 1);
+    if(wasPerso) persoSync();
   }
   closeDrawer(); render();
   toast("🗑 Tâche supprimée");
@@ -835,6 +851,7 @@ function saveTask(){
     EDIT.note = document.getElementById("nt-note").value.trim();
     EDIT.sub = subs.map((x,i)=>({t:x.trim(), ok:EDIT.sub[i] ? EDIT.sub[i].ok : false}));
     DID = EDIT.id;
+    if(EDIT.perso) persoSync();
     render(); renderTask();
     toast("✓ Tâche mise à jour");
     return;
@@ -849,7 +866,9 @@ function saveTask(){
   t.hist = [{s:"todo", d:TODAY, u:"Thomas Martin"}];
   t.sub = subs.map(x=>({t:x.trim(), ok:false}));
   t.note = document.getElementById("nt-note").value.trim();
+  t.perso = true;
   TASKS.unshift(t);
+  persoSync();
   closeDrawer(); FSTAT = "all"; PAGE = 1; render();
   toast("✓ Tâche « " + (titre.length > 34 ? titre.slice(0,34) + "…" : titre) + " » créée");
 }
