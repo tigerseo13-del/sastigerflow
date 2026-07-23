@@ -939,6 +939,8 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
 function qv(ref){
   const d = DEVIS.find(x => x.ref === ref);
   if(!d) return;
+  let env = null;
+  try{ env = (JSON.parse(localStorage.getItem("tigerflow-devis-envois")) || {})[ref] || null; }catch(e){}
   document.getElementById("qbody").innerHTML = `
     <div class="qbar"><b>🧾 Aperçu du devis</b><button class="qx" aria-label="Fermer" onclick="qvClose()">✕</button></div>
     <div class="qcard">
@@ -946,6 +948,7 @@ function qv(ref){
       <div class="qobj">${d.titre}</div>
       <div class="qamt">${eur(d.montant)} <small>TTC</small></div>
       <div class="qrow"><span class="st st-${d.statut}">${LBL[d.statut]}</span>${relBadge(d)}${expChip(d)}</div>
+      ${env ? `<div class="qkv"><span>📤 Envoyé le</span><b>${env.date}${env.to ? " · " + env.to : ""}</b></div>` : ""}
       <div class="qkv"><span>Créé le</span><b>${fdate(d.date)}</b></div>
       <div class="qkv"><span>Valable jusqu'au</span><b>${fdate(d.valid)}</b></div>
       <div class="qkv"><span>Référence</span><b style="font-family:ui-monospace,monospace;font-size:.74rem;color:var(--muted)">${d.ref}</b></div>
