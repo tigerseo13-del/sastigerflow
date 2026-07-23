@@ -965,9 +965,25 @@ function toast(msg){
   var q = new URLSearchParams(location.search).get("c");
   if(!q) return;
   var f = FICHES[q];
-  /* client inconnu du modèle : pas de fausse alerte d'encaissement */
   var bar = document.getElementById("alertbar");
-  if(!f){ if(bar) bar.style.display = "none"; return; }
+  var NEUF = false, r = null;
+  if(!f){
+    /* client créé à la main (ou inconnu du modèle) : SA fiche démarre à zéro — JAMAIS les données d'un autre */
+    NEUF = true;
+    try{
+      var box = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]");
+      for(var bi = box.length - 1; bi >= 0; bi--){ if(box[bi] && box[bi].nom === q){ r = box[bi]; break; } }
+    }catch(e){}
+    var mois = new Date().toLocaleDateString("fr-FR", {month:"long", year:"numeric"});
+    f = {
+      adr: r ? [r.adresse, r.cp, r.ville].filter(Boolean).join(", ") : "",
+      tel: (r && r.tel) ? String(r.tel).replace(/\s/g, "") : "",
+      email: (r && r.email) || "",
+      ref: "Nouveau client",
+      siret: (r && r.siret) ? r.siret : (r && r.type === "particulier" ? "\u2014 (particulier)" : "\u2014 (\u00e0 compl\u00e9ter)"),
+      depuis: mois.charAt(0).toUpperCase() + mois.slice(1)
+    };
+  }
   if(bar){
     if(!f.due){ bar.style.display = "none"; }
     else {
@@ -994,7 +1010,48 @@ function toast(msg){
   var ml = document.querySelector('.hero .actions a[href^="mailto:"]');
   if(ml) ml.href = "mailto:" + f.email;
   var wa = document.querySelector('.hero .actions a[href*="wa.me"]');
-  if(wa) wa.href = "https://wa.me/33" + f.tel.slice(1);
+  if(wa && f.tel) wa.href = "https://wa.me/33" + f.tel.slice(1);
+  /* le bouton « Nouveau devis » part avec le bon client présélectionné */
+  var nd = document.querySelector('.hero .actions a[href^="devis.html"]');
+  if(nd) nd.href = "devis.html?c=" + encodeURIComponent(q);
+  if(NEUF){
+    var _a2 = document.getElementById("h-adr");
+    if(_a2) _a2.innerHTML = f.adr
+      ? '\ud83d\udccd <a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(f.adr) + '" target="_blank" rel="noopener">' + f.adr + ' \u00b7 \ud83d\uddfa\ufe0f Itin\u00e9raire</a>'
+      : "\ud83d\udccd Adresse \u00e0 compl\u00e9ter";
+    var srcb = document.querySelector(".hero .srcb");
+    if(srcb) srcb.textContent = "Cr\u00e9\u00e9 \u00e0 la main";
+    /* compteurs à zéro : un nouveau client n'a encore rien fait */
+    var zed = [["CA total","0 \u20ac",""],["Interventions","0","aucune pour l'instant"],["Contrat","\u2014","aucun contrat actif"],["Prochaine visite","\u2014","rien de planifi\u00e9"]];
+    document.querySelectorAll(".hero .quick .q").forEach(function(el, i){
+      var z = zed[i]; if(!z) return;
+      var sm = el.querySelector("small"), b = el.querySelector("b");
+      if(sm) sm.textContent = z[0];
+      if(b) b.innerHTML = z[1] + (z[2] ? " <em>" + z[2] + "</em>" : "");
+    });
+    document.querySelectorAll(".tabs .tab .n").forEach(function(n){ n.textContent = "0"; });
+    /* les onglets démarrent vides */
+    var vide = function(msg){ return '<div class="card wide" style="grid-column:1/-1;text-align:center;color:var(--muted);padding:34px 16px;font-size:.88rem">' + msg + '</div>'; };
+    var PANES = {devis:"\ud83e\uddfe Aucun devis pour l'instant \u2014 cr\u00e9e le premier avec \u00ab Nouveau devis \u00bb", fact:"\ud83d\udcb6 Aucune facture pour l'instant", equip:"", ctr:"\ud83d\udcd1 Aucun contrat pour l'instant", histint:"\ud83d\uddd3\ufe0f Aucune intervention pour l'instant \u2014 \u00ab Planifier \u00bb pour cr\u00e9er la premi\u00e8re", docs:"\ud83d\udcc2 Aucun document pour l'instant"};
+    Object.keys(PANES).forEach(function(k){
+      var p = document.querySelector('[data-tab="' + k + '"]');
+      if(p) p.innerHTML = PANES[k] ? vide(PANES[k]) : "";
+    });
+    /* l'onglet Informations garde Contacts + Notes, mais aux couleurs de CE client */
+    var inf = document.querySelector('[data-tab="infos"]');
+    if(inf){
+      inf.querySelectorAll(".contact").forEach(function(c){ c.remove(); });
+      var ch = inf.querySelector(".card.wide .card-h");
+      if(ch){
+        var cdiv = document.createElement("div");
+        cdiv.className = "contact";
+        cdiv.innerHTML = "<div><b>" + ((r && r.contact) || q) + "</b><small>" + ((r && r.tel) || "t\u00e9l\u00e9phone \u00e0 compl\u00e9ter") + ((r && r.email) ? " \u00b7 " + r.email : "") + "</small></div>";
+        ch.parentNode.insertBefore(cdiv, ch.nextSibling);
+      }
+      var hist = inf.querySelector(".card.full ul.hist");
+      if(hist) hist.innerHTML = '<li><span class="hic" style="background:var(--green-bg)">\u2728</span><div><b>Fiche cr\u00e9\u00e9e</b><small>' + q + " vient d'arriver dans TigerFlow \u2014 son historique s'\u00e9crira ici</small></div></li>";
+    }
+  }
 })();
 </script>
 

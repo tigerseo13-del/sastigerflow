@@ -583,9 +583,10 @@ function render(){
   document.getElementById("f-stat").value = FSTAT;
   const list = filtered();
   void 0; /* compteur hero retiré */
-  document.getElementById("n-todo").textContent = TASKS.filter(t=>t.st==="todo").length;
-  document.getElementById("n-prog").textContent = TASKS.filter(t=>t.st==="prog").length;
-  document.getElementById("n-done").textContent = TASKS.filter(t=>t.st==="done").length;
+  const _setn = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  _setn("n-todo", TASKS.filter(t=>t.st==="todo").length);
+  _setn("n-prog", TASKS.filter(t=>t.st==="prog").length);
+  _setn("n-done", TASKS.filter(t=>t.st==="done").length);
 
   if(VIEW === "list"){
     const pages = Math.max(1, Math.ceil(list.length / PER));
@@ -795,6 +796,27 @@ function openNewTask(editId){
       <div class="rchips">${Object.keys(PRIOS).map(p=>`<span class="rchip ${p===NPRIO?'on':''}" onclick="nPrio('${p}',this)"><i style="width:7px;height:7px;border-radius:50%;background:${PRIOS[p]}"></i> ${p}</span>`).join("")}</div>
     </div>
 
+    <div class="dcard">
+      <div class="dh">🔗 Entité liée <small style="font-weight:600;color:var(--muted);font-size:.72rem">— rattache la tâche à un dossier (facultatif)</small></div>
+      <div class="frow2">
+        <div>
+          <span class="rlab">Type d'entité</span>
+          <select id="nt-enttype" onchange="nEntType()">
+            <option value="">Aucune</option>
+            <option value="Client" ${EDIT && EDIT.ent && EDIT.ent.type==="Client" ? "selected" : ""}>Client</option>
+            <option value="Devis" ${EDIT && EDIT.ent && EDIT.ent.type==="Devis" ? "selected" : ""}>Devis</option>
+            <option value="Facture" ${EDIT && EDIT.ent && EDIT.ent.type==="Facture" ? "selected" : ""}>Facture</option>
+            <option value="Contrat" ${EDIT && EDIT.ent && EDIT.ent.type==="Contrat" ? "selected" : ""}>Contrat</option>
+            <option value="Intervention" ${EDIT && EDIT.ent && EDIT.ent.type==="Intervention" ? "selected" : ""}>Intervention</option>
+          </select>
+        </div>
+        <div id="nt-entwrap" style="${EDIT && EDIT.ent && EDIT.ent.type ? "" : "display:none"}">
+          <span class="rlab">Élément</span>
+          <select id="nt-entref"></select>
+        </div>
+      </div>
+    </div>
+
     
 
     <div class="dcard">
@@ -815,8 +837,25 @@ function openNewTask(editId){
       <button class="dbig" onclick="saveTask()">✓ ${EDIT ? "Enregistrer" : "Créer la tâche"}</button>
     </div>`;
   nRenderSubs();
+  nEntType();
   openDrawer();
   if(matchMedia("(min-width:761px)").matches) document.getElementById("nt-titre").focus();
+}
+const ENTREFS = {
+  Client: ["Ironwood Solutions", "Syndic Foncia Lilas", "Hôtel du Parc", "Boulangerie Dupont", "Pharmacie Centrale", "Mme Perrin", "M. Diallo"],
+  Devis: ["DEV-2026-01287", "DEV-2026-01285", "DEV-2026-01283", "DEV-2026-01276"],
+  Facture: ["FAC-2026-00873", "FAC-2026-00872", "FAC-2026-00871", "FAC-2026-00858"],
+  Contrat: ["CTR-2026-00112", "CTR-2025-04512"],
+  Intervention: ["INT-2026-0450 · sam 29/08 Pablo", "INT-2026-0447 · jeu 27/08 Karim"],
+};
+function nEntType(){
+  const t = document.getElementById("nt-enttype").value;
+  const wrap = document.getElementById("nt-entwrap");
+  const sel = document.getElementById("nt-entref");
+  if(!t){ wrap.style.display = "none"; sel.innerHTML = ""; return; }
+  wrap.style.display = "";
+  const cur = (EDIT && EDIT.ent && EDIT.ent.type === t) ? EDIT.ent.ref : null;
+  sel.innerHTML = (ENTREFS[t] || []).map(r => `<option ${cur === r ? "selected" : ""}>${r}</option>`).join("");
 }
 function nPrio(p, el){
   NPRIO = p;
@@ -850,6 +889,8 @@ function saveTask(){
     EDIT.due = document.getElementById("nt-due").value || EDIT.due;
     EDIT.note = document.getElementById("nt-note").value.trim();
     EDIT.sub = subs.map((x,i)=>({t:x.trim(), ok:EDIT.sub[i] ? EDIT.sub[i].ok : false}));
+    const et = document.getElementById("nt-enttype").value;
+    EDIT.ent = et ? {type: et, ref: document.getElementById("nt-entref").value} : null;
     DID = EDIT.id;
     if(EDIT.perso) persoSync();
     render(); renderTask();
@@ -866,6 +907,8 @@ function saveTask(){
   t.hist = [{s:"todo", d:TODAY, u:"Thomas Martin"}];
   t.sub = subs.map(x=>({t:x.trim(), ok:false}));
   t.note = document.getElementById("nt-note").value.trim();
+  const et = document.getElementById("nt-enttype").value;
+  t.ent = et ? {type: et, ref: document.getElementById("nt-entref").value} : null;
   t.perso = true;
   TASKS.unshift(t);
   persoSync();
@@ -1034,6 +1077,7 @@ function statsT(){
   g("k-urg").textContent = open_.filter(t => t.prio === "Urgente").length;
   const P = [["Urgente","#D63B33"],["Haute","#D9A408"],["Normale","#2E5CE6"],["Basse","#C6CCD8"]];
   const tot = open_.length || 1;
+  if(!g("pipe") || !g("pipeleg")) return;   /* pas de barre de répartition sur cette page */
   g("pipe").innerHTML = P.map(([p, col]) => {
     const n = open_.filter(t => t.prio === p).length;
     return n > 0 ? `<i style="background:${col};width:${n / tot * 100}%"></i>` : "";

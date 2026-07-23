@@ -151,7 +151,7 @@ h1,.num{font-family:'Sora',sans-serif}
 .statmini small{font-size:.68rem;color:var(--muted)}
 
 /* ============ MODALE AJOUT ============ */
-.mpanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 24px));max-height:90vh;overflow-y:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.mpanel{position:absolute;right:0;top:0;bottom:0;width:min(680px,100%);overflow-y:auto;background:#fff;padding:20px;box-shadow:-16px 0 50px rgba(0,0,0,.25);animation:slide .22s ease}
 .mhead{display:flex;align-items:center;margin-bottom:15px}
 .mhead b{font-family:'Sora';font-size:1.02rem}
 .mclose{margin-left:auto;width:34px;height:34px;border-radius:10px;color:var(--muted);font-size:1rem}
@@ -203,7 +203,7 @@ label.lab{display:block;font-size:.76rem;font-weight:600;color:var(--ink-2);marg
   .search{min-width:0;max-width:none;width:100%}
   .grid{grid-template-columns:1fr}
   .panel{width:100%}
-  .mpanel{left:0;right:0;top:auto;bottom:0;transform:none;width:100%;border-radius:20px 20px 0 0;max-height:92vh;padding-bottom:calc(20px + var(--safe-b))}
+  .mpanel{width:100%}
   .macts .btn{flex:1;justify-content:center}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -231,6 +231,28 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .msec:first-child{margin-top:0}
 .msec::before{content:"";width:4px;height:14px;border-radius:3px;background:var(--orange);flex:none}
 .msec small{font-family:'Inter';font-weight:500;font-size:.7rem;color:var(--muted)}
+/* tiroir : étapes numérotées + lignes dynamiques */
+.msec.step{margin:24px 0 6px;font-size:.93rem}
+.msec.step::before{display:none}
+.stepn{width:23px;height:23px;border-radius:8px;background:var(--orange);color:#fff;display:inline-grid;place-items:center;font-size:.74rem;font-weight:800;font-family:'Sora';flex:none}
+.certrow{display:grid;grid-template-columns:1.4fr 1fr 42px;gap:8px;margin-bottom:7px}
+.certrow .del{border:1.5px solid var(--line);border-radius:10px;color:var(--muted);font-size:.85rem;background:#fff}
+.certrow .del:hover{border-color:var(--red,#D63B33);color:var(--red,#D63B33)}
+.addrowbtn{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed var(--orange);color:var(--orange-deep);border-radius:11px;padding:9px 14px;font-size:.79rem;font-weight:700;background:#fff;cursor:pointer;transition:.13s}
+.addrowbtn:hover{background:var(--orange-soft)}
+.hnote{font-size:.74rem;color:var(--muted);background:var(--bg);border-radius:11px;padding:10px 13px;line-height:1.55;margin-top:9px}
+.doclist{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.docc{display:inline-flex;align-items:center;gap:7px;background:var(--bg);border-radius:10px;padding:7px 11px;font-size:.76rem;font-weight:600}
+.docc button{color:var(--muted)}
+.docc button:hover{color:var(--red,#D63B33)}
+input.err,select.err{border-color:var(--red,#D63B33)!important;background:var(--red-bg,#FDE9E8)}
+/* actions rapides sur les cartes techniciens */
+.tc .act{margin-left:auto;display:flex;gap:7px}
+.tc .foot .go{margin-left:12px}
+.tc .act a{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2);background:#fff;transition:.12s}
+.tc .act a:hover{border-color:var(--orange);color:var(--orange-deep)}
+.tc .act a.wab:hover{border-color:#25D366;color:#1DA851}
+.tc .act a svg{width:15px;height:15px;stroke-width:2;fill:none;stroke:currentColor}
 /* puces cochables : la case disparaît, la puce s'allume */
 .skchips{display:flex;gap:7px;flex-wrap:wrap}
 .skchip{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:11px;border:1.5px solid var(--line);
@@ -383,7 +405,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <div class="filters">
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input id="q" placeholder="Rechercher un technicien…" oninput="render()">
+        <input id="q" placeholder="Rechercher nom, zone, téléphone…" oninput="render()">
       </div>
       <div class="chips" id="chips"></div>
     </div>
@@ -446,6 +468,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <div class="kv"><span class="k">Véhicule</span><b id="d-veh">—</b></div>
         <div class="kv"><span class="k">Immatriculation</span><b><span class="plate" id="d-plaque">—</span></b></div>
         <div class="kv"><span class="k">Certibiocide</span><b id="d-certi">—</b></div>
+        <div id="d-extra"></div>
       </div>
 
       <div class="sec">
@@ -486,15 +509,24 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
   <div class="mpanel">
     <div class="mhead"><b>Nouveau technicien</b><button class="mclose" onclick="closeAdd()">✕</button></div>
     <div class="mbody">
-      <div class="msec">Identité</div>
+      <div class="msec step" style="margin-top:0"><span class="stepn">1</span>Identité</div>
       <div class="fgrid">
-        <div><label class="lab">Prénom</label><input id="a-prenom" placeholder="Julien"></div>
-        <div><label class="lab">Nom</label><input id="a-nom" placeholder="Moreau"></div>
-        <div><label class="lab">Téléphone</label><input type="tel" autocomplete="tel" id="a-tel" placeholder="06 12 34 56 78"></div>
+        <div><label class="lab">Statut</label><select id="a-statut"><option value="dispo">🟢 Actif — disponible</option><option value="conge">🌴 En congé</option><option value="off">⚪ Inactif</option></select></div>
         <div><label class="lab">Certibiocide n°</label><input id="a-certi" placeholder="123456"></div>
-        <div><label class="lab">Véhicule</label><input id="a-veh" placeholder="Renault Kangoo"></div>
-        <div><label class="lab">Immatriculation</label><input id="a-plaque" placeholder="AB-123-CD"></div>
+        <div><label class="lab">Prénom *</label><input id="a-prenom" placeholder="Julien"></div>
+        <div><label class="lab">Nom *</label><input id="a-nom" placeholder="Moreau"></div>
+        <div><label class="lab">Téléphone 1 *</label><input type="tel" autocomplete="tel" id="a-tel" placeholder="06 12 34 56 78"></div>
+        <div><label class="lab">Téléphone 2</label><input type="tel" id="a-tel2" placeholder="01 48 12 34 56"></div>
+        <div class="full"><label class="lab">E-mail *</label><input type="email" id="a-mail" placeholder="julien@tiger-hygiene3d.fr"></div>
+        <div class="full"><label class="lab">Adresse *</label><input id="a-adr" placeholder="14 rue des Acacias"></div>
+        <div><label class="lab">Code postal *</label><input id="a-cp" inputmode="numeric" placeholder="93100"></div>
+        <div><label class="lab">Ville *</label><input id="a-ville" placeholder="Montreuil"></div>
+        <div class="full"><label class="lab">Pays *</label><input id="a-pays" value="France"></div>
       </div>
+
+      <div class="msec">Certifications <small>— CACES, habilitation électrique, SST…</small></div>
+      <div id="a-certs"></div>
+      <button class="addrowbtn" onclick="certAdd()">＋ Ajouter une certification</button>
 
       <div class="msec">Rôles</div>
       <div class="skchips" id="a-roles">
@@ -503,17 +535,47 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <label class="skchip"><input type="checkbox" id="a-r-gar"> 🛡️ Garanties prioritaires</label>
       </div>
 
-      <div class="msec">Zones de préférence</div>
+      <div class="msec">Compétences <small>&amp; % de commission</small></div>
+      <div id="a-skills"></div>
+
+      <div class="msec step"><span class="stepn">2</span>Planning de travail</div>
+      <div class="msec">Jours travaillés *</div>
+      <div class="skchips" id="a-jours"></div>
+      <div class="skchips" style="margin-top:8px">
+        <label class="skchip"><input type="checkbox" id="a-we"> 🗓️ Travaille le week-end</label>
+      </div>
+      <div class="fgrid" style="margin-top:12px">
+        <div><label class="lab">Heure de début *</label><input type="time" id="a-hdeb" value="08:00"></div>
+        <div><label class="lab">Heure de fin *</label><input type="time" id="a-hfin" value="17:00"></div>
+        <div><label class="lab">Pause déjeuner</label><select id="a-pause"><option>1 h</option><option>30 min</option><option value="">Sans pause</option></select></div>
+        <div><label class="lab">Congé en cours ?</label><select id="a-conge"><option value="">Non</option><option value="oui">Oui — actuellement en congé</option></select></div>
+      </div>
+
+      <div class="msec">Véhicules <small>— 2 max</small></div>
+      <div class="fgrid">
+        <div><label class="lab">Véhicule 1</label><input id="a-veh" placeholder="Renault Kangoo"></div>
+        <div><label class="lab">Immatriculation 1</label><input id="a-plaque" placeholder="AB-123-CD"></div>
+        <div><label class="lab">Véhicule 2</label><input id="a-veh2" placeholder="—"></div>
+        <div><label class="lab">Immatriculation 2</label><input id="a-plaque2" placeholder="—"></div>
+      </div>
+
+      <div class="msec">Matériel embarqué <small>— équipement, 10 max</small></div>
+      <div class="skchips" id="a-mat"></div>
+
+      <div class="msec step"><span class="stepn">3</span>Zone d'intervention</div>
+      <div class="fgrid">
+        <div><label class="lab">Rayon d'intervention (km) *</label><input type="number" id="a-rayon" value="30" min="1" max="200"></div>
+      </div>
+      <div class="msec">Zones de préférence <small>— départements où il tourne en priorité</small></div>
       <div class="skchips" id="a-deps"></div>
 
       <div class="msec">Zones de dépannage <small>— seulement si personne du secteur n'est dispo</small></div>
       <div class="skchips" id="a-deps2"></div>
+      <div class="hnote">🗺️ La carte interactive du secteur (rayon + zones surlignées) s'affichera ici dans la version connectée.</div>
 
-      <div class="msec">Matériel embarqué</div>
-      <div class="skchips" id="a-mat"></div>
-
-      <div class="msec">Compétences <small>&amp; % de commission</small></div>
-      <div id="a-skills"></div>
+      <div class="msec">Documents <small>— contrat, permis, attestations…</small></div>
+      <label class="addrowbtn" style="cursor:pointer">📎 Ajouter un document<input type="file" multiple style="display:none" onchange="docAdd(this)"></label>
+      <div class="doclist" id="a-docs"></div>
     </div>
     <div class="macts">
       <button class="btn outline" onclick="closeAdd()">Annuler</button>
@@ -699,17 +761,27 @@ const TECHS = [
    planning:[["16:00","Retour de garantie rongeurs — Boucherie Halal du Marché","Créteil (94)"]]},
 ];
 
+/* + les techniciens créés à la main (localStorage) : ils réapparaissent à chaque visite */
+(function(){
+  try{
+    JSON.parse(localStorage.getItem("tigerflow-techs-perso") || "[]").forEach(r => {
+      if(r && r.prenom && !TECHS.some(t => t.prenom === r.prenom && (t.nom || "") === (r.nom || ""))) TECHS.push(r);
+    });
+  }catch(e){}
+})();
 const TODAY = new Date("2026-08-25");
 const fmt = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
 const fdate = iso => { const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; };
 const jours = iso => Math.ceil((new Date(iso) - TODAY) / 86400000);
 function confStatut(iso){
+  if(!iso) return {cls:"warn", txt:"À renseigner"};
   const j = jours(iso);
   if(j < 0)   return {cls:"bad",  txt:"Expiré depuis " + (-j) + " j"};
   if(j <= 90) return {cls:"warn", txt:"Expire dans " + j + " j"};
   return {cls:"ok", txt:"Valide jusqu'au " + fdate(iso)};
 }
 function confBadge(t){
+  if(!t.certiExp && !t.ctVeh) return '';
   const a = confStatut(t.certiExp), b = confStatut(t.ctVeh);
   return (a.cls!=="ok" || b.cls!=="ok") ? '<span class="alertb" title="Certibiocide ou contrôle technique à renouveler">⚠️</span>' : '';
 }
@@ -739,12 +811,13 @@ function render(){
   document.getElementById('k-nb').textContent = TECHS.length;
   const list = TECHS.map((t,i)=>({...t,i})).filter(t =>
     (FILTRE==="all" || (FILTRE==="_dispo" ? t.dispo==="dispo" : t.com[FILTRE]!=null)) &&
-    (((t.prenom+" "+t.nom).trim()).toLowerCase().includes(q) || t.zones.join(" ").toLowerCase().includes(q))
+    (((t.prenom+" "+t.nom).trim()).toLowerCase().includes(q) || t.zones.join(" ").toLowerCase().includes(q)
+      || (t.tel || "").replace(/ /g, "").includes(q.replace(/ /g, "")))
   );
   document.getElementById('grid').innerHTML = list.map(t=>`
     <div class="tc" onclick="openFiche(${t.i})">
       <div class="head">
-        <span class="tav" style="background:${t.grad}">${t.prenom[0]}${t.nom[0]}</span>
+        <span class="tav" style="background:${t.grad}">${(t.prenom[0]||"")}${((t.nom||"")[0]||"")}</span>
         <div><b>${(t.prenom+" "+t.nom).trim()}</b><small>Certibiocide n° ${t.certi}</small></div>
         <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${confBadge(t)}${t.top?'<span class="star">★ Top</span>':''}</span>
       </div>
@@ -755,7 +828,13 @@ function render(){
         <div class="r"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${t.zones.join(" · ")}</div>
       </div>
       <div class="skills">${Object.keys(t.com).map(s=>`<span class="sk">${s} · ${t.com[s]} %</span>`).join("")}</div>
-      <div class="foot"><span>${t.interv} interventions ce mois</span><span class="go">Voir la fiche →</span></div>
+      <div class="foot"><span>${t.interv} interventions ce mois</span>
+        <span class="act" onclick="event.stopPropagation()">
+          <a href="tel:${(t.tel||"").replace(/ /g,"")}" title="Appeler"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
+          <a class="wab" href="https://wa.me/33${(t.tel||"").replace(/ /g,"").replace(/^0/,"")}" target="_blank" rel="noopener" title="WhatsApp"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-12.3 7.4L3 21l2.1-5.6A8.5 8.5 0 1121 11.5z"/></svg></a>
+          <a href="mailto:${t.mail||""}" title="E-mail"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>
+        </span>
+        <span class="go">Voir la fiche →</span></div>
     </div>`).join("") || `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px">Aucun technicien ne correspond.</div>`;
 }
 
@@ -765,7 +844,7 @@ function openFiche(i){
   const t = TECHS[i];
   if(!t) return;                       /* index inconnu : on ne crashe pas la page */
   const g = id => document.getElementById(id);
-  g('d-av').textContent = t.prenom[0]+t.nom[0];
+  g('d-av').textContent = (t.prenom[0]||"") + ((t.nom||"")[0]||"");
   g('d-av').style.background = t.grad;
   g('d-nom').textContent = (t.prenom+" "+t.nom).trim();
   g('d-tel').href = "tel:"+t.tel.replace(/ /g,"");
@@ -775,6 +854,17 @@ function openFiche(i){
   g('d-veh').textContent = t.veh;
   g('d-plaque').textContent = t.plaque;
   g('d-certi').textContent = "n° "+t.certi;
+  const _ex = g('d-extra');
+  if(_ex){
+    const kvr = (k, val) => '<div class="kv"><span class="k">' + k + '</span><b>' + val + '</b></div>';
+    _ex.innerHTML =
+      (t.tel2 ? kvr("Téléphone 2", t.tel2) : "") +
+      (t.adr ? kvr("Adresse", t.adr) : "") +
+      (t.veh2 ? kvr("Véhicule 2", t.veh2 + (t.plaque2 ? ' · <span class="plate">' + t.plaque2 + '</span>' : "")) : "") +
+      (t.certs && t.certs.length ? kvr("Certifications", t.certs.join("<br>")) : "") +
+      (t.rayon ? kvr("Rayon d'intervention", t.rayon + " km") : "") +
+      (t.horaires ? kvr("Horaires", (t.horaires.jours || []).join(" · ") + " — " + t.horaires.deb + "–" + t.horaires.fin + (t.horaires.pause ? " · pause " + t.horaires.pause : "")) : "");
+  }
   renderSkills(t);
   const _ml = g('d-matlist');
   if(_ml){
@@ -812,11 +902,41 @@ function openFiche(i){
 function closeFiche(){ document.getElementById('fiche').classList.remove('open'); }
 
 /* ================= AJOUT ================= */
+const JOURS7 = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+let CERTN = 0;
+function certAdd(){
+  const w = document.getElementById('a-certs');
+  const i = CERTN++;
+  const d = document.createElement('div');
+  d.className = 'certrow'; d.id = 'certrow-' + i;
+  d.innerHTML = `<input placeholder="Intitulé (ex. CACES nacelle)"><input placeholder="N° / échéance"><button class="del" onclick="document.getElementById('certrow-${i}').remove()" title="Retirer">✕</button>`;
+  w.appendChild(d);
+}
+function docAdd(inp){
+  const w = document.getElementById('a-docs');
+  [...inp.files].forEach(f => {
+    const sp = document.createElement('span');
+    sp.className = 'docc';
+    sp.innerHTML = '📎 ' + f.name + ' <button onclick="this.parentNode.remove()" title="Retirer">✕</button>';
+    w.appendChild(sp);
+  });
+  inp.value = "";
+  toast("📎 Document ajouté — il partira avec la fiche");
+}
 function openAdd(){
   const chip = (id, lbl) => `<label class="skchip"><input type="checkbox" id="${id}"> ${lbl}</label>`;
   document.getElementById('a-deps').innerHTML  = ALL_DEPS.map(z => chip('a-z-' + z, z)).join("");
   document.getElementById('a-deps2').innerHTML = ALL_DEPS.map(z => chip('a-z2-' + z, z)).join("");
   document.getElementById('a-mat').innerHTML   = ALL_MAT.map((m, i) => chip('a-m-' + i, m)).join("");
+  document.getElementById('a-jours').innerHTML = JOURS7.map((j, i) => chip('a-j-' + i, j)).join("");
+  JOURS7.forEach((j, i) => { document.getElementById('a-j-' + i).checked = i < 5; });
+  document.getElementById('a-we').checked = false;
+  document.getElementById('a-we').onchange = e => {
+    document.getElementById('a-j-5').checked = e.target.checked;
+    document.getElementById('a-j-6').checked = e.target.checked;
+  };
+  document.getElementById('a-certs').innerHTML = ""; CERTN = 0; certAdd();
+  document.getElementById('a-docs').innerHTML = "";
   /* un département ne peut pas être préférence ET dépannage */
   ALL_DEPS.forEach(z => {
     document.getElementById('a-z-' + z).onchange = e => { if(e.target.checked) document.getElementById('a-z2-' + z).checked = false; };
@@ -832,22 +952,57 @@ function openAdd(){
 }
 function closeAdd(){ document.getElementById('addm').classList.remove('open'); }
 function addTech(){
-  const v = id => document.getElementById(id).value.trim();
-  if(!v('a-prenom') || !v('a-nom')){ toast("Prénom et nom obligatoires"); return; }
+  const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+  /* champs obligatoires : mêmes règles que Saigon (prénom, nom, tél 1, e-mail, adresse, CP, ville) */
+  let missing = false;
+  ["a-prenom","a-nom","a-tel","a-mail","a-adr","a-cp","a-ville"].forEach(id => {
+    const el = document.getElementById(id);
+    const empty = !el.value.trim();
+    el.classList.toggle("err", empty);
+    if(empty) missing = true;
+  });
+  if(missing){
+    toast("⚠️ Remplis les champs marqués * (identité et adresse)");
+    const e1 = document.querySelector(".mbody .err");
+    if(e1 && e1.scrollIntoView) try{ e1.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
+    return;
+  }
   const com = {};
   SKILLS.forEach((s,i)=>{
     if(document.getElementById('ask-'+i).checked)
       com[s] = +document.getElementById('apc-'+i).value || 0;
   });
   const grads = ["linear-gradient(135deg,#5B82F0,#2148C0)","linear-gradient(135deg,#2FC9B9,#0E8A7A)","linear-gradient(135deg,#9C63F2,#6425D0)","linear-gradient(135deg,#F2AE3C,#D07E0C)","linear-gradient(135deg,#EE6A8A,#C2255C)"];
-  TECHS.push({
-    prenom:v('a-prenom'), nom:v('a-nom'), tel:v('a-tel')||"—", mail:(v('a-prenom')||"t").toLowerCase()+"@tiger-hygiene3d.fr",
-    veh:v('a-veh')||"—", plaque:v('a-plaque')||"—", certi:v('a-certi')||"—",
+  const jsel = JOURS7.filter((j, i) => { const el = document.getElementById('a-j-' + i); return el && el.checked; });
+  const statSel = document.getElementById('a-statut').value;
+  const enConge = v('a-conge') === "oui" || statSel === "conge";
+  const dispo = enConge ? "conge" : (statSel === "off" ? "conge" : "dispo");
+  const horaire = (jsel.length ? jsel.join(" · ") : "—") + " — " + (v('a-hdeb') || "08:00") + "–" + (v('a-hfin') || "17:00");
+  const certs = [];
+  document.querySelectorAll('#a-certs .certrow').forEach(row => {
+    const ins = row.querySelectorAll('input');
+    if(ins[0] && ins[0].value.trim()) certs.push(ins[0].value.trim() + (ins[1] && ins[1].value.trim() ? " · " + ins[1].value.trim() : ""));
+  });
+  const rec = {
+    prenom:v('a-prenom'), nom:v('a-nom'), tel:v('a-tel')||"—", tel2:v('a-tel2'),
+    mail:v('a-mail') || (v('a-prenom')||"t").toLowerCase()+"@tiger-hygiene3d.fr",
+    adr:[v('a-adr'), v('a-cp'), v('a-ville')].filter(Boolean).join(", ") + (v('a-pays') && v('a-pays') !== "France" ? " · " + v('a-pays') : ""),
+    veh:v('a-veh')||"—", plaque:v('a-plaque')||"—", veh2:v('a-veh2'), plaque2:v('a-plaque2'),
+    certi:v('a-certi')||"—", certs, rayon:v('a-rayon')||"30",
+    horaires:{jours:jsel, deb:v('a-hdeb')||"08:00", fin:v('a-hfin')||"17:00", pause:v('a-pause'), we:document.getElementById('a-we').checked},
     grad:grads[TECHS.length % grads.length],
     zones: ALL_DEPS.filter(z => document.getElementById('a-z-' + z).checked).length
       ? ALL_DEPS.filter(z => document.getElementById('a-z-' + z).checked) : ["—"],
-    com, mat:[], interv:0, taux:"—", ca:"0 €"
-  });
+    com, mat:[], interv:0, taux:"—", ca:"0 €", planning:[],
+    dispo, dispoD: dispo === "dispo" ? "Disponible — " + horaire : (statSel === "off" ? "Inactif" : "En congé")
+  };
+  TECHS.push(rec);
+  /* persistance locale : le technicien survit au rechargement de la page */
+  try{
+    const box = JSON.parse(localStorage.getItem("tigerflow-techs-perso") || "[]");
+    box.push(rec);
+    localStorage.setItem("tigerflow-techs-perso", JSON.stringify(box));
+  }catch(e){}
   /* mêmes réglages que les fiches : partagés avec l'onglet Tournées */
   const name = (v('a-prenom') + " " + v('a-nom')).trim();
   const sk = skLoad();

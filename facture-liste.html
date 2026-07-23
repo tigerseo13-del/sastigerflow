@@ -434,7 +434,7 @@ const DEVIS = [
 
 const LBL = {payee:"Payée", retard:"En retard", attente:"En attente", brouillon:"Brouillon", partiel:"Partielle"};
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
-const fdate = iso => { const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; };
+const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014"; const [y,m,d]=String(iso).split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
 const TODAY = new Date("2026-08-25");
 function joursRestants(d){
@@ -496,7 +496,7 @@ function render(){
 
   window._LISTF = list;
   document.getElementById('tbody').innerHTML = list.length ? list.map(d=>`
-    <tr onclick="${d.statut==='brouillon' ? "location.href='facture.html'" : `openFac('${d.ref}')`}" class="${SEL.has(d.ref) ? 'selrow' : ''} ${d.statut==='retard' ? 'overdue' : ''}">
+    <tr onclick="openFac('${d.ref}')" class="${SEL.has(d.ref) ? 'selrow' : ''} ${d.statut==='retard' ? 'overdue' : ''}">
       <td onclick="event.stopPropagation()"><input type="checkbox" class="fck" ${SEL.has(d.ref) ? 'checked' : ''} onchange="ckOne('${d.ref}', this)"></td>
       <td class="ref">${d.ref}</td>
       <td class="cl"><b>${d.client}</b><small>${d.ct}</small></td>
@@ -629,14 +629,14 @@ function openFac(ref){
       <div class="dkv"><span class="k">Déjà encaissé</span><span class="v" style="color:var(--green-d)">${eur(paid)}</span></div>
       <div class="dkv"><span class="k">Émise le</span><span class="v">${fdate(d.date)}</span></div>
       <div class="dkv"><span class="k">Échéance</span><span class="v">${fdate(d.valid)}</span></div>
-      <div class="dkv"><span class="k">Contact</span><span class="v">${d.ct}</span></div>
+      ${d.ct ? `<div class="dkv"><span class="k">Contact</span><span class="v">${d.ct}</span></div>` : ""}
     </div>
 
     ${pays.length ? `<div class="dcard"><div class="dh">Paiements reçus</div>
       ${pays.map(p=>`<div class="payrow"><span class="pm">${eur(p.m)}</span><span>${p.mode}</span><span class="pd">${fdate(p.d)}</span></div>`).join("")}
     </div>` : ""}
 
-    ${rest > 0 ? `<div class="dcard">
+    ${rest > 0 && d.statut !== 'brouillon' ? `<div class="dcard">
       <div class="dh">💶 Ajouter un paiement</div>
       <span class="rlab">Montant (€)</span>
       <input id="pay-m" type="number" inputmode="decimal" min="0.01" step="0.01" value="${rest.toFixed(2)}">
@@ -648,6 +648,7 @@ function openFac(ref){
       </div>
       <button class="dbig" onclick="addPay('${d.ref}')">✓ Enregistrer le paiement</button>
     </div>` : ""}
+    ${d.statut === 'brouillon' ? `<a class="dbig" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="facture.html?draft=${d.ref}" onclick="try{sessionStorage.setItem('tigerflow-facture-ref','${d.ref}')}catch(e){}">✏️ Reprendre en atelier</a>` : ""}
     <a class="dsec" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${d.ref}')}catch(e){}">📄 Ouvrir la fiche de la facture</a>`;
   document.getElementById("drawer").classList.add("open");
   document.getElementById("dveil").classList.add("open");
