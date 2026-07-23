@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Nouveau contrat</title>
+<meta name="theme-color" content="#FF5A1F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3C%2Fsvg%3E">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
+  --line:#EBECF1; --bg:#F4F5F8; --card:#fff;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --blue:#2E5CE6; --blue-bg:#EBF1FE; --amber:#A16207; --amber-bg:#FBF3D9;
+  --red:#D63B33; --red-bg:#FDE9E8;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+button{background:none;border:0;font-family:inherit;cursor:pointer}
+a{text-decoration:none;color:inherit}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+input,select,textarea{font-family:inherit;font-size:.9rem;color:var(--ink);border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;background:#fff;width:100%;transition:.13s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
+input.err,select.err{border-color:var(--red)!important;background:var(--red-bg)}
+textarea{resize:vertical;min-height:76px}
+
+/* ===== sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:238px;background:#14161B;color:#B9BEC9;display:flex;flex-direction:column;z-index:50}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 18px 18px}
+.brand .logo{width:34px;height:34px;border-radius:50%;background:#0A0B0E;border:1.5px solid #262A32;display:grid;place-items:center}
+.brand .logo svg{width:22px;height:22px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.02rem;color:#fff;letter-spacing:.4px}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5A6070;padding:8px 20px 6px}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9.5px 12px;border-radius:10px;font-size:.86rem;font-weight:500;color:#B9BEC9;transition:.13s}
+.nav a svg{width:17px;height:17px;flex:none}
+.nav a:hover{background:#1D2027;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600;box-shadow:0 6px 16px -6px rgba(255,90,31,.55)}
+.nav.navbot{margin-top:auto;padding-bottom:10px}
+.side-user{display:flex;align-items:center;gap:10px;margin:8px 14px 16px;padding:10px 12px;background:#1D2027;border-radius:12px}
+.side-user .ph{width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:700;font-family:'Sora'}
+.side-user b{display:block;font-size:.78rem;color:#fff;font-weight:600}
+.side-user span{font-size:.68rem;color:#7A8091}
+
+/* ===== main / topbar ===== */
+.main{margin-left:238px;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 26px}
+.crumbs{font-size:.95rem;color:var(--muted)}
+.crumbs a{font-weight:600;color:var(--muted)}
+.crumbs a:hover{color:var(--orange-deep)}
+.crumbs .cur{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.2px}
+.title-m{display:none;font-family:'Sora';font-weight:700;font-size:1.08rem}
+.spacer{flex:1}
+.btn2{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 16px;font-size:.85rem;font-weight:700;color:var(--ink-2);transition:.13s;white-space:nowrap}
+.btn2:hover{border-color:#D8DAE1;background:#FAFAFC}
+.btn2 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn2.primary{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 6px 16px -6px rgba(255,90,31,.5)}
+.btn2.primary:hover{background:var(--orange-deep)}
+
+/* ===== page / cartes ===== */
+.page{max-width:1120px;margin:0 auto;padding:22px 26px calc(60px + var(--safe-b))}
+.card{background:var(--card);border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:16px}
+.card-h{font-family:'Sora';font-weight:800;font-size:.98rem;display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.card-h .tick{width:4px;height:17px;border-radius:3px;background:var(--orange);flex:none}
+.card-h small{font-family:'Inter';font-weight:500;font-size:.74rem;color:var(--muted)}
+.lab{display:block;font-size:.76rem;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.lab em{font-style:normal;color:var(--orange-deep)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fgrid .full{grid-column:1/-1}
+.fgrid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.hint{font-size:.74rem;color:var(--muted);margin-top:6px;line-height:1.5}
+
+/* client + nouveau client (comme l'atelier devis) */
+.clirow{display:flex;gap:10px;align-items:stretch}
+.clirow select{flex:1;min-width:0}
+.newcli{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:.84rem;color:var(--orange-deep);border:1.5px dashed var(--orange);border-radius:11px;padding:0 14px;transition:.13s;white-space:nowrap}
+.newcli:hover{background:var(--orange-soft)}
+.newcli svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.cliadr{font-size:.78rem;color:var(--muted);margin-top:7px}
+.objbig{font-size:1.02rem;font-weight:700;padding:13px 15px}
+
+/* badge durée + TTC */
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--bg);border-radius:11px;padding:11px 15px;font-size:.9rem;font-weight:700;width:100%;border:1.5px solid transparent}
+.badge small{font-weight:600;color:var(--muted)}
+.ttcbox{background:var(--orange-soft);border-radius:12px;padding:12px 16px;display:flex;align-items:baseline;gap:10px}
+.ttcbox b{font-family:'Sora';font-size:1.25rem;color:var(--orange-deep)}
+.ttcbox small{font-size:.78rem;color:var(--ink-2);font-weight:600}
+
+/* puces cochables */
+.skchips{display:flex;gap:8px;flex-wrap:wrap}
+.skchip{display:inline-flex;align-items:center;gap:7px;padding:10px 15px;border-radius:11px;border:1.5px solid var(--line);background:#fff;font-size:.82rem;font-weight:600;color:var(--ink-2);cursor:pointer;user-select:none;transition:.13s}
+.skchip:hover{border-color:#D8DAE1}
+.skchip input{position:absolute;opacity:0;pointer-events:none;width:0}
+.skchip:has(input:checked){border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
+.skchip:active{transform:scale(.96)}
+.skchips.err .skchip{border-color:var(--red)}
+
+/* lignes dynamiques (matériel / checklist) */
+.dynrow{display:grid;grid-template-columns:1fr 110px 42px;gap:9px;margin-bottom:8px}
+.dynrow.ck{grid-template-columns:1fr 42px}
+.dynrow .del{border:1.5px solid var(--line);border-radius:10px;color:var(--muted);font-size:.85rem;background:#fff;transition:.12s}
+.dynrow .del:hover{border-color:var(--red);color:var(--red)}
+.addrowbtn{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed var(--orange);color:var(--orange-deep);border-radius:11px;padding:9px 15px;font-size:.8rem;font-weight:700;background:#fff;cursor:pointer;transition:.13s}
+.addrowbtn:hover{background:var(--orange-soft)}
+.emptyline{font-size:.8rem;color:var(--muted);margin-bottom:9px}
+
+/* interrupteur renouvellement */
+.swrow{display:flex;align-items:flex-start;gap:14px}
+.swrow .txt b{display:block;font-size:.88rem;font-weight:700}
+.swrow .txt small{display:block;font-size:.75rem;color:var(--muted);line-height:1.55;margin-top:3px}
+.sw{position:relative;width:46px;height:26px;flex:none;margin-left:auto;cursor:pointer}
+.sw input{position:absolute;opacity:0;width:0}
+.sw i{position:absolute;inset:0;background:#D8DAE1;border-radius:999px;transition:.18s}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.18s}
+.sw input:checked + i{background:var(--orange)}
+.sw input:checked + i::after{transform:translateX(20px)}
+.renbox{background:var(--bg);border-radius:13px;padding:15px 16px;margin-top:13px}
+.renprev{display:flex;gap:22px;flex-wrap:wrap;margin-top:11px;padding:11px 13px;background:#fff;border:1px dashed var(--line);border-radius:11px;font-size:.82rem}
+.renprev span{color:var(--muted)}
+.renprev b{font-weight:700}
+
+/* pièces jointes compactes */
+.pjrow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.pjadd{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed var(--orange);color:var(--orange-deep);border-radius:11px;padding:9px 15px;font-size:.8rem;font-weight:700;background:#fff;cursor:pointer}
+.pjadd:hover{background:var(--orange-soft)}
+.pjc{display:inline-flex;align-items:center;gap:7px;background:var(--bg);border-radius:10px;padding:8px 12px;font-size:.78rem;font-weight:600}
+.pjc button{color:var(--muted)}
+.pjc button:hover{color:var(--red)}
+.pjhint{font-size:.72rem;color:var(--muted);margin-top:8px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:calc(30px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#171A20;color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== disposition : formulaire + rail récapitulatif ===== */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 318px;gap:18px;align-items:start}
+.rail{position:sticky;top:78px}
+.rcard{background:#fff;border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:18px 19px}
+.rcard h3{font-family:'Sora';font-weight:800;font-size:.92rem;display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.rcard h3 .tick{width:4px;height:15px;border-radius:3px;background:var(--orange);flex:none}
+.rline{display:flex;align-items:baseline;gap:8px;padding:6.5px 0;font-size:.82rem;border-bottom:1px dashed var(--line)}
+.rline .k{color:var(--muted);flex:none}
+.rline b{margin-left:auto;text-align:right;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rttc{margin:13px 0 4px;background:var(--orange-soft);border-radius:13px;padding:13px 15px;text-align:center}
+.rttc b{display:block;font-family:'Sora';font-size:1.45rem;color:var(--orange-deep)}
+.rttc small{font-size:.72rem;color:var(--ink-2);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.rsub{text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:11px;font-weight:600;min-height:1.2em}
+.rck{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:.78rem;color:var(--muted)}
+.rck.ok{color:var(--green-d);font-weight:600}
+.rck i{width:17px;height:17px;border-radius:6px;border:2px solid #D5D8DF;display:grid;place-items:center;font-size:.6rem;font-style:normal;font-weight:800;flex:none;color:#fff;background:#fff;transition:.15s}
+.rck.ok i{background:var(--green);border-color:var(--green)}
+.rbtns{display:grid;gap:9px;margin-top:13px}
+.rbtns .btn2{justify-content:center;width:100%}
+@media(max-width:1080px){.layout{grid-template-columns:1fr}.rail{position:static}}
+
+/* ===== mobile ===== */
+@media(max-width:1080px){.fgrid4{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .topbar .btn2{flex:1;justify-content:center;padding:11px 8px}
+  .page{padding:14px 13px calc(80px + var(--safe-b))}
+  .card{padding:16px 15px;border-radius:14px}
+  .fgrid,.fgrid4{grid-template-columns:1fr}
+  .clirow{flex-direction:column}
+  .newcli{padding:11px 14px;justify-content:center}
+  input,select,textarea{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+:focus-visible{outline:2.5px solid var(--orange);outline-offset:2px;border-radius:6px}
+button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
+button:active,.skchip:active,.btn2:active,.addrowbtn:active,.pjadd:active{transform:scale(.97)}
+button,.skchip,.btn2{-webkit-user-select:none;user-select:none}
+::selection{background:#FFD9C4;color:#171A20}
+*{scrollbar-width:thin;scrollbar-color:#D8DAE1 transparent}
+a,button,input,select,textarea,label{touch-action:manipulation}
+</style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="contrats-liste.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="paiements.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Paiements</a>
+    <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <nav class="nav navbot">
+    <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <div class="crumbs">📑 <a href="contrats-liste.html">Contrats</a> / <span class="cur">Nouveau contrat</span></div>
+    <div class="title-m">📑 Nouveau contrat</div>
+    <div class="spacer"></div>
+    <a class="btn2" href="contrats-liste.html">Annuler</a>
+    <button class="btn2" onclick="saveContrat('brouillon')" title="Ctrl+S"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Enregistrer comme brouillon</button>
+    <button class="btn2 primary" onclick="saveContrat('actif')"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Enregistrer et envoyer</button>
+  </div>
+
+  <div class="page">
+   <div class="layout">
+   <div class="col">
+
+    <!-- ===== 1. INFORMATIONS ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Informations</div>
+      <div class="fgrid">
+        <div class="full">
+          <label class="lab">Client <em>*</em></label>
+          <div class="clirow">
+            <select id="v-client" onchange="pickCli()"><option value="">— Choisir un client —</option></select>
+            <a class="newcli" href="client-nouveau.html"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nouveau client</a>
+          </div>
+          <div class="cliadr" id="cliadr">L'adresse du client s'affichera ici</div>
+        </div>
+        <div class="full">
+          <label class="lab">Intitulé du contrat <em>*</em></label>
+          <input class="objbig" id="v-titre" placeholder="Ex. Dératisation annuelle — fournil" oninput="TITREEDIT=true">
+        </div>
+        <div class="full">
+          <label class="lab">Type de contrat <em>*</em></label>
+          <input type="hidden" id="v-type">
+          <div class="skchips" id="typechips">
+            <label class="skchip"><input type="radio" name="ctype" value="Dératisation" onchange="typePick(this)"> 🐀 Dératisation</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Désinsectisation" onchange="typePick(this)"> 🪳 Désinsectisation</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Veille punaises de lit" onchange="typePick(this)"> 🛏️ Veille punaises de lit</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Dépigeonnage" onchange="typePick(this)"> 🕊️ Dépigeonnage</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Contrat 3D complet" onchange="typePick(this)"> 🛡️ Contrat 3D complet</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Veille sanitaire HACCP" onchange="typePick(this)"> 🧴 Veille sanitaire HACCP</label>
+          </div>
+        </div>
+        <div class="full">
+          <label class="lab">Notes <small style="font-weight:500;color:var(--muted)">— internes, jamais envoyées au client</small></label>
+          <textarea id="v-notes" placeholder="Accès, digicode, consignes particulières…" style="min-height:46px"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 2. PÉRIODE & DATES ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Période &amp; dates</div>
+      <div class="fgrid4">
+        <div>
+          <label class="lab">Date de début <em>*</em></label>
+          <input type="date" id="v-deb" onchange="datesCalc()">
+        </div>
+        <div>
+          <label class="lab">Date de fin <em>*</em></label>
+          <input type="date" id="v-fin" onchange="datesCalc()">
+        </div>
+        <div>
+          <label class="lab">Durée du contrat</label>
+          <span class="badge" id="v-duree">📆 <small>choisis les deux dates</small></span>
+        </div>
+        <div>
+          <label class="lab">Fréquence de facturation <em>*</em></label>
+          <select id="v-freqfac" onchange="finCalc()">
+            <option value="">— Sélectionner —</option>
+            <option>Mensuelle</option>
+            <option>Trimestrielle</option>
+            <option>Semestrielle</option>
+            <option>Annuelle</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 3. FINANCES ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Finances</div>
+      <div class="fgrid4">
+        <div>
+          <label class="lab">Montant annuel HT <em>*</em></label>
+          <input type="number" inputmode="decimal" id="v-ht" min="0" step="0.01" placeholder="0,00 €" oninput="finCalc()">
+        </div>
+        <div>
+          <label class="lab">Taux de TVA <em>*</em></label>
+          <select id="v-tva" onchange="finCalc()">
+            <option value="10" selected>10 %</option>
+            <option value="20">20 %</option>
+            <option value="5.5">5,5 %</option>
+            <option value="0">0 %</option>
+          </select>
+        </div>
+        <div>
+          <label class="lab">Montant annuel TTC</label>
+          <div class="ttcbox"><b id="v-ttc">0,00 €</b></div>
+        </div>
+        <div>
+          <label class="lab">Par échéance</label>
+          <span class="badge" id="v-parech">💶 <small>selon la fréquence</small></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 4. CATÉGORIES DE SERVICES ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Catégories de services <small>— ce que couvre le contrat</small></div>
+      <div class="skchips" id="v-cats">
+        <label class="skchip"><input type="checkbox" value="Cafards"> 🪳 Cafards</label>
+        <label class="skchip"><input type="checkbox" value="Chenilles processionnaires"> 🐛 Chenilles processionnaires</label>
+        <label class="skchip"><input type="checkbox" value="Dératisation (Rats / Souris)"> 🐀 Dératisation (Rats / Souris)</label>
+        <label class="skchip"><input type="checkbox" value="Désinsectisation"> 🧴 Désinsectisation</label>
+        <label class="skchip"><input type="checkbox" value="Guêpes / Frelons"> 🐝 Guêpes / Frelons</label>
+        <label class="skchip"><input type="checkbox" value="Pigeons"> 🕊️ Pigeons</label>
+        <label class="skchip"><input type="checkbox" value="Punaises de lit"> 🛏️ Punaises de lit</label>
+        <label class="skchip"><input type="checkbox" value="Termites & Insectes xylophages"> 🪵 Termites &amp; Insectes xylophages</label>
+      </div>
+    </div>
+
+    <!-- ===== 5. MATÉRIEL À APPORTER ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Matériel à apporter <small>— visible par le technicien avant chaque passage</small></div>
+      <div id="v-mats"><div class="emptyline" id="mats-empty">Aucun élément ajouté.</div></div>
+      <button class="addrowbtn" onclick="matAdd()"><b>＋</b> Ajouter du matériel</button>
+    </div>
+
+    <!-- ===== 6. RÉCAPITULATIF D'INTERVENTION ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Récapitulatif d'intervention <small>— la checklist cochée à chaque passage</small></div>
+      <div id="v-cks"><div class="emptyline" id="cks-empty">Aucun élément de checklist.</div></div>
+      <button class="addrowbtn" onclick="ckAdd()"><b>＋</b> Ajouter une étape</button>
+    </div>
+
+    <!-- ===== 7. PLANIFICATION ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Planification des interventions</div>
+      <div class="fgrid" style="margin-bottom:14px">
+        <div>
+          <label class="lab">Fréquence <em>*</em></label>
+          <select id="v-freqint" onchange="freqSync()">
+            <option value="">— Sélectionner —</option>
+            <option data-n="12">Mensuelle</option>
+            <option data-n="6">Bimestrielle</option>
+            <option data-n="4">Trimestrielle</option>
+            <option data-n="2">Semestrielle</option>
+            <option data-n="1">Annuelle</option>
+          </select>
+        </div>
+        <div>
+          <label class="lab">Nombre d'interventions par an <em>*</em></label>
+          <input type="number" id="v-nbint" min="1" max="52" placeholder="Ex. 4">
+          <div class="hint" id="nbhint" style="display:none">✨ rempli d'après la fréquence — modifiable</div>
+        </div>
+      </div>
+      <label class="lab">Jours préférés <em>*</em></label>
+      <div class="skchips" id="v-jours" style="margin-bottom:14px">
+        <label class="skchip"><input type="checkbox" value="Lundi"> Lundi</label>
+        <label class="skchip"><input type="checkbox" value="Mardi"> Mardi</label>
+        <label class="skchip"><input type="checkbox" value="Mercredi"> Mercredi</label>
+        <label class="skchip"><input type="checkbox" value="Jeudi"> Jeudi</label>
+        <label class="skchip"><input type="checkbox" value="Vendredi"> Vendredi</label>
+        <label class="skchip"><input type="checkbox" value="Samedi"> Samedi</label>
+        <label class="skchip"><input type="checkbox" value="Dimanche"> Dimanche</label>
+      </div>
+      <label class="lab">Créneau horaire préféré <em>*</em></label>
+      <div class="skchips" id="v-creneaux">
+        <label class="skchip"><input type="checkbox" value="08:00 – 10:00"> 08:00 – 10:00</label>
+        <label class="skchip"><input type="checkbox" value="10:00 – 12:00"> 10:00 – 12:00</label>
+        <label class="skchip"><input type="checkbox" value="13:00 – 15:00"> 13:00 – 15:00</label>
+        <label class="skchip"><input type="checkbox" value="15:00 – 17:00"> 15:00 – 17:00</label>
+        <label class="skchip"><input type="checkbox" value="perso" id="ck-perso" onchange="persoTog()"> ⚙️ Personnaliser</label>
+      </div>
+      <div class="fgrid" id="persobox" style="display:none;margin-top:12px;max-width:440px">
+        <div><label class="lab">De</label><input type="time" id="v-pdeb" value="09:00"></div>
+        <div><label class="lab">À</label><input type="time" id="v-pfin" value="11:00"></div>
+      </div>
+    </div>
+
+    <!-- ===== 8. RENOUVELLEMENT & SIGNATURE ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Renouvellement &amp; signature</div>
+      <div class="swrow">
+        <div class="txt">
+          <b>Exiger un renouvellement</b>
+          <small><b style="color:var(--green-d)">Activé :</b> le contrat apparaît dans le widget de renouvellement avant l'échéance, avec un suivi proposé.<br><b style="color:var(--ink-2)">Désactivé :</b> le contrat passe à « Expiré » à sa date de fin.</small>
+        </div>
+        <label class="sw"><input type="checkbox" id="v-renouv" checked onchange="renTog()"><i></i></label>
+      </div>
+      <div class="renbox" id="renbox">
+        <label class="lab">Échéance de renouvellement <em>*</em></label>
+        <select id="v-renech" onchange="renPrev()" style="max-width:440px">
+          <option value="12" selected>Prolonger d'un an</option>
+          <option value="6">Prolonger de 6 mois</option>
+          <option value="24">Prolonger de 2 ans</option>
+        </select>
+        <div class="renprev" id="renprev">
+          <div><span>Nouvelle date de début&nbsp;&nbsp;</span><b id="ren-deb">—</b></div>
+          <div><span>Nouvelle date de fin&nbsp;&nbsp;</span><b id="ren-fin">—</b></div>
+        </div>
+        <div class="hint">Aperçu uniquement — le renouvellement effectif se fait depuis la fiche du contrat ; le contrat d'origine est conservé.</div>
+      </div>
+      <div class="skchips" style="margin-top:14px">
+        <label class="skchip"><input type="checkbox" id="v-signature"> ✍️ Exiger une signature électronique</label>
+      </div>
+    </div>
+
+    <!-- ===== 9. PIÈCES JOINTES ===== -->
+    <div class="card">
+      <div class="card-h"><span class="tick"></span>Pièces jointes <small>— PDF, JPG, PNG · 10 Mo max par fichier</small></div>
+      <div class="pjrow" id="v-pjs">
+        <label class="pjadd">📎 Téléverser un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label>
+        <button class="pjadd" onclick="toast('📚 Bibliothèque de documents — bientôt reliée à la base')">🗂️ Bibliothèque de documents</button>
+      </div>
+      <div class="pjhint" id="pjempty">Aucun fichier sélectionné.</div>
+    </div>
+
+   </div><!-- /.col -->
+
+   <!-- ===== RAIL RÉCAPITULATIF ===== -->
+   <aside class="rail">
+     <div class="rcard">
+       <h3><span class="tick"></span>Récapitulatif</h3>
+       <div class="rline"><span class="k">Client</span><b id="r-client">—</b></div>
+       <div class="rline"><span class="k">Type</span><b id="r-type">—</b></div>
+       <div class="rline"><span class="k">Durée</span><b id="r-duree">—</b></div>
+       <div class="rline"><span class="k">Facturation</span><b id="r-freq">—</b></div>
+       <div class="rline"><span class="k">Passages / an</span><b id="r-nbint">—</b></div>
+       <div class="rline" style="border-bottom:0"><span class="k">Renouvellement</span><b id="r-renouv">Oui ✓</b></div>
+       <div class="rttc"><small>Montant annuel TTC</small><b id="r-ttc">0,00 €</b></div>
+       <div class="rsub" id="r-ech">—</div>
+       <div class="rck" id="ck-cli"><i></i>Client choisi</div>
+       <div class="rck" id="ck-type"><i></i>Type de contrat</div>
+       <div class="rck" id="ck-dates"><i></i>Dates &amp; facturation</div>
+       <div class="rck" id="ck-fin"><i></i>Montant renseigné</div>
+       <div class="rck" id="ck-plan"><i></i>Planification complète</div>
+       <div class="rbtns">
+         <button class="btn2 primary" onclick="saveContrat('actif')"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Enregistrer et envoyer</button>
+         <button class="btn2" onclick="saveContrat('brouillon')"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Brouillon</button>
+       </div>
+     </div>
+   </aside>
+   </div><!-- /.layout -->
+  </div>
+</div>
+
+<script>
+/* ================= DONNÉES ================= */
+const g = id => document.getElementById(id);
+const eur = n => (Math.round(n * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+const CLIENTS = {
+  "Ironwood Solutions":    {adr:"12 rue de la République, 75011 Paris", mail:"john.thompson@ironwood.com", tel:"06 12 34 56 78"},
+  "Syndic Foncia Lilas":   {adr:"60 rue des Lilas, 75020 Paris", mail:"gestion@foncia-lilas.fr", tel:"01 40 31 62 00"},
+  "Hôtel du Parc":         {adr:"2 avenue du Château, 94300 Vincennes", mail:"reception@hotelduparc.fr", tel:"01 43 28 55 12"},
+  "Entrepôt Central":      {adr:"7 rue Cartier-Bresson, 93500 Pantin", mail:"logistique@entrepot-central.fr", tel:"01 48 91 07 33"},
+  "Camping Val de Seine":  {adr:"Chemin des Mousseaux, 91210 Draveil", mail:"accueil@camping-valdeseine.fr", tel:"01 69 03 88 21"},
+  "Pharmacie Centrale":    {adr:"88 rue du Commerce, 75015 Paris", mail:"pharmacie.centrale@orange.fr", tel:"01 45 32 10 87"},
+  "Restaurant Chez Marcel":{adr:"52 avenue Jean Jaurès, 75019 Paris", mail:"chezmarcel75@gmail.com", tel:"01 42 08 15 33"},
+  "Boulangerie Dupont":    {adr:"4 rue de la Mairie, 92600 Asnières", mail:"contact@boulangerie-dupont.fr", tel:"06 45 22 18 90"},
+  "Crèche Les Lutins":     {adr:"18 rue de la Révolution, 93100 Montreuil", mail:"direction@creche-leslutins.fr", tel:"01 48 57 12 90"},
+  "Tabac de la Mairie":    {adr:"1 place de la Mairie, 92600 Asnières", mail:"tabacmairie92@orange.fr", tel:"01 47 93 34 18"},
+  "Mme Perrin":            {adr:"31 rue de Tolbiac, 75013 Paris", mail:"perrin.marie@gmail.com", tel:"06 52 30 41 78"},
+  "M. Diallo":             {adr:"15 rue des Rosiers, 93400 Saint-Ouen", mail:"m.diallo@gmail.com", tel:"06 61 44 28 03"},
+};
+/* + les clients créés à la main (localStorage) : le sélecteur est TOUJOURS complet */
+try{
+  (JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]")).forEach(r => {
+    if(!r || !r.nom || CLIENTS[r.nom]) return;
+    CLIENTS[r.nom] = {adr:[r.adresse, r.cp, r.ville].filter(Boolean).join(", ") || "Adresse à compléter", mail:r.email || "", tel:r.tel || ""};
+  });
+}catch(e){}
+Object.keys(CLIENTS).forEach(n => {
+  const o = document.createElement("option");
+  o.value = n; o.textContent = n;
+  g("v-client").appendChild(o);
+});
+try{
+  const _qc = new URLSearchParams(location.search).get("c");
+  if(_qc && CLIENTS[_qc]){ g("v-client").value = _qc; pickCli(); }
+}catch(e){}
+function pickCli(){
+  const c = CLIENTS[g("v-client").value];
+  g("cliadr").textContent = c ? "📍 " + c.adr + " · " + c.tel : "L'adresse du client s'affichera ici";
+  titreSmart();
+}
+function typePick(el){
+  g("v-type").value = el.value;
+  g("typechips").classList.remove("err");
+  titreSmart();
+}
+/* intitulé intelligent : type + client, tant que tu n'as pas écrit toi-même */
+let TITREEDIT = false;
+function titreSmart(){
+  if(TITREEDIT) return;
+  const t = g("v-type").value, c = g("v-client").value;
+  if(t) g("v-titre").value = t + (c ? " — " + c : "");
+}
+
+/* ================= DATES & DURÉE ================= */
+function moisEntre(a, b){
+  /* durée inclusive : du 23/07/2026 au 22/07/2027 = 12 mois pleins */
+  const d1 = new Date(a), d2 = new Date(b); d2.setDate(d2.getDate() + 1);
+  return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()) + (d2.getDate() >= d1.getDate() ? 0 : -1);
+}
+const fdate = iso => { if(!iso) return "—"; const [y,m,d] = iso.split("-"); return d + "/" + m + "/" + y; };
+function datesCalc(){
+  const a = g("v-deb").value, b = g("v-fin").value;
+  const el = g("v-duree");
+  if(a && b){
+    if(b <= a){ el.innerHTML = "⚠️ <small>la fin doit suivre le début</small>"; renPrev(); return; }
+    const m = Math.max(1, moisEntre(a, b));
+    el.innerHTML = "📆 " + (m >= 12 && m % 12 === 0 ? (m / 12) + " an" + (m > 12 ? "s" : "") : m + " mois");
+  } else {
+    el.innerHTML = "📆 <small>choisis les deux dates</small>";
+  }
+  renPrev();
+}
+/* pré-remplissage malin : aujourd'hui → +1 an */
+(function(){
+  const t = new Date(); const iso = d => d.toISOString().slice(0, 10);
+  g("v-deb").value = iso(t);
+  const f = new Date(t); f.setFullYear(f.getFullYear() + 1); f.setDate(f.getDate() - 1);
+  g("v-fin").value = iso(f);
+  datesCalc();
+})();
+
+/* ================= FINANCES ================= */
+const ECH = {"Mensuelle":[12, "mois"], "Trimestrielle":[4, "trimestre"], "Semestrielle":[2, "semestre"], "Annuelle":[1, "an"]};
+function finCalc(){
+  const ht = parseFloat(g("v-ht").value) || 0;
+  const tva = parseFloat(g("v-tva").value) || 0;
+  const ttc = ht * (1 + tva / 100);
+  g("v-ttc").textContent = eur(ttc);
+  const f = ECH[g("v-freqfac").value];
+  g("v-parech").innerHTML = (f && ttc > 0)
+    ? "💶 " + eur(ttc / f[0]) + " <small>/ " + f[1] + "</small>"
+    : "💶 <small>selon la fréquence</small>";
+}
+
+/* ================= MATÉRIEL & CHECKLIST ================= */
+let MATN = 0, CKN = 0;
+function matAdd(nom, q){
+  const e = g("mats-empty"); if(e) e.remove();
+  const i = MATN++;
+  const d = document.createElement("div");
+  d.className = "dynrow"; d.id = "matrow-" + i;
+  d.innerHTML = `<input placeholder="Ex. Postes d'appâtage sécurisés" value="${nom || ""}"><input type="number" min="1" value="${q || 1}" title="Quantité"><button class="del" onclick="g('matrow-${i}').remove()" title="Retirer">✕</button>`;
+  g("v-mats").appendChild(d);
+  d.querySelector("input").focus();
+}
+function ckAdd(txt){
+  const e = g("cks-empty"); if(e) e.remove();
+  const i = CKN++;
+  const d = document.createElement("div");
+  d.className = "dynrow ck"; d.id = "ckrow-" + i;
+  d.innerHTML = `<input placeholder="Ex. Contrôler et recharger les postes d'appâtage" value="${txt || ""}"><button class="del" onclick="g('ckrow-${i}').remove()" title="Retirer">✕</button>`;
+  g("v-cks").appendChild(d);
+  d.querySelector("input").focus();
+}
+
+/* ================= PLANIFICATION ================= */
+function freqSync(){
+  const o = g("v-freqint").selectedOptions[0];
+  if(o && o.dataset.n){
+    g("v-nbint").value = o.dataset.n;
+    g("nbhint").style.display = "";
+  }
+}
+function persoTog(){
+  g("persobox").style.display = g("ck-perso").checked ? "" : "none";
+}
+
+/* ================= RENOUVELLEMENT ================= */
+function renTog(){
+  g("renbox").style.display = g("v-renouv").checked ? "" : "none";
+  renPrev();
+}
+function renPrev(){
+  if(!g("v-renouv").checked) return;
+  const fin = g("v-fin").value;
+  if(!fin){ g("ren-deb").textContent = "—"; g("ren-fin").textContent = "—"; return; }
+  const m = parseInt(g("v-renech").value) || 12;
+  const d1 = new Date(fin); d1.setDate(d1.getDate() + 1);
+  const d2 = new Date(d1); d2.setMonth(d2.getMonth() + m); d2.setDate(d2.getDate() - 1);
+  const iso = d => d.toISOString().slice(0, 10);
+  g("ren-deb").textContent = fdate(iso(d1));
+  g("ren-fin").textContent = fdate(iso(d2));
+}
+
+/* ================= PIÈCES JOINTES ================= */
+function pjAdd(inp){
+  const e = g("pjempty"); if(e) e.style.display = "none";
+  [...inp.files].forEach(f => {
+    const s = document.createElement("span");
+    s.className = "pjc";
+    s.innerHTML = "📎 " + f.name + ' <button onclick="this.parentNode.remove()" title="Retirer">✕</button>';
+    g("v-pjs").appendChild(s);
+  });
+  inp.value = "";
+  toast("📎 Fichier ajouté — il partira avec le contrat");
+}
+
+/* ================= ENREGISTREMENT ================= */
+function saveContrat(statut){
+  /* champs obligatoires */
+  let missing = false;
+  const mark = (el, bad) => { el.classList.toggle("err", !!bad); if(bad) missing = true; };
+  mark(g("v-client"), !g("v-client").value);
+  mark(g("v-titre"), !g("v-titre").value.trim());
+  g("typechips").classList.toggle("err", !g("v-type").value); if(!g("v-type").value) missing = true;
+  mark(g("v-deb"), !g("v-deb").value);
+  mark(g("v-fin"), !g("v-fin").value || g("v-fin").value <= g("v-deb").value);
+  mark(g("v-freqfac"), !g("v-freqfac").value);
+  mark(g("v-ht"), !(parseFloat(g("v-ht").value) > 0));
+  mark(g("v-freqint"), !g("v-freqint").value);
+  mark(g("v-nbint"), !(parseInt(g("v-nbint").value) > 0));
+  const jours = [...document.querySelectorAll("#v-jours input:checked")].map(c => c.value);
+  g("v-jours").classList.toggle("err", !jours.length); if(!jours.length) missing = true;
+  const cren = [...document.querySelectorAll("#v-creneaux input:checked")].map(c => c.value === "perso" ? (g("v-pdeb").value + " – " + g("v-pfin").value) : c.value);
+  g("v-creneaux").classList.toggle("err", !cren.length); if(!cren.length) missing = true;
+  if(missing){
+    toast("⚠️ Remplis les champs marqués * — ils sont en rouge");
+    const e1 = document.querySelector(".err");
+    if(e1 && e1.scrollIntoView) try{ e1.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
+    return;
+  }
+  const ht = parseFloat(g("v-ht").value) || 0;
+  const ttc = ht * (1 + (parseFloat(g("v-tva").value) || 0) / 100);
+  const ref = "CTR-2026-" + String(10000 + Math.floor(Math.random() * 89999));
+  const rec = {
+    ref, client: g("v-client").value, ct: "",
+    titre: g("v-titre").value.trim(),
+    type: g("v-type").value, notes: g("v-notes").value.trim(),
+    deb: g("v-deb").value, fin: g("v-fin").value,
+    freq: g("v-freqfac").value,
+    ht, tva: parseFloat(g("v-tva").value) || 0, montant: Math.round(ttc * 100) / 100,
+    cats: [...document.querySelectorAll("#v-cats input:checked")].map(c => c.value),
+    materiel: [...document.querySelectorAll("#v-mats .dynrow")].map(r => { const ins = r.querySelectorAll("input"); return {n: ins[0].value.trim(), q: +ins[1].value || 1}; }).filter(m => m.n),
+    checklist: [...document.querySelectorAll("#v-cks .dynrow input")].map(i => i.value.trim()).filter(Boolean),
+    nbint: parseInt(g("v-nbint").value) || 0, freqint: g("v-freqint").value,
+    jours, creneaux: cren,
+    renouv: g("v-renouv").checked, renech: parseInt(g("v-renech").value) || 12,
+    signature: g("v-signature").checked,
+    pj: [...document.querySelectorAll("#v-pjs .pjc")].map(p => p.textContent.replace("📎", "").replace("✕", "").trim()),
+    statut,
+  };
+  try{
+    const box = JSON.parse(localStorage.getItem("tigerflow-inbox-contrats") || "[]").filter(x => x.ref !== ref);
+    box.unshift(rec);
+    localStorage.setItem("tigerflow-inbox-contrats", JSON.stringify(box.slice(0, 30)));
+  }catch(e){}
+  toast(statut === "brouillon"
+    ? "💾 Brouillon " + ref + " enregistré — visible dans la liste des contrats"
+    : "📨 Contrat " + ref + " enregistré et envoyé à " + rec.client);
+  setTimeout(() => { location.href = "contrats-liste.html"; }, 1200);
+}
+
+/* ================= ERGONOMIE ================= */
+function toast(msg){
+  let t = g("toast");
+  if(!t){ t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+document.addEventListener("keydown", e => {
+  if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s"){ e.preventDefault(); saveContrat("brouillon"); }
+});
+/* les champs marqués en rouge se nettoient dès qu'on les corrige */
+document.addEventListener("input", e => { if(e.target.classList) e.target.classList.remove("err"); });
+document.addEventListener("change", e => { if(e.target.classList) e.target.classList.remove("err"); });
+/* ===== rail récapitulatif : tout se met à jour en direct ===== */
+function recap(){
+  const or = (v, d) => v || d || "—";
+  g("r-client").textContent = or(g("v-client").value);
+  g("r-type").textContent = or(g("v-type").value);
+  g("r-duree").textContent = (g("v-deb").value && g("v-fin").value && g("v-fin").value > g("v-deb").value)
+    ? g("v-duree").textContent.replace("📆", "").trim() : "—";
+  g("r-freq").textContent = or(g("v-freqfac").value);
+  g("r-nbint").textContent = g("v-nbint").value ? g("v-nbint").value + " ×" : "—";
+  g("r-renouv").textContent = g("v-renouv").checked ? "Oui ✓" : "Non";
+  g("r-ttc").textContent = g("v-ttc").textContent;
+  const ech = g("v-parech").textContent.replace("💶", "").trim();
+  g("r-ech").textContent = ech.startsWith("selon") ? "—" : "soit " + ech;
+  const ck = (id, ok) => { const el = g(id); el.classList.toggle("ok", !!ok); el.querySelector("i").textContent = ok ? "✓" : ""; };
+  ck("ck-cli", g("v-client").value);
+  ck("ck-type", g("v-type").value);
+  ck("ck-dates", g("v-deb").value && g("v-fin").value && g("v-fin").value > g("v-deb").value && g("v-freqfac").value);
+  ck("ck-fin", parseFloat(g("v-ht").value) > 0);
+  ck("ck-plan", g("v-freqint").value && parseInt(g("v-nbint").value) > 0
+    && document.querySelector("#v-jours input:checked") && document.querySelector("#v-creneaux input:checked"));
+}
+document.addEventListener("input", recap);
+document.addEventListener("change", recap);
+finCalc(); renPrev(); recap();
+</script>
+</body>
+</html>

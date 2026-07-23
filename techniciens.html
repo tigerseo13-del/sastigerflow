@@ -34,7 +34,7 @@ h1,.num{font-family:'Sora',sans-serif}
 .sidebar{width:238px;background:#101216;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
 .sidebar::-webkit-scrollbar{width:0}
 .brand{display:flex;align-items:center;gap:11px;padding:24px 20px 20px;position:sticky;top:0;background:#101216;z-index:2}
-.brand .logo{width:36px;height:36px;border-radius:11px;background:#FF5A1F;display:grid;place-items:center;box-shadow:0 4px 14px rgba(255,90,31,.4)}
+.brand .logo{width:36px;height:36px;border-radius:50%;background:#0A0B0E;border:1.5px solid #262A32;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.45)}
 .brand .logo svg{width:20px;height:20px}
 .brand .name{font-family:'Sora';font-weight:800;font-size:1.06rem;color:#fff}
 .brand .name em{font-style:normal;color:var(--orange)}
@@ -246,6 +246,47 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .docc button{color:var(--muted)}
 .docc button:hover{color:var(--red,#D63B33)}
 input.err,select.err{border-color:var(--red,#D63B33)!important;background:var(--red-bg,#FDE9E8)}
+/* ===== assistant 3 étapes ===== */
+.avrow{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.avprev{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;color:#fff;font-family:'Sora';font-weight:800;font-size:1.1rem;background:linear-gradient(135deg,#5B82F0,#2148C0);flex:none;transition:.15s}
+.avprev.haspic{background-size:cover;background-position:center}
+.avdel{margin-left:9px;font-size:.74rem;color:var(--red,#D63B33);font-weight:700;background:none}
+.avhint{font-size:.7rem;color:var(--muted);margin-top:5px}
+.wsub{margin-left:11px;font-size:.73rem;color:var(--muted);font-weight:600;font-family:'Inter'}
+.mailhint{font-size:.7rem;color:var(--green-d);margin-top:4px;display:none}
+.mailhint.on{display:block}
+.wsteps{display:flex;align-items:center;gap:7px;margin-bottom:18px}
+.wstepc{display:inline-flex;align-items:center;gap:8px;font-family:'Sora';font-weight:700;font-size:.8rem;color:var(--muted);background:none;padding:6px 9px;border-radius:10px;transition:.13s;cursor:pointer}
+.wstepc i{width:24px;height:24px;border-radius:50%;border:2px solid #D5D8DF;display:grid;place-items:center;font-style:normal;font-size:.72rem;background:#fff;color:var(--muted);transition:.13s}
+.wstepc.on{color:var(--orange-deep)}
+.wstepc.on i{background:var(--orange);border-color:var(--orange);color:#fff}
+.wstepc.done{color:var(--green-d)}
+.wstepc.done i{background:var(--green);border-color:var(--green);color:#fff}
+.wline{flex:1;height:2px;background:var(--line);border-radius:2px;min-width:12px}
+.wstep{display:none}
+.wstep.on{display:block;animation:wfade .18s ease}
+@keyframes wfade{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+/* hiérarchie : les sous-sections deviennent discrètes sous le titre d'étape */
+.mbody .msec{font-family:'Inter';font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.mbody .msec::before{height:11px}
+.mbody .msec small{text-transform:none;letter-spacing:0;font-weight:500}
+/* accordéons */
+details.acc{border:1.5px solid var(--line);border-radius:12px;margin:14px 0 4px;overflow:hidden;background:#fff}
+details.acc summary{cursor:pointer;padding:12px 14px;font-size:.83rem;font-weight:700;color:var(--ink-2);list-style:none;display:flex;align-items:center;user-select:none}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary::after{content:"▾";margin-left:auto;color:var(--muted);transition:.15s}
+details.acc[open] summary::after{transform:rotate(180deg)}
+details.acc > *:not(summary){padding:0 14px 13px}
+/* zones tri-état : 1 clic préférence · 2 clics dépannage · 3 clics retirée */
+.zc{display:inline-flex;align-items:baseline;gap:6px;padding:9px 13px;border-radius:11px;border:1.5px solid var(--line);background:#fff;font-size:.82rem;font-weight:700;color:var(--ink-2);cursor:pointer;user-select:none;transition:.13s;font-family:inherit}
+.zc small{font-size:.6rem;font-weight:700;opacity:.8}
+.zc:active{transform:scale(.95)}
+.zc.z1{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
+.zc.z2{border-color:#C9DAFB;background:var(--blue-bg,#EBF1FE);color:#2749B8}
+/* récapitulatif */
+.wrecap{background:var(--bg);border-radius:13px;padding:13px 16px;font-size:.85rem;line-height:2}
+.wrecap .k{color:var(--muted)}
+.wrecap b{font-weight:700}
 /* actions rapides sur les cartes techniciens */
 .tc .act{margin-left:auto;display:flex;gap:7px}
 .tc .foot .go{margin-left:12px}
@@ -353,7 +394,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 <!-- ============ SIDEBAR ============ -->
 <aside class="sidebar">
   <div class="brand">
-    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><g stroke-width="1.7"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></g></svg></span>
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="2.2" stroke-linecap="round"><g stroke-width="1.7"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></g></svg></span>
     <span class="name">TIGER<em>FLOW</em></span>
   </div>
   <div class="nav-label">Général</div>
@@ -364,6 +405,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
     <a href="contrats-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
     <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="paiements.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Paiements</a>
     <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
     <a href="#" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
     <a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
@@ -507,79 +549,116 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 <div class="modal" id="addm">
   <div class="veil" onclick="closeAdd()"></div>
   <div class="mpanel">
-    <div class="mhead"><b>Nouveau technicien</b><button class="mclose" onclick="closeAdd()">✕</button></div>
+    <div class="mhead"><b>Nouveau technicien<span class="wsub" id="wsub">Étape 1/3 · Identité</span></b><button class="mclose" onclick="closeAdd()">✕</button></div>
     <div class="mbody">
-      <div class="msec step" style="margin-top:0"><span class="stepn">1</span>Identité</div>
-      <div class="fgrid">
-        <div><label class="lab">Statut</label><select id="a-statut"><option value="dispo">🟢 Actif — disponible</option><option value="conge">🌴 En congé</option><option value="off">⚪ Inactif</option></select></div>
-        <div><label class="lab">Certibiocide n°</label><input id="a-certi" placeholder="123456"></div>
-        <div><label class="lab">Prénom *</label><input id="a-prenom" placeholder="Julien"></div>
-        <div><label class="lab">Nom *</label><input id="a-nom" placeholder="Moreau"></div>
-        <div><label class="lab">Téléphone 1 *</label><input type="tel" autocomplete="tel" id="a-tel" placeholder="06 12 34 56 78"></div>
-        <div><label class="lab">Téléphone 2</label><input type="tel" id="a-tel2" placeholder="01 48 12 34 56"></div>
-        <div class="full"><label class="lab">E-mail *</label><input type="email" id="a-mail" placeholder="julien@tiger-hygiene3d.fr"></div>
-        <div class="full"><label class="lab">Adresse *</label><input id="a-adr" placeholder="14 rue des Acacias"></div>
-        <div><label class="lab">Code postal *</label><input id="a-cp" inputmode="numeric" placeholder="93100"></div>
-        <div><label class="lab">Ville *</label><input id="a-ville" placeholder="Montreuil"></div>
-        <div class="full"><label class="lab">Pays *</label><input id="a-pays" value="France"></div>
+      <div class="wsteps">
+        <button type="button" class="wstepc on" id="wtab-1" onclick="wGo(1)"><i>1</i>Identité</button>
+        <span class="wline"></span>
+        <button type="button" class="wstepc" id="wtab-2" onclick="wGo(2)"><i>2</i>Planning</button>
+        <span class="wline"></span>
+        <button type="button" class="wstepc" id="wtab-3" onclick="wGo(3)"><i>3</i>Secteur</button>
       </div>
 
-      <div class="msec">Certifications <small>— CACES, habilitation électrique, SST…</small></div>
-      <div id="a-certs"></div>
-      <button class="addrowbtn" onclick="certAdd()">＋ Ajouter une certification</button>
+      <!-- ═══ ÉTAPE 1 · IDENTITÉ ═══ -->
+      <div class="wstep on" id="wstep-1">
+        <div class="avrow">
+          <span class="avprev" id="avprev">?</span>
+          <div>
+            <label class="addrowbtn" style="cursor:pointer">📷 Ajouter une photo<input type="file" accept="image/*" style="display:none" onchange="photoAdd(this)"></label>
+            <button type="button" class="avdel" id="avdel" onclick="photoDel()" style="display:none">✕ Retirer</button>
+            <div class="avhint">JPG ou PNG — sinon les initiales font le travail</div>
+          </div>
+        </div>
+        <div class="fgrid">
+          <div class="full"><label class="lab">Statut</label>
+            <input type="hidden" id="a-statut" value="dispo">
+            <div class="skchips">
+              <label class="skchip"><input type="radio" name="astat" value="dispo" checked onchange="g2('a-statut').value=this.value"> 🟢 Actif</label>
+              <label class="skchip"><input type="radio" name="astat" value="conge" onchange="g2('a-statut').value=this.value"> 🌴 En congé</label>
+              <label class="skchip"><input type="radio" name="astat" value="off" onchange="g2('a-statut').value=this.value"> ⚪ Inactif</label>
+            </div>
+          </div>
+          <div><label class="lab">Prénom *</label><input id="a-prenom" placeholder="Julien"></div>
+          <div><label class="lab">Nom *</label><input id="a-nom" placeholder="Moreau"></div>
+          <div><label class="lab">Téléphone 1 *</label><input type="tel" autocomplete="tel" id="a-tel" placeholder="06 12 34 56 78"></div>
+          <div><label class="lab">Téléphone 2</label><input type="tel" id="a-tel2" placeholder="01 48 12 34 56"></div>
+          <div class="full"><label class="lab">E-mail *</label><input type="email" id="a-mail" placeholder="julien@tiger-hygiene3d.fr">
+            <div class="mailhint" id="mailhint">✨ proposé d'après le prénom — modifiable</div></div>
+          <div class="full"><label class="lab">Adresse *</label><input id="a-adr" placeholder="14 rue des Acacias"></div>
+          <div><label class="lab">Code postal *</label><input id="a-cp" inputmode="numeric" placeholder="93100"></div>
+          <div><label class="lab">Ville *</label><input id="a-ville" placeholder="Montreuil"></div>
+          <div><label class="lab">Pays *</label><input id="a-pays" value="France"></div>
+          <div><label class="lab">Certibiocide n°</label><input id="a-certi" placeholder="123456"></div>
+        </div>
 
-      <div class="msec">Rôles</div>
-      <div class="skchips" id="a-roles">
-        <label class="skchip"><input type="checkbox" id="a-r-vente"> 💼 Habilité vente</label>
-        <label class="skchip"><input type="checkbox" id="a-r-venteR"> 💼 Vente en renfort</label>
-        <label class="skchip"><input type="checkbox" id="a-r-gar"> 🛡️ Garanties prioritaires</label>
+        <div class="msec">Rôles</div>
+        <div class="skchips" id="a-roles">
+          <label class="skchip"><input type="checkbox" id="a-r-vente"> 💼 Habilité vente</label>
+          <label class="skchip"><input type="checkbox" id="a-r-venteR"> 💼 Vente en renfort</label>
+          <label class="skchip"><input type="checkbox" id="a-r-gar"> 🛡️ Garanties prioritaires</label>
+        </div>
+
+        <div class="msec">Certifications <small>— CACES, habilitation électrique, SST…</small></div>
+        <div id="a-certs"></div>
+        <button class="addrowbtn" onclick="certAdd()">＋ Ajouter une certification</button>
+
+        <details class="acc" id="acc-skills">
+          <summary id="sum-skills">Compétences &amp; % de commission · aucune sélectionnée</summary>
+          <div id="a-skills"></div>
+        </details>
       </div>
 
-      <div class="msec">Compétences <small>&amp; % de commission</small></div>
-      <div id="a-skills"></div>
+      <!-- ═══ ÉTAPE 2 · PLANNING ═══ -->
+      <div class="wstep" id="wstep-2">
+        <div class="msec" style="margin-top:0">Jours travaillés *</div>
+        <div class="skchips" id="a-jours"></div>
+        <div class="skchips" style="margin-top:8px">
+          <label class="skchip"><input type="checkbox" id="a-we"> 🗓️ Travaille le week-end</label>
+        </div>
+        <div class="fgrid" style="margin-top:12px">
+          <div><label class="lab">Heure de début *</label><input type="time" id="a-hdeb" value="08:00"></div>
+          <div><label class="lab">Heure de fin *</label><input type="time" id="a-hfin" value="17:00"></div>
+          <div><label class="lab">Pause déjeuner</label><select id="a-pause"><option>1 h</option><option>30 min</option><option value="">Sans pause</option></select></div>
+          <div><label class="lab">Congé en cours ?</label><select id="a-conge"><option value="">Non</option><option value="oui">Oui — actuellement en congé</option></select></div>
+        </div>
 
-      <div class="msec step"><span class="stepn">2</span>Planning de travail</div>
-      <div class="msec">Jours travaillés *</div>
-      <div class="skchips" id="a-jours"></div>
-      <div class="skchips" style="margin-top:8px">
-        <label class="skchip"><input type="checkbox" id="a-we"> 🗓️ Travaille le week-end</label>
+        <div class="msec">Véhicules <small>— 2 max</small></div>
+        <div class="fgrid">
+          <div><label class="lab">Véhicule 1</label><input id="a-veh" placeholder="Renault Kangoo"></div>
+          <div><label class="lab">Immatriculation 1</label><input id="a-plaque" placeholder="AB-123-CD"></div>
+          <div><label class="lab">Véhicule 2</label><input id="a-veh2" placeholder="—"></div>
+          <div><label class="lab">Immatriculation 2</label><input id="a-plaque2" placeholder="—"></div>
+        </div>
+
+        <details class="acc" id="acc-mat">
+          <summary id="sum-mat">Matériel embarqué · aucun</summary>
+          <div class="skchips" id="a-mat" style="padding-top:4px"></div>
+        </details>
       </div>
-      <div class="fgrid" style="margin-top:12px">
-        <div><label class="lab">Heure de début *</label><input type="time" id="a-hdeb" value="08:00"></div>
-        <div><label class="lab">Heure de fin *</label><input type="time" id="a-hfin" value="17:00"></div>
-        <div><label class="lab">Pause déjeuner</label><select id="a-pause"><option>1 h</option><option>30 min</option><option value="">Sans pause</option></select></div>
-        <div><label class="lab">Congé en cours ?</label><select id="a-conge"><option value="">Non</option><option value="oui">Oui — actuellement en congé</option></select></div>
+
+      <!-- ═══ ÉTAPE 3 · SECTEUR ═══ -->
+      <div class="wstep" id="wstep-3">
+        <div class="fgrid">
+          <div><label class="lab">Rayon d'intervention (km) *</label><input type="number" id="a-rayon" value="30" min="1" max="200"></div>
+        </div>
+        <div class="msec">Zones couvertes</div>
+        <div class="skchips" id="a-zones"></div>
+        <div class="hnote">🖱️ <b>1ᵉʳ clic</b> = zone de préférence (orange) · <b>2ᵉ clic</b> = zone de dépannage (bleu — seulement si personne du secteur n'est dispo) · <b>3ᵉ clic</b> = retirée.<br>🗺️ La carte interactive du secteur arrivera avec la version connectée.</div>
+
+        <div class="msec">Documents <small>— contrat, permis, attestations…</small></div>
+        <label class="addrowbtn" style="cursor:pointer">📎 Ajouter un document<input type="file" multiple style="display:none" onchange="docAdd(this)"></label>
+        <div class="doclist" id="a-docs"></div>
+
+        <div class="msec">Récapitulatif <small>— vérifie d'un œil avant d'ajouter</small></div>
+        <div class="wrecap" id="wrecap"></div>
       </div>
-
-      <div class="msec">Véhicules <small>— 2 max</small></div>
-      <div class="fgrid">
-        <div><label class="lab">Véhicule 1</label><input id="a-veh" placeholder="Renault Kangoo"></div>
-        <div><label class="lab">Immatriculation 1</label><input id="a-plaque" placeholder="AB-123-CD"></div>
-        <div><label class="lab">Véhicule 2</label><input id="a-veh2" placeholder="—"></div>
-        <div><label class="lab">Immatriculation 2</label><input id="a-plaque2" placeholder="—"></div>
-      </div>
-
-      <div class="msec">Matériel embarqué <small>— équipement, 10 max</small></div>
-      <div class="skchips" id="a-mat"></div>
-
-      <div class="msec step"><span class="stepn">3</span>Zone d'intervention</div>
-      <div class="fgrid">
-        <div><label class="lab">Rayon d'intervention (km) *</label><input type="number" id="a-rayon" value="30" min="1" max="200"></div>
-      </div>
-      <div class="msec">Zones de préférence <small>— départements où il tourne en priorité</small></div>
-      <div class="skchips" id="a-deps"></div>
-
-      <div class="msec">Zones de dépannage <small>— seulement si personne du secteur n'est dispo</small></div>
-      <div class="skchips" id="a-deps2"></div>
-      <div class="hnote">🗺️ La carte interactive du secteur (rayon + zones surlignées) s'affichera ici dans la version connectée.</div>
-
-      <div class="msec">Documents <small>— contrat, permis, attestations…</small></div>
-      <label class="addrowbtn" style="cursor:pointer">📎 Ajouter un document<input type="file" multiple style="display:none" onchange="docAdd(this)"></label>
-      <div class="doclist" id="a-docs"></div>
     </div>
     <div class="macts">
       <button class="btn outline" onclick="closeAdd()">Annuler</button>
-      <button class="btn primary" onclick="addTech()">✓ Ajouter le technicien</button>
+      <span style="flex:1"></span>
+      <button class="btn outline" id="wback" onclick="wGo(WSTEP-1)" style="display:none">← Retour</button>
+      <button class="btn primary" id="wnext" onclick="wNext()">Suivant →</button>
+      <button class="btn primary" id="wadd" onclick="addTech()" style="display:none">✓ Ajouter le technicien</button>
     </div>
   </div>
 </div>
@@ -817,7 +896,7 @@ function render(){
   document.getElementById('grid').innerHTML = list.map(t=>`
     <div class="tc" onclick="openFiche(${t.i})">
       <div class="head">
-        <span class="tav" style="background:${t.grad}">${(t.prenom[0]||"")}${((t.nom||"")[0]||"")}</span>
+        <span class="tav" style="${t.photo ? `background-image:url(${t.photo});background-size:cover;background-position:center` : `background:${t.grad}`}">${t.photo ? "" : `${(t.prenom[0]||"")}${((t.nom||"")[0]||"")}`}</span>
         <div><b>${(t.prenom+" "+t.nom).trim()}</b><small>Certibiocide n° ${t.certi}</small></div>
         <span style="margin-left:auto;display:flex;gap:6px;align-items:center">${confBadge(t)}${t.top?'<span class="star">★ Top</span>':''}</span>
       </div>
@@ -844,8 +923,13 @@ function openFiche(i){
   const t = TECHS[i];
   if(!t) return;                       /* index inconnu : on ne crashe pas la page */
   const g = id => document.getElementById(id);
-  g('d-av').textContent = (t.prenom[0]||"") + ((t.nom||"")[0]||"");
-  g('d-av').style.background = t.grad;
+  if(t.photo){
+    g('d-av').textContent = "";
+    g('d-av').style.background = "url(" + t.photo + ") center/cover";
+  } else {
+    g('d-av').textContent = (t.prenom[0]||"") + ((t.nom||"")[0]||"");
+    g('d-av').style.background = t.grad;
+  }
   g('d-nom').textContent = (t.prenom+" "+t.nom).trim();
   g('d-tel').href = "tel:"+t.tel.replace(/ /g,"");
   g('d-sms').href = "sms:"+t.tel.replace(/ /g,"");
@@ -903,6 +987,122 @@ function closeFiche(){ document.getElementById('fiche').classList.remove('open')
 
 /* ================= AJOUT ================= */
 const JOURS7 = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+/* ===== assistant : navigation entre les 3 étapes ===== */
+const g2 = id => document.getElementById(id);
+let WSTEP = 1, AVPHOTO = "";
+function avUpd(){
+  if(AVPHOTO) return;
+  const p = ((g2('a-prenom').value.trim())[0] || "").toUpperCase();
+  const n = ((g2('a-nom').value.trim())[0] || "").toUpperCase();
+  g2('avprev').textContent = (p + n) || "?";
+}
+function avShow(){
+  const el = g2('avprev');
+  if(AVPHOTO){
+    el.classList.add('haspic');
+    el.style.backgroundImage = "url(" + AVPHOTO + ")";
+    el.textContent = "";
+    g2('avdel').style.display = "";
+  } else {
+    el.classList.remove('haspic');
+    el.style.backgroundImage = "";
+    avUpd();
+    g2('avdel').style.display = "none";
+  }
+}
+function photoAdd(inp){
+  const f = inp.files && inp.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    /* la photo est réduite (128 px) pour rester légère dans le navigateur */
+    try{
+      const img = new Image();
+      img.onload = () => {
+        try{
+          const c = document.createElement("canvas");
+          const k = Math.max(img.width, img.height) / 128 || 1;
+          c.width = Math.max(1, Math.round(img.width / k));
+          c.height = Math.max(1, Math.round(img.height / k));
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          AVPHOTO = c.toDataURL("image/jpeg", .82);
+        }catch(e){ AVPHOTO = rd.result; }
+        avShow();
+        toast("📷 Photo ajoutée — elle suivra le technicien partout");
+      };
+      img.onerror = () => { AVPHOTO = rd.result; avShow(); };
+      img.src = rd.result;
+    }catch(e){ AVPHOTO = rd.result; avShow(); }
+  };
+  rd.readAsDataURL(f);
+  inp.value = "";
+}
+function photoDel(){ AVPHOTO = ""; avShow(); }
+function telFmt(el){
+  const d = el.value.replace(/\D/g, "").slice(0, 10);
+  el.value = d.replace(/(\d\d)(?=\d)/g, "$1 ");
+}
+function wCheck(n){
+  if(n !== 1) return true;
+  let missing = false;
+  ["a-prenom","a-nom","a-tel","a-mail","a-adr","a-cp","a-ville"].forEach(id => {
+    const el = document.getElementById(id);
+    const empty = !el.value.trim();
+    el.classList.toggle("err", empty);
+    if(empty) missing = true;
+  });
+  if(missing){
+    toast("⚠️ Complète l'identité (champs *) avant de passer à la suite");
+    const e1 = document.querySelector(".wstep.on .err");
+    if(e1 && e1.scrollIntoView) try{ e1.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
+  }
+  return !missing;
+}
+function wGo(n){
+  if(n < 1 || n > 3) return;
+  if(n > WSTEP && !wCheck(WSTEP)) return;
+  WSTEP = n;
+  const sub = g2("wsub");
+  if(sub) sub.textContent = "Étape " + n + "/3 · " + ["Identité", "Planning", "Secteur"][n - 1];
+  for(let i = 1; i <= 3; i++){
+    document.getElementById("wstep-" + i).classList.toggle("on", i === n);
+    const tb = document.getElementById("wtab-" + i);
+    tb.classList.toggle("on", i === n);
+    tb.classList.toggle("done", i < n);
+  }
+  document.getElementById("wback").style.display = n > 1 ? "" : "none";
+  document.getElementById("wnext").style.display = n < 3 ? "" : "none";
+  document.getElementById("wadd").style.display = n === 3 ? "" : "none";
+  if(n === 3) wRecap();
+  const p = document.querySelector("#addm .mpanel");
+  if(p) p.scrollTop = 0;
+}
+function wNext(){ if(wCheck(WSTEP)) wGo(WSTEP + 1); }
+function zoneCycle(el){
+  const nx = ((+el.dataset.st || 0) + 1) % 3;
+  el.dataset.st = nx;
+  el.classList.toggle("z1", nx === 1);
+  el.classList.toggle("z2", nx === 2);
+  el.querySelector("small").textContent = nx === 1 ? "préférence" : nx === 2 ? "dépannage" : "";
+}
+function zPrefs(){ return [...document.querySelectorAll('#a-zones .zc')].filter(e => e.dataset.st === "1").map(e => e.id.replace("a-zn-", "")); }
+function zSecs(){ return [...document.querySelectorAll('#a-zones .zc')].filter(e => e.dataset.st === "2").map(e => e.id.replace("a-zn-", "")); }
+function wRecap(){
+  const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+  const jsel = JOURS7.filter((j, i) => { const el = document.getElementById('a-j-' + i); return el && el.checked; });
+  const nsk = SKILLS.filter((x, i) => { const el = document.getElementById('ask-' + i); return el && el.checked; }).length;
+  const stLbl = {dispo:"🟢 Actif", conge:"🌴 En congé", off:"⚪ Inactif"}[document.getElementById('a-statut').value] || "—";
+  const li = (k, val) => '<div><span class="k">' + k + ' : </span><b>' + (val || "—") + '</b></div>';
+  document.getElementById('wrecap').innerHTML =
+    li("Technicien", ((v('a-prenom') + " " + v('a-nom')).trim() || "—") + " · " + stLbl) +
+    li("Contact", [v('a-tel'), v('a-mail')].filter(Boolean).join(" · ")) +
+    li("Adresse", [v('a-adr'), v('a-cp'), v('a-ville')].filter(Boolean).join(", ")) +
+    li("Planning", (jsel.length ? jsel.join(" · ") : "—") + " — " + (v('a-hdeb') || "08:00") + "–" + (v('a-hfin') || "17:00")) +
+    li("Véhicule", [v('a-veh'), v('a-plaque')].filter(Boolean).join(" · ")) +
+    li("Secteur", (v('a-rayon') || "30") + " km · préférence " + (zPrefs().join(", ") || "—") + (zSecs().length ? " · dépannage " + zSecs().join(", ") : "")) +
+    li("Compétences", nsk ? nsk + " sélectionnée" + (nsk > 1 ? "s" : "") : "aucune") +
+    li("Photo", AVPHOTO ? "ajoutée ✓" : "initiales (ajoute-la à l'étape 1 si tu veux)");
+}
 let CERTN = 0;
 function certAdd(){
   const w = document.getElementById('a-certs');
@@ -925,8 +1125,8 @@ function docAdd(inp){
 }
 function openAdd(){
   const chip = (id, lbl) => `<label class="skchip"><input type="checkbox" id="${id}"> ${lbl}</label>`;
-  document.getElementById('a-deps').innerHTML  = ALL_DEPS.map(z => chip('a-z-' + z, z)).join("");
-  document.getElementById('a-deps2').innerHTML = ALL_DEPS.map(z => chip('a-z2-' + z, z)).join("");
+  document.getElementById('a-zones').innerHTML = ALL_DEPS.map(z =>
+    `<button type="button" class="zc" id="a-zn-${z}" data-st="0" onclick="zoneCycle(this)">${z}<small></small></button>`).join("");
   document.getElementById('a-mat').innerHTML   = ALL_MAT.map((m, i) => chip('a-m-' + i, m)).join("");
   document.getElementById('a-jours').innerHTML = JOURS7.map((j, i) => chip('a-j-' + i, j)).join("");
   JOURS7.forEach((j, i) => { document.getElementById('a-j-' + i).checked = i < 5; });
@@ -937,11 +1137,43 @@ function openAdd(){
   };
   document.getElementById('a-certs').innerHTML = ""; CERTN = 0; certAdd();
   document.getElementById('a-docs').innerHTML = "";
-  /* un département ne peut pas être préférence ET dépannage */
-  ALL_DEPS.forEach(z => {
-    document.getElementById('a-z-' + z).onchange = e => { if(e.target.checked) document.getElementById('a-z2-' + z).checked = false; };
-    document.getElementById('a-z2-' + z).onchange = e => { if(e.target.checked) document.getElementById('a-z-' + z).checked = false; };
+  /* les accordéons annoncent leur contenu */
+  const updSums = () => {
+    const nsk = SKILLS.filter((x, i) => { const el = document.getElementById('ask-' + i); return el && el.checked; }).length;
+    document.getElementById('sum-skills').textContent = "Compétences & % de commission · " + (nsk ? nsk + " sélectionnée" + (nsk > 1 ? "s" : "") : "aucune sélectionnée");
+    const nm = ALL_MAT.filter((m, i) => { const el = document.getElementById('a-m-' + i); return el && el.checked; }).length;
+    document.getElementById('sum-mat').textContent = "Matériel embarqué · " + (nm ? nm + " coché" + (nm > 1 ? "s" : "") : "aucun");
+  };
+  document.getElementById('acc-skills').addEventListener('change', updSums);
+  document.getElementById('acc-mat').addEventListener('change', updSums);
+  updSums();
+  /* avatar : photo du technicien, sinon initiales en direct */
+  AVPHOTO = "";
+  avShow();
+  g2('avprev').textContent = "?";
+  g2('a-prenom').addEventListener('input', avUpd);
+  g2('a-nom').addEventListener('input', avUpd);
+  /* e-mail proposé d'après le prénom, tant que tu ne l'as pas écrit toi-même */
+  const mailEl = g2('a-mail');
+  mailEl.dataset.user = "";
+  g2('a-prenom').addEventListener('input', () => {
+    if(mailEl.dataset.user) return;
+    const p = g2('a-prenom').value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z-]/g, "");
+    mailEl.value = p ? p + "@tiger-hygiene3d.fr" : "";
+    g2('mailhint').classList.toggle('on', !!p);
   });
+  mailEl.addEventListener('keydown', () => { mailEl.dataset.user = "1"; g2('mailhint').classList.remove('on'); });
+  /* téléphones formatés par paires en tapant */
+  g2('a-tel').addEventListener('input', e => telFmt(e.target));
+  g2('a-tel2').addEventListener('input', e => telFmt(e.target));
+  /* Entrée = Suivant (dans les champs des étapes 1 et 2) */
+  document.querySelector('#addm .mpanel').onkeydown = e => {
+    if(e.key === "Enter" && e.target.tagName === "INPUT" && e.target.type !== "checkbox" && e.target.type !== "radio" && WSTEP < 3){
+      e.preventDefault();
+      wNext();
+    }
+  };
+  wGo(1);
   document.getElementById('a-skills').innerHTML = SKILLS.map((s,i)=>`
     <label class="skrow">
       <input type="checkbox" id="ask-${i}">
@@ -962,6 +1194,7 @@ function addTech(){
     if(empty) missing = true;
   });
   if(missing){
+    wGo(1);
     toast("⚠️ Remplis les champs marqués * (identité et adresse)");
     const e1 = document.querySelector(".mbody .err");
     if(e1 && e1.scrollIntoView) try{ e1.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
@@ -990,9 +1223,8 @@ function addTech(){
     veh:v('a-veh')||"—", plaque:v('a-plaque')||"—", veh2:v('a-veh2'), plaque2:v('a-plaque2'),
     certi:v('a-certi')||"—", certs, rayon:v('a-rayon')||"30",
     horaires:{jours:jsel, deb:v('a-hdeb')||"08:00", fin:v('a-hfin')||"17:00", pause:v('a-pause'), we:document.getElementById('a-we').checked},
-    grad:grads[TECHS.length % grads.length],
-    zones: ALL_DEPS.filter(z => document.getElementById('a-z-' + z).checked).length
-      ? ALL_DEPS.filter(z => document.getElementById('a-z-' + z).checked) : ["—"],
+    grad:grads[TECHS.length % grads.length], photo:AVPHOTO || "",
+    zones: zPrefs().length ? zPrefs() : ["—"],
     com, mat:[], interv:0, taux:"—", ca:"0 €", planning:[],
     dispo, dispoD: dispo === "dispo" ? "Disponible — " + horaire : (statSel === "off" ? "Inactif" : "En congé")
   };
@@ -1010,8 +1242,8 @@ function addTech(){
     vente:  document.getElementById('a-r-vente').checked,
     venteR: document.getElementById('a-r-venteR').checked,
     gar:    document.getElementById('a-r-gar').checked,
-    zones:  ALL_DEPS.filter(z => document.getElementById('a-z-' + z).checked),
-    zonesSec: ALL_DEPS.filter(z => document.getElementById('a-z2-' + z).checked),
+    zones:  zPrefs(),
+    zonesSec: zSecs(),
     mat:    ALL_MAT.filter((m, i) => document.getElementById('a-m-' + i).checked),
   };
   try{ localStorage.setItem(SKKEY, JSON.stringify(sk)); }catch(e){}
@@ -1215,6 +1447,7 @@ render();
       <a href="clients.html"><span class="i">&#128101;</span>Clients</a>
       <a href="contrats-liste.html"><span class="i">&#128196;</span>Contrats</a>
       <a href="facture-liste.html"><span class="i">&#128182;</span>Factures</a>
+      <a href="paiements.html"><span class="i">&#128181;</span>Paiements</a>
       <a href="taches.html"><span class="i">&#9989;</span>Tâches</a>
       <a href="techniciens.html"><span class="i">&#128295;</span>Techniciens</a>
       <a href="rapports.html"><span class="i">&#128202;</span>Rapports</a>

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Paiements</title>
+<meta name="theme-color" content="#FF5A1F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3C%2Fsvg%3E">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
+  --line:#EBECF1; --bg:#F4F5F8; --card:#fff;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --blue:#2E5CE6; --blue-bg:#EBF1FE; --amber:#A16207; --amber-bg:#FBF3D9;
+  --red:#D63B33; --red-bg:#FDE9E8;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+button{background:none;border:0;font-family:inherit;cursor:pointer}
+a{text-decoration:none;color:inherit}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+input,select,textarea{font-family:inherit;font-size:.88rem;color:var(--ink);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff;width:100%;transition:.13s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
+input.err,select.err{border-color:var(--red)!important;background:var(--red-bg)}
+textarea{resize:vertical;min-height:64px}
+
+/* ===== sidebar ===== */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:238px;background:#14161B;color:#B9BEC9;display:flex;flex-direction:column;z-index:50}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 18px 18px}
+.brand .logo{width:34px;height:34px;border-radius:50%;background:#0A0B0E;border:1.5px solid #262A32;display:grid;place-items:center}
+.brand .logo svg{width:22px;height:22px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.02rem;color:#fff;letter-spacing:.4px}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5A6070;padding:8px 20px 6px}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9.5px 12px;border-radius:10px;font-size:.86rem;font-weight:500;color:#B9BEC9;transition:.13s}
+.nav a svg{width:17px;height:17px;flex:none}
+.nav a:hover{background:#1D2027;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600;box-shadow:0 6px 16px -6px rgba(255,90,31,.55)}
+.nav.navbot{margin-top:auto;padding-bottom:10px}
+.side-user{display:flex;align-items:center;gap:10px;margin:8px 14px 16px;padding:10px 12px;background:#1D2027;border-radius:12px}
+.side-user .ph{width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:700;font-family:'Sora'}
+.side-user b{display:block;font-size:.78rem;color:#fff;font-weight:600}
+.side-user span{font-size:.68rem;color:#7A8091}
+
+/* ===== main ===== */
+.main{margin-left:238px;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 26px}
+.crumbs{font-size:.95rem;color:var(--muted)}
+.crumbs .cur{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.2px}
+.title-m{display:none;font-family:'Sora';font-weight:700;font-size:1.08rem}
+.spacer{flex:1}
+.btn2{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 16px;font-size:.85rem;font-weight:700;color:var(--ink-2);transition:.13s;white-space:nowrap}
+.btn2:hover{border-color:#D8DAE1;background:#FAFAFC}
+.btn2 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn2.primary{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 6px 16px -6px rgba(255,90,31,.5)}
+.btn2.primary:hover{background:var(--orange-deep)}
+.page{width:100%;padding:20px 28px calc(60px + var(--safe-b))}   /* pleine largeur : la liste respire */
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.kpi{border-radius:18px;padding:16px 18px;border:1px solid transparent}
+.kpi.k-orange{background:#FFF1EA;border-color:#FFD9C4}
+.kpi.k-green{background:#DFF3ED;border-color:#BFE5D8}
+.kpi.k-amber{background:#FBF3D9;border-color:#EEDFAE}
+.kpi.k-blue{background:#EBF1FE;border-color:#C9DAFB}
+.kpi .lbl{font-size:.78rem;font-weight:600;color:var(--ink-2)}
+.kpi .num{font-size:1.55rem;font-weight:800;letter-spacing:-.5px;margin-top:6px;font-family:'Sora';font-variant-numeric:tabular-nums}
+.kpi small{font-size:.73rem;color:var(--ink-2);font-weight:500;display:block;margin-top:4px}
+
+/* filtres */
+.toolrow{display:flex;gap:10px;align-items:center;margin-bottom:13px;flex-wrap:wrap}
+.search{position:relative;flex:1;min-width:220px;max-width:360px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:2}
+.search input{padding-left:36px}
+.toolrow select{width:auto;min-width:150px}
+.dwrap{position:relative}
+.dpop{display:none;position:absolute;left:0;top:calc(100% + 8px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px -12px rgba(23,26,32,.28);padding:14px;z-index:70;width:238px}
+.dpop.open{display:block}
+.dpop .dclear{margin-top:11px;width:100%;border:1.5px dashed var(--line);border-radius:10px;padding:8px;font-size:.78rem;font-weight:700;color:var(--muted)}
+.dpop .dclear:hover{border-color:var(--orange);color:var(--orange-deep)}
+.btn2.fon{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
+
+/* tableau */
+.tcard{background:#fff;border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+thead th{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);background:#FAFBFC;white-space:nowrap}
+tbody td{padding:12px 14px;border-bottom:1px solid #F3F4F7;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr{cursor:pointer;transition:background .12s}
+tbody tr:hover{background:#FAFAFC}
+tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
+.pid{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fref{color:var(--orange-deep);font-weight:700;font-size:.8rem;white-space:nowrap}
+.amt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.st{display:inline-flex;align-items:center;font-size:.72rem;font-weight:800;border-radius:9px;padding:4px 10px;white-space:nowrap}
+.st-enc{background:var(--green-bg);color:var(--green-d)}
+.st-att{background:var(--amber-bg);color:var(--amber)}
+.dte{color:var(--muted);font-size:.8rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+.empty-row{text-align:center;color:var(--muted);padding:40px 10px!important}
+.acts{white-space:nowrap;text-align:right}
+.aic{width:31px;height:31px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink-2);font-size:.82rem;opacity:0;transition:.12s;margin-left:5px}
+tbody tr:hover .aic{opacity:1}
+.aic:hover{border-color:var(--orange);color:var(--orange-deep)}
+.aic.ok:hover{border-color:var(--green);color:var(--green-d);background:var(--green-bg)}
+@media(pointer:coarse){.aic{opacity:1;min-width:40px;min-height:40px}}
+.tfoot{padding:12px 16px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
+.tfoot b{color:var(--ink);font-size:.88rem}
+.kpi[onclick]{cursor:pointer;transition:.13s}
+.kpi[onclick]:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px rgba(23,26,32,.2)}
+
+/* tiroir */
+.dveil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:90;backdrop-filter:blur(2px)}
+.dveil.open{display:block}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:600px;max-width:100%;background:var(--bg);z-index:95;transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);box-shadow:-18px 0 50px rgba(16,18,22,.2);overflow-y:auto;padding:16px 16px calc(30px + var(--safe-b))}
+.drawer.open{transform:none}
+.dcard{background:#fff;border:1px solid #F0F1F4;border-radius:15px;box-shadow:var(--shadow);padding:16px 17px;margin-bottom:12px}
+.dh{font-family:'Sora';font-weight:800;font-size:.9rem;display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.dh::before{content:"";width:4px;height:15px;border-radius:3px;background:var(--orange)}
+.drow1{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.dclose{margin-left:auto;width:36px;height:36px;border-radius:10px;color:var(--ink-2);background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:1rem}
+.dkv{display:flex;justify-content:space-between;gap:10px;padding:7.5px 0;font-size:.85rem;border-bottom:1px dashed var(--line)}
+.dkv:last-child{border-bottom:0}
+.dkv .k{color:var(--muted)}
+.dkv .v{font-weight:600;text-align:right}
+.dbig{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--orange);color:#fff;border-radius:12px;padding:13px;font-size:.9rem;font-weight:700;box-shadow:0 8px 20px -8px rgba(255,90,31,.55);margin-bottom:9px}
+.dbig:hover{background:var(--orange-deep)}
+.dbig.sec{background:#fff;color:var(--ink-2);border:1.5px solid var(--line);box-shadow:none}
+.dbig.sec:hover{border-color:var(--orange);color:var(--orange-deep)}
+.solde{background:var(--orange-soft);border-radius:13px;padding:14px 16px;text-align:center;margin-bottom:12px}
+.solde b{display:block;font-family:'Sora';font-size:1.5rem;color:var(--orange-deep)}
+.solde small{font-size:.75rem;color:var(--ink-2);font-weight:600}
+.lab{display:block;font-size:.75rem;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.lab em{font-style:normal;color:var(--orange-deep)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fgrid .full{grid-column:1/-1}
+.pjadd{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed var(--orange);color:var(--orange-deep);border-radius:11px;padding:9px 14px;font-size:.79rem;font-weight:700;background:#fff;cursor:pointer}
+.pjadd:hover{background:var(--orange-soft)}
+.pjc{display:inline-flex;align-items:center;gap:7px;background:var(--bg);border-radius:10px;padding:7px 11px;font-size:.76rem;font-weight:600;margin-left:8px}
+.pjc button{color:var(--muted)}
+.hint{font-size:.73rem;color:var(--muted);margin-top:6px;line-height:1.5}
+
+.toast{position:fixed;left:50%;bottom:calc(30px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#171A20;color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:1080px){.kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .page{padding:12px 13px calc(80px + var(--safe-b))}
+  .kpis{gap:9px}
+  .kpi{padding:13px 14px}
+  .kpi .num{font-size:1.15rem}
+  .drawer{width:100%}
+  thead th:nth-child(2),tbody td:nth-child(2),thead th:nth-child(7),tbody td:nth-child(7){display:none}
+  input,select,textarea{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+:focus-visible{outline:2.5px solid var(--orange);outline-offset:2px;border-radius:6px}
+button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
+button:active,.btn2:active,.dbig:active{transform:scale(.97)}
+::selection{background:#FFD9C4;color:#171A20}
+*{scrollbar-width:thin;scrollbar-color:#D8DAE1 transparent}
+a,button,input,select,textarea,label{touch-action:manipulation}
+td,.amt,.num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="contrats-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="paiements.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Paiements</a>
+    <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <nav class="nav navbot">
+    <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <div class="crumbs">💶 <span class="cur">Paiements</span></div>
+    <div class="title-m">💶 Paiements</div>
+    <div class="spacer"></div>
+    <button class="btn2" onclick="exportCSV()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exporter</button>
+    <button class="btn2 primary" onclick="openNew()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Créer un paiement</button>
+  </div>
+
+  <div class="page">
+
+    <div class="kpis">
+      <div class="kpi k-green" onclick="kfil('enc',false)" title="Voir les paiements encaissés"><div class="lbl">Total encaissé</div><div class="num" id="k-tot">0 €</div><small id="k-totn">—</small></div>
+      <div class="kpi k-blue" onclick="kfil('enc',true)" title="Voir les encaissements du mois"><div class="lbl">Ce mois-ci</div><div class="num" id="k-mois">0 €</div><small>encaissé sur le mois en cours</small></div>
+      <div class="kpi k-amber" onclick="kfil('att',false)" title="Voir les paiements en attente"><div class="lbl">En attente d'encaissement</div><div class="num" id="k-att">0 €</div><small id="k-attn">—</small></div>
+      <div class="kpi k-orange" onclick="kfil('att',false)" title="Voir ce qui reste à encaisser"><div class="lbl">Montant restant dû</div><div class="num" id="k-du">0 €</div><small>sur les factures non soldées</small></div>
+    </div>
+
+    <div class="toolrow">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="q" placeholder="Rechercher par ID, client, facture…" oninput="render()">
+      </div>
+      <span class="dwrap">
+        <button class="btn2" id="f-datebtn" onclick="dateTog(event)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="f-datelbl">Date d'encaissement</span></button>
+        <div class="dpop" id="dpop" onclick="event.stopPropagation()">
+          <label class="lab">Du</label><input type="date" id="f-du" onchange="render()">
+          <label class="lab" style="margin-top:9px">Au</label><input type="date" id="f-au" onchange="render()">
+          <button class="dclear" onclick="dateClear()">Effacer les dates</button>
+        </div>
+      </span>
+      <select id="f-stat" onchange="render()">
+        <option value="all">Tous les statuts</option>
+        <option value="enc">Encaissé</option>
+        <option value="att">En attente</option>
+      </select>
+      <select id="f-mode" onchange="render()">
+        <option value="all">Tous les modes</option>
+        <option>Virement</option><option>Carte bancaire</option><option>Chèque</option><option>Espèces</option>
+        <option>Stripe (en ligne)</option><option>QR code</option><option>Payer plus tard</option>
+      </select>
+      <select id="f-cli" onchange="render()">
+        <option value="all">Client : tous</option>
+      </select>
+    </div>
+
+    <div class="tcard">
+      <table>
+        <thead><tr>
+          <th>ID du paiement</th><th>Facture liée</th><th>Client</th><th>Montant</th><th>Mode</th><th>Statut</th><th>Encaissé le</th><th></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="tfoot" id="tfoot">—</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ TIROIRS ============ -->
+<div class="dveil" id="dveil" onclick="closeAll()"></div>
+<aside class="drawer" id="drawer"><div id="dbody"></div></aside>
+
+<script>
+/* ================= DONNÉES ================= */
+const g = id => document.getElementById(id);
+const eur = n => (Math.round(n * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "—"; const [y,m,d] = String(iso).split("-"); return d + "/" + m + "/" + y; };
+const TODAY = new Date().toISOString().slice(0, 10);
+const MOIS = TODAY.slice(0, 7);
+
+const CLIENTS = ["Ironwood Solutions","Syndic Foncia Lilas","Hôtel du Parc","Entrepôt Central","Camping Val de Seine","Pharmacie Centrale","Restaurant Chez Marcel","Boulangerie Dupont","Crèche Les Lutins","Tabac de la Mairie","Mme Perrin","M. Diallo"];
+/* factures connues (mêmes réfs que la liste des factures) + celles créées dans l'atelier */
+const FACS = {
+  "FAC-2026-00873": {client:"Ironwood Solutions",    montant:536.80,  statut:"brouillon"},
+  "FAC-2026-00872": {client:"Boulangerie Dupont",    montant:447.00,  statut:"attente"},
+  "FAC-2026-00871": {client:"Hôtel du Parc",         montant:1596.00, statut:"attente"},
+  "FAC-2026-00870": {client:"Restaurant Le Baobab",  montant:720.50,  statut:"payee"},
+  "FAC-2026-00869": {client:"M. et Mme Garnier",     montant:165.00,  statut:"payee"},
+  "FAC-2026-00868": {client:"Copropriété Les Lilas", montant:585.00,  statut:"retard"},
+};
+try{
+  JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").forEach(r => {
+    if(r && r.ref && !FACS[r.ref]) FACS[r.ref] = {client:r.client || "—", montant:r.montant || 0, statut:r.statut || "brouillon"};
+  });
+  JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]").forEach(r => {
+    if(r && r.nom && !CLIENTS.includes(r.nom)) CLIENTS.push(r.nom);
+  });
+}catch(e){}
+try{
+  const stm = JSON.parse(localStorage.getItem("tigerflow-factures-statuts")) || {};
+  Object.keys(stm).forEach(ref => { if(FACS[ref]) FACS[ref].statut = stm[ref]; });
+}catch(e){}
+
+/* missions (interventions) connues, par client — mêmes réfs que l'agenda */
+const MISSIONS = {
+  "Ironwood Solutions":    [{ref:"INT-2026-1102", l:"Dératisation — contrôle des postes"}],
+  "Hôtel du Parc":         [{ref:"INT-2026-1095", l:"Punaises — 6 chambres"}],
+  "Boulangerie Dupont":    [{ref:"INT-2026-1088", l:"Dératisation fournil — passage 2"}],
+  "Pharmacie Centrale":    [{ref:"INT-2026-1042", l:"Contrôle mensuel HACCP"}],
+  "Restaurant Le Baobab":  [{ref:"INT-2026-1076", l:"Cafards cuisine — 2ᵉ passage"}],
+  "Copropriété Les Lilas": [{ref:"INT-2026-1061", l:"Dératisation caves — 3 immeubles"}],
+};
+
+/* paiements démo (juillet 2026, cohérents avec les factures démo) */
+const DEMOP = [
+  {id:"PAY-2026-00036", fac:"FAC-2026-00870", client:"Restaurant Le Baobab",  m:720.50, mode:"Carte bancaire",     st:"enc", d:"2026-07-19", note:"", mis:"INT-2026-1076"},
+  {id:"PAY-2026-00035", fac:"FAC-2026-00869", client:"M. et Mme Garnier",     m:165.00, mode:"Espèces",            st:"enc", d:"2026-07-02", note:""},
+  {id:"PAY-2026-00033", fac:"FAC-2026-00872", client:"Boulangerie Dupont",    m:447.00, mode:"Stripe (en ligne)",  st:"att", d:"", note:"Lien de paiement envoyé le 21/07"},
+  {id:"PAY-2026-00031", fac:"",               client:"Mme Perrin",            m:120.00, mode:"QR code",            st:"att", d:"", note:""},
+  {id:"PAY-2026-00030", fac:"FAC-2026-00871", client:"Hôtel du Parc",         m:800.00, mode:"Virement",           st:"att", d:"", note:"Acompte convenu au téléphone", mis:"INT-2026-1095"},
+  {id:"PAY-2026-00028", fac:"FAC-2026-00868", client:"Copropriété Les Lilas", m:585.00, mode:"Payer plus tard",    st:"att", d:"", note:"Relance faite — promesse fin de mois"},
+  {id:"PAY-2026-00027", fac:"",               client:"Tabac de la Mairie",    m:96.00,  mode:"Espèces",            st:"enc", d:"2026-07-15", note:""},
+  {id:"PAY-2026-00025", fac:"FAC-2026-00873", client:"Ironwood Solutions",    m:250.00, mode:"Virement",           st:"enc", d:"2026-07-08", note:"Acompte à la commande"},
+];
+/* + les encaissements enregistrés sur les fiches factures (registre partagé) */
+let ROWS = [];
+function buildRows(){
+  ROWS = DEMOP.map(p => ({...p}));
+  try{
+    const reg = JSON.parse(localStorage.getItem("tigerflow-factures-paiements")) || {};
+    Object.keys(reg).forEach(ref => (reg[ref] || []).forEach((p, i) => {
+      if(p && p.pid) return;   /* déjà représenté par le paiement d'origine : pas de doublon */
+      ROWS.unshift({id:"PAY-FIC-" + ref.slice(-5) + "-" + (i + 1), fac:ref, client:(FACS[ref] || {}).client || ref,
+        m:p.m || 0, mode:p.mode || "Virement", st:"enc", d:p.d || TODAY, note:p.note || "", src:"fiche"});
+    }));
+    JSON.parse(localStorage.getItem("tigerflow-paiements-perso") || "[]").forEach(p => ROWS.unshift({...p}));
+    const ov = JSON.parse(localStorage.getItem("tigerflow-paiements-statuts")) || {};
+    ROWS.forEach(r => { const o = ov[r.id]; if(o){ r.st = o.st; if(o.d) r.d = o.d; } });
+  }catch(e){}
+}
+
+/* ================= KPI + RENDU ================= */
+function paidOf(ref){ return ROWS.filter(r => r.fac === ref && r.st === "enc").reduce((a, r) => a + r.m, 0); }
+function stats(){
+  const enc = ROWS.filter(r => r.st === "enc");
+  const att = ROWS.filter(r => r.st === "att");
+  g("k-tot").textContent = eur(enc.reduce((a, r) => a + r.m, 0));
+  g("k-totn").textContent = enc.length + " paiement" + (enc.length > 1 ? "s" : "") + " encaissé" + (enc.length > 1 ? "s" : "");
+  g("k-mois").textContent = eur(enc.filter(r => (r.d || "").startsWith(MOIS)).reduce((a, r) => a + r.m, 0));
+  g("k-att").textContent = eur(att.reduce((a, r) => a + r.m, 0));
+  g("k-attn").textContent = att.length ? att.length + " paiement" + (att.length > 1 ? "s" : "") + " à suivre" : "rien en attente 🎉";
+  const du = Object.keys(FACS).reduce((a, ref) => {
+    const f = FACS[ref];
+    if(f.statut === "payee" || f.statut === "brouillon") return a;
+    return a + Math.max(0, f.montant - paidOf(ref));
+  }, 0);
+  g("k-du").textContent = eur(du);
+}
+function render(){
+  buildRows();
+  stats();
+  const q = (g("q").value || "").toLowerCase().trim();
+  const fs = g("f-stat").value, fm = g("f-mode").value, fc = g("f-cli").value;
+  const du = g("f-du").value, au = g("f-au").value;
+  const lbl = g("f-datelbl"), btn = g("f-datebtn");
+  if(du || au){
+    lbl.textContent = (du ? fdate(du) : "…") + " → " + (au ? fdate(au) : "…");
+    btn.classList.add("fon");
+  } else { lbl.textContent = "Date d'encaissement"; btn.classList.remove("fon"); }
+  const list = ROWS.filter(r =>
+    (fs === "all" || r.st === fs) &&
+    (fm === "all" || r.mode === fm) &&
+    (fc === "all" || r.client === fc) &&
+    (!du || (r.d && r.d >= du)) &&
+    (!au || (r.d && r.d <= au)) &&
+    (!q || (r.id + " " + r.client + " " + (r.fac || "")).toLowerCase().includes(q)
+      || String(r.m).includes(q.replace(",", ".")) || String(r.m).replace(".", ",").includes(q)));
+  /* en attente d'abord (le travail du jour), puis les encaissés du plus récent au plus ancien */
+  list.sort((a, b) => a.st !== b.st ? (a.st === "att" ? -1 : 1)
+    : (a.st === "enc" ? String(b.d || "").localeCompare(String(a.d || "")) : 0));
+  /* les filtres survivent au rechargement */
+  try{ localStorage.setItem("tigerflow-paiements-filtre", JSON.stringify({q:g("q").value, fs, fm, fc, du, au})); }catch(e){}
+  g("tbody").innerHTML = list.length ? list.map(r => `
+    <tr onclick="openPay('${r.id}')">
+      <td class="pid">${r.id}</td>
+      <td>${r.fac ? `<a class="fref" href="facture-detail.html" onclick="event.stopPropagation();try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">${r.fac}</a>` : '<span class="dte">—</span>'}</td>
+      <td><b>${r.client}</b></td>
+      <td class="amt">${eur(r.m)}</td>
+      <td class="dte">${r.mode}</td>
+      <td><span class="st ${r.st === "enc" ? "st-enc" : "st-att"}">${r.st === "enc" ? "Encaissé" : "En attente"}</span></td>
+      <td class="dte">${fdate(r.d)}</td>
+      <td class="acts">${r.st === "att" ? `<button class="aic ok" onclick="event.stopPropagation();encaisser('${r.id}')" title="Marquer encaissé — 1 clic">✓</button><button class="aic" onclick="event.stopPropagation();relancer('${r.id}')" title="Relancer par email">✉️</button>` : ""}</td>
+    </tr>`).join("")
+    : '<tr><td colspan="8" class="empty-row">Aucun paiement ne correspond.<br><small>Modifie les filtres ou crée un paiement.</small></td></tr>';
+  g("tfoot").innerHTML = list.length
+    ? list.length + " paiement" + (list.length > 1 ? "s" : "") + " affiché" + (list.length > 1 ? "s" : "") + '<b>' + eur(list.reduce((a, r) => a + r.m, 0)) + '</b>'
+    : "Rien à afficher";
+}
+
+/* ================= TIROIR DÉTAIL ================= */
+function openPay(id){
+  const r = ROWS.find(x => x.id === id);
+  if(!r) return;
+  g("dbody").innerHTML = `
+    <div class="dcard">
+      <div class="drow1">
+        <span class="st ${r.st === "enc" ? "st-enc" : "st-att"}">${r.st === "enc" ? "Encaissé" : "En attente"}</span>
+        <button class="dclose" onclick="closeAll()">✕</button>
+      </div>
+      <h2 style="font-family:'Sora';font-size:1.1rem">${r.client}</h2>
+      <div style="font-size:.8rem;color:var(--muted);margin-top:3px">${r.id}</div>
+    </div>
+    <div class="solde"><small>Montant du paiement</small><b>${eur(r.m)}</b></div>
+    <div class="dcard">
+      <div class="dh">Détails</div>
+      <div class="dkv"><span class="k">Mode de paiement</span><span class="v">${r.mode}</span></div>
+      <div class="dkv"><span class="k">Statut</span><span class="v">${r.st === "enc" ? "Encaissé ✓" : "En attente"}</span></div>
+      <div class="dkv"><span class="k">Date d'encaissement</span><span class="v">${fdate(r.d)}</span></div>
+      ${r.mis ? `<div class="dkv"><span class="k">Mission liée</span><span class="v"><a class="fref" href="calendrier.html">${r.mis} →</a></span></div>` : ""}
+      ${r.fac ? `<div class="dkv"><span class="k">Facture liée</span><span class="v"><a class="fref" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">${r.fac} →</a></span></div>` : ""}
+      ${r.pj && r.pj.length ? `<div class="dkv"><span class="k">Justificatif</span><span class="v">📎 ${r.pj.join(", ")}</span></div>` : ""}
+      ${r.note ? `<div class="dkv"><span class="k">Note</span><span class="v" style="max-width:60%">${r.note}</span></div>` : ""}
+    </div>
+    ${r.st === "att" ? `<button class="dbig" onclick="encaisser('${r.id}')">✓ Marquer comme encaissé aujourd'hui</button>` : ""}
+    ${r.fac ? `<a class="dbig sec" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">📄 Ouvrir la fiche de la facture</a>` : ""}`;
+  g("drawer").classList.add("open");
+  g("dveil").classList.add("open");
+  g("drawer").scrollTop = 0;
+}
+function encaisser(id){
+  try{
+    const ov = JSON.parse(localStorage.getItem("tigerflow-paiements-statuts")) || {};
+    ov[id] = {st:"enc", d:TODAY};
+    localStorage.setItem("tigerflow-paiements-statuts", JSON.stringify(ov));
+    /* le registre partagé apprend l'encaissement si une facture est liée */
+    const r = ROWS.find(x => x.id === id);
+    if(r && r.fac){
+      const reg = JSON.parse(localStorage.getItem("tigerflow-factures-paiements")) || {};
+      if(!reg[r.fac]) reg[r.fac] = [];
+      reg[r.fac].push({m:r.m, mode:r.mode, t:Date.now(), d:TODAY, note:r.note || "", pid:r.id});
+      localStorage.setItem("tigerflow-factures-paiements", JSON.stringify(reg));
+      const f = FACS[r.fac];
+      if(f && reg[r.fac].reduce((a, p) => a + p.m, 0) >= f.montant - 0.005){
+        const stm = JSON.parse(localStorage.getItem("tigerflow-factures-statuts")) || {};
+        stm[r.fac] = "payee";
+        localStorage.setItem("tigerflow-factures-statuts", JSON.stringify(stm));
+        f.statut = "payee";
+      }
+    }
+  }catch(e){}
+  render();
+  closeAll();
+  toast("💶 Paiement encaissé — la facture liée est à jour");
+}
+
+/* ================= TIROIR CRÉATION ================= */
+function openNew(){
+  const cliOpts = CLIENTS.map(c => `<option>${c}</option>`).join("");
+  g("dbody").innerHTML = `
+    <div class="dcard">
+      <div class="drow1">
+        <b style="font-family:'Sora';font-size:1.05rem">💶 Créer un paiement</b>
+        <button class="dclose" onclick="closeAll()">✕</button>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dh">Liens</div>
+      <div class="fgrid">
+        <div class="full"><label class="lab">Client <em>*</em></label>
+          <select id="n-client" onchange="facSync()"><option value="">— Choisir un client —</option>${cliOpts}</select></div>
+        <div class="full"><label class="lab">Mission liée</label>
+          <select id="n-mis"><option value="">Sélectionne d'abord un client</option></select></div>
+        <div class="full"><label class="lab">Facture liée</label>
+          <select id="n-fac"><option value="">Sélectionne d'abord un client</option></select>
+          <div class="hint" id="n-fachint">💡 Lie ce paiement à une facture : la fiche facture le verra automatiquement.</div></div>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dh">Paiement</div>
+      <div class="fgrid">
+        <div><label class="lab">Montant (€) <em>*</em></label><input id="n-m" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="0,00"></div>
+        <div><label class="lab">Mode de paiement <em>*</em></label>
+          <select id="n-mode"><option>Virement</option><option>Carte bancaire</option><option>Chèque</option><option>Espèces</option><option>Stripe (en ligne)</option><option>QR code</option><option>Payer plus tard</option></select></div>
+        <div><label class="lab">Statut</label>
+          <select id="n-st"><option value="enc">Encaissé</option><option value="att">En attente</option></select></div>
+        <div><label class="lab">Date d'encaissement <em>*</em></label><input id="n-d" type="date" value="${TODAY}"></div>
+        <div class="full"><label class="lab">Justificatif de paiement</label>
+          <label class="pjadd">📎 Ajouter un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label><span id="n-pjs"></span>
+          <div class="hint">PDF, JPG, PNG — 10 Mo max par fichier.</div></div>
+        <div class="full"><label class="lab">Notes</label><textarea id="n-note" placeholder="Note interne facultative…"></textarea></div>
+      </div>
+    </div>
+    <button class="dbig" onclick="savePay()">✓ Enregistrer le paiement</button>`;
+  g("drawer").classList.add("open");
+  g("dveil").classList.add("open");
+  g("drawer").scrollTop = 0;
+  setTimeout(() => { const c = g("n-client"); if(c) c.focus(); }, 60);
+}
+function facSync(){
+  const cli = g("n-client").value;
+  const mi = g("n-mis");
+  if(mi){
+    const ms = MISSIONS[cli] || [];
+    mi.innerHTML = ms.length
+      ? '<option value="">— Aucune mission liée —</option>' + ms.map(m => `<option value="${m.ref}">${m.ref} · ${m.l}</option>`).join("")
+      : '<option value="">Aucune mission planifiée pour ce client</option>';
+  }
+  const sel = g("n-fac");
+  const refs = Object.keys(FACS).filter(ref => FACS[ref].client === cli && FACS[ref].statut !== "payee");
+  sel.innerHTML = refs.length
+    ? '<option value="">— Aucune facture liée —</option>' + refs.map(ref => {
+        const f = FACS[ref];
+        const reste = Math.max(0, f.montant - paidOf(ref));
+        return `<option value="${ref}" data-reste="${reste}">${ref} · reste ${eur(reste)}</option>`;
+      }).join("")
+    : '<option value="">Aucune facture ouverte pour ce client</option>';
+  sel.onchange = () => {
+    const o = sel.selectedOptions[0];
+    if(o && o.dataset.reste && !g("n-m").value) g("n-m").value = (+o.dataset.reste).toFixed(2);
+  };
+}
+function pjAdd(inp){
+  [...inp.files].forEach(f => {
+    const s = document.createElement("span");
+    s.className = "pjc";
+    s.innerHTML = "📎 " + f.name + ' <button onclick="this.parentNode.remove()">✕</button>';
+    g("n-pjs").appendChild(s);
+  });
+  inp.value = "";
+}
+let PAYN = 40;
+function savePay(){
+  let missing = false;
+  const mark = (el, bad) => { el.classList.toggle("err", !!bad); if(bad) missing = true; };
+  mark(g("n-client"), !g("n-client").value);
+  mark(g("n-m"), !(parseFloat(g("n-m").value) > 0));
+  mark(g("n-d"), !g("n-d").value);
+  if(missing){ toast("⚠️ Client, montant et date sont obligatoires"); return; }
+  const rec = {
+    id: "PAY-2026-" + String(100 + Math.floor(Math.random() * 89899)).padStart(5, "0"),
+    fac: g("n-fac").value || "",
+    mis: (g("n-mis") || {value:""}).value || "",
+    client: g("n-client").value,
+    m: Math.round(parseFloat(g("n-m").value) * 100) / 100,
+    mode: g("n-mode").value,
+    st: g("n-st").value,
+    d: g("n-st").value === "enc" ? g("n-d").value : "",
+    note: (g("n-note").value || "").trim(),
+    pj: [...document.querySelectorAll("#n-pjs .pjc")].map(p => p.textContent.replace("📎", "").replace("✕", "").trim()),
+  };
+  try{
+    const box = JSON.parse(localStorage.getItem("tigerflow-paiements-perso") || "[]");
+    box.unshift(rec);
+    localStorage.setItem("tigerflow-paiements-perso", JSON.stringify(box.slice(0, 50)));
+    /* encaissé + facture liée → le registre partagé et le statut de la facture suivent */
+    if(rec.st === "enc" && rec.fac){
+      const reg = JSON.parse(localStorage.getItem("tigerflow-factures-paiements")) || {};
+      if(!reg[rec.fac]) reg[rec.fac] = [];
+      reg[rec.fac].push({m:rec.m, mode:rec.mode, t:Date.now(), d:rec.d, note:rec.note, pid:rec.id});
+      localStorage.setItem("tigerflow-factures-paiements", JSON.stringify(reg));
+      const f = FACS[rec.fac];
+      if(f && reg[rec.fac].reduce((a, p) => a + p.m, 0) >= f.montant - 0.005){
+        const stm = JSON.parse(localStorage.getItem("tigerflow-factures-statuts")) || {};
+        stm[rec.fac] = "payee";
+        localStorage.setItem("tigerflow-factures-statuts", JSON.stringify(stm));
+        f.statut = "payee";
+      }
+    }
+  }catch(e){}
+  closeAll();
+  render();
+  toast(rec.st === "enc"
+    ? "💶 " + eur(rec.m) + " encaissés — " + rec.client + (rec.fac ? " · la fiche " + rec.fac + " est à jour" : "")
+    : "🕒 Paiement en attente créé — " + rec.client);
+}
+
+/* ================= EXPORT ================= */
+function exportCSV(){
+  buildRows();
+  const rows = [["ID", "Facture", "Client", "Montant", "Mode", "Statut", "Date", "Note"]]
+    .concat(ROWS.map(r => [r.id, r.fac || "", r.client, String(r.m).replace(".", ","), r.mode, r.st === "enc" ? "Encaissé" : "En attente", fdate(r.d), (r.note || "").replace(/;/g, ",")]));
+  const csv = "﻿" + rows.map(r => r.join(";")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = "tigerflow-paiements.csv";
+  a.click();
+  toast("📥 Export CSV téléchargé — " + ROWS.length + " paiements");
+}
+
+/* ================= COMMUN ================= */
+function closeAll(){
+  g("drawer").classList.remove("open");
+  g("dveil").classList.remove("open");
+}
+function toast(msg){
+  let t = g("toast");
+  if(!t){ t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+function dateTog(e){ e.stopPropagation(); g("dpop").classList.toggle("open"); }
+function dateClear(){ g("f-du").value = ""; g("f-au").value = ""; render(); }
+document.addEventListener("click", e => { if(!e.target.closest(".dwrap")) g("dpop").classList.remove("open"); });
+/* le filtre Client connaît tous les clients présents dans la liste */
+(function(){
+  buildRows();
+  const names = [...new Set(ROWS.map(r => r.client).concat(CLIENTS))].sort((a, b) => a.localeCompare(b, "fr"));
+  g("f-cli").innerHTML = '<option value="all">Client : tous</option>' + names.map(n => `<option>${n}</option>`).join("");
+  /* filtres retrouvés tels quels */
+  try{
+    const f = JSON.parse(localStorage.getItem("tigerflow-paiements-filtre")) || {};
+    if(f.q) g("q").value = f.q;
+    if(f.fs) g("f-stat").value = f.fs;
+    if(f.fm) g("f-mode").value = f.fm;
+    if(f.fc && [...g("f-cli").options].some(o => o.value === f.fc)) g("f-cli").value = f.fc;
+    if(f.du) g("f-du").value = f.du;
+    if(f.au) g("f-au").value = f.au;
+  }catch(e){}
+})();
+/* tuiles cliquables → filtre immédiat */
+function kfil(st, mois){
+  g("f-stat").value = st;
+  g("f-du").value = mois ? MOIS + "-01" : "";
+  g("f-au").value = mois ? TODAY : "";
+  render();
+  toast(st === "att" ? "🔎 Les paiements à suivre — « Tous les statuts » pour tout revoir" : "🔎 Les paiements encaissés" + (mois ? " ce mois-ci" : ""));
+}
+/* relance par email préremplie */
+const CMAILS = {"Ironwood Solutions":"john.thompson@ironwood.com","Syndic Foncia Lilas":"gestion@foncia-lilas.fr","Hôtel du Parc":"reception@hotelduparc.fr","Entrepôt Central":"logistique@entrepot-central.fr","Camping Val de Seine":"accueil@camping-valdeseine.fr","Pharmacie Centrale":"pharmacie.centrale@orange.fr","Restaurant Chez Marcel":"chezmarcel75@gmail.com","Boulangerie Dupont":"contact@boulangerie-dupont.fr","Crèche Les Lutins":"direction@creche-leslutins.fr","Tabac de la Mairie":"tabacmairie92@orange.fr","Mme Perrin":"perrin.marie@gmail.com","M. Diallo":"m.diallo@gmail.com"};
+function _go(url){ location.href = url; }
+function relancer(id){
+  const r = ROWS.find(x => x.id === id);
+  if(!r) return;
+  let mail = CMAILS[r.client] || "";
+  try{ (JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]")).forEach(c => { if(c && c.nom === r.client && (c.email || c.mail)) mail = c.email || c.mail; }); }catch(e){}
+  const suj = encodeURIComponent("Règlement en attente" + (r.fac ? " — facture " + r.fac : "") + " · TIGER Hygiène 3D");
+  const body = encodeURIComponent("Bonjour,\n\nSauf erreur de notre part, votre règlement de " + eur(r.m).replace(/\u202f|\u00a0/g, " ") + (r.fac ? " (facture " + r.fac + ")" : "") + " est toujours en attente.\n\nVous pouvez régler par virement ou nous contacter directement au 06 12 34 56 78 pour toute question.\n\nMerci d'avance,\nTIGER Hygiène 3D");
+  _go("mailto:" + mail + "?subject=" + suj + "&body=" + body);
+  toast("✉️ Relance préparée pour " + r.client);
+}
+document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeAll(); g("dpop").classList.remove("open"); } });
+/* raccourcis : / recherche · N nouveau paiement */
+document.addEventListener("keydown", e => {
+  const t = e.target;
+  const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable);
+  if(typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.key === "/"){ e.preventDefault(); g("q").focus(); }
+  else if(e.key === "n" || e.key === "N"){ e.preventDefault(); openNew(); }
+});
+document.addEventListener("input", e => { if(e.target.classList) e.target.classList.remove("err"); });
+render();
+</script>
+</body>
+</html>
