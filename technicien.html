@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TigerFlow — Fiche technicien</title>
+<meta name="theme-color" content="#FF5A1F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3C%2Fsvg%3E">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
+  --line:#EBECF1; --bg:#F4F5F8; --card:#fff;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --blue:#2E5CE6; --blue-bg:#EBF1FE; --amber:#A16207; --amber-bg:#FBF3D9;
+  --red:#D63B33; --red-bg:#FDE9E8;
+  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+button{background:none;border:0;font-family:inherit;cursor:pointer}
+a{text-decoration:none;color:inherit}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+input,select,textarea{font-family:inherit;font-size:.88rem;color:var(--ink);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff;width:100%;transition:.13s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
+textarea{resize:vertical;min-height:64px}
+
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:238px;background:#14161B;color:#B9BEC9;display:flex;flex-direction:column;z-index:50}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 18px 18px}
+.brand .logo{width:34px;height:34px;border-radius:50%;background:#0A0B0E;border:1.5px solid #262A32;display:grid;place-items:center}
+.brand .logo svg{width:22px;height:22px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.02rem;color:#fff;letter-spacing:.4px}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#5A6070;padding:8px 20px 6px}
+.nav{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9.5px 12px;border-radius:10px;font-size:.86rem;font-weight:500;color:#B9BEC9;transition:.13s}
+.nav a svg{width:17px;height:17px;flex:none}
+.nav a:hover{background:#1D2027;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600;box-shadow:0 6px 16px -6px rgba(255,90,31,.55)}
+.nav.navbot{margin-top:auto;padding-bottom:10px}
+.side-user{display:flex;align-items:center;gap:10px;margin:8px 14px 16px;padding:10px 12px;background:#1D2027;border-radius:12px}
+.side-user .ph{width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:700;font-family:'Sora'}
+.side-user b{display:block;font-size:.78rem;color:#fff;font-weight:600}
+.side-user span{font-size:.68rem;color:#7A8091}
+
+.main{margin-left:238px;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 26px}
+.crumbs{font-size:.95rem;color:var(--muted)}
+.crumbs a{font-weight:600;color:var(--muted)}
+.crumbs a:hover{color:var(--orange-deep)}
+.crumbs .cur{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-.2px}
+.title-m{display:none;font-family:'Sora';font-weight:700;font-size:1.08rem}
+.spacer{flex:1}
+.btn2{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 15px;font-size:.84rem;font-weight:700;color:var(--ink-2);transition:.13s;white-space:nowrap;cursor:pointer}
+.btn2:hover{border-color:#D8DAE1;background:#FAFAFC}
+.btn2 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn2.primary{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 6px 16px -6px rgba(255,90,31,.5)}
+.btn2.primary:hover{background:var(--orange-deep)}
+.fmenu-wrap{position:relative}
+.fmenu{display:none;position:absolute;right:0;top:calc(100% + 8px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px -12px rgba(23,26,32,.28);min-width:238px;padding:7px;z-index:60}
+.fmenu.open{display:block}
+.fmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 13px;border-radius:10px;font-size:.85rem;font-weight:600;color:var(--ink-2);font-family:inherit;background:none;border:0;cursor:pointer}
+.fmenu button:hover{background:var(--bg)}
+.fmenu .sep{height:1px;background:var(--line);margin:6px 4px}
+.fmenu .danger{color:var(--red)}
+.fmenu .danger:hover{background:var(--red-bg)}
+
+.page{width:100%;padding:20px 28px calc(60px + var(--safe-b))}
+
+/* en-tête fiche */
+.fhead{display:flex;align-items:center;gap:15px;margin-bottom:4px;flex-wrap:wrap}
+.fav{width:58px;height:58px;border-radius:17px;display:grid;place-items:center;color:#fff;font-family:'Sora';font-weight:800;font-size:1.15rem;background:linear-gradient(135deg,#5B82F0,#2148C0);flex:none;background-size:cover;background-position:center}
+.fhead h1{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px}
+.stbadge{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:800;border-radius:10px;padding:5px 12px}
+.st-dispo{background:var(--green-bg);color:var(--green-d)}
+.st-interv{background:var(--blue-bg);color:var(--blue)}
+.st-conge{background:#EEF0F4;color:var(--muted)}
+.fsub{font-size:.8rem;color:var(--muted);margin-top:3px}
+.hchips{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px;width:100%}
+.hchip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:.79rem;font-weight:600;color:var(--ink-2);text-decoration:none;transition:.13s}
+a.hchip:hover{border-color:var(--orange);color:var(--orange-deep)}
+.gC{display:grid;grid-template-columns:296px 1fr;gap:16px;align-items:start}
+@media(max-width:1080px){.gC{grid-template-columns:1fr}}
+.g2i{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:1080px){.g2i{grid-template-columns:1fr}}
+.sav{width:92px;height:92px;border-radius:26px;background:linear-gradient(135deg,#5B82F0,#2148C0);color:#fff;display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:1.8rem;margin:6px auto 13px;background-size:cover;background-position:center}
+.srows{margin-top:15px}
+.srow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:.84rem;text-align:left}
+.srow:last-child{border-bottom:0}
+.srow .ic{width:32px;height:32px;border-radius:10px;background:var(--orange-soft);display:grid;place-items:center;flex:none;font-size:.9rem}
+.srow b{font-weight:600;display:block;word-break:break-word}
+.srow small{color:var(--muted);font-size:.71rem;display:block;margin-top:1px}
+a.srow{color:inherit;text-decoration:none}
+a.srow:hover b{color:var(--orange-deep)}
+.sact{display:flex;gap:8px;margin-top:14px}
+.sact a{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:11px;padding:10px 8px;font-size:.78rem;font-weight:700;border:1.5px solid var(--line);color:var(--ink-2);transition:.13s;text-decoration:none}
+.sact a.pcall{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 6px 16px -6px rgba(255,90,31,.5)}
+.sact a.pcall:hover{background:var(--orange-deep)}
+.sact a.pwa{border-color:#25D366;color:#1DA851}
+.sact a.pwa:hover{background:#EAF9F0}
+.sact a:hover{border-color:var(--orange);color:var(--orange-deep)}
+.sact a svg,.congebox-svg svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.srow .ic svg{width:15px;height:15px;stroke:var(--orange-deep);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mapph .pinsvg{width:36px;height:36px;stroke:var(--orange-deep);fill:#fff;stroke-width:1.8;filter:drop-shadow(0 5px 8px rgba(0,0,0,.28))}
+.sav{box-shadow:0 14px 30px -14px rgba(0,0,0,.35)}
+.congebox-svg{display:inline-flex;align-items:center;gap:8px}
+.lab2{display:block;font-size:.72rem;font-weight:700;color:var(--ink-2);margin-bottom:5px}
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.stt2{background:var(--bg);border-radius:13px;padding:15px;text-align:center}
+.stt2 b{display:block;font-family:'Sora';font-size:1.3rem;letter-spacing:-.4px}
+.stt2 small{font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.stt2.b{background:var(--blue-bg)} .stt2.b b{color:var(--blue)} .stt2.b small{color:var(--blue);opacity:.75}
+.stt2.g{background:var(--green-bg)} .stt2.g b{color:var(--green-d)} .stt2.g small{color:var(--green-d);opacity:.75}
+.stt2.o{background:var(--orange-soft)} .stt2.o b{color:var(--orange-deep)} .stt2.o small{color:var(--orange-deep);opacity:.75}
+/* barres CA par activité */
+.cbar{display:grid;grid-template-columns:170px 1fr 92px;gap:10px;align-items:center;padding:5.5px 0;font-size:.8rem}
+.cbar .cl{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbar .ct{height:10px;border-radius:6px;background:#F1F2F5;overflow:hidden}
+.cbar .ct i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--orange),#FF8A50)}
+.cbar .cv{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media(max-width:760px){.cbar{grid-template-columns:110px 1fr 80px}}
+.glab{font-size:.64rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--orange-deep);margin:15px 0 3px}
+.glab:first-child{margin-top:0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+@media(max-width:1080px){.grid3{grid-template-columns:1fr}}
+
+/* onglets */
+.tabsrow{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid #F0F1F4;border-radius:15px;padding:6px;box-shadow:var(--shadow);margin:0 0 16px;overflow-x:auto;position:sticky;top:66px;z-index:30}
+.stbadge .dotp{width:7px;height:7px;border-radius:50%;background:currentColor;animation:bpulse 2s ease-in-out infinite;flex:none}
+@keyframes bpulse{0%,100%{opacity:1}50%{opacity:.3}}
+.copytel{cursor:copy}
+.copytel:hover b{color:var(--orange-deep)}
+.nextchip{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border-radius:999px;padding:6px 12px;font-size:.73rem;font-weight:600;color:var(--ink-2);max-width:100%}
+.nextchip svg{width:12px;height:12px;stroke:var(--orange-deep);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.nextchip.off{color:var(--muted)}
+#i-perf tbody tr:nth-child(even) td{background:#FAFBFC}
+#i-perf tbody tr:hover td{background:#F6F7FA}
+.day.today{border:2px solid var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
+.day .tdy{font-size:.55rem;font-weight:800;color:var(--orange-deep);text-transform:uppercase;letter-spacing:.05em;margin-left:4px}
+.tab{padding:9.5px 15px;font-size:.85rem;font-weight:600;color:var(--muted);border-radius:10px;white-space:nowrap;transition:.13s}
+.tab:hover{color:var(--ink);background:var(--bg)}
+.tab.on{background:var(--orange);color:#fff;font-weight:700;box-shadow:0 6px 14px -6px rgba(255,90,31,.55)}
+.tab .n{font-size:.68rem;background:#EEF0F4;border-radius:8px;padding:2px 7px;margin-left:5px;color:var(--muted)}
+.tab.on .n{background:rgba(255,255,255,.25);color:#fff}
+
+/* bandeau de couverture */
+.cover{position:relative;height:158px;border-radius:20px;overflow:hidden;margin:14px 0 -96px;border:1px solid #FFE2D2;
+  background:radial-gradient(circle at 12% 130%, rgba(255,90,31,.28) 0, transparent 50%),
+  radial-gradient(circle at 88% -40%, rgba(255,90,31,.18) 0, transparent 45%),
+  linear-gradient(115deg,#FFF6F0,#FFEDE2 55%,#FFF3EA)}
+.cover::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(234,74,16,.05) 1px,transparent 1px),linear-gradient(rgba(234,74,16,.05) 1px,transparent 1px);background-size:27px 27px}
+.cover .cvlab{position:absolute;left:22px;top:18px;font-size:.64rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(234,74,16,.55)}
+.gC{position:relative;z-index:1}
+
+/* mini-stats colorées du panneau d'identité */
+.mini3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:13px}
+.mini3 .m{border-radius:12px;padding:9px 5px;text-align:center}
+.mini3 b{display:block;font-family:'Sora';font-size:.95rem;letter-spacing:-.3px;white-space:nowrap}
+.mini3 small{font-size:.6rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;opacity:.8}
+.mini3 .mo{background:var(--orange-soft);color:var(--orange-deep)}
+.mini3 .mg{background:var(--green-bg);color:var(--green-d)}
+.mini3 .mb{background:var(--blue-bg);color:var(--blue)}
+
+/* pastilles d'icônes des cartes */
+.chsq{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none}
+.chsq svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chsq.o{background:var(--orange-soft);color:var(--orange-deep)}
+.chsq.g{background:var(--green-bg);color:var(--green-d)}
+.chsq.b{background:var(--blue-bg);color:var(--blue)}
+.chsq.a{background:var(--amber-bg);color:var(--amber)}
+.fmenu button svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* cartes */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.card{background:var(--card);border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:18px 20px}
+.card.full{grid-column:1/-1}
+.card-h{font-family:'Sora';font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.card-h .tick{width:4px;height:16px;border-radius:3px;background:var(--orange);flex:none}
+.card-h small{font-family:'Inter';font-weight:500;font-size:.72rem;color:var(--muted)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;font-size:.86rem;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}
+/* lignes compactes « étiquette : valeur » — le design validé du résumé facture */
+.dline{padding:8px 0;font-size:.88rem;border-bottom:1px dashed var(--line);line-height:1.5}
+.dline:last-child{border-bottom:0}
+.dline .k{color:var(--muted)}
+.dline b{font-weight:700}
+.chiprow{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.eqc{font-size:.74rem;font-weight:600;padding:5px 11px;border-radius:11px;background:#F1F2F5;color:var(--ink-2)}
+/* planning visuel */
+.dayrow{display:flex;gap:6px;margin:2px 0 4px}
+.dpill{flex:1;height:34px;border-radius:10px;display:grid;place-items:center;font-size:.72rem;font-weight:800;background:#F1F2F5;color:#B7BCC8}
+.dpill.on{background:var(--green-bg);color:var(--green-d)}
+.hbig{display:flex;align-items:center;gap:9px;font-family:'Sora';font-weight:800;font-size:1.12rem;letter-spacing:-.3px;padding:12px 0 11px;border-bottom:1px dashed var(--line)}
+.hbig svg{width:16px;height:16px;stroke:var(--orange-deep);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hbig .hsub{margin-left:auto;font-family:'Inter';font-size:.72rem;font-weight:600;color:var(--muted)}
+.congeline{margin-top:11px;background:var(--amber-bg);color:var(--amber);font-size:.78rem;font-weight:700;border-radius:10px;padding:9px 12px}
+/* logistique visuelle */
+.vehbox{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:9px}
+.vehbox .vic{width:38px;height:38px;border-radius:11px;background:var(--amber-bg);display:grid;place-items:center;flex:none}
+.vehbox .vic svg{width:19px;height:19px;stroke:var(--amber);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vehbox b{font-size:.88rem;display:block}
+.vehbox small{color:var(--muted);font-size:.71rem}
+.plate{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;font-weight:700;background:#F4F5F8;border:1.5px solid #D8DAE1;border-left:8px solid #2E5CE6;border-radius:7px;padding:5px 10px;letter-spacing:.06em;color:var(--ink-2);white-space:nowrap}
+.eqc .qty{font-weight:800;margin-left:4px}
+/* secteur visuel */
+.zlegend{display:flex;gap:6px;flex-wrap:wrap}
+.zkey{display:flex;gap:16px;font-size:.7rem;color:var(--muted);margin-top:10px}
+.zkey i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.zkey .k1{background:var(--green-bg);border:1px solid #BFE5D8}
+.zkey .k2{background:var(--blue-bg);border:1px solid #C3D4F9}
+.mapph .radb{position:absolute;top:10px;right:12px;background:#fff;border:1.5px solid var(--orange);color:var(--orange-deep);font-size:.72rem;font-weight:800;border-radius:999px;padding:4px 11px;box-shadow:var(--shadow)}
+.mapph .mini{position:absolute;width:20px;height:20px;opacity:.5}
+.kv .k{color:var(--muted);flex:none}
+.kv b{font-weight:600;text-align:right;min-width:0}
+.zones{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.zone{font-size:.74rem;font-weight:700;padding:5px 11px;border-radius:11px;background:var(--green-bg);color:var(--green-d)}
+.zone.sec{background:var(--blue-bg);color:var(--blue)}
+.mapph{margin-top:12px;height:190px;border-radius:13px;background:
+  radial-gradient(circle at 52% 45%, rgba(255,90,31,.2) 0, rgba(255,90,31,.06) 34%, transparent 35%),
+  linear-gradient(90deg, #E8EDF2 1px, transparent 1px), linear-gradient(#E8EDF2 1px, transparent 1px), #F1F5F7;
+  background-size:100% 100%, 26px 26px, 26px 26px, 100% 100%;
+  display:grid;place-items:center;position:relative;border:1px solid var(--line)}
+.mapph .pin{font-size:1.6rem;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.mapph small{position:absolute;bottom:9px;left:12px;font-size:.68rem;color:var(--muted);background:rgba(255,255,255,.85);border-radius:8px;padding:3px 8px}
+
+/* disponibilité */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.day{border:1px solid var(--line);border-radius:13px;padding:11px 12px;min-height:86px}
+.day b{display:block;font-size:.8rem}
+.day small{font-size:.72rem;font-weight:700}
+.day.on{background:var(--green-bg);border-color:#BFE5D8}
+.day.on small{color:var(--green-d)}
+.day.off{background:#FAFBFC}
+.day.off small{color:var(--muted)}
+
+/* compétences */
+.skrow2{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:.86rem}
+.skrow2:last-child{border-bottom:0}
+.skrow2 .chip{background:#F1F2F5;border-radius:10px;padding:5px 12px;font-weight:600;font-size:.78rem;width:168px;flex:none;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skrow2 .skb{flex:1;height:8px;border-radius:5px;background:#F1F2F5;overflow:hidden}
+.skrow2 .skb i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#27B08B);border-radius:5px}
+.skrow2 .pct{font-family:'Sora';font-weight:700;color:var(--green-d);min-width:44px;text-align:right}
+.skhint{font-size:.7rem;color:var(--muted);margin-top:10px}
+@media(max-width:760px){.skrow2 .chip{width:120px}}
+/* certifications */
+.crow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:.85rem}
+.crow:last-child{border-bottom:0}
+.crow .cic{width:32px;height:32px;border-radius:10px;background:var(--green-bg);display:grid;place-items:center;flex:none}
+.crow .cic svg{width:16px;height:16px;stroke:var(--green-d);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.crow .ctx{flex:1;min-width:0}
+.crow b{font-weight:600}
+.crow small{display:block;color:var(--muted);font-size:.71rem;margin-top:1px}
+.expb{font-size:.68rem;font-weight:800;border-radius:9px;padding:4px 10px;white-space:nowrap;flex:none}
+.expb.okk{background:var(--green-bg);color:var(--green-d)}
+.expb.warn{background:var(--amber-bg);color:var(--amber)}
+.expb.red{background:var(--red-bg);color:var(--red)}
+/* documents */
+.fic{width:30px;height:30px;border-radius:9px;background:var(--blue-bg);display:grid;place-items:center;flex:none}
+.fic svg{width:15px;height:15px;stroke:var(--blue);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* tables (performance / documents) */
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+thead th{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);background:#FAFBFC;white-space:nowrap}
+tbody td{padding:11px 13px;border-bottom:1px solid #F3F4F7}
+tbody tr:last-child td{border-bottom:0}
+.mref{color:var(--orange-deep);font-weight:700}
+.stt{display:inline-flex;font-size:.7rem;font-weight:800;border-radius:9px;padding:4px 10px}
+.stt.ok{background:var(--green-bg);color:var(--green-d)}
+.stt.plan{background:var(--blue-bg);color:var(--blue)}
+.emptybox{text-align:center;color:var(--muted);padding:30px 10px;font-size:.85rem}
+
+/* notes */
+.nrow{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.nrow:last-of-type{border-bottom:0}
+.nav2{width:30px;height:30px;border-radius:50%;background:var(--orange);color:#fff;font-size:.62rem;font-weight:800;font-family:'Sora';display:grid;place-items:center;flex:none}
+.nrow b{font-size:.8rem}
+.nrow small{color:var(--muted);font-size:.7rem;margin-left:6px}
+.nrow p{font-size:.83rem;color:var(--ink-2);margin-top:2px;line-height:1.5}
+.naddrow{display:flex;justify-content:flex-end;margin-top:9px}
+.naddrow button{background:var(--orange);color:#fff;border-radius:10px;padding:9px 16px;font-size:.8rem;font-weight:700}
+.pjadd{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed var(--orange);color:var(--orange-deep);border-radius:11px;padding:9px 14px;font-size:.79rem;font-weight:700;background:#fff;cursor:pointer}
+.pjadd:hover{background:var(--orange-soft)}
+
+.pane{display:none}
+.pane.on{display:block;animation:pfade .18s ease}
+@keyframes pfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.toast{position:fixed;left:50%;bottom:calc(30px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:#171A20;color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:1080px){.grid2{grid-template-columns:1fr}.week{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .page{padding:14px 13px calc(80px + var(--safe-b))}
+  .fhead .btn2{padding:10px 11px}
+  .week{grid-template-columns:1fr 1fr}
+  .cover{height:128px;margin:8px 0 -80px;border-radius:16px}
+  input,select,textarea{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+:focus-visible{outline:2.5px solid var(--orange);outline-offset:2px;border-radius:6px}
+button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
+button:active,.btn2:active{transform:scale(.97)}
+::selection{background:#FFD9C4;color:#171A20}
+*{scrollbar-width:thin;scrollbar-color:#D8DAE1 transparent}
+td,.num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo" style="position:relative;overflow:hidden"><img src="logo-tigre.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="contrats-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="paiements.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Paiements</a>
+    <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="techniciens.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports</a>
+  </nav>
+  <nav class="nav navbot">
+    <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
+  </nav>
+  <div class="side-user">
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="crumbs"><a href="techniciens.html">Techniciens</a> / <span class="cur" id="c-nom">—</span></div>
+    <div class="title-m">Fiche technicien</div>
+    <div class="spacer"></div>
+  </div>
+
+  <div class="page">
+
+    <!-- ===== EN-TÊTE ===== -->
+    <div class="fhead">
+      <a class="btn2" href="techniciens.html">← Retour à la liste</a>
+      <div class="spacer"></div>
+      <a class="btn2 primary" href="intervention-nouvelle.html"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Nouvelle intervention</a>
+      <span class="fmenu-wrap">
+        <button class="btn2" onclick="fMenu(event)" title="Plus d'actions" aria-label="Plus d'actions">⋯</button>
+        <div class="fmenu" id="fmenu">
+          <button onclick="location.href='techniciens.html?edit=' + encodeURIComponent(NAME)"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg> Modifier la fiche</button>
+          <button onclick="toggleActif()"><svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 11-12.73 0M12 2v10"/></svg> <span id="b-togglelbl">Désactiver</span></button>
+          <div class="sep"></div>
+          <button class="danger" id="b-del" onclick="delTech(event)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg> <span id="b-dellbl">Supprimer le technicien</span></button>
+        </div>
+      </span>
+    </div>
+
+    <div class="cover"><span class="cvlab">Fiche technicien</span></div>
+
+    <div class="gC">
+      <div class="card" style="text-align:center">
+        <span class="sav" id="s-av">—</span>
+        <h2 style="font-family:'Sora';font-size:1.12rem" id="s-nom">—</h2>
+        <div style="margin-top:7px" id="s-badge"></div>
+        <div class="fsub" id="s-sub" style="margin-top:7px">—</div>
+        <div id="s-next" style="margin-top:9px"></div>
+        <div class="sact" id="s-act"></div>
+        <div class="mini3" id="s-mini"></div>
+        <div id="congebox" style="margin-top:11px"></div>
+        <div class="srows" id="i-infos"></div>
+      </div>
+      <div>
+
+    <!-- ===== ONGLETS ===== -->
+    <div class="tabsrow" style="margin-top:0">
+      <button class="tab on" data-p="profil" onclick="showTab('profil',this)">Profil</button>
+      <button class="tab" data-p="perf" onclick="showTab('perf',this)">Performance</button>
+      <button class="tab" data-p="dispo" onclick="showTab('dispo',this)">Disponibilité</button>
+      <button class="tab" data-p="comp" onclick="showTab('comp',this)">Compétences</button>
+      <button class="tab" data-p="docs" onclick="showTab('docs',this)">Documents <span class="n" id="n-docs">0</span></button>
+      <button class="tab" data-p="notes" onclick="showTab('notes',this)">Notes <span class="n" id="n-notes">0</span></button>
+    </div>
+
+    <!-- ===== PROFIL ===== -->
+    <div class="pane on" id="p-profil">
+      <div class="g2i">
+            <div class="card">
+              <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Planning &amp; congés</div>
+              <div id="i-horaires"></div>
+            </div>
+            <div class="card">
+              <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M1 4h14v12H1zM15 9h4l4 4v3h-8z"/><circle cx="5.5" cy="18.5" r="2.2"/><circle cx="18" cy="18.5" r="2.2"/></svg></span>Logistique</div>
+              <div id="i-vehs"></div>
+              <div class="chiprow" id="i-equip"></div>
+            </div>
+          </div>
+      <div class="card">
+        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Secteur</div>
+        <div id="i-zone"></div>
+        <div class="mapph" style="height:230px">
+          <svg class="pinsvg" viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg class="pinsvg mini" style="left:24%;top:24%" viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg class="pinsvg mini" style="right:21%;top:40%" viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <svg class="pinsvg mini" style="left:33%;bottom:18%" viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span class="radb" id="rad-b">30 km</span>
+          <small>Carte interactive — arrive avec la version connectée</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== COMPÉTENCES ===== -->
+    <div class="pane" id="p-comp">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span>Compétences et taux de commission</div>
+          <div id="i-comp"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>Certifications</div>
+          <div id="i-certs"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DISPONIBILITÉ ===== -->
+    <div class="pane" id="p-dispo">
+      <div class="card full">
+        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Calendrier de disponibilité <small id="i-dispohint">—</small></div>
+        <div class="week" id="i-week"></div>
+      </div>
+    </div>
+
+    <!-- ===== PERFORMANCE ===== -->
+    <div class="pane" id="p-perf">
+      <div class="card full">
+        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>Performance du mois</div>
+        <div class="statrow" id="i-stats"></div>
+        <div id="i-cacat" style="margin-bottom:4px"></div>
+        <div class="card-h" style="margin-top:6px"><span class="chsq b"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>Historique des missions <small id="i-perfhint">—</small></div>
+        <div id="i-perf"></div>
+      </div>
+    </div>
+
+    <!-- ===== DOCUMENTS ===== -->
+    <div class="pane" id="p-docs">
+      <div class="card full">
+        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>Documents
+          <label class="pjadd" style="margin-left:auto"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg> Téléverser un document<input type="file" multiple style="display:none" onchange="docAdd(this)"></label>
+        </div>
+        <div id="i-docs"></div>
+      </div>
+    </div>
+
+    <!-- ===== NOTES ===== -->
+    <div class="pane" id="p-notes">
+      <div class="card full">
+        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
+        <div id="i-notes"></div>
+        <textarea id="n-in" placeholder="Saisir une nouvelle note… (Ctrl+Entrée pour publier)" style="margin-top:10px" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey))noteAdd()"></textarea>
+        <div class="naddrow"><button onclick="noteAdd()">＋ Ajouter une note</button></div>
+      </div>
+    </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================= DONNÉES ================= */
+let TID = 0;
+const TK = () => {};   /* compat */
+const TECHS = [
+  {prenom:"Pablo", nom:"", tel:"06 12 45 78 90", mail:"pablo@tiger-hygiene3d.fr",
+   veh:"Renault Kangoo", plaque:"GH-482-KL", certi:"245871", grad:"linear-gradient(135deg,#5B82F0,#2148C0)",
+   zones:["Paris","92 Hauts-de-Seine","95 Val-d'Oise"],
+   com:{"Rongeurs":5,"Cafards":5,"Punaises de lit":8,"Guêpes / Frelons":10,"Désinfection":4},
+   mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Nébulisateur ULV",1,"ok"],["Postes d'appâtage sécurisés",40,"ok"],["Perche télescopique 6 m",1,"use"],["Combinaison anti-frelons",1,"ok"],["Canon à chaleur punaises",1,"ok"]],
+   interv:21, taux:"96 %", ca:"2 754,90 €", top:true,
+   dispo:"interv", dispoD:"En intervention — Boulangerie Dupont, Paris 11ᵉ · fin prévue 15h30",
+   certiExp:"2029-04-12", ctVeh:"2027-11-05",
+   caCat:{"Rongeurs":690,"Cafards":420,"Punaises de lit":980,"Guêpes / Frelons":540,"Désinfection":124.90},
+   planning:[["08:00","Dératisation — Boulangerie Dupont","Paris 11ᵉ"],["11:00","Punaises T3 — Ironwood Solutions","Paris 11ᵉ"],["14:30","Contrôle postes — Pharmacie Centrale","Paris 12ᵉ"]]},
+  {prenom:"Otman", nom:"", tel:"06 98 32 14 65", mail:"otman@tiger-hygiene3d.fr",
+   veh:"Citroën Berlingo", plaque:"FS-917-MN", certi:"318204", grad:"linear-gradient(135deg,#2FC9B9,#0E8A7A)",
+   zones:["93 Seine-Saint-Denis","77 Seine-et-Marne"],
+   com:{"Rongeurs":5,"Cafards":6,"Fourmis":5,"Pigeons":7,"Désinfection":4},
+   mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Postes d'appâtage sécurisés",35,"ok"],["Pics anti-pigeons (stock)",120,"ok"],["Échelle télescopique 5 m",1,"ok"],["Harnais antichute",1,"use"]],
+   interv:19, taux:"92 %", ca:"1 964,87 €",
+   dispo:"dispo", dispoD:"Disponible — prochaine intervention à 16h00",
+   certiExp:"2028-01-20", ctVeh:"2026-09-14",
+   caCat:{"Rongeurs":760,"Cafards":540,"Fourmis":210,"Pigeons":454.87},
+   planning:[["16:00","Dépigeonnage — Entrepôt Central","Aubervilliers (93)"]]},
+  {prenom:"Fredo", nom:"", tel:"07 45 88 21 03", mail:"fredo@tiger-hygiene3d.fr",
+   veh:"Peugeot Partner", plaque:"GK-205-QP", certi:"402316", grad:"linear-gradient(135deg,#9C63F2,#6425D0)",
+   zones:["Paris","94 Val-de-Marne"],
+   com:{"Punaises de lit":9,"Cafards":6,"Désinfection":5,"Fourmis":5},
+   mat:[["Canon à chaleur punaises",1,"ok"],["Aspirateur vapeur 8 bars",1,"ok"],["Housses anti-punaises (stock)",24,"ok"],["Pulvérisateur 8 L",1,"use"],["Détecteur canin (partenariat)",0,"ok"]],
+   interv:10, taux:"85 %", ca:"1 147,65 €",
+   dispo:"interv", dispoD:"En intervention — Hôtel du Parc, punaises · fin prévue 13h00",
+   certiExp:"2027-06-30", ctVeh:"2026-07-02",
+   caCat:{"Punaises de lit":820,"Cafards":180,"Désinfection":147.65},
+   planning:[["09:00","Punaises 6 chambres — Hôtel du Parc","Paris 9ᵉ"],["15:00","2ᵉ passage cafards — Le Baobab","Paris 18ᵉ"]]},
+  {prenom:"Babacar", nom:"", tel:"06 23 57 41 88", mail:"babacar@tiger-hygiene3d.fr",
+   veh:"Renault Trafic", plaque:"FY-664-TR", certi:"287540", grad:"linear-gradient(135deg,#F2AE3C,#D07E0C)",
+   zones:["78 Yvelines","95 Val-d'Oise","27 Eure"],
+   com:{"Guêpes / Frelons":12,"Chenilles processionnaires":10,"Rongeurs":5,"Termites":8},
+   mat:[["Perche télescopique 12 m",1,"ok"],["Combinaison anti-frelons",2,"ok"],["Pulvérisateur thermonébulisateur",1,"ok"],["Échenilloir + EPI chenilles",1,"ok"],["Drone d'inspection toiture",1,"use"]],
+   interv:12, taux:"95 %", ca:"1 927,20 €",
+   dispo:"conge", dispoD:"En congé jusqu'au 27/08",
+   certiExp:"2026-09-30", ctVeh:"2027-03-18",
+   caCat:{"Guêpes / Frelons":1020,"Chenilles processionnaires":610,"Rongeurs":297.20},
+   planning:[]},
+{prenom:"Wissam", nom:"", tel:"06 71 20 84 46", mail:"wissam@tiger-hygiene3d.fr",
+   veh:"Renault Kangoo", plaque:"GL-118-AD", certi:"356902", grad:"linear-gradient(135deg,#EE6A6A,#B52F28)",
+   zones:["Paris","93 Seine-Saint-Denis"],
+   com:{"Rongeurs":5,"Cafards":6,"Punaises de lit":8,"Désinfection":4},
+   mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Postes d'appâtage sécurisés",30,"ok"],["Nébulisateur ULV",1,"ok"]],
+   interv:14, taux:"91 %", ca:"1 520,00 €",
+   dispo:"dispo", dispoD:"Disponible — prochaine intervention à 14h00",
+   certiExp:"2028-05-11", ctVeh:"2027-02-22",
+   caCat:{"Rongeurs":540,"Cafards":420,"Punaises de lit":560},
+   planning:[["14:00","Cafards cuisine — Brasserie du Canal","Pantin (93)"]]},
+  {prenom:"Enzo", nom:"", tel:"06 54 39 07 71", mail:"enzo@tiger-hygiene3d.fr",
+   veh:"Citroën Berlingo", plaque:"GM-472-BE", certi:"391755", grad:"linear-gradient(135deg,#17A87E,#0A6B51)",
+   zones:["Paris","92 Hauts-de-Seine"],
+   com:{"Rongeurs":5,"Cafards":5,"Guêpes / Frelons":9,"Punaises de lit":7},
+   mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Combinaison anti-frelons",1,"ok"],["Postes d'appâtage sécurisés",25,"ok"]],
+   interv:16, taux:"94 %", ca:"1 815,40 €",
+   dispo:"interv", dispoD:"En intervention — retour de garantie, Levallois · fin prévue 12h30",
+   certiExp:"2028-10-03", ctVeh:"2026-12-01",
+   caCat:{"Guêpes / Frelons":760,"Rongeurs":580,"Punaises de lit":475.40},
+   planning:[["10:30","Retour de garantie guêpes — Résidence Anatole","Levallois (92)"]]},
+  {prenom:"Éric", nom:"", tel:"07 88 14 62 30", mail:"eric@tiger-hygiene3d.fr",
+   veh:"Peugeot Partner", plaque:"FT-903-CV", certi:"274188", grad:"linear-gradient(135deg,#F06AA8,#C21D63)",
+   zones:["Paris","95 Val-d'Oise"],
+   com:{"Rongeurs":6,"Cafards":5,"Pigeons":7,"Désinfection":4},
+   mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Pics anti-pigeons (stock)",80,"ok"],["Postes d'appâtage sécurisés",28,"ok"]],
+   interv:13, taux:"90 %", ca:"1 402,75 €",
+   dispo:"dispo", dispoD:"Disponible — tournée de contrôles cet après-midi",
+   certiExp:"2027-08-19", ctVeh:"2027-05-30",
+   caCat:{"Rongeurs":620,"Pigeons":480,"Cafards":302.75},
+   planning:[["15:00","Contrôle postes — Copropriété Les Ormes","Argenteuil (95)"]]},
+  {prenom:"Mahamadou", nom:"", tel:"06 09 51 27 94", mail:"mahamadou@tiger-hygiene3d.fr",
+   veh:"Renault Kangoo", plaque:"GN-556-DF", certi:"418320", grad:"linear-gradient(135deg,#38BDD8,#0779A0)",
+   zones:["93 Seine-Saint-Denis","Paris"],
+   com:{"Rongeurs":5,"Cafards":6,"Punaises de lit":7,"Fourmis":5},
+   mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Postes d'appâtage sécurisés",32,"ok"],["Gel appât cafards (stock)",15,"ok"]],
+   interv:15, taux:"93 %", ca:"1 688,10 €",
+   dispo:"interv", dispoD:"En intervention — retour de garantie cafards, Bobigny · fin prévue 11h45",
+   certiExp:"2029-01-27", ctVeh:"2026-10-15",
+   caCat:{"Cafards":720,"Rongeurs":540,"Punaises de lit":428.10},
+   planning:[["09:30","Retour de garantie cafards — Kebab de la Mairie","Bobigny (93)"]]},
+  {prenom:"Rémi", nom:"", tel:"06 62 78 33 51", mail:"remi@tiger-hygiene3d.fr",
+   veh:"Renault Trafic", plaque:"GP-201-EG", certi:"329467", grad:"#FF5A1F",
+   zones:["77 Seine-et-Marne","91 Essonne","94 Val-de-Marne"],
+   com:{"Rongeurs":5,"Guêpes / Frelons":10,"Cafards":5,"Punaises de lit":8},
+   mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Perche télescopique 6 m",1,"ok"],["Postes d'appâtage sécurisés",30,"ok"]],
+   interv:17, taux:"95 %", ca:"2 060,00 €",
+   dispo:"interv", dispoD:"En intervention — Melun (77) · fin prévue 12h00",
+   certiExp:"2028-03-08", ctVeh:"2027-09-12",
+   caCat:{"Guêpes / Frelons":880,"Rongeurs":690,"Punaises de lit":490},
+   planning:[["08:30","Dératisation — Zone commerciale","Melun (77)"],["14:00","Vente contrat annuel — Restaurant Le Chêne","Évry (91)"]]},
+  {prenom:"Jawad", nom:"", tel:"07 12 90 45 28", mail:"jawad@tiger-hygiene3d.fr",
+   veh:"Citroën Berlingo", plaque:"GQ-874-FH", certi:"445019", grad:"linear-gradient(135deg,#9CC94E,#5E8F0C)",
+   zones:["77 Seine-et-Marne","91 Essonne","94 Val-de-Marne"],
+   com:{"Rongeurs":5,"Cafards":6,"Punaises de lit":7,"Désinfection":5},
+   mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Postes d'appâtage sécurisés",26,"ok"],["Nébulisateur ULV",1,"ok"]],
+   interv:12, taux:"89 %", ca:"1 355,25 €",
+   dispo:"dispo", dispoD:"Disponible — secteur 94 cet après-midi",
+   certiExp:"2027-12-14", ctVeh:"2026-11-08",
+   caCat:{"Rongeurs":520,"Cafards":460,"Punaises de lit":375.25},
+   planning:[["16:00","Retour de garantie rongeurs — Boucherie Halal du Marché","Créteil (94)"]]},
+];
+/* + les techniciens créés à la main */
+try{
+  JSON.parse(localStorage.getItem("tigerflow-techs-perso") || "[]").forEach(r => {
+    if(r && r.prenom && !TECHS.some(t => t.prenom === r.prenom && (t.nom || "") === (r.nom || ""))) TECHS.push(r);
+  });
+}catch(e){}
+/* + les modifications faites via l'assistant */
+try{
+  const _em = JSON.parse(localStorage.getItem("tigerflow-techs-edit")) || {};
+  TECHS.forEach((t, i) => { const k = (t.prenom + " " + (t.nom || "")).trim(); if(_em[k]) TECHS[i] = Object.assign({}, t, _em[k]); });
+}catch(e){}
+
+const g = id => document.getElementById(id);
+const QN = (function(){ try{ return new URLSearchParams(location.search).get("t") || ""; }catch(e){ return ""; } })();
+let T = TECHS.find(t => (t.prenom + " " + (t.nom || "")).trim() === QN) || TECHS[0];
+const NAME = (T.prenom + " " + (T.nom || "")).trim();
+
+/* statut désactivé persistant */
+try{
+  const ov = JSON.parse(localStorage.getItem("tigerflow-techs-statut")) || {};
+  if(ov[NAME]){ T.dispo = ov[NAME].dispo; T.dispoD = ov[NAME].dispoD; }
+}catch(e){}
+
+/* réglages tournée partagés (zones) */
+let SK = null;
+try{ SK = (JSON.parse(localStorage.getItem("tigerflow-techs-skills")) || {})[NAME] || null; }catch(e){}
+
+function toast(msg){
+  let t = g("toast");
+  if(!t){ t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+const kv = (k, v) => '<div class="kv"><span class="k">' + k + '</span><b>' + (v || "—") + '</b></div>';
+const fdz = iso => { if(!iso) return "—"; const p = String(iso).split("-"); return p[2] + "/" + p[1] + "/" + p[0]; };
+const ini = (t) => ((t.prenom[0] || "") + ((t.nom || "")[0] || "")).toUpperCase();
+function copyTel(){
+  const v = T.tel || "";
+  if(!v){ toast("Pas de numéro enregistré"); return; }
+  try{ navigator.clipboard.writeText(v); }
+  catch(e){ try{ const i = document.createElement("input"); i.value = v; document.body.appendChild(i); i.select(); document.execCommand("copy"); i.remove(); }catch(_){} }
+  toast("Numéro copié : " + v);
+}
+
+/* ================= EN-TÊTE ================= */
+function head(){
+  g("c-nom").textContent = NAME;
+  document.title = "TigerFlow — " + NAME;
+  g("b-togglelbl").textContent = T.dispo === "conge" ? "Réactiver" : "Désactiver";
+}
+
+/* ================= PROFIL ================= */
+function profil(){
+  /* panneau d'identité : photo en grand + contacts avec icônes */
+  let rue = "", cp = "", ville = "";
+  if(T.adr){
+    const parts = T.adr.split(", ");
+    rue = parts[0] || "";
+    cp = (parts[1] || "").match(/^\d{5}$/) ? parts[1] : "";
+    ville = parts[2] || (cp ? "" : parts[1] || "");
+  }
+  const sav = g("s-av");
+  if(T.photo){ sav.style.backgroundImage = "url(" + T.photo + ")"; sav.textContent = ""; }
+  else { sav.textContent = ini(T); sav.style.background = T.grad || "linear-gradient(135deg,#5B82F0,#2148C0)"; }
+  g("s-nom").textContent = NAME;
+  const stC = {dispo:"st-dispo", interv:"st-interv", conge:"st-conge"}[T.dispo] || "st-conge";
+  const stT = {dispo:"Actif", interv:"En intervention", conge:"Inactif"}[T.dispo] || "—";
+  g("s-badge").innerHTML = '<span class="stbadge ' + stC + '">' + (T.dispo === "conge" ? "" : '<span class="dotp"></span>') + stT + '</span>';
+  g("s-sub").textContent = T.dispoD || "Disponibilité à renseigner";
+  const p0 = (T.planning || [])[0];
+  g("s-next").innerHTML = T.dispo === "conge" ? "" : (p0
+    ? '<span class="nextchip"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Prochaine : ' + p0[0] + " · " + (p0[1].split(" — ")[0] || p0[1]) + '</span>'
+    : '<span class="nextchip off">Aucune mission planifiée</span>');
+  const srow = (ic, main, sub, href) => '<' + (href ? 'a href="' + href + '"' : 'div') + ' class="srow"><span class="ic">' + ic + '</span><div><b>' + (main || "—") + '</b>' + (sub ? '<small>' + sub + '</small>' : "") + '</div></' + (href ? 'a' : 'div') + '>';
+  const telRaw = (T.tel || "").replace(/ /g, "");
+  g("i-infos").innerHTML =
+    '<div class="srow copytel" onclick="copyTel()" title="Cliquer pour copier le numéro"><span class="ic"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></span><div><b>' + (T.tel || "—") + '</b><small>Cliquer pour copier · Tél 2 : ' + (T.tel2 || "—") + '</small></div></div>' +
+    srow('<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>', T.mail, "", T.mail ? "mailto:" + T.mail : "") +
+    srow('<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>', rue || "Adresse à compléter", [cp, ville].filter(Boolean).join(" ") + (T.adr ? " · France" : "")) +
+    srow('<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h4M6 13h6M15 9h3M15 13h3"/></svg>', "Certibiocide : " + (T.certi && T.certi !== "—" ? "n° " + T.certi : "—"));
+  g("s-act").innerHTML =
+    '<a class="pcall" href="tel:' + telRaw + '"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg> Appeler</a>' +
+    '<a class="pwa" href="https://wa.me/33' + telRaw.replace(/^0/, "") + '" target="_blank" rel="noopener" title="WhatsApp"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-12.3 7.4L3 21l2.1-5.6A8.5 8.5 0 1121 11.5z"/></svg> WhatsApp</a>' +
+    '<a href="mailto:' + (T.mail || "") + '" title="Envoyer un e-mail"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>';
+  g("s-mini").innerHTML =
+    '<div class="m mb"><b>' + (T.interv || 0) + '</b><small>Missions</small></div>' +
+    '<div class="m mg"><b>' + (T.taux || "—") + '</b><small>Réussite</small></div>' +
+    '<div class="m mo"><b>' + String(T.ca || "0 €").replace(/,\d+\s?€/, " €") + '</b><small>CA mois</small></div>';
+  const h = T.horaires || {jours:["Lun","Mar","Mer","Jeu","Ven"], deb:"08:00", fin:"17:00", pause:"1 h", we:false};
+  const CG = (function(){ try{ const c = (JSON.parse(localStorage.getItem("tigerflow-techs-statut")) || {})[NAME]; return c && c.du ? c : null; }catch(e){ return null; } })();
+  g("i-horaires").innerHTML =
+    '<div class="dayrow">' + ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(j => '<span class="dpill' + ((h.jours || []).includes(j) ? " on" : "") + '" title="' + j + '">' + j[0] + '</span>').join("") + '</div>' +
+    '<div class="hbig"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>' + (h.deb || "08:00") + ' – ' + (h.fin || "17:00") + '<span class="hsub">Pause ' + (h.pause || "—") + '</span></div>' +
+    kv("Travaille le week-end", h.we ? "Oui" : "Non") +
+    (CG ? '<div class="congeline">En congé du ' + fdz(CG.du) + ' au ' + fdz(CG.au) + '</div>' : "");
+  const zP = SK ? (SK.zones || []) : (T.zones || []);
+  const zS = SK ? (SK.zonesSec || []) : [];
+  g("i-zone").innerHTML =
+    '<div class="zlegend">' +
+    (zP.map(z => '<span class="zone">' + z + '</span>').join("") || "<b>—</b>") +
+    zS.map(z => '<span class="zone sec" title="Zone de dépannage">' + z + '</span>').join("") +
+    '</div>' +
+    '<div class="zkey"><span><i class="k1"></i>Zone de préférence</span>' + (zS.length ? '<span><i class="k2"></i>Dépannage</span>' : "") + '</div>';
+  const rb = g("rad-b"); if(rb) rb.textContent = (T.rayon ? T.rayon : "30") + " km";
+  const TRK = '<svg viewBox="0 0 24 24"><path d="M1 4h14v12H1zM15 9h4l4 4v3h-8z"/><circle cx="5.5" cy="18.5" r="2.2"/><circle cx="18" cy="18.5" r="2.2"/></svg>';
+  const vb = (nom, sub, plaque) => '<div class="vehbox"><span class="vic">' + TRK + '</span><div><b>' + nom + '</b><small>' + sub + '</small></div>' + (plaque && plaque !== "—" ? '<span class="plate">' + plaque + '</span>' : "") + '</div>';
+  g("i-vehs").innerHTML =
+    (T.veh && T.veh !== "—" ? vb(T.veh, "Véhicule principal", T.plaque) : vb("—", "Véhicule à renseigner", "")) +
+    (T.veh2 ? vb(T.veh2, "Véhicule secondaire", T.plaque2) : "");
+  const eqFull = (Array.isArray(T.mat) && T.mat.length && Array.isArray(T.mat[0])) ? T.mat : null;
+  const eq = SK && SK.mat && SK.mat.length ? SK.mat : (eqFull ? eqFull.map(m => m[0]) : []);
+  g("i-equip").innerHTML = eqFull
+    ? eqFull.map(m => '<span class="eqc">' + m[0] + (m[1] > 1 ? '<span class="qty">×' + m[1] + '</span>' : "") + '</span>').join("")
+    : (eq.length
+      ? eq.map(m => '<span class="eqc">' + m + '</span>').join("")
+      : '<span class="eqc" style="background:#FAFBFC;color:var(--muted)">Aucun équipement enregistré</span>');
+}
+
+/* ================= COMPÉTENCES ================= */
+function comp(){
+  const entries = Object.entries(T.com || {});
+  g("i-comp").innerHTML = entries.length
+    ? entries.map(([s, p]) => '<div class="skrow2"><span class="chip">' + s + '</span><span class="skb"><i style="width:' + Math.min(100, Math.round(p / 15 * 100)) + '%"></i></span><span class="pct">' + p + ' %</span></div>').join("") +
+      '<div class="skhint">Taux de commission reversé au technicien sur le CA de chaque activité.</div>'
+    : '<div class="emptybox">Aucune compétence enregistrée.</div>';
+  const SHLD = '<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>';
+  const REFD = new Date("2026-08-25");
+  const expb = iso => {
+    if(!iso) return "";
+    const dd = (new Date(iso) - REFD) / 864e5;
+    const cls = dd < 0 ? "red" : dd < 180 ? "warn" : "okk";
+    const lbl = dd < 0 ? "Expiré le " : dd < 180 ? "Expire le " : "Valide → ";
+    return '<span class="expb ' + cls + '">' + lbl + fdz(iso) + '</span>';
+  };
+  const crow = (nom, sub, badge) => '<div class="crow"><span class="cic">' + SHLD + '</span><div class="ctx"><b>' + nom + '</b>' + (sub ? '<small>' + sub + '</small>' : "") + '</div>' + (badge || "") + '</div>';
+  let cr = "";
+  if(T.certi && T.certi !== "—") cr += crow("Certibiocide", "n° " + T.certi, expb(T.certiExp));
+  if(T.ctVeh) cr += crow("Contrôle technique", T.veh || "Véhicule", expb(T.ctVeh));
+  (T.certs || []).forEach(c => { cr += crow(c, "", ""); });
+  g("i-certs").innerHTML = cr || '<div class="emptybox">Aucune certification enregistrée.</div>';
+}
+
+/* ================= DISPONIBILITÉ ================= */
+function dispo(){
+  const h = T.horaires || {jours:["Lun","Mar","Mer","Jeu","Ven"], deb:"08:00", fin:"17:00"};
+  g("i-dispohint").textContent = "Horaires : " + (h.deb || "08:00") + " – " + (h.fin || "17:00");
+  const JD = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+  const off = T.dispo === "conge";
+  const ti = (new Date().getDay() + 6) % 7;
+  g("i-week").innerHTML = JD.map((j, i) => {
+    const on = !off && (h.jours || []).includes(j);
+    const td = i === ti;
+    return '<div class="day ' + (on ? "on" : "off") + (td ? " today" : "") + '"><b>' + j + (td ? ' <span class="tdy">Aujourd&#39;hui</span>' : "") + '</b><small>' + (off ? "Indisponible" : on ? (h.deb || "08:00") + " – " + (h.fin || "17:00") : "Repos") + '</small></div>';
+  }).join("");
+}
+
+/* ================= PERFORMANCE ================= */
+function perf(){
+  g("i-stats").innerHTML =
+    '<div class="stt2 b"><b>' + (T.interv || 0) + '</b><small>Interventions ce mois</small></div>' +
+    '<div class="stt2 g"><b>' + (T.taux || "—") + '</b><small>Taux de réalisation</small></div>' +
+    '<div class="stt2 o"><b>' + (T.ca || "—") + '</b><small>CA généré</small></div>';
+  const cc = Object.entries(T.caCat || {}).sort((a, b) => b[1] - a[1]);
+  const cmx = cc.length ? cc[0][1] : 1;
+  g("i-cacat").innerHTML = cc.length
+    ? '<div class="glab" style="margin:14px 0 8px">CA par activité — ce mois</div>' +
+      cc.map(([k, v]) => '<div class="cbar"><span class="cl">' + k + '</span><span class="ct"><i style="width:' + Math.max(6, Math.round(v / cmx * 100)) + '%"></i></span><span class="cv">' + v.toLocaleString("fr-FR", {maximumFractionDigits:2}) + ' €</span></div>').join("")
+    : "";
+  g("i-perfhint").textContent = "aujourd'hui";
+  const rows = (T.planning || []).map((p, i) =>
+    '<tr><td class="mref">INT-2026-' + (1100 + i) + '</td><td>' + p[1] + '</td><td>' + p[2] + '</td><td>' + p[0] + '</td><td><span class="stt plan">Planifiée</span></td></tr>');
+  g("i-perf").innerHTML = rows.length
+    ? '<table><thead><tr><th>Réf</th><th>Mission</th><th>Lieu</th><th>Heure</th><th>Statut</th></tr></thead><tbody>' + rows.join("") + "</tbody></table>"
+    : '<div class="emptybox">Aucune mission planifiée aujourd\'hui — l\'historique complet arrivera avec la version connectée.</div>';
+}
+
+/* ================= DOCUMENTS ================= */
+const DK = "tigerflow-tech-docs-" + NAME;
+function docsGet(){ try{ return JSON.parse(localStorage.getItem(DK)) || []; }catch(e){ return []; } }
+function docsRender(){
+  const list = docsGet();
+  g("n-docs").textContent = list.length;
+  const FIC = '<span class="fic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span>';
+  g("i-docs").innerHTML = list.length
+    ? '<table><thead><tr><th>Nom du fichier</th><th>Ajouté le</th><th>Par</th><th></th></tr></thead><tbody>' +
+      list.map((d, i) => '<tr><td><div style="display:flex;align-items:center;gap:9px">' + FIC + '<b>' + d.n + '</b></div></td><td>' + d.d + '</td><td>' + d.u + '</td><td style="text-align:right"><button onclick="docDel(' + i + ')" title="Retirer" style="color:var(--muted)">✕</button></td></tr>').join("") +
+      "</tbody></table>"
+    : '<div class="emptybox">Aucun document pour ce technicien.<br><small style="font-size:.75rem">Contrat, Certibiocide, attestations, permis… — bouton « Téléverser un document » en haut à droite.</small></div>';
+}
+function docAdd(inp){
+  const list = docsGet();
+  [...inp.files].forEach(f => list.unshift({n:f.name, d:new Date().toLocaleDateString("fr-FR"), u:"Thomas Martin"}));
+  try{ localStorage.setItem(DK, JSON.stringify(list.slice(0, 20))); }catch(e){}
+  inp.value = "";
+  docsRender();
+  toast("Document ajouté à la fiche");
+}
+function docDel(i){
+  const list = docsGet();
+  list.splice(i, 1);
+  try{ localStorage.setItem(DK, JSON.stringify(list)); }catch(e){}
+  docsRender();
+}
+
+/* ================= NOTES ================= */
+const NK = "tigerflow-tech-notes-" + NAME;
+function notesGet(){ try{ return JSON.parse(localStorage.getItem(NK)) || []; }catch(e){ return []; } }
+function notesRender(){
+  const list = notesGet();
+  g("n-notes").textContent = list.length;
+  g("i-notes").innerHTML = list.length
+    ? list.map(n => '<div class="nrow"><span class="nav2">TM</span><div><b>Thomas Martin</b><small>' + n.d + '</small><p>' + n.m + '</p></div></div>').join("")
+    : '<div class="emptybox">Aucune note pour le moment.<br><small style="font-size:.75rem">Un code de portail, une préférence client, un point de vigilance… écris-le ici pour toute l\'équipe.</small></div>';
+}
+function noteAdd(){
+  const inp = g("n-in");
+  const v = (inp.value || "").trim();
+  if(!v){ inp.focus(); return; }
+  const list = notesGet();
+  const now = new Date();
+  list.unshift({m:v, d:now.toLocaleDateString("fr-FR") + " " + now.toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"})});
+  try{ localStorage.setItem(NK, JSON.stringify(list.slice(0, 30))); }catch(e){}
+  inp.value = "";
+  notesRender();
+  toast("Note ajoutée");
+}
+
+/* ================= ACTIONS ================= */
+function toggleActif(){
+  try{
+    const ov = JSON.parse(localStorage.getItem("tigerflow-techs-statut")) || {};
+    if(T.dispo === "conge"){
+      T.dispo = "dispo"; T.dispoD = "Disponible";
+      delete ov[NAME];
+      toast(NAME + " réactivé");
+    } else {
+      T.dispo = "conge"; T.dispoD = "Indisponible — désactivé depuis la fiche";
+      ov[NAME] = {dispo:"conge", dispoD:T.dispoD};
+      toast(NAME + " désactivé — il n'apparaîtra plus comme disponible");
+    }
+    localStorage.setItem("tigerflow-techs-statut", JSON.stringify(ov));
+  }catch(e){}
+  head(); profil(); dispo();
+}
+function fMenu(e){ e.stopPropagation(); g("fmenu").classList.toggle("open"); }
+document.addEventListener("click", e => {
+  if(!e.target.closest(".fmenu-wrap")){
+    const m = g("fmenu"); if(m) m.classList.remove("open");
+    const b = g("b-del"); if(b && b.dataset.armed){ b.dataset.armed = ""; g("b-dellbl").textContent = "Supprimer le technicien"; }
+  }
+});
+function delTech(e){
+  if(e && e.stopPropagation) e.stopPropagation();
+  const b = g("b-del");
+  if(!b.dataset.armed){
+    b.dataset.armed = "1";
+    g("b-dellbl").textContent = "Confirmer ?";
+    setTimeout(() => { if(b.isConnected){ b.dataset.armed = ""; g("b-dellbl").textContent = "Supprimer le technicien"; } }, 3200);
+    return;
+  }
+  try{
+    localStorage.setItem("tigerflow-techs-perso", JSON.stringify((JSON.parse(localStorage.getItem("tigerflow-techs-perso") || "[]")).filter(r => (r.prenom + " " + (r.nom || "")).trim() !== NAME)));
+    const del = JSON.parse(localStorage.getItem("tigerflow-techs-del") || "[]");
+    if(!del.includes(NAME)){ del.push(NAME); localStorage.setItem("tigerflow-techs-del", JSON.stringify(del)); }
+    localStorage.removeItem(NK); localStorage.removeItem(DK);
+  }catch(e2){}
+  toast(NAME + " supprimé de l'équipe");
+  setTimeout(() => { location.href = "techniciens.html"; }, 900);
+}
+
+/* ================= CONGÉS ================= */
+function congeRender(){
+  const box = g("congebox");
+  if(!box) return;
+  box.innerHTML = T.dispo === "conge"
+    ? '<button class="btn2" style="width:100%;justify-content:center" onclick="congeClear()">✕ Annuler le congé</button>'
+    : '<button class="btn2 congebox-svg" style="width:100%;justify-content:center" onclick="congeForm()"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg> Poser un congé</button>';
+}
+function congeForm(){
+  g("congebox").innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px"><div><label class="lab2">Du</label><input type="date" id="cg-du"></div><div><label class="lab2">Au</label><input type="date" id="cg-au"></div></div>' +
+    '<button class="btn2 primary" style="width:100%;justify-content:center;margin-top:9px" onclick="congeSave()">✓ Valider le congé</button>';
+}
+function congeSave(){
+  const du = g("cg-du").value, au = g("cg-au").value;
+  if(!du || !au || au < du){ toast("Choisis les deux dates (le Au après le Du)"); return; }
+  T.dispo = "conge";
+  T.dispoD = "En congé du " + fdz(du) + " au " + fdz(au);
+  try{
+    const ov = JSON.parse(localStorage.getItem("tigerflow-techs-statut")) || {};
+    ov[NAME] = {dispo:"conge", dispoD:T.dispoD, du, au};
+    localStorage.setItem("tigerflow-techs-statut", JSON.stringify(ov));
+  }catch(e){}
+  profil(); dispo(); congeRender();
+  toast("Congé posé — la liste des techniciens le voit aussi");
+}
+function congeClear(){
+  T.dispo = "dispo";
+  T.dispoD = "Disponible";
+  try{
+    const ov = JSON.parse(localStorage.getItem("tigerflow-techs-statut")) || {};
+    delete ov[NAME];
+    localStorage.setItem("tigerflow-techs-statut", JSON.stringify(ov));
+  }catch(e){}
+  profil(); dispo(); congeRender();
+  toast("Congé annulé — de nouveau disponible");
+}
+
+/* ================= ONGLETS ================= */
+function showTab(p, btn){
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("on"));
+  btn.classList.add("on");
+  document.querySelectorAll(".pane").forEach(x => x.classList.toggle("on", x.id === "p-" + p));
+}
+
+head(); profil(); comp(); dispo(); perf(); docsRender(); notesRender(); congeRender();
+</script>
+</body>
+</html>
