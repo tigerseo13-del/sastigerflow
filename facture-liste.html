@@ -376,6 +376,7 @@ tr.overdue{box-shadow:inset 3px 0 0 #D63B33}
         <input id="q" placeholder="Rechercher un client, un n° de facture…" oninput="render()">
       </div>
       <div class="chips" id="chips">
+        <button class="chip" onclick="exportCSV()" title="Télécharger la liste affichée au format CSV (Excel)" style="border-style:dashed">⬇ Exporter</button>
         <button class="chip on" data-f="all">Toutes <span class="n" id="n-all"></span></button>
         <button class="chip" data-f="brouillon">Brouillon <span class="n" id="n-brouillon"></span></button>
         <button class="chip" data-f="attente">En attente <span class="n" id="n-attente"></span></button>
@@ -485,7 +486,7 @@ function render(){
   const sort = document.getElementById('sort').value;
   let list = DEVIS.filter(d =>
     (FILTRE==="all" || d.statut===FILTRE) &&
-    (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q))
+    (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q) || String(d.montant).includes(q.replace(",", ".")))
   );
   if(sort==="montant-d") list.sort((a,b)=>b.montant-a.montant);
   if(sort==="montant-a") list.sort((a,b)=>a.montant-b.montant);
@@ -493,6 +494,7 @@ function render(){
   if(sort==="recent")    list.sort((a,b)=>b.date.localeCompare(a.date));
   if(sort==="echeance")  list.sort((a,b)=>a.valid.localeCompare(b.valid));
 
+  window._LISTF = list;
   document.getElementById('tbody').innerHTML = list.length ? list.map(d=>`
     <tr onclick="${d.statut==='brouillon' ? "location.href='facture.html'" : `openFac('${d.ref}')`}" class="${SEL.has(d.ref) ? 'selrow' : ''} ${d.statut==='retard' ? 'overdue' : ''}">
       <td onclick="event.stopPropagation()"><input type="checkbox" class="fck" ${SEL.has(d.ref) ? 'checked' : ''} onchange="ckOne('${d.ref}', this)"></td>
@@ -519,12 +521,38 @@ function render(){
 
 /* ================= FILTRES ================= */
 document.getElementById('chips').addEventListener('click', e=>{
-  const b = e.target.closest('.chip'); if(!b) return;
+  const b = e.target.closest('.chip'); if(!b || !b.dataset.f) return;
   document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   FILTRE = b.dataset.f;
+  try{ localStorage.setItem("tigerflow-factures-filtre", JSON.stringify({f:FILTRE, s:document.getElementById('sort').value, q:document.getElementById('q').value})); }catch(err){}
   render();
 });
+document.getElementById('sort').addEventListener('change', ()=>{ try{ const m=JSON.parse(localStorage.getItem("tigerflow-factures-filtre"))||{}; m.s=document.getElementById('sort').value; localStorage.setItem("tigerflow-factures-filtre", JSON.stringify(m)); }catch(e){} });
+document.getElementById('q').addEventListener('input', ()=>{ try{ const m=JSON.parse(localStorage.getItem("tigerflow-factures-filtre"))||{}; m.q=document.getElementById('q').value; localStorage.setItem("tigerflow-factures-filtre", JSON.stringify(m)); }catch(e){} });
+try{
+  const m = JSON.parse(localStorage.getItem("tigerflow-factures-filtre"));
+  if(m){
+    if(m.f){ FILTRE = m.f; document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.dataset.f===m.f)); }
+    if(m.s) document.getElementById('sort').value = m.s;
+    if(m.q) document.getElementById('q').value = m.q;
+    render();
+  }
+}catch(e){}
+
+/* ===== export CSV : la liste telle qu'affichée ===== */
+function exportCSV(){
+  const list = window._LISTF || DEVIS;
+  const esc = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const rows = [["Référence","Client","Contact","Objet","Montant TTC (€)","Statut","Émise le","Échéance"]]
+    .concat(list.map(d => [d.ref, d.client, d.ct || "", d.titre, d.montant, LBL[d.statut] || d.statut, fdate(d.date), fdate(d.valid)]));
+  const csv = "\ufeff" + rows.map(r => r.map(esc).join(";")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = "tigerflow-factures-" + new Date().toISOString().slice(0,10) + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  toast("⬇ " + list.length + " facture(s) exportée(s) en CSV");
+}
 
 /* ================= ACTIONS RAPIDES ================= */
 /* ===== Panneau facture + paiements ===== */
@@ -576,7 +604,7 @@ function bulkClear(){
   bulkSync();
 }
 function openFac(ref){
-  const d = DATA.find(x=>x.ref===ref);
+  const d = DEVIS.find(x=>x.ref===ref);
   if(!d) return;
   const paid = paidOf(ref);
   const rest = Math.max(0, d.montant - paid);
@@ -599,13 +627,13 @@ function openFac(ref){
       <div class="dh">Détails</div>
       <div class="dkv"><span class="k">Montant total</span><span class="v">${eur(d.montant)}</span></div>
       <div class="dkv"><span class="k">Déjà encaissé</span><span class="v" style="color:var(--green-d)">${eur(paid)}</span></div>
-      <div class="dkv"><span class="k">Émise le</span><span class="v">${fd(d.date)}</span></div>
-      <div class="dkv"><span class="k">Échéance</span><span class="v">${fd(d.valid)}</span></div>
+      <div class="dkv"><span class="k">Émise le</span><span class="v">${fdate(d.date)}</span></div>
+      <div class="dkv"><span class="k">Échéance</span><span class="v">${fdate(d.valid)}</span></div>
       <div class="dkv"><span class="k">Contact</span><span class="v">${d.ct}</span></div>
     </div>
 
     ${pays.length ? `<div class="dcard"><div class="dh">Paiements reçus</div>
-      ${pays.map(p=>`<div class="payrow"><span class="pm">${eur(p.m)}</span><span>${p.mode}</span><span class="pd">${fd(p.d)}</span></div>`).join("")}
+      ${pays.map(p=>`<div class="payrow"><span class="pm">${eur(p.m)}</span><span>${p.mode}</span><span class="pd">${fdate(p.d)}</span></div>`).join("")}
     </div>` : ""}
 
     ${rest > 0 ? `<div class="dcard">
@@ -620,7 +648,7 @@ function openFac(ref){
       </div>
       <button class="dbig" onclick="addPay('${d.ref}')">✓ Enregistrer le paiement</button>
     </div>` : ""}
-    <a class="dsec" href="facture.html">📄 Ouvrir la facture</a>`;
+    <a class="dsec" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${d.ref}')}catch(e){}">📄 Ouvrir la fiche de la facture</a>`;
   document.getElementById("drawer").classList.add("open");
   document.getElementById("dveil").classList.add("open");
   document.body.style.overflow = "hidden";
@@ -632,7 +660,7 @@ function closeFac(){
   document.body.style.overflow = "";
 }
 function addPay(ref){
-  const d = DATA.find(x=>x.ref===ref);
+  const d = DEVIS.find(x=>x.ref===ref);
   const m = +document.getElementById("pay-m").value;
   if(!m || m <= 0){ toast("⚠️ Indique un montant"); return; }
   if(!PAIEMENTS[ref]) PAIEMENTS[ref] = [];
@@ -652,10 +680,22 @@ function toast(msg){
   clearTimeout(t._h);
   t._h = setTimeout(()=>t.classList.remove('show'), 2400);
 }
+/* ===== les factures créées dans l'atelier rejoignent la liste ===== */
+try{
+  JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").reverse().forEach(rec => {
+    const i = DEVIS.findIndex(d => d.ref === rec.ref);
+    if(i > -1) DEVIS[i] = {...DEVIS[i], ...rec};
+    else DEVIS.unshift(rec);
+  });
+}catch(e){}
+const FSTKEY = "tigerflow-factures-statuts";
+function fstSave(ref, st){ try{ const m = JSON.parse(localStorage.getItem(FSTKEY)) || {}; m[ref] = st; localStorage.setItem(FSTKEY, JSON.stringify(m)); }catch(e){} }
+try{ const m = JSON.parse(localStorage.getItem(FSTKEY)) || {}; DEVIS.forEach(d => { if(m[d.ref]) d.statut = m[d.ref]; }); }catch(e){}
 function setSt(e, ref, st){
   e.stopPropagation(); e.preventDefault();
   const d = DEVIS.find(x=>x.ref===ref);
   d.statut = st;
+  fstSave(ref, st);                                  /* ← survit au rechargement */
   stats(); render();
   toast("💶 " + ref + " encaissée — " + eur(d.montant));
 }

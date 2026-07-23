@@ -409,6 +409,7 @@ tr.torelance{box-shadow:inset 3px 0 0 #D9A408}
         <input id="q" placeholder="Rechercher un client, un n° de devis…" oninput="render()">
       </div>
       <div class="chips" id="chips">
+        <button class="chip" onclick="exportCSV()" title="Télécharger la liste affichée au format CSV (Excel)" style="border-style:dashed">⬇ Exporter</button>
         <button class="chip on" data-f="all">Tous <span class="n" id="n-all"></span></button>
         <button class="chip" data-f="envoye">Envoyé <span class="n" id="n-envoye"></span></button>
         <button class="chip" data-f="gagne">Gagné <span class="n" id="n-gagne"></span></button>
@@ -595,13 +596,14 @@ function render(){
   const sort = document.getElementById('sort').value;
   let list = DEVIS.filter(d =>
     (FILTRE==="all" || d.statut===FILTRE) &&
-    (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q))
+    (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q) || String(d.montant).includes(q.replace(",", ".")))
   );
   if(sort==="montant-d") list.sort((a,b)=>b.montant-a.montant);
   if(sort==="montant-a") list.sort((a,b)=>a.montant-b.montant);
   if(sort==="client")    list.sort((a,b)=>a.client.localeCompare(b.client,'fr'));
   if(sort==="recent")    list.sort((a,b)=>b.date.localeCompare(a.date));
 
+  window._LISTD = list;
   document.getElementById('tbody').innerHTML = list.length ? list.map(d=>`
     <tr onclick="qv('${d.ref}')" class="${relBadge(d) ? 'torelance' : ''}">
       <td class="cl"><b>${d.client}</b><small>${d.ct}</small></td>
@@ -627,12 +629,43 @@ function render(){
 
 /* ================= FILTRES ================= */
 document.getElementById('chips').addEventListener('click', e=>{
-  const b = e.target.closest('.chip'); if(!b) return;
+  const b = e.target.closest('.chip'); if(!b || !b.dataset.f) return;
   document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   FILTRE = b.dataset.f;
+  try{ localStorage.setItem("tigerflow-devis-filtre", JSON.stringify({f:FILTRE, s:document.getElementById('sort').value, q:document.getElementById('q').value})); }catch(err){}
   render();
 });
+document.getElementById('sort').addEventListener('change', ()=>{ try{ const m=JSON.parse(localStorage.getItem("tigerflow-devis-filtre"))||{}; m.s=document.getElementById('sort').value; localStorage.setItem("tigerflow-devis-filtre", JSON.stringify(m)); }catch(e){} });
+document.getElementById('q').addEventListener('input', ()=>{ try{ const m=JSON.parse(localStorage.getItem("tigerflow-devis-filtre"))||{}; m.q=document.getElementById('q').value; localStorage.setItem("tigerflow-devis-filtre", JSON.stringify(m)); }catch(e){} });
+try{
+  const m = JSON.parse(localStorage.getItem("tigerflow-devis-filtre"));
+  if(m){
+    if(m.f){ FILTRE = m.f; document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.dataset.f===m.f)); }
+    if(m.s) document.getElementById('sort').value = m.s;
+    if(m.q) document.getElementById('q').value = m.q;
+    render();
+  }
+}catch(e){}
+
+/* ===== export CSV : la liste telle qu'affichée (filtres + recherche + tri) ===== */
+function exportCSV(){
+  const list = window._LISTD || DEVIS;
+  const esc = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  let envRegistre = {};
+  try{ envRegistre = JSON.parse(localStorage.getItem("tigerflow-devis-envois")) || {}; }catch(e){}
+  const rows = [["Référence","Client","Contact","Objet","Montant TTC (€)","Statut","Créé le","Valable jusqu'au","Envoyé le","Envoyé à"]]
+    .concat(list.map(d => {
+      const env = envRegistre[d.ref] || {};
+      return [d.ref, d.client, d.ct || "", d.titre, d.montant, LBL[d.statut] || d.statut, fdate(d.date), fdate(d.valid), env.date || "", env.to || ""];
+    }));
+  const csv = "\ufeff" + rows.map(r => r.map(esc).join(";")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = "tigerflow-devis-" + new Date().toISOString().slice(0,10) + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  toast("⬇ " + list.length + " devis exporté(s) en CSV");
+}
 
 /* ================= ACTIONS RAPIDES ================= */
 function toast(msg){
