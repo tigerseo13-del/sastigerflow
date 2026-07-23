@@ -401,9 +401,6 @@ button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-sele
 .rline.ttc{border-top:2px solid var(--ink);margin-top:8px;padding-top:11px}
 .rline.ttc span{font-family:'Sora';font-weight:800;font-size:1rem}
 .rline.ttc b{font-family:'Sora';font-weight:800;font-size:1.42rem;letter-spacing:-.6px;color:var(--orange-deep)}
-.acompte{display:flex;gap:7px;align-items:center;margin-top:12px;padding-top:11px;border-top:1px dashed var(--line);font-size:.75rem;color:var(--muted);flex-wrap:wrap}
-.acompte .ac{border:1.5px solid var(--line);border-radius:9px;padding:6px 11px;font-weight:700;cursor:pointer;background:#fff;font-family:inherit;font-size:.73rem}
-.acompte .ac.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
 .tgl{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px dashed #F0F1F4}
 .tgl:last-of-type{border-bottom:0}
 .tgl b{font-size:.85rem;display:block}
@@ -531,6 +528,26 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
 .lemoji{width:40px;height:40px;border-radius:12px;background:var(--orange-bg,#FFF1EA);border:1px solid #F8DECB;display:grid;place-items:center;font-size:1.15rem;flex:none;margin-top:2px}
 .pcol{flex:1;min-width:0}
 @media print{.lemoji{border:0;background:none}}
+/* ---- remise commerciale : panneau ergonomique ---- */
+.remadd{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;color:var(--ink-2);border:1.5px dashed #D8DAE1;border-radius:11px;padding:9px 14px;transition:.13s;margin:2px 0 10px;background:none}
+.remadd:hover{border-color:var(--green);color:var(--green-d);background:var(--green-bg)}
+.rempanel{border:1px solid var(--line);background:#FAFBFC;border-radius:13px;padding:13px 15px;margin:2px 0 10px}
+.remtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.remtop b{font-size:.84rem}
+.remx{font-size:.75rem;font-weight:700;color:var(--muted);padding:5px 9px;border-radius:8px}
+.remx:hover{background:var(--red-bg);color:var(--red)}
+.remrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.remseg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.remseg button{padding:8px 14px;font-size:.84rem;font-weight:800;color:var(--muted);min-width:44px}
+.remseg button.on{background:var(--ink);color:#fff}
+.remfield{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 10px}
+.remfield input{border:0;outline:none;width:64px;text-align:right;font-size:.95rem;font-weight:700;padding:9px 0;font-variant-numeric:tabular-nums;background:none;font-family:inherit}
+.remfield span{font-size:.85rem;font-weight:800;color:var(--muted)}
+.rempresets{display:flex;gap:6px;flex-wrap:wrap}
+.rempresets button{font-size:.76rem;font-weight:700;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:7px 12px;background:#fff;transition:.13s}
+.rempresets button:hover{border-color:var(--green);color:var(--green-d);background:var(--green-bg)}
+.remhint{font-size:.74rem;color:var(--muted);margin-top:9px;line-height:1.5}
+.remhint.onv{color:var(--green-d);font-weight:700}
 </style>
 </head>
 <body>
@@ -648,34 +665,49 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
       <div class="recap"><div class="rbox">
         <div class="rline"><span>Sous-total prestations HT</span><b id="v-ht">—</b></div>
         <div class="rline"><span>Frais optionnels</span><b id="v-fr">—</b></div>
-        <div class="rline"><span>Remise commerciale
-          <input class="vinline" id="v-rem" value="0" inputmode="decimal" style="width:56px;text-align:right" oninput="calc()">
-          <select class="vinline" id="v-remt" onchange="calc()" style="width:auto"><option value="%">%</option><option value="€">€</option></select></span>
-          <b id="v-remv" style="color:var(--green-d,#0A6B51)">—</b></div>
+        <!-- ===== remise commerciale : bouton discret → panneau clair ===== -->
+        <div id="rem-off">
+          <button class="remadd" onclick="remOpen()">🏷️ Ajouter une remise commerciale</button>
+        </div>
+        <div id="rem-on" style="display:none">
+          <div class="rempanel">
+            <div class="remtop"><b>🏷️ Remise commerciale</b><button class="remx" onclick="remClear()" title="Retirer la remise">✕ Retirer</button></div>
+            <div class="remrow">
+              <div class="remseg" id="remseg">
+                <button class="on" data-t="%" onclick="remType('%')">%</button>
+                <button data-t="€" onclick="remType('€')">€</button>
+              </div>
+              <div class="remfield">
+                <input id="v-rem" value="0" inputmode="decimal" oninput="calc()" aria-label="Montant de la remise">
+                <span id="remunit">%</span>
+              </div>
+              <div class="rempresets" id="rempresets">
+                <button onclick="remPreset(5)">5 %</button><button onclick="remPreset(10)">10 %</button><button onclick="remPreset(15)">15 %</button>
+              </div>
+            </div>
+            <div class="remhint" id="remhint">Le montant est déduit du total — la TVA suit automatiquement.</div>
+          </div>
+          <select id="v-remt" style="display:none"><option value="%">%</option><option value="€">€</option></select>
+        </div>
+        <div class="rline" id="rl-rem" style="display:none"><span>Remise commerciale</span><b id="v-remv" style="color:var(--green-d,#0A6B51)">—</b></div>
         <div class="rline" id="rl-tva10" style="display:none"><span>TVA 10 %</span><b id="v-tva10">—</b></div>
         <div class="rline" id="rl-tva20" style="display:none"><span>TVA 20 %</span><b id="v-tva20">—</b></div>
         <div class="rline"><span>TVA totale</span><b id="v-tva">—</b></div>
         <div class="rline ttc"><span>Total TTC</span><b id="v-ttc">—</b></div>
-        <div class="acompte">Acompte à la signature :
-          <button class="ac" onclick="setAc(0,this)">Aucun</button>
-          <button class="ac on" onclick="setAc(30,this)">30 %</button>
-          <button class="ac" onclick="setAc(50,this)">50 %</button>
-          <span id="v-acv" style="font-weight:800;color:var(--ink)"></span>
-        </div>
       </div></div>
     </div>
 
     <div class="legalfoot">
       <b>SAS TigerFlow 3D</b> · SIRET 812 345 678 00019 · Certibiocide n° <b>CB-2024-045612</b> · RC Pro AXA n° 7845123 ·
       TVA intracommunautaire FR 42 812345678 · Devis gratuit, valable <span id="lf-valid">30</span> jours ·
-      Règlement : acompte à la signature, solde à l'issue de l'intervention · Escompte pour paiement anticipé : néant ·
+      Règlement : à l'issue de l'intervention · Escompte pour paiement anticipé : néant ·
       Pénalités de retard : 3 × taux légal · Indemnité forfaitaire de recouvrement : 40 €
     </div>
 
     <!-- ===== 4. préférences ===== -->
     <div class="vcard">
       <div class="vh">Préférences et notes</div>
-      <div style="margin-top:14px"><label class="vlab">Notes pour le client</label><textarea class="vfld" rows="3" placeholder="Conditions particulières, accès, consignes…">Devis gratuit valable 30 jours. Acompte de 30 % à la commande, solde à la fin de l'intervention. Produits certifiés Certibiocide — fiches de sécurité fournies. Garantie de résultat 3 mois.</textarea></div>
+      <div style="margin-top:14px"><label class="vlab">Notes pour le client</label><textarea class="vfld" rows="3" placeholder="Conditions particulières, accès, consignes…">Devis gratuit valable 30 jours. Règlement à la fin de l'intervention. Produits certifiés Certibiocide — fiches de sécurité fournies. Garantie de résultat 3 mois.</textarea></div>
     </div>
 
     <!-- ===== 5. pièces jointes ===== -->
@@ -690,7 +722,6 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
 <!-- ===== barre du bas : le total te suit ===== -->
 <div class="vfoot">
   <div class="ft">Total TTC<b id="f-ttc">—</b></div>
-  <div class="ft ftb">Acompte<b id="f-aco">—</b></div>
   <div class="spacer"></div>
   <button class="btn2" onclick="window.print()">⬇️ PDF</button>
   <button class="btn2 primary" onclick="sendV2()">📤 Envoyer au client</button>
@@ -735,10 +766,9 @@ let LIGNES = [
   {designation:"Housses anti-punaises (lit 140×190)", desc:"Fourniture et pose de housses intégrales certifiées, matelas + sommier.", qte:2, pu:45, tva:20},
 ];
 let FRAIS = [];
-let ACPC = 30;
 let STAT2 = "brouillon";
 const g = id => document.getElementById(id);
-const eur = n => n.toLocaleString("fr-FR", {minimumFractionDigits:2}) + " €";
+const eur = n => (Math.round(n * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
 function toast(msg){
   const t = document.createElement("div");
   t.className = "toast";
@@ -820,6 +850,18 @@ function setTTC(i, val){
   if(pu && document.activeElement !== pu) pu.value = l.pu;
   calc();
 }
+/* ---------- remise commerciale : panneau ergonomique ---------- */
+function remOpen(){ g('rem-off').style.display='none'; g('rem-on').style.display=''; setTimeout(()=>{const i=g('v-rem'); if(i){i.focus(); i.select();}}, 60); }
+function remClear(){ g('v-rem').value='0'; g('v-remt').value='%'; remSeg('%'); g('rem-on').style.display='none'; g('rem-off').style.display=''; calc(); }
+function remSeg(t){
+  document.querySelectorAll('#remseg button').forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+  g('remunit').textContent = t;
+  g('rempresets').innerHTML = (t==='%' ? [5,10,15].map(v=>`<button onclick="remPreset(${v})">${v} %</button>`)
+                                       : [20,50,100].map(v=>`<button onclick="remPreset(${v})">${v} €</button>`)).join('');
+}
+function remType(t){ g('v-remt').value=t; remSeg(t); calc(); }
+function remPreset(v){ g('v-rem').value=String(v); calc(); }
+
 function calc(){
   let ht = 0, t10 = 0, t20 = 0;
   LIGNES.forEach((l, i) => {
@@ -836,6 +878,8 @@ function calc(){
   const scale = ht > 0 ? (ht - remAmt) / ht : 1;
   ht -= remAmt; t10 *= scale; t20 *= scale;
   if(g("v-remv")) g("v-remv").textContent = remAmt ? "− " + eur(remAmt) : "—";
+  if(g("rl-rem")) g("rl-rem").style.display = remAmt ? "" : "none";
+  if(g("remhint")){ g("remhint").textContent = remAmt ? "− " + eur(remAmt) + " déduits du total — la TVA est recalculée automatiquement." : "Le montant est déduit du total — la TVA suit automatiquement."; g("remhint").classList.toggle("onv", remAmt > 0); }
   if(g("rl-tva10")) g("rl-tva10").style.display = t10 > 0 ? "" : "none";
   if(g("rl-tva20")) g("rl-tva20").style.display = t20 > 0 ? "" : "none";
   if(g("v-tva10")) g("v-tva10").textContent = eur(t10);
@@ -851,15 +895,6 @@ function calc(){
   g("v-tva").textContent = eur(tva + fr * .2);
   g("v-ttc").textContent = eur(ttc);
   g("f-ttc").textContent = eur(ttc);
-  const ac = ttc * ACPC / 100;
-  g("v-acv").textContent = ACPC ? "→ " + eur(ac) : "";
-  g("f-aco").textContent = ACPC ? eur(ac) + " (" + ACPC + " %)" : "—";
-}
-function setAc(v, el){
-  ACPC = v;
-  document.querySelectorAll(".ac").forEach(c => c.classList.remove("on"));
-  el.classList.add("on");
-  calc();
 }
 
 /* ================= ENVOI ================= */
@@ -869,18 +904,16 @@ function sendV2(){
   if(!LIGNES.length){ toast("⚠️ Ajoute au moins une prestation"); return; }
   /* le récap avant d'appuyer sur le bouton qui compte */
   const tot = document.getElementById("v-ttc") ? document.getElementById("v-ttc").textContent : "";
-  const acv = (document.getElementById("v-acv") ? document.getElementById("v-acv").textContent : "").replace(/[→\s]+/, " ").trim();
   document.getElementById("srecap").innerHTML =
     '<div class="srow"><span>Client</span><b>' + cli + '</b></div>' +
     '<div class="srow"><span>Prestations</span><b>' + LIGNES.length + '</b></div>' +
-    '<div class="srow sttc"><span>Total TTC</span><b>' + tot + '</b></div>' +
-    (acv ? '<div class="srow"><span>Acompte à la signature</span><b>' + acv + '</b></div>' : '');
+    '<div class="srow sttc"><span>Total TTC</span><b>' + tot + '</b></div>';
   /* l'e-mail s'écrit tout seul — modifiable avant envoi */
   document.getElementById("s-to").value = cli.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr";
   document.getElementById("s-obj").value = "Votre devis " + ((document.getElementById("dref2") || {}).textContent || "").trim() || "Votre devis — TigerFlow 3D";
   document.getElementById("s-body").value =
 "Bonjour " + cli + ",\n\n" +
-"Veuillez trouver ci-joint votre devis" + (tot ? " d'un montant de " + tot + " TTC" : "") + (acv ? " (acompte à la signature : " + acv + ")" : "") + ".\n\n" +
+"Veuillez trouver ci-joint votre devis" + (tot ? " d'un montant de " + tot + " TTC" : "") + ".\n\n" +
 "Il est valable " + ((document.getElementById("v-valid") || {value:"30"}).value) + " jours. Vous pouvez le signer directement en ligne via le lien inclus — n'hésitez pas à nous appeler pour toute question.\n\n" +
 "Bien cordialement,\nL'équipe TigerFlow 3D";
   document.getElementById("sendveil").classList.add("open");
@@ -1177,7 +1210,7 @@ async function sbSaveDevis(statut, silent){
     <div class="sfld"><label>Message</label><textarea id="s-body" rows="5"></textarea></div>
     <div class="spj">📎 Le PDF du devis sera joint automatiquement à cet e-mail.</div>
     <div class="tgl"><div><b>✍️ Signature électronique</b><small>Le client signe en ligne — SMS + horodatage, valeur légale eIDAS</small></div><div class="sw on" id="sw-sign" onclick="this.classList.toggle('on')"></div></div>
-    <div class="tgl"><div><b>💳 Paiement de l'acompte en ligne</b><small>Carte / Apple Pay dès la signature</small></div><div class="sw on" id="sw-pay" onclick="this.classList.toggle('on')"></div></div>
+    <div class="tgl"><div><b>💳 Paiement en ligne</b><small>Carte / Apple Pay dès la signature</small></div><div class="sw on" id="sw-pay" onclick="this.classList.toggle('on')"></div></div>
     <div class="sbtns">
       <button class="btn2" onclick="sendClose()">Annuler</button>
       <button class="btn2 primary" onclick="sendConfirm()">📤 Envoyer maintenant</button>

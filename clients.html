@@ -107,7 +107,25 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
 .cav{width:40px;height:40px;border-radius:11px;background:#F3F4F7;color:var(--ink-2);border:1px solid var(--line);display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:.72rem;flex:none}
 .cl b{display:block;font-size:.9rem;margin-bottom:1px}
 .cl small{color:var(--muted);font-size:.74rem}
-.typ{font-size:.7rem;font-weight:700;padding:4px 11px;border-radius:11px;background:#F1F2F5;color:var(--ink-2);white-space:nowrap}
+.typ{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;padding:4px 11px;border-radius:11px;background:#F1F2F5;color:var(--ink-2);white-space:nowrap}
+.typ.pro{background:#EBF1FE;color:#2E5CE6}
+.typ.syn{background:#F3EBFE;color:#7C3AED}
+.typ.part{background:#DFF3ED;color:#0A6B51}
+/* ---- boutons d'action à droite ---- */
+.acts{white-space:nowrap;text-align:right}
+.ab{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink-2);vertical-align:middle;margin-left:5px;transition:.13s;cursor:pointer;text-decoration:none}
+.ab svg{width:15px;height:15px}
+.ab:hover{border-color:#CFD3DC;background:#FAFBFC;color:var(--ink)}
+.ab.wa:hover{border-color:#25D366;color:#1DA851;background:#EAF9F0}
+.ab.tel:hover{border-color:var(--blue,#2E5CE6);color:var(--blue,#2E5CE6);background:#EBF1FE}
+.ab.mail:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft,#FFF1EA)}
+.rowmenu{position:fixed;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 38px -10px rgba(23,26,32,.3);padding:6px;min-width:210px;z-index:140;display:none}
+.rowmenu.open{display:block}
+.rowmenu button,.rowmenu a{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 11px;border-radius:9px;font-size:.84rem;font-weight:600;color:var(--ink-2);background:none;border:0;cursor:pointer;font-family:inherit;text-decoration:none}
+.rowmenu button:hover,.rowmenu a:hover{background:var(--bg,#F4F5F8)}
+.rowmenu .danger{color:var(--red,#D63B33)}
+.rowmenu .danger:hover{background:#FCECEA}
+.rowmenu .sep{height:1px;background:var(--line);margin:5px 8px}
 .amt{font-family:'Sora';font-weight:700;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
 .due{font-family:'Sora';font-weight:700;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;color:var(--red)}
 .due.zero{color:#C4C8D2;font-weight:600}
@@ -129,6 +147,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
   .dt th:nth-child(2),.dt td:nth-child(2),
   .dt th:nth-child(3),.dt td:nth-child(3),
   .dt th:nth-child(4),.dt td:nth-child(4){display:none}
+  .acts .ab.hidem{display:none}
 }
 @media(max-width:760px){
   html{font-size:15.5px}
@@ -332,9 +351,10 @@ tbody td .cl b, tbody td.cl b{font-weight:800}
     <div class="toolrow">
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input id="q" placeholder="Nom, ville, code postal…" oninput="render()">
+        <input id="q" placeholder="Nom, ville, téléphone, e-mail…" oninput="render()">
       </div>
       <div class="chips">
+        <button class="fchip" onclick="exportCSV()" title="Télécharger la liste au format CSV (Excel)">⬇ Exporter</button>
         <button class="fchip on" data-f="all" onclick="setFilter(this)">Tous <span class="c">12</span></button>
         <button class="fchip" data-f="due" onclick="setFilter(this)">À encaisser <span class="c">3</span></button>
         <button class="fchip" data-f="actif" onclick="setFilter(this)">Actifs <span class="c">10</span></button>
@@ -352,7 +372,7 @@ tbody td .cl b, tbody td.cl b{font-weight:800}
           <th class="sort" onclick="sortCA()">CA total <span class="arr" id="arr">↓</span></th>
           <th style="text-align:right">À encaisser</th>
           <th>Statut</th>
-          <th></th>
+          <th style="text-align:right;padding-right:18px">Actions</th>
         </tr></thead>
         <tbody id="rows"></tbody>
       </table>
@@ -381,8 +401,8 @@ function inboxMerge(){
       if(CLIENTS.some(c => c.nom === r.nom)) return;  /* pas de doublon */
       CLIENTS.unshift({
         nom: r.nom, ville: r.ville || "—", cp: r.cp || "",
-        type: r.type === "particulier" ? "Particulier" : "Pro",
-        nb: 0, ca: 0, due: 0, st: "actif",
+        type: r.type === "particulier" ? "Particulier" : r.type === "syndic" ? "Syndic" : "Pro",
+        nb: 0, ca: 0, due: 0, st: "actif", tel: r.tel || "", mail: r.mail || "",
       });
     });
     if(typeof render === "function") render();
@@ -410,8 +430,8 @@ async function sbLoad(silent){
       nom: c.nom,
       ville: c.ville || "—",
       cp: c.cp || "",
-      type: c.type === "particulier" ? "Particulier" : "Pro",
-      nb: 0, ca: 0, due: 0, st: "actif",
+      type: c.type === "particulier" ? "Particulier" : c.type === "syndic" ? "Syndic" : "Pro",
+      nb: 0, ca: 0, due: 0, st: "actif", tel: c.tel || "", mail: c.mail || "",
     }));
     if(typeof render === "function") render();
     if(!data || !data.length){
@@ -469,18 +489,18 @@ function toastLive(msg){
   t._h = setTimeout(()=>t.classList.remove("show"), 2600);
 }
 const CLIENTS = [
-  {nom:"Ironwood Solutions",   ville:"Paris 11e",    cp:"75011", type:"Pro",         nb:1, ca:3840,  due:1250, st:"retard"},
-  {nom:"Syndic Foncia Lilas",  ville:"Paris 20e",    cp:"75020", type:"Pro",         nb:3, ca:11260, due:0,    st:"actif"},
-  {nom:"Hôtel du Parc",        ville:"Paris 17e",    cp:"75017", type:"Pro",         nb:2, ca:8450,  due:640,  st:"attente"},
-  {nom:"Entrepôt Central",     ville:"Gennevilliers",cp:"92230", type:"Pro",         nb:1, ca:5620,  due:0,    st:"actif"},
-  {nom:"Camping Val de Seine", ville:"Villeneuve",   cp:"78670", type:"Pro",         nb:1, ca:4100,  due:0,    st:"inactif"},
-  {nom:"Pharmacie Centrale",   ville:"Paris 15e",    cp:"75015", type:"Pro",         nb:1, ca:2980,  due:0,    st:"actif"},
-  {nom:"Restaurant Chez Marcel",ville:"Paris 19e",   cp:"75019", type:"Pro",         nb:1, ca:2310,  due:0,    st:"actif"},
-  {nom:"Boulangerie Dupont",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1940,  due:0,    st:"actif"},
-  {nom:"Crèche Les Lutins",    ville:"Montreuil",    cp:"93100", type:"Pro",         nb:1, ca:1720,  due:0,    st:"actif"},
-  {nom:"Tabac de la Mairie",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1280,  due:320,  st:"attente"},
-  {nom:"Mme Perrin",           ville:"Paris 13e",    cp:"75013", type:"Particulier", nb:0, ca:578,   due:0,    st:"actif"},
-  {nom:"M. Diallo",            ville:"Saint-Ouen",   cp:"93400", type:"Particulier", nb:0, ca:390,   due:0,    st:"actif"},
+  {nom:"Ironwood Solutions",   ville:"Paris 11e",    cp:"75011", type:"Pro",         nb:1, ca:3840,  due:1250, st:"retard",  tel:"0612345678", mail:"john.thompson@ironwood.com"},
+  {nom:"Syndic Foncia Lilas",  ville:"Paris 20e",    cp:"75020", type:"Syndic",      nb:3, ca:11260, due:0,    st:"actif",   tel:"0145879632", mail:"gestion@foncia-lilas.fr"},
+  {nom:"Hôtel du Parc",        ville:"Paris 17e",    cp:"75017", type:"Pro",         nb:2, ca:8450,  due:640,  st:"attente", tel:"0143285512", mail:"reception@hotelduparc.fr"},
+  {nom:"Entrepôt Central",     ville:"Gennevilliers",cp:"92230", type:"Pro",         nb:1, ca:5620,  due:0,    st:"actif",   tel:"0147336890", mail:"contact@entrepot-central.fr"},
+  {nom:"Camping Val de Seine", ville:"Villeneuve",   cp:"78670", type:"Pro",         nb:1, ca:4100,  due:0,    st:"inactif", tel:"0139588274", mail:"info@camping-valdeseine.fr"},
+  {nom:"Pharmacie Centrale",   ville:"Paris 15e",    cp:"75015", type:"Pro",         nb:1, ca:2980,  due:0,    st:"actif",   tel:"0145321087", mail:"pharmacie.centrale@orange.fr"},
+  {nom:"Restaurant Chez Marcel",ville:"Paris 19e",   cp:"75019", type:"Pro",         nb:1, ca:2310,  due:0,    st:"actif",   tel:"0142051733", mail:"chezmarcel75@gmail.com"},
+  {nom:"Boulangerie Dupont",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1940,  due:0,    st:"actif",   tel:"0645221890", mail:"contact@boulangerie-dupont.fr"},
+  {nom:"Crèche Les Lutins",    ville:"Montreuil",    cp:"93100", type:"Pro",         nb:1, ca:1720,  due:0,    st:"actif",   tel:"0148574421", mail:"direction@creche-leslutins.fr"},
+  {nom:"Tabac de la Mairie",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1280,  due:320,  st:"attente", tel:"0147901255", mail:"tabacdelamairie@sfr.fr"},
+  {nom:"Mme Perrin",           ville:"Paris 13e",    cp:"75013", type:"Particulier", nb:0, ca:578,   due:0,    st:"actif",   tel:"0652304178", mail:"perrin.marie@gmail.com"},
+  {nom:"M. Diallo",            ville:"Saint-Ouen",   cp:"93400", type:"Particulier", nb:0, ca:390,   due:0,    st:"actif",   tel:"0661482935", mail:"m.diallo93@gmail.com"},
 ];
 const STL = {actif:["st-actif","Actif"], retard:["st-retard","En retard"], attente:["st-attente","En attente"], inactif:["st-inactif","Inactif"]};
 let FILTER = "all", DESC = true;
@@ -503,24 +523,73 @@ function render(){
   const q = document.getElementById("q").value.toLowerCase().trim();
   let list = CLIENTS.filter(c =>
     (FILTER==="all" || (FILTER==="due" ? c.due>0 : FILTER==="inactif" ? c.st==="inactif" : c.st!=="inactif")) &&
-    (!q || c.nom.toLowerCase().includes(q) || c.ville.toLowerCase().includes(q) || c.cp.includes(q))
+    (!q || c.nom.toLowerCase().includes(q) || c.ville.toLowerCase().includes(q) || c.cp.includes(q)
+         || (c.tel || "").replace(/\D/g,"").includes(q.replace(/\D/g,"") || "§") || (c.mail || "").toLowerCase().includes(q))
   );
   list.sort((a,b)=> DESC ? b.ca-a.ca : a.ca-b.ca);
   void 0; /* compteur hero retiré */
   document.getElementById("empty").style.display = list.length ? "none" : "block";
-  document.getElementById("rows").innerHTML = list.map(c=>{
+  const TYPK = {Pro:["pro","🏢"], Syndic:["syn","🏛️"], Particulier:["part","👤"]};
+  document.getElementById("rows").innerHTML = list.map((c, i)=>{
     const [cls,lbl] = STL[c.st];
+    const [tk,tic] = TYPK[c.type] || ["","📇"];
+    const wa = c.tel ? "https://wa.me/33" + c.tel.replace(/\D/g,"").replace(/^0/,"") : "";
     return `<tr onclick="location.href='client.html?c='+encodeURIComponent('${c.nom.replace(/'/g,"\\'")}')" title="Ouvrir la fiche client">
-      <td><span class="cl"><span class="cav">${ini(c.nom)}</span><span><b>${c.nom}</b><small>📍 ${c.cp} · ${c.ville}</small></span></span></td>
-      <td><span class="typ">${c.type}</span></td>
+      <td><span class="cl"><span><b>${c.nom}</b><small>${c.cp} · ${c.ville}</small></span></span></td>
+      <td><span class="typ ${tk}">${tic} ${c.type}</span></td>
       <td>${c.nb || "—"}</td>
       <td class="amt">${euro(c.ca)}</td>
       <td class="${c.due ? "due" : "due zero"}">${c.due ? euro(c.due) : "—"}</td>
       <td><span class="st ${cls}">${lbl}</span></td>
-      <td><svg class="arrgo" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+      <td class="acts" onclick="event.stopPropagation()">
+        ${wa ? `<a class="ab wa hidem" href="${wa}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.89 1.22 3.09.15.2 2.11 3.22 5.1 4.51.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.58-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.05 21.79h-.01a9.87 9.87 0 01-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.85 9.85 0 01-1.51-5.26c0-5.45 4.44-9.88 9.9-9.88a9.83 9.83 0 019.88 9.89c0 5.45-4.44 9.88-9.89 9.88zm8.41-18.29A11.8 11.8 0 0012.04 0C5.5 0 .16 5.33.16 11.89c0 2.1.55 4.14 1.59 5.94L.05 24l6.3-1.65a11.88 11.88 0 005.68 1.45h.01c6.55 0 11.89-5.33 11.89-11.89 0-3.18-1.24-6.16-3.47-8.41z"/></svg></a>` : ""}
+        ${c.mail ? `<a class="ab mail hidem" href="mailto:${c.mail}" title="Envoyer un e-mail" aria-label="E-mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg></a>` : ""}
+        ${c.tel ? `<a class="ab tel hidem" href="tel:+33${c.tel.replace(/\D/g,"").replace(/^0/,"")}" title="Appeler" aria-label="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg></a>` : ""}
+        <button class="ab" onclick="rowMenu(event, ${i})" title="Plus d'actions" aria-label="Plus d'actions">⋯</button>
+      </td>
     </tr>`;
   }).join("");
+  window._LIST = list;
 }
+/* ---- export CSV : la liste telle qu'affichée (filtres + recherche respectés) ---- */
+function exportCSV(){
+  const list = window._LIST || CLIENTS;
+  const esc = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const rows = [["Nom","Type","Code postal","Ville","Téléphone","E-mail","Contrats","CA total (€)","À encaisser (€)","Statut"]]
+    .concat(list.map(c => [c.nom, c.type, c.cp, c.ville, c.tel || "", c.mail || "", c.nb || 0, c.ca || 0, c.due || 0, (STL[c.st] || ["", c.st])[1]]));
+  const csv = "\ufeff" + rows.map(r => r.map(esc).join(";")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = "tigerflow-clients-" + new Date().toISOString().slice(0,10) + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  toast("⬇ " + list.length + " client(s) exporté(s) en CSV");
+}
+
+/* ---- menu ⋯ par ligne ---- */
+function rowMenu(e, i){
+  e.stopPropagation();
+  const c = (window._LIST || [])[i]; if(!c) return;
+  let m = document.getElementById("rowmenu");
+  if(!m){ m = document.createElement("div"); m.id = "rowmenu"; m.className = "rowmenu"; document.body.appendChild(m); }
+  const safe = c.nom.replace(/'/g, "\\'");
+  m.innerHTML =
+    `<a href="client.html?c=${encodeURIComponent(c.nom)}">✏️ Modifier la fiche</a>` +
+    `<a href="devis.html">🧾 Nouveau devis</a>` +
+    `<a href="intervention-nouvelle.html">📅 Planifier une intervention</a>` +
+    `<div class="sep"></div>` +
+    `<button onclick="toast('📋 « ${safe} » copié'); rowMenuClose()">📋 Copier le nom</button>` +
+    `<div class="sep"></div>` +
+    `<button class="danger" onclick="toast('🗑 Suppression — bientôt reliée à la base'); rowMenuClose()">🗑 Supprimer le client</button>`;
+  const r = e.currentTarget.getBoundingClientRect();
+  m.classList.add("open");
+  const mw = 216, mh = m.offsetHeight || 230;
+  m.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + "px";
+  m.style.top  = (r.bottom + mh + 10 > window.innerHeight ? r.top - mh - 6 : r.bottom + 6) + "px";
+}
+function rowMenuClose(){ const m = document.getElementById("rowmenu"); if(m) m.classList.remove("open"); }
+document.addEventListener("click", rowMenuClose);
+window.addEventListener("scroll", rowMenuClose, {passive:true});
+
 function toast(msg){
   let t = document.getElementById("toast");
   if(!t){ t = document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
