@@ -537,6 +537,11 @@ try{
     else DEVIS.unshift(rec);
   });
 }catch(e){}
+/* ===== les statuts changés depuis la liste ou le tiroir SURVIVENT au rechargement ===== */
+const STKEY = "tigerflow-devis-statuts";
+function stSaved(){ try{ return JSON.parse(localStorage.getItem(STKEY)) || {}; }catch(e){ return {}; } }
+function stSave(ref, st){ try{ const m = stSaved(); m[ref] = st; localStorage.setItem(STKEY, JSON.stringify(m)); }catch(e){} }
+try{ const m = stSaved(); DEVIS.forEach(d => { if(m[d.ref]) d.statut = m[d.ref]; }); }catch(e){}
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
 const fdate = iso => { const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
@@ -642,6 +647,7 @@ function setSt(e, ref, st){
   e.stopPropagation(); e.preventDefault();
   const d = DEVIS.find(x=>x.ref===ref);
   d.statut = st;
+  stSave(ref, st);                                   /* ← enregistré : survit au rechargement */
   stats(); render();
   toast(st==="gagne" ? "🎉 " + ref + " marqué gagné — " + eur(d.montant) : ref + " marqué perdu");
 }
@@ -948,6 +954,7 @@ function qv(ref){
       <a class="qbig" href="devis.html" onclick="try{sessionStorage.setItem('tigerflow-devis-ref','${d.ref}')}catch(e){}">✏️ Ouvrir en grand</a>
       ${d.statut === "envoye" || d.statut === "envoye" ? `<button class="qsec" onclick="toast('📤 Relance envoyée à ' + '${d.client.replace(/'/g,"\\'")}')">📤 Relancer maintenant</button>` : ""}
       ${d.statut !== "gagne" ? `<button class="qsec" onclick="qvGagne('${d.ref}')">🏆 Marquer gagné</button>` : ""}
+      ${d.statut !== "perdu" && d.statut !== "gagne" ? `<button class="qsec" onclick="qvPerdu('${d.ref}')">✗ Marquer perdu</button>` : ""}
       <button class="qsec" onclick="qvDup('${d.ref}')">🔁 Dupliquer</button>
       <div style="position:relative">
         <button class="qsec" style="width:100%" onclick="qvMenu(event)">⋯ Plus d'actions</button>
@@ -974,7 +981,11 @@ function qvClose(){
 }
 function qvGagne(ref){
   const d = DEVIS.find(x => x.ref === ref);
-  if(d){ d.statut = "gagne"; render(); qv(ref); toast("🏆 " + d.client + " — devis gagné !"); }
+  if(d){ d.statut = "gagne"; stSave(ref, "gagne"); render(); qv(ref); toast("🏆 " + d.client + " — devis gagné !"); }
+}
+function qvPerdu(ref){
+  const d = DEVIS.find(x => x.ref === ref);
+  if(d){ d.statut = "perdu"; stSave(ref, "perdu"); render(); qv(ref); toast("✗ " + d.client + " — devis marqué perdu"); }
 }
 function qvMenu(e){
   e.stopPropagation();

@@ -226,7 +226,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .st-envoye{background:var(--blue-bg);color:var(--blue-d)}
 .st-gagne,.st-payee{background:var(--green-bg);color:var(--green-d)}
 .st-attente{background:var(--amber-bg);color:var(--amber)}
-.st-retard{background:var(--red-bg);color:var(--red)}
+.st-retard,.st-perdu{background:var(--red-bg);color:var(--red)}
+.st-brouillon{background:#EEF0F3;color:#6C7285}
+.qact{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:.8rem;font-weight:800;cursor:pointer;vertical-align:middle;margin-right:5px;font-family:inherit;transition:.13s}
+.qact.ok{color:var(--green-d)} .qact.ok:hover{background:var(--green-bg);border-color:var(--green-d)}
+.qact.ko{color:var(--red)} .qact.ko:hover{background:var(--red-bg);border-color:var(--red)}
 .rlink{color:var(--orange-deep);font-weight:700;font-size:.79rem;white-space:nowrap}
 
 /* Équipements */
@@ -576,9 +580,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <table class="dt">
           <thead><tr><th>N° devis</th><th>Objet</th><th>Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>
           <tbody>
-            <tr><td class="ref">DEV-2026-01287</td><td>Punaises de lit — appartement T3</td><td class="amt">578,05 €</td><td>25/08/2026</td><td><span class="st st-envoye">Envoyé</span></td><td><a class="rlink" href="devis.html">Ouvrir →</a></td></tr>
-            <tr><td class="ref">DEV-2026-01198</td><td>Extension contrat — punaises (avenant)</td><td class="amt">0,00 €</td><td>03/03/2026</td><td><span class="st st-gagne">Gagné</span></td><td><a class="rlink" href="index.html">Contrat →</a></td></tr>
-            <tr><td class="ref">DEV-2025-01102</td><td>Dératisation annuelle — 12 passages</td><td class="amt">750,50 €</td><td>05/12/2025</td><td><span class="st st-gagne">Gagné</span></td><td><a class="rlink" href="index.html">Contrat →</a></td></tr>
+            <tr data-ref="DEV-2026-01287"><td class="ref">DEV-2026-01287</td><td>Punaises de lit — appartement T3</td><td class="amt">578,05 €</td><td>25/08/2026</td><td><span class="st st-envoye">Envoyé</span></td><td style="white-space:nowrap"><button class="qact ok" title="Marquer gagné" onclick="devSt(event,'DEV-2026-01287','gagne')">✓</button><button class="qact ko" title="Marquer perdu" onclick="devSt(event,'DEV-2026-01287','perdu')">✗</button><a class="rlink" href="devis.html" onclick="try{sessionStorage.setItem('tigerflow-devis-ref','DEV-2026-01287')}catch(e){}">Ouvrir →</a></td></tr>
+            <tr data-ref="DEV-2026-01198"><td class="ref">DEV-2026-01198</td><td>Extension contrat — punaises (avenant)</td><td class="amt">0,00 €</td><td>03/03/2026</td><td><span class="st st-gagne">Gagné</span></td><td><a class="rlink" href="index.html">Contrat →</a></td></tr>
+            <tr data-ref="DEV-2025-01102"><td class="ref">DEV-2025-01102</td><td>Dératisation annuelle — 12 passages</td><td class="amt">750,50 €</td><td>05/12/2025</td><td><span class="st st-gagne">Gagné</span></td><td><a class="rlink" href="index.html">Contrat →</a></td></tr>
           </tbody>
         </table>
       </div>
@@ -698,6 +702,33 @@ function showTab(name, btn){
   const vis = GROUPES[name] || [name];
   document.querySelectorAll('[data-tab]').forEach(d=>d.classList.toggle('show', vis.includes(d.dataset.tab)));
 }
+/* ---- statuts devis : mêmes règles et même registre que la liste des devis ---- */
+const DEVST_KEY = "tigerflow-devis-statuts";
+const DEVLBL = {brouillon:["st-brouillon","Brouillon"], envoye:["st-envoye","Envoyé"], gagne:["st-gagne","Gagné"], perdu:["st-perdu","Perdu"]};
+function devStApply(){
+  try{
+    const m = JSON.parse(localStorage.getItem(DEVST_KEY)) || {};
+    document.querySelectorAll("tr[data-ref]").forEach(tr => {
+      const st = m[tr.dataset.ref];
+      if(!st || !DEVLBL[st]) return;
+      const c = tr.querySelector(".st");
+      if(c){ c.className = "st " + DEVLBL[st][0]; c.textContent = DEVLBL[st][1]; }
+      if(st === "gagne" || st === "perdu") tr.querySelectorAll(".qact").forEach(b => b.style.display = "none");
+    });
+  }catch(e){}
+}
+function devSt(e, ref, st){
+  e.stopPropagation(); e.preventDefault();
+  try{
+    const m = JSON.parse(localStorage.getItem(DEVST_KEY)) || {};
+    m[ref] = st;
+    localStorage.setItem(DEVST_KEY, JSON.stringify(m));
+  }catch(err){}
+  devStApply();
+  toast(st === "gagne" ? "🏆 " + ref + " marqué gagné" : "✗ " + ref + " marqué perdu");
+}
+devStApply();
+
 /* ---- menu ⋯ de la fiche + suppression en 2 temps ---- */
 function cliMenu(e){ e.stopPropagation(); document.getElementById('cmenu').classList.toggle('open'); }
 function cliMenuClose(){ document.getElementById('cmenu').classList.remove('open');

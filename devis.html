@@ -352,6 +352,7 @@ button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-sele
 .dstatb2 i{width:8px;height:8px;border-radius:50%}
 .dstatb2.sent{background:var(--blue-bg);color:var(--blue)}
 .dstatb2.ok{background:var(--green-bg);color:var(--green-d)}
+.dstatb2.ko{background:var(--red-bg,#FCECEA);color:var(--red,#D63B33)}
 .spacer{flex:1}
 .btn2{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.84rem;padding:11px 16px;border-radius:12px;cursor:pointer;font-family:inherit;border:1px solid var(--line);background:#fff;color:var(--ink-2);text-decoration:none;transition:.13s}
 .btn2:hover{border-color:#D5D8DF}
@@ -604,6 +605,7 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
       <span class="autosave2">✓ enregistré <b id="asago">à l'instant</b></span>
       <div class="spacer"></div>
       <a class="btn2" href="devis-client.html">👁 Aperçu client</a>
+      <button class="btn2" onclick="saveDevis()" title="Enregistrer sans envoyer — le devis reste en brouillon dans la liste">💾 Enregistrer</button>
       <button class="btn2 primary" onclick="sendV2()">📤 Envoyer au client</button>
       <div class="morewrap">
         <button class="btn2" onclick="moreMenu(event)" aria-label="Plus d'actions" title="Plus d'actions">⋯</button>
@@ -724,6 +726,7 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
   <div class="ft">Total TTC<b id="f-ttc">—</b></div>
   <div class="spacer"></div>
   <button class="btn2" onclick="window.print()">⬇️ PDF</button>
+  <button class="btn2" onclick="saveDevis()" title="Enregistrer sans envoyer">💾 Enregistrer</button>
   <button class="btn2 primary" onclick="sendV2()">📤 Envoyer au client</button>
 </div>
 
@@ -794,7 +797,7 @@ function setStat2(k, el){
   document.querySelectorAll(".stc").forEach(c => c.classList.remove("on"));
   el.classList.add("on");
   const b = g("dstatb2");
-  const conf = {brouillon:["#9CA1AD","Brouillon",""], envoye:["var(--blue)","Envoyé","sent"], gagne:["var(--green)","Gagné","ok"]}[k];
+  const conf = {brouillon:["#9CA1AD","Brouillon",""], envoye:["var(--blue)","Envoyé","sent"], gagne:["var(--green)","Gagné","ok"], perdu:["var(--red,#D63B33)","Perdu","ko"]}[k] || ["#9CA1AD",k,""];
   b.className = "dstatb2 " + conf[2];
   b.innerHTML = "<i style='background:" + conf[0] + "'></i>" + conf[1];
 }
@@ -1252,12 +1255,43 @@ function pushDevisInbox(){
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").filter(x => x.ref !== DREF);
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-devis", JSON.stringify(box.slice(0, 30)));
+    pushClientInbox(cli);                       /* ← le client du devis rejoint la liste clients */
+  }catch(e){}
+}
+/* ===== chaque devis enregistré garantit son client dans la liste clients ===== */
+function pushClientInbox(cli){
+  try{
+    if(!cli) return;
+    const box = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]");
+    if(box.some(r => r.nom === cli)) return;    /* déjà en attente : pas de doublon */
+    const info = (typeof CLIENTS !== "undefined" && CLIENTS[cli]) ? CLIENTS[cli] : {};
+    let cp = "", ville = "";
+    const m = String(info.adr || "").match(/(\d{5})\s+(.+)$/);
+    if(m){ cp = m[1]; ville = m[2]; }
+    box.unshift({
+      nom: cli,
+      type: /^(M\.|Mme|Mlle)\s/.test(cli) ? "particulier" : "pro",
+      cp, ville,
+      tel: (info.tel || "").replace(/\s/g, ""),
+      mail: info.mail || "",
+    });
+    localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(box.slice(0, 30)));
   }catch(e){}
 }
 (function(){
   const _set = typeof setStat2 === "function" ? setStat2 : null;
-  if(_set) setStat2 = function(st, el){ CURSTAT = st; _set(st, el); syncDel(); pushDevisInbox(); };
+  if(_set) setStat2 = function(st, el){ CURSTAT = st; _set(st, el); syncDel(); pushDevisInbox();
+    /* le statut est TOUJOURS écrit dans le registre partagé, même sans client choisi */
+    try{ const m = JSON.parse(localStorage.getItem("tigerflow-devis-statuts")) || {}; m[DREF] = st; localStorage.setItem("tigerflow-devis-statuts", JSON.stringify(m)); }catch(e){} };
 })();
+/* ===== enregistrer SANS envoyer : le devis reste en brouillon et rejoint la liste ===== */
+function saveDevis(){
+  const cli = g("v-client").value;
+  if(!cli){ toast("👤 Choisis d'abord un client pour enregistrer le devis"); g("v-client").focus(); return; }
+  pushDevisInbox();
+  toast("💾 Devis " + DREF + " enregistré" + (CURSTAT === "brouillon" ? " en brouillon" : "") + " — il t'attend dans la liste");
+  setTimeout(() => { location.href = "devis-liste.html"; }, 900);
+}
 function syncDel(){
   const b = document.getElementById("mdel");
   if(!b) return;
