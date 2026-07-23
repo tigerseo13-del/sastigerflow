@@ -410,7 +410,6 @@ tr.torelance{box-shadow:inset 3px 0 0 #D9A408}
       </div>
       <div class="chips" id="chips">
         <button class="chip on" data-f="all">Tous <span class="n" id="n-all"></span></button>
-        <button class="chip" data-f="attente">En attente <span class="n" id="n-attente"></span></button>
         <button class="chip" data-f="envoye">Envoyé <span class="n" id="n-envoye"></span></button>
         <button class="chip" data-f="gagne">Gagné <span class="n" id="n-gagne"></span></button>
         <button class="chip" data-f="perdu">Perdu <span class="n" id="n-perdu"></span></button>
@@ -496,7 +495,7 @@ function relSt(){
   el.classList.toggle("off", !REL.on);
 }
 function relBadge(d){
-  if(!REL.on || (d.statut !== "envoye" && d.statut !== "attente")) return "";
+  if(!REL.on || (d.statut !== "envoye" && d.statut !== "envoye")) return "";
   if(PAUSED.has(d.ref))
     return `<span class="relbadge pause" onclick="relTog(event,'${d.ref}')" title="Relances en pause pour ce devis — cliquer pour reprendre">⏸ en pause</span>`;
   const seq = d.pro ? REL.pro : REL.part;
@@ -517,19 +516,27 @@ setTimeout(relSt, 0);
 const DEVIS = [
   {ref:"DEV-2026-01287", pro:true, client:"Ironwood Solutions",   ct:"John Thompson",   titre:"Punaises de lit — appartement T3",       montant:536.80,  statut:"envoye",  date:"2026-08-25", valid:"2026-09-25"},
   {ref:"DEV-2026-01286", pro:true, client:"Boulangerie Dupont",   ct:"Raymond Berger",  titre:"Dératisation annuelle — fournil",        montant:1490.00, statut:"gagne",   date:"2026-08-22", valid:"2026-09-22"},
-  {ref:"DEV-2026-01285", pro:true, client:"Pharmacie Centrale",   ct:"Roger Seguin",    titre:"Contrat cafards — réserve + labo",       montant:964.87,  statut:"attente", date:"2026-08-21", valid:"2026-08-28"},
+  {ref:"DEV-2026-01285", pro:true, client:"Pharmacie Centrale",   ct:"Roger Seguin",    titre:"Contrat cafards — réserve + labo",       montant:964.87,  statut:"envoye", date:"2026-08-21", valid:"2026-08-28"},
   {ref:"DEV-2026-01284", pro:true, client:"Restaurant Le Baobab", ct:"Awa Diallo",      titre:"Traitement cafards cuisine + plonge",    montant:720.50,  statut:"gagne",   date:"2026-08-19", valid:"2026-09-19"},
-  {ref:"DEV-2026-01283", pro:true, client:"Copropriété Les Lilas",ct:"Syndic Foncia",   titre:"Dératisation caves + local poubelles",   montant:2340.00, statut:"attente", date:"2026-08-18", valid:"2026-09-02"},
+  {ref:"DEV-2026-01283", pro:true, client:"Copropriété Les Lilas",ct:"Syndic Foncia",   titre:"Dératisation caves + local poubelles",   montant:2340.00, statut:"envoye", date:"2026-08-18", valid:"2026-09-02"},
   {ref:"DEV-2026-01282", pro:true, client:"Hôtel du Parc",        ct:"Sophie Larson",   titre:"Punaises de lit — 6 chambres",           montant:2280.00, statut:"gagne",   date:"2026-08-12", valid:"2026-09-12"},
   {ref:"DEV-2026-01281", pro:true, client:"Crèche Les Poussins",  ct:"Nadia Benali",    titre:"Désinfection + traitement fourmis",      montant:495.00,  statut:"perdu",   date:"2026-08-08", valid:"2026-09-08"},
-  {ref:"DEV-2026-01280", pro:true, client:"Entrepôt Central",     ct:"Josette Blot",    titre:"Dépigeonnage toiture — pose de pics",    montant:3150.00, statut:"attente", date:"2026-08-05", valid:"2026-08-26"},
+  {ref:"DEV-2026-01280", pro:true, client:"Entrepôt Central",     ct:"Josette Blot",    titre:"Dépigeonnage toiture — pose de pics",    montant:3150.00, statut:"envoye", date:"2026-08-05", valid:"2026-08-26"},
   {ref:"DEV-2026-01279", pro:false, client:"M. et Mme Garnier",    ct:"Particulier",     titre:"Nid de frelons — jardin",                montant:165.00,  statut:"gagne",   date:"2026-08-02", valid:"2026-09-02"},
   {ref:"DEV-2026-01278", pro:true, client:"Boucherie Martel",     ct:"Paul Martel",     titre:"Contrat annuel 3D — boutique",           montant:1180.00, statut:"perdu",   date:"2026-07-28", valid:"2026-08-28"},
   {ref:"DEV-2026-01277", pro:true, client:"Résidence Beau Site",  ct:"Syndic Citya",    titre:"Traitement chenilles processionnaires",  montant:890.00,  statut:"expire",  date:"2026-07-15", valid:"2026-08-15"},
   {ref:"DEV-2026-01276", pro:true, client:"Café de la Gare",      ct:"Babacar",   titre:"Dératisation cave + terrasse",           montant:410.00,  statut:"gagne",   date:"2026-07-11", valid:"2026-08-11"},
 ];
 
-const LBL = {gagne:"Gagné", perdu:"Perdu", attente:"En attente", envoye:"Envoyé", expire:"Expiré"};
+const LBL = {brouillon:"Brouillon", envoye:"Envoyé", gagne:"Gagné", perdu:"Perdu", expire:"Expiré"};
+/* ===== les devis créés dans l'atelier rejoignent la liste ===== */
+try{
+  JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").reverse().forEach(rec => {
+    const i = DEVIS.findIndex(d => d.ref === rec.ref);
+    if(i > -1) DEVIS[i] = {...DEVIS[i], ...rec};
+    else DEVIS.unshift(rec);
+  });
+}catch(e){}
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
 const fdate = iso => { const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
@@ -538,7 +545,7 @@ function joursRestants(d){
   return Math.ceil((new Date(d.valid) - TODAY) / 86400000);
 }
 function expChip(d){
-  if(d.statut!=="attente" && d.statut!=="envoye") return "";
+  if(d.statut!=="envoye" && d.statut!=="envoye") return "";
   const j = joursRestants(d);
   if(j<0)  return `<span class="exp urgent">⏳ expiré</span>`;
   if(j<=3) return `<span class="exp urgent">⏳ expire dans ${j} j</span>`;
@@ -546,7 +553,7 @@ function expChip(d){
   return "";
 }
 function actionsHTML(d){
-  if(d.statut==="attente" || d.statut==="envoye"){
+  if(d.statut==="envoye" || d.statut==="envoye"){
     return `<span class="acts">
       <button class="act ok" title="Marquer gagné"  onclick="setSt(event,'${d.ref}','gagne')">✓</button>
       <button class="act ko" title="Marquer perdu"  onclick="setSt(event,'${d.ref}','perdu')">✗</button>
@@ -562,7 +569,7 @@ function actionsHTML(d){
 function stats(){
   const g = DEVIS.filter(d=>d.statut==="gagne");
   const p = DEVIS.filter(d=>d.statut==="perdu"||d.statut==="expire");
-  const a = DEVIS.filter(d=>d.statut==="attente"||d.statut==="envoye");
+  const a = DEVIS.filter(d=>d.statut==="envoye"||d.statut==="envoye");
   document.getElementById('k-tot').textContent = DEVIS.length;
   document.getElementById('k-totm').textContent = eur(DEVIS.reduce((s,d)=>s+d.montant,0)) + " au total";
   document.getElementById('k-gagne').textContent = eur(g.reduce((s,d)=>s+d.montant,0));
@@ -572,7 +579,7 @@ function stats(){
   document.getElementById('k-taux').textContent = Math.round(g.length/(g.length+p.length)*100) + " %";
   // compteurs des puces
   const cnt = f => f==="all" ? DEVIS.length : DEVIS.filter(d=>d.statut===f).length;
-  ["all","attente","envoye","gagne","perdu","expire"].forEach(f=>{
+  ["all","envoye","envoye","gagne","perdu","expire"].forEach(f=>{
     document.getElementById('n-'+f).textContent = "(" + cnt(f) + ")";
   });
 }
@@ -663,7 +670,7 @@ function dupliquer(e, ref){
   const d = DEVIS.find(x=>x.ref===ref);
   const maxN = Math.max(...DEVIS.map(x=>+x.ref.split("-")[2]));
   const nref = "DEV-2026-0" + (maxN+1);
-  DEVIS.unshift({...d, ref:nref, statut:"attente", date:"2026-08-25", valid:"2026-09-25"});
+  DEVIS.unshift({...d, ref:nref, statut:"envoye", date:"2026-08-25", valid:"2026-09-25"});
   stats(); render();
   toast("⧉ Devis dupliqué → " + nref);
 }
@@ -673,7 +680,7 @@ function pipeline(){
   const sum = f => DEVIS.filter(d=>d.statut===f).reduce((s,d)=>s+d.montant,0);
   const tot = DEVIS.reduce((s,d)=>s+d.montant,0) || 1;
   const seg = [
-    ["pg","Gagné",sum("gagne")], ["pa","En attente",sum("attente")],
+    ["pg","Gagné",sum("gagne")], ["pa","En attente",sum("envoye")],
     ["pe","Envoyé",sum("envoye")], ["pp","Perdu",sum("perdu")], ["px","Expiré",sum("expire")]
   ];
   (document.getElementById('pipe') || {innerHTML:null,style:{}}).innerHTML =
@@ -939,7 +946,7 @@ function qv(ref){
     </div>
     <div class="qacts">
       <a class="qbig" href="devis.html">✏️ Ouvrir en grand</a>
-      ${d.statut === "envoye" || d.statut === "attente" ? `<button class="qsec" onclick="toast('📤 Relance envoyée à ' + '${d.client.replace(/'/g,"\\'")}')">📤 Relancer maintenant</button>` : ""}
+      ${d.statut === "envoye" || d.statut === "envoye" ? `<button class="qsec" onclick="toast('📤 Relance envoyée à ' + '${d.client.replace(/'/g,"\\'")}')">📤 Relancer maintenant</button>` : ""}
       ${d.statut !== "gagne" ? `<button class="qsec" onclick="qvGagne('${d.ref}')">🏆 Marquer gagné</button>` : ""}
       <button class="qsec" onclick="qvDup('${d.ref}')">🔁 Dupliquer</button>
       <div style="position:relative">
@@ -952,7 +959,7 @@ function qv(ref){
           <button onclick="toast('💶 Facture créée depuis ${d.ref} — dans l\\'onglet Factures')">💶 Transformer en facture</button>
           <button onclick="toast('📄 Contrat récurrent proposé depuis ${d.ref} 🐯')">📄 Transformer en contrat <span class="qnew">malin</span></button>
           <div class="qsep"></div>` : ""}
-          ${d.statut === "attente" || d.statut === "brouillon"
+          ${d.statut === "envoye" || d.statut === "brouillon"
             ? `<button class="qdanger" onclick="qvDel('${d.ref}')">🗑 Supprimer le brouillon</button>`
             : `<button class="qdanger" onclick="qvCancel('${d.ref}')">✕ Annuler le devis</button>`}
         </div>
@@ -991,7 +998,7 @@ function qvDup(ref){
   const d = DEVIS.find(x => x.ref === ref);
   if(!d) return;
   const maxN = Math.max(...DEVIS.map(x => +x.ref.split("-")[2]));
-  const copy = {...d, ref:"DEV-2026-" + String(maxN + 1).padStart(5, "0"), statut:"attente", date:new Date().toISOString().slice(0,10)};
+  const copy = {...d, ref:"DEV-2026-" + String(maxN + 1).padStart(5, "0"), statut:"envoye", date:new Date().toISOString().slice(0,10)};
   DEVIS.unshift(copy);
   render(); qvClose();
   toast("🔁 Devis dupliqué → " + copy.ref);

@@ -481,6 +481,56 @@ body.dens-compact .tc, body.dens-compact .card{--densgap:1}
 
 /* ===== anti-saut entre les pages : la gouttière de défilement est réservée ===== */
 html{overflow-y:scroll;scrollbar-gutter:stable}
+
+/* ===== fenêtre d'envoi ===== */
+.sendveil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.5);backdrop-filter:blur(3px);z-index:130}
+.sendveil.open{display:grid;place-items:center}
+.sendbox{width:min(480px,92vw);background:#fff;border-radius:20px;padding:22px 24px;box-shadow:0 30px 80px -20px rgba(16,18,22,.5);animation:pop .18s ease}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.sh{font-family:'Sora';font-weight:800;font-size:1.05rem;margin-bottom:14px}
+.srecap{background:var(--bg);border-radius:13px;padding:6px 16px;margin-bottom:16px}
+.srow.sttc{font-size:.95rem}
+.srow.sttc b{color:var(--orange-deep);font-size:1.05rem;font-variant-numeric:tabular-nums}
+.sh{margin-bottom:16px!important}
+.srow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:.85rem}
+.srow:last-child{border-bottom:0}
+.srow span{color:var(--muted)}
+.sbtns{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.sfld{margin-bottom:11px}
+.sfld label{display:block;font-size:.66rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-2);margin-bottom:4px}
+.sfld .req{color:var(--red)}
+.sfld input,.sfld textarea{width:100%;font-family:inherit;font-size:.88rem;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;outline:none;resize:vertical}
+.sfld input:focus,.sfld textarea:focus{border-color:var(--orange)}
+.spj{font-size:.75rem;color:var(--muted);margin:2px 0 13px}
+.sendbox{max-height:88vh;overflow-y:auto}
+
+/* ===== total TTC saisissable ===== */
+input.ltot{width:96px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;border:1.5px solid transparent;border-radius:9px;background:none;font-family:inherit;font-size:.9rem;padding:6px 8px;outline:none}
+input.ltot:hover{border-color:var(--line)}
+input.ltot:focus{border-color:var(--orange);background:#fff}
+
+/* ===== menu ⋯ de l'atelier ===== */
+.morewrap{position:relative}
+.moremenu{display:none;position:absolute;right:0;top:calc(100% + 8px);width:250px;background:#fff;border-radius:14px;box-shadow:0 18px 50px -12px rgba(16,18,22,.3);border:1px solid var(--line);padding:6px;z-index:90}
+.moremenu.open{display:block;animation:pop .14s ease}
+.moremenu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:10px 12px;border:0;background:none;font-family:inherit;font-size:.84rem;font-weight:600;border-radius:9px;cursor:pointer;color:var(--ink)}
+.moremenu button:hover{background:var(--bg)}
+.moremenu .mdanger{color:#B3261E}
+.moremenu .mdanger:hover{background:#FDEAEA}
+.msep{height:1px;background:var(--line);margin:5px 8px}
+
+/* ===== mentions obligatoires ===== */
+.legalfoot{font-size:.68rem;color:var(--muted);line-height:1.75;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 17px;margin-bottom:14px}
+.legalfoot b{color:var(--ink-2)}
+@media print{.legalfoot{border:0;padding:8px 0;page-break-inside:avoid}}
+
+/* ===== vignettes des lignes ===== */
+.presta{display:flex!important;align-items:flex-start;gap:11px}
+.lph{width:40px;height:40px;border-radius:12px;object-fit:cover;border:1px solid var(--line);flex:none;margin-top:2px;background:#fff}
+@media print{.lph{border:0}}
+.lemoji{width:40px;height:40px;border-radius:12px;background:var(--orange-bg,#FFF1EA);border:1px solid #F8DECB;display:grid;place-items:center;font-size:1.15rem;flex:none;margin-top:2px}
+.pcol{flex:1;min-width:0}
+@media print{.lemoji{border:0;background:none}}
 </style>
 </head>
 <body>
@@ -538,6 +588,18 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="spacer"></div>
       <a class="btn2" href="devis-client.html">👁 Aperçu client</a>
       <button class="btn2 primary" onclick="sendV2()">📤 Envoyer au client</button>
+      <div class="morewrap">
+        <button class="btn2" onclick="moreMenu(event)" aria-label="Plus d'actions" title="Plus d'actions">⋯</button>
+        <div class="moremenu" id="moremenu">
+          <button onclick="window.print()">📄 Télécharger le PDF</button>
+          <button onclick="toast('📑 Devis dupliqué — nouvelle référence attribuée')">📑 Dupliquer le devis</button>
+          <div class="msep"></div>
+          <button onclick="if(CURSTAT==='gagne'){location.href='facture.html'}else{toast('🏆 Marque d\'abord le devis Gagné pour le transformer')}">🧾 Transformer en facture</button>
+          <button onclick="if(CURSTAT==='gagne'){toast('📄 Contrat créé à partir du devis')}else{toast('🏆 Marque d\'abord le devis Gagné pour le transformer')}">📄 Transformer en contrat</button>
+          <div class="msep"></div>
+          <button class="mdanger" id="mdel" onclick="delOrCancel()">🗑 Supprimer le brouillon</button>
+        </div>
+      </div>
     </div>
 
     <!-- ===== 1. client + statut ===== -->
@@ -556,17 +618,21 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <div class="stchips" id="stchips">
             <button class="stc on" data-s="brouillon" onclick="setStat2('brouillon',this)"><i style="background:#9CA1AD"></i> Brouillon</button>
             <button class="stc" data-s="envoye" onclick="setStat2('envoye',this)"><i style="background:var(--blue)"></i> Envoyé</button>
-            <button class="stc" data-s="accepte" onclick="setStat2('accepte',this)"><i style="background:var(--green)"></i> Accepté</button>
+            <button class="stc" data-s="gagne" onclick="setStat2('gagne',this)"><i style="background:var(--green)"></i> Gagné</button>
+            <button class="stc" data-s="perdu" onclick="setStat2('perdu',this)"><i style="background:var(--red,#D63B33)"></i> Perdu</button>
           </div>
         </div>
       </div>
-      <div class="subnote">＋ <a href="clients.html" style="color:var(--orange-deep);font-weight:700;text-decoration:none">Créer un nouveau client</a> · Objet : <input class="vinline" id="v-objet" value="Traitement punaises de lit — appartement T3"> · Validité : <b>30 jours après envoi</b> <em class="vauto2">auto</em></div>
+      <div class="subnote">＋ <a href="clients.html" style="color:var(--orange-deep);font-weight:700;text-decoration:none">Créer un nouveau client</a> · Objet : <input class="vinline" id="v-objet" value="Traitement punaises de lit — appartement T3"> · Validité : <select class="vinline" id="v-valid" onchange="calc()" style="width:auto">
+        <option value="7">7 jours</option><option value="15">15 jours</option>
+        <option value="30" selected>30 jours</option><option value="60">60 jours</option>
+      </select> après envoi</div>
     </div>
 
     <!-- ===== 2. lignes ===== -->
     <div class="vcard">
       <div class="vh">Lignes <small id="v-nl">—</small></div>
-      <div class="lrow lhead"><span>Prestation</span><span>Qté</span><span>PU HT</span><span>TVA</span><span style="text-align:right">Total ligne</span><span></span></div>
+      <div class="lrow lhead"><span>Prestation</span><span>Qté</span><span>PU HT</span><span>TVA</span><span style="text-align:right" title="Cliquez le montant pour saisir directement en TTC">Total TTC ✏️</span><span></span></div>
       <div id="v-lignes"></div>
       <div class="laddrow">
         <button class="ladd" onclick="addLibre()">＋ Ligne libre</button>
@@ -582,7 +648,13 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="recap"><div class="rbox">
         <div class="rline"><span>Sous-total prestations HT</span><b id="v-ht">—</b></div>
         <div class="rline"><span>Frais optionnels</span><b id="v-fr">—</b></div>
-        <div class="rline"><span>TVA</span><b id="v-tva">—</b></div>
+        <div class="rline"><span>Remise commerciale
+          <input class="vinline" id="v-rem" value="0" inputmode="decimal" style="width:56px;text-align:right" oninput="calc()">
+          <select class="vinline" id="v-remt" onchange="calc()" style="width:auto"><option value="%">%</option><option value="€">€</option></select></span>
+          <b id="v-remv" style="color:var(--green-d,#0A6B51)">—</b></div>
+        <div class="rline" id="rl-tva10" style="display:none"><span>TVA 10 %</span><b id="v-tva10">—</b></div>
+        <div class="rline" id="rl-tva20" style="display:none"><span>TVA 20 %</span><b id="v-tva20">—</b></div>
+        <div class="rline"><span>TVA totale</span><b id="v-tva">—</b></div>
         <div class="rline ttc"><span>Total TTC</span><b id="v-ttc">—</b></div>
         <div class="acompte">Acompte à la signature :
           <button class="ac" onclick="setAc(0,this)">Aucun</button>
@@ -593,11 +665,16 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </div></div>
     </div>
 
+    <div class="legalfoot">
+      <b>SAS TigerFlow 3D</b> · SIRET 812 345 678 00019 · Certibiocide n° <b>CB-2024-045612</b> · RC Pro AXA n° 7845123 ·
+      TVA intracommunautaire FR 42 812345678 · Devis gratuit, valable <span id="lf-valid">30</span> jours ·
+      Règlement : acompte à la signature, solde à l'issue de l'intervention · Escompte pour paiement anticipé : néant ·
+      Pénalités de retard : 3 × taux légal · Indemnité forfaitaire de recouvrement : 40 €
+    </div>
+
     <!-- ===== 4. préférences ===== -->
     <div class="vcard">
       <div class="vh">Préférences et notes</div>
-      <div class="tgl"><div><b>✍️ Demander une signature électronique</b><small>Le client signe en ligne (SMS + horodatage, valeur légale eIDAS)</small></div><div class="sw on" onclick="this.classList.toggle('on')"></div></div>
-      <div class="tgl"><div><b>💳 Autoriser le paiement en ligne</b><small>L'acompte se règle par carte / Apple Pay dès la signature</small></div><div class="sw on" onclick="this.classList.toggle('on')"></div></div>
       <div style="margin-top:14px"><label class="vlab">Notes pour le client</label><textarea class="vfld" rows="3" placeholder="Conditions particulières, accès, consignes…">Devis gratuit valable 30 jours. Acompte de 30 % à la commande, solde à la fin de l'intervention. Produits certifiés Certibiocide — fiches de sécurité fournies. Garantie de résultat 3 mois.</textarea></div>
     </div>
 
@@ -687,7 +764,7 @@ function setStat2(k, el){
   document.querySelectorAll(".stc").forEach(c => c.classList.remove("on"));
   el.classList.add("on");
   const b = g("dstatb2");
-  const conf = {brouillon:["#9CA1AD","Brouillon",""], envoye:["var(--blue)","Envoyé","sent"], accepte:["var(--green)","Accepté","ok"]}[k];
+  const conf = {brouillon:["#9CA1AD","Brouillon",""], envoye:["var(--blue)","Envoyé","sent"], gagne:["var(--green)","Gagné","ok"]}[k];
   b.className = "dstatb2 " + conf[2];
   b.innerHTML = "<i style='background:" + conf[0] + "'></i>" + conf[1];
 }
@@ -697,16 +774,21 @@ function drawL(){
   g("v-lignes").innerHTML = LIGNES.map((l, i) => `
     <div class="lrow">
       <div class="presta">
+        ${l.img
+          ? `<img class="lph" src="${l.img}" alt="" loading="lazy" onerror="this.outerHTML='<span class=\\'lemoji\\'>${l.emo || "🧾"}</span>'">`
+          : `<span class="lemoji" title="${(l.designation || "").replace(/"/g, "&quot;")}">${l.emo || "🧾"}</span>`}
+        <div class="pcol">
         <input class="pin" value="${l.designation.replace(/"/g, "&quot;")}" oninput="LIGNES[${i}].designation=this.value" placeholder="Désignation">
         <input class="pin sub" value="${(l.desc || "").replace(/"/g, "&quot;")}" oninput="LIGNES[${i}].desc=this.value" placeholder="Description (facultatif)">
+        </div>
       </div>
       <div class="qty"><button onclick="qmod(${i},-1)">−</button><input value="${l.qte}" inputmode="numeric" oninput="LIGNES[${i}].qte=Math.max(0,parseInt(this.value)||0);calc()"><button onclick="qmod(${i},1)">＋</button></div>
-      <input class="vfld num" value="${l.pu}" inputmode="decimal" oninput="LIGNES[${i}].pu=parseFloat(String(this.value).replace(',','.'))||0;calc()">
+      <input class="vfld num" id="pu-${i}" value="${l.pu}" inputmode="decimal" oninput="LIGNES[${i}].pu=parseFloat(String(this.value).replace(',','.'))||0;calc()">
       <select class="vfld" onchange="LIGNES[${i}].tva=+this.value;calc()">
         <option value="10" ${l.tva === 10 ? "selected" : ""}>10 %</option>
         <option value="20" ${l.tva === 20 ? "selected" : ""}>20 %</option>
       </select>
-      <div class="ltot" id="lt-${i}">—</div>
+      <input class="ltot" id="lt-${i}" inputmode="decimal" title="Saisis le total TTC : le PU HT se recalcule" oninput="setTTC(${i}, this.value)">
       <button class="ldel" aria-label="Fermer" onclick="LIGNES.splice(${i},1);drawL()" title="Supprimer">✕</button>
     </div>`).join("");
   calc();
@@ -729,17 +811,41 @@ function drawF(){
 function addFrais(){ FRAIS.push({n:"Frais de déplacement", m:35}); drawF(); }
 
 /* ================= TOTAUX ================= */
+function setTTC(i, val){
+  const t = parseFloat(String(val).replace(",", ".")) || 0;
+  const l = LIGNES[i];
+  const div = (l.qte || 1) * (1 + (l.tva || 0) / 100);
+  l.pu = div ? +(t / div).toFixed(2) : 0;
+  const pu = g("pu-" + i);
+  if(pu && document.activeElement !== pu) pu.value = l.pu;
+  calc();
+}
 function calc(){
-  let ht = 0, tva = 0;
+  let ht = 0, t10 = 0, t20 = 0;
   LIGNES.forEach((l, i) => {
     const lh = (l.qte || 0) * (l.pu || 0);
-    ht += lh; tva += lh * (l.tva || 0) / 100;
+    ht += lh;
+    if((l.tva || 0) === 10) t10 += lh * .10; else t20 += lh * (l.tva || 0) / 100;
     const el = g("lt-" + i);
-    if(el) el.textContent = eur(lh);
+    if(el && document.activeElement !== el) el.value = (lh * (1 + (l.tva || 0) / 100)).toFixed(2).replace(".", ",");
   });
+  /* remise commerciale, répartie proportionnellement (HT et TVA suivent) */
+  const remIn = parseFloat(String((g("v-rem") || {value:0}).value).replace(",", ".")) || 0;
+  const remT = (g("v-remt") || {value:"%"}).value;
+  let remAmt = remT === "%" ? ht * Math.min(remIn, 100) / 100 : Math.min(remIn, ht);
+  const scale = ht > 0 ? (ht - remAmt) / ht : 1;
+  ht -= remAmt; t10 *= scale; t20 *= scale;
+  if(g("v-remv")) g("v-remv").textContent = remAmt ? "− " + eur(remAmt) : "—";
+  if(g("rl-tva10")) g("rl-tva10").style.display = t10 > 0 ? "" : "none";
+  if(g("rl-tva20")) g("rl-tva20").style.display = t20 > 0 ? "" : "none";
+  if(g("v-tva10")) g("v-tva10").textContent = eur(t10);
+  if(g("v-tva20")) g("v-tva20").textContent = eur(t20);
+  const tva = t10 + t20;
   const fr = FRAIS.reduce((a, f) => a + (f.m || 0), 0);
   const ttc = ht + tva + fr * 1.2;
   g("v-nl").textContent = LIGNES.length + " prestation" + (LIGNES.length > 1 ? "s" : "") + " · " + eur(ttc);
+  const vd = (g("v-valid") || {value:"30"}).value;
+  if(g("lf-valid")) g("lf-valid").textContent = vd;
   g("v-ht").textContent = eur(ht);
   g("v-fr").textContent = fr ? eur(fr) + " HT" : "—";
   g("v-tva").textContent = eur(tva + fr * .2);
@@ -761,9 +867,30 @@ function sendV2(){
   const cli = g("v-client").value;
   if(!cli){ toast("⚠️ Choisis d'abord le client"); g("v-client").focus(); return; }
   if(!LIGNES.length){ toast("⚠️ Ajoute au moins une prestation"); return; }
+  /* le récap avant d'appuyer sur le bouton qui compte */
+  const tot = document.getElementById("v-ttc") ? document.getElementById("v-ttc").textContent : "";
+  const acv = (document.getElementById("v-acv") ? document.getElementById("v-acv").textContent : "").replace(/[→\s]+/, " ").trim();
+  document.getElementById("srecap").innerHTML =
+    '<div class="srow"><span>Client</span><b>' + cli + '</b></div>' +
+    '<div class="srow"><span>Prestations</span><b>' + LIGNES.length + '</b></div>' +
+    '<div class="srow sttc"><span>Total TTC</span><b>' + tot + '</b></div>' +
+    (acv ? '<div class="srow"><span>Acompte à la signature</span><b>' + acv + '</b></div>' : '');
+  /* l'e-mail s'écrit tout seul — modifiable avant envoi */
+  document.getElementById("s-to").value = cli.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr";
+  document.getElementById("s-obj").value = "Votre devis " + ((document.getElementById("dref2") || {}).textContent || "").trim() || "Votre devis — TigerFlow 3D";
+  document.getElementById("s-body").value =
+"Bonjour " + cli + ",\n\n" +
+"Veuillez trouver ci-joint votre devis" + (tot ? " d'un montant de " + tot + " TTC" : "") + (acv ? " (acompte à la signature : " + acv + ")" : "") + ".\n\n" +
+"Il est valable " + ((document.getElementById("v-valid") || {value:"30"}).value) + " jours. Vous pouvez le signer directement en ligne via le lien inclus — n'hésitez pas à nous appeler pour toute question.\n\n" +
+"Bien cordialement,\nL'équipe TigerFlow 3D";
+  document.getElementById("sendveil").classList.add("open");
+  setTimeout(() => { const f = document.getElementById("s-to"); if(f){ f.focus(); f.select(); } }, 120);
+}
+function doSend(sign, pay){
+  const cli = g("v-client").value;
   if(typeof sbSaveDevis === "function"){ try{ sbSaveDevis("envoye", true); }catch(e){} }
   setStat2("envoye", document.querySelector('.stc[data-s="envoye"]'));
-  toast("📤 Devis envoyé à " + cli + " — lien de signature inclus");
+  toast("📤 Devis envoyé à " + cli + (sign ? " — lien de signature inclus" : "") + (pay ? " · paiement en ligne activé" : ""));
 }
 
 /* ================= BIBLIOTHÈQUE (la boutique) ================= */
@@ -842,7 +969,11 @@ function catConfirm(){
   recPush(Object.keys(BIBSEL).filter(i => BIBSEL[i] > 0));
   let n = 0;
   Object.keys(BIBSEL).forEach(i => {
-    if(BIBSEL[i] > 0){ LIGNES.push({...CATALOGUE[i], qte:BIBSEL[i]}); n++; }
+    if(BIBSEL[i] > 0){
+      LIGNES.push({...CATALOGUE[i], qte:BIBSEL[i],
+        img: (typeof CAT_IMG !== "undefined" && CAT_IMG[i]) ? BIB_W + CAT_IMG[i] + "?width=96" : ""});
+      n++;
+    }
   });
   drawL(); catClose();
   toast("＋ " + n + " prestation" + (n > 1 ? "s" : "") + " ajoutée" + (n > 1 ? "s" : "") + " au devis");
@@ -1036,6 +1167,87 @@ async function sbSaveDevis(statut, silent){
   }catch(e){ if(!silent) toast("⚠️ Enregistrement impossible : " + (e.message || "erreur")); }
 }
 
+</script>
+<div class="sendveil" id="sendveil" onclick="if(event.target===this)sendClose()">
+  <div class="sendbox">
+    <div class="sh">📤 Envoyer le devis</div>
+    <div class="srecap" id="srecap"></div>
+    <div class="sfld"><label>À <b class="req">*</b></label><input id="s-to" type="email" placeholder="client@exemple.fr"></div>
+    <div class="sfld"><label>Objet <b class="req">*</b></label><input id="s-obj"></div>
+    <div class="sfld"><label>Message</label><textarea id="s-body" rows="5"></textarea></div>
+    <div class="spj">📎 Le PDF du devis sera joint automatiquement à cet e-mail.</div>
+    <div class="tgl"><div><b>✍️ Signature électronique</b><small>Le client signe en ligne — SMS + horodatage, valeur légale eIDAS</small></div><div class="sw on" id="sw-sign" onclick="this.classList.toggle('on')"></div></div>
+    <div class="tgl"><div><b>💳 Paiement de l'acompte en ligne</b><small>Carte / Apple Pay dès la signature</small></div><div class="sw on" id="sw-pay" onclick="this.classList.toggle('on')"></div></div>
+    <div class="sbtns">
+      <button class="btn2" onclick="sendClose()">Annuler</button>
+      <button class="btn2 primary" onclick="sendConfirm()">📤 Envoyer maintenant</button>
+    </div>
+  </div>
+</div>
+<script>
+function sendClose(){ document.getElementById("sendveil").classList.remove("open"); }
+function sendConfirm(){
+  const to = document.getElementById("s-to").value.trim();
+  if(!to || !to.includes("@")){ toast("⚠️ Renseigne l'adresse e-mail du client"); document.getElementById("s-to").focus(); return; }
+  if(!document.getElementById("s-obj").value.trim()){ toast("⚠️ L'objet est obligatoire"); document.getElementById("s-obj").focus(); return; }
+  sendClose();
+  const sign = document.getElementById("sw-sign").classList.contains("on");
+  const pay = document.getElementById("sw-pay").classList.contains("on");
+  doSend(sign, pay);
+}
+</script>
+<script>
+let CURSTAT = "brouillon";
+/* ===== le pont vers la liste des devis ===== */
+let DREF = null;
+try{ DREF = sessionStorage.getItem("tigerflow-devis-ref"); }catch(e){}
+if(!DREF){
+  DREF = "DEV-2026-" + String(10000 + Math.floor(Math.random() * 89999));
+  try{ sessionStorage.setItem("tigerflow-devis-ref", DREF); }catch(e){}
+}
+function pushDevisInbox(){
+  try{
+    const cli = document.getElementById("v-client").value;
+    if(!cli) return;                                    /* rien à lister sans client */
+    const ttcTxt = (document.getElementById("v-ttc") || {textContent:""}).textContent;
+    const montant = parseFloat(ttcTxt.replace(/[^\d,\.]/g, "").replace(/\s/g, "").replace(",", ".")) || 0;
+    const vd = parseInt((document.getElementById("v-valid") || {value:"30"}).value) || 30;
+    const d = new Date(); const iso = x => x.toISOString().slice(0, 10);
+    const dv = new Date(); dv.setDate(dv.getDate() + vd);
+    const rec = {ref:DREF, pro:false, client:cli, ct:"", titre:(document.getElementById("v-objet") || {value:""}).value,
+      montant, statut:CURSTAT, date:iso(d), valid:iso(dv)};
+    const box = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").filter(x => x.ref !== DREF);
+    box.unshift(rec);
+    localStorage.setItem("tigerflow-inbox-devis", JSON.stringify(box.slice(0, 30)));
+  }catch(e){}
+}
+(function(){
+  const _set = typeof setStat2 === "function" ? setStat2 : null;
+  if(_set) setStat2 = function(st, el){ CURSTAT = st; _set(st, el); syncDel(); pushDevisInbox(); };
+})();
+function syncDel(){
+  const b = document.getElementById("mdel");
+  if(!b) return;
+  b.textContent = CURSTAT === "brouillon" ? "🗑 Supprimer le brouillon" : "🚫 Annuler le devis";
+  b.title = CURSTAT === "brouillon" ? "" : "Un devis envoyé ne se supprime pas : il s'annule (traçabilité légale)";
+}
+function delOrCancel(){
+  moreClose();
+  if(CURSTAT === "brouillon"){
+    if(confirm("Supprimer définitivement ce brouillon ?")) toast("🗑 Brouillon supprimé");
+  } else {
+    if(confirm("Annuler ce devis ? Il restera archivé (traçabilité légale).")) toast("🚫 Devis annulé — archivé");
+  }
+}
+function moreMenu(e){
+  e.stopPropagation();
+  document.getElementById("moremenu").classList.toggle("open");
+}
+function moreClose(){ document.getElementById("moremenu").classList.remove("open"); }
+document.addEventListener("click", e => { if(!e.target.closest(".morewrap")) moreClose(); });
+document.addEventListener("keydown", e => { if(e.key === "Escape") moreClose(); });
+syncDel();
+setInterval(pushDevisInbox, 4000);   /* l'autosave alimente aussi la liste */
 </script>
 </body>
 </html>
