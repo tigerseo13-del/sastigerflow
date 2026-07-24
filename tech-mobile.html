@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TigerFlow TEC — appli technicien (maquette cliquable)</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285; --line:#EBECF1;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --blue:#2E5CE6; --blue-bg:#EBF1FE;
+  --amber:#A16207; --amber-bg:#FBF3D9;
+  --red:#C0392B; --red-bg:#FDECEA;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#E9EBF0;color:var(--ink);padding:30px 14px 60px;display:flex;flex-direction:column;align-items:center}
+svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg.fillsvg{fill:currentColor;stroke:none}
+.capt{text-align:center;margin-bottom:18px}
+.capt h1{font-family:'Sora';font-size:1.15rem;letter-spacing:-.3px}
+.capt p{color:var(--muted);font-size:.82rem;margin-top:4px}
+
+/* ---------- le téléphone ---------- */
+.phone{width:412px;max-width:100%;background:#101114;border-radius:50px;padding:11px;box-shadow:0 30px 70px -25px rgba(23,26,32,.45)}
+.screenwrap{background:#F4F5F8;border-radius:40px;overflow:hidden;height:846px;display:flex;flex-direction:column;position:relative}
+.sbar{flex:none;height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:.78rem;font-weight:700}
+.sbar .sic{display:flex;gap:5px;align-items:center;color:var(--ink)}
+.app{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none}
+.app::-webkit-scrollbar{display:none;width:0;height:0}
+.scr{display:none;padding:10px 16px 36px;animation:fad .18s ease}
+.scr.on{display:block}
+@keyframes fad{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- barre du bas ---------- */
+.tabbar{flex:none;background:#fff;border-top:1px solid #ECEDF2;display:flex;align-items:flex-start;padding:9px 8px 14px;position:relative}
+.tb{flex:1;background:none;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:#8A90A0;font-family:'Inter';font-size:.6rem;font-weight:700}
+.tb svg{width:22px;height:22px}
+.tb.on{color:var(--orange)}
+.fabslot{flex:1;display:flex;justify-content:center}
+.fab{width:58px;height:58px;border-radius:50%;background:var(--orange);border:0;cursor:pointer;color:#fff;display:grid;place-items:center;margin-top:-32px;box-shadow:0 10px 22px -6px rgba(255,90,31,.55)}
+.fab svg{width:26px;height:26px;stroke-width:2.6}
+.hbar{width:120px;height:5px;border-radius:99px;background:#D6D9E0;position:absolute;bottom:5px;left:50%;transform:translateX(-50%)}
+
+/* ---------- briques communes ---------- */
+.cd{background:#fff;border:1px solid #ECEDF2;border-radius:18px;padding:15px 15px 14px;box-shadow:0 1px 2px rgba(23,26,32,.04);margin-bottom:13px}
+.seclab{font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);margin:4px 2px 9px;display:flex;align-items:center;justify-content:space-between}
+.seclab small{font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted);font-size:.72rem}
+.bo{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--orange);color:#fff;border:0;border-radius:14px;padding:15px;font-weight:800;font-size:.92rem;width:100%;font-family:'Sora';cursor:pointer;transition:.12s}
+.bo:active{transform:scale(.98)}
+.bo.g{background:var(--green)}
+.bo.b{background:var(--blue)}
+.bo svg{width:17px;height:17px}
+.lnk{display:block;width:100%;background:none;border:0;color:var(--muted);font-size:.78rem;font-weight:700;padding:10px 0 2px;cursor:pointer;font-family:'Inter';text-align:center}
+.lnk:hover{color:var(--ink)}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 10px;font-size:.68rem;font-weight:700}
+.chip svg{width:11px;height:11px}
+.stb{display:inline-block;border-radius:8px;padding:5px 10px;font-size:.64rem;font-weight:800;letter-spacing:.05em}
+.stb.o{background:var(--orange-soft);color:var(--orange-deep)}
+.stb.b{background:var(--blue-bg);color:var(--blue)}
+.stb.g{background:var(--green-bg);color:var(--green-d)}
+.stb.a{background:var(--amber-bg);color:var(--amber)}
+.stb.n{background:#EEF0F3;color:var(--ink-2)}
+.toast{position:absolute;left:50%;top:44px;transform:translateX(-50%) translateY(-16px);background:#1C1F26;color:#fff;font-size:.78rem;font-weight:600;padding:11px 17px;border-radius:12px;max-width:330px;text-align:center;opacity:0;pointer-events:none;transition:.22s;z-index:60;line-height:1.4;box-shadow:0 10px 24px -8px rgba(0,0,0,.4)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+
+/* ---------- accueil ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 0 12px}
+.tico{width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid #ECEDF2;display:grid;place-items:center;color:var(--ink-2);cursor:pointer;position:relative}
+.tico svg{width:19px;height:19px}
+.logo{font-family:'Sora';font-weight:800;font-size:1rem;letter-spacing:-.3px;display:flex;align-items:center;gap:7px}
+.logo b{color:var(--orange)}
+.logo .tec{font-size:.58rem;border:1.5px solid var(--orange);color:var(--orange-deep);border-radius:7px;padding:2px 6px;letter-spacing:.06em}
+.bdg{position:absolute;top:-5px;right:-5px;background:#E11D48;color:#fff;font-size:.58rem;font-weight:800;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center;padding:0 4px;border:2px solid #F4F5F8}
+.hello{display:flex;align-items:center;justify-content:space-between;margin:2px 0 14px}
+.hello .hl small{display:block;color:var(--muted);font-size:.8rem;font-weight:600}
+.hello .hl b{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px}
+.hello .stt{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2);font-size:.78rem;font-weight:700;margin-top:4px}
+.dot{width:9px;height:9px;border-radius:50%;background:#16A34A;box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+.pav{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#fff;display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:1.05rem;flex:none}
+.next .nlab{font-size:.66rem;font-weight:800;letter-spacing:.07em;color:var(--orange-deep);margin-bottom:9px}
+.next .nlab b{color:var(--ink)}
+.nrow{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
+.nrow .nh{font-family:'Sora';font-weight:800;font-size:1.5rem;color:var(--orange-deep);letter-spacing:-.5px;line-height:1}
+.nrow .nb{flex:1}
+.nrow .nb b{font-size:.95rem}
+.nrow .nb .nchips{display:inline-flex;gap:5px;margin-left:7px;vertical-align:2px}
+.nrow .nadr{color:var(--muted);font-size:.78rem;margin-top:3px}
+.nrow .chev{color:#B9BEC9;font-size:1.2rem;font-weight:800;line-height:1}
+.nmeta{display:flex;border-top:1px solid var(--line);margin-top:12px;padding-top:11px;margin-bottom:12px}
+.nmeta>div{flex:1;display:flex;gap:8px;align-items:center;font-size:.72rem;color:var(--muted)}
+.nmeta b{display:block;color:var(--ink);font-size:.8rem}
+.nmeta svg{width:16px;height:16px;color:var(--ink-2);flex:none}
+.map{border-radius:16px;overflow:hidden;border:1px solid #ECEDF2;margin-bottom:13px;display:block;line-height:0}
+.t4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:13px}
+.tl{background:#fff;border:1px solid #ECEDF2;border-radius:14px;padding:12px 6px;text-align:center}
+.tl b{display:block;font-family:'Sora';font-size:1.15rem;letter-spacing:-.4px}
+.tl small{display:block;color:var(--muted);font-size:.62rem;font-weight:700;margin-top:3px}
+.tl.c-b b{color:var(--blue)}.tl.c-o b{color:var(--orange-deep)}.tl.c-g b{color:var(--green-d)}
+.tl.c-e b{font-size:.98rem;color:var(--green-d)}
+.drow{display:flex;align-items:center;justify-content:space-between;padding:10px 2px;cursor:pointer}
+.drow+.drow{border-top:1px solid var(--line)}
+.drow b{font-size:.85rem}
+.drow small{display:block;color:var(--muted);font-size:.72rem;margin-top:2px}
+.drow .dm{font-family:'Sora';font-weight:800;color:var(--green-d);font-size:.9rem}
+
+/* ---------- liste interventions ---------- */
+.lhead{display:flex;align-items:center;justify-content:space-between;padding:6px 0 10px}
+.lhead h2{font-family:'Sora';font-size:1.05rem;letter-spacing:-.3px}
+.lhead .lg{display:flex;gap:8px}
+.ltabs{display:flex;gap:4px;border-bottom:1.5px solid var(--line);margin-bottom:13px}
+.ltab{flex:1;background:none;border:0;cursor:pointer;font-family:'Inter';font-weight:700;font-size:.78rem;color:var(--muted);padding:9px 2px 11px;position:relative}
+.ltab.on{color:var(--orange-deep)}
+.ltab.on::after{content:"";position:absolute;left:8%;right:8%;bottom:-1.5px;height:3px;border-radius:99px;background:var(--orange)}
+.ltab.t-b.on{color:var(--blue)}.ltab.t-b.on::after{background:var(--blue)}
+.ltab.t-g.on{color:var(--green-d)}.ltab.t-g.on::after{background:var(--green)}
+.lsec{font-size:.66rem;font-weight:800;letter-spacing:.08em;color:var(--ink-2);margin:16px 2px 9px}
+.lsec.b{color:var(--blue)}.lsec.g{color:var(--green-d)}
+.mc{display:flex;gap:11px;background:#fff;border:1px solid #ECEDF2;border-left-width:4px;border-radius:16px;padding:13px 12px 11px;margin-bottom:10px;cursor:pointer;box-shadow:0 1px 2px rgba(23,26,32,.04)}
+.mc.p-h{border-left-color:#E11D48}
+.mc.p-n{border-left-color:var(--orange)}
+.mc.p-e{border-left-color:var(--blue)}
+.mc.p-d{border-left-color:var(--green)}
+.mct{flex:none;width:52px;text-align:left}
+.mct b{font-family:'Sora';font-size:1.05rem;letter-spacing:-.4px;display:block;line-height:1.1}
+.mct small{color:var(--muted);font-size:.68rem;font-weight:600}
+.mcb{flex:1;min-width:0}
+.mch{display:flex;align-items:flex-start;gap:7px}
+.mch b{font-size:.87rem;flex:1;line-height:1.25}
+.prio{flex:none;border-radius:7px;padding:3px 8px;font-size:.58rem;font-weight:800;letter-spacing:.05em;display:inline-flex;align-items:center;gap:4px}
+.prio.h{background:var(--red-bg);color:#B91C1C}
+.prio.n{background:var(--blue-bg);color:var(--blue)}
+.prio.d{background:var(--green-bg);color:var(--green-d)}
+.mch .chev{color:#C2C6D0;font-weight:800;font-size:1.05rem;line-height:1}
+.mca{color:var(--muted);font-size:.74rem;margin-top:3px;line-height:1.4}
+.mcf{display:flex;align-items:center;gap:5px;margin-top:9px}
+.mcf .chips{flex:1;display:flex;gap:5px;flex-wrap:wrap}
+.rnd{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--ink-2);cursor:pointer;flex:none;transition:.12s}
+.rnd svg{width:16px;height:16px}
+.rnd:hover{border-color:var(--green);color:var(--green-d);background:var(--green-bg)}
+.rnd.gph{background:var(--green-bg);border-color:var(--green-bg);color:var(--green-d)}
+.prog{display:flex;align-items:center;gap:9px;margin-top:9px}
+.prog .pb{flex:1;height:5px;border-radius:99px;background:#E4E7ED;overflow:hidden}
+.prog .pb i{display:block;height:100%;background:var(--blue);border-radius:99px}
+.prog small{color:var(--blue);font-weight:700;font-size:.68rem;font-variant-numeric:tabular-nums}
+.mc .cont{margin-top:9px;background:var(--blue);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-weight:800;font-size:.76rem;font-family:'Sora';cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.mc .cont svg{width:13px;height:13px}
+
+/* ---------- détail ---------- */
+.dhead{display:flex;align-items:center;gap:10px;padding:6px 0 12px}
+.dhead .dtt{flex:1;text-align:center}
+.dhead .dtt b{font-family:'Sora';font-size:.98rem;display:block}
+.dhead .dtt small{color:var(--muted);font-size:.7rem;font-weight:600}
+.dtitle{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px;margin:9px 0 5px}
+.dadr{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:12px}
+.dadr svg{width:14px;height:14px;color:var(--orange-deep)}
+.dchips{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.dchips .sp{flex:1}
+.obtn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:8px 13px;font-size:.75rem;font-weight:800;color:var(--ink-2);cursor:pointer;font-family:'Inter'}
+.obtn svg{width:14px;height:14px}
+.i3{display:grid;grid-template-columns:1fr 1fr 1fr;background:#fff;border:1px solid #ECEDF2;border-radius:16px;margin-bottom:13px}
+.i3>div{padding:12px 10px;text-align:center}
+.i3>div+div{border-left:1px solid var(--line)}
+.i3 small{display:flex;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:.6rem;font-weight:700;margin-bottom:5px}
+.i3 small svg{width:11px;height:11px}
+.i3 b{font-size:.78rem;line-height:1.3;display:block}
+.qacts{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-bottom:13px;background:#fff;border:1px solid #ECEDF2;border-radius:16px;padding:13px 4px 11px;box-shadow:0 1px 2px rgba(23,26,32,.04)}
+.qa+.qa{border-left:1px solid var(--line);border-radius:0}
+.qa{background:none;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:'Inter';font-size:.62rem;font-weight:700;color:var(--ink-2);padding:4px 0}
+.qa .qi{width:46px;height:46px;border-radius:50%;display:grid;place-items:center}
+.qa .qi svg{width:19px;height:19px}
+.qa.g .qi{background:var(--green-bg);color:var(--green-d)}
+.qa.wa .qi{background:#E7F8EC;color:#25D366}
+.qa.b .qi{background:var(--blue-bg);color:var(--blue)}
+.qa.n .qi{background:#EEF0F3;color:var(--ink-2)}
+.ban{display:flex;align-items:center;gap:11px;border-radius:15px;padding:13px 14px;margin-bottom:11px;cursor:pointer}
+.ban svg{width:19px;height:19px;flex:none}
+.ban .bb{flex:1}
+.ban .bb b{display:block;font-size:.7rem;font-weight:800;letter-spacing:.05em;margin-bottom:3px}
+.ban .bb small{font-size:.76rem;line-height:1.45;color:var(--ink-2)}
+.ban .chev{color:#C2C6D0;font-weight:800}
+.ban.o{background:var(--orange-soft);color:var(--orange-deep)}
+.ban.a{background:var(--amber-bg);color:var(--amber)}
+.crow{display:flex;align-items:center;gap:11px;padding:9px 0}
+.crow+.crow{border-top:1px solid var(--line)}
+.crow .cav{width:40px;height:40px;border-radius:50%;background:#EEF0F3;color:var(--ink-2);display:grid;place-items:center;font-weight:800;font-size:.78rem;flex:none}
+.crow .cb{flex:1}
+.crow .cb b{font-size:.83rem;display:block}
+.crow .ctags{display:flex;gap:5px;margin-top:4px}
+.ctah{font-size:.72rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2px 2px 9px}
+.waitb{background:var(--amber-bg);border:1px dashed #E2C56E;color:var(--amber);border-radius:13px;padding:12px 14px;font-size:.79rem;font-weight:700;margin-bottom:10px;line-height:1.45}
+.doneb{display:flex;align-items:center;gap:9px;background:var(--green-bg);color:var(--green-d);border-radius:13px;padding:13px 14px;font-size:.85rem;font-weight:800;margin-bottom:4px}
+.doneb svg{width:17px;height:17px}
+.cta{position:sticky;bottom:0;padding:16px 0 4px;background:linear-gradient(#F4F5F800,#F4F5F8 22%)}
+
+/* ---------- atelier devis / signature / encaissement / rapport ---------- */
+.fh{display:flex;align-items:center;gap:10px;padding:6px 0 12px}
+.fh b{font-family:'Sora';font-size:1rem;flex:1;text-align:center}
+.bl{display:flex;align-items:center;gap:11px;background:#fff;border:1.5px solid #ECEDF2;border-radius:14px;padding:12px 13px;margin-bottom:8px;cursor:pointer;transition:.12s}
+.bl .bck{width:22px;height:22px;border-radius:7px;border:2px solid #D6D9E0;flex:none;display:grid;place-items:center;color:#fff}
+.bl .bck svg{width:12px;height:12px;opacity:0}
+.bl .bb{flex:1}
+.bl .bb b{font-size:.82rem;display:block}
+.bl .bb small{color:var(--muted);font-size:.7rem}
+.bl .bp{font-family:'Sora';font-weight:800;font-size:.88rem}
+.bl.on{border-color:var(--orange);background:var(--orange-soft)}
+.bl.on .bck{background:var(--orange);border-color:var(--orange)}
+.bl.on .bck svg{opacity:1;stroke-width:3}
+.dvtot{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #ECEDF2;border-radius:14px;padding:13px 15px;margin:12px 0}
+.dvtot b{font-family:'Sora';font-size:1.15rem;color:var(--orange-deep)}
+.sigbox{background:#fff;border:2px dashed #C9CDD6;border-radius:16px;overflow:hidden;margin-bottom:10px;position:relative}
+.sigbox canvas{display:block;width:100%;height:190px;touch-action:none}
+.sigbox .sigh{position:absolute;inset:0;display:grid;place-items:center;color:#C2C6D0;font-size:.8rem;font-weight:700;pointer-events:none}
+.elab{font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:12px 2px 7px}
+.encm{border:1.5px solid var(--line);border-radius:13px;padding:13px 15px;font-size:1.25rem;font-weight:800;width:100%;font-family:'Sora';font-variant-numeric:tabular-nums;background:#fff}
+.encm:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 15px;font-size:.78rem;font-weight:700;color:var(--ink-2);cursor:pointer;font-family:'Inter';transition:.12s}
+.pill.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
+.steps{display:flex;gap:5px;margin-bottom:14px}
+.steps i{flex:1;height:5px;border-radius:99px;background:#E4E7ED;font-style:normal}
+.steps i.on{background:var(--orange)}
+.rlab{font-size:.85rem;font-weight:800;margin:4px 2px 8px}
+.rta{width:100%;border:1.5px solid var(--line);border-radius:13px;padding:12px 13px;font-family:'Inter';font-size:.83rem;min-height:110px;resize:none;background:#fff}
+.rta:focus{outline:none;border-color:var(--orange)}
+.okwrap{text-align:center;padding:70px 10px 20px}
+.okic{width:76px;height:76px;border-radius:50%;background:var(--green-bg);color:var(--green-d);display:grid;place-items:center;margin:0 auto 18px}
+.okic svg{width:34px;height:34px;stroke-width:2.4}
+.okwrap h3{font-family:'Sora';font-size:1.15rem;margin-bottom:8px}
+.okwrap p{color:var(--muted);font-size:.84rem;line-height:1.55;max-width:280px;margin:0 auto 22px}
+
+/* ---------- notifs & réglages ---------- */
+.nf{display:flex;gap:11px;background:#fff;border:1px solid #ECEDF2;border-radius:15px;padding:13px;margin-bottom:9px}
+.nf.un{border-left:4px solid var(--orange)}
+.nf .ni{width:36px;height:36px;border-radius:11px;background:var(--orange-soft);color:var(--orange-deep);display:grid;place-items:center;flex:none}
+.nf .ni svg{width:16px;height:16px}
+.nf .nb2{flex:1}
+.nf .nb2 p{font-size:.8rem;line-height:1.45;font-weight:600}
+.nf .nb2 small{color:var(--muted);font-size:.68rem}
+.nf .okb{align-self:center;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-size:.68rem;font-weight:800;color:var(--ink-2);cursor:pointer;flex:none}
+.rrow{display:flex;align-items:center;gap:12px;padding:12px 2px;cursor:pointer}
+.rrow+.rrow{border-top:1px solid var(--line)}
+.rrow .ri{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none}
+.rrow .ri svg{width:16px;height:16px}
+.rrow .ri.o{background:var(--orange-soft);color:var(--orange-deep)}
+.rrow .ri.b{background:var(--blue-bg);color:var(--blue)}
+.rrow .ri.g{background:var(--green-bg);color:var(--green-d)}
+.rrow .ri.a{background:var(--amber-bg);color:var(--amber)}
+.rrow .ri.r{background:var(--red-bg);color:var(--red)}
+.rrow .rb{flex:1}
+.rrow .rb b{font-size:.83rem;display:block}
+.rrow .rb small{color:var(--muted);font-size:.7rem}
+.rrow .chev{color:#C2C6D0;font-weight:800}
+.rrow.danger b{color:var(--red)}
+.sw{width:44px;height:26px;border-radius:99px;background:#D6D9E0;position:relative;cursor:pointer;flex:none;transition:.15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.15s}
+.sw.on{background:var(--green)}
+.sw.on::after{left:21px}
+.sheet{position:absolute;inset:0;background:rgba(16,17,20,.45);z-index:50;display:none;align-items:flex-end}
+.sheet.on{display:flex}
+.sheet .shc{background:#fff;border-radius:24px 24px 0 0;width:100%;padding:18px 16px 26px}
+.sheet .shh{width:44px;height:5px;border-radius:99px;background:#D6D9E0;margin:0 auto 16px}
+/* ---------- polish UX : placement, retours au toucher, hiérarchie ---------- */
+.mc{position:relative;padding-right:32px}
+.mch .chev{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:1.25rem}
+.mc,.bl,.drow,.rrow,.nf{transition:transform .1s ease}
+.mc:active,.bl:active,.drow:active,.rrow:active,.nf:active{transform:scale(.985)}
+.bo{box-shadow:0 8px 18px -9px rgba(255,90,31,.55)}
+.bo.g{box-shadow:0 8px 18px -9px rgba(14,138,104,.5)}
+.bo.b{box-shadow:0 8px 18px -9px rgba(46,92,230,.5)}
+.tb svg{transition:.15s;border-radius:11px;padding:4px;width:30px;height:30px}
+.tb.on svg{background:var(--orange-soft)}
+.fab{transition:transform .12s}
+.fab:active{transform:scale(.92)}
+.lsec{position:sticky;top:0;z-index:5;background:#F4F5F8;padding:8px 2px;margin:8px 0 6px}
+.lhead h2{flex:1;text-align:center}
+.bo:disabled{background:#C9CDD6;box-shadow:none;cursor:default;transform:none}
+.lnk[disabled]{opacity:.45;cursor:default;pointer-events:none}
+@keyframes secflash{0%{background:var(--orange-soft)}100%{background:#F4F5F8}}
+.lsec.flash{animation:secflash .8s ease}
+@keyframes rowflash{0%{background:var(--amber-bg)}100%{background:transparent}}
+.flash2{animation:rowflash .9s ease}
+.dtt,.fh b{cursor:pointer}
+/* ---------- polish visuel ---------- */
+#s-home{position:relative}
+#s-home::before{content:"";position:absolute;left:0;right:0;top:0;height:192px;border-radius:0 0 26px 26px;border-bottom:1px solid #FFE2D2;background:radial-gradient(circle at 85% 18%,rgba(255,90,31,.10),transparent 55%),radial-gradient(circle at 8% 85%,rgba(255,90,31,.07),transparent 50%),linear-gradient(115deg,#FFF8F3,#FFEFE4 55%,#FFF4EC)}
+#s-home>*{position:relative;z-index:1}
+.next{border-left:4px solid var(--orange);background:linear-gradient(180deg,#FFFEFD,#FFFAF6)}
+.tl{border-color:transparent}
+.tl.c-b{background:var(--blue-bg)}
+.tl.c-o{background:var(--orange-soft)}
+.tl.c-g,.tl.c-e{background:var(--green-bg)}
+.tl small{color:var(--ink-2)}
+.pav{box-shadow:0 0 0 2.5px #fff,0 0 0 5px var(--orange)}
+#s-enc .fh,#s-rapport .fh,#s-sign .fh,#s-atelier .fh{margin:-10px -16px 14px;padding:12px 16px}
+#s-enc .fh{background:var(--green-bg)}#s-enc .fh b{color:var(--green-d)}
+#s-rapport .fh{background:var(--orange-soft)}#s-rapport .fh b{color:var(--orange-deep)}
+#s-atelier .fh{background:var(--orange-soft)}#s-atelier .fh b{color:var(--orange-deep)}
+#s-sign .fh{background:var(--blue-bg)}#s-sign .fh b{color:var(--blue)}
+#s-ok.on .okic{animation:okpop .45s cubic-bezier(.36,1.6,.5,1) both}
+#s-ok.on .okic svg path{stroke-dasharray:30;stroke-dashoffset:30;animation:okdraw .55s ease .2s forwards}
+@keyframes okdraw{to{stroke-dashoffset:0}}
+@keyframes okpop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+@media(max-width:460px){body{padding:12px 4px 40px}.phone{border-radius:0;padding:0}.screenwrap{border-radius:0;height:92vh}}
+</style>
+</head>
+<body>
+
+<div class="capt">
+  <h1>TigerFlow <span style="color:var(--orange)">TEC</span> — l'appli du technicien</h1>
+  <p>Maquette cliquable conforme aux 3 écrans envoyés à Saigon Technology · journée du vendredi 24 mai</p>
+</div>
+
+<div class="phone"><div class="screenwrap">
+  <div class="sbar"><b>9:41</b><span class="sic">
+    <svg class="fillsvg" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M2 15h3v5H2zM7.5 11h3v9h-3zM13 7h3v13h-3zM18.5 3h3v17h-3z"/></svg>
+    <svg viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M5 12.5a10 10 0 0114 0M8 15.5a6 6 0 018 0M11 18.5a2.5 2.5 0 012 0"/></svg>
+    <svg viewBox="0 0 24 24" style="width:20px;height:20px"><rect x="2" y="7" width="17" height="10" rx="2.5"/><path d="M21 10.5v3" stroke-width="2.6"/></svg>
+  </span></div>
+
+  <div class="app" id="app">
+
+  <!-- ============ 1. ACCUEIL ============ -->
+  <section class="scr on" id="s-home">
+    <div class="topbar">
+      <button class="tico" onclick="toast('Tout passe par la barre du bas — moins de menus, moins perdu')"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div class="logo"><svg class="fillsvg" viewBox="0 0 24 24" style="width:22px;height:22px;color:var(--orange)"><path d="M12 2C7 2 4 5.5 4 9.5c0 2.4 1 4.2 2.2 5.7L12 22l5.8-6.8C19 13.7 20 11.9 20 9.5 20 5.5 17 2 12 2zm-3.4 7.2a1.3 1.3 0 110-2.6 1.3 1.3 0 010 2.6zm6.8 0a1.3 1.3 0 110-2.6 1.3 1.3 0 010 2.6zM12 16l-2.4-3h4.8z"/></svg>TIGER<b>FLOW</b><span class="tec">TEC</span></div>
+      <button class="tico" onclick="go('notifs')"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg><span class="bdg" id="bell-b">2</span></button>
+    </div>
+
+    <div class="hello">
+      <div class="hl"><small>Bonjour</small><b>Thomas Martin</b><br><span class="stt"><span class="dot"></span>En service</span></div>
+      <div class="pav">TM</div>
+    </div>
+
+    <div class="cd next" id="nextcard"></div>
+
+    <div class="map">
+      <svg viewBox="0 0 380 150" style="stroke:none">
+        <rect width="380" height="150" fill="#E8EDE7"/>
+        <rect x="0" y="0" width="150" height="60" fill="#DDE7DA"/>
+        <rect x="250" y="90" width="130" height="60" fill="#DDE7DA"/>
+        <g opacity=".92">
+          <rect x="12" y="8" width="34" height="20" rx="3" fill="#D5DED3"/>
+          <rect x="80" y="50" width="30" height="16" rx="3" fill="#D5DED3"/>
+          <rect x="185" y="12" width="40" height="20" rx="3" fill="#D5DED3"/>
+          <rect x="312" y="10" width="30" height="18" rx="3" fill="#D5DED3"/>
+          <rect x="316" y="52" width="42" height="16" rx="3" fill="#D5DED3"/>
+          <rect x="188" y="118" width="36" height="20" rx="3" fill="#D5DED3"/>
+          <rect x="10" y="118" width="30" height="20" rx="3" fill="#D5DED3"/>
+        </g>
+        <path d="M0 40 H380 M0 105 H380 M60 0 V150 M170 0 V150 M300 0 V150" stroke="#fff" stroke-width="9"/>
+        <path d="M0 75 H380 M235 0 V150" stroke="#fff" stroke-width="5"/>
+        <path d="M75 118 C120 118 130 75 180 72 S 260 55 292 47" stroke="#2E5CE6" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <circle cx="292" cy="47" r="7" fill="#2E5CE6" stroke="#fff" stroke-width="3"/>
+        <g transform="translate(292 26)"><rect x="-31" y="-11" width="62" height="20" rx="10" fill="#fff" stroke="#E4E7ED"/><text x="0" y="3.5" fill="#3D434E" font-family="Inter,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Tu es ici</text></g>
+        <g transform="translate(75 118)"><path d="M0 -22a13 13 0 00-13 13c0 9 13 22 13 22s13-13 13-22A13 13 0 000-22z" fill="#FF5A1F" stroke="#fff" stroke-width="2.5"/><circle r="4.5" cy="-9" fill="#fff"/></g>
+        <g transform="translate(120 52)"><rect x="-32" y="-14" width="64" height="26" rx="13" fill="#2E5CE6"/><text x="0" y="4" fill="#fff" font-family="Inter,sans-serif" font-size="12" font-weight="800" text-anchor="middle">18 min</text></g>
+      </svg>
+    </div>
+
+    <div class="seclab">Résumé de la journée<small id="hj-date">Vendredi 24 mai</small></div>
+    <div class="t4" id="t4"></div>
+
+    <div class="seclab">Devis en attente<small><span class="bdg" style="position:static;border:0" id="dv-b">1</span></small></div>
+    <div class="cd" id="dvhome" style="padding:6px 15px"></div>
+  </section>
+
+  <!-- ============ 2. INTERVENTIONS ============ -->
+  <section class="scr" id="s-list">
+    <div class="lhead">
+      <button class="tico" onclick="toast('Tout passe par la barre du bas — moins de menus, moins perdu')"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <h2>Interventions</h2>
+      <div class="lg">
+        <button class="tico" onclick="toast('Les 3 onglets suffisent : À faire, En cours, Terminées')"><svg viewBox="0 0 24 24"><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></svg></button>
+        <button class="tico" onclick="toast('Une intervention se crée au bureau — elle arrive ici toute seule')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+    </div>
+    <div class="ltabs">
+      <button class="ltab on" id="lt-todo" onclick="ltab('todo')">À faire (<span>4</span>)</button>
+      <button class="ltab t-b" id="lt-enc" onclick="ltab('enc')">En cours (<span>1</span>)</button>
+      <button class="ltab t-g" id="lt-done" onclick="ltab('done')">Terminées (<span>1</span>)</button>
+    </div>
+    <div id="lbody"></div>
+  </section>
+
+  <!-- ============ 3. DÉTAIL ============ -->
+  <section class="scr" id="s-detail"></section>
+
+  <!-- ============ 4. DEVIS ============ -->
+  <section class="scr" id="s-devis">
+    <div class="lhead"><h2 style="padding-left:2px">Devis</h2>
+      <button class="obtn" onclick="openAtelier(null)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nouveau devis</button>
+    </div>
+    <div id="dvbody"></div>
+  </section>
+
+  <!-- ============ 5. RÉGLAGES ============ -->
+  <section class="scr" id="s-reglages">
+    <div class="lhead"><h2 style="padding-left:2px">Réglages</h2></div>
+    <div class="cd" style="display:flex;align-items:center;gap:13px">
+      <div class="pav">TM</div>
+      <div style="flex:1"><b style="font-family:'Sora';font-size:1rem">Thomas Martin</b><br><small style="color:var(--muted);font-size:.75rem">En service depuis 08:00</small></div>
+      <span class="stb g">ACTIF</span>
+    </div>
+    <div class="seclab">Compte</div>
+    <div class="cd" style="padding:4px 15px">
+      <div class="rrow" onclick="toast('Adresse gérée par le bureau')"><span class="ri b"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></span><span class="rb"><b>thomas.martin@tigerflow.fr</b><small>E-mail</small></span></div>
+      <div class="rrow" onclick="toast('Numéro géré par le bureau')"><span class="ri g"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg></span><span class="rb"><b>06 12 34 56 78</b><small>Téléphone</small></span></div>
+      <div class="rrow" onclick="toast('Le rôle est attribué par l’administrateur')"><span class="ri a"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="rb"><b>Technicien</b><small>Rôle</small></span></div>
+    </div>
+    <div class="seclab">Application</div>
+    <div class="cd" style="padding:4px 15px">
+      <div class="rrow" onclick="swTog(this.querySelector('.sw'))"><span class="ri b"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></span><span class="rb"><b>Thème sombre</b><small>bientôt disponible</small></span><span class="sw"></span></div>
+      <div class="rrow" onclick="swTog(this.querySelector('.sw'))"><span class="ri o"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg></span><span class="rb"><b>Notifications push</b><small>missions, devis, rappels</small></span><span class="sw on"></span></div>
+      <div class="rrow" onclick="toast('Choix des alertes (missions, devis, rappels) — bientôt')"><span class="ri b"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span><span class="rb"><b>Préférences de notification</b><small>choisir ce qui te prévient</small></span><span class="chev">›</span></div>
+    </div>
+    <div class="seclab">Confidentialité</div>
+    <div class="cd" style="padding:4px 15px">
+      <div class="rrow" onclick="toast('La politique de confidentialité s’ouvre — données hébergées en Europe')"><span class="ri b"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4"/></svg></span><span class="rb"><b>Politique de confidentialité</b><small>tes données, tes droits</small></span><span class="chev">›</span></div>
+      <div class="rrow danger" id="delacct" onclick="delAcct()"><span class="ri r"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6"/></svg></span><span class="rb"><b id="delacct-lbl">Supprimer mon compte</b><small>la demande part au bureau — l&rsquo;administrateur valide</small></span><span class="chev">›</span></div>
+    </div>
+    <div class="cd" style="padding:4px 15px">
+      <div class="rrow" onclick="toast('À demain Thomas — bonne fin de journée')"><span class="ri r"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></span><span class="rb"><b style="color:var(--red)">Se déconnecter</b><small>Thomas Martin — TEC</small></span></div>
+    </div>
+    <p style="text-align:center;color:#B9BEC9;font-size:.68rem;margin:6px 0 10px">TigerFlow TEC · version 1.0 (maquette)</p>
+  </section>
+
+  <!-- ============ NOTIFICATIONS ============ -->
+  <section class="scr" id="s-notifs">
+    <div class="dhead">
+      <button class="tico" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="dtt" onclick="go('home')"><b>Notifications</b><small id="nf-sub">2 non lues</small></div>
+      <button class="tico" onclick="notifAll()" title="Tout marquer comme lu"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></button>
+    </div>
+    <div id="nfbody"></div>
+  </section>
+
+  <!-- ============ ATELIER DEVIS ============ -->
+  <section class="scr" id="s-atelier">
+    <div class="fh">
+      <button class="tico" onclick="atBack()"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <b onclick="atBack()">Devis <span id="at-cli" style="color:var(--orange-deep)"></span></b>
+      <span style="width:40px"></span>
+    </div>
+    <div class="ctah">Bibliothèque de prestations — touche pour ajouter</div>
+    <div id="blrows"></div>
+    <div class="cta">
+      <div class="dvtot"><span style="font-size:.8rem;font-weight:700;color:var(--muted)">Total TTC</span><b id="dv-tot">0 €</b></div>
+      <button class="bo" id="at-sign" onclick="atSign()"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Le client signe sur le téléphone</button>
+      <button class="lnk" id="at-mail" onclick="atMail()">Envoyer le devis par e-mail — la fiche attendra sa réponse</button>
+    </div>
+  </section>
+
+  <!-- ============ SIGNATURE ============ -->
+  <section class="scr" id="s-sign">
+    <div class="fh">
+      <button class="tico" onclick="go('atelier')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <b onclick="go('atelier')">Signature du client</b>
+      <span style="width:40px"></span>
+    </div>
+    <p style="color:var(--muted);font-size:.8rem;margin:0 2px 12px">Tends le téléphone au client : il signe avec le doigt, le devis de <b id="sg-tot" style="color:var(--ink)">0 €</b> est accepté.</p>
+    <div class="sigbox"><canvas id="sigc" width="356" height="190"></canvas><div class="sigh" id="sigh">Signature ici</div></div>
+    <div class="cta">
+      <button class="bo g" onclick="sigOK()"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>C&rsquo;est signé — encaisser</button>
+      <button class="lnk" onclick="sigClear()">Effacer et recommencer</button>
+    </div>
+  </section>
+
+  <!-- ============ ENCAISSEMENT ============ -->
+  <section class="scr" id="s-enc">
+    <div class="fh">
+      <button class="tico" onclick="encBack()"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <b onclick="encBack()">Encaissement</b>
+      <span style="width:40px"></span>
+    </div>
+    <p style="color:var(--muted);font-size:.8rem;margin:0 2px 4px" id="enc-cli"></p>
+    <div class="elab">Combien ?</div>
+    <div class="pills" id="enc-part">
+      <button class="pill on" data-p="1" onclick="encPart(this)">La totalité</button>
+      <button class="pill" data-p="0.3" onclick="encPart(this)">Acompte 30 %</button>
+    </div>
+    <div class="elab">Montant TTC</div>
+    <input class="encm" id="enc-m" inputmode="decimal" value="0,00" onfocus="this.select()" oninput="encBtnState()">
+    <div class="elab">Mode de paiement</div>
+    <div class="pills" id="enc-modes">
+      <button class="pill on" data-m="Carte bancaire" onclick="encMode(this)">Carte</button>
+      <button class="pill" data-m="Espèces" onclick="encMode(this)">Espèces</button>
+      <button class="pill" data-m="Virement" onclick="encMode(this)">Virement</button>
+      <button class="pill" data-m="Lien de paiement" onclick="encMode(this)">Lien envoyé</button>
+    </div>
+    <div style="height:16px"></div>
+    <div class="cta">
+      <button class="bo g" id="enc-go" onclick="encDone()"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span id="enc-btn">Encaissé</span></button>
+      <button class="lnk" onclick="encLater()">Encaisser plus tard</button>
+    </div>
+  </section>
+
+  <!-- ============ RAPPORT ============ -->
+  <section class="scr" id="s-rapport">
+    <div class="fh">
+      <button class="tico" onclick="rapBack()"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <b onclick="rapBack()">Rapport d&rsquo;intervention</b>
+      <span style="width:40px"></span>
+    </div>
+    <div class="steps"><i class="on" id="st1"></i><i id="st2"></i><i id="st3"></i></div>
+    <div id="rapbody"></div>
+  </section>
+
+  <!-- ============ OK ============ -->
+  <section class="scr" id="s-ok">
+    <div class="okwrap">
+      <div class="okic"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <h3 id="ok-h">C&rsquo;est bouclé</h3>
+      <p id="ok-t">Le bureau voit tout en temps réel.</p>
+      <button class="bo" onclick="go('home')" style="max-width:240px;margin:0 auto">Retour à l&rsquo;accueil</button>
+    </div>
+  </section>
+
+  </div><!-- /app -->
+
+  <!-- ============ BARRE DU BAS ============ -->
+  <nav class="tabbar">
+    <button class="tb on" id="nb-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 01-1 1h-5v-7h-6v7H4a1 1 0 01-1-1z"/></svg>Accueil</button>
+    <button class="tb" id="nb-list" onclick="go('list')"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18M8 14h4M8 17.5h6"/></svg>Interventions</button>
+    <span class="fabslot"><button class="fab" onclick="fabOpen()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></span>
+    <button class="tb" id="nb-devis" onclick="go('devis')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</button>
+    <button class="tb" id="nb-reg" onclick="go('reglages')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</button>
+  </nav>
+  <span class="hbar"></span>
+
+  <!-- feuille d'actions du + -->
+  <div class="sheet" id="sheet" onclick="if(event.target===this)fabClose()">
+    <div class="shc">
+      <div class="shh"></div>
+      <div class="rrow" onclick="fabClose();openAtelier(null)"><span class="ri o"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span><span class="rb"><b>Nouveau devis</b><small>bibliothèque de prestations, signature sur place</small></span><span class="chev">›</span></div>
+      <div class="rrow" onclick="fabClose();toast('Le bureau est prévenu — quelqu’un te rappelle')"><span class="ri a"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/></svg></span><span class="rb"><b>Signaler un imprévu</b><small>retard, client absent, problème sur place</small></span><span class="chev">›</span></div>
+      <button class="lnk" onclick="fabClose()">Annuler</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div></div>
+
+<script>
+/* ================= données de la journée ================= */
+const M = {
+  1:{id:1, ref:"INT-2024-0451", h:"08:30", dur:"1h15", client:"Dupont Immobilier", adr:"15 rue des Lilas", ville:"75019 Paris", prio:"HAUTE",   nuis:["Punaise de lit"], type:"traitement", st:"todo", prix:260, tel:"06 12 45 78 90", contact:"M. Dupont", ctags:["Payeur"]},
+  2:{id:2, ref:"INT-2024-0457", h:"10:00", dur:"1h30", client:"Société Martin",   adr:"8 Rue Victor Hugo", ville:"59000 Lille", prio:"NORMALE", nuis:["Dératisation","Rats","Souris"], type:"devis", st:"todo", tel:"06 45 23 67 01", trajet:"18 min", note:"Client absent avant 10h30. Paiement en espèces demandé.", contact:"Mme Dupont", ctags:["Présente sur place","Payeur"], autres:2},
+  3:{id:3, ref:"INT-2024-0458", h:"13:30", dur:"45min", client:"Restaurant Le Bistrot", adr:"25 Rue de Paris", ville:"59000 Lille", prio:"NORMALE", nuis:["Blattes"], type:"traitement", st:"todo", prix:120, tel:"06 77 10 44 82", contact:"M. Aubert", ctags:["Payeur"]},
+  4:{id:4, ref:"INT-2024-0459", h:"14:30", dur:"1h15", client:"Mairie de Lille", adr:"Place Augustin Laurent", ville:"59000 Lille", prio:"NORMALE", nuis:["Pigeons"], type:"traitement", st:"todo", prix:180, tel:"03 20 49 50 00", contact:"Mme Laurent", ctags:["Sur place l’après-midi"]},
+  5:{id:5, ref:"INT-2024-0455", h:"11:30", dur:"1h00", client:"Entrepôt LogiNord", adr:"Zone Industrielle", ville:"59000 Lille", prio:"NORMALE", nuis:["Dératisation"], type:"traitement", st:"encours", prix:160, prog:58, progt:"00:35 / 1h00", tel:"06 88 32 19 40", contact:"M. Nowak", ctags:["Payeur"]},
+  6:{id:6, ref:"INT-2024-0448", h:"17:00", dur:"1h00", client:"Clinique vétérinaire des Flandres", adr:"3 Rue Colbert", ville:"59000 Lille", prio:"NORMALE", nuis:["Désinsectisation"], type:"traitement", st:"done", prix:140, tel:"03 20 11 22 33", contact:"Dr Flament", ctags:[]}
+};
+let DEVIS = [ {id:"d1", mid:3, client:"Restaurant Le Bistrot", m:120, st:"attente", sub:"Intervention du 24/05 à 13:30"} ];
+let NOTIFS = [
+  {t:"Le devis de Restaurant Le Bistrot (120 €) attend toujours la réponse du client.", time:"il y a 2 h", un:true},
+  {t:"Nouvelle intervention demain 09:00 — Charcuterie Bellamy, souris.", time:"il y a 3 h", un:true},
+  {t:"Le bureau a validé ta semaine — rien à signaler.", time:"hier", un:false}
+];
+const NUISC = {
+  "Punaise de lit":{c:"#B91C1C", bg:"#FDECEA"}, "Dératisation":{c:"#7C3AED", bg:"#F3EEFE"},
+  "Rats":{c:"#52606D", bg:"#EEF0F3"}, "Souris":{c:"#52606D", bg:"#EEF0F3"},
+  "Blattes":{c:"#334155", bg:"#E9EDF3"}, "Pigeons":{c:"#7C3AED", bg:"#F3EEFE"},
+  "Désinsectisation":{c:"#0A6B51", bg:"#DFF3ED"}
+};
+const ICB = {
+  bug:'<path d="M12 8.5a3.6 3.6 0 013.6 3.6v2a3.6 3.6 0 01-7.2 0v-2A3.6 3.6 0 0112 8.5zM12 8.5V6.4M9 10.5L6.2 8.6M8.9 13.6H5.4M9.2 16.2l-2.6 1.9M15 10.5l2.8-1.9M15.1 13.6h3.5M14.8 16.2l2.6 1.9"/>',
+  paw:'<circle cx="12" cy="14.6" r="3"/><circle cx="7.3" cy="9.6" r="1.6"/><circle cx="12" cy="7.9" r="1.6"/><circle cx="16.7" cy="9.6" r="1.6"/>',
+  bird:'<path d="M4 18.5c6 0 10-4 10-9l3-2.2-1 4.2c2 0 3.2-1 4-2.2 0 6-5 9.2-11 9.2z"/>'
+};
+const BL = [
+  {n:"Traitement punaises de lit — 2 passages", d:"chambres + literie, produits inclus", p:480},
+  {n:"Dératisation locaux professionnels", d:"forfait postes sécurisés + suivi", p:160},
+  {n:"Désinsectisation blattes — cuisine", d:"gel appât + pulvérisation", p:120},
+  {n:"Pose de postes sécurisés (x4)", d:"appâts protégés enfants / animaux", p:90}
+];
+let ENC = 0;                       // encaissé aujourd'hui
+let CURID = null;                  // fiche ouverte
+let ENCTX = null;                  // contexte d'encaissement {kind, mid, did, base}
+let ATX = null;                    // contexte atelier {mid}
+let SEL = new Set();               // presta sélectionnées
+let RSTEP = 1, RAPID = null;       // rapport
+const g = id => document.getElementById(id);
+
+const WAPATH = "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z";
+
+/* ================= navigation ================= */
+const NAVMAP = {home:"nb-home", list:"nb-list", detail:"nb-list", devis:"nb-devis", atelier:"nb-devis", sign:"nb-devis", enc:"nb-list", rapport:"nb-list", ok:"nb-home", reglages:"nb-reg", notifs:"nb-home"};
+function go(k){
+  document.querySelectorAll(".scr").forEach(s => s.classList.remove("on"));
+  g("s-" + k).classList.add("on");
+  document.querySelectorAll(".tb").forEach(b => b.classList.remove("on"));
+  const nb = g(NAVMAP[k] || "nb-home"); if(nb) nb.classList.add("on");
+  g("app").scrollTop = 0;
+  renderAll();
+}
+let TT = null;
+function toast(t){
+  const el = g("toast"); el.textContent = t; el.classList.add("on");
+  clearTimeout(TT); TT = setTimeout(() => el.classList.remove("on"), 2600);
+}
+function fabOpen(){ g("sheet").classList.add("on"); }
+function fabClose(){ g("sheet").classList.remove("on"); }
+function swTog(el){ el.classList.toggle("on"); toast(el.classList.contains("on") ? "Activé" : "Désactivé"); }
+
+/* ================= petits helpers ================= */
+function EUR(n){ return n.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €"; }
+function chip(n){
+  const c = NUISC[n] || {c:"#52606D", bg:"#EEF0F3"};
+  const ic = /pigeon/i.test(n) ? ICB.bird : /dérat|rat|souris/i.test(n) ? ICB.paw : ICB.bug;
+  return `<span class="chip" style="background:${c.bg};color:${c.c}"><svg viewBox="0 0 24 24" style="stroke-width:2">${ic}</svg>${n}</span>`;
+}
+function callC(m, ev){ if(ev) ev.stopPropagation(); toast("Appel vers " + m.contact + " — " + m.tel); }
+function navC(m, ev){ if(ev) ev.stopPropagation(); toast("Itinéraire vers " + m.adr + ", " + m.ville); }
+function todos(){ return Object.values(M).filter(m => m.st === "todo").sort((a, b) => a.h.localeCompare(b.h)); }
+
+/* ================= rendu global ================= */
+function renderAll(){ rhome(); rlist(); rdevis(); rnotifs(); if(CURID) rdetail(); }
+
+/* ---------- accueil ---------- */
+function rhome(){
+  const next = (M[2].st === "todo" || M[2].st === "encours") ? M[2] : (todos()[0] || null);
+  const nc = g("nextcard");
+  if(next){
+    nc.innerHTML = `
+      <div class="nlab">PROCHAINE <b>INTERVENTION</b></div>
+      <div class="nrow" onclick="openM(${next.id})">
+        <span class="nh">${next.h}</span>
+        <span class="nb"><b>${next.client}</b><span class="nchips">${next.nuis.length > 1 ? next.nuis.slice(1).map(chip).join("") : chip(next.nuis[0])}</span>
+        <div class="nadr">${next.adr}, ${next.ville}</div></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="nmeta">
+        <div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>${next.dur}</b>Durée estimée</span></div>
+        <div><svg viewBox="0 0 24 24"><path d="M3 16v-3.5L5.5 7h13L21 12.5V16M5 16h14M7 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm10 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg><span><b>${next.trajet || "12 min"}</b>Trajet estimé</span></div>
+      </div>
+      <button class="bo" onclick="openM(${next.id});startM(${next.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Démarrer l&rsquo;intervention</button>`;
+  } else {
+    nc.innerHTML = `<div class="nlab">JOURNÉE <b>BOUCLÉE</b></div><p style="font-size:.85rem;color:var(--muted)">Plus rien à faire — beau travail Thomas.</p>`;
+  }
+  const all = Object.values(M);
+  const nb = s => all.filter(m => m.st === s).length;
+  const att = DEVIS.filter(d => d.st === "attente");
+  const aenc = att.reduce((s, d) => s + d.m, 0);
+  g("t4").innerHTML = `
+    <div class="tl c-b"><b>${nb("todo")}</b><small>À faire</small></div>
+    <div class="tl c-o"><b>${nb("encours")}</b><small>En cours</small></div>
+    <div class="tl c-g"><b>${nb("done") + nb("wait")}</b><small>Terminées</small></div>
+    <div class="tl c-e"><b>${EUR(aenc)}</b><small>À encaisser</small></div>`;
+  g("dv-b").textContent = att.length;
+  g("dvhome").innerHTML = att.length
+    ? att.map(d => `<div class="drow" onclick="go('devis')"><span><b>${d.client}</b><small>${d.sub}</small></span><span class="dm">${EUR(d.m)}</span></div>`).join("")
+    : `<div class="drow"><span><b>Aucun devis en attente</b><small>tout est signé ou encaissé — ${EUR(ENC)} encaissés aujourd&rsquo;hui</small></span></div>`;
+  const un = NOTIFS.filter(n => n.un).length;
+  g("bell-b").textContent = un; g("bell-b").style.display = un ? "grid" : "none";
+}
+
+/* ---------- liste ---------- */
+function mcard(m){
+  const done = m.st === "done", enc = m.st === "encours", wait = m.st === "wait";
+  const cls = done ? "p-d" : enc ? "p-e" : (m.prio === "HAUTE" ? "p-h" : "p-n");
+  let badge = done ? `<span class="prio d">TERMINÉE</span>`
+    : wait ? `<span class="prio d" style="background:var(--amber-bg);color:var(--amber)">DEVIS ENVOYÉ</span>`
+    : m.prio === "HAUTE"
+      ? `<span class="prio h"><svg viewBox="0 0 24 24" style="width:9px;height:9px;stroke-width:2.6"><path d="M4 21V4s1.5-1.5 5-1.5S14 4 14 4s1.5 1.5 5 1.5V15s-1.5-1.5-5-1.5S9 15 9 15H4"/></svg>${m.prio}</span>`
+      : `<span class="prio n">${m.prio}</span>`;
+  const foot = done ? `<div class="mcf"><div class="chips">${m.nuis.map(chip).join("")}</div></div>` : `
+    <div class="mcf">
+      <div class="chips">${m.nuis.map(chip).join("")}</div>
+      <span class="rnd" onclick="callC(M[${m.id}],event)"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg></span>
+      <span class="rnd" onclick="navC(M[${m.id}],event)"><svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8z"/></svg></span>
+    </div>`;
+  const prog = enc ? `
+    <div class="prog"><span class="pb"><i style="width:${m.prog || 50}%"></i></span><small>${m.progt || ""}</small></div>
+    <button class="cont" onclick="event.stopPropagation();openM(${m.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer</button>` : "";
+  return `<div class="mc ${cls}" onclick="openM(${m.id})">
+    <div class="mct"><b>${m.h}</b><small>${m.dur}</small></div>
+    <div class="mcb">
+      <div class="mch"><b>${m.client}</b>${badge}<span class="chev">›</span></div>
+      <div class="mca">${m.adr}<br>${m.ville}</div>
+      ${foot}${prog}
+    </div>
+  </div>`;
+}
+function rlist(){
+  const all = Object.values(M);
+  const td = todos(), ec = all.filter(m => m.st === "encours"), wt = all.filter(m => m.st === "wait"), dn = all.filter(m => m.st === "done");
+  g("lt-todo").innerHTML = `À faire (<span>${td.length}</span>)`;
+  g("lt-enc").innerHTML = `En cours (<span>${ec.length}</span>)`;
+  g("lt-done").innerHTML = `Terminées (<span>${dn.length + wt.length}</span>)`;
+  let h = "";
+  if(td.length){ h += `<div class="lsec" id="ls-todo">À FAIRE</div>` + td.map(mcard).join(""); }
+  if(ec.length){ h += `<div class="lsec b" id="ls-enc">EN COURS</div>` + ec.map(mcard).join(""); }
+  if(wt.length || dn.length){ h += `<div class="lsec g" id="ls-done">TERMINÉES &amp; EN ATTENTE</div>` + wt.map(mcard).join("") + dn.map(mcard).join(""); }
+  if(!h) h = `<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0">Rien aujourd&rsquo;hui.</p>`;
+  g("lbody").innerHTML = h;
+}
+function ltab(k){
+  ["todo", "enc", "done"].forEach(x => g("lt-" + x).classList.toggle("on", x === k));
+  const el = g("ls-" + k);
+  if(el && el.scrollIntoView) el.scrollIntoView({behavior:"smooth", block:"start"});
+  if(el){ el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 800); }
+}
+
+/* ---------- détail ---------- */
+function openM(id){ CURID = id; rdetail(); go("detail"); }
+function rdetail(){
+  const m = M[CURID]; if(!m) return;
+  let badge = m.st === "done" ? `<span class="stb g">TERMINÉE</span>`
+    : m.st === "wait" ? `<span class="stb a">DEVIS ENVOYÉ — EN ATTENTE</span>`
+    : m.st === "encours" ? `<span class="stb b">EN COURS</span>`
+    : m.type === "devis" ? `<span class="stb o">DEVIS À ÉTABLIR</span>` : `<span class="stb n">À FAIRE</span>`;
+  let ban = "";
+  if(m.type === "devis" && (m.st === "todo" || m.st === "encours"))
+    ban += `<div class="ban o" onclick="toast('Le devis se fait sur place, avec la bibliothèque de prestations')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
+      <span class="bb"><b>DEVIS À ÉTABLIR</b><small>Un devis sera établi avant toute intervention.</small></span><span class="chev">›</span></div>`;
+  if(NOTEED === m.id)
+    ban += `<div class="ban a" style="flex-direction:column;align-items:stretch;cursor:default">
+      <b style="font-size:.7rem;font-weight:800;letter-spacing:.05em">NOTE POUR CETTE INTERVENTION</b>
+      <textarea id="note-ta" class="rta" style="min-height:72px;margin:9px 0 10px" placeholder="Ex. : sonner au portail, chien dans la cour, clé chez le voisin…">${m.note || ""}</textarea>
+      <div style="display:flex;gap:8px">
+        <button class="bo g" style="padding:10px;font-size:.8rem" onclick="noteSave(${m.id})">Enregistrer</button>
+        <button class="obtn" onclick="NOTEED=null;rdetail()">Annuler</button>
+      </div></div>`;
+  else if(m.note)
+    ban += `<div class="ban a" onclick="noteEdit(${m.id})">
+      <svg class="fillsvg" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
+      <span class="bb"><b>NOTE IMPORTANTE DU BUREAU</b><small>${m.note}</small></span><span class="chev">›</span></div>`;
+  else
+    ban += `<div class="ban" style="background:#fff;border:1.5px dashed #D6D9E0;color:var(--muted)" onclick="noteEdit(${m.id})">
+      <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
+      <span class="bb"><b style="color:var(--ink-2)">NOTE</b><small>Aucune note pour cette intervention — touche pour en ajouter une.</small></span>
+      <span class="chev" style="font-size:1.1rem">+</span></div>`;
+  let cta = "";
+  if(m.st === "todo"){
+    cta = `<button class="bo" onclick="startM(${m.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Démarrer l&rsquo;intervention</button>`;
+  } else if(m.st === "encours"){
+    cta = m.type === "devis"
+      ? `<div class="ctah">En cours — quand le constat est fait :</div>
+         <button class="bo" onclick="openAtelier(${m.id})"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Faire le devis — bibliothèque</button>
+         <p style="text-align:center;color:var(--muted);font-size:.72rem;margin-top:8px;line-height:1.5">Pas de rapport aujourd&rsquo;hui : c&rsquo;est une visite pour devis — le devis EST le document du jour. Le rapport viendra le jour du traitement.</p>
+         <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`
+      : `<div class="ctah">En cours — quand le travail est fait :</div>
+         <button class="bo g" onclick="finTrait(${m.id})"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Intervention terminée</button>
+         <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`;
+  } else if(m.st === "wait"){
+    cta = `<div class="waitb">Devis ${m.devisM ? "de " + EUR(m.devisM) + " " : ""}envoyé — la fiche attend la réponse du client, même dans 3 jours.</div>
+      <button class="bo g" onclick="cliOui(${m.id})"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Le client a dit OUI — encaisser</button>`;
+  } else {
+    cta = `<div class="doneb"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Intervention terminée${m.paid ? " — encaissée" : ""}</div>`;
+  }
+  g("s-detail").innerHTML = `
+    <div class="dhead">
+      <button class="tico" onclick="go('list')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="dtt" onclick="go('list')"><b>Intervention</b><small>#${m.ref}</small></div>
+      <button class="tico" onclick="toast('Rien de plus ici — tout est sur la fiche')"><svg class="fillsvg" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button>
+    </div>
+    ${badge}
+    <div class="dtitle">${m.client}</div>
+    <div class="dadr"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>${m.adr}, ${m.ville}</div>
+    <div class="dchips">${m.nuis.map(chip).join("")}<span class="sp"></span>
+      <button class="obtn" onclick="navC(M[${m.id}])"><svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8z"/></svg>Itinéraire</button></div>
+    <div class="i3">
+      <div><small><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg>Date / Heure</small><b>24 mai 2024<br>${m.h}</b></div>
+      <div><small><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Durée estimée</small><b>${m.dur}</b></div>
+      <div><small><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Type d&rsquo;intervention</small><b>${m.nuis[0]}</b></div>
+    </div>
+    <div class="ctah">Actions rapides</div>
+    <div class="qacts">
+      <button class="qa g" onclick="callC(M[${m.id}])"><span class="qi"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg></span>Appeler</button>
+      <button class="qa wa" onclick="toast('WhatsApp s&rsquo;ouvre avec ${m.contact}')"><span class="qi"><svg class="fillsvg" viewBox="0 0 24 24"><path d="${WAPATH}"/></svg></span>WhatsApp</button>
+      <button class="qa b" onclick="toast('SMS à ${m.contact} — ${m.tel}')"><span class="qi"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8z"/></svg></span>SMS</button>
+      <button class="qa n" onclick="navC(M[${m.id}])"><span class="qi"><svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8z"/></svg></span>Itinéraire</button>
+    </div>
+    ${ban}
+    <div class="ctah" style="margin-top:4px">Contacts</div>
+    <div class="cd" style="padding:8px 15px">
+      <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin:5px 0 1px">Contact principal</div>
+      <div class="crow"><span class="cav">${m.contact.split(" ").map(x => x[0]).join("").slice(0, 2).toUpperCase()}</span>
+        <span class="cb"><b>${m.contact}</b><span class="ctags">${(m.ctags || []).map(t => `<span class="chip" style="background:${t === "Payeur" ? "var(--amber-bg)" : "var(--green-bg)"};color:${t === "Payeur" ? "var(--amber)" : "var(--green-d)"}">${t}</span>`).join("")}</span></span>
+        <span class="rnd gph" onclick="callC(M[${m.id}],event)"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg></span></div>
+      ${m.autres ? `<div class="crow" onclick="toast('${m.autres} autres contacts sur la fiche client')"><span class="cav"><svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/><circle cx="9" cy="7" r="4"/></svg></span><span class="cb"><b style="font-weight:700;color:var(--ink-2)">+ ${m.autres} autres contacts</b></span><span class="chev">›</span></div>` : ""}
+    </div>
+    <div class="cta">${cta}</div>`;
+}
+
+/* ---------- note du bureau (présente sur toutes les fiches, même vide) ---------- */
+let NOTEED = null;
+function noteEdit(id){ NOTEED = id; rdetail(); const ta = g("note-ta"); if(ta && ta.focus) ta.focus(); }
+function noteSave(id){
+  const v = (g("note-ta").value || "").trim();
+  M[id].note = v || null;
+  NOTEED = null;
+  toast(v ? "Note enregistrée — le bureau la voit aussi" : "Note vidée");
+  rdetail();
+  const b = document.querySelector("#s-detail .ban.a");
+  if(b){ b.classList.add("flash2"); setTimeout(() => b.classList.remove("flash2"), 900); }
+}
+
+/* ---------- le parcours : démarrer → terminer → encaisser → rapport ---------- */
+function startM(id){
+  const m = M[id]; if(m.st !== "todo") return;
+  m.st = "encours"; m.prog = 5; m.progt = "démarrée à l’instant";
+  toast("Intervention démarrée — bon courage");
+  renderAll();
+  const app = g("app"); if(app) app.scrollTop = app.scrollHeight;
+}
+function cancelM(id){ const m = M[id]; m.st = "todo"; toast("Démarrage annulé"); renderAll(); }
+function finTrait(id){
+  const m = M[id];
+  ENCTX = {kind:"trait", mid:id, did:null, base:m.prix || 120};
+  renc(); go("enc");
+}
+function cliOui(id){
+  const m = M[id];
+  const d = DEVIS.find(x => x.mid === id && x.st === "attente");
+  ENCTX = {kind:"devisOK", mid:id, did:d ? d.id : null, base:m.devisM || (d ? d.m : 120)};
+  renc(); go("enc");
+}
+function devisOui(did){
+  const d = DEVIS.find(x => x.id === did); if(!d) return;
+  ENCTX = {kind:"devisOK", mid:d.mid || null, did:did, base:d.m};
+  renc(); go("enc");
+}
+
+/* ---------- encaissement ---------- */
+let PART = 1;
+function renc(){
+  if(!ENCTX) return;
+  const m = ENCTX.mid ? M[ENCTX.mid] : null;
+  g("enc-cli").innerHTML = (m ? "<b>" + m.client + "</b> — " : "") + (ENCTX.kind === "devisOK" ? "le client a accepté le devis." : "le travail est fait, le client est devant toi.");
+  PART = 1;
+  document.querySelectorAll("#enc-part .pill").forEach((p, i) => p.classList.toggle("on", i === 0));
+  encRecalc();
+}
+function encPart(el){
+  document.querySelectorAll("#enc-part .pill").forEach(p => p.classList.remove("on"));
+  el.classList.add("on"); PART = parseFloat(el.dataset.p); encRecalc();
+}
+function encRecalc(){
+  const v = ENCTX ? ENCTX.base * PART : 0;
+  g("enc-m").value = v.toFixed(2).replace(".", ",");
+  g("enc-btn").textContent = "Encaissé — " + EUR(v);
+  encBtnState();
+}
+function encBtnState(){
+  const v = parseFloat((g("enc-m").value || "0").replace(",", ".")) || 0;
+  const b = g("enc-go"); if(b) b.disabled = v <= 0;
+}
+function encMode(el){
+  document.querySelectorAll("#enc-modes .pill").forEach(p => p.classList.remove("on"));
+  el.classList.add("on");
+}
+function encBack(){
+  if(ENCTX && ENCTX.mid){ go("detail"); } else { go("devis"); }
+}
+function encDone(){
+  if(!ENCTX) return;
+  const raw = parseFloat((g("enc-m").value || "0").replace(",", ".")) || 0;
+  const mode = (document.querySelector("#enc-modes .pill.on") || {dataset:{m:"Carte bancaire"}}).dataset.m;
+  ENC += raw;
+  const m = ENCTX.mid ? M[ENCTX.mid] : null;
+  if(ENCTX.did){ const d = DEVIS.find(x => x.id === ENCTX.did); if(d) d.st = "paye"; }
+  toast(EUR(raw) + " encaissés par " + mode.toLowerCase());
+  if(ENCTX.kind === "trait"){
+    m.paid = true;
+    openRapport(ENCTX.mid);
+  } else {
+    if(m && m.st === "wait"){ m.st = "done"; m.paid = true; }
+    g("ok-h").textContent = "La boucle est bouclée";
+    g("ok-t").textContent = "Devis accepté et " + EUR(raw) + " encaissés. Le bureau planifie l’intervention de traitement — c’est elle qui aura le rapport.";
+    ENCTX = null; go("ok");
+  }
+}
+function encLater(){
+  if(!ENCTX) return;
+  if(ENCTX.kind === "trait"){ toast("Encaissement remis à plus tard — le rapport s’ouvre"); openRapport(ENCTX.mid); }
+  else { toast("D’accord — le devis reste en attente d’encaissement"); ENCTX = null; go("devis"); }
+}
+
+/* ---------- rapport (3 étapes, Suivant libre) ---------- */
+function openRapport(mid){ RAPID = mid; RSTEP = 1; ENCTX = null; rrap(); go("rapport"); }
+function rapBack(){ if(RSTEP > 1){ RSTEP--; rrap(); } else { go("detail"); } }
+function rrap(){
+  [1, 2, 3].forEach(i => g("st" + i).classList.toggle("on", i <= RSTEP));
+  const m = M[RAPID] || {};
+  let h = "";
+  if(RSTEP === 1) h = `<div class="rlab">1. Observation sur place</div>
+    <textarea class="rta" placeholder="Ce que tu as constaté chez ${m.client || "le client"} : traces, accès, ampleur…"></textarea>`;
+  else if(RSTEP === 2) h = `<div class="rlab">2. Traitement réalisé</div>
+    <textarea class="rta" placeholder="Produits utilisés, zones traitées, postes posés…"></textarea>
+    <button class="obtn" style="margin-top:10px" onclick="toast('L’appareil photo s’ouvre')"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Prendre des photos</button>`;
+  else h = `<div class="rlab">3. Signature du client</div>
+    <div class="sigbox"><canvas id="rsig" width="356" height="190"></canvas><div class="sigh" id="rsigh">Le client signe ici</div></div>`;
+  h += `<div style="height:14px"></div><div class="cta">` + (RSTEP < 3
+    ? `<button class="bo" onclick="RSTEP++;rrap()">Suivant</button>`
+    : `<button class="bo g" onclick="finishRap()"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Signer &amp; clôturer</button>`) + `</div>`;
+  g("rapbody").innerHTML = h;
+  if(RSTEP === 3) sigInit("rsig", "rsigh");
+}
+function finishRap(){
+  const m = M[RAPID]; if(m){ m.st = "done"; }
+  g("ok-h").textContent = "Rapport envoyé";
+  g("ok-t").textContent = "Mission bouclée" + (m && m.paid ? ", paiement encaissé" : "") + " — le bureau voit tout en temps réel.";
+  RAPID = null; go("ok");
+}
+
+/* ---------- atelier devis ---------- */
+function openAtelier(mid){
+  ATX = {mid:mid}; SEL = new Set();
+  g("at-cli").textContent = mid ? "— " + M[mid].client : "— nouveau client";
+  rbl(); go("atelier");
+}
+function atBack(){ if(ATX && ATX.mid){ go("detail"); } else { go("devis"); } }
+function rbl(){
+  g("blrows").innerHTML = BL.map((b, i) => `
+    <div class="bl ${SEL.has(i) ? "on" : ""}" onclick="blTog(${i})">
+      <span class="bck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>
+      <span class="bb"><b>${b.n}</b><small>${b.d}</small></span>
+      <span class="bp">${b.p} €</span>
+    </div>`).join("");
+  g("dv-tot").textContent = atTotal() + " €";
+  const rdy = SEL.size > 0;
+  const bs = g("at-sign"), bm = g("at-mail");
+  if(bs) bs.disabled = !rdy;
+  if(bm){ if(rdy){ bm.removeAttribute("disabled"); } else { bm.setAttribute("disabled", "disabled"); } }
+}
+function blTog(i){ SEL.has(i) ? SEL.delete(i) : SEL.add(i); rbl(); }
+function atTotal(){ return [...SEL].reduce((s, i) => s + BL[i].p, 0); }
+function atSign(){
+  if(!SEL.size){ toast("Choisis au moins une prestation dans la bibliothèque"); return; }
+  g("sg-tot").textContent = EUR(atTotal());
+  go("sign"); sigInit("sigc", "sigh");
+}
+function atMail(){
+  if(!SEL.size){ toast("Choisis au moins une prestation dans la bibliothèque"); return; }
+  const t = atTotal();
+  if(ATX && ATX.mid){
+    const m = M[ATX.mid];
+    m.st = "wait"; m.devisM = t;
+    DEVIS.push({id:"d" + (DEVIS.length + 1), mid:m.id, client:m.client, m:t, st:"attente", sub:"Envoyé à l’instant par e-mail"});
+    toast("Devis de " + EUR(t) + " envoyé à " + m.client + " — la fiche attendra sa réponse");
+    ATX = null;
+    CURID = m.id; rdetail(); go("detail");
+  } else {
+    DEVIS.push({id:"d" + (DEVIS.length + 1), mid:null, client:"Nouveau client", m:t, st:"attente", sub:"Envoyé à l’instant par e-mail"});
+    toast("Devis de " + EUR(t) + " envoyé — visible dans l’onglet Devis");
+    ATX = null;
+    go("devis");
+  }
+}
+function sigOK(){
+  const t = atTotal();
+  const mid = ATX ? ATX.mid : null;
+  if(mid){ M[mid].devisM = t; M[mid].st = "wait"; }
+  ENCTX = {kind:"devisOK", mid:mid, did:null, base:t || 120};
+  ATX = null;
+  toast("Devis signé sur place — place à l’encaissement");
+  renc(); go("enc");
+}
+
+/* ---------- signature (canvas) ---------- */
+function sigInit(cid, hid){
+  const c = g(cid); if(!c) return;
+  const ctx = c.getContext && c.getContext("2d"); if(!ctx) return;
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.strokeStyle = "#171A20"; ctx.lineWidth = 2.4; ctx.lineCap = "round";
+  let on = false;
+  const pos = e => { const r = c.getBoundingClientRect(); return {x:(e.clientX - r.left) * (c.width / r.width), y:(e.clientY - r.top) * (c.height / r.height)}; };
+  c.onpointerdown = e => { on = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); const hh = g(hid); if(hh) hh.style.display = "none"; };
+  c.onpointermove = e => { if(!on) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+  c.onpointerup = c.onpointerleave = () => { on = false; };
+  const hh = g(hid); if(hh) hh.style.display = "grid";
+}
+function sigClear(){ sigInit("sigc", "sigh"); }
+
+/* ---------- devis (onglet) ---------- */
+function rdevis(){
+  const att = DEVIS.filter(d => d.st === "attente"), pay = DEVIS.filter(d => d.st === "paye");
+  let h = "";
+  h += `<div class="seclab">En attente de réponse<small>${att.length}</small></div>`;
+  h += att.length ? att.map(d => `
+    <div class="cd" style="padding:13px 15px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="flex:1"><b style="font-size:.88rem">${d.client}</b><br><small style="color:var(--muted);font-size:.72rem">${d.sub}</small></span>
+        <span style="font-family:'Sora';font-weight:800;color:var(--green-d)">${EUR(d.m)}</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:11px">
+        <button class="bo g" style="padding:11px;font-size:.8rem" onclick="devisOui('${d.id}')">Le client a dit OUI — encaisser</button>
+        <button class="obtn" onclick="toast('Relance envoyée à ${d.client}')">Relancer</button>
+      </div>
+    </div>`).join("")
+    : `<div class="cd" style="text-align:center;color:var(--muted);font-size:.82rem">Aucun devis en attente — tout est signé.</div>`;
+  if(pay.length){
+    h += `<div class="seclab" style="margin-top:16px">Acceptés &amp; encaissés</div>`;
+    h += pay.map(d => `<div class="cd" style="padding:12px 15px;display:flex;align-items:center;gap:10px">
+      <span class="stb g">ENCAISSÉ</span>
+      <span style="flex:1"><b style="font-size:.85rem">${d.client}</b></span>
+      <b style="font-family:'Sora'">${EUR(d.m)}</b></div>`).join("");
+  }
+  h += `<div class="cd" style="margin-top:16px;background:var(--orange-soft);border-color:#FFD9C4">
+    <b style="font-size:.82rem;color:var(--orange-deep)">Encaissé aujourd&rsquo;hui : ${EUR(ENC)}</b>
+    <p style="font-size:.74rem;color:var(--ink-2);margin-top:4px;line-height:1.5">Chaque encaissement remonte au bureau en temps réel — rien à ressaisir le soir.</p></div>`;
+  g("dvbody").innerHTML = h;
+}
+
+/* ---------- notifications ---------- */
+function rnotifs(){
+  const un = NOTIFS.filter(n => n.un).length;
+  g("nf-sub").textContent = un ? un + " non lue" + (un > 1 ? "s" : "") : "tout est lu";
+  g("nfbody").innerHTML = NOTIFS.map((n, i) => `
+    <div class="nf ${n.un ? "un" : ""}">
+      <span class="ni"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg></span>
+      <span class="nb2"><p>${n.t}</p><small>${n.time}</small></span>
+      ${n.un ? `<button class="okb" onclick="nfRead(${i})">OK</button>` : ""}
+    </div>`).join("");
+}
+function nfRead(i){
+  NOTIFS[i].un = false; renderAll();
+  const r = g("nfbody").children[i];
+  if(r){ r.classList.add("flash2"); setTimeout(() => r.classList.remove("flash2"), 900); }
+}
+function notifAll(){ NOTIFS.forEach(n => n.un = false); toast("Tout est lu"); renderAll(); }
+
+/* ---------- suppression de compte (2 temps, la demande part au bureau) ---------- */
+let DELACCT = false;
+function delAcct(){
+  if(!DELACCT){
+    DELACCT = true;
+    g("delacct-lbl").textContent = "Re-touche pour confirmer la demande";
+    toast("La demande part au bureau — re-touche pour confirmer");
+    setTimeout(() => { if(DELACCT){ DELACCT = false; g("delacct-lbl").textContent = "Supprimer mon compte"; } }, 3500);
+    return;
+  }
+  DELACCT = false;
+  g("delacct-lbl").textContent = "Demande envoyée au bureau";
+  toast("Demande envoyée — l’administrateur doit valider la suppression");
+}
+
+renderAll();
+</script>
+</body>
+</html>

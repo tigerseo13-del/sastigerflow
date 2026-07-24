@@ -778,6 +778,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
   </nav>
   <nav class="nav navbot">
+    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.56rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
     <a href="rapports.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Rapports<span style="font-size:.56rem;font-weight:800;background:#FF5A1F;color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">BÊTA</span></a>
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
@@ -1229,7 +1230,6 @@ function allTech(on){
 }
 document.addEventListener('click', e=>{
   if(!e.target.closest('#tdrop')) document.getElementById('tdpanel').classList.remove('open');
-  if(!e.target.closest('.helpwrap')) document.getElementById('helppop').classList.remove('open');
 });
 function toggleTech(id){
   VIS.has(id) ? VIS.delete(id) : VIS.add(id);
@@ -1558,23 +1558,11 @@ function renderDetail(){
   let mainBtns = "", menuItems = "";
   if(v.cancelled){
     mainBtns = `<button class="dbig" onclick="restoreInt(${v.id})">↩ Restaurer l'intervention</button>`;
-  } else if(DEVCH === v.id){
-    mainBtns = `<div class="fin2">
-      <div class="finh">Devis express — ${v.client}</div>
-      <div class="elab">Prestation</div>
-      <input class="encm" id="dv-desc" style="font-family:'Inter';font-size:.9rem;font-weight:600" value="${TYPES[v.type].lbl} — traitement complet">
-      <div class="elab">Montant TTC</div>
-      <input class="encm" id="dv-m" inputmode="decimal" value="${(120 + (v.id * 53) % 360).toFixed(2).replace(".", ",")}">
-      <button class="dbig" onclick="devSigne(${v.id})">Faire signer le client</button>
-      <button class="fback" onclick="devMail(${v.id})">Il veut réfléchir — envoyer ce devis par e-mail</button>
-      <button class="fback" onclick="devBack()">← Retour</button>
-    </div>`;
-    menuItems = `<button onclick="cancelStart(${v.id})">✕ Annuler le démarrage</button>`;
   } else if(ENCH === v.id){
     mainBtns = `<div class="fin2">
       <div class="finh">Encaissement — ${v.client}</div>
       <div class="elab">Montant TTC</div>
-      <input class="encm" id="enc-m" inputmode="decimal" value="${v.devisM || (80 + (v.id * 37) % 160).toFixed(2).replace(".", ",")}">
+      <input class="encm" id="enc-m" inputmode="decimal" value="${(80 + (v.id * 37) % 160).toFixed(2).replace(".", ",")}">
       <div class="elab">Mode de paiement</div>
       <div class="encmodes">
         <button class="encmode on" data-m="Carte bancaire" onclick="encMode(this)">Carte</button>
@@ -1589,7 +1577,7 @@ function renderDetail(){
     menuItems = `<button onclick="cancelStart(${v.id})">✕ Annuler le démarrage</button>`;
   } else if(v.done && v.devisFlag){
     mainBtns = `<div class="fin2">
-      <div class="finh">Devis ${v.devisM ? "de " + v.devisM + " € " : ""}envoyé — en attente de la réponse</div>
+      <div class="finh">Devis envoyé — en attente de la réponse du client</div>
       <button class="dbig" onclick="encOpen(${v.id})">Le client a dit OUI → encaisser</button>
     </div>`;
     menuItems = `<button onclick="finishInt(${v.id})">↩ Rouvrir l'intervention</button>`;
@@ -1600,7 +1588,7 @@ function renderDetail(){
     mainBtns = `<div class="fin2">
       <div class="finh">Intervention en cours — pour la clôturer :</div>
       <button class="fopt" onclick="encOpen(${v.id})"><span class="fic2 g"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span><span><b>Intervention terminée</b><small>encaisser le client, puis faire le rapport</small></span></button>
-      <button class="fopt" onclick="devOpen(${v.id})"><span class="fic2 b"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span><span><b>Devis sur place</b><small>le client signe sur le téléphone, ou le reçoit par e-mail</small></span></button>
+      <button class="fopt" onclick="devAtelier(${v.id})"><span class="fic2 b"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span><span><b>Devis sur place</b><small>ouvre l'atelier devis (bibliothèque) — la fiche t'attendra ici</small></span></button>
     </div>`;
     menuItems = `<button onclick="cancelStart(${v.id})">✕ Annuler le démarrage</button>`;
   } else {
@@ -1840,27 +1828,27 @@ function dupInt(id){
   toast("🔁 Dupliquée au " + nd.split("-").reverse().join("/") + " · " + hstr(v.start) + " · " + TECHS[v.tech].nom);
 }
 let FINCH = null, ENCH = null, DEVCH = null;
-function devOpen(id){ DEVCH = id; renderDetail(); }
-function devBack(){ DEVCH = null; renderDetail(); }
-function devGrab(id){
-  const v = INTERVS.find(x => x.id === id);
-  const de = document.getElementById("dv-desc"), dm = document.getElementById("dv-m");
-  if(de && de.value.trim()) v.devisDesc = de.value.trim();
-  if(dm && dm.value.trim()) v.devisM = dm.value.trim();
+const IFKEY = "tigerflow-interv-flow";
+function iflowSave(v){
+  try{
+    const m = JSON.parse(localStorage.getItem(IFKEY)) || {};
+    m[v.id] = {started:!!v.started, done:!!v.done, devisFlag:!!v.devisFlag, paid:v.paid || null};
+    localStorage.setItem(IFKEY, JSON.stringify(m));
+  }catch(e){}
 }
-function devSigne(id){
+(function iflowApply(){
+  try{
+    const m = JSON.parse(localStorage.getItem(IFKEY)) || {};
+    INTERVS.forEach(v => { const o = m[v.id]; if(o) Object.assign(v, o); });
+  }catch(e){}
+})();
+function devAtelier(id){
   const v = INTERVS.find(x => x.id === id);
-  devGrab(id);
-  v.devisSigned = true; v.devisFlag = false; DEVCH = null;
-  toast("Devis " + (v.devisM ? v.devisM + " € " : "") + "signé par " + v.client + " — encaissement");
-  encOpen(id);
-}
-function devMail(id){
-  const v = INTERVS.find(x => x.id === id);
-  devGrab(id);
-  v.done = true; v.devisFlag = true; DEVCH = null;
-  render(); renderDetail();
-  toast("Devis " + (v.devisM ? "de " + v.devisM + " € " : "") + "envoyé à " + v.client + " — la fiche attend sa réponse");
+  v.started = true; v.done = true; v.devisFlag = true; DEVCH = null; ENCH = null;
+  iflowSave(v);
+  render();
+  toast("La fiche t'attend ici — fais le devis avec la bibliothèque, " + v.client + " est prérempli");
+  setTimeout(() => { location.href = "devis.html?c=" + encodeURIComponent(v.client); }, 900);
 }
 function encOpen(id){ ENCH = id; const v = INTERVS.find(x => x.id === id); if(v){ v.started = true; } renderDetail(); }
 function encBack(){ ENCH = null; renderDetail(); }
@@ -1874,6 +1862,7 @@ function encDone(id){
   const mode = (document.querySelector(".encmode.on") || {dataset:{m:"Carte bancaire"}}).dataset.m;
   v.paid = {m, mode};
   v.devisFlag = false;
+  iflowSave(v);
   ENCH = null;
   toast((m ? m + " € encaissés" : "Encaissé") + " par " + mode.toLowerCase() + " — au rapport !");
   openReport(id);
@@ -1881,6 +1870,7 @@ function encDone(id){
 function encSkip(id){
   const v = INTERVS.find(x => x.id === id);
   v.devisFlag = false;
+  iflowSave(v);
   ENCH = null;
   toast("Encaissement remis à plus tard — le rapport s'ouvre");
   openReport(id);
@@ -1888,12 +1878,14 @@ function encSkip(id){
 function startInt(id){
   const v = INTERVS.find(x=>x.id===id);
   v.started = true;
+  iflowSave(v);
   render(); renderDetail();
   toast("▶ Intervention démarrée — " + v.client);
 }
 function cancelStart(id){
   const v = INTERVS.find(x=>x.id===id);
   v.started = false;
+  iflowSave(v);
   render(); renderDetail();
   toast("✕ Démarrage annulé");
 }
@@ -2192,6 +2184,7 @@ function reassignTo(id, j){
 function finishInt(id){
   const v = INTERVS.find(x=>x.id===id);
   v.done = !v.done;
+  iflowSave(v);
   render(); renderDetail();
   toast(v.done ? "✓ Intervention terminée" : "↩ Intervention rouverte");
 }
