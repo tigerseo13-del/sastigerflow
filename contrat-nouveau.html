@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<link rel="preload" as="image" href="logo-tigre.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>TigerFlow — Nouveau contrat</title>
@@ -20,11 +21,14 @@
   --safe-b:env(safe-area-inset-bottom,0px);
 }
 *{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
 button{background:none;border:0;font-family:inherit;cursor:pointer}
 a{text-decoration:none;color:inherit}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
-input,select,textarea{font-family:inherit;font-size:.9rem;color:var(--ink);border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;background:#fff;width:100%;transition:.13s}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
+input,select,textarea{font-family:inherit;font-size:.9rem;color:var(--ink);border:1.5px solid transparent;border-radius:11px;padding:11px 13px;background:#F6F7F9;width:100%;transition:border .13s, background .13s}
+input:hover,select:hover,textarea:hover{border-color:#E7E9EE;background:#FBFBFC}
+input::placeholder,textarea::placeholder{color:#CDD2DA;font-weight:400;font-size:.84rem}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);background:#fff;box-shadow:0 0 0 3px #FFEFE6}
 input.err,select.err{border-color:var(--red)!important;background:var(--red-bg)}
 textarea{resize:vertical;min-height:76px}
 
@@ -66,6 +70,10 @@ textarea{resize:vertical;min-height:76px}
 .page{max-width:1120px;margin:0 auto;padding:22px 26px calc(60px + var(--safe-b))}
 .card{background:var(--card);border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:16px}
 .card-h{font-family:'Sora';font-weight:800;font-size:.98rem;display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.steph{display:flex;align-items:center;gap:11px;margin:26px 2px 12px;font-family:'Sora';font-weight:800;font-size:1.02rem;letter-spacing:-.2px}
+.steph:first-of-type{margin-top:2px}
+.steph span{width:28px;height:28px;border-radius:9px;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:.85rem;flex:none;box-shadow:0 4px 10px -3px rgba(255,90,31,.5)}
+.steph small{font-family:'Inter';font-weight:500;font-size:.76rem;color:var(--muted);margin-left:2px}
 .card-h .tick{width:4px;height:17px;border-radius:3px;background:var(--orange);flex:none}
 .card-h small{font-family:'Inter';font-weight:500;font-size:.74rem;color:var(--muted)}
 .lab{display:block;font-size:.76rem;font-weight:700;color:var(--ink-2);margin-bottom:6px}
@@ -85,9 +93,15 @@ textarea{resize:vertical;min-height:76px}
 .objbig{font-size:1.02rem;font-weight:700;padding:13px 15px}
 
 /* badge durée + TTC */
-.badge{display:inline-flex;align-items:center;gap:7px;background:var(--bg);border-radius:11px;padding:11px 15px;font-size:.9rem;font-weight:700;width:100%;border:1.5px solid transparent}
+.badge{display:inline-flex;align-items:center;gap:7px;background:#F6F7F9;border-radius:11px;padding:11px 15px;font-size:.9rem;font-weight:700;width:100%;border:1.5px solid transparent}
+.bic{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;flex:none}
+.cdot{width:9px;height:9px;border-radius:50%;background:var(--c,#999);display:inline-block;flex:none;margin-right:1px}
 .badge small{font-weight:600;color:var(--muted)}
-.ttcbox{background:var(--orange-soft);border-radius:12px;padding:12px 16px;display:flex;align-items:baseline;gap:10px}
+.qbtns{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;align-items:center}
+.qbtns small{font-size:.72rem;font-weight:700;color:var(--muted);margin-right:2px}
+.qb{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:.76rem;font-weight:700;color:var(--ink-2);cursor:pointer;font-family:inherit;transition:.13s}
+.qb:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
+.ttcbox{background:linear-gradient(135deg,#FFF3EC,#FFE4D5);border:1px solid #FFD9C4;border-radius:12px;padding:12px 16px;display:flex;align-items:baseline;gap:10px}
 .ttcbox b{font-family:'Sora';font-size:1.25rem;color:var(--orange-deep)}
 .ttcbox small{font-size:.78rem;color:var(--ink-2);font-weight:600}
 
@@ -138,8 +152,12 @@ textarea{resize:vertical;min-height:76px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ===== disposition : formulaire + rail récapitulatif ===== */
-.layout{display:grid;grid-template-columns:minmax(0,760px);justify-content:center;gap:18px;align-items:start}
-.rail{display:none}
+.layout{display:block;padding-bottom:88px}
+.actbar{position:fixed;left:238px;right:0;bottom:0;z-index:45;display:flex;align-items:center;gap:11px;padding:12px 26px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.ab-ttc small{display:block;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ab-ttc b{font-family:'Sora';font-size:1.18rem;letter-spacing:-.3px}
+@media(max-width:900px){.actbar{left:0;padding:11px 14px}}
+
 .rcard{background:#fff;border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:18px 19px}
 .rcard h3{font-family:'Sora';font-weight:800;font-size:.92rem;display:flex;align-items:center;gap:9px;margin-bottom:12px}
 .rcard h3 .tick{width:4px;height:15px;border-radius:3px;background:var(--orange);flex:none}
@@ -156,7 +174,7 @@ textarea{resize:vertical;min-height:76px}
 .rck.ok i{background:var(--green);border-color:var(--green)}
 .rbtns{display:grid;gap:9px;margin-top:13px}
 .rbtns .btn2{justify-content:center;width:100%}
-@media(max-width:1080px){.layout{grid-template-columns:1fr}.rail{position:static}}
+
 
 /* ===== mobile ===== */
 @media(max-width:1080px){.fgrid4{grid-template-columns:1fr 1fr}}
@@ -190,7 +208,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 <!-- ============ SIDEBAR ============ -->
 <aside class="sidebar">
   <div class="brand">
-    <span class="logo" style="position:relative;overflow:hidden"><img src="logotigre.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='logo-tigre.png'}else{this.remove()}"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></svg></span>
+    <span class="logo" style="position:relative;overflow:hidden"><img src="logo-tigre.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></svg></span>
     <span class="name">TIGER<em>FLOW</em></span>
   </div>
   <div class="nav-label">Général</div>
@@ -218,17 +236,17 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 <!-- ============ MAIN ============ -->
 <div class="main">
   <div class="topbar">
-    <div class="crumbs">📑 <a href="contrats-liste.html">Contrats</a> / <span class="cur">Nouveau contrat</span></div>
-    <div class="title-m">📑 Nouveau contrat</div>
+    <div class="crumbs"><a href="contrats-liste.html">Contrats</a> / <span class="cur">Nouveau contrat</span></div>
+    <div class="title-m"><svg class="bic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg> Nouveau contrat</div>
     <div class="spacer"></div>
     <a class="btn2" href="contrats-liste.html">Annuler</a>
-    <button class="btn2" onclick="saveContrat('brouillon')" title="Ctrl+S"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Enregistrer comme brouillon</button>
-    <button class="btn2 primary" onclick="saveContrat('actif')"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Enregistrer et envoyer</button>
   </div>
 
   <div class="page">
    <div class="layout">
    <div class="col">
+
+    <div class="steph"><span>1</span>Le contrat <small>— qui, quand, combien</small></div>
 
     <!-- ===== 1. INFORMATIONS ===== -->
     <div class="card">
@@ -250,12 +268,12 @@ a,button,input,select,textarea,label{touch-action:manipulation}
           <label class="lab">Type de contrat <em>*</em></label>
           <input type="hidden" id="v-type">
           <div class="skchips" id="typechips">
-            <label class="skchip"><input type="radio" name="ctype" value="Dératisation" onchange="typePick(this)"> 🐀 Dératisation</label>
-            <label class="skchip"><input type="radio" name="ctype" value="Désinsectisation" onchange="typePick(this)"> 🪳 Désinsectisation</label>
-            <label class="skchip"><input type="radio" name="ctype" value="Veille punaises de lit" onchange="typePick(this)"> 🛏️ Veille punaises de lit</label>
-            <label class="skchip"><input type="radio" name="ctype" value="Dépigeonnage" onchange="typePick(this)"> 🕊️ Dépigeonnage</label>
-            <label class="skchip"><input type="radio" name="ctype" value="Contrat 3D complet" onchange="typePick(this)"> 🛡️ Contrat 3D complet</label>
-            <label class="skchip"><input type="radio" name="ctype" value="Veille sanitaire HACCP" onchange="typePick(this)"> 🧴 Veille sanitaire HACCP</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Dératisation" onchange="typePick(this)"> <i class="cdot" style="--c:#B45309"></i>Dératisation</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Désinsectisation" onchange="typePick(this)"> <i class="cdot" style="--c:#9A3412"></i>Désinsectisation</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Veille punaises de lit" onchange="typePick(this)"> <i class="cdot" style="--c:#7C3AED"></i>Veille punaises de lit</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Dépigeonnage" onchange="typePick(this)"> <i class="cdot" style="--c:#2E5CE6"></i>Dépigeonnage</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Contrat 3D complet" onchange="typePick(this)"> <i class="cdot" style="--c:#FF5A1F"></i>Contrat 3D complet</label>
+            <label class="skchip"><input type="radio" name="ctype" value="Veille sanitaire HACCP" onchange="typePick(this)"> <i class="cdot" style="--c:#0D9488"></i>Veille sanitaire HACCP</label>
           </div>
         </div>
         <div class="full">
@@ -279,7 +297,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
         </div>
         <div>
           <label class="lab">Durée du contrat</label>
-          <span class="badge" id="v-duree">📆 <small>choisis les deux dates</small></span>
+          <span class="badge" id="v-duree"><svg class="bic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg> <small>choisis les deux dates</small></span>
         </div>
         <div>
           <label class="lab">Fréquence de facturation <em>*</em></label>
@@ -291,6 +309,11 @@ a,button,input,select,textarea,label{touch-action:manipulation}
             <option>Annuelle</option>
           </select>
         </div>
+      </div>
+      <div class="qbtns"><small>Durée rapide :</small>
+        <button type="button" class="qb" onclick="durQuick(6)">6 mois</button>
+        <button type="button" class="qb" onclick="durQuick(12)">1 an</button>
+        <button type="button" class="qb" onclick="durQuick(24)">2 ans</button>
       </div>
     </div>
 
@@ -317,23 +340,25 @@ a,button,input,select,textarea,label{touch-action:manipulation}
         </div>
         <div>
           <label class="lab">Par échéance</label>
-          <span class="badge" id="v-parech">💶 <small>selon la fréquence</small></span>
+          <span class="badge" id="v-parech"><svg class="bic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg> <small>selon la fréquence</small></span>
         </div>
       </div>
     </div>
 
     <!-- ===== 4. CATÉGORIES DE SERVICES ===== -->
+    <div class="steph"><span>2</span>Le contenu <small>— ce que le technicien fait sur place</small></div>
+
     <div class="card">
       <div class="card-h"><span class="tick"></span>Catégories de services <small>— ce que couvre le contrat</small></div>
       <div class="skchips" id="v-cats">
-        <label class="skchip"><input type="checkbox" value="Cafards"> 🪳 Cafards</label>
-        <label class="skchip"><input type="checkbox" value="Chenilles processionnaires"> 🐛 Chenilles processionnaires</label>
-        <label class="skchip"><input type="checkbox" value="Dératisation (Rats / Souris)"> 🐀 Dératisation (Rats / Souris)</label>
-        <label class="skchip"><input type="checkbox" value="Désinsectisation"> 🧴 Désinsectisation</label>
-        <label class="skchip"><input type="checkbox" value="Guêpes / Frelons"> 🐝 Guêpes / Frelons</label>
-        <label class="skchip"><input type="checkbox" value="Pigeons"> 🕊️ Pigeons</label>
-        <label class="skchip"><input type="checkbox" value="Punaises de lit"> 🛏️ Punaises de lit</label>
-        <label class="skchip"><input type="checkbox" value="Termites & Insectes xylophages"> 🪵 Termites &amp; Insectes xylophages</label>
+        <label class="skchip"><input type="checkbox" value="Cafards"> <i class="cdot" style="--c:#9A3412"></i>Cafards</label>
+        <label class="skchip"><input type="checkbox" value="Chenilles processionnaires"> <i class="cdot" style="--c:#65A30D"></i>Chenilles processionnaires</label>
+        <label class="skchip"><input type="checkbox" value="Dératisation (Rats / Souris)"> <i class="cdot" style="--c:#B45309"></i>Dératisation (Rats / Souris)</label>
+        <label class="skchip"><input type="checkbox" value="Désinsectisation"> <i class="cdot" style="--c:#0D9488"></i>Désinsectisation</label>
+        <label class="skchip"><input type="checkbox" value="Guêpes / Frelons"> <i class="cdot" style="--c:#A16207"></i>Guêpes / Frelons</label>
+        <label class="skchip"><input type="checkbox" value="Pigeons"> <i class="cdot" style="--c:#2E5CE6"></i>Pigeons</label>
+        <label class="skchip"><input type="checkbox" value="Punaises de lit"> <i class="cdot" style="--c:#7C3AED"></i>Punaises de lit</label>
+        <label class="skchip"><input type="checkbox" value="Termites & Insectes xylophages"> <i class="cdot" style="--c:#57534E"></i>Termites &amp; Insectes xylophages</label>
       </div>
     </div>
 
@@ -352,6 +377,8 @@ a,button,input,select,textarea,label{touch-action:manipulation}
     </div>
 
     <!-- ===== 7. PLANIFICATION ===== -->
+    <div class="steph"><span>3</span>La planification <small>— le rythme des passages</small></div>
+
     <div class="card">
       <div class="card-h"><span class="tick"></span>Planification des interventions</div>
       <div class="fgrid" style="margin-bottom:14px">
@@ -369,10 +396,10 @@ a,button,input,select,textarea,label{touch-action:manipulation}
         <div>
           <label class="lab">Nombre d'interventions par an <em>*</em></label>
           <input type="number" id="v-nbint" min="1" max="52" placeholder="Ex. 4">
-          <div class="hint" id="nbhint" style="display:none">✨ rempli d'après la fréquence — modifiable</div>
+          <div class="hint" id="nbhint" style="display:none">rempli d'après la fréquence — modifiable</div>
         </div>
       </div>
-      <label class="lab">Jours préférés <em>*</em></label>
+      <label class="lab">Jours préférés <em>*</em> <button type="button" class="qb" style="margin-left:8px" onclick="joursOuvres()">Lun → Ven</button></label>
       <div class="skchips" id="v-jours" style="margin-bottom:14px">
         <label class="skchip"><input type="checkbox" value="Lundi"> Lundi</label>
         <label class="skchip"><input type="checkbox" value="Mardi"> Mardi</label>
@@ -388,7 +415,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
         <label class="skchip"><input type="checkbox" value="10:00 – 12:00"> 10:00 – 12:00</label>
         <label class="skchip"><input type="checkbox" value="13:00 – 15:00"> 13:00 – 15:00</label>
         <label class="skchip"><input type="checkbox" value="15:00 – 17:00"> 15:00 – 17:00</label>
-        <label class="skchip"><input type="checkbox" value="perso" id="ck-perso" onchange="persoTog()"> ⚙️ Personnaliser</label>
+        <label class="skchip"><input type="checkbox" value="perso" id="ck-perso" onchange="persoTog()"> Personnaliser</label>
       </div>
       <div class="fgrid" id="persobox" style="display:none;margin-top:12px;max-width:440px">
         <div><label class="lab">De</label><input type="time" id="v-pdeb" value="09:00"></div>
@@ -397,6 +424,8 @@ a,button,input,select,textarea,label{touch-action:manipulation}
     </div>
 
     <!-- ===== 8. RENOUVELLEMENT & SIGNATURE ===== -->
+    <div class="steph"><span>4</span>Finalisation <small>— renouvellement, signature, documents</small></div>
+
     <div class="card">
       <div class="card-h"><span class="tick"></span>Renouvellement &amp; signature</div>
       <div class="swrow">
@@ -428,37 +457,21 @@ a,button,input,select,textarea,label{touch-action:manipulation}
     <div class="card">
       <div class="card-h"><span class="tick"></span>Pièces jointes <small>— PDF, JPG, PNG · 10 Mo max par fichier</small></div>
       <div class="pjrow" id="v-pjs">
-        <label class="pjadd">📎 Téléverser un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label>
-        <button class="pjadd" onclick="toast('📚 Bibliothèque de documents — bientôt reliée à la base')">🗂️ Bibliothèque de documents</button>
+        <label class="pjadd"><svg class="bic" viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg> Téléverser un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label>
+        <button class="pjadd" onclick="toast('Bibliothèque de documents — bientôt reliée à la base')"><svg class="bic" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> Bibliothèque de documents</button>
       </div>
       <div class="pjhint" id="pjempty">Aucun fichier sélectionné.</div>
     </div>
 
    </div><!-- /.col -->
 
-   <!-- ===== RAIL RÉCAPITULATIF ===== -->
-   <aside class="rail">
-     <div class="rcard">
-       <h3><span class="tick"></span>Récapitulatif</h3>
-       <div class="rline"><span class="k">Client</span><b id="r-client">—</b></div>
-       <div class="rline"><span class="k">Type</span><b id="r-type">—</b></div>
-       <div class="rline"><span class="k">Durée</span><b id="r-duree">—</b></div>
-       <div class="rline"><span class="k">Facturation</span><b id="r-freq">—</b></div>
-       <div class="rline"><span class="k">Passages / an</span><b id="r-nbint">—</b></div>
-       <div class="rline" style="border-bottom:0"><span class="k">Renouvellement</span><b id="r-renouv">Oui ✓</b></div>
-       <div class="rttc"><small>Montant annuel TTC</small><b id="r-ttc">0,00 €</b></div>
-       <div class="rsub" id="r-ech">—</div>
-       <div class="rck" id="ck-cli"><i></i>Client choisi</div>
-       <div class="rck" id="ck-type"><i></i>Type de contrat</div>
-       <div class="rck" id="ck-dates"><i></i>Dates &amp; facturation</div>
-       <div class="rck" id="ck-fin"><i></i>Montant renseigné</div>
-       <div class="rck" id="ck-plan"><i></i>Planification complète</div>
-       <div class="rbtns">
-         <button class="btn2 primary" onclick="saveContrat('actif')"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Enregistrer et envoyer</button>
-         <button class="btn2" onclick="saveContrat('brouillon')"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Brouillon</button>
-       </div>
-     </div>
-   </aside>
+   <!-- ===== BARRE D'ACTION ===== -->
+   <div class="actbar">
+     <div class="ab-ttc"><small>Montant annuel TTC</small><b id="r-ttc">0,00 €</b></div>
+     <span style="flex:1"></span>
+     <button class="btn2" onclick="saveContrat('brouillon')"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Brouillon</button>
+     <button class="btn2 primary" onclick="saveContrat('actif')"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Enregistrer et envoyer</button>
+   </div>
    </div><!-- /.layout -->
   </div>
 </div>
@@ -499,7 +512,7 @@ try{
 }catch(e){}
 function pickCli(){
   const c = CLIENTS[g("v-client").value];
-  g("cliadr").textContent = c ? "📍 " + c.adr + " · " + c.tel : "L'adresse du client s'affichera ici";
+  g("cliadr").innerHTML = c ? '<svg class="bic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + c.adr + " · " + c.tel : "L'adresse du client s'affichera ici";
   titreSmart();
 }
 function typePick(el){
@@ -526,11 +539,11 @@ function datesCalc(){
   const a = g("v-deb").value, b = g("v-fin").value;
   const el = g("v-duree");
   if(a && b){
-    if(b <= a){ el.innerHTML = "⚠️ <small>la fin doit suivre le début</small>"; renPrev(); return; }
+    if(b <= a){ el.innerHTML = '<svg class="bic" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg> <small>la fin doit suivre le début</small>'; renPrev(); return; }
     const m = Math.max(1, moisEntre(a, b));
-    el.innerHTML = "📆 " + (m >= 12 && m % 12 === 0 ? (m / 12) + " an" + (m > 12 ? "s" : "") : m + " mois");
+    el.innerHTML = '<svg class="bic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg> ' + (m >= 12 && m % 12 === 0 ? (m / 12) + " an" + (m > 12 ? "s" : "") : m + " mois");
   } else {
-    el.innerHTML = "📆 <small>choisis les deux dates</small>";
+    el.innerHTML = '<svg class="bic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg> <small>choisis les deux dates</small>';
   }
   renPrev();
 }
@@ -552,8 +565,8 @@ function finCalc(){
   g("v-ttc").textContent = eur(ttc);
   const f = ECH[g("v-freqfac").value];
   g("v-parech").innerHTML = (f && ttc > 0)
-    ? "💶 " + eur(ttc / f[0]) + " <small>/ " + f[1] + "</small>"
-    : "💶 <small>selon la fréquence</small>";
+    ? '<svg class="bic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg> ' + eur(ttc / f[0]) + ' <small>/ ' + f[1] + '</small>'
+    : '<svg class="bic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg> <small>selon la fréquence</small>';
 }
 
 /* ================= MATÉRIEL & CHECKLIST ================= */
@@ -612,11 +625,11 @@ function pjAdd(inp){
   [...inp.files].forEach(f => {
     const s = document.createElement("span");
     s.className = "pjc";
-    s.innerHTML = "📎 " + f.name + ' <button onclick="this.parentNode.remove()" title="Retirer">✕</button>';
+    s.innerHTML = '<svg class="bic" viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg> ' + f.name + ' <button onclick="this.parentNode.remove()" title="Retirer">✕</button>';
     g("v-pjs").appendChild(s);
   });
   inp.value = "";
-  toast("📎 Fichier ajouté — il partira avec le contrat");
+  toast("Fichier ajouté — il partira avec le contrat");
 }
 
 /* ================= ENREGISTREMENT ================= */
@@ -638,7 +651,7 @@ function saveContrat(statut){
   const cren = [...document.querySelectorAll("#v-creneaux input:checked")].map(c => c.value === "perso" ? (g("v-pdeb").value + " – " + g("v-pfin").value) : c.value);
   g("v-creneaux").classList.toggle("err", !cren.length); if(!cren.length) missing = true;
   if(missing){
-    toast("⚠️ Remplis les champs marqués * — ils sont en rouge");
+    toast("Remplis les champs marqués * — ils sont en rouge");
     const e1 = document.querySelector(".err");
     if(e1 && e1.scrollIntoView) try{ e1.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
     return;
@@ -660,7 +673,7 @@ function saveContrat(statut){
     jours, creneaux: cren,
     renouv: g("v-renouv").checked, renech: parseInt(g("v-renech").value) || 12,
     signature: g("v-signature").checked,
-    pj: [...document.querySelectorAll("#v-pjs .pjc")].map(p => p.textContent.replace("📎", "").replace("✕", "").trim()),
+    pj: [...document.querySelectorAll("#v-pjs .pjc")].map(p => p.textContent.replace("Téléverser", "").replace("✕", "").trim()),
     statut,
   };
   try{
@@ -670,7 +683,7 @@ function saveContrat(statut){
   }catch(e){}
   toast(statut === "brouillon"
     ? "Brouillon " + ref + " enregistré — visible dans la liste des contrats"
-    : "📨 Contrat " + ref + " enregistré et envoyé à " + rec.client);
+    : "Contrat " + ref + " enregistré et envoyé à " + rec.client);
   setTimeout(() => { location.href = "contrats-liste.html"; }, 1200);
 }
 
@@ -685,30 +698,36 @@ function toast(msg){
 }
 document.addEventListener("keydown", e => {
   if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s"){ e.preventDefault(); saveContrat("brouillon"); }
+  if((e.metaKey || e.ctrlKey) && e.key === "Enter"){ e.preventDefault(); saveContrat("actif"); }
+});
+/* ===== ergonomie : dates intelligentes & raccourcis ===== */
+const isoD = d => d.toISOString().slice(0, 10);
+function plusMois(iso, n){ const d = new Date(iso + "T12:00:00"); d.setMonth(d.getMonth() + n); return isoD(d); }
+function durQuick(n){
+  if(!g("v-deb").value) g("v-deb").value = isoD(new Date());
+  g("v-fin").value = plusMois(g("v-deb").value, n);
+  g("v-fin").classList.remove("err");
+  datesCalc();
+}
+function joursOuvres(){
+  document.querySelectorAll("#v-jours input").forEach(c => { c.checked = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].includes(c.value); });
+  g("v-jours").classList.remove("err");
+  recap();
+}
+/* pré-remplissage : début = aujourd'hui, fin = +1 an — modifiables, zéro clic pour le cas courant */
+if(!g("v-deb").value){ g("v-deb").value = isoD(new Date()); g("v-fin").value = plusMois(g("v-deb").value, 12); datesCalc(); }
+/* si on recule la fin avant le début, elle se recale à +1 an automatiquement */
+g("v-deb").addEventListener("change", () => {
+  if(g("v-deb").value && (!g("v-fin").value || g("v-fin").value <= g("v-deb").value)){
+    g("v-fin").value = plusMois(g("v-deb").value, 12); datesCalc();
+  }
 });
 /* les champs marqués en rouge se nettoient dès qu'on les corrige */
 document.addEventListener("input", e => { if(e.target.classList) e.target.classList.remove("err"); });
 document.addEventListener("change", e => { if(e.target.classList) e.target.classList.remove("err"); });
 /* ===== rail récapitulatif : tout se met à jour en direct ===== */
 function recap(){
-  const or = (v, d) => v || d || "—";
-  g("r-client").textContent = or(g("v-client").value);
-  g("r-type").textContent = or(g("v-type").value);
-  g("r-duree").textContent = (g("v-deb").value && g("v-fin").value && g("v-fin").value > g("v-deb").value)
-    ? g("v-duree").textContent.replace("📆", "").trim() : "—";
-  g("r-freq").textContent = or(g("v-freqfac").value);
-  g("r-nbint").textContent = g("v-nbint").value ? g("v-nbint").value + " ×" : "—";
-  g("r-renouv").textContent = g("v-renouv").checked ? "Oui ✓" : "Non";
   g("r-ttc").textContent = g("v-ttc").textContent;
-  const ech = g("v-parech").textContent.replace("💶", "").trim();
-  g("r-ech").textContent = ech.startsWith("selon") ? "—" : "soit " + ech;
-  const ck = (id, ok) => { const el = g(id); el.classList.toggle("ok", !!ok); el.querySelector("i").textContent = ok ? "✓" : ""; };
-  ck("ck-cli", g("v-client").value);
-  ck("ck-type", g("v-type").value);
-  ck("ck-dates", g("v-deb").value && g("v-fin").value && g("v-fin").value > g("v-deb").value && g("v-freqfac").value);
-  ck("ck-fin", parseFloat(g("v-ht").value) > 0);
-  ck("ck-plan", g("v-freqint").value && parseInt(g("v-nbint").value) > 0
-    && document.querySelector("#v-jours input:checked") && document.querySelector("#v-creneaux input:checked"));
 }
 document.addEventListener("input", recap);
 document.addEventListener("change", recap);
