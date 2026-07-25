@@ -150,7 +150,131 @@ contrat reste blanc bordé (neutre voulu), .71rem + léger relief. Contrastes �
 le client en titre. Le titre du panneau détail reste « Client — Type ». Les nouveautés
 conservées : chips type, sceau ✓ Terminée/Encaissée, pastille note. Natures rendues STABLES par client (hash du nom, fini la loterie par
 intervention) — clients sous contrat restent ctr. Vérif 8/8.
-Reste : aligner le vocabulaire de l'appli technicien (4 natures, mêmes mots).
+AUDIT COMPLET 24/07 (les 25 pages au scanner jsdom) : zéro erreur JS, zéro image
+cassée, zéro id en double, zéro onclick mort. Corrections d'affichage : tech-mobile
+statuts « À faire » → « Planifiées » (onglet, tuile, toast, re-render) + dates/réfs
+2024 → 2026 (11 corr.) ; technicien/techniciens/tournee : « Retour de garantie » →
+« 2ᵉ passage garantie » (7 corr.). GARDÉS volontairement : « À faire » dans
+taches.html (ce sont des tâches, pas des interventions) et « 2ᵉ passage inclus »
+dans devis/facture (description commerciale d'une ligne de prestation). Le warning
+jsdom « Could not parse CSS » = :has() moderne (contrat-nouveau, techniciens),
+parfaitement géré par les vrais navigateurs — pas un bug.
+FAIT 24/07 — PORTE UNIQUE : le modal « Planifier une intervention » du calendrier
+(code mort, openNew jamais appelé, mais addIv fonctionnait encore et créait des inters
+sans type) est SUPPRIMÉ (markup nvm + openNew/closeNew/addIv + branche Échap).
+La seule porte de création = intervention-nouvelle.html (pré-remplissable ?d&h&t).
+FAIT 24/07 — APPLI TECHNICIEN (tech-mobile.html, vérif 12/12) : ITYPES = mêmes 4 mots
+(Visite devis / Traitement ponctuel / Sous contrat / 2ᵉ passage-garantie), missions
+avec itype + solde, chips .itchip (mêmes couleurs pleines que l'agenda) sur liste et
+fiche + ligne type avec sous-titre, statut « PLANIFIÉE(S) ». CLÔTURE PILOTÉE PAR LE
+TYPE : ctr → finCtr() terminée SANS encaissement + rapport direct ; suite avec solde →
+finSolde() encaisse LE SOLDE ; suite sans solde → comme ctr ; encais → finTrait
+(encaisser puis rapport) ; devis → atelier (inchangés). RÈGLE D'OR ENCAISSEMENT (le nœud Saigon, démêlé 25/07) : chez Saigon on encaisse
+APRÈS le rapport (écran cassé) ; chez TigerFlow l'ENCAISSEMENT VIENT AVANT LE RAPPORT,
+piloté par le TYPE (ponctuel → encaisser puis rapport ; contrat → rapport direct ;
+2ᵉ passage → solde puis rapport ; devis → signature/email puis rapport). Aucun écran
+« Que souhaitez-vous faire ? » après le rapport — ne jamais en créer un.
+Menu Actions du panneau : « 🔁 Dupliquer → semaine prochaine » SUPPRIMÉ (patron
+25/07 — dupInt reste en code mais plus aucun bouton ne l'appelle).
+SUIVANT LIBÉRÉ (25/07, ordre patron) : le niveau d'infestation n'est PLUS obligatoire
+— rapNext (mobile) et rNav (PC) passent sans blocage. NE PAS remettre le verrou.
+ONGLET RAPPORTS PC = VUE DE CONSULTATION (25/07, calquée sur la capture Saigon en
+mieux) : boutons « ⬇ Exporter le rapport » (rPdf) + « 📧 Envoyer par e-mail » (rMail)
+en tête, puis 3 cartes Étape 1/2/3 en lecture (tous les champs, tirets « — » si vide,
+devis compl. « Oui — desc »/« Non », signature « ✓ Signée »), bouton Modifier en pied.
+RAPPORT PC ét.1 (25/07) : zone PHOTOS remontée juste après Signes de présence
+(.rdrop2 grande zone pointillée, icône appareil SVG, hover orange, « elles partiront
+sur le rapport client ») — l'ancienne ligne fine du bas supprimée. AÉRATION : .rlab
+padding-top 24px + margin-bottom 13px, chips gap 8px, marges textarea.
+ENCAISSEMENT PC v2 (25/07, « ça bloque niveau ergonomie », vérif 8/8) : module carté
+.encv2 — contexte (chip type + client + nuisible), montant GROS pré-rempli du VRAI
+v.montant (Sora 1.55rem + « € TTC »), 5 modes en tuiles SVG (Chèque AJOUTÉ), bouton
+principal PARLANT mis à jour en direct (« ✓ Encaisser 179,00 € par carte bancaire —
+puis rapport », encLbl sur input + mode), « Encaisser plus tard » = vrai bouton
+secondaire bordé. encDone lit .emt.on.
+Panneau PC : le bouton « Intervention terminée » du bloc de clôture s'appelle
+désormais « Clôturer l'intervention » (patron 25/07 — évite la confusion avec le
+statut ; sous-titre « encaisser le client, puis faire le rapport » conservé).
+PIÈCES JOINTES PAR ÉTAT (25/07, bug « toutes pareilles » corrigé, vérif 6/6) :
+l'onglet PJ suit l'état de CHAQUE intervention — Planifiée : vide (« Rien pour le
+moment ») ; En cours : 1 photo de constat ; Terminée : photo + bon signé ; Terminée
+AVEC rapport : + signature + rapport PDF. Noms de fichiers avec la référence de
+l'intervention, tailles variées par id.
+CORRECTION PATRON (25/07) : les chips de délai (1 sem/2 sem/1 mois…) sont
+SUPPRIMÉES mobile ET PC — le prochain passage est JUSTE un champ date qui ouvre le
+calendrier au clic. NE PAS les remettre. HIÉRARCHIE titres/champs refaite (l'illisible
+signalé) : .rlab = MAJUSCULES .7rem espacées gris #6B7180 + barre orange + séparateur
+border-top au-dessus de chaque section (sauf la première) — les titres commandent, les
+champs suivent. Appliqué mobile + rapport PC. Cartes devis Oui/Non conservées.
+ÉTAPE SUITES FUN (25/07, vérif 10/10, « c'est ennuyeux le rapport ») : mobile —
+prochain passage EN UN TAP (chips 1 sem/2 sem/1 mois/3 mois/Aucun → rapNextIn calcule
+la date, ligne « 📅 suivi noté au … » ; date précise repliée derrière un lien) ; devis
+complémentaire en 2 GRANDES CARTES (Non vert « tout est réglé » / Oui bleu « travaux à
+chiffrer », .qcards) ; compteur vivant sous les conseils ; intitulés humains (« Les
+conseils au client », « On revient quand ? », ét.4 « Beau boulot — relis, puis fais
+signer »). PC : mêmes chips de délai (rNextIn + toast).
+ERGONOMIE RAPPORT PC (25/07, vérif 8/8, parité mobile) : niveau d'infestation
+requis en douceur (rNav bloque + .rerr secousse + toast) ; changement d'étape →
+drawer.scrollTop=0 ; stepper cliquable sur étapes passées (RID global) ; « Suivant —
+Traitement/Clôture » ; nav collante .rapnavpc sticky bottom fond blur.
+ERGONOMIE RAPPORT (25/07, vérif 9/9) : changement d'étape → scroll haut ; barre
+Suivant COLLANTE (.rapnav sticky, fond blur) avec destination annoncée (« Suivant —
+Traitement/Suites/Signature ») ; niveau d'infestation = SEULE case obligatoire (blocage
+doux : secousse .rerr + toast) ; « Enregistrer et continuer plus tard » sous le CTA
+(rapLater → brouillon + retour fiche) ; bouton Effacer sur la signature mobile. Bouton « ‹ Précédent » AJOUTÉ à la barre
+collante mobile dès l'étape 2 (.bprev, .rapnavrow) — la flèche du haut et le stepper
+cliquable existaient mais un vrai bouton manquait.
+DESIGN RAPPORT (25/07, vérif 9/9) : stepper mobile NOMMÉ (Constat·Traitement·
+Suites·Signature, pastilles numérotées, ✓ vert sur l'acquis, trait orange, clic sur
+étape passée = navigation) ; bandeau contexte .rctx (chip type + client + nuisible +
+heure) ; niveaux infestation ET urgence en pastilles couleur 4 valeurs (vert/bleu/
+ambre/rouge, + Critique ajouté) mobile + PC ; corps du rapport carté blanc, labels
+.rlab à barre orange signature.
+UX RAPPORT (25/07, vérif 8/8) : 1) BROUILLONS mobiles par mission (RAPDRAFTS) —
+quitter le rapport ne perd RIEN, retour = « Brouillon repris », finishRap purge.
+2) RÉCAP AVANT SIGNATURE : mobile ét.4 « Relire, puis signer » + PC « Relecture avant
+signature » (.rsums condensé niveau/urgence/méthode/produits/zones/recos/devis/passage).
+3) SUGGESTIONS PRODUITS par nuisible (PSUGG regex → chips, tap = ligne remplie :
+punaises CimexOut/K-Othrine/Diatomée, rats Brodifacoum…, cafards Goliath/Maxforce…).
+RAPPORT AMÉLIORÉ v2 (25/07, vérif 14/14, réf = maquettes envoyées par le patron à
+Saigon) : PC déjà conforme, ajouts = « Temps passé sur place » (étape 2, r.temps) +
+encart « brouillon de devis créé automatiquement » + toast rSave. MOBILE enrichi :
+ét.1 + Signes de présence + Urgence client ; ét.2 Méthode en chips + Produits lignes
+nom/qté (+Ajouter/✕, .rprod) + Matériel chips + Actions ; ét.3 + Devis complémentaire
+Oui/Non (Oui → description + VRAI brouillon poussé dans DEVIS à finishRap) + suivi.
+RAPPORT MOBILE ALIGNÉ PC (24/07, vérif 11/11) : 4 étapes = 1 Constat (niveau
+Faible/Modérée/Forte + observation) · 2 Méthode & produits + Zones traitées (chips) +
+photos · 3 Recommandations (chips) + Prochain passage (date) · 4 Signature — mêmes
+rubriques que le rapport PC du calendrier. BANDEAU DU SORT DU DEVIS en tête (m.devout) :
+« ✍️ signé sur place — X € · encaissé/à encaisser » ou « ✉️ envoyé par email — X € ·
+en attente ». RAPD conserve les saisies entre étapes (rapKeep). « Envoyer par email »
+clôture DÉSORMAIS la visite (done + rapport) comme la signature — plus de wait.
+PARCOURS DEVIS CORRIGÉ (bug signalé par le patron 24/07, vérif 11/11) :
+atelier = CATALOGUE COMPLET 12 prestations + recherche instantanée (#blq) + « + Ligne
+libre » (désignation+prix, cochée d'office). sigOK() crée le devis dans l'onglet Devis
+(« Signé sur place — en attente d'encaissement »). RÈGLE : après signature, la VISITE
+se clôture TOUJOURS (st=done) et le RAPPORT s'ouvre — encaissé maintenant (paid=true)
+OU plus tard (paid=false, le devis attend dans l'onglet Devis). Plus AUCUNE fiche
+suspendue en « wait ». Hero mobile v2 (24/07) : rond logo SUPPRIMÉ de la topbar accueil (espaceur/vide/
+cloche) ; « Bonjour Thomas » = prénom en DÉGRADÉ orange (background-clip:text, Sora
+1.52rem) + méta en 3 pilules (verte « ● En service », blanches « ven. 24 mai » et
+« 4 interventions ») ; avatar TH 54px anneau conservé. FAB + : 64px avec anneau de
+découpe border 5px #F7F8FA (flotte proprement au-dessus du contenu).
+Topbar mobile : bouton menu hamburger SUPPRIMÉ (patron 24/07 — tout passe par la
+barre du bas ; remplacé par un espaceur 40px pour garder le logo centré). Atelier
+devis : Qté + Prix MODIFIABLES par ligne cochée (BLQP {i:{q,p}}, blUpd recalcule
+total + ligne verte, décocher réinitialise, openAtelier remet à zéro). Vérif 8/8.
+Accueil mobile refait (24/07, « Bonjour Thomas c'est moche ») : hero = avatar TH
+dégradé orange à anneau + « Bonjour Thomas » Sora + sous-ligne unique « ● En service ·
+ven. 24 mai · 4 interventions » — la tuile date .dchip est SUPPRIMÉE. Médaillon logo :
+fond dégradé orange + « T » de secours (fini le rond noir quand logo-tigre.png ne
+charge pas). .scr padding-bottom 118px : le bouton + n'écrase plus le contenu.
+Onglet Devis mobile : bouton « Relancer » SUPPRIMÉ (décision
+patron 24/07 — la relance est un travail de bureau, pas du technicien). Texte fiche devis mis à jour (plus de « pas de rapport »).
+Clôture EXPLICITE (retour
+patron) : le titre « Clôturer l'intervention » porte le chip du type, le bouton
+ponctuel affiche le montant (« encaisser 260 €, puis faire le rapport »), le repli
+devis s'appelle « Finalement un devis ? » (changement de situation sur place).
 
 ## Les règles d'or du projet
 - 25 pages dans le zip canonique, toujours. Patches Python à ancres + assert. Vérif jsdom.
