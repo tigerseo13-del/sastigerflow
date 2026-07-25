@@ -174,6 +174,29 @@ APRÈS le rapport (écran cassé) ; chez TigerFlow l'ENCAISSEMENT VIENT AVANT LE
 piloté par le TYPE (ponctuel → encaisser puis rapport ; contrat → rapport direct ;
 2ᵉ passage → solde puis rapport ; devis → signature/email puis rapport). Aucun écran
 « Que souhaitez-vous faire ? » après le rapport — ne jamais en créer un.
+TITRE DU PANNEAU DÉTAIL (25/07) : « CP · Ville · Nuisible » (ex « Client — Nuisible »)
+— le client reste en lien orange dans Détails. Renommage manuel (v.titre) conservé.
+MENU RÉCAP ÉPURÉ (25/07) : tuile « 💶 À encaisser : X € » SUPPRIMÉE du récap ;
+sous-titre du bac « À planifier » SANS la mention rouge « N rappels en retard »
+(juste « — glisse une carte sur l'agenda »). Le chip filtre « N en retard » du récap
+jour est conservé (utile pour filtrer).
+AGENDA PROPRE (25/07, « ça bug » = données sales, vérif 7/7) : seedReports() au
+chargement — CHAQUE intervention done reçoit un rapport complet et crédible par
+nuisible (obs/zones/signes/urgence/méthode/produits/matériel/actions/temps/recos/
+signé, _suiviFait+_quoteFait pour ne pas régénérer de cartes). Plus aucun badge
+« 📋 ! » au chargement ; les planifiées restent vierges (normal). Zéro bug de code
+au stress-test 46 IV × 5 onglets + rapport.
+NOUVEL ORDRE CARTOUCHE (25/07, remplace le précédent — décision patron) :
+ligne 1 = NUISIBLE (icône + libellé), ligne 2 = CLIENT (gras), ligne 3 = « 📍 CP ·
+Ville » (.ladr, masquée sur cartouches sm/xs). Appliqué vues Jour, Semaine et Bac.
+ANCIEN ordre (ex-décision) :
+TITRE « 📍 CP · Ville · Nuisible » GÉNÉRALISÉ (25/07) : vue Jour ✓ (déjà fait),
+vue SEMAINE corrigée (séparateur « cp · ville »), BAC corrigé (le titre .l1 = CP ·
+Ville · Nuisible ; le chip mode/montant passe en ligne 2, client en ligne 3). La vue
+Mois reste une vue de densité (points + compteur, pas de cartouches).
+En-tête colonne technicien SIMPLIFIÉ (25/07) : « N interv. » seul — les heures
+(« · 4 h ») et la barre de progression .tbar sont SUPPRIMÉES. La note de création
+s'affiche déjà en encart jaune au-dessus du bloc Technicien dans le Résumé (vérifié).
 Menu Actions du panneau : « 🔁 Dupliquer → semaine prochaine » SUPPRIMÉ (patron
 25/07 — dupInt reste en code mais plus aucun bouton ne l'appelle).
 SUIVANT LIBÉRÉ (25/07, ordre patron) : le niveau d'infestation n'est PLUS obligatoire
