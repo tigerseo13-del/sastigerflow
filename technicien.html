@@ -360,20 +360,29 @@ label[for]{cursor:pointer}
 .gsbtn span,.gsbtn kbd{display:none}
 .gsbtn{width:40px;justify-content:center;padding:0}
 
-/* ===== la recherche globale toujours au même endroit (centrée dans la barre du haut) ===== */
-.topbar{position:relative}
-@media(min-width:1100px){
-  .topbar .gsbtn{position:absolute;left:50%;transform:translateX(-50%);margin:0;width:min(420px,34vw)}
+/* ===== recherche globale : POSITION FIXE, identique sur toutes les pages =====
+   la barre du haut n'a pas la même hauteur partout (6 paddings différents),
+   donc on ne se cale plus dessus : la barre est ancrée à l'écran. */
+.topbar{position:relative;min-height:64px}
+@media(min-width:761px){
+  .topbar .gsbtn{
+    position:fixed;
+    top:14px;                              /* toujours la même hauteur à l'écran */
+    left:calc(50% + 119px);                /* centre de la zone à droite du menu (238px / 2) */
+    transform:translateX(-50%);
+    width:min(430px, calc(100vw - 300px));
+    margin:0;z-index:60;
+  }
   .topbar .gsbtn span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* le titre ne déborde jamais jusqu'au centre, les boutons restent à droite */
+  .topbar .title-d,.topbar .title-m,.topbar .crumbs{max-width:calc(50% - 250px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
-
-/* ===== navigation mobile (portée) ===== */
-.bnv, .bcat, .st{-webkit-user-select:none;user-select:none}
+@media(min-width:761px) and (max-width:1180px){
+  .topbar .gsbtn{width:min(320px, calc(100vw - 300px))}
+  .topbar .title-d,.topbar .title-m,.topbar .crumbs{max-width:calc(50% - 190px)}
+}
 .ctrlKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); open ? gsClose() : gsOpen(); return; }
 .bnv{display:none}
-.bnv{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;align-items:stretch;
-    background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line,#EBECF1);
-    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
 .bnv a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;
     font-size:.6rem;font-weight:700;color:#8A8F9C;border-radius:11px;text-decoration:none;min-height:48px;justify-content:center}
 .bnv a svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -418,6 +427,28 @@ label[for]{cursor:pointer}
   .g2i,.grid2,.grid3,.mini3,.statrow{grid-template-columns:1fr}
 }
 @media(max-width:420px){
+}
+
+/* ===== la barre du bas n'existe QUE sur téléphone ===== */
+.bnv,.bnvsheet{display:none}
+@media(max-width:760px){
+  .bnv{display:flex}
+  .bnvsheet.open{display:block}
+}
+
+/* ===== barre du bas : téléphone uniquement ===== */
+.bnv,.bnvsheet{display:none}
+@media(max-width:760px){
+
+
+/* ===== navigation mobile (portée) ===== */
+.bnv, .bcat, .st{-webkit-user-select:none;user-select:none}
+
+.bnv{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;align-items:stretch;
+    background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line,#EBECF1);
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+  .bnv{display:flex}
+  .bnvsheet.open{display:block}
 }
 </style>
 </head>
