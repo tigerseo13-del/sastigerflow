@@ -644,7 +644,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <button type="button" class="rolec on" data-r="mixte" onclick="setRole(this)">
             <span class="ric"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></span>
             <b>Polyvalent</b>
-            <small>Il vend et il traite</small>
+            <small>Visites devis et traitements sur le terrain</small>
             <em>Tous les types</em>
           </button>
         </div>
@@ -653,10 +653,8 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <div id="a-certs"></div>
         <button class="addrowbtn" onclick="certAdd()">＋ Ajouter une certification</button>
 
-        <details class="acc" id="acc-skills">
-          <summary id="sum-skills">Compétences &amp; % de commission · aucune sélectionnée</summary>
-          <div id="a-skills"></div>
-        </details>
+        <div class="msec">Compétences &amp; % de commission <small id="sum-skills">— aucune sélectionnée</small></div>
+        <div id="acc-skills"><div id="a-skills"></div></div>
       </div>
 
       <!-- ═══ ÉTAPE 2 · PLANNING ═══ -->
@@ -1326,12 +1324,13 @@ function openAdd(){
   /* les accordéons annoncent leur contenu */
   const updSums = () => {
     const nsk = SKILLS.filter((x, i) => { const el = document.getElementById('ask-' + i); return el && el.checked; }).length;
-    document.getElementById('sum-skills').textContent = "Compétences & % de commission · " + (nsk ? nsk + " sélectionnée" + (nsk > 1 ? "s" : "") : "aucune sélectionnée");
+    document.getElementById('sum-skills').textContent = "— " + (nsk ? nsk + " sélectionnée" + (nsk > 1 ? "s" : "") : "aucune sélectionnée");
     const nm = ALL_MAT.filter((m, i) => { const el = document.getElementById('a-m-' + i); return el && el.checked; }).length;
     document.getElementById('sum-mat').textContent = "Matériel embarqué · " + (nm ? nm + " coché" + (nm > 1 ? "s" : "") : "aucun");
   };
   document.getElementById('acc-skills').addEventListener('change', updSums);
   document.getElementById('acc-mat').addEventListener('change', updSums);
+  window.updSums = updSums;
   updSums();
   /* avatar : photo du technicien, sinon initiales en direct */
   AVPHOTO = "";
@@ -1498,8 +1497,12 @@ function toast(msg, undoFn){
 chips();
 render();
 
-/* ===== mode édition : ?edit=NOM ouvre l'assistant pré-rempli ===== */
-(function(){
+/* ===== mode édition : ?edit=NOM ouvre l'assistant pré-rempli =====
+   Différé à DOMContentLoaded : roleSet() est déclaré dans un <script> PLUS BAS,
+   donc inconnu tant que la page n'est pas entièrement analysée. Sans ce report,
+   la ligne roleSet(...) lançait une ReferenceError qui coupait le pré-remplissage
+   juste avant les compétences, les certifications et la photo. */
+document.addEventListener("DOMContentLoaded", function(){
   let q = null;
   try{ q = new URLSearchParams(location.search).get("edit"); }catch(e){}
   if(!q) return;
@@ -1544,6 +1547,7 @@ render();
       if(c2) c2.value = t.com[sn];
     }
   });
+  if(window.updSums) window.updSums();
   document.getElementById('a-certs').innerHTML = ""; CERTN = 0;
   if(t.certs && t.certs.length){
     t.certs.forEach(c => {
@@ -1560,7 +1564,7 @@ render();
   if(mh && mh.childNodes.length) mh.childNodes[0].nodeValue = "Modifier le technicien";
   const wa = document.getElementById('wadd');
   if(wa) wa.textContent = "✓ Enregistrer les modifications";
-})();
+});
 
 /* ===== Répartition des interventions du mois, aux couleurs de l'équipe ===== */
 (function(){
