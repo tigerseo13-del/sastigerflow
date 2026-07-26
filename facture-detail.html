@@ -58,7 +58,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .page{padding:6px 30px 70px}
 
 /* ===== en-tête ===== */
-.fhead{position:relative;display:flex;align-items:center;gap:13px;margin:4px 0 14px;flex-wrap:wrap;border-radius:18px;border:1px solid #FFE2D2;padding:16px 20px;overflow:hidden;
+.fhead{position:relative;display:flex;align-items:center;gap:13px;margin:4px 0 14px;flex-wrap:wrap;border-radius:18px;border:1px solid #FFE2D2;padding:16px 20px;
   background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.2) 0, transparent 45%),
   radial-gradient(circle at 92% -60%, rgba(255,90,31,.14) 0, transparent 45%),
   linear-gradient(115deg,#FFF8F3,#FFEFE4 55%,#FFF4EC)}
@@ -433,6 +433,14 @@ label[for]{cursor:pointer}
   .bnv{display:flex}
   .bnvsheet.open{display:block}
 }
+
+/* ===== cloche de notifications (portée) ===== */
+.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:18px;height:18px}
+.bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+
+.fhead .hcli{font-family:'Sora';font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink)}
+.kpi.nolink{pointer-events:none}
 </style>
 </head>
 <body>
@@ -445,7 +453,7 @@ label[for]{cursor:pointer}
   </div>
   <div class="nav-label">Général</div>
   <nav class="nav">
-    <a href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
     <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
     <a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
     <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
@@ -482,12 +490,17 @@ label[for]{cursor:pointer}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
       <span>Rechercher clients, pages, actions…</span><kbd class="slash">/</kbd><kbd>⌘K</kbd>
     </button>
-    </div>
+        <button class="bell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <span class="dot">2</span>
+    </button>
+  </div>
 
   <div class="page">
 
     <!-- en-tête : réf + statut + actions -->
     <div class="fhead">
+      <span class="hcli" id="h-client">—</span>
       <span class="ref" id="h-ref">FAC-…</span>
       <span class="badge" id="h-badge"><i></i><span>—</span></span>
       <div class="spacer"></div>
@@ -508,7 +521,7 @@ label[for]{cursor:pointer}
     <div class="kpis">
       <div class="kpi k-orange"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div></div>
       <div class="kpi k-green" onclick="goEncaisser()" style="cursor:pointer" title="Voir les paiements"><div class="lbl">Montant payé</div><div class="num" id="k-paye">—</div></div>
-      <div class="kpi k-blue" id="k-solde-tile" onclick="goEncaisser()" style="cursor:pointer" title="Encaisser — ouvre les paiements"><div class="lbl">Solde dû</div><div class="num" id="k-solde">—</div><span class="sub" id="k-solde-sub"></span></div>
+      <div class="kpi k-blue" id="k-solde-tile" style="cursor:pointer" title="Encaisser — ouvre les paiements"><div class="lbl">Solde dû</div><div class="num" id="k-solde">—</div><span class="sub" id="k-solde-sub"></span></div>
     </div>
     <div class="paywrap"><div class="paybar"><i id="paybarfill"></i></div><span id="paybartxt">—</span></div>
 
@@ -599,7 +612,6 @@ label[for]{cursor:pointer}
     <div data-tab="hist">
       <div class="card"><div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>Historique de la facture</div><ul class="hist" id="histlist"></ul></div>
     </div>
-
   </div>
 </div>
 </div>
@@ -816,11 +828,20 @@ function kpis(){
   }
   const stamp = g('paidstamp');
   if(stamp && solde <= 0 && paidTxt) stamp.textContent = paidTxt.toUpperCase().replace("PAYÉE LE", "PAYÉE le");
+  const hc = g('h-client'); if(hc) hc.textContent = REC.client || "—";
   const enc = g('a-encaisser');
   if(enc){
     const done = solde <= 0;
     enc.classList.toggle("off", done);
     enc.disabled = done;
+    /* la carte « Solde dû » est le jumeau de ce bouton : elle se désactive avec lui */
+    const tile = g('k-solde-tile');
+    if(tile){
+      tile.style.cursor = done ? "default" : "pointer";
+      tile.onclick = done ? null : goEncaisser;
+      tile.title = done ? "Facture soldée — rien à encaisser" : "Encaisser — ouvre les paiements";
+      tile.classList.toggle("nolink", done);
+    }
     enc.title = done ? "Facture déjà soldée — rien à encaisser ✓" : "Ouvre l'onglet Paiements avec le solde pré-rempli";
   }
   /* le bouton principal suit la situation */
@@ -1178,7 +1199,7 @@ function logout(){
     {n:"DEV-2026-01287", s:"Devis - punaises de lit", h:"devis.html"},
     {n:"FAC-2026-00873", s:"Facture - Ironwood Solutions", h:"facture.html"},
     {n:"FAC-2026-00858", s:"Facture en retard - 1 250 EUR", h:"facture-liste.html"},
-    {n:"CTR-2026-04729", s:"Contrat annuel - Ironwood", h:"index.html"}
+    {n:"CTR-2026-04729", s:"Contrat annuel - Ironwood", h:"contrat.html"}
   ];
   var PG = [
     {n:"Tableau de bord", i:"🏠", h:"dashboard.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},{n:"Tournees", i:"🗺️", h:"tournee.html"},
@@ -1248,7 +1269,7 @@ function logout(){
 })();
 </script>
 <nav class="bnv" aria-label="Navigation mobile">
-  <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+  <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
   <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda</a>
   <a class="ctr" href="devis.html"><span class="dsc"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Devis</a>
   <a class="bn" href="#"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
