@@ -76,9 +76,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .cover::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(234,74,16,.045) 1px,transparent 1px),linear-gradient(rgba(234,74,16,.045) 1px,transparent 1px);background-size:27px 27px}
 .cover h1{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px;position:relative}
 .cover .csub{font-size:.84rem;color:var(--ink-2);margin-top:3px;position:relative}
-.kpi[onclick]{cursor:pointer;transition:.13s}
-.kpi[onclick]:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px rgba(23,26,32,.2)}
-.kpi.on{box-shadow:0 0 0 2.5px rgba(255,90,31,.65)}
+.kpi{transition:.13s}
+
+
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
 .kpi{border-radius:18px;padding:16px 18px;border:1px solid transparent}
 .kpi.k-orange{background:#FFF1EA;border-color:#FFD9C4}
@@ -301,12 +301,19 @@ tr.torenew{box-shadow:inset 3px 0 0 #D9A408}
     <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
   </nav>
   <nav class="nav navbot">
-    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.56rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
+    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.62rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
-  <div class="side-user">
+  <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
     <span class="ph">TM</span>
     <div><b>Thomas Martin</b><span>Administrateur</span></div>
+    <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    <div class="umenu" id="umenu">
+      <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
+        <span class="uic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg></span>Mon compte</button>
+      <button type="button" class="udanger" onclick="event.stopPropagation();logout()">
+        <span class="uic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Déconnexion</button>
+    </div>
   </div>
 </aside>
 
@@ -332,14 +339,13 @@ tr.torenew{box-shadow:inset 3px 0 0 #D9A408}
 
     <section class="cover">
       <h1>Contrats</h1>
-      <div class="csub">Le récurrent qui fait vivre la boîte — et les renouvellements à ne pas laisser filer</div>
     </section>
 
     <div class="kpis">
-      <div class="kpi k-blue" onclick="FSTAT='renouveler';render()" title="Filtrer : à renouveler"><div class="lbl">À renouveler dans 30 jours</div><div class="num" id="k-ren">0</div></div>
-      <div class="kpi k-green" onclick="FSTAT='actif';render()" title="Filtrer : actifs"><div class="lbl">Contrats actifs</div><div class="num" id="k-n">0</div></div>
+      <div class="kpi k-blue"><div class="lbl">À renouveler dans 30 jours</div><div class="num" id="k-ren">0</div></div>
+      <div class="kpi k-green"><div class="lbl">Contrats actifs</div><div class="num" id="k-n">0</div></div>
       <div class="kpi k-amber"><div class="lbl">En attente de signature</div><div class="num" id="k-sig">0</div></div>
-      <div class="kpi k-orange" onclick="FSTAT='expire';render()" title="Filtrer : expirés"><div class="lbl">Expirés</div><div class="num" id="k-exp">0</div></div>
+      <div class="kpi k-orange"><div class="lbl">Expirés</div><div class="num" id="k-exp">0</div></div>
     </div>
 
 <div class="toolrow">
@@ -396,8 +402,8 @@ try{
     else CONTRATS.unshift(rec);
   });
 }catch(e){}
-const eur = n => n.toLocaleString("fr-FR", {minimumFractionDigits:2}) + " €";
-const fdate = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit", year:"numeric"});
+const eur = n => n.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014"; const [y,m,d]=String(iso).split("-"); return d+"/"+m+"/"+y; };
 let FSTAT = "tous";
 
 /* ================= FILTRES ================= */
@@ -522,9 +528,18 @@ function stats(){
     `<span><i style="background:${col}"></i>${LBL[k]} · ${eur(CONTRATS.filter(c => c.statut === k).reduce((a, c) => a + c.montant, 0))}</span>`).join("");
 }
 
-function toast(msg){
+function toast(msg, undoFn){
   const t = document.getElementById("toast");
-  t.textContent = msg;
+  if(undoFn){
+    window.__undo = () => { undoFn(); t.classList.remove('show'); window.__undo = null; };
+    t.innerHTML = "";
+    const s = document.createElement("span"); s.textContent = msg;
+    const b = document.createElement("button"); b.textContent = "Annuler";
+    b.style.cssText = "all:unset;margin-left:12px;padding:5px 13px;border-radius:9px;background:rgba(255,255,255,.16);"
+      + "border:1px solid rgba(255,255,255,.35);font-weight:800;cursor:pointer;font-size:.8rem";
+    b.onclick = () => window.__undo && window.__undo();
+    t.appendChild(s); t.appendChild(b);
+  } else { t.textContent = msg; window.__undo = null; }
   t.classList.add("show");
   clearTimeout(t._h);
   t._h = setTimeout(()=>t.classList.remove("show"), 2400);
@@ -710,6 +725,39 @@ statsT();
 
 /* ===== référence/N°/ID : police et taille UNIQUES sur tout le SaaS ===== */
 .ref,td.ref,.dt .ref,.pid,td.pid{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace!important;font-size:.78rem!important;font-weight:600!important;color:var(--ink-2)!important;letter-spacing:.01em;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* ===== boutons d'action de ligne — STYLE UNIQUE DU SaaS (25/07) ===== */
+button.act,a.act,button.aic,a.aic{width:32px;height:32px;min-width:32px;min-height:32px;border-radius:10px;border:1px solid transparent;background:#F1F2F5;color:var(--ink-2);display:inline-grid;place-items:center;cursor:pointer;transition:.12s;padding:0;font-size:.8rem;font-weight:800;opacity:1}
+button.act:hover,a.act:hover,button.aic:hover,a.aic:hover{background:#FFF1E9;color:var(--orange-deep);border-color:var(--orange)}
+button.act:active,a.act:active,button.aic:active,a.aic:active{transform:scale(.94)}
+button.act svg,a.act svg,button.aic svg,a.aic svg{width:15px!important;height:15px!important;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+button.act.vdel:hover,button.aic.del:hover,a.act.vdel:hover,a.aic.del:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+
+/* ===== UX : retour tactile + focus clavier (25/07) ===== */
+tr:active,.row:active,.card:active,.line:active,.itm:active,.tdrow:active{background:#F5F6F9}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+
+/* ===== menu du compte (bas du menu latéral) ===== */
+.side-user{position:relative;cursor:pointer;transition:background .12s}
+.side-user:hover{background:#1B1E25}
+.side-user .uchev{width:15px;height:15px;stroke:#7E838F;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-left:auto;flex:none;transition:transform .18s}
+.side-user.open .uchev{transform:rotate(180deg)}
+.umenu{display:none;position:absolute;left:12px;right:12px;bottom:calc(100% + 6px);background:#fff;border-radius:14px;padding:6px;box-shadow:0 18px 44px -12px rgba(0,0,0,.45);z-index:80}
+.side-user.open .umenu{display:block}
+.umenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;font-family:inherit;font-size:.84rem;font-weight:700;color:#171A20;padding:10px 11px;border-radius:10px;cursor:pointer;transition:background .1s}
+.umenu button:hover{background:#F4F5F8}
+.umenu .uic{width:28px;height:28px;border-radius:9px;background:#F3F4F7;display:grid;place-items:center;flex:none}
+.umenu .uic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.umenu .udanger{color:#B3261E}
+.umenu .udanger:hover{background:#FCECEA}
+.umenu .udanger .uic{background:#FCECEA}
+
+/* ===== la recherche globale toujours au même endroit (centrée dans la barre du haut) ===== */
+.topbar{position:relative}
+@media(min-width:1100px){
+  .topbar .gsbtn{position:absolute;left:50%;transform:translateX(-50%);margin:0;width:min(420px,34vw)}
+  .topbar .gsbtn span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
@@ -802,6 +850,45 @@ function qvClose(){
   document.getElementById("qdrawer").classList.remove("open");
 }
 document.addEventListener("keydown", e => { if(e.key === "Escape") qvClose(); });
+
+
+</script>
+<script>
+/* ===== raccourcis : « / » et Ctrl+K amènent à la recherche (le header le promet) ===== */
+document.addEventListener("keydown", function(e){
+  var a = document.activeElement, t = a ? a.tagName : "";
+  if(t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || (a && a.isContentEditable)) return;
+  var kk = (e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey);
+  if(e.key !== "/" && !kk) return;
+  var ch = document.getElementById("gs-q") || document.getElementById("q");
+  if(!ch) return;
+  e.preventDefault();
+  var ov = ch.closest(".gsbox, .gswrap, #gs, .palbox");
+  if(ov && getComputedStyle(ov).display === "none") ov.style.display = "";
+  ch.focus(); ch.select();
+});
+
+/* ===== compte : ouvrir le menu, se déconnecter ===== */
+function userMenu(e){
+  if(e) e.stopPropagation();
+  const u = document.getElementById("side-user");
+  if(!u) return;
+  const ouvert = u.classList.toggle("open");
+  u.setAttribute("aria-expanded", ouvert ? "true" : "false");
+}
+document.addEventListener("click", function(){
+  const u = document.getElementById("side-user");
+  if(u && u.classList.contains("open")){ u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+});
+document.addEventListener("keydown", function(e){
+  const u = document.getElementById("side-user");
+  if(e.key === "Escape" && u) { u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+  if((e.key === "Enter" || e.key === " ") && document.activeElement === u){ e.preventDefault(); userMenu(); }
+});
+function logout(){
+  try{ if(typeof toast === "function") toast("Déconnexion…"); }catch(err){}
+  setTimeout(function(){ location.href = "connexion.html"; }, 350);
+}
 </script>
 </body>
 </html>

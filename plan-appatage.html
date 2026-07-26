@@ -308,12 +308,19 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
   </nav>
   <nav class="nav navbot">
-    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.56rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
+    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.62rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
-  <div class="side-user">
+  <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
     <span class="ph">TM</span>
     <div><b>Thomas Martin</b><span>Administrateur</span></div>
+    <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    <div class="umenu" id="umenu">
+      <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
+        <span class="uic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg></span>Mon compte</button>
+      <button type="button" class="udanger" onclick="event.stopPropagation();logout()">
+        <span class="uic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Déconnexion</button>
+    </div>
   </div>
 </aside>
 
@@ -731,6 +738,42 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
 .bnv a.ctr:active .dsc{transform:scale(.93);transition:transform .08s}
 .bnvgrid a:active{transform:scale(.95);transition:transform .08s}
 .bnvgrid a.here{background:var(--orange-soft,#FFF1EA);color:var(--orange-deep,#EA4A10)}
+
+/* ===== UX : retour tactile + focus clavier (25/07) ===== */
+tr:active,.row:active,.card:active,.line:active,.itm:active,.tdrow:active{background:#F5F6F9}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+
+/* ===== impression : le client reçoit un document, pas l'interface ===== */
+@media print{
+  .sidebar,.topbar,.rail,.bnv,.bnvsheet,.mobbar,.actbar,.abar,.toast,.gs-veil,.gs-pal,button,.btn,.qbar,.toolrow{display:none!important}
+  .main{margin-left:0!important}
+  .page,.wrap{padding:0!important;max-width:none!important}
+  .card,.sheet{box-shadow:none!important;border:0!important;border-radius:0!important;break-inside:avoid}
+  body{background:#fff!important}
+  a[href]:after{content:""}
+}
+
+/* ===== menu du compte (bas du menu latéral) ===== */
+.side-user{position:relative;cursor:pointer;transition:background .12s}
+.side-user:hover{background:#1B1E25}
+.side-user .uchev{width:15px;height:15px;stroke:#7E838F;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-left:auto;flex:none;transition:transform .18s}
+.side-user.open .uchev{transform:rotate(180deg)}
+.umenu{display:none;position:absolute;left:12px;right:12px;bottom:calc(100% + 6px);background:#fff;border-radius:14px;padding:6px;box-shadow:0 18px 44px -12px rgba(0,0,0,.45);z-index:80}
+.side-user.open .umenu{display:block}
+.umenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;font-family:inherit;font-size:.84rem;font-weight:700;color:#171A20;padding:10px 11px;border-radius:10px;cursor:pointer;transition:background .1s}
+.umenu button:hover{background:#F4F5F8}
+.umenu .uic{width:28px;height:28px;border-radius:9px;background:#F3F4F7;display:grid;place-items:center;flex:none}
+.umenu .uic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.umenu .udanger{color:#B3261E}
+.umenu .udanger:hover{background:#FCECEA}
+.umenu .udanger .uic{background:#FCECEA}
+
+/* ===== la recherche globale toujours au même endroit (centrée dans la barre du haut) ===== */
+.topbar{position:relative}
+@media(min-width:1100px){
+  .topbar .gsbtn{position:absolute;left:50%;transform:translateX(-50%);margin:0;width:min(420px,34vw)}
+  .topbar .gsbtn span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="dashboard.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
@@ -765,6 +808,43 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
     if(a.getAttribute("href") === p) a.classList.add("here");
   });
 })();
+</script>
+<script>
+/* ===== raccourcis : « / » et Ctrl+K amènent à la recherche (le header le promet) ===== */
+document.addEventListener("keydown", function(e){
+  var a = document.activeElement, t = a ? a.tagName : "";
+  if(t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || (a && a.isContentEditable)) return;
+  var kk = (e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey);
+  if(e.key !== "/" && !kk) return;
+  var ch = document.getElementById("gs-q") || document.getElementById("q");
+  if(!ch) return;
+  e.preventDefault();
+  var ov = ch.closest(".gsbox, .gswrap, #gs, .palbox");
+  if(ov && getComputedStyle(ov).display === "none") ov.style.display = "";
+  ch.focus(); ch.select();
+});
+
+/* ===== compte : ouvrir le menu, se déconnecter ===== */
+function userMenu(e){
+  if(e) e.stopPropagation();
+  const u = document.getElementById("side-user");
+  if(!u) return;
+  const ouvert = u.classList.toggle("open");
+  u.setAttribute("aria-expanded", ouvert ? "true" : "false");
+}
+document.addEventListener("click", function(){
+  const u = document.getElementById("side-user");
+  if(u && u.classList.contains("open")){ u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+});
+document.addEventListener("keydown", function(e){
+  const u = document.getElementById("side-user");
+  if(e.key === "Escape" && u) { u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+  if((e.key === "Enter" || e.key === " ") && document.activeElement === u){ e.preventDefault(); userMenu(); }
+});
+function logout(){
+  try{ if(typeof toast === "function") toast("Déconnexion…"); }catch(err){}
+  setTimeout(function(){ location.href = "connexion.html"; }, 350);
+}
 </script>
 </body>
 </html>

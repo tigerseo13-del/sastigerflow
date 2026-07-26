@@ -67,7 +67,7 @@ textarea{resize:vertical;min-height:76px}
 .btn2.primary:hover{background:var(--orange-deep)}
 
 /* ===== page / cartes ===== */
-.page{max-width:1120px;margin:0 auto;padding:22px 26px calc(60px + var(--safe-b))}
+.page{max-width:1400px;margin:0 auto;padding:22px 26px calc(60px + var(--safe-b))}
 .card{background:var(--card);border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:16px}
 .card-h{font-family:'Sora';font-weight:800;font-size:.98rem;display:flex;align-items:center;gap:10px;margin-bottom:15px}
 .steph{display:flex;align-items:center;gap:11px;margin:26px 2px 12px;font-family:'Sora';font-weight:800;font-size:1.02rem;letter-spacing:-.2px}
@@ -153,6 +153,12 @@ textarea{resize:vertical;min-height:76px}
 
 /* ===== disposition : formulaire + rail récapitulatif ===== */
 .layout{display:block;padding-bottom:88px}
+@media(min-width:1250px){
+  .col{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start}
+  .col > .steph{grid-column:1 / -1}
+  .col > .card{margin-bottom:16px}
+  .col > .actbar{grid-column:1 / -1}
+}
 .actbar{position:fixed;left:238px;right:0;bottom:0;z-index:45;display:flex;align-items:center;gap:11px;padding:12px 26px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
 .ab-ttc small{display:block;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .ab-ttc b{font-family:'Sora';font-size:1.18rem;letter-spacing:-.3px}
@@ -207,6 +213,88 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .icq:active{transform:scale(.94)}
 .icq.on{background:#FFF1E9;border-color:#FF5A1F;color:#D63B05}
 .icq svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ===== UX : retour tactile + focus clavier (25/07) ===== */
+tr:active,.row:active,.card:active,.line:active,.itm:active,.tdrow:active{background:#F5F6F9}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+
+/* ===== montants : chiffres alignés comme partout ailleurs ===== */
+.amt,.mont,.prix,.tot,.total,.euro,input[type=number],td:last-child,.kpi b,.sum b{font-variant-numeric:tabular-nums}
+
+/* ===== impression : le client reçoit un document, pas l'interface ===== */
+@media print{
+  .sidebar,.topbar,.rail,.bnv,.bnvsheet,.mobbar,.actbar,.abar,.toast,.gs-veil,.gs-pal,button,.btn,.qbar,.toolrow{display:none!important}
+  .main{margin-left:0!important}
+  .page,.wrap{padding:0!important;max-width:none!important}
+  .card,.sheet{box-shadow:none!important;border:0!important;border-radius:0!important;break-inside:avoid}
+  body{background:#fff!important}
+  a[href]:after{content:""}
+}
+label[for]{cursor:pointer}
+
+/* ===== choix majeurs du contrat : des cartes, pas des menus ===== */
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px}
+.pick button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:2px;border:1.5px solid var(--line);border-radius:13px;background:#fff;padding:12px 8px;cursor:pointer;transition:.13s;text-align:center}
+.pick button:hover{border-color:#D8DBE2;background:#FAFBFC}
+.pick button b{font-size:.86rem;font-weight:800;color:var(--ink)}
+.pick button small{font-size:.7rem;font-weight:700;color:var(--muted)}
+.pick button.on{border-color:var(--orange);background:#FFF1E9}
+.pick button.on b{color:var(--orange-deep)}
+.pick button.on small{color:#C2571F}
+
+/* ===== sections facultatives repliables ===== */
+.card.wide{grid-column:1 / -1}
+.fold-h{cursor:pointer;user-select:none}
+.fold-h .opt{margin-left:auto;font-family:'Inter';font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:#F1F2F5;border-radius:999px;padding:3px 9px}
+.fold-h .fchev{width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-left:9px;transition:transform .18s;flex:none}
+.card.fold.open .fchev{transform:rotate(180deg)}
+.card.fold .fold-b{display:none;margin-top:13px}
+.card.fold.open .fold-b{display:block}
+.card.fold:hover{border-color:#DDE1E8}
+
+/* ===== menu du compte (bas du menu latéral) ===== */
+.side-user{position:relative;cursor:pointer;transition:background .12s}
+.side-user:hover{background:#1B1E25}
+.side-user .uchev{width:15px;height:15px;stroke:#7E838F;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-left:auto;flex:none;transition:transform .18s}
+.side-user.open .uchev{transform:rotate(180deg)}
+.umenu{display:none;position:absolute;left:12px;right:12px;bottom:calc(100% + 6px);background:#fff;border-radius:14px;padding:6px;box-shadow:0 18px 44px -12px rgba(0,0,0,.45);z-index:80}
+.side-user.open .umenu{display:block}
+.umenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;font-family:inherit;font-size:.84rem;font-weight:700;color:#171A20;padding:10px 11px;border-radius:10px;cursor:pointer;transition:background .1s}
+.umenu button:hover{background:#F4F5F8}
+.umenu .uic{width:28px;height:28px;border-radius:9px;background:#F3F4F7;display:grid;place-items:center;flex:none}
+.umenu .uic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.umenu .udanger{color:#B3261E}
+.umenu .udanger:hover{background:#FCECEA}
+.umenu .udanger .uic{background:#FCECEA}
+
+/* ===== recherche globale ===== */
+.gsbtn{width:40px;padding:0;justify-content:center}
+.gsbtn > :not(svg){display:none}
+.gsbtn{min-width:250px;justify-content:flex-start;background:#fff}
+.gsbtn span{flex:1;text-align:left}
+.gsbtn kbd.slash{margin-left:0}
+.gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line,#EBECF1);color:var(--muted,#6C7285);font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit}
+.gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,#3D434E)}
+.gsbtn svg{width:15px;height:15px;flex:none}
+.gsbtn kbd{font-family:inherit;font-size:.66rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted,#6C7285)}
+.gs-veil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:120;backdrop-filter:blur(2px)}
+.gs-veil.open{display:block}
+.gs-pal{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 26px));background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);z-index:121;overflow:hidden;display:none}
+.gs-pal.open{display:block}
+.gs-in{display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid #EBECF1}
+.gs-in svg{width:18px;height:18px;stroke:#6C7285;flex:none}
+.gs-in input{flex:1;border:0;font-family:inherit;font-size:1rem;color:#171A20;background:none;padding:0}
+.gs-in input:focus{outline:none;box-shadow:none}
+.gs-res{max-height:52vh;overflow-y:auto;padding:8px}
+.gsbtn span,.gsbtn kbd{display:none}
+.gsbtn{width:40px;justify-content:center;padding:0}
+
+/* ===== la recherche globale toujours au même endroit (centrée dans la barre du haut) ===== */
+.topbar{position:relative}
+@media(min-width:1100px){
+  .topbar .gsbtn{position:absolute;left:50%;transform:translateX(-50%);margin:0;width:min(420px,34vw)}
+  .topbar .gsbtn span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
 </style>
 </head>
 <body>
@@ -230,12 +318,19 @@ a,button,input,select,textarea,label{touch-action:manipulation}
     <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
   </nav>
   <nav class="nav navbot">
-    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.56rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
+    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.62rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
-  <div class="side-user">
+  <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
     <span class="ph">TM</span>
     <div><b>Thomas Martin</b><span>Administrateur</span></div>
+    <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    <div class="umenu" id="umenu">
+      <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
+        <span class="uic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg></span>Mon compte</button>
+      <button type="button" class="udanger" onclick="event.stopPropagation();logout()">
+        <span class="uic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Déconnexion</button>
+    </div>
   </div>
 </aside>
 
@@ -245,6 +340,10 @@ a,button,input,select,textarea,label{touch-action:manipulation}
     <div class="crumbs"><a href="contrats-liste.html">Contrats</a> / <span class="cur">Nouveau contrat</span></div>
     <div class="title-m"><svg class="bic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg> Nouveau contrat</div>
     <div class="spacer"></div>
+    <button class="gsbtn" onclick="gsOpen()" aria-label="Recherche globale">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+      <span>Rechercher clients, pages, actions…</span><kbd class="slash">/</kbd><kbd>⌘K</kbd>
+    </button>
     <a class="btn2" href="contrats-liste.html">Annuler</a>
   </div>
 
@@ -259,7 +358,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
       <div class="card-h"><span class="tick"></span>Informations</div>
       <div class="fgrid">
         <div class="full">
-          <label class="lab">Client <em>*</em></label>
+          <label class="lab" for="v-client">Client <em>*</em></label>
           <div class="clirow">
             <select id="v-client" onchange="pickCli()"><option value="">— Choisir un client —</option></select>
             <a class="newcli" href="client-nouveau.html"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nouveau client</a>
@@ -267,7 +366,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
           <div class="cliadr" id="cliadr">L'adresse du client s'affichera ici</div>
         </div>
         <div class="full">
-          <label class="lab">Intitulé du contrat <em>*</em></label>
+          <label class="lab" for="v-titre">Intitulé du contrat <em>*</em></label>
           <input class="objbig" id="v-titre" placeholder="Ex. Dératisation annuelle — fournil" oninput="TITREEDIT=true">
         </div>
         <div class="full">
@@ -294,11 +393,11 @@ a,button,input,select,textarea,label{touch-action:manipulation}
       <div class="card-h"><span class="tick"></span>Période &amp; dates</div>
       <div class="fgrid4">
         <div>
-          <label class="lab">Date de début <em>*</em></label>
+          <label class="lab" for="v-deb">Date de début <em>*</em></label>
           <input type="date" id="v-deb" onchange="datesCalc()">
         </div>
         <div>
-          <label class="lab">Date de fin <em>*</em></label>
+          <label class="lab" for="v-fin">Date de fin <em>*</em></label>
           <input type="date" id="v-fin" onchange="datesCalc()">
         </div>
         <div>
@@ -306,14 +405,15 @@ a,button,input,select,textarea,label{touch-action:manipulation}
           <span class="badge" id="v-duree"><svg class="bic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg> <small>choisis les deux dates</small></span>
         </div>
         <div>
-          <label class="lab">Fréquence de facturation <em>*</em></label>
-          <select id="v-freqfac" onchange="finCalc()">
+          <label class="lab" for="v-freqfac">Fréquence de facturation <em>*</em></label>
+          <select id="v-freqfac" onchange="finCalc()" style="display:none">
             <option value="">— Sélectionner —</option>
             <option>Mensuelle</option>
             <option>Trimestrielle</option>
             <option>Semestrielle</option>
             <option>Annuelle</option>
           </select>
+          <div class="pick" id="pick-v-freqfac"><button type="button" data-v="Mensuelle" onclick="pickSet('v-freqfac',this)"><b>Mensuelle</b><small>12 factures / an</small></button><button type="button" data-v="Trimestrielle" onclick="pickSet('v-freqfac',this)"><b>Trimestrielle</b><small>4 factures / an</small></button><button type="button" data-v="Semestrielle" onclick="pickSet('v-freqfac',this)"><b>Semestrielle</b><small>2 factures / an</small></button><button type="button" data-v="Annuelle" onclick="pickSet('v-freqfac',this)"><b>Annuelle</b><small>1 facture / an</small></button></div>
         </div>
       </div>
       <div class="qbtns"><small>Durée rapide :</small>
@@ -328,11 +428,11 @@ a,button,input,select,textarea,label{touch-action:manipulation}
       <div class="card-h"><span class="tick"></span>Finances</div>
       <div class="fgrid4">
         <div>
-          <label class="lab">Montant annuel HT <em>*</em></label>
-          <input type="number" inputmode="decimal" id="v-ht" min="0" step="0.01" placeholder="0,00 €" oninput="finCalc()">
+          <label class="lab" for="v-ht">Montant annuel HT <em>*</em></label>
+          <input type="number" inputmode="decimal" id="v-ht" min="0" step="0.01" placeholder="0,00 €" oninput="finCalc()">
         </div>
         <div>
-          <label class="lab">Taux de TVA <em>*</em></label>
+          <label class="lab" for="v-tva">Taux de TVA <em>*</em></label>
           <select id="v-tva" onchange="finCalc()">
             <option value="10" selected>10 %</option>
             <option value="20">20 %</option>
@@ -342,7 +442,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
         </div>
         <div>
           <label class="lab">Montant annuel TTC</label>
-          <div class="ttcbox"><b id="v-ttc">0,00 €</b></div>
+          <div class="ttcbox"><b id="v-ttc">0,00 €</b></div>
         </div>
         <div>
           <label class="lab">Par échéance</label>
@@ -369,28 +469,36 @@ a,button,input,select,textarea,label{touch-action:manipulation}
     </div>
 
     <!-- ===== 5. MATÉRIEL À APPORTER ===== -->
-    <div class="card">
-      <div class="card-h"><span class="tick"></span>Matériel à apporter <small>— visible par le technicien avant chaque passage</small></div>
+    <div class="card fold" id="fold-mat">
+      <div class="card-h fold-h" onclick="foldTog('mat')"><span class="tick"></span>Matériel à apporter <small>— visible par le technicien avant chaque passage</small><span class="opt">facultatif</span><svg class="fchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="fold-b">
       <div id="v-mats"><div class="emptyline" id="mats-empty">Aucun élément ajouté.</div></div>
       <button class="addrowbtn" onclick="matAdd()"><b>＋</b> Ajouter du matériel</button>
     </div>
 
     <!-- ===== 6. RÉCAPITULATIF D'INTERVENTION ===== -->
-    <div class="card">
-      <div class="card-h"><span class="tick"></span>Récapitulatif d'intervention <small>— la checklist cochée à chaque passage</small></div>
+      </div>
+    </div>
+
+    <div class="card fold" id="fold-rec">
+      <div class="card-h fold-h" onclick="foldTog('rec')"><span class="tick"></span>Récapitulatif d'intervention <small>— la checklist cochée à chaque passage</small><span class="opt">facultatif</span><svg class="fchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="fold-b">
       <div id="v-cks"><div class="emptyline" id="cks-empty">Aucun élément de checklist.</div></div>
       <button class="addrowbtn" onclick="ckAdd()"><b>＋</b> Ajouter une étape</button>
     </div>
 
     <!-- ===== 7. PLANIFICATION ===== -->
+      </div>
+    </div>
+
     <div class="steph"><span>3</span>La planification <small>— le rythme des passages</small></div>
 
-    <div class="card">
+    <div class="card wide">
       <div class="card-h"><span class="tick"></span>Planification des interventions</div>
       <div class="fgrid" style="margin-bottom:14px">
         <div>
-          <label class="lab">Fréquence <em>*</em></label>
-          <select id="v-freqint" onchange="freqSync()">
+          <label class="lab" for="v-freqint">Fréquence <em>*</em></label>
+          <select id="v-freqint" onchange="freqSync()" style="display:none">
             <option value="">— Sélectionner —</option>
             <option data-n="12">Mensuelle</option>
             <option data-n="6">Bimestrielle</option>
@@ -398,9 +506,10 @@ a,button,input,select,textarea,label{touch-action:manipulation}
             <option data-n="2">Semestrielle</option>
             <option data-n="1">Annuelle</option>
           </select>
+          <div class="pick" id="pick-v-freqint"><button type="button" data-v="Mensuelle" onclick="pickSet('v-freqint',this)"><b>Mensuelle</b><small>12 passages / an</small></button><button type="button" data-v="Bimestrielle" onclick="pickSet('v-freqint',this)"><b>Bimestrielle</b><small>6 passages / an</small></button><button type="button" data-v="Trimestrielle" onclick="pickSet('v-freqint',this)"><b>Trimestrielle</b><small>4 passages / an</small></button><button type="button" data-v="Semestrielle" onclick="pickSet('v-freqint',this)"><b>Semestrielle</b><small>2 passages / an</small></button><button type="button" data-v="Annuelle" onclick="pickSet('v-freqint',this)"><b>Annuelle</b><small>1 passage / an</small></button></div>
         </div>
         <div>
-          <label class="lab">Nombre d'interventions par an <em>*</em></label>
+          <label class="lab" for="v-nbint">Nombre d'interventions par an <em>*</em></label>
           <input type="number" id="v-nbint" min="1" max="52" placeholder="Ex. 4">
           <div class="hint" id="nbhint" style="display:none">rempli d'après la fréquence — modifiable</div>
         </div>
@@ -424,8 +533,8 @@ a,button,input,select,textarea,label{touch-action:manipulation}
         <label class="skchip"><input type="checkbox" value="perso" id="ck-perso" onchange="persoTog()"> Personnaliser</label>
       </div>
       <div class="fgrid" id="persobox" style="display:none;margin-top:12px;max-width:440px">
-        <div><label class="lab">De</label><input type="time" id="v-pdeb" value="09:00"></div>
-        <div><label class="lab">À</label><input type="time" id="v-pfin" value="11:00"></div>
+        <div><label class="lab" for="v-pdeb">De</label><input type="time" id="v-pdeb" value="09:00"></div>
+        <div><label class="lab" for="v-pfin">À</label><input type="time" id="v-pfin" value="11:00"></div>
       </div>
     </div>
 
@@ -442,12 +551,13 @@ a,button,input,select,textarea,label{touch-action:manipulation}
         <label class="sw"><input type="checkbox" id="v-renouv" checked onchange="renTog()"><i></i></label>
       </div>
       <div class="renbox" id="renbox">
-        <label class="lab">Échéance de renouvellement <em>*</em></label>
-        <select id="v-renech" onchange="renPrev()" style="max-width:440px">
+        <label class="lab" for="v-renech">Échéance de renouvellement <em>*</em></label>
+        <select id="v-renech" onchange="renPrev()" style="display:none">
           <option value="12" selected>Prolonger d'un an</option>
           <option value="6">Prolonger de 6 mois</option>
           <option value="24">Prolonger de 2 ans</option>
         </select>
+        <div class="pick" id="pick-v-renech"><button type="button" data-v="6" onclick="pickSet('v-renech',this)"><b>6 mois</b><small>reconduction courte</small></button><button type="button" data-v="12" onclick="pickSet('v-renech',this)"><b>1 an</b><small>le plus courant</small></button><button type="button" data-v="24" onclick="pickSet('v-renech',this)"><b>2 ans</b><small>engagement long</small></button></div>
         <div class="renprev" id="renprev">
           <div><span>Nouvelle date de début&nbsp;&nbsp;</span><b id="ren-deb">—</b></div>
           <div><span>Nouvelle date de fin&nbsp;&nbsp;</span><b id="ren-fin">—</b></div>
@@ -460,8 +570,9 @@ a,button,input,select,textarea,label{touch-action:manipulation}
     </div>
 
     <!-- ===== 9. PIÈCES JOINTES ===== -->
-    <div class="card">
-      <div class="card-h"><span class="tick"></span>Pièces jointes <small>— PDF, JPG, PNG · 10 Mo max par fichier</small></div>
+    <div class="card fold" id="fold-pj">
+      <div class="card-h fold-h" onclick="foldTog('pj')"><span class="tick"></span>Pièces jointes <small>— PDF, JPG, PNG · 10 Mo max par fichier</small><span class="opt">facultatif</span><svg class="fchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="fold-b">
       <div class="pjrow" id="v-pjs">
         <label class="pjadd"><svg class="bic" viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg> Téléverser un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label>
         <button class="pjadd" onclick="toast('Bibliothèque de documents — bientôt reliée à la base')"><svg class="bic" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> Bibliothèque de documents</button>
@@ -472,8 +583,11 @@ a,button,input,select,textarea,label{touch-action:manipulation}
    </div><!-- /.col -->
 
    <!-- ===== BARRE D'ACTION ===== -->
-   <div class="actbar">
-     <div class="ab-ttc"><small>Montant annuel TTC</small><b id="r-ttc">0,00 €</b></div>
+      </div>
+    </div>
+
+    <div class="actbar">
+     <div class="ab-ttc"><small>Montant annuel TTC</small><b id="r-ttc">0,00 €</b></div>
      <span style="flex:1"></span>
      <button class="btn2" onclick="saveContrat('brouillon')"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Brouillon</button>
      <button class="btn2 primary" onclick="saveContrat('actif')"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Enregistrer et envoyer</button>
@@ -485,7 +599,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 <script>
 /* ================= DONNÉES ================= */
 const g = id => document.getElementById(id);
-const eur = n => (Math.round(n * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+const eur = n => (Math.round(n * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
 const CLIENTS = {
   "Ironwood Solutions":    {adr:"12 rue de la République, 75011 Paris", mail:"john.thompson@ironwood.com", tel:"06 12 34 56 78"},
   "Syndic Foncia Lilas":   {adr:"60 rue des Lilas, 75020 Paris", mail:"gestion@foncia-lilas.fr", tel:"01 40 31 62 00"},
@@ -694,10 +808,19 @@ function saveContrat(statut){
 }
 
 /* ================= ERGONOMIE ================= */
-function toast(msg){
+function toast(msg, undoFn){
   let t = g("toast");
   if(!t){ t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); }
-  t.textContent = msg;
+  if(undoFn){
+    window.__undo = () => { undoFn(); t.classList.remove('show'); window.__undo = null; };
+    t.innerHTML = "";
+    const s = document.createElement("span"); s.textContent = msg;
+    const b = document.createElement("button"); b.textContent = "Annuler";
+    b.style.cssText = "all:unset;margin-left:12px;padding:5px 13px;border-radius:9px;background:rgba(255,255,255,.16);"
+      + "border:1px solid rgba(255,255,255,.35);font-weight:800;cursor:pointer;font-size:.8rem";
+    b.onclick = () => window.__undo && window.__undo();
+    t.appendChild(s); t.appendChild(b);
+  } else { t.textContent = msg; window.__undo = null; }
   t.classList.add("show");
   clearTimeout(t._h);
   t._h = setTimeout(() => t.classList.remove("show"), 2600);
@@ -738,6 +861,146 @@ function recap(){
 document.addEventListener("input", recap);
 document.addEventListener("change", recap);
 finCalc(); renPrev(); recap();
+
+/* ===== cartes de choix : elles pilotent le <select> d'origine, rien d'autre ne change ===== */
+function pickSet(sid, btn){
+  const sel = document.getElementById(sid);
+  if(!sel) return;
+  sel.value = btn.dataset.v;
+  pickSync(sid);
+  sel.dispatchEvent(new Event("change", {bubbles:true}));
+}
+function pickSync(sid){
+  const sel = document.getElementById(sid), box = document.getElementById("pick-" + sid);
+  if(!sel || !box) return;
+  box.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === sel.value));
+}
+document.addEventListener("DOMContentLoaded", () => ["v-freqfac","v-freqint","v-renech"].forEach(pickSync));
+["v-freqfac","v-freqint","v-renech"].forEach(pickSync);
+
+/* ===== repli des sections facultatives (fermées au départ, l'essentiel d'abord) ===== */
+function foldTog(cle){
+  const c = document.getElementById("fold-" + cle);
+  if(c) c.classList.toggle("open");
+}
+
+/* ===== compte : ouvrir le menu, se déconnecter ===== */
+function userMenu(e){
+  if(e) e.stopPropagation();
+  const u = document.getElementById("side-user");
+  if(!u) return;
+  const ouvert = u.classList.toggle("open");
+  u.setAttribute("aria-expanded", ouvert ? "true" : "false");
+}
+document.addEventListener("click", function(){
+  const u = document.getElementById("side-user");
+  if(u && u.classList.contains("open")){ u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+});
+document.addEventListener("keydown", function(e){
+  const u = document.getElementById("side-user");
+  if(e.key === "Escape" && u) { u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+  if((e.key === "Enter" || e.key === " ") && document.activeElement === u){ e.preventDefault(); userMenu(); }
+});
+function logout(){
+  try{ if(typeof toast === "function") toast("Déconnexion…"); }catch(err){}
+  setTimeout(function(){ location.href = "connexion.html"; }, 350);
+}
+</script>
+<div class="gs-veil" id="gs-veil" onclick="gsClose()"></div>
+<div class="gs-pal" id="gs-pal">
+  <div class="gs-in">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="gs-q" placeholder="Client, téléphone, devis, facture, page…" autocomplete="off">
+  </div>
+  <div class="gs-res" id="gs-res"></div>
+</div>
+<script>
+(function(){
+  var CL = [
+    {n:"Ironwood Solutions", s:"Paris 11e - 06 12 34 56 78", h:"client.html?c=Ironwood%20Solutions"},
+    {n:"Boulangerie Dupont", s:"Asnieres - 06 45 22 18 90", h:"client.html?c=Boulangerie%20Dupont"},
+    {n:"Pharmacie Centrale", s:"Paris 15e - 01 45 32 10 87", h:"client.html?c=Pharmacie%20Centrale"},
+    {n:"Hotel du Parc", s:"Vincennes - 01 43 28 55 12", h:"client.html?c=H%C3%B4tel%20du%20Parc"},
+    {n:"Restaurant Le Baobab", s:"Paris 18e - 06 52 30 41 78", h:"client.html?c=Restaurant%20Le%20Baobab"},
+    {n:"M. Diallo", s:"Saint-Ouen - 06 61 44 28 03", h:"client.html?c=M.%20Diallo"},
+    {n:"Mme Perrin", s:"Paris 13e - 06 78 12 45 66", h:"client.html?c=Mme%20Perrin"},
+    {n:"Mme Ferreira", s:"Ivry - 06 33 90 71 25", h:"client.html?c=Mme%20Ferreira"},
+    {n:"Syndic Foncia Lilas", s:"Paris 20e - 01 40 31 62 00", h:"client.html?c=Syndic%20Foncia%20Lilas"},
+    {n:"Entrepot Central", s:"Pantin - 01 48 91 07 33", h:"client.html?c=Entrep%C3%B4t%20Central"},
+    {n:"Camping Val de Seine", s:"Draveil - 01 69 03 88 21", h:"client.html?c=Camping%20Val%20de%20Seine"}
+  ];
+  var DOC = [
+    {n:"DEV-2026-01287", s:"Devis - punaises de lit", h:"devis.html"},
+    {n:"FAC-2026-00873", s:"Facture - Ironwood Solutions", h:"facture.html"},
+    {n:"FAC-2026-00858", s:"Facture en retard - 1 250 EUR", h:"facture-liste.html"},
+    {n:"CTR-2026-04729", s:"Contrat annuel - Ironwood", h:"index.html"}
+  ];
+  var PG = [
+    {n:"Tableau de bord", i:"🏠", h:"dashboard.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},{n:"Tournees", i:"🗺️", h:"tournee.html"},
+    {n:"Clients", i:"👥", h:"clients.html"},{n:"Nouveau client", i:"➕", h:"client-nouveau.html"},
+    {n:"Nouvelle intervention", i:"🗓️", h:"intervention-nouvelle.html"},{n:"Devis", i:"🧾", h:"devis-liste.html"},
+    {n:"Nouveau devis", i:"✏️", h:"devis.html"},{n:"Factures", i:"💶", h:"facture-liste.html"},
+    {n:"Taches", i:"✅", h:"taches.html"},{n:"Techniciens", i:"👷", h:"techniciens.html"},
+    {n:"Rapports", i:"📊", h:"rapports.html"},{n:"Reglages", i:"⚙️", h:"reglages.html"}
+  ];
+  var SEL = 0, RES = [];
+  var norm = function(x){ return x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\s.\-]/g,""); };
+  function search(q){
+    var nq = norm(q);
+    if(!nq) return [];
+    var out = [];
+    CL.forEach(function(c){ if(norm(c.n).indexOf(nq) > -1 || norm(c.s).indexOf(nq) > -1) out.push({g:"Clients", i:"👤", n:c.n, s:c.s, h:c.h}); });
+    DOC.forEach(function(d){ if(norm(d.n).indexOf(nq) > -1 || norm(d.s).indexOf(nq) > -1) out.push({g:"Documents", i:"📄", n:d.n, s:d.s, h:d.h}); });
+    PG.forEach(function(p){ if(norm(p.n).indexOf(nq) > -1) out.push({g:"Pages", i:p.i, n:p.n, s:"", h:p.h}); });
+    return out.slice(0, 9);
+  }
+  function draw(){
+    var box = document.getElementById("gs-res");
+    if(!RES.length){
+      var q = document.getElementById("gs-q").value.trim();
+      box.innerHTML = q ? '<div class="gs-empty">Aucun resultat pour « ' + q + ' »</div>'
+        : '<div class="gs-empty">Tape un nom de client, un numero de telephone,<br>une reference de devis/facture ou une page…</div>';
+      return;
+    }
+    var html = "", lastG = "";
+    RES.forEach(function(r, i){
+      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
+      html += '<div class="gs-r ' + (i === SEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsSel(' + i + ')">'
+        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
+        + '<span class="go">Entree ↵</span></div>';
+    });
+    box.innerHTML = html;
+  }
+  window.gsSel = function(i){ SEL = i; draw(); };
+  window.gsOpen = function(){
+    document.getElementById("gs-veil").classList.add("open");
+    document.getElementById("gs-pal").classList.add("open");
+    var inp = document.getElementById("gs-q");
+    inp.value = ""; RES = []; SEL = 0; draw();
+    setTimeout(function(){ inp.focus(); }, 30);
+  };
+  window.gsClose = function(){
+    document.getElementById("gs-veil").classList.remove("open");
+    document.getElementById("gs-pal").classList.remove("open");
+  };
+  document.getElementById("gs-q").addEventListener("input", function(){
+    RES = search(this.value); SEL = 0; draw();
+  });
+  document.addEventListener("keydown", function(e){
+    var open = document.getElementById("gs-pal").classList.contains("open");
+    if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); open ? gsClose() : gsOpen(); return; }
+    if(e.key === "/" && !open){
+      const t = e.target;
+      if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      e.preventDefault(); gsOpen(); return;
+    }
+    if(!open) return;
+    if(e.key === "Escape"){ gsClose(); }
+    else if(e.key === "ArrowDown"){ e.preventDefault(); SEL = Math.min(RES.length - 1, SEL + 1); draw(); }
+    else if(e.key === "ArrowUp"){ e.preventDefault(); SEL = Math.max(0, SEL - 1); draw(); }
+    else if(e.key === "Enter" && RES[SEL]){ location.href = RES[SEL].h; }
+  });
+})();
 </script>
 </body>
 </html>

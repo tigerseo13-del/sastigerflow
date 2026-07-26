@@ -138,7 +138,7 @@ a.srow:hover b{color:var(--orange-deep)}
 #i-perf tbody tr:nth-child(even) td{background:#FAFBFC}
 #i-perf tbody tr:hover td{background:#F6F7FA}
 .day.today{border:2px solid var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
-.day .tdy{font-size:.55rem;font-weight:800;color:var(--orange-deep);text-transform:uppercase;letter-spacing:.05em;margin-left:4px}
+.day .tdy{font-size:.62rem;font-weight:800;color:var(--orange-deep);text-transform:uppercase;letter-spacing:.05em;margin-left:4px}
 .tab{padding:9.5px 15px;font-size:.85rem;font-weight:600;color:var(--muted);border-radius:10px;white-space:nowrap;transition:.13s}
 .tab:hover{color:var(--ink);background:var(--bg)}
 .tab.on{background:var(--orange);color:#fff;font-weight:700;box-shadow:0 6px 14px -6px rgba(255,90,31,.55)}
@@ -317,6 +317,55 @@ td,.num{font-variant-numeric:tabular-nums}
 .icq:active{transform:scale(.94)}
 .icq.on{background:#FFF1E9;border-color:#FF5A1F;color:#D63B05}
 .icq svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ===== UX : retour tactile + focus clavier (25/07) ===== */
+tr:active,.row:active,.card:active,.line:active,.itm:active,.tdrow:active{background:#F5F6F9}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+label[for]{cursor:pointer}
+
+/* ===== menu du compte (bas du menu latéral) ===== */
+.side-user{position:relative;cursor:pointer;transition:background .12s}
+.side-user:hover{background:#1B1E25}
+.side-user .uchev{width:15px;height:15px;stroke:#7E838F;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-left:auto;flex:none;transition:transform .18s}
+.side-user.open .uchev{transform:rotate(180deg)}
+.umenu{display:none;position:absolute;left:12px;right:12px;bottom:calc(100% + 6px);background:#fff;border-radius:14px;padding:6px;box-shadow:0 18px 44px -12px rgba(0,0,0,.45);z-index:80}
+.side-user.open .umenu{display:block}
+.umenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;font-family:inherit;font-size:.84rem;font-weight:700;color:#171A20;padding:10px 11px;border-radius:10px;cursor:pointer;transition:background .1s}
+.umenu button:hover{background:#F4F5F8}
+.umenu .uic{width:28px;height:28px;border-radius:9px;background:#F3F4F7;display:grid;place-items:center;flex:none}
+.umenu .uic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.umenu .udanger{color:#B3261E}
+.umenu .udanger:hover{background:#FCECEA}
+.umenu .udanger .uic{background:#FCECEA}
+
+/* ===== recherche globale ===== */
+.gsbtn{width:40px;padding:0;justify-content:center}
+.gsbtn > :not(svg){display:none}
+.gsbtn{min-width:250px;justify-content:flex-start;background:#fff}
+.gsbtn span{flex:1;text-align:left}
+.gsbtn kbd.slash{margin-left:0}
+.gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line,#EBECF1);color:var(--muted,#6C7285);font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit}
+.gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,#3D434E)}
+.gsbtn svg{width:15px;height:15px;flex:none}
+.gsbtn kbd{font-family:inherit;font-size:.66rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted,#6C7285)}
+.gs-veil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:120;backdrop-filter:blur(2px)}
+.gs-veil.open{display:block}
+.gs-pal{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 26px));background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);z-index:121;overflow:hidden;display:none}
+.gs-pal.open{display:block}
+.gs-in{display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid #EBECF1}
+.gs-in svg{width:18px;height:18px;stroke:#6C7285;flex:none}
+.gs-in input{flex:1;border:0;font-family:inherit;font-size:1rem;color:#171A20;background:none;padding:0}
+.gs-in input:focus{outline:none;box-shadow:none}
+.gs-res{max-height:52vh;overflow-y:auto;padding:8px}
+.gsbtn span,.gsbtn kbd{display:none}
+.gsbtn{width:40px;justify-content:center;padding:0}
+
+/* ===== la recherche globale toujours au même endroit (centrée dans la barre du haut) ===== */
+.topbar{position:relative}
+@media(min-width:1100px){
+  .topbar .gsbtn{position:absolute;left:50%;transform:translateX(-50%);margin:0;width:min(420px,34vw)}
+  .topbar .gsbtn span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
 </style>
 </head>
 <body>
@@ -339,12 +388,19 @@ td,.num{font-variant-numeric:tabular-nums}
     <a href="techniciens.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
   </nav>
   <nav class="nav navbot">
-    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.56rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
+    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.62rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
-  <div class="side-user">
+  <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
     <span class="ph">TM</span>
     <div><b>Thomas Martin</b><span>Administrateur</span></div>
+    <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    <div class="umenu" id="umenu">
+      <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
+        <span class="uic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg></span>Mon compte</button>
+      <button type="button" class="udanger" onclick="event.stopPropagation();logout()">
+        <span class="uic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Déconnexion</button>
+    </div>
   </div>
 </aside>
 
@@ -353,7 +409,11 @@ td,.num{font-variant-numeric:tabular-nums}
     <div class="crumbs"><a href="techniciens.html">Techniciens</a> / <span class="cur" id="c-nom">—</span></div>
     <div class="title-m">Fiche technicien</div>
     <div class="spacer"></div>
-  </div>
+  <button class="gsbtn" onclick="gsOpen()" aria-label="Recherche globale">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+      <span>Rechercher clients, pages, actions…</span><kbd class="slash">/</kbd><kbd>⌘K</kbd>
+    </button>
+    </div>
 
   <div class="page">
 
@@ -493,7 +553,7 @@ const TECHS = [
    zones:["Paris","92 Hauts-de-Seine","95 Val-d'Oise"],
    com:{"Rongeurs":5,"Cafards":5,"Punaises de lit":8,"Guêpes / Frelons":10,"Désinfection":4},
    mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Nébulisateur ULV",1,"ok"],["Postes d'appâtage sécurisés",40,"ok"],["Perche télescopique 6 m",1,"use"],["Combinaison anti-frelons",1,"ok"],["Canon à chaleur punaises",1,"ok"]],
-   interv:21, taux:"96 %", ca:"2 754,90 €", top:true,
+   interv:21, taux:"96 %", ca:"2 754,90 €", top:true,
    dispo:"interv", dispoD:"En intervention — Boulangerie Dupont, Paris 11ᵉ · fin prévue 15h30",
    certiExp:"2029-04-12", ctVeh:"2027-11-05",
    caCat:{"Rongeurs":690,"Cafards":420,"Punaises de lit":980,"Guêpes / Frelons":540,"Désinfection":124.90},
@@ -503,7 +563,7 @@ const TECHS = [
    zones:["93 Seine-Saint-Denis","77 Seine-et-Marne"],
    com:{"Rongeurs":5,"Cafards":6,"Fourmis":5,"Pigeons":7,"Désinfection":4},
    mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Postes d'appâtage sécurisés",35,"ok"],["Pics anti-pigeons (stock)",120,"ok"],["Échelle télescopique 5 m",1,"ok"],["Harnais antichute",1,"use"]],
-   interv:19, taux:"92 %", ca:"1 964,87 €",
+   interv:19, taux:"92 %", ca:"1 964,87 €",
    dispo:"dispo", dispoD:"Disponible — prochaine intervention à 16h00",
    certiExp:"2028-01-20", ctVeh:"2026-09-14",
    caCat:{"Rongeurs":760,"Cafards":540,"Fourmis":210,"Pigeons":454.87},
@@ -513,7 +573,7 @@ const TECHS = [
    zones:["Paris","94 Val-de-Marne"],
    com:{"Punaises de lit":9,"Cafards":6,"Désinfection":5,"Fourmis":5},
    mat:[["Canon à chaleur punaises",1,"ok"],["Aspirateur vapeur 8 bars",1,"ok"],["Housses anti-punaises (stock)",24,"ok"],["Pulvérisateur 8 L",1,"use"],["Détecteur canin (partenariat)",0,"ok"]],
-   interv:10, taux:"85 %", ca:"1 147,65 €",
+   interv:10, taux:"85 %", ca:"1 147,65 €",
    dispo:"interv", dispoD:"En intervention — Hôtel du Parc, punaises · fin prévue 13h00",
    certiExp:"2027-06-30", ctVeh:"2026-07-02",
    caCat:{"Punaises de lit":820,"Cafards":180,"Désinfection":147.65},
@@ -523,7 +583,7 @@ const TECHS = [
    zones:["78 Yvelines","95 Val-d'Oise","27 Eure"],
    com:{"Guêpes / Frelons":12,"Chenilles processionnaires":10,"Rongeurs":5,"Termites":8},
    mat:[["Perche télescopique 12 m",1,"ok"],["Combinaison anti-frelons",2,"ok"],["Pulvérisateur thermonébulisateur",1,"ok"],["Échenilloir + EPI chenilles",1,"ok"],["Drone d'inspection toiture",1,"use"]],
-   interv:12, taux:"95 %", ca:"1 927,20 €",
+   interv:12, taux:"95 %", ca:"1 927,20 €",
    dispo:"conge", dispoD:"En congé jusqu'au 27/08",
    certiExp:"2026-09-30", ctVeh:"2027-03-18",
    caCat:{"Guêpes / Frelons":1020,"Chenilles processionnaires":610,"Rongeurs":297.20},
@@ -533,7 +593,7 @@ const TECHS = [
    zones:["Paris","93 Seine-Saint-Denis"],
    com:{"Rongeurs":5,"Cafards":6,"Punaises de lit":8,"Désinfection":4},
    mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Postes d'appâtage sécurisés",30,"ok"],["Nébulisateur ULV",1,"ok"]],
-   interv:14, taux:"91 %", ca:"1 520,00 €",
+   interv:14, taux:"91 %", ca:"1 520,00 €",
    dispo:"dispo", dispoD:"Disponible — prochaine intervention à 14h00",
    certiExp:"2028-05-11", ctVeh:"2027-02-22",
    caCat:{"Rongeurs":540,"Cafards":420,"Punaises de lit":560},
@@ -543,7 +603,7 @@ const TECHS = [
    zones:["Paris","92 Hauts-de-Seine"],
    com:{"Rongeurs":5,"Cafards":5,"Guêpes / Frelons":9,"Punaises de lit":7},
    mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Combinaison anti-frelons",1,"ok"],["Postes d'appâtage sécurisés",25,"ok"]],
-   interv:16, taux:"94 %", ca:"1 815,40 €",
+   interv:16, taux:"94 %", ca:"1 815,40 €",
    dispo:"interv", dispoD:"En intervention — retour de garantie, Levallois · fin prévue 12h30",
    certiExp:"2028-10-03", ctVeh:"2026-12-01",
    caCat:{"Guêpes / Frelons":760,"Rongeurs":580,"Punaises de lit":475.40},
@@ -553,7 +613,7 @@ const TECHS = [
    zones:["Paris","95 Val-d'Oise"],
    com:{"Rongeurs":6,"Cafards":5,"Pigeons":7,"Désinfection":4},
    mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Pics anti-pigeons (stock)",80,"ok"],["Postes d'appâtage sécurisés",28,"ok"]],
-   interv:13, taux:"90 %", ca:"1 402,75 €",
+   interv:13, taux:"90 %", ca:"1 402,75 €",
    dispo:"dispo", dispoD:"Disponible — tournée de contrôles cet après-midi",
    certiExp:"2027-08-19", ctVeh:"2027-05-30",
    caCat:{"Rongeurs":620,"Pigeons":480,"Cafards":302.75},
@@ -563,7 +623,7 @@ const TECHS = [
    zones:["93 Seine-Saint-Denis","Paris"],
    com:{"Rongeurs":5,"Cafards":6,"Punaises de lit":7,"Fourmis":5},
    mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Postes d'appâtage sécurisés",32,"ok"],["Gel appât cafards (stock)",15,"ok"]],
-   interv:15, taux:"93 %", ca:"1 688,10 €",
+   interv:15, taux:"93 %", ca:"1 688,10 €",
    dispo:"interv", dispoD:"En intervention — retour de garantie cafards, Bobigny · fin prévue 11h45",
    certiExp:"2029-01-27", ctVeh:"2026-10-15",
    caCat:{"Cafards":720,"Rongeurs":540,"Punaises de lit":428.10},
@@ -573,7 +633,7 @@ const TECHS = [
    zones:["77 Seine-et-Marne","91 Essonne","94 Val-de-Marne"],
    com:{"Rongeurs":5,"Guêpes / Frelons":10,"Cafards":5,"Punaises de lit":8},
    mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Perche télescopique 6 m",1,"ok"],["Postes d'appâtage sécurisés",30,"ok"]],
-   interv:17, taux:"95 %", ca:"2 060,00 €",
+   interv:17, taux:"95 %", ca:"2 060,00 €",
    dispo:"interv", dispoD:"En intervention — Melun (77) · fin prévue 12h00",
    certiExp:"2028-03-08", ctVeh:"2027-09-12",
    caCat:{"Guêpes / Frelons":880,"Rongeurs":690,"Punaises de lit":490},
@@ -583,7 +643,7 @@ const TECHS = [
    zones:["77 Seine-et-Marne","91 Essonne","94 Val-de-Marne"],
    com:{"Rongeurs":5,"Cafards":6,"Punaises de lit":7,"Désinfection":5},
    mat:[["Pulvérisateur 16 L à pression",1,"ok"],["Postes d'appâtage sécurisés",26,"ok"],["Nébulisateur ULV",1,"ok"]],
-   interv:12, taux:"89 %", ca:"1 355,25 €",
+   interv:12, taux:"89 %", ca:"1 355,25 €",
    dispo:"dispo", dispoD:"Disponible — secteur 94 cet après-midi",
    certiExp:"2027-12-14", ctVeh:"2026-11-08",
    caCat:{"Rongeurs":520,"Cafards":460,"Punaises de lit":375.25},
@@ -616,10 +676,19 @@ try{
 let SK = null;
 try{ SK = (JSON.parse(localStorage.getItem("tigerflow-techs-skills")) || {})[NAME] || null; }catch(e){}
 
-function toast(msg){
+function toast(msg, undoFn){
   let t = g("toast");
   if(!t){ t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); }
-  t.textContent = msg;
+  if(undoFn){
+    window.__undo = () => { undoFn(); t.classList.remove('show'); window.__undo = null; };
+    t.innerHTML = "";
+    const s = document.createElement("span"); s.textContent = msg;
+    const b = document.createElement("button"); b.textContent = "Annuler";
+    b.style.cssText = "all:unset;margin-left:12px;padding:5px 13px;border-radius:9px;background:rgba(255,255,255,.16);"
+      + "border:1px solid rgba(255,255,255,.35);font-weight:800;cursor:pointer;font-size:.8rem";
+    b.onclick = () => window.__undo && window.__undo();
+    t.appendChild(s); t.appendChild(b);
+  } else { t.textContent = msg; window.__undo = null; }
   t.classList.add("show");
   clearTimeout(t._h);
   t._h = setTimeout(() => t.classList.remove("show"), 2600);
@@ -673,7 +742,7 @@ function profil(){
   g("s-mini").innerHTML =
     '<div class="m mb"><b>' + (T.interv || 0) + '</b><small>Missions</small></div>' +
     '<div class="m mg"><b>' + (T.taux || "—") + '</b><small>Réussite</small></div>' +
-    '<div class="m mo"><b>' + String(T.ca || "0 €").replace(/,\d+\s?€/, " €") + '</b><small>CA mois</small></div>';
+    '<div class="m mo"><b>' + String(T.ca || "0 €").replace(/,\d+\s?€/, " €") + '</b><small>CA mois</small></div>';
   const h = T.horaires || {jours:["Lun","Mar","Mer","Jeu","Ven"], deb:"08:00", fin:"17:00", pause:"1 h", we:false};
   const CG = (function(){ try{ const c = (JSON.parse(localStorage.getItem("tigerflow-techs-statut")) || {})[NAME]; return c && c.du ? c : null; }catch(e){ return null; } })();
   g("i-horaires").innerHTML =
@@ -752,7 +821,7 @@ function perf(){
   const cmx = cc.length ? cc[0][1] : 1;
   g("i-cacat").innerHTML = cc.length
     ? '<div class="glab" style="margin:14px 0 8px">CA par activité — ce mois</div>' +
-      cc.map(([k, v]) => '<div class="cbar"><span class="cl">' + k + '</span><span class="ct"><i style="width:' + Math.max(6, Math.round(v / cmx * 100)) + '%"></i></span><span class="cv">' + v.toLocaleString("fr-FR", {maximumFractionDigits:2}) + ' €</span></div>').join("")
+      cc.map(([k, v]) => '<div class="cbar"><span class="cl">' + k + '</span><span class="ct"><i style="width:' + Math.max(6, Math.round(v / cmx * 100)) + '%"></i></span><span class="cv">' + v.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €</span></div>').join("")
     : "";
   g("i-perfhint").textContent = "aujourd'hui";
   const rows = (T.planning || []).map((p, i) =>
@@ -866,7 +935,7 @@ function congeRender(){
 }
 function congeForm(){
   g("congebox").innerHTML =
-    '<div style="display:grid;gap:9px;text-align:left"><div><label class="lab2">Du</label><input type="date" id="cg-du"></div><div><label class="lab2">Au</label><input type="date" id="cg-au"></div></div>' +
+    '<div style="display:grid;gap:9px;text-align:left"><div><label class="lab2" for="cg-du">Du</label><input type="date" id="cg-du"></div><div><label class="lab2" for="cg-au">Au</label><input type="date" id="cg-au"></div></div>' +
     '<div style="display:flex;gap:8px;margin-top:10px">' +
     '<button class="btn2" style="flex:1;justify-content:center" onclick="congeRender()">Annuler</button>' +
     '<button class="btn2 primary" style="flex:1;justify-content:center" onclick="congeSave()">✓ Valider</button></div>';
@@ -904,6 +973,124 @@ function showTab(p, btn){
 }
 
 head(); profil(); comp(); dispo(); perf(); docsRender(); notesRender(); congeRender();
+
+/* ===== compte : ouvrir le menu, se déconnecter ===== */
+function userMenu(e){
+  if(e) e.stopPropagation();
+  const u = document.getElementById("side-user");
+  if(!u) return;
+  const ouvert = u.classList.toggle("open");
+  u.setAttribute("aria-expanded", ouvert ? "true" : "false");
+}
+document.addEventListener("click", function(){
+  const u = document.getElementById("side-user");
+  if(u && u.classList.contains("open")){ u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+});
+document.addEventListener("keydown", function(e){
+  const u = document.getElementById("side-user");
+  if(e.key === "Escape" && u) { u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+  if((e.key === "Enter" || e.key === " ") && document.activeElement === u){ e.preventDefault(); userMenu(); }
+});
+function logout(){
+  try{ if(typeof toast === "function") toast("Déconnexion…"); }catch(err){}
+  setTimeout(function(){ location.href = "connexion.html"; }, 350);
+}
+</script>
+<div class="gs-veil" id="gs-veil" onclick="gsClose()"></div>
+<div class="gs-pal" id="gs-pal">
+  <div class="gs-in">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="gs-q" placeholder="Client, téléphone, devis, facture, page…" autocomplete="off">
+  </div>
+  <div class="gs-res" id="gs-res"></div>
+</div>
+<script>
+(function(){
+  var CL = [
+    {n:"Ironwood Solutions", s:"Paris 11e - 06 12 34 56 78", h:"client.html?c=Ironwood%20Solutions"},
+    {n:"Boulangerie Dupont", s:"Asnieres - 06 45 22 18 90", h:"client.html?c=Boulangerie%20Dupont"},
+    {n:"Pharmacie Centrale", s:"Paris 15e - 01 45 32 10 87", h:"client.html?c=Pharmacie%20Centrale"},
+    {n:"Hotel du Parc", s:"Vincennes - 01 43 28 55 12", h:"client.html?c=H%C3%B4tel%20du%20Parc"},
+    {n:"Restaurant Le Baobab", s:"Paris 18e - 06 52 30 41 78", h:"client.html?c=Restaurant%20Le%20Baobab"},
+    {n:"M. Diallo", s:"Saint-Ouen - 06 61 44 28 03", h:"client.html?c=M.%20Diallo"},
+    {n:"Mme Perrin", s:"Paris 13e - 06 78 12 45 66", h:"client.html?c=Mme%20Perrin"},
+    {n:"Mme Ferreira", s:"Ivry - 06 33 90 71 25", h:"client.html?c=Mme%20Ferreira"},
+    {n:"Syndic Foncia Lilas", s:"Paris 20e - 01 40 31 62 00", h:"client.html?c=Syndic%20Foncia%20Lilas"},
+    {n:"Entrepot Central", s:"Pantin - 01 48 91 07 33", h:"client.html?c=Entrep%C3%B4t%20Central"},
+    {n:"Camping Val de Seine", s:"Draveil - 01 69 03 88 21", h:"client.html?c=Camping%20Val%20de%20Seine"}
+  ];
+  var DOC = [
+    {n:"DEV-2026-01287", s:"Devis - punaises de lit", h:"devis.html"},
+    {n:"FAC-2026-00873", s:"Facture - Ironwood Solutions", h:"facture.html"},
+    {n:"FAC-2026-00858", s:"Facture en retard - 1 250 EUR", h:"facture-liste.html"},
+    {n:"CTR-2026-04729", s:"Contrat annuel - Ironwood", h:"index.html"}
+  ];
+  var PG = [
+    {n:"Tableau de bord", i:"🏠", h:"dashboard.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},{n:"Tournees", i:"🗺️", h:"tournee.html"},
+    {n:"Clients", i:"👥", h:"clients.html"},{n:"Nouveau client", i:"➕", h:"client-nouveau.html"},
+    {n:"Nouvelle intervention", i:"🗓️", h:"intervention-nouvelle.html"},{n:"Devis", i:"🧾", h:"devis-liste.html"},
+    {n:"Nouveau devis", i:"✏️", h:"devis.html"},{n:"Factures", i:"💶", h:"facture-liste.html"},
+    {n:"Taches", i:"✅", h:"taches.html"},{n:"Techniciens", i:"👷", h:"techniciens.html"},
+    {n:"Rapports", i:"📊", h:"rapports.html"},{n:"Reglages", i:"⚙️", h:"reglages.html"}
+  ];
+  var SEL = 0, RES = [];
+  var norm = function(x){ return x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\s.\-]/g,""); };
+  function search(q){
+    var nq = norm(q);
+    if(!nq) return [];
+    var out = [];
+    CL.forEach(function(c){ if(norm(c.n).indexOf(nq) > -1 || norm(c.s).indexOf(nq) > -1) out.push({g:"Clients", i:"👤", n:c.n, s:c.s, h:c.h}); });
+    DOC.forEach(function(d){ if(norm(d.n).indexOf(nq) > -1 || norm(d.s).indexOf(nq) > -1) out.push({g:"Documents", i:"📄", n:d.n, s:d.s, h:d.h}); });
+    PG.forEach(function(p){ if(norm(p.n).indexOf(nq) > -1) out.push({g:"Pages", i:p.i, n:p.n, s:"", h:p.h}); });
+    return out.slice(0, 9);
+  }
+  function draw(){
+    var box = document.getElementById("gs-res");
+    if(!RES.length){
+      var q = document.getElementById("gs-q").value.trim();
+      box.innerHTML = q ? '<div class="gs-empty">Aucun resultat pour « ' + q + ' »</div>'
+        : '<div class="gs-empty">Tape un nom de client, un numero de telephone,<br>une reference de devis/facture ou une page…</div>';
+      return;
+    }
+    var html = "", lastG = "";
+    RES.forEach(function(r, i){
+      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
+      html += '<div class="gs-r ' + (i === SEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsSel(' + i + ')">'
+        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
+        + '<span class="go">Entree ↵</span></div>';
+    });
+    box.innerHTML = html;
+  }
+  window.gsSel = function(i){ SEL = i; draw(); };
+  window.gsOpen = function(){
+    document.getElementById("gs-veil").classList.add("open");
+    document.getElementById("gs-pal").classList.add("open");
+    var inp = document.getElementById("gs-q");
+    inp.value = ""; RES = []; SEL = 0; draw();
+    setTimeout(function(){ inp.focus(); }, 30);
+  };
+  window.gsClose = function(){
+    document.getElementById("gs-veil").classList.remove("open");
+    document.getElementById("gs-pal").classList.remove("open");
+  };
+  document.getElementById("gs-q").addEventListener("input", function(){
+    RES = search(this.value); SEL = 0; draw();
+  });
+  document.addEventListener("keydown", function(e){
+    var open = document.getElementById("gs-pal").classList.contains("open");
+    if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); open ? gsClose() : gsOpen(); return; }
+    if(e.key === "/" && !open){
+      const t = e.target;
+      if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      e.preventDefault(); gsOpen(); return;
+    }
+    if(!open) return;
+    if(e.key === "Escape"){ gsClose(); }
+    else if(e.key === "ArrowDown"){ e.preventDefault(); SEL = Math.min(RES.length - 1, SEL + 1); draw(); }
+    else if(e.key === "ArrowUp"){ e.preventDefault(); SEL = Math.max(0, SEL - 1); draw(); }
+    else if(e.key === "Enter" && RES[SEL]){ location.href = RES[SEL].h; }
+  });
+})();
 </script>
 </body>
 </html>
