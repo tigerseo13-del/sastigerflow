@@ -622,9 +622,11 @@ function persoSync(){
   try{ localStorage.setItem(PERSOK, JSON.stringify(TASKS.filter(t => t.perso))); }catch(e){}
 }
 try{
-  JSON.parse(localStorage.getItem(PERSOK) || "[]").reverse().forEach(rec => {
+  /* 27/07 : reverse + unshift s'annulaient — la plus ancienne remontait. */
+  JSON.parse(localStorage.getItem(PERSOK) || "[]").forEach((rec, k) => {
     rec.id = TID++;
     rec.perso = true;
+    rec._cree = k + 1;            /* marque l'ordre de creation */
     TASKS.unshift(rec);
   });
 }catch(e){}
@@ -691,6 +693,10 @@ function filtered(){
   list.sort((a,b)=> sort === "prio" ? PRIORDER[a.prio] - PRIORDER[b.prio]
     : sort === "created" ? b.created.localeCompare(a.created)
     : a.due.localeCompare(b.due));
+  /* 27/07 : ce qu'on vient de créer passe devant, quelle que soit son échéance.
+     Le tri par défaut est l'échéance croissante : une tâche neuve datée loin
+     tombait tout en bas. Le tri est stable, donc les autres gardent leur ordre. */
+  list.sort((a, b) => (b._cree || 0) - (a._cree || 0));
   /* les terminées glissent en bas : la liste montre d'abord le travail restant */
   const fini = x => (x.st === "done" || x.st === "annul") ? 1 : 0;
   if(FSTAT === "all") list.sort((a, b) => fini(a) - fini(b));
