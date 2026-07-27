@@ -969,9 +969,16 @@ Tiger Hygiène 3D — 01 84 25 36 47`);
 function dupliquer(e, ref){
   e.stopPropagation(); e.preventDefault();
   const d = DEVIS.find(x=>x.ref===ref);
-  const maxN = Math.max(...DEVIS.map(x=>+x.ref.split("-")[2]));
+  /* 27/07 : deux defauts sur la duplication.
+     - le nouveau document n'etait pas marque comme cree : il repassait
+       derriere ceux venus de l'editeur, alors qu'il vient d'etre fait ici ;
+     - le numero se calculait sur TOUTES les references, y compris celles qui
+       ne suivent pas le format a trois segments : une seule suffisait a
+       produire « 00NaN ». On ne garde que les references numerotables. */
+  const nums = DEVIS.map(x=>+String(x.ref).split("-")[2]).filter(n=>Number.isFinite(n));
+  const maxN = nums.length ? Math.max(...nums) : 0;
   const nref = "FAC-2026-00" + (maxN+1);
-  DEVIS.unshift({...d, ref:nref, statut:"brouillon", date:"2026-08-25", valid:"2026-09-24"});
+  DEVIS.unshift({...d, ref:nref, statut:"brouillon", date:"2026-08-25", valid:"2026-09-24", _cree:Date.now()});
   stats(); render();
   toast("⧉ Facture dupliquée (brouillon) → " + nref);
 }
