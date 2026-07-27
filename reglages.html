@@ -105,7 +105,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .tscroll .acti{white-space:nowrap}
 .card-h{display:flex;align-items:center;gap:10px;font-family:'Sora';font-weight:700;font-size:1.05rem;margin-bottom:20px;flex-wrap:wrap}
 .card-h::before{content:"";width:4px;height:16px;border-radius:3px;background:var(--orange)}
-.card-h .act{margin-left:auto;display:inline-flex;align-items:center;gap:7px;background:var(--orange);color:#fff;font-weight:700;font-size:.79rem;padding:9px 14px;border-radius:11px}
+/* 27/07 : le bouton d'en-tete est un element flex — il RETRECISSAIT quand la
+   place manquait et son libelle debordait de la pastille orange. C'est ce qui
+   donnait ce bouton coupe en haut a droite. Il ne se comprime plus. */
+.card-h .act{margin-left:auto;flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;background:var(--orange);color:#fff;font-weight:700;font-size:.79rem;padding:9px 14px;border-radius:11px}
 .card-h .act:hover{background:var(--orange-deep)}
 
 .dt{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -339,6 +342,27 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 .rok:hover{background:var(--orange-deep)}
 .rgrp{font-family:'Sora';font-weight:700;font-size:.85rem;margin:13px 0 8px}
 .rgrp small{font-family:'Inter';font-weight:500;font-size:.72rem;color:var(--muted)}
+
+/* vignettes de documents — meme presentation que l'onglet Dossier d'un technicien */
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:16px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(23,26,32,.04);transition:.14s}
+.doccard.ouvrable{cursor:zoom-in}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 12px 26px -16px rgba(23,26,32,.45);transform:translateY(-2px)}
+.docvue{height:146px;background:#fff;display:grid;place-items:center;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.docvue:has(.docext){background:#F5F6F9}
+.docvue img{width:100%;height:100%;object-fit:cover;display:block}
+.docvue iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+.docvue::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.92))}
+.docvue:has(.docext)::after{display:none}
+.docext{font-family:'Sora';font-weight:800;font-size:1.02rem;color:var(--muted);letter-spacing:.06em}
+.doctag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;background:rgba(23,26,32,.72);color:#fff;padding:2px 7px;border-radius:6px}
+.docvue:has(.docext) .doctag{display:none}
+.doccard figcaption{padding:10px 12px 12px;display:block}
+.doccard figcaption b{display:block;font-size:.76rem;font-weight:700;line-height:1.35;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doccard figcaption small{display:block;font-size:.69rem;color:var(--muted);margin-top:4px}
+.docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--muted);font-size:.72rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.22);opacity:0;transition:.14s}
+.doccard:hover .docx,.docx:focus-visible{opacity:1}
+.docx:hover{background:var(--red-bg);color:var(--red)}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 </head>
@@ -835,23 +859,57 @@ R.num = () => `
 
 /* ----- bibliothèque de documents ----- */
 let DOCSR = [
-  {n:"RC PRO", t:"Autre", on:true, d:"16/07/2026"},
-  {n:"Terms and Condition", t:"Conditions générales", on:true, d:"16/07/2026"}
+  {n:"RC PRO.pdf", t:"Autre", on:true, d:"16/07/2026"},
+  {n:"Terms and Condition.pdf", t:"Conditions générales", on:true, d:"16/07/2026"}
 ];
+/* ===== documents reutilisables : meme presentation que l'onglet Dossier d'une
+   fiche technicien (27/07). Le bouton n'etait pas branche — il affichait un
+   message et rien d'autre. Il televerse maintenant vraiment. ===== */
+const DOCR_MAX = 1500 * 1024;
+const docrPoids = o => o < 1024 ? o + " o" : o < 1048576 ? Math.round(o/1024) + " Ko" : (o/1048576).toFixed(1).replace(".", ",") + " Mo";
+function docrAdd(inp){
+  const fichiers = [...inp.files];
+  if(!fichiers.length) return;
+  let restants = fichiers.length;
+  const fin = () => { if(--restants === 0){ inp.value = ""; spRender();
+    toast(fichiers.length > 1 ? fichiers.length + " documents ajoutés" : "Document ajouté"); } };
+  fichiers.forEach(f => {
+    const base = {n:f.name, t:"Autre", on:true, d:new Date().toLocaleDateString("fr-FR"), mime:f.type || "", s:f.size};
+    if(f.size <= DOCR_MAX && typeof FileReader !== "undefined"){
+      const r = new FileReader();
+      r.onload = () => { DOCSR.unshift({...base, src:r.result}); fin(); };
+      r.onerror = () => { DOCSR.unshift(base); fin(); };
+      r.readAsDataURL(f);
+    } else { DOCSR.unshift(base); fin(); }
+  });
+}
+function docrOuvrir(i){
+  const d = DOCSR[i];
+  if(!d || !d.src){ toast("Ce document n'a pas d'aperçu — il était trop lourd pour être conservé"); return; }
+  const w = window.open();
+  if(w) w.document.write('<title>' + d.n + '</title><body style="margin:0;background:#22252B">' +
+    (/^image\//.test(d.mime) ? '<img src="' + d.src + '" style="max-width:100%;display:block;margin:auto">'
+                             : '<iframe src="' + d.src + '" style="border:0;width:100%;height:100vh"></iframe>') + '</body>');
+}
 let RULES = [ {n:"CGV sur devis", j:"Devis", doc:"Terms and Condition", on:true} ];
 R.docs = () => `
   <div class="card">
-    <div class="card-h">Documents réutilisables<button class="act" onclick="toast('PDF, DOCX ou image — le document devient joignable partout')" title="Télécharger">+ Téléverser un document</button></div>
-    <div class="tscroll"><table class="dt"><thead><tr><th>Nom</th><th>Type de document</th><th>Statut</th><th>Téléversé le</th><th style="text-align:right">Actions</th></tr></thead>
-    <tbody>${DOCSR.map((d, i) => `<tr>
-      <td><b>${d.n}</b></td><td>${d.t}</td>
-      <td><span class="bdg ${d.on ? "b-on" : "b-off"}">${d.on ? "Actif" : "Inactif"}</span></td>
-      <td>${d.d}</td>
-      <td><span class="acti">
-        <button class="aic" title="Modifier" onclick="toast('Modification de « ${d.n} »')">${ic.pen}</button>
-        <button class="aic del" title="Supprimer" onclick="arm(this,()=>{DOCSR.splice(${i},1);spRender();toast('Document supprimé')})">${ic.del}</button>
-      </span></td></tr>`).join("")}</tbody></table></div>
-    <div class="tfoot"><span>1-${DOCSR.length} sur ${DOCSR.length} affichés</span><span>Par page&nbsp;<b>20</b></span></div>
+    <div class="card-h">Documents réutilisables<button class="act" onclick="document.getElementById('docr-in').click()" title="PDF, DOCX ou image">+ Téléverser</button></div>
+    <input type="file" id="docr-in" multiple hidden onchange="docrAdd(this)">
+    <div class="docgrid">${DOCSR.map((d, i) => {
+      const img = /^image\//.test(d.mime || "") && d.src;
+      const pdf = /pdf/.test(d.mime || "") && d.src;
+      const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
+      const vue = img ? `<img src="${d.src}" alt="">`
+        : pdf ? `<iframe src="${d.src}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>`
+        : `<span class="docext">${ext}</span>`;
+      return `<figure class="doccard${d.src ? " ouvrable" : ""}"${d.src ? ` onclick="docrOuvrir(${i})" title="Ouvrir ${d.n}"` : ""}>
+        <button class="docx" title="Retirer" onclick="event.stopPropagation();arm(this,()=>{DOCSR.splice(${i},1);spRender();toast('Document supprimé')})">✕</button>
+        <div class="docvue">${vue}<span class="doctag">${ext}</span></div>
+        <figcaption><b title="${d.n}">${d.n}</b>
+        <small>${d.t} · ${d.d}${d.s ? " · " + docrPoids(d.s) : ""}${d.src ? "" : " · aperçu non conservé"}</small></figcaption>
+      </figure>`;
+    }).join("") || '<div class="emptybox" style="grid-column:1/-1">Aucun document réutilisable.<br><small style="font-size:.75rem">Contrat type, CGV, attestation — ils deviennent joignables aux devis et factures.</small></div>'}</div>
   </div>
   <div class="card">
     <div class="card-h" style="margin-top:2px">Règles de pièces jointes<button class="act" onclick="toast('Une règle joint automatiquement un document à un type d\\'envoi')">+ Ajouter une règle</button></div>
