@@ -229,12 +229,17 @@ h1,.num{font-family:'Sora',sans-serif}
 .fck{width:16px;height:16px;accent-color:var(--orange);cursor:pointer}
 tr.selrow{background:var(--orange-soft)}
 tr.selrow:hover{background:#FFE8DC}
-.bulkbar{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);z-index:80;display:flex;align-items:center;gap:13px;background:var(--ink);color:#fff;border-radius:15px;padding:12px 12px 12px 19px;box-shadow:0 16px 44px rgba(16,18,22,.4);transition:transform .22s cubic-bezier(.2,.8,.2,1);max-width:calc(100vw - 26px);flex-wrap:wrap}
-.bulkbar.show{transform:translateX(-50%) translateY(0)}
-.bulkbar b{font-family:'Sora';font-size:.88rem;white-space:nowrap}
-.bulkbar span{font-size:.76rem;color:#9BA1AE;white-space:nowrap}
-.bk{padding:10px 15px;border-radius:11px;font-size:.8rem;font-weight:700;border:1px solid #2C3039;background:#1F222A;color:#C7CBD4;cursor:pointer;font-family:inherit;white-space:nowrap}
-.bk:hover{color:#fff;border-color:#3A3F4A}
+/* 27/07 : la barre d'actions passe du bas de l'ecran au-dessus du tableau,
+   dans le flux. Elle n'apparait toujours QUE s'il y a une selection. */
+.bulkbar{display:none;align-items:center;gap:12px;flex-wrap:wrap;background:var(--orange-soft);
+  border:1px solid #FFD3BF;border-radius:14px;padding:11px 9px 11px 15px;margin-bottom:14px}
+.bulkbar.show{display:flex;animation:bfad .18s ease}
+@keyframes bfad{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.bulkbar .bk:first-of-type{margin-left:auto}
+.bulkbar b{font-family:'Sora';font-size:.88rem;white-space:nowrap;color:var(--ink)}
+.bulkbar span{font-size:.76rem;color:var(--orange-deep);font-weight:600;white-space:nowrap}
+.bk{padding:9px 14px;border-radius:11px;font-size:.8rem;font-weight:700;border:1px solid #FFD3BF;background:#fff;color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap}
+.bk:hover{color:var(--orange-deep);border-color:var(--orange)}
 .bk.primary{background:var(--orange);border-color:var(--orange);color:#fff}
 .bk.primary:hover{background:var(--orange-deep)}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
@@ -415,6 +420,16 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
         <option value="client">Client A→Z</option>
       </select>
       <button class="expbtn" onclick="exportCSV()" title="Télécharger la liste affichée au format CSV (Excel)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exporter</button>
+    </div>
+
+    <div class="bulkbar" id="bulkbar">
+      <b id="bulk-n">0 sélectionnée</b>
+      <span id="bulk-detail"></span>
+      <button class="bk primary" onclick="bulkRelance()">📧 Relancer les impayées</button>
+      <button class="bk" id="bk-payees" onclick="bulkPayees()">✓ Marquer payées</button>
+      <button class="bk" onclick="bulkEnvoyer()">✈ Envoyer la sélection</button>
+      <button class="bk" onclick="bulkTelecharger()">⬇ Télécharger</button>
+      <button class="bk" onclick="bulkClear()">✕ Annuler</button>
     </div>
 
     <!-- Table desktop -->
@@ -1080,15 +1095,6 @@ render();
   });
 })();
 </script>
-<div class="bulkbar" id="bulkbar">
-  <b id="bulk-n">0 sélectionnée</b>
-  <span id="bulk-detail"></span>
-  <button class="bk primary" onclick="bulkRelance()">📧 Relancer les impayées</button>
-  <button class="bk" id="bk-payees" onclick="bulkPayees()">✓ Marquer payées</button>
-  <button class="bk" onclick="bulkEnvoyer()">✈ Envoyer la sélection</button>
-  <button class="bk" onclick="bulkTelecharger()">⬇ Télécharger</button>
-  <button class="bk" onclick="bulkClear()">✕ Annuler</button>
-</div>
 
 <style>
 .bnv{display:none}
