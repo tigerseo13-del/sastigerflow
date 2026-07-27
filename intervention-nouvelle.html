@@ -522,37 +522,8 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <!-- ===== 6. TECHNICIEN ===== -->
     <div class="card">
       <div class="card-h"><span class="num">6</span>Technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— plusieurs choix possibles</span></div>
-      <div class="techs" id="techs">
-        <div class="tech" data-v="Pablo" onclick="togTech(this)">
-          <span class="tav">MD</span>
-          <span><b>Pablo</b><small>Dératisation · Désinsectisation</small></span>
-          <span class="tst dispo">Disponible</span>
-          <span class="km">📍 à 5 km</span>
-          <span class="chk"></span>
-        </div>
-        <div class="tech" data-v="Sofia Leroy" onclick="togTech(this)">
-          <span class="tav">SL</span>
-          <span><b>Sofia Leroy</b><small>Punaises de lit · Cafards</small></span>
-          <span class="tst dispo">Disponible</span>
-          <span class="km">📍 à 8 km</span>
-          <span class="chk"></span>
-        </div>
-        <div class="tech" data-v="Karim Benali" onclick="togTech(this)">
-          <span class="tav">KB</span>
-          <span><b>Karim Benali</b><small>Guêpes / Frelons · Pigeons</small></span>
-          <span class="tst tournee">En tournée</span>
-          <span class="km">📍 à 14 km</span>
-          <span class="chk"></span>
-        </div>
-        <div class="tech" data-v="Julie Moreau" onclick="togTech(this)">
-          <span class="tav">JM</span>
-          <span><b>Julie Moreau</b><small>Dératisation · Contrats pro</small></span>
-          <span class="tst dispo">Disponible</span>
-          <span class="km">📍 à 11 km</span>
-          <span class="chk"></span>
-        </div>
-      </div>
-      <button class="morelink" onclick="reveal('g-addtech', this)">+ Ajouter un technicien</button>
+      <div class="techs" id="techs"></div>
+        <button class="morelink" onclick="reveal('g-addtech', this)">+ Ajouter un technicien</button>
       <div id="g-addtech" style="display:none;margin-top:11px">
         <div style="display:flex;gap:9px">
           <input id="f-newtech" placeholder="Nom du technicien (Ex : Paul Girard)" style="max-width:340px" onkeydown="if(event.key==='Enter')addTech()">
@@ -956,7 +927,55 @@ document.getElementById("f-montant").addEventListener("blur", function(){
 
 /* ===== Brouillon automatique ===== */
 const IKEY = "tigerflow-intervention-brouillon";
-const PRESET_TECHS = ["Pablo","Sofia Leroy","Karim Benali","Julie Moreau"];
+/* ===== TECHNICIENS RÉELS (27/07) =====
+   Le formulaire proposait quatre noms inventés — Sofia Leroy, Karim Benali,
+   Julie Moreau — qui n'existent nulle part ailleurs dans le SaaS, et Pablo
+   avec les initiales « MD ». On affiche desormais l'equipe reelle, et on lit
+   les memes cles de stockage que la page Techniciens : les fiches creees
+   apparaissent, les supprimees disparaissent, les conges sont repercutes.
+   Le referentiel est recopie ici comme partout ailleurs (chaque page est
+   autonome) ; la parite est controlee par la suite techint.js. */
+const TECHS_REF = [
+  {p:"Pablo", i:"PA", c:"Rongeurs · Cafards", d:"interv"},
+  {p:"Otman", i:"OT", c:"Rongeurs · Cafards", d:"dispo"},
+  {p:"Fredo", i:"FR", c:"Punaises de lit · Cafards", d:"interv"},
+  {p:"Babacar", i:"BA", c:"Guêpes / Frelons · Chenilles processionnaires", d:"conge"},
+  {p:"Wissam", i:"WI", c:"Rongeurs · Cafards", d:"dispo"},
+  {p:"Enzo", i:"EN", c:"Rongeurs · Cafards", d:"interv"},
+  {p:"Éric", i:"ÉR", c:"Rongeurs · Cafards", d:"dispo"},
+  {p:"Mahamadou", i:"MA", c:"Rongeurs · Cafards", d:"interv"},
+  {p:"Rémi", i:"RÉ", c:"Rongeurs · Guêpes / Frelons", d:"interv"},
+  {p:"Jawad", i:"JA", c:"Rongeurs · Cafards", d:"dispo"}
+];
+function techsReels(){
+  let list = TECHS_REF.map(t => ({...t}));
+  try{
+    (JSON.parse(localStorage.getItem("tigerflow-techs-perso") || "[]")).forEach(r => {
+      const nom = ((r.prenom || "") + " " + (r.nom || "")).trim();
+      if(!nom || list.some(t => t.p === nom)) return;
+      const ini = ((r.prenom || " ")[0] + ((r.nom || "") ? r.nom[0] : (r.prenom || "  ")[1] || "")).toUpperCase();
+      list.unshift({p:nom, i:ini, c:Object.keys(r.com || {}).slice(0,2).join(" · ") || "Nouveau technicien", d:r.dispo || "dispo"});
+    });
+    const del = JSON.parse(localStorage.getItem("tigerflow-techs-del") || "[]");
+    list = list.filter(t => !del.includes(t.p));
+    const st = JSON.parse(localStorage.getItem("tigerflow-techs-statut") || "{}");
+    list.forEach(t => { if(st[t.p] && st[t.p].dispo) t.d = st[t.p].dispo; });
+  }catch(e){}
+  return list;
+}
+function renderTechs(){
+  const LBL = {dispo:["dispo","Disponible"], interv:["tournee","En tournée"], conge:["tournee","En congé"]};
+  document.getElementById("techs").innerHTML = techsReels().map(t => {
+    const [cls, lbl] = LBL[t.d] || LBL.dispo;
+    return '<div class="tech" data-v="' + t.p + '" onclick="togTech(this)">'
+      + '<span class="tav">' + t.i + '</span>'
+      + '<span><b>' + t.p + '</b><small>' + (t.c || "—") + '</small></span>'
+      + '<span class="tst ' + cls + '">' + lbl + '</span>'
+      + '<span class="chk"></span></div>';
+  }).join("");
+  document.querySelectorAll("#techs .tech").forEach(kbd);
+}
+const PRESET_TECHS = TECHS_REF.map(t => t.p);
 function iDraftSave(){
   try{
     const vals = [...document.querySelectorAll("input,select,textarea")].map(e=>e.value);
@@ -965,6 +984,7 @@ function iDraftSave(){
     }));
   }catch(e){}
 }
+renderTechs();
 function iDraftRestore(){
   try{
     const raw = localStorage.getItem(IKEY);
