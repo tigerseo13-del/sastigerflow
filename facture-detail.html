@@ -467,6 +467,28 @@ label[for]{cursor:pointer}
 
 .fhead .hcli{font-family:'Sora';font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink)}
 .kpi.nolink{pointer-events:none}
+
+/* 27/07 : retour visuel du glisser-deposer + vignettes, comme la fiche technicien */
+.pjrow.over{border-color:var(--orange);background:var(--orange-soft)}
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(23,26,32,.04);transition:.14s}
+.doccard.ouvrable{cursor:zoom-in}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 12px 26px -16px rgba(23,26,32,.45);transform:translateY(-2px)}
+.docvue{height:132px;background:#fff;display:grid;place-items:center;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.docvue:has(.docext){background:#F5F6F9}
+.docvue img{width:100%;height:100%;object-fit:cover;display:block}
+.docvue iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+.docvue::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30px;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.92))}
+.docvue:has(.docext)::after{display:none}
+.docext{font-family:'Sora';font-weight:800;font-size:.98rem;color:var(--muted);letter-spacing:.06em}
+.doctag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;background:rgba(23,26,32,.72);color:#fff;padding:2px 7px;border-radius:6px}
+.docvue:has(.docext) .doctag{display:none}
+.doccard figcaption{padding:9px 11px 11px;display:block}
+.doccard figcaption b{display:block;font-size:.75rem;font-weight:700;line-height:1.35;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doccard figcaption small{display:block;font-size:.68rem;color:var(--muted);margin-top:3px}
+.docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--muted);font-size:.72rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.22);opacity:0;transition:.14s}
+.doccard:hover .docx,.docx:focus-visible{opacity:1}
+.docx:hover{background:var(--red-bg);color:var(--red)}
 </style>
 </head>
 <body>
@@ -591,11 +613,17 @@ label[for]{cursor:pointer}
         </div></div>
       </div>
       <div class="card" style="padding:14px 20px">
-        <div class="pjrow" style="margin-top:0" onclick="toast('Ajout de fichiers — bientôt relié au backend')" title="Clique ou glisse un fichier sur cette ligne">
+        <input type="file" id="fpj-in" multiple hidden onchange="fpjAdd(this.files); this.value=''">
+        <div class="pjrow" style="margin-top:0" onclick="document.getElementById('fpj-in').click()"
+             ondragover="event.preventDefault();this.classList.add('over')"
+             ondragleave="this.classList.remove('over')"
+             ondrop="event.preventDefault();this.classList.remove('over');fpjAdd(event.dataTransfer.files)"
+             title="Clique ou glisse un fichier sur cette ligne">
           <button class="pjadd" type="button"><svg viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.2-9.19a4 4 0 015.65 5.66l-9.2 9.19a2 2 0 01-2.82-2.83l8.49-8.48"/></svg> Ajouter une pièce jointe</button>
-          <span class="pjhint">ou glisse ton fichier ici · PDF, JPG, PNG · 10 Mo max</span>
+          <span class="pjhint">ou glisse ton fichier ici · PDF, JPG, PNG · aperçu gardé jusqu'à 1,5 Mo</span>
           <span class="pjcount2" id="pjcount">0 fichier</span>
         </div>
+        <div class="docgrid" id="fpj-liste" style="margin-top:12px"></div>
       </div>
     </div>
 
@@ -623,10 +651,16 @@ label[for]{cursor:pointer}
             </select></div>
             <div><label class="plab" for="p-date">Date d'encaissement <b class="req">*</b></label><input type="date" id="p-date"></div>
           </div>
-          <div class="pjrow" style="margin-top:10px" onclick="toast('Justificatif — bientôt relié au backend')" title="Avis de virement, remise de chèque…">
+          <input type="file" id="ppj-in" hidden onchange="ppjPrendre(this.files); this.value=''">
+          <div class="pjrow" style="margin-top:10px" onclick="document.getElementById('ppj-in').click()"
+               ondragover="event.preventDefault();this.classList.add('over')"
+               ondragleave="this.classList.remove('over')"
+               ondrop="event.preventDefault();this.classList.remove('over');ppjPrendre(event.dataTransfer.files)"
+               title="Avis de virement, remise de chèque…">
             <button class="pjadd" type="button"><svg viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.2-9.19a4 4 0 015.65 5.66l-9.2 9.19a2 2 0 01-2.82-2.83l8.49-8.48"/></svg> Joindre un justificatif</button>
-            <span class="pjhint">avis de virement, remise de chèque… · PDF, JPG · facultatif</span>
+            <span class="pjhint" id="ppj-nom">avis de virement, remise de chèque… · PDF, JPG · facultatif</span>
           </div>
+          <div class="docgrid" id="ppj-vue" style="margin-top:10px"></div>
           <input id="p-note" class="pnote" placeholder="Note (facultatif) — ex. « acompte 30 % », « chèque n°1234 »" onkeydown="if(event.key==='Enter')payAdd()">
           <div class="pfacts2">
             <button class="btn2" onclick="payFull()" title="Enregistre le solde restant en un clic">✓ Solder la facture</button>
@@ -767,6 +801,71 @@ function showTab(k,btn){ document.querySelectorAll('.tab').forEach(t=>t.classLis
 
 /* ===== la facture : depuis le pont (atelier) ou démo ===== */
 let REF = null;
+/* ===== pieces jointes de la facture et justificatifs de paiement (27/07) =====
+   Les deux zones affichaient « bientot relie au backend » et ne faisaient rien.
+   Elles acceptent maintenant vraiment un fichier, au clic comme au
+   glisser-deposer, et on VOIT le document au lieu de lire son nom. ===== */
+const FPJ_MAX = 1500 * 1024;
+const fpjPoids = o => o < 1024 ? o + " o" : o < 1048576 ? Math.round(o/1024) + " Ko" : (o/1048576).toFixed(1).replace(".", ",") + " Mo";
+const fpjKey = () => "tigerflow-facture-pj-" + (REF || "x");
+const fpjGet = () => { try{ return JSON.parse(localStorage.getItem(fpjKey())) || []; }catch(e){ return []; } };
+function fpjLire(f, fait){
+  const base = {n:f.name, d:new Date().toLocaleDateString("fr-FR"), t:f.type || "", s:f.size};
+  if(f.size <= FPJ_MAX && typeof FileReader !== "undefined"){
+    const r = new FileReader();
+    r.onload = () => fait({...base, src:r.result});
+    r.onerror = () => fait(base);
+    r.readAsDataURL(f);
+  } else fait(base);
+}
+function fpjAdd(files){
+  const liste = [...(files || [])];
+  if(!liste.length) return;
+  let restants = liste.length;
+  liste.forEach(f => fpjLire(f, rec => {
+    const l = fpjGet(); l.unshift(rec);
+    try{ localStorage.setItem(fpjKey(), JSON.stringify(l.slice(0, 20))); }
+    catch(e){ delete rec.src; try{ localStorage.setItem(fpjKey(), JSON.stringify(l.slice(0, 20))); }catch(e2){}
+      toast("Aperçu non conservé — le stockage du navigateur est plein"); }
+    if(--restants === 0){ fpjRender();
+      toast(liste.length > 1 ? liste.length + " fichiers joints" : "Fichier joint à la facture"); }
+  }));
+}
+function fpjDel(i){
+  const l = fpjGet(); const sauv = l[i]; l.splice(i, 1);
+  try{ localStorage.setItem(fpjKey(), JSON.stringify(l)); }catch(e){}
+  fpjRender();
+  toast("🗑 Pièce retirée", () => { const l2 = fpjGet(); l2.splice(i, 0, sauv);
+    try{ localStorage.setItem(fpjKey(), JSON.stringify(l2)); }catch(e){} fpjRender(); });
+}
+function fpjOuvrir(i){
+  const d = fpjGet()[i];
+  if(!d || !d.src){ toast("Cette pièce n'a pas d'aperçu — elle était trop lourde pour être conservée"); return; }
+  const w = window.open();
+  if(w) w.document.write('<title>' + d.n + '</title><body style="margin:0;background:#22252B">' +
+    (/^image\//.test(d.t) ? '<img src="' + d.src + '" style="max-width:100%;display:block;margin:auto">'
+                          : '<iframe src="' + d.src + '" style="border:0;width:100%;height:100vh"></iframe>') + '</body>');
+}
+function fpjVignette(d, i, sup){
+  const img = /^image\//.test(d.t || "") && d.src;
+  const pdf = /pdf/.test(d.t || "") && d.src;
+  const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
+  const vue = img ? '<img src="' + d.src + '" alt="">'
+    : pdf ? '<iframe src="' + d.src + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>'
+    : '<span class="docext">' + ext + '</span>';
+  return '<figure class="doccard' + (d.src ? ' ouvrable' : '') + '"' + (d.src ? ' onclick="fpjOuvrir(' + i + ')" title="Ouvrir ' + d.n + '"' : '') + '>' +
+    (sup ? '<button class="docx" title="Retirer" onclick="event.stopPropagation();fpjDel(' + i + ')">✕</button>' : '') +
+    '<div class="docvue">' + vue + '<span class="doctag">' + ext + '</span></div>' +
+    '<figcaption><b title="' + d.n + '">' + d.n + '</b><small>' + d.d + ' · ' +
+    (d.s ? fpjPoids(d.s) : ext) + (d.src ? '' : ' · aperçu non conservé') + '</small></figcaption></figure>';
+}
+function fpjRender(){
+  const box = document.getElementById("fpj-liste");
+  const cpt = document.getElementById("pjcount");
+  const l = fpjGet();
+  if(cpt) cpt.textContent = l.length + " fichier" + (l.length > 1 ? "s" : "");
+  if(box) box.innerHTML = l.map((d, i) => fpjVignette(d, i, true)).join("");
+}
 try{ REF = sessionStorage.getItem("tigerflow-facture-detail"); }catch(e){}
 let REC = null;
 try{
@@ -1018,7 +1117,7 @@ function histo(){
   items.reverse();   /* le dernier événement d'abord */
   g('histlist').innerHTML = items.map(i => '<li><span class="hic" style="background:' + i.bg + '">' + i.ic + '</span><div><b>' + i.b + '</b><small>' + i.s + '</small></div></li>').join('');
 }
-function renderAll(){ badge(); kpis(); details(); lignes(); paylist(); avoirsRender(); histo(); }
+function renderAll(){ badge(); kpis(); details(); lignes(); paylist(); avoirsRender(); histo(); fpjRender(); ppjRender(); }
 
 /* ===== actions ===== */
 function avSolde(){ return Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0)); }
@@ -1097,12 +1196,29 @@ function avoirsRender(){
     ? A.map((a, i) => '<div class="pay"><span><b>' + a.num + '</b><small style="color:var(--muted)"> · ' + a.motif + ' · ' + a.t + (a.desc ? ' · <em>' + a.desc + '</em>' : '') + '</small></span><span style="display:flex;align-items:center"><b style="color:var(--red)">− ' + eur(a.m) + '</b><button class="avdl" onclick="avPrint(' + i + ')" title="Télécharger l\'avoir en PDF">⬇ PDF</button><button class="paydel" tabindex="-1" onclick="avDel(event, ' + i + ')" title="Annuler cet avoir">✕</button></span></div>').join('')
     : '<div class="empty2">Aucun avoir pour l\'instant.</div>';
 }
+let PPJ = null;
+function ppjPrendre(files){
+  const f = (files || [])[0];
+  if(!f) return;
+  fpjLire(f, rec => { PPJ = rec; ppjRender(); toast("Justificatif joint au paiement"); });
+}
+function ppjRender(){
+  const nom = document.getElementById("ppj-nom");
+  const vue = document.getElementById("ppj-vue");
+  if(nom) nom.textContent = PPJ ? PPJ.n : "avis de virement, remise de chèque… · PDF, JPG · facultatif";
+  if(vue) vue.innerHTML = PPJ ? fpjVignette(PPJ, -1, false) : "";
+}
 function payAdd(montant){
   const m = montant != null ? montant : parseFloat(String(g('p-montant').value).replace(",", ".")) || 0;
   if(m <= 0){ toast("Indique un montant supérieur à 0 😉"); g('p-montant').focus(); return; }
   const dval = (g('p-date') || {value:""}).value;
   const note = ((g('p-note') || {value:""}).value || "").trim();
-  const arr = pays(); arr.push({m, mode:g('p-mode').value, t:stamp(), d:dval, note}); paysSave(arr);
+  const arr = pays();
+  /* le justificatif choisi juste au-dessus part AVEC le paiement — sinon on
+     l'aurait joint pour rien, sans jamais s'en apercevoir. */
+  arr.push({m, mode:g('p-mode').value, t:stamp(), d:dval, note, pj: PPJ ? {...PPJ} : null});
+  paysSave(arr);
+  PPJ = null; ppjRender();
   g('p-montant').value = ""; if(g('p-note')) g('p-note').value = "";
   const paye = arr.reduce((a,p) => a + p.m, 0);
   const avT = avoirs().reduce((a,x) => a + x.m, 0);
