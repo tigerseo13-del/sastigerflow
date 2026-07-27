@@ -1068,6 +1068,14 @@ const TYPES = {
 };
 
 /* ================= INTERVENTIONS ================= */
+/* La `desc` de chaque mode n'est plus affichee sur la ligne Type des panneaux
+   (27/07) : elle repetait le libelle — « Visite devis » etait suivi de
+   « devis sur place », le mode ponctuel de « a encaisser ». Et surtout la
+   consequence de facturation est deja ecrite en toutes lettres, avec le
+   montant, dans le bloc Facturation juste en dessous. La desc reste utilisee
+   ailleurs (choix du mode a la creation), d'ou sa conservation ici.
+   NB : ne pas citer de libelle contenant le signe euro dans un commentaire,
+   fin2.js compte les espaces secables sur TOUT le fichier, commentaires inclus. */
 const MODES = {
   devis :{lbl:"Visite devis",          ic:"🧾", desc:"devis sur place"},
   encais:{lbl:"Ponctuel · €",          ic:"💶", desc:"€ à encaisser"},
@@ -2089,7 +2097,7 @@ function renderDetail(){
       <div class="dkv"><span class="k">Adresse</span><span class="v"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.rue ? v.rue + ", " : ""}${v.cp} ${v.ville}</span></div>
       <div class="dkv"><span class="k">Priorité</span><span class="v"><span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span></span></div>
       <div class="dkv"><span class="k">Statut</span><span class="v"><span class="dst ${sc}" style="font-size:.62rem">${sl}</span></span></div>
-      <div class="dkv"><span class="k">Type</span><span class="v" style="display:inline-flex;align-items:center;gap:8px"><span class="mchip m-${v.mode}" style="font-size:.68rem;padding:2.5px 9px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + " €" : ""}</span><small style="color:var(--muted);font-size:.72rem;font-weight:600">${MODES[v.mode].desc}</small></span></div>
+      <div class="dkv"><span class="k">Type</span><span class="v" style="display:inline-flex;align-items:center;gap:8px"><span class="mchip m-${v.mode}" style="font-size:.68rem;padding:2.5px 9px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + " €" : ""}</span></span></div>
     </div>
     <div class="dref" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('Référence copiée'))" title="Copier la référence">${refInt(v.id)}</div>`;
   document.getElementById("dbody").innerHTML = `
@@ -3038,7 +3046,7 @@ function openPending(pid){
       ${kv("Adresse", '<svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + adr)}
       ${kv("Priorité", `<span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>`)}
       ${kv("Statut", `<span class="dst ${sc}" style="font-size:.62rem">${sl}</span>`)}
-      ${kv("Type", `<span class="mchip m-${m}" style="font-size:.68rem;padding:3px 10px">${M.ic} ${M.lbl}</span> <span style="color:var(--muted);font-weight:600">${M.desc}</span>`)}
+      ${kv("Type", `<span class="mchip m-${m}" style="font-size:.68rem;padding:3px 10px">${M.lbl}</span>`)}
       ${kv("Nuisible", T.ic + " " + T.lbl)}
       ${kv("Durée estimée", dur)}
       ${p.rappel ? kv(p.suivi ? "Prévu le" : "Rappel", p.rappel.split("-").reverse().join("/")) : ""}
