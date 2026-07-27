@@ -877,10 +877,15 @@ try{
    sont datees plus tard que le jour ou l'on cree — un enregistrement neuf
    coulait donc sous elles. On marque desormais l'instant de creation et il
    passe avant la date. */
-  JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").forEach((rec, k) => {
+  /* 27/07 — SENS DU MARQUEUR. L'editeur empile le plus RECENT EN PREMIER
+     (box.unshift). Le marqueur doit donc DECROITRE avec l'index, sinon le tri
+     remonte le plus ancien : avec deux documents crees a la suite, c'est le
+     precedent qui sortait en tete. Meme piege que sur les paiements. */
+  const _boite = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]");
+  _boite.forEach((rec, k) => {
     const i = DEVIS.findIndex(d => d.ref === rec.ref);
     if(i > -1) DEVIS[i] = {...DEVIS[i], ...rec};
-    else DEVIS.unshift({...rec, _cree: k + 1});
+    else DEVIS.unshift({...rec, _cree: _boite.length - k});
   });
 }catch(e){}
 const FSTKEY = "tigerflow-factures-statuts";
