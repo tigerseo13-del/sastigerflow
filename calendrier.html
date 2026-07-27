@@ -1880,8 +1880,14 @@ function renderDetail(){
     /* ===== clôture IDENTIQUE pour toutes les interventions : 2 choix ===== */
     const fopts = `
       <button class="fopt" onclick="encOpen(${v.id})"><span class="fic2 g"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span><span><b>Encaisser le client</b><small>${v.montant ? v.montant + " € — puis faire le rapport" : "puis faire le rapport"}</small></span></button>
-      <button class="fopt" onclick="openReport(${v.id})"><span class="fic2 b"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span><span><b>Faire le rapport sans encaisser</b><small>l'encaissement restera à suivre</small></span></button>`;
-    mainBtns = `<div class="fin2" style="flex-basis:100%">
+      <button class="fopt" onclick="openReport(${v.id})"><span class="fic2 b"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span><span><b>${REPORTS[v.id] ? "Modifier le rapport" : "Faire le rapport sans encaisser"}</b><small>${REPORTS[v.id] ? "il est déjà rédigé — l'encaissement reste à suivre" : "l'encaissement restera à suivre"}</small></span></button>`;
+    /* 27/07 : quand le rapport est déjà rédigé, on remet le bouton orange en
+       tête et il annonce « Modifier le rapport ». Avant, le bloc de clôture
+       proposait « Faire le rapport » alors que l'onglet Rapports affichait
+       juste à côté « rapport validé, signé par le client » : deux zones du
+       même écran qui se contredisaient. */
+    mainBtns = (REPORTS[v.id] ? `<button class="dbig" style="flex-basis:100%" onclick="openReport(${v.id})"><span class="goic"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span>Modifier le rapport</button>` : "")
+      + `<div class="fin2" style="flex-basis:100%">
       <div class="finh" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l'intervention <span class="mchip m-${v.mode}" style="font-size:.62rem;padding:2px 8px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + " €" : ""}</span></div>
       ${fopts}
     </div>`;
