@@ -527,9 +527,7 @@ h1,.num{font-family:'Sora',sans-serif}
 .ev.sm .ladr,.ev.xs .ladr{display:none}
 .pcard .urg{font-size:.62rem;font-weight:800;background:var(--red);color:#fff;padding:2px 6px;border-radius:8px;letter-spacing:.03em}
 .pcard .sbb{font-size:.62rem;font-weight:800;background:var(--amber-bg);color:var(--amber);padding:2px 7px;border-radius:8px;white-space:nowrap}
-.pcard .agee{font-size:.62rem;font-weight:800;background:#F1F2F5;color:var(--ink-2);padding:2px 7px;border-radius:8px;white-space:nowrap}
 .pcard .svb{font-size:.62rem;font-weight:800;background:var(--blue-bg);color:var(--blue);padding:2px 7px;border-radius:8px;white-space:nowrap}
-.pcard .agee.r{background:var(--red-bg);color:var(--red)}
 .pcard.lt{border-color:#F3C4C0;background:#FFFBFA}
 .pcard.ghost{position:fixed;z-index:99;pointer-events:none;opacity:.95;box-shadow:0 18px 40px -8px rgba(23,26,32,.45);transform:scale(1.04);background:#fff}
 .trayempty{font-size:.8rem;color:var(--muted);padding:6px 2px}
@@ -1281,12 +1279,9 @@ try{
   /* 5. après une modification : l'agenda SAUTE sur la date de l'intervention */
   if(JUMPDATE) CUR = new Date(JUMPDATE + "T12:00:00");
 }catch(e){}
-function trayAge(p){
-  if(!p.since) return "";
-  const d = Math.round((TODAYD - new Date(p.since + "T12:00:00")) / 86400000);
-  if(d <= 0) return "";
-  return `<span class="agee ${d > 7 ? "r" : ""}">⏳ J+${d}</span>`;
-}
+/* trayAge() retiree le 27/07 : le compteur « J+35 » sur les cartes du bac ne
+   disait rien d'actionnable, il vieillissait tout seul et prenait la place
+   d'informations utiles. Le rappel, lui, reste affiche. */
 function renderTray(){
   const isLate = p => p.rappel && p.rappel < iso(TODAYD);
   const nLate = PENDING.filter(isLate).length;
@@ -1300,9 +1295,9 @@ function renderTray(){
     return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}" style="--evc:${T.c}"><span class="grip" title="Glisser sur l'agenda">⠿</span>
       <div class="c"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${p.rue ? p.rue + " · " : ""}${p.cp} · ${p.ville}</div>
       <div class="c" style="font-weight:800;color:var(--ink)">${p.client}</div>
-      <div class="l1"><span>${T.ic}</span><span>${T.lbl}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}${trayAge(p)}<span class="dur">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span></div>
-      <div class="z">${p.mode ? '<span class="mchip m-' + p.mode + '" style="font-size:.6rem;padding:1.5px 7px">' + MODES[p.mode].lbl + (p.montant ? " · " + p.montant + " €" : "") + '</span>' : ''}${p.rappel ? (p.mode ? ' · ' : '') + '<b style="color:var(--ink-2)">' + (p.suivi ? 'prévu ' : 'rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
-      <div class="ptop"><span class="mchip m-${modeDe(p.client)}">${MODES[modeDe(p.client)].ic} ${MODES[modeDe(p.client)].lbl}</span></div>
+      <div class="l1"><span>${T.ic}</span><span>${T.lbl}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}<span class="dur">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span></div>
+      <div class="z">${p.montant ? '<b>' + p.montant + " €" + '</b>' + (p.rappel ? ' · ' : '') : ''}${p.rappel ? '<b style="color:var(--ink-2)">' + (p.suivi ? 'prévu ' : 'rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
+      <div class="ptop"><span class="mchip m-${p.mode || modeDe(p.client)}">${MODES[p.mode || modeDe(p.client)].ic} ${MODES[p.mode || modeDe(p.client)].lbl}</span></div>
     </div>`;
   }).join("") : `<div class="trayempty" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:7px 6px;text-align:left"><svg viewBox="0 0 48 40" style="width:40px;height:34px;flex:none"><g fill="none" stroke="#C9CCD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14 L11 9 C14 7.5 16.5 7.4 18.5 8.5"/><path d="M34 14 L37 9 C34 7.5 31.5 7.4 29.5 8.5"/><path d="M24 36 C18.5 36 14 33 12.5 28 C11.4 24 11.6 20 13 16.5 C14 14 16 12 18.5 10.8 C20.3 10 22.1 9.6 24 9.6 C25.9 9.6 27.7 10 29.5 10.8 C32 12 34 14 35 16.5 C36.4 20 36.6 24 35.5 28 C34 33 29.5 36 24 36 Z"/><path d="M17 22 Q19 23.5 21 22"/><path d="M27 22 Q29 23.5 31 22"/><path d="M21.8 27 H26.2 L24 29.4 Z"/><path d="M24 29.4 V31.6"/><path d="M24 31.6 C22.3 31.8 20.8 31.2 19.8 30"/><path d="M24 31.6 C25.7 31.8 27.2 31.2 28.2 30"/></g><text x="38" y="12" font-size="8" fill="#C9CCD4">z</text><text x="42" y="7" font-size="6" fill="#D8DAE1">z</text></svg><b style="font-size:.84rem">Le bac fait la sieste</b><small style="margin:0;color:var(--muted)">— rien à planifier, tout est affecté</small></div>`;
   document.getElementById("tray").style.display = "";
