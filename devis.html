@@ -1539,6 +1539,15 @@ function saveDevis(){
   const cli = g("v-client").value;
   if(!cli){ toast("👤 Choisis d'abord un client pour enregistrer le devis"); g("v-client").focus(); return; }
   pushDevisInbox();
+  /* 27/07 — BUG MAJEUR. La reference etait memorisee en sessionStorage pour
+     survivre a un rechargement. Mais elle etait aussi REPRISE a l'ouverture
+     suivante : deux documents crees a la suite dans le meme onglet portaient
+     donc la MEME reference. Et comme l'enregistrement retire d'abord toute
+     entree de meme reference, le second effacait le premier.
+     On libere la reference des que le document est enregistre : un brouillon
+     en cours survit toujours au rechargement, mais le document suivant repart
+     sur une reference neuve. */
+  try{ sessionStorage.removeItem("tigerflow-devis-ref"); }catch(e){}
   toast("💾 Devis " + DREF + " enregistré" + (CURSTAT === "brouillon" ? " en brouillon" : "") + " — il t'attend dans la liste");
   setTimeout(() => { location.href = "devis-liste.html"; }, 900);
 }
