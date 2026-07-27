@@ -552,6 +552,22 @@ let SLOT = "", CSLOT = "", PRIO = "Normale", PAY = "Devis sur place";
 document.addEventListener("DOMContentLoaded", () => { if(document.getElementById("payzone")) payzoneDraw(); });
 document.addEventListener("DOMContentLoaded", () => {
   const q = new URLSearchParams(location.search);
+  /* 27/07 : la fiche client propose « Planifier une intervention » avec le
+     client dans l'URL — sans ca il fallait le rechoisir a la main. */
+  if(q.get("c")){
+    const fc = document.getElementById("f-client");
+    if(fc){
+      const nom = q.get("c");
+      /* les options portent un code court (iron, pharma...) et le NOM en texte :
+         c'est sur le texte qu'il faut comparer, pas sur la valeur. */
+      const cmp = s => String(s).toLowerCase().trim();
+      /* le libelle contient le nom PUIS la ville (« Ironwood Solutions — Paris 11e ») :
+         on compare sur ce qui precede le tiret. */
+      const nomDe = s => cmp(String(s).split("—")[0]);
+      const opt = [...(fc.options || [])].find(o => nomDe(o.textContent) === cmp(nom) || cmp(o.value) === cmp(nom));
+      if(opt){ fc.value = opt.value; fc.dispatchEvent(new Event("change")); }
+    }
+  }
   if(q.get("d")) { const fd = document.getElementById("f-date"); if(fd){ fd.value = q.get("d"); } }
   if(q.get("h")){
     const h = String(q.get("h")).padStart(2, "0");
