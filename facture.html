@@ -1600,6 +1600,13 @@ function saveDevis(){
   const cli = g("v-client").value;
   if(!cli){ toast("👤 Choisis d'abord un client pour enregistrer la facture"); g("v-client").focus(); return; }
   pushDevisInbox();
+  /* 27/07 — MEME BUG QUE SUR LES DEVIS. La reference etait memorisee en
+     sessionStorage pour survivre a un rechargement, mais elle etait aussi
+     REPRISE a l'ouverture suivante : deux factures creees a la suite dans le
+     meme onglet portaient la meme reference, et comme l'enregistrement retire
+     d'abord toute entree de meme reference, la seconde effacait la premiere.
+     On libere la reference une fois la facture enregistree. */
+  try{ sessionStorage.removeItem("tigerflow-facture-ref"); }catch(e){}
   savedOpen();
 }
 /* ===== le résumé après enregistrement : PDF · valider · supprimer · dupliquer ===== */
