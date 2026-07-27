@@ -684,23 +684,14 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .vcli{color:var(--orange-deep)!important;font-weight:800;text-decoration:none}
 .vcli:hover{text-decoration:underline}
 .dref{text-align:center;font-size:.66rem;font-weight:600;color:#A6ABBB;letter-spacing:.04em;margin:7px 0 2px;cursor:pointer;font-variant-numeric:tabular-nums}
-/* 27/07 : la référence flottait, centrée, entre deux cartes — une bannière
-   orange qui n'appartenait à rien. Elle devient une ligne du tableau de
-   détails, au même titre que le statut ou le type, et reste copiable. */
-/* Option A du 27/07 : rangee d'etats en tete de carte, reference en pied. */
+/* Option A du 27/07 : rangee d'etats en tete de carte. */
 .detats{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:-3px 0 14px}
-.dpied{border-top:1px solid #F2F3F6;margin-top:12px;padding-top:9px;display:flex;justify-content:flex-end}
-.dpied .refc{font-size:.72rem;color:var(--muted)}
-.dpied .refc:hover{color:var(--orange-deep)}
-.refc{display:inline-flex;align-items:center;gap:7px;background:none;border:0;padding:0;cursor:pointer;
-  font-family:inherit;font-size:.76rem;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums;letter-spacing:.02em}
-.refc svg{width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.refc:hover{color:var(--orange-deep)}
-.refc:hover svg{stroke:var(--orange-deep)}
 .dref:hover{color:var(--orange-deep)}
 .dmain{position:relative}
 .dmenu{position:absolute;top:calc(100% + 8px);right:0;z-index:60;background:#fff;border:1px solid #EFF0F4;border-radius:16px;box-shadow:0 18px 48px -14px rgba(23,26,32,.25);padding:7px;min-width:270px}
 .dmenu button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:0;font-family:inherit;font-size:.84rem;font-weight:600;color:var(--ink);padding:9px 11px;border-radius:11px;cursor:pointer;transition:background .1s}
+/* le numero rappele a droite de l'entree : on le compare sans cliquer */
+.dmenu .miref{margin-left:auto;font-size:.72rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .dmenu .mic{width:30px;height:30px;border-radius:9px;background:#F3F4F7;display:grid;place-items:center;flex:none;color:var(--ink-2)}
 .dmenu .mic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .dmenu .mic.r{background:#FBEAEA;color:var(--red)}
@@ -1913,6 +1904,7 @@ function renderDetail(){
     stop: '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
     x:    '<path d="M18 6L6 18M6 6l12 12"/>',
     phoneoff: '<path d="M10.7 6.4c.2.8.5 1.6.8 2.4a2 2 0 01-.5 2.1l-1.2 1.2"/><path d="M14.1 17.6a19 19 0 01-4.2-3.5M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-11.3-5.1M4.5 8.6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7"/><path d="M2 2l20 20"/>',
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/>',
     trash: '<path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/>'
   };
   const mi = (fn, ic, lbl, danger) => `<button ${danger ? 'class="danger"' : ''} onclick="${fn}">
@@ -1973,6 +1965,13 @@ function renderDetail(){
     if(!v.done) menuItems += mi(`standbyInt(${v.id})`, "phoneoff", "Client injoignable — à reprogrammer")
       + mi(`cancelInt(${v.id})`, "x", "Le client annule");
   }
+  /* 27/07 (option C, choix patron) : la reference quitte la carte Details et
+     entre ici. Elle n'est plus visible a l'ecran — le geste qu'on en fait est
+     de la copier, pas de la lire. Le numero est rappele a droite de l'entree
+     pour qu'on puisse le comparer sans cliquer. */
+  menuItems += `<div class="sep"></div>` + mi(
+    `navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('Référence ${refInt(v.id)} copiée'))`,
+    "copy", `Copier la référence<span class="miref">${refInt(v.id)}</span>`);
   menuItems += `<div class="sep"></div>` + mi(`delInt(${v.id})`, "trash", "Supprimer l'intervention", true);
 
   /* ----- contenu de l'onglet ----- */
@@ -2170,7 +2169,6 @@ function renderDetail(){
       <div class="dkv"><span class="k">Client</span><span class="v"><a class="vcli" href="#" onclick="cliPanel('${isIron ? 'client.html?panel=1' : 'client.html?c=' + encodeURIComponent(v.client) + '&panel=1'}');return false">${v.client} →</a></span></div>
       <div class="dkv"><span class="k">Date planifiée</span><span class="v">${dateTxt} · ${hstr(v.start)} – ${hstr(v.start + v.dur)}</span></div>
       <div class="dkv"><span class="k">Adresse</span><span class="v"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.rue ? v.rue + ", " : ""}${v.cp} ${v.ville}</span></div>
-      <div class="dpied"><button class="refc" title="Copier la référence" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('Référence copiée'))">${refInt(v.id)}<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></div>
     </div>`;
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead">
