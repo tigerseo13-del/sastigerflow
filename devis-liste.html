@@ -96,6 +96,10 @@ h1,.num{font-family:'Sora',sans-serif}
 .cover h1{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px;position:relative}
 .cover .csub{font-size:.84rem;color:var(--ink-2);margin-top:3px;position:relative}
 .kpi{transition:.13s}
+/* 27/07 : les cartouches filtrent la liste — on le montre. */
+.kpi[role="button"]{cursor:pointer}
+.kpi[role="button"]:hover{transform:translateY(-1px);box-shadow:0 8px 20px -10px rgba(23,26,32,.28)}
+.kpi[role="button"]:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 
 
 .kpi .obar{height:6px;border-radius:99px;background:rgba(46,92,230,.16);margin-top:10px;overflow:hidden}
@@ -400,10 +404,13 @@ tr.torelance{box-shadow:inset 3px 0 0 #D9A408}
 
     <!-- KPI -->
 
+    <!-- 27/07 : les cartouches redeviennent cliquables. kfil() et kringSync()
+     existaient toujours dans le code mais plus rien ne les appelait :
+     le clic avait disparu, la mecanique de filtrage etait restee. -->
     <div class="kpis">
-      <div class="kpi k-orange"><div class="lbl">Devis ce mois</div><div class="num" id="k-tot">0</div></div>
-      <div class="kpi k-green"><div class="lbl">Montant gagné</div><div class="num" id="k-gagne">0 €</div></div>
-      <div class="kpi k-amber"><div class="lbl">En attente de réponse</div><div class="num" id="k-attente">0 €</div></div>
+      <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="lbl">Devis ce mois</div><div class="num" id="k-tot">0</div></div>
+      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('gagne')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('gagne')}"><div class="lbl">Montant gagné</div><div class="num" id="k-gagne">0 €</div></div>
+      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('envoye')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('envoye')}"><div class="lbl">En attente de réponse</div><div class="num" id="k-attente">0 €</div></div>
       <div class="kpi k-blue"><div class="lbl">Taux de signature</div><div class="num" id="k-taux">0 %</div><div class="obar"><i id="k-tbar"></i></div></div>
     </div>
 
@@ -498,10 +505,17 @@ const DEVIS = [
 const LBL = {brouillon:"Brouillon", envoye:"Envoyé", gagne:"Gagné", perdu:"Perdu", expire:"Expiré"};
 /* ===== les devis créés dans l'atelier rejoignent la liste ===== */
 try{
-  JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").reverse().forEach(rec => {
+/* 27/07 — TOUT ENREGISTREMENT CREE PASSE EN TETE.
+   Deux defauts se cumulaient : (1) .reverse() suivi de .unshift() s'annulent,
+   donc avec deux creations d'affilee la plus ANCIENNE remontait ; (2) le tri
+   « Plus recents » compare la DATE du document, et les donnees de demonstration
+   sont datees plus tard que le jour ou l'on cree — un enregistrement neuf
+   coulait donc sous elles. On marque desormais l'instant de creation et il
+   passe avant la date. */
+  JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").forEach((rec, k) => {
     const i = DEVIS.findIndex(d => d.ref === rec.ref);
     if(i > -1) DEVIS[i] = {...DEVIS[i], ...rec};
-    else DEVIS.unshift(rec);
+    else DEVIS.unshift({...rec, _cree: k + 1});
   });
 }catch(e){}
 /* ===== les statuts changés depuis la liste ou le tiroir SURVIVENT au rechargement ===== */
@@ -608,7 +622,7 @@ function render(){
   if(sort==="montant-d") list.sort((a,b)=>b.montant-a.montant);
   if(sort==="montant-a") list.sort((a,b)=>a.montant-b.montant);
   if(sort==="client")    list.sort((a,b)=>a.client.localeCompare(b.client,'fr'));
-  if(sort==="recent")    list.sort((a,b)=>b.date.localeCompare(a.date));
+  if(sort==="recent")    list.sort((a,b)=>(b._cree||0)-(a._cree||0) || b.date.localeCompare(a.date));
 
   window._LISTD = list;
   const slice = pageDe(list);
