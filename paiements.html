@@ -397,6 +397,24 @@ label[for]{cursor:pointer}
 .ebtn:hover{border-color:var(--orange);color:var(--orange-deep)}
 .ebtn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
 .ebtn.primary:hover{background:var(--orange-deep)}
+
+/* vignettes — meme presentation que l'onglet Dossier d'une fiche technicien */
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(23,26,32,.04);transition:.14s}
+.doccard.ouvrable{cursor:zoom-in}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 12px 26px -16px rgba(23,26,32,.45);transform:translateY(-2px)}
+.docvue{height:132px;background:#fff;display:grid;place-items:center;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.docvue:has(.docext){background:#F5F6F9}
+.docvue img{width:100%;height:100%;object-fit:cover;display:block}
+.docvue iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+.docvue::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30px;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.92))}
+.docvue:has(.docext)::after{display:none}
+.docext{font-family:'Sora';font-weight:800;font-size:.98rem;color:var(--muted);letter-spacing:.06em}
+.doctag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;background:rgba(23,26,32,.72);color:#fff;padding:2px 7px;border-radius:6px}
+.docvue:has(.docext) .doctag{display:none}
+.doccard figcaption{padding:9px 11px 11px;display:block}
+.doccard figcaption b{display:block;font-size:.75rem;font-weight:700;line-height:1.35;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doccard figcaption small{display:block;font-size:.68rem;color:var(--muted);margin-top:3px}
 </style>
 </head>
 <body>
@@ -694,7 +712,20 @@ function openPay(id){
       <div class="dkv"><span class="k">Date d'encaissement</span><span class="v">${fdate(r.d)}</span></div>
       ${r.mis ? `<div class="dkv"><span class="k">Mission liée</span><span class="v"><a class="fref" href="calendrier.html">${r.mis} →</a></span></div>` : ""}
       ${r.fac ? `<div class="dkv"><span class="k">Facture liée</span><span class="v"><a class="fref" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">${r.fac} →</a></span></div>` : ""}
-      ${r.pj && r.pj.length ? `<div class="dkv"><span class="k">Justificatif</span><span class="v">${r.pj.join(", ")}</span></div>` : ""}
+      ${r.pj && r.pj.length ? `<div class="dkv" style="display:block"><span class="k">Justificatif${r.pj.length > 1 ? "s" : ""}</span>
+        <div class="docgrid" style="margin-top:10px">${r.pj.map((x, k) => {
+          const d = typeof x === "string" ? {n:x} : x;      /* anciens paiements : juste un nom */
+          const img = /^image\//.test(d.t || "") && d.src;
+          const pdf = /pdf/.test(d.t || "") && d.src;
+          const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
+          const vue = img ? `<img src="${d.src}" alt="">`
+            : pdf ? `<iframe src="${d.src}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>`
+            : `<span class="docext">${ext}</span>`;
+          return `<figure class="doccard${d.src ? " ouvrable" : ""}"${d.src ? ` onclick="pjOuvrir('${r.id}',${k})" title="Ouvrir ${d.n}"` : ""}>
+            <div class="docvue">${vue}<span class="doctag">${ext}</span></div>
+            <figcaption><b title="${d.n}">${d.n}</b><small>${d.s ? pjPoids(d.s) : ext}${d.src ? "" : " · aperçu non conservé"}</small></figcaption>
+          </figure>`;
+        }).join("")}</div></div>` : ""}
       ${r.note ? `<div class="dkv"><span class="k">Note</span><span class="v" style="max-width:60%">${r.note}</span></div>` : ""}
     </div>
     ${r.st === "att" ? `<button class="dbig" onclick="encaisser('${r.id}')">✓ Marquer comme encaissé aujourd'hui</button>` : ""}
@@ -773,7 +804,7 @@ function openNew(){
         <div><label class="lab" for="n-d">Date d'encaissement <em>*</em></label><input id="n-d" type="date" value="${TODAY}"></div>
         <div class="full"><label class="lab">Justificatif de paiement</label>
           <label class="pjadd"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.2-9.19a4 4 0 015.65 5.66l-9.2 9.19a2 2 0 01-2.82-2.83l8.49-8.48"/></svg> Ajouter un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label><span id="n-pjs"></span>
-          <div class="hint">PDF, JPG, PNG — 10 Mo max par fichier.</div></div>
+          <div class="hint">PDF, JPG, PNG — aperçu conservé jusqu'à 1,5 Mo par fichier.</div></div>
         <div class="full"><label class="lab" for="n-note">Notes</label><textarea id="n-note" placeholder="Note interne facultative…"></textarea></div>
       </div>
     </div>
@@ -807,12 +838,33 @@ function facSync(){
     if(o && o.dataset.reste && !g("n-m").value) g("n-m").value = (+o.dataset.reste).toFixed(2);
   };
 }
+/* 27/07 : on ne gardait que le NOM du justificatif. Le panneau affichait donc
+   « CONFLANS.jpeg » et rien d'autre — impossible de verifier une preuve de
+   paiement sans rouvrir le fichier ailleurs. On garde le contenu quand il tient
+   dans le stockage du navigateur (1,5 Mo), et on le montre. */
+const PJ_MAX = 1500 * 1024;
+const pjPoids = o => o < 1024 ? o + " o" : o < 1048576 ? Math.round(o/1024) + " Ko" : (o/1048576).toFixed(1).replace(".", ",") + " Mo";
+function pjOuvrir(id, k){
+  const r = ROWS.find(x => String(x.id) === String(id));
+  const d = r && r.pj && r.pj[k];
+  if(!d || !d.src){ toast("Ce justificatif n'a pas d'aperçu — il était trop lourd pour être conservé"); return; }
+  const w = window.open();
+  if(w) w.document.write('<title>' + d.n + '</title><body style="margin:0;background:#22252B">' +
+    (/^image\//.test(d.t) ? '<img src="' + d.src + '" style="max-width:100%;display:block;margin:auto">'
+                          : '<iframe src="' + d.src + '" style="border:0;width:100%;height:100vh"></iframe>') + '</body>');
+}
 function pjAdd(inp){
   [...inp.files].forEach(f => {
     const s = document.createElement("span");
     s.className = "pjc";
+    s.dataset.n = f.name; s.dataset.t = f.type || ""; s.dataset.s = f.size;
     s.innerHTML = f.name + ' <button onclick="this.parentNode.remove()">✕</button>';
     g("n-pjs").appendChild(s);
+    if(f.size <= PJ_MAX && typeof FileReader !== "undefined"){
+      const r = new FileReader();
+      r.onload = () => { s.dataset.src = r.result; };
+      r.readAsDataURL(f);
+    }
   });
   inp.value = "";
 }
@@ -834,7 +886,10 @@ function savePay(){
     st: g("n-st").value,
     d: g("n-st").value === "enc" ? g("n-d").value : "",
     note: (g("n-note").value || "").trim(),
-    pj: [...document.querySelectorAll("#n-pjs .pjc")].map(p => p.textContent.replace("✕", "").trim()),
+    pj: [...document.querySelectorAll("#n-pjs .pjc")].map(p => ({
+      n: p.dataset.n || p.textContent.replace("✕", "").trim(),
+      t: p.dataset.t || "", s: +p.dataset.s || 0, src: p.dataset.src || ""
+    })),
   };
   try{
     const box = JSON.parse(localStorage.getItem("tigerflow-paiements-perso") || "[]");
