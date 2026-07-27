@@ -512,7 +512,9 @@ h1,.num{font-family:'Sora',sans-serif}
    de 4,5px a gauche, qui suffit a lire la famille d'un coup d'oeil. */
 .pcard .l1{display:flex;align-items:center;gap:5px;font-size:.76rem;font-weight:800;color:var(--ink)}
 .pcard .l1 .dur{margin-left:auto;font-size:.64rem;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 7px}
-.pcard .ptop{display:flex;margin-bottom:6px}
+/* 27/07 : meme ordre que la cartouche de l'agenda —
+   CP + ville, client, nuisible, nature de l'intervention. */
+.pcard .ptop{display:flex;margin-top:7px}
 .pdhint{margin-top:12px;font-size:.74rem;font-weight:600;color:var(--ink-2);background:var(--amber-bg);border:1px solid #F5E0B0;border-radius:11px;padding:9px 12px;line-height:1.5}
 .pcard .z{font-size:.72rem;font-weight:700;color:var(--ink);margin-top:3px}
 .pcard .c{font-size:.68rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1266,11 +1268,11 @@ function renderTray(){
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
     const T = TYPES[p.type];
     return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}" style="--evc:${T.c}"><span class="grip" title="Glisser sur l'agenda">⠿</span>
-      <div class="ptop"><span class="mchip m-${modeDe(p.client)}">${MODES[modeDe(p.client)].ic} ${MODES[modeDe(p.client)].lbl}</span></div>
+      <div class="c"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${p.rue ? p.rue + " · " : ""}${p.cp} · ${p.ville}</div>
+      <div class="c" style="font-weight:800;color:var(--ink)">${p.client}</div>
       <div class="l1"><span>${T.ic}</span><span>${T.lbl}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}${trayAge(p)}<span class="dur">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span></div>
       <div class="z">${p.mode ? '<span class="mchip m-' + p.mode + '" style="font-size:.6rem;padding:1.5px 7px">' + MODES[p.mode].lbl + (p.montant ? " · " + p.montant + " €" : "") + '</span>' : ''}${p.rappel ? (p.mode ? ' · ' : '') + '<b style="color:var(--ink-2)">' + (p.suivi ? 'prévu ' : 'rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
-      <div class="c" style="font-weight:800;color:var(--ink)">${p.client}</div>
-      <div class="c"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${p.rue ? p.rue + " · " : ""}${p.cp} · ${p.ville}</div>
+      <div class="ptop"><span class="mchip m-${modeDe(p.client)}">${MODES[modeDe(p.client)].ic} ${MODES[modeDe(p.client)].lbl}</span></div>
     </div>`;
   }).join("") : `<div class="trayempty" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:7px 6px;text-align:left"><svg viewBox="0 0 48 40" style="width:40px;height:34px;flex:none"><g fill="none" stroke="#C9CCD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14 L11 9 C14 7.5 16.5 7.4 18.5 8.5"/><path d="M34 14 L37 9 C34 7.5 31.5 7.4 29.5 8.5"/><path d="M24 36 C18.5 36 14 33 12.5 28 C11.4 24 11.6 20 13 16.5 C14 14 16 12 18.5 10.8 C20.3 10 22.1 9.6 24 9.6 C25.9 9.6 27.7 10 29.5 10.8 C32 12 34 14 35 16.5 C36.4 20 36.6 24 35.5 28 C34 33 29.5 36 24 36 Z"/><path d="M17 22 Q19 23.5 21 22"/><path d="M27 22 Q29 23.5 31 22"/><path d="M21.8 27 H26.2 L24 29.4 Z"/><path d="M24 29.4 V31.6"/><path d="M24 31.6 C22.3 31.8 20.8 31.2 19.8 30"/><path d="M24 31.6 C25.7 31.8 27.2 31.2 28.2 30"/></g><text x="38" y="12" font-size="8" fill="#C9CCD4">z</text><text x="42" y="7" font-size="6" fill="#D8DAE1">z</text></svg><b style="font-size:.84rem">Le bac fait la sieste</b><small style="margin:0;color:var(--muted)">— rien à planifier, tout est affecté</small></div>`;
   document.getElementById("tray").style.display = "";
