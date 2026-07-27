@@ -380,7 +380,7 @@ h1,.num{font-family:'Sora',sans-serif}
 .tca.wa:hover{background:#F0FAF4}
 .tcol-head b{font-size:.83rem;display:block;line-height:1.2}
 .tcol-head small{font-size:.68rem;color:var(--muted)}
-.tcol-body{position:relative;height:calc(var(--hourh) * 16);background-color:var(--tint,transparent);
+.tcol-body{position:relative;height:calc(var(--hourh) * var(--hcount, 17));background-color:var(--tint,transparent);
   background:repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hourh) - 1px), #F2F3F6 calc(var(--hourh) - 1px), #F2F3F6 var(--hourh));}
 .tcol-body.dropover{background-color:var(--orange-soft)}
 .ev .cpv{font-weight:800;font-size:.74rem;letter-spacing:-.1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -1322,7 +1322,12 @@ function renderTray(){
 }
 
 /* ================= ÉTAT ================= */
-const DAYSTART = 6, HOURS = 16;
+/* 27/07 : la journee affichee va desormais jusqu'a 23h (6h + 17). ATTENTION :
+   cette valeur etait recopiee en dur dans le CSS (height:calc(var(--hourh)*16)).
+   Deux verites pour une seule grille — la hauteur des colonnes ne suivait pas.
+   Le CSS lit maintenant la meme valeur, posee sur la racine au demarrage. */
+const DAYSTART = 6, HOURS = 17;
+document.documentElement.style.setProperty("--hcount", HOURS);
 let VIEW = "day";
 let CUR = new Date(); CUR.setHours(12,0,0,0);
 const TODAYD = new Date(); TODAYD.setHours(12,0,0,0);
@@ -1538,8 +1543,10 @@ function renderDay(){
   /* 27/07 (option B) : plus de pastilles de recapitulatif — les chiffres sont
      dans le menu des statuts, qui faisait deja le meme filtrage. */
   document.getElementById('recap').innerHTML = "";
+  /* nuit : avant 7h, et a partir de 20h jusqu'au bas de la grille — calculee,
+     plus ecrite en dur, sinon elle s'arrete avant la derniere heure affichee. */
   const nightZones = `<div class="night" style="top:0;height:${1*64}px"></div>
-    <div class="night" style="top:${14*64}px;height:${2*64}px"></div>`;
+    <div class="night" style="top:${14*64}px;height:${(DAYSTART + HOURS - 20) * 64}px"></div>`;
 
   const cols = techs.map(t=>{
     const mine = evs.filter(v=>v.tech===t.id);
