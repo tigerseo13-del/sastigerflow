@@ -826,6 +826,12 @@ function reveal(id, btn){
 
 /* ===== Validation + enregistrement ===== */
 function saveInter(){
+  /* 27/07 — BUG. On tapait un nuisible dans « Autre » et on cliquait
+     directement sur Enregistrer : le texte n'etait pris en compte QUE si on
+     cliquait d'abord sur « Ajouter ». Le formulaire refusait alors en disant
+     « complete les champs obligatoires » alors que le champ etait rempli sous
+     les yeux. On ramasse la saisie en attente avant de valider. */
+  autreAdd();
   let bad = null;
   const cl = document.getElementById("f-client");
   if(!cl.value){ cl.classList.add("err"); bad = bad || cl; }
@@ -853,7 +859,7 @@ function saveInter(){
   if(typeof sbNewInter === "function") sbNewInter();
   try{
     const P2K = {"Rongeurs":"rongeur","Punaises de lit":"punaise","Cafards":"cafard","Guêpes / Frelons":"guepe",
-      "Chenilles processionnaires":"chenille","Pigeons":"pigeon","Désinfection":"desinf","Fourmis":"fourmi","Autre":"rongeur"};
+      "Chenilles processionnaires":"chenille","Pigeons":"pigeon","Désinfection":"desinf","Fourmis":"fourmi"};
     const PAY2M = {"Devis sur place":"devis","Encaissement sur place":"encais","Inclus au contrat":"ctr","Suite de traitement":"suite","Sans encaissement":"ctr","Retour de garantie":"gar"};
     const slot = effSlot();
     const start = parseInt(slot) || 9;
@@ -866,7 +872,11 @@ function saveInter(){
       ville: document.getElementById("f-ville").value.trim(),
       date: document.getElementById("f-date").value,
       start, dur: 2,
-      type: P2K[[...PESTS][0]] || "rongeur",
+      /* un nuisible saisi a la main n'entre dans aucune case connue : on le
+         range en « autre » et on emporte son libelle, au lieu de le faire
+         passer pour une deratisation. */
+      type: P2K[[...PESTS][0]] || "autre",
+      typeLibre: P2K[[...PESTS][0]] ? "" : ([...PESTS][0] || ""),
       mode: PAY2M[PAY] || "devis",
       tech: [...TECHS][0] || "",
       montant: (document.getElementById("f-montant") || {value:""}).value.trim(),
