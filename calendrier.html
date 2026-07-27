@@ -3001,6 +3001,21 @@ function closeTournee(){ document.getElementById('trm').classList.remove('open')
 
 renderChips();
 renderTray();
+/* ===== mois recu du tableau de bord : calendrier.html?m=AAAA-MM =====
+   Le selecteur du tableau de bord n'y filtre rien (aucun de ses chiffres ne
+   depend d'un mois) : il envoie ici, ou le mois veut dire quelque chose. */
+(function(){
+  var q = new URLSearchParams(location.search).get("m");
+  if(!q || !/^\d{4}-\d{2}$/.test(q)) return;
+  var a = +q.slice(0,4), m = +q.slice(5,7);
+  if(m < 1 || m > 12) return;
+  CUR = new Date(a, m - 1, 1); CUR.setHours(12,0,0,0);
+  VIEW = "month";
+  ["day","week","month"].forEach(function(x){
+    var el = document.getElementById("v-" + x);
+    if(el) el.classList.toggle("on", x === "month");
+  });
+})();
 render();
 </script>
 <div class="dveil" id="dveil" onclick="closeDetail()"></div>
