@@ -354,6 +354,9 @@ details.acc[open] summary::after{transform:rotate(180deg)}
 details.acc > *:not(summary){padding:0 14px 13px}
 /* zones tri-état : 1 clic préférence · 2 clics dépannage · 3 clics retirée */
 .zc{display:inline-flex;align-items:baseline;gap:6px;padding:9px 13px;border-radius:11px;border:1.5px solid var(--line);background:#fff;font-size:.82rem;font-weight:700;color:var(--ink-2);cursor:pointer;user-select:none;transition:.13s;font-family:inherit}
+/* 27/07 : la liste des zones commence vide, il faut le dire plutot que de
+   laisser un espace nu a cote du bouton. */
+.zvide{align-self:center;font-size:.78rem;color:var(--muted);font-weight:600}
 .zc small{font-size:.6rem;font-weight:700;opacity:.8}
 .zc:active{transform:scale(.95)}
 .zc.z1{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
@@ -755,7 +758,7 @@ const ALL_DEPS = ["75","77","78","91","92","93","94","95"];
    TigerFlow ne tourne pas qu'en Île-de-France : ZONELIST est la liste vivante du
    formulaire, ALL_DEPS reste le référentiel des propositions. La valeur réelle est
    portée par data-z, pas par l'id (une ville a des espaces et des accents). */
-let ZONELIST = ALL_DEPS.slice();
+let ZONELIST = [];
 const zid = z => 'a-zn-' + String(z).replace(/[^0-9A-Za-z]+/g, "-");
 function zoneHTML(z, st){
   st = st || 0;
@@ -769,7 +772,8 @@ function zoneRender(prefs, secs){
   const P = new Set(prefs || zPrefs()), S = new Set(secs || zSecs());
   box.innerHTML =
     ZONELIST.map(z => zoneHTML(z, P.has(z) ? 1 : S.has(z) ? 2 : 0)).join("") +
-    '<button type="button" class="addrowbtn" id="zone-autre" onclick="zoneOpen()">＋ Autre</button>' +
+    (ZONELIST.length ? "" : '<span class="zvide">Aucune zone — saisis un département ou une ville, puis Ajouter</span>') +
+    '<button type="button" class="addrowbtn" id="zone-autre" onclick="zoneOpen()">＋ Ajouter une zone</button>' +
     '<span class="addbox" id="zone-box"><input id="f-zone" placeholder="Département ou ville" onkeydown="zoneKey(event)"><button type="button" onclick="zoneAdd()">Ajouter</button></span>';
 }
 function zoneOpen(){
@@ -1396,7 +1400,10 @@ function docAdd(inp){
 }
 function openAdd(){
   const chip = (id, lbl) => `<label class="skchip"><input type="checkbox" id="${id}"> ${lbl}</label>`;
-  ZONELIST = ALL_DEPS.slice();
+  /* 27/07 (choix patron) : plus de departements proposes d'avance. On part d'une
+     liste vide et on saisit ce qu'on couvre — le SaaS ne tourne pas qu'en
+     Ile-de-France, afficher 75/77/78/91/92/93/94/95 supposait le contraire. */
+  ZONELIST = [];
   zoneRender([], []);
   MATLIST = ALL_MAT.slice();
   matRender([]);
