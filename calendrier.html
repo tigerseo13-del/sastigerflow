@@ -2932,14 +2932,24 @@ function trayDrop(pid){
 let pdrag = null;
 const trayEl = document.getElementById('traycards');
 
+/* 27/07 — SEUIL DE GLISSEMENT.
+   Avant, le pointerdown demarrait le glisser immediatement et appelait
+   preventDefault() : le navigateur n'emettait donc plus d'evenement `click`, et
+   pdragEnd posait en plus un silence de 450 ms. Resultat, un simple clic sur une
+   carte du bac n'ouvrait jamais le panneau de droite — le code d'ouverture
+   existait pourtant et repondait bien quand on l'appelait a la main.
+   Desormais on attend 5px de deplacement avant de decider : en dessous c'est un
+   clic, au-dessus c'est un glisser. */
+let pcand = null;
 trayEl.addEventListener('pointerdown', e=>{
   const card = e.target.closest('.pcard');
   if(!card) return;
   /* mobile : saisie uniquement par la poignée ⠿ — le doigt libre fait défiler le bac */
   if(matchMedia('(pointer:coarse)').matches && !e.target.closest('.grip')) return;
-  if(VIEW!=="day"){ toast("Passe en vue Jour pour planifier 👆"); return; }
-  e.preventDefault();
-  const pid = +card.dataset.pid;
+  pcand = {card, pid:+card.dataset.pid, x:e.clientX, y:e.clientY, pointerId:e.pointerId};
+});
+function pdragStart(c, e){
+  const card = c.card;
   const r = card.getBoundingClientRect();
   const ghost = card.cloneNode(true);
   ghost.classList.add('ghost');
@@ -2947,12 +2957,18 @@ trayEl.addEventListener('pointerdown', e=>{
   ghost.style.left = r.left+"px";
   ghost.style.top = r.top+"px";
   document.body.appendChild(ghost);
-  pdrag = {pid, ghost, offX:e.clientX-r.left, offY:e.clientY-r.top, col:null, h:null, raf:null, lx:0, ly:0};
-  card.setPointerCapture(e.pointerId);
+  pdrag = {pid:c.pid, ghost, offX:c.x-r.left, offY:c.y-r.top, col:null, h:null, raf:null, lx:0, ly:0};
+  try{ card.setPointerCapture(c.pointerId); }catch(err){}
   busyShow(null);
   document.body.classList.add("dragging");
-});
+  pcand = null;
+}
 trayEl.addEventListener('pointermove', e=>{
+  if(pcand && !pdrag){
+    if(Math.abs(e.clientX - pcand.x) < 5 && Math.abs(e.clientY - pcand.y) < 5) return;  /* encore un clic */
+    if(VIEW!=="day"){ toast("Passe en vue Jour pour planifier 👆"); pcand = null; return; }
+    pdragStart(pcand, e);
+  }
   if(!pdrag) return;
   e.preventDefault();
   pdrag.lx = e.clientX; pdrag.ly = e.clientY;
@@ -2980,6 +2996,7 @@ trayEl.addEventListener('pointermove', e=>{
   });
 });
 function pdragEnd(){
+  pcand = null;                                /* un relachement sans glisser = clic, gere plus haut */
   if(!pdrag) return;
   if(pdrag.raf){ cancelAnimationFrame(pdrag.raf); pdrag.raf = null; }
   suppressUntil = Date.now() + 450;           /* silence total après le drop du bac */
