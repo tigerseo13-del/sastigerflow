@@ -85,6 +85,11 @@ h1,.num{font-family:'Sora',sans-serif}
 .tdrop{position:relative;flex:none}
 .tdbtn{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:.82rem;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap}
 .tdbtn:hover{border-color:#D5D8DF}
+.sdi{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;font-family:inherit;
+  font-size:.82rem;font-weight:600;color:var(--ink-2);padding:9px 11px;border-radius:9px;cursor:pointer}
+.sdi:hover{background:var(--bg)}
+.sdi.on{color:var(--ink);font-weight:800}
+.sdck{width:14px;flex:none;color:var(--orange-deep);font-weight:900}
 .tdpanel{position:absolute;top:calc(100% + 7px);left:0;z-index:80;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 14px 38px rgba(23,26,32,.16);padding:9px;min-width:245px;max-height:330px;overflow-y:auto;display:none}
 .tdpanel.open{display:block}
 .tdacts{display:flex;gap:6px;padding:0 2px 8px;border-bottom:1px solid #F2F3F6;margin-bottom:7px}
@@ -957,6 +962,15 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </div>
     </div>
     
+    <div class="tdrop" id="sdrop">
+      <button class="tdbtn" onclick="togSDrop(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M22 11.1V12a10 10 0 11-5.9-9.1"/><path d="M22 4l-10 10-3-3"/></svg>
+        <span id="sdlabel">Tous les statuts</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="tdpanel" id="sdpanel"><div id="sdlist"></div></div>
+    </div>
+
     <span style="flex:1"></span>
     <div class="seg">
       <button id="v-day" class="on" onclick="setView('day')">Jour</button>
@@ -1311,10 +1325,21 @@ function filtered(){
   const q = (el && el.value || "").toLowerCase().trim();
   return INTERVS.filter(v =>
     VIS.has(v.tech) &&
+    /* Etats REELS de l'agenda. Il n'y a pas d'etat « Assigné » : une intervention
+       nait avec son technicien, ce serait un filtre qui ne filtre rien. */
+    /* Les quatre etats doivent dire la MEME chose que les pastilles des
+       cartouches, sinon filtrer sur « En cours » ne rendrait pas les cartes qui
+       affichent « En cours ». Le badge est calcule sur l'heure, pas seulement
+       sur le drapeau `started` — le filtre fait pareil. */
     (FSTAT==="all"
       || (FSTAT==="done" && v.done)
-      || (FSTAT==="todo" && !v.done)
-      || (FSTAT==="late" && !v.done && !v.cancelled && v.date === iso(TODAYD) && v.start + v.dur <= NOWH)) &&
+      || (FSTAT==="cancel" && v.cancelled)
+      || (FSTAT==="prog" && !v.done && !v.cancelled && (v.started
+            || (v.date === iso(TODAYD) && v.start <= NOWH && NOWH < v.start + v.dur)))
+      || (FSTAT==="late" && !v.done && !v.cancelled && v.date === iso(TODAYD) && v.start + v.dur <= NOWH)
+      || (FSTAT==="todo" && !v.done && !v.cancelled && !v.started
+            && !(v.date === iso(TODAYD) && v.start + v.dur <= NOWH)
+            && !(v.date === iso(TODAYD) && v.start <= NOWH && NOWH < v.start + v.dur))) &&
     (!q || v.client.toLowerCase().includes(q) || v.ville.toLowerCase().includes(q) || v.cp.includes(q)
       || (v.note || "").toLowerCase().includes(q))
   );
@@ -1340,6 +1365,35 @@ function renderChips(){
     : n + " techniciens";
   document.getElementById('tdlabel').textContent = lbl;
 }
+/* ===== filtre de statut (27/07) =====
+   FSTAT existait deja, pilote par les pastilles du recapitulatif. On lui donne
+   une commande explicite : les pastilles et le menu ecrivent la meme variable,
+   donc ils restent toujours d'accord. */
+const FSTATS = [
+  ["all",    "Tous les statuts"],
+  ["todo",   "Planifiée"],
+  ["prog",   "En cours"],
+  ["late",   "En retard"],
+  ["done",   "Terminée"],
+  ["cancel", "Annulée"]
+];
+function sdRender(){
+  const lb = document.getElementById("sdlabel");
+  const lst = document.getElementById("sdlist");
+  if(!lb || !lst) return;
+  const cur = FSTATS.find(x => x[0] === FSTAT) || FSTATS[0];
+  lb.textContent = cur[1];
+  lst.innerHTML = FSTATS.map(([v, l]) =>
+    `<button class="sdi${v === FSTAT ? " on" : ""}" onclick="setStat('${v}');document.getElementById('sdpanel').classList.remove('open')">
+       <span class="sdck">${v === FSTAT ? "✓" : ""}</span>${l}</button>`).join("");
+}
+function togSDrop(e){
+  if(e) e.stopPropagation();
+  const p = document.getElementById("sdpanel");
+  document.getElementById("tdpanel").classList.remove("open");
+  sdRender();
+  p.classList.toggle("open");
+}
 function togDrop(e){
   e.stopPropagation();
   document.getElementById('tdpanel').classList.toggle('open');
@@ -1351,6 +1405,7 @@ function allTech(on){
 }
 document.addEventListener('click', e=>{
   if(!e.target.closest('#tdrop')) document.getElementById('tdpanel').classList.remove('open');
+  if(!e.target.closest('#sdrop')) document.getElementById('sdpanel').classList.remove('open');
 });
 function toggleTech(id){
   VIS.has(id) ? VIS.delete(id) : VIS.add(id);
@@ -1378,6 +1433,7 @@ function soloTech(id){
 }
 function setStat(sVal){
   FSTAT = sVal;
+  sdRender();
   ["all","todo","done"].forEach(x=>{
     const b = document.getElementById('f-' + x);
     if(b) b.classList.toggle('on', x === sVal);
