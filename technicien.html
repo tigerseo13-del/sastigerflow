@@ -442,6 +442,12 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   color:var(--green-d);border-radius:11px;padding:7px 12px;font-size:.8rem;font-weight:700;margin:0 7px 7px 0}
 .habc svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .habc .pb{background:var(--orange-soft);border:1px solid #FFD3BF;border-radius:999px;padding:2px 8px;font-size:.72rem;font-weight:800;color:var(--orange-deep);margin-left:2px;flex:none}
+
+/* puce certification : même famille verte que l'habilitation, badge numéro neutre (26/07) */
+.certc{display:inline-flex;align-items:center;gap:7px;background:#E4F5EE;border:1px solid #BFE6D8;
+  color:var(--green-d);border-radius:11px;padding:7px 12px;font-size:.8rem;font-weight:700;margin:0 7px 7px 0}
+.certc svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.certc .cnum{background:#fff;border:1px solid #BFE6D8;border-radius:999px;padding:2px 8px;font-size:.72rem;font-weight:800;color:var(--green-d);margin-left:2px;flex:none}
 </style>
 </head>
 <body>
@@ -568,13 +574,11 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
         <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>Nuisibles qu'il peut traiter</div>
         <div id="i-hab"></div>
       </div>
-    </div>
-
       <div class="card">
         <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>Certifications</div>
         <div id="i-certs"></div>
       </div>
-      </div>
+    </div>
 
     <!-- ===== COMPÉTENCES ===== -->
     <!-- ===== DISPONIBILITÉ ===== -->
@@ -893,6 +897,24 @@ function comp(){
     ? entries.map(([n, p]) => '<span class="habc"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>' + n + '<span class="pb">' + p + ' %</span></span>').join("")
       + '<div class="skhint">Nuisibles qu\'il est habilité à traiter seul, et sa commission sur chacun.</div>'
     : '<div class="emptybox">Aucune habilitation enregistrée.</div>';
+
+  /* ── les certifications saisies à la création / modification (26/07) ──
+     i-certs n'était jamais rempli : la carte restait vide quoi qu'on saisisse.
+     T.certs est un tableau de chaînes « intitulé · numéro ». */
+  const certs = document.getElementById("i-certs");
+  if(certs){
+    const liste = (T.certs || []).filter(c => c && String(c).trim() && String(c).trim() !== "—");
+    certs.innerHTML = liste.length
+      ? liste.map(c => {
+          const parts = String(c).split(" · ");
+          const nom = parts[0].trim();
+          const num = parts.slice(1).join(" · ").trim();
+          return '<span class="certc"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>'
+               + nom + (num ? '<span class="cnum">n\u00b0 ' + num + '</span>' : '') + '</span>';
+        }).join("")
+        + '<div class="skhint">Certifications et num\u00e9ros d\u00e9clar\u00e9s pour ce technicien.</div>'
+      : '<div class="emptybox">Aucune certification enregistr\u00e9e.</div>';
+  }
 }
 
 /* ================= DISPONIBILITÉ ================= */
