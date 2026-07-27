@@ -503,13 +503,16 @@ h1,.num{font-family:'Sora',sans-serif}
 .pcard{flex:none;width:200px;border-radius:11px;padding:6px 9px 6px 12px;position:relative;overflow:hidden;
   cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
   background:#F7F8FA;border:1px solid var(--line);box-shadow:0 1px 4px -1px rgba(23,26,32,.1)}
-.pcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4.5px;background:var(--evc)}
+/* 27/07 : le lisere ne porte plus la couleur de la famille. Le bac reste neutre ;
+   la couleur n'apparait qu'une fois la carte posee sur l'agenda (.ev garde --evc). */
+.pcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4.5px;background:var(--line)}
 /* 27/07 : le nom du nuisible etait ecrit dans la couleur de sa famille.
    Cinq cartes cote a cote = cinq couleurs de texte. Le texte passe en
    sombre neutre ; la couleur de famille ne subsiste que sur le liseré
    de 4,5px a gauche, qui suffit a lire la famille d'un coup d'oeil. */
 .pcard .l1{display:flex;align-items:center;gap:5px;font-size:.76rem;font-weight:800;color:var(--ink)}
 .pcard .l1 .dur{margin-left:auto;font-size:.64rem;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 7px}
+.pcard .ptop{display:flex;margin-bottom:6px}
 .pcard .z{font-size:.72rem;font-weight:700;color:var(--ink);margin-top:3px}
 .pcard .c{font-size:.68rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev .ladr{font-size:.68rem;font-weight:600;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1056,6 +1059,10 @@ const MODES = {
   gar   :{lbl:"2ᵉ passage / garantie", ic:"🔁", desc:"solde éventuel"},
 };
 const NMODE = m => m === "gar" ? "suite" : (m || "devis");
+/* Nature de l'intervention deduite du client. Extraite le 27/07 pour que le bac
+   « A planifier » affiche LA MEME nature que la cartouche une fois posee sur
+   l'agenda — avant, la regle etait enfermee dans le constructeur IV(). */
+const modeDe = c => CLIENT_MODE[c] || ["devis","encais","suite","devis"][[...c].reduce((s,x)=>s+x.charCodeAt(0),0) % 4];
 const CLIENT_MODE = {
   "Ironwood Solutions":"ctr", "Syndic Foncia":"ctr", "Hôtel du Parc":"ctr",
   "Pharmacie Centrale":"ctr", "Boulangerie Dupont":"ctr", "Crèche Les Lutins":"ctr",
@@ -1077,7 +1084,7 @@ const RUES = ["24 rue de la Roquette","8 avenue Jean Jaurès","132 boulevard Vol
 const IV = (date,start,dur,tech,type,client,cp,ville,done=false)=>({id:NID++,date,start,dur,tech,type,client,cp,ville,done,
   rue: RUES[NID % RUES.length],
   started:false, cancelled:false, note:"", prio:["Normale","Haute","Normale","Urgente","Basse","Normale","Haute"][NID % 7],
-  mode: CLIENT_MODE[client] || ["devis","encais","suite","devis"][[...client].reduce((s,c)=>s+c.charCodeAt(0),0) % 4]});
+  mode: modeDe(client)});
 const INTERVS = [
   // Mardi 25/08 (aujourd'hui)
   IV("2026-08-25", 8,   2, 0, "punaise", "John Thompson",      "75011","Paris"),
@@ -1258,6 +1265,7 @@ function renderTray(){
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
     const T = TYPES[p.type];
     return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}" style="--evc:${T.c}"><span class="grip" title="Glisser sur l'agenda">⠿</span>
+      <div class="ptop"><span class="mchip m-${modeDe(p.client)}">${MODES[modeDe(p.client)].ic} ${MODES[modeDe(p.client)].lbl}</span></div>
       <div class="l1"><span>${T.ic}</span><span>${T.lbl}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}${trayAge(p)}<span class="dur">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span></div>
       <div class="z">${p.mode ? '<span class="mchip m-' + p.mode + '" style="font-size:.6rem;padding:1.5px 7px">' + MODES[p.mode].lbl + (p.montant ? " · " + p.montant + " €" : "") + '</span>' : ''}${p.rappel ? (p.mode ? ' · ' : '') + '<b style="color:var(--ink-2)">' + (p.suivi ? 'prévu ' : 'rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
       <div class="c" style="font-weight:800;color:var(--ink)">${p.client}</div>
