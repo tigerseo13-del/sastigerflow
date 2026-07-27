@@ -2879,6 +2879,20 @@ function openPending(pid){
   const adr = (p.rue ? p.rue + " · " : "") + p.cp + " · " + p.ville;
   const kv = (k, v) => `<div class="dkv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
   const dur = p.dur % 1 ? Math.floor(p.dur) + "h" + Math.round((p.dur % 1) * 60) : p.dur + "h";
+  /* Meme grille de lecture que le panneau d'une intervention planifiee : priorite,
+     statut, type, technicien, facturation. Ce qui n'existe pas encore le DIT,
+     au lieu d'etre absent — une ligne vide se remarque, une ligne manquante non. */
+  const prio = p.urgent ? "Urgente" : "Normale";
+  const sl = p.standby ? "À reprogrammer" : p.suivi ? "Suivi" : "À planifier";
+  const sc = p.standby ? "prog" : p.suivi ? "todo" : "todo";
+  const inv = m === "devis"
+    ? `<div class="invbox"><span><span class="lbl">Chiffrage sur place</span><b style="font-size:.9rem">Devis à établir</b></span>
+        <a class="go" href="devis.html?c=${encodeURIComponent(p.client)}&cp=${encodeURIComponent(p.cp)}&ville=${encodeURIComponent(p.ville)}">Créer le devis</a></div>`
+    : m === "ctr"
+    ? `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">📄 Incluse au contrat</b></span></div>`
+    : m === "encais"
+    ? `<div class="invbox"><span><span class="lbl">À encaisser sur place</span><b style="font-size:.9rem">${p.montant ? p.montant + " €" : "montant à définir"}</b></span></div>`
+    : `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">🔁 2ᵉ passage / garantie — rien à encaisser</b></span></div>`;
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead">
       <div class="drow1" style="justify-content:flex-end">
@@ -2893,20 +2907,33 @@ function openPending(pid){
       <div class="pdhint">Pas encore planifiée — glisse la carte sur l'agenda pour lui donner une heure.</div>
     </div>
     <div class="dcard">
-      <div class="dkvh">Intervention</div>
-      ${kv("Nature", `<span class="mchip m-${m}">${M.ic} ${M.lbl}</span>`)}
+      <div class="dh">Détails de l'intervention</div>
+      ${kv("Client", p.client)}
+      ${kv("Date planifiée", '<span style="color:var(--muted)">Pas encore planifiée</span>')}
+      ${kv("Adresse", '<svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + adr)}
+      ${kv("Priorité", `<span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>`)}
+      ${kv("Statut", `<span class="dst ${sc}" style="font-size:.62rem">${sl}</span>`)}
+      ${kv("Type", `<span class="mchip m-${m}" style="font-size:.68rem;padding:3px 10px">${M.ic} ${M.lbl}</span> <span style="color:var(--muted);font-weight:600">${M.desc}</span>`)}
       ${kv("Nuisible", T.ic + " " + T.lbl)}
       ${kv("Durée estimée", dur)}
-      ${p.urgent ? kv("Priorité", '<span class="urg">URGENT</span>') : ""}
-      ${p.standby ? kv("État", '<span class="sbb">À reprogrammer</span>') : ""}
-      ${p.suivi ? kv("État", '<span class="svb">Suivi</span>') : ""}
       ${p.rappel ? kv(p.suivi ? "Prévu le" : "Rappel", p.rappel.split("-").reverse().join("/")) : ""}
     </div>
     <div class="dcard">
-      <div class="dkvh">Client</div>
+      <div class="dh">Client</div>
       ${kv("Nom", p.client)}
-      ${kv("Téléphone", telFmt(tel))}
+      ${kv("Téléphone", `<a href="tel:+33${tel.slice(1)}" style="color:var(--orange-deep)">${telFmt(tel)}</a>`)}
       ${kv("Adresse", adr)}
+    </div>
+    <div class="dcard">
+      <div class="dh">Technicien</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FAFBFC;border:1px dashed #E1E4EA;border-radius:11px;padding:11px 13px">
+        <span style="font-size:.8rem;color:var(--muted);font-weight:600">Pas encore affecté</span>
+        <span style="font-size:.75rem;color:var(--muted)">glisse la carte sur la colonne d'un technicien</span>
+      </div>
+    </div>
+    <div class="dcard">
+      <div class="dh">Facturation</div>
+      ${inv}
     </div>
     <div class="dcard">
       <button class="dbig sec" onclick="trayDrop(${pid})">Retirer du bac</button>
