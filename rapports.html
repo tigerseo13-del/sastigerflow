@@ -300,10 +300,12 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <div class="crumbs"><span class="pgico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span><span class="cur">Rapports</span> <span style="font-size:.62rem;font-weight:800;background:#FFF1EA;color:#EA4A10;border:1px solid #FFD9C4;border-radius:8px;padding:3px 10px;letter-spacing:.06em;vertical-align:2px">MODE BÊTA</span></div>
     <div class="title-m"><span class="pgico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>Rapports <span style="font-size:.62rem;font-weight:800;background:#FFF1EA;color:#EA4A10;border:1px solid #FFD9C4;border-radius:8px;padding:3px 10px;letter-spacing:.06em;vertical-align:2px">MODE BÊTA</span></div>
     <div class="spacer"></div>
-    <button class="gsbtn" onclick="gsOpen()" aria-label="Recherche globale">
+    <div class="gsbtn" onclick="gsTap()" role="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-      <span>Rechercher clients, pages, actions…</span><kbd class="slash">/</kbd><kbd>⌘K</kbd>
-    </button>
+      <input class="gsq" id="gs-top" type="text" autocomplete="off" placeholder="Rechercher clients, pages, actions…" aria-label="Recherche globale">
+      <kbd class="slash">/</kbd><kbd>⌘K</kbd>
+      <div class="gsdrop" id="gs-drop"></div>
+    </div>
     <select class="per pertop" id="per" onchange="setPer()">
       <option value="mois">📅 Août 2026</option>
       <option value="tri">📅 3ᵉ trimestre 2026</option>
@@ -540,6 +542,21 @@ setPer();
 .gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,var(--ink-2))}
 .gsbtn svg{width:15px;height:15px;flex:none}
 .gsbtn kbd{font-family:inherit;font-size:.66rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted,var(--muted))}
+/* ===== recherche directe dans la barre (27/07) =====
+   On ecrit dans la barre du haut, les resultats tombent dessous. La fenetre
+   centrale ne sert plus que sur telephone, ou la barre se reduit a une icone
+   de 40px : il n'y a pas la place d'un champ de saisie. C'est la regle
+   .gsbtn > :not(svg){display:none} du bloc telephone qui masque le champ,
+   la liste et les raccourcis en dessous de 760px. */
+.gsbtn{position:relative;cursor:text}
+.gsbtn:focus-within{border-color:var(--orange,#FF5A1F)}
+.gsbtn .gsq{flex:1;min-width:0;border:0;background:none;padding:0;font-family:inherit;font-size:.8rem;font-weight:600;color:var(--ink,#171A20)}
+.gsbtn .gsq:focus{outline:none;box-shadow:none}
+.gsbtn .gsq::placeholder{color:var(--muted,#8A90A0);font-weight:500}
+.gsdrop{position:absolute;top:calc(100% + 7px);left:0;right:0;background:#fff;border:1px solid var(--line,#E7E9EF);
+  border-radius:14px;box-shadow:0 18px 44px rgba(16,18,22,.16);max-height:52vh;overflow-y:auto;padding:8px;
+  display:none;z-index:130;text-align:left;cursor:default}
+.gsdrop.open{display:block}
 .gs-veil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:120;backdrop-filter:blur(2px)}
 .gs-veil.open{display:block}
 .gs-pal{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 26px));background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);z-index:121;overflow:hidden;display:none}
@@ -627,6 +644,10 @@ setPer();
   }
   window.gsSel = function(i){ SEL = i; draw(); };
   window.gsOpen = function(){
+    /* Sur ordinateur la barre est un vrai champ : / et Cmd+K y placent le
+       curseur au lieu d'ouvrir la fenetre. La fenetre reste pour le telephone. */
+    var ch = document.getElementById("gs-top");
+    if(ch && window.innerWidth > 760){ ch.focus(); ch.select(); return; }
     document.getElementById("gs-veil").classList.add("open");
     document.getElementById("gs-pal").classList.add("open");
     var inp = document.getElementById("gs-q");
@@ -637,6 +658,49 @@ setPer();
     document.getElementById("gs-veil").classList.remove("open");
     document.getElementById("gs-pal").classList.remove("open");
   };
+  /* ===== resultats sous la barre (27/07) : meme moteur que la fenetre ===== */
+  var IRES = [], ISEL = 0;
+  function gsInPaint(){
+    var box = document.getElementById("gs-drop"), ch = document.getElementById("gs-top");
+    if(!box || !ch) return;
+    var q = ch.value.trim();
+    if(!q){ box.classList.remove("open"); box.innerHTML = ""; return; }
+    box.classList.add("open");
+    if(!IRES.length){ box.innerHTML = '<div class="gs-empty">Aucun resultat pour \u00ab ' + q + ' \u00bb</div>'; return; }
+    var html = "", lastG = "";
+    IRES.forEach(function(r, i){
+      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
+      html += '<div class="gs-r ' + (i === ISEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsInSel(' + i + ')">'
+        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
+        + '<span class="go">Entree \u21b5</span></div>';
+    });
+    box.innerHTML = html;
+  }
+  window.gsInPaint = gsInPaint;
+  window.gsInSel = function(i){ ISEL = i; gsInPaint(); };
+  window.gsInClose = function(){ var b = document.getElementById("gs-drop"); if(b){ b.classList.remove("open"); } };
+  /* sur telephone le champ est masque : un appui rouvre la fenetre */
+  window.gsTap = function(){
+    /* clic n'importe ou dans la barre = curseur dans le champ, comme une vraie
+       barre de recherche. Sur telephone le champ est masque : on rouvre la fenetre. */
+    if(window.innerWidth <= 760){ gsOpen(); return; }
+    var ch = document.getElementById("gs-top");
+    if(ch) ch.focus();
+  };
+  (function(){
+    var ch = document.getElementById("gs-top");
+    if(!ch) return;
+    ch.addEventListener("input", function(){ IRES = search(this.value); ISEL = 0; gsInPaint(); });
+    ch.addEventListener("focus", function(){ if(this.value.trim()){ IRES = search(this.value); gsInPaint(); } });
+    ch.addEventListener("keydown", function(e){
+      if(e.key === "Escape"){ gsInClose(); this.blur(); return; }
+      if(!IRES.length) return;
+      if(e.key === "ArrowDown"){ e.preventDefault(); ISEL = Math.min(IRES.length - 1, ISEL + 1); gsInPaint(); }
+      else if(e.key === "ArrowUp"){ e.preventDefault(); ISEL = Math.max(0, ISEL - 1); gsInPaint(); }
+      else if(e.key === "Enter" && IRES[ISEL]){ location.href = IRES[ISEL].h; }
+    });
+    document.addEventListener("click", function(e){ if(!e.target.closest || !e.target.closest(".gsbtn")) gsInClose(); });
+  })();
   document.getElementById("gs-q").addEventListener("input", function(){
     RES = search(this.value); SEL = 0; draw();
   });
