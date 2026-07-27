@@ -275,6 +275,15 @@ h1,.num{font-family:'Sora',sans-serif}
 .recoc.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
 .recoc.on .rcb{background:var(--orange);border-color:var(--orange);color:#fff}
 .rdrop2{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px dashed #D8DCE4;border-radius:14px;background:#FAFBFC;padding:24px 16px;cursor:pointer;text-align:center;transition:.15s;margin-bottom:4px}
+/* 27/07 : retour visuel du glisser-deposer + galerie des photos ajoutees */
+.rdrop2.over{border-color:var(--orange);background:var(--orange-soft)}
+.rphotos{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px}
+.rph{position:relative;margin:0;width:96px;height:96px;border-radius:11px;overflow:hidden;border:1px solid var(--line);background:#F5F6F9}
+.rph img{width:100%;height:100%;object-fit:cover;display:block}
+.rphx{position:absolute;top:5px;right:5px;width:20px;height:20px;border:0;border-radius:50%;background:rgba(255,255,255,.92);
+  color:var(--muted);font-size:.68rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.25);opacity:0;transition:.13s}
+.rph:hover .rphx,.rphx:focus-visible{opacity:1}
+.rphx:hover{background:var(--red-bg);color:var(--red)}
 .rdrop2:hover{border-color:var(--orange);background:var(--orange-soft)}
 .rdrop2 svg{width:30px;height:30px;stroke:#A6ABBB;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .rdrop2:hover svg{stroke:var(--orange-deep)}
@@ -2369,7 +2378,7 @@ const R_RECOS  = ["Boucher les fissures et points d'entrée","Améliorer la gest
 function openReport(id){
   if(!REPORTS[id]) REPORTS[id] = {niv:"", zones:new Set(), signes:new Set(), obs:"", urg:"Moyenne",
     meths:new Set(), prods:[{p:0,q:1}], mats:new Set(), tzones:new Set(), act:"", temps:"",
-    recos:new Set(), quote:false, quoteDesc:"", next:"", notes:""};
+    recos:new Set(), quote:false, quoteDesc:"", next:"", notes:"", photos:[]};
   RSTEP = 1;
   renderReport(id);
 }
@@ -2402,11 +2411,19 @@ function renderReport(id){
       <span class="rlab">Niveau d'urgence du client</span>
       <div class="rchips">${R_URG.map(([u,c])=>`<span class="rchip ${r.urg===u?'on':''}" onclick="rOne(${id},'urg','${u}',this)"><i style="width:8px;height:8px;border-radius:50%;background:${c}"></i>${u}</span>`).join("")}</div>
       <span class="rlab">Photos / preuves</span>
-      <div class="rdrop2" onclick="toast('Ajout de photos — bientôt relié')">
+      <!-- 27/07 : la zone ne faisait qu'afficher « bientot relie ». Elle accepte
+           maintenant vraiment les photos, au clic comme au glisser-deposer. -->
+      <input type="file" id="rphotos" accept="image/*" multiple hidden onchange="rPhotoAdd(${id}, this.files); this.value=''">
+      <div class="rdrop2" onclick="document.getElementById('rphotos').click()"
+           ondragover="event.preventDefault();this.classList.add('over')"
+           ondragleave="this.classList.remove('over')"
+           ondrop="event.preventDefault();this.classList.remove('over');rPhotoAdd(${id}, event.dataTransfer.files)">
         <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
         <b>Ajoute tes photos du constat</b>
-        <small>glisse-les ici ou clique — JPG, PNG · 10 Mo max · elles partiront sur le rapport client</small>
+        <small>glisse-les ici ou clique — JPG, PNG · 4 Mo par photo · elles partiront sur le rapport client</small>
       </div>
+      <div class="rphotos" id="rphotolist">${(r.photos || []).map((ph, k) =>
+        `<figure class="rph"><img src="${ph.src}" alt=""><button class="rphx" title="Retirer" onclick="rPhotoDel(${id},${k})">✕</button></figure>`).join("")}</div>
 `;
   }
   else if(RSTEP === 2){
@@ -2486,6 +2503,33 @@ function rNav(id, d){
   const dw = document.getElementById("drawer");
   if(dw) dw.scrollTop = 0;
   renderReport(id);
+}
+/* ===== photos du constat (27/07) =====
+   Elles partent sur le rapport client : on les garde avec le rapport, en clair,
+   plafonnees a 4 Mo par photo pour ne pas saturer le navigateur. */
+const RPH_MAX = 4 * 1024 * 1024;
+function rPhotoAdd(id, files){
+  const r = REPORTS[id]; if(!r || !files || !files.length) return;
+  r.photos = r.photos || [];
+  const images = [...files].filter(f => /^image\//.test(f.type));
+  const lourdes = [...files].length - images.length;
+  if(lourdes) toast("⛔ " + lourdes + " fichier(s) ignoré(s) — seules les photos sont acceptées");
+  let restants = images.length;
+  if(!restants) return;
+  images.forEach(f => {
+    if(f.size > RPH_MAX){ toast("⛔ " + f.name + " dépasse 4 Mo"); if(--restants === 0) renderReport(id); return; }
+    const rd = new FileReader();
+    rd.onload = () => { r.photos.push({n:f.name, src:rd.result}); if(--restants === 0) renderReport(id); };
+    rd.onerror = () => { if(--restants === 0) renderReport(id); };
+    rd.readAsDataURL(f);
+  });
+}
+function rPhotoDel(id, k){
+  const r = REPORTS[id]; if(!r || !r.photos) return;
+  const sauv = r.photos[k];
+  r.photos.splice(k, 1);
+  renderReport(id);
+  toast("🗑 Photo retirée", () => { r.photos.splice(k, 0, sauv); renderReport(id); });
 }
 function rOne(id, key, val, el){
   REPORTS[id][key] = val;
