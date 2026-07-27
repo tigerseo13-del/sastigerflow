@@ -678,6 +678,11 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 /* 27/07 : la référence flottait, centrée, entre deux cartes — une bannière
    orange qui n'appartenait à rien. Elle devient une ligne du tableau de
    détails, au même titre que le statut ou le type, et reste copiable. */
+/* Option A du 27/07 : rangee d'etats en tete de carte, reference en pied. */
+.detats{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:-3px 0 14px}
+.dpied{border-top:1px solid #F2F3F6;margin-top:12px;padding-top:9px;display:flex;justify-content:flex-end}
+.dpied .refc{font-size:.72rem;color:var(--muted)}
+.dpied .refc:hover{color:var(--orange-deep)}
 .refc{display:inline-flex;align-items:center;gap:7px;background:none;border:0;padding:0;cursor:pointer;
   font-family:inherit;font-size:.76rem;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .refc svg{width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -2123,13 +2128,20 @@ function renderDetail(){
   const FICHE = `
     <div class="dcard">
       <div class="dh">Détails de l'intervention</div>
+      <!-- 27/07 (option A) : priorite, statut et type quittent les lignes cle/valeur
+           pour une rangee de pastilles en tete. Ce sont trois ETATS : on les reconnait
+           a leur couleur, les lire mot a mot ne servait a rien, et le retard se voit
+           maintenant avant meme le nom du client. La reference descend en pied : on ne
+           la lit jamais, on la copie. -->
+      <div class="detats">
+        <span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span>
+        <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
+        <span class="mchip m-${v.mode}" style="font-size:.68rem;padding:2.5px 9px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + "\u00a0€" : ""}</span>
+      </div>
       <div class="dkv"><span class="k">Client</span><span class="v"><a class="vcli" href="#" onclick="cliPanel('${isIron ? 'client.html?panel=1' : 'client.html?c=' + encodeURIComponent(v.client) + '&panel=1'}');return false">${v.client} →</a></span></div>
       <div class="dkv"><span class="k">Date planifiée</span><span class="v">${dateTxt} · ${hstr(v.start)} – ${hstr(v.start + v.dur)}</span></div>
       <div class="dkv"><span class="k">Adresse</span><span class="v"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.rue ? v.rue + ", " : ""}${v.cp} ${v.ville}</span></div>
-      <div class="dkv"><span class="k">Priorité</span><span class="v"><span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span></span></div>
-      <div class="dkv"><span class="k">Statut</span><span class="v"><span class="dst ${sc}" style="font-size:.62rem">${sl}</span></span></div>
-      <div class="dkv"><span class="k">Type</span><span class="v" style="display:inline-flex;align-items:center;gap:8px"><span class="mchip m-${v.mode}" style="font-size:.68rem;padding:2.5px 9px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + " €" : ""}</span></span></div>
-      <div class="dkv"><span class="k">Référence</span><span class="v"><button class="refc" title="Copier la référence" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('Référence copiée'))">${refInt(v.id)}<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></span></div>
+      <div class="dpied"><button class="refc" title="Copier la référence" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('Référence copiée'))">${refInt(v.id)}<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></div>
     </div>`;
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead">
@@ -3096,12 +3108,16 @@ function openPending(pid){
     </div>
     <div class="dcard">
       <div class="dh">Détails de l'intervention</div>
+      <!-- meme grille que le panneau d'une intervention planifiee (option A) :
+           priorite, statut et type en rangee d'etats plutot qu'en lignes. -->
+      <div class="detats">
+        <span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>
+        <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
+        <span class="mchip m-${m}" style="font-size:.68rem;padding:2.5px 9px">${M.ic} ${M.lbl}</span>
+      </div>
       ${kv("Client", p.client)}
       ${kv("Date planifiée", '<span style="color:var(--muted)">Pas encore planifiée</span>')}
       ${kv("Adresse", '<svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + adr)}
-      ${kv("Priorité", `<span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>`)}
-      ${kv("Statut", `<span class="dst ${sc}" style="font-size:.62rem">${sl}</span>`)}
-      ${kv("Type", `<span class="mchip m-${m}" style="font-size:.68rem;padding:3px 10px">${M.lbl}</span>`)}
       ${kv("Nuisible", T.ic + " " + T.lbl)}
       ${kv("Durée estimée", dur)}
       ${p.rappel ? kv(p.suivi ? "Prévu le" : "Rappel", p.rappel.split("-").reverse().join("/")) : ""}
