@@ -142,6 +142,10 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
 .tfoot{padding:12px 16px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
 .tfoot b{color:var(--ink);font-size:.88rem}
 .kpi{transition:.13s}
+/* 27/07 : les cartouches filtrent la liste — on le montre. */
+.kpi[role="button"]{cursor:pointer}
+.kpi[role="button"]:hover{transform:translateY(-1px);box-shadow:0 8px 20px -10px rgba(23,26,32,.28)}
+.kpi[role="button"]:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 
 
 /* tiroir */
@@ -454,11 +458,13 @@ label[for]{cursor:pointer}
   <div class="page">
 
 
+    <!-- 27/07 : cartouches cliquables. kfil() existait deja et savait poser le
+     statut et la periode ; plus rien ne l'appelait. -->
     <div class="kpis">
-      <div class="kpi k-green"><div class="lbl">Total encaissé</div><div class="num" id="k-tot">0 €</div></div>
-      <div class="kpi k-blue"><div class="lbl">Ce mois-ci</div><div class="num" id="k-mois">0 €</div></div>
-      <div class="kpi k-amber"><div class="lbl">En attente d'encaissement</div><div class="num" id="k-att">0 €</div></div>
-      <div class="kpi k-orange"><div class="lbl">Montant restant dû</div><div class="num" id="k-du">0 €</div></div>
+      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('enc',0)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('enc',0)}"><div class="lbl">Total encaissé</div><div class="num" id="k-tot">0 €</div></div>
+      <div class="kpi k-blue" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('enc',1)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('enc',1)}"><div class="lbl">Ce mois-ci</div><div class="num" id="k-mois">0 €</div></div>
+      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('att',0)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('att',0)}"><div class="lbl">En attente d'encaissement</div><div class="num" id="k-att">0 €</div></div>
+      <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('att',0)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('att',0)}"><div class="lbl">Montant restant dû</div><div class="num" id="k-du">0 €</div></div>
     </div>
 
     <div class="toolrow">
@@ -578,7 +584,7 @@ function buildRows(){
       ROWS.unshift({id:"PAY-FIC-" + ref.slice(-5) + "-" + (i + 1), fac:ref, client:(FACS[ref] || {}).client || ref,
         m:p.m || 0, mode:p.mode || "Virement", st:"enc", d:p.d || TODAY, note:p.note || "", src:"fiche"});
     }));
-    JSON.parse(localStorage.getItem("tigerflow-paiements-perso") || "[]").forEach(p => ROWS.unshift({...p}));
+    JSON.parse(localStorage.getItem("tigerflow-paiements-perso") || "[]").forEach((p, k) => ROWS.unshift({...p, _cree: k + 1}));
     const ov = JSON.parse(localStorage.getItem("tigerflow-paiements-statuts")) || {};
     ROWS.forEach(r => { const o = ov[r.id]; if(o){ r.st = o.st; if(o.d) r.d = o.d; } });
   }catch(e){}
@@ -633,6 +639,9 @@ function render(){
   else if(tri === "date") list.sort((a, b) => String(b.d || "").localeCompare(String(a.d || "")));
   else list.sort((a, b) => a.st !== b.st ? (a.st === "att" ? -1 : 1)
     : (a.st === "enc" ? String(b.d || "").localeCompare(String(a.d || "")) : 0));
+  /* 27/07 : un paiement qu'on vient de saisir passe en tete, avant meme l'ordre
+     metier — sinon on ne retrouve pas ce qu'on vient de faire. */
+  list.sort((a, b) => (b._cree || 0) - (a._cree || 0));
   /* les filtres survivent au rechargement */
   try{ localStorage.setItem("tigerflow-paiements-filtre", JSON.stringify({q:g("q").value, fs, fm, fc, du, au})); }catch(e){}
   g("cards").innerHTML = list.map(r => `
