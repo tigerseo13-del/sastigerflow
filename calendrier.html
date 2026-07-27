@@ -513,6 +513,7 @@ h1,.num{font-family:'Sora',sans-serif}
 .pcard .l1{display:flex;align-items:center;gap:5px;font-size:.76rem;font-weight:800;color:var(--ink)}
 .pcard .l1 .dur{margin-left:auto;font-size:.64rem;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 7px}
 .pcard .ptop{display:flex;margin-bottom:6px}
+.pdhint{margin-top:12px;font-size:.74rem;font-weight:600;color:var(--ink-2);background:var(--amber-bg);border:1px solid #F5E0B0;border-radius:11px;padding:9px 12px;line-height:1.5}
 .pcard .z{font-size:.72rem;font-weight:700;color:var(--ink);margin-top:3px}
 .pcard .c{font-size:.68rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev .ladr{font-size:.68rem;font-weight:600;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2590,6 +2591,16 @@ document.addEventListener("click", e=>{
   if(downXY && (Math.abs(e.clientX - downXY[0]) > 5 || Math.abs(e.clientY - downXY[1]) > 5)) return;
   openDetail(+el.dataset.id);
 });
+/* clic sur une carte du bac -> meme tiroir. La poignee ⠿ sert a glisser, donc
+   elle n'ouvre pas ; et un deplacement de plus de 5px est un glisser, pas un clic. */
+document.addEventListener("click", e=>{
+  if(Date.now() < suppressUntil) return;
+  const c = e.target.closest(".pcard");
+  if(!c || !c.dataset.pid || c.classList.contains("ghost")) return;
+  if(e.target.closest(".grip")) return;
+  if(downXY && (Math.abs(e.clientX - downXY[0]) > 5 || Math.abs(e.clientY - downXY[1]) > 5)) return;
+  openPending(+c.dataset.pid);
+});
 document.addEventListener("keydown", e=>{
   if((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")){ e.preventDefault(); palOpen(); return; }
   if(e.key === "Escape"){
@@ -2849,6 +2860,71 @@ scroller.addEventListener('pointercancel', ()=>{
   busyHide();
   if(drag){ drag.el.classList.remove('dragging'); render(); drag = null; }
 });
+
+
+/* ===== panneau de droite pour une carte du bac (27/07) =====
+   Meme tiroir que pour une intervention posee, mais rempli avec ce qui existe
+   VRAIMENT pour une carte pas encore planifiee : ni date, ni heure, ni
+   technicien. On n'affiche donc ni « Cloturer » ni « Encaisser » — proposer
+   ces boutons sur quelque chose qui n'a pas eu lieu serait un piege. */
+let PDID = null;
+function openPending(pid){
+  const p = PENDING.find(x => x.pid === pid);
+  if(!p) return;
+  PDID = pid;
+  const T = TYPES[p.type], m = modeDe(p.client), M = MODES[m];
+  const tel = telOf(p);
+  const adr = (p.rue ? p.rue + " · " : "") + p.cp + " · " + p.ville;
+  const kv = (k, v) => `<div class="dkv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const dur = p.dur % 1 ? Math.floor(p.dur) + "h" + Math.round((p.dur % 1) * 60) : p.dur + "h";
+  document.getElementById("dbody").innerHTML = `
+    <div class="dcard dhead">
+      <div class="drow1" style="justify-content:flex-end">
+        <button class="dclose" onclick="closeDetail()">✕</button>
+      </div>
+      <h2 id="dtitle">${p.cp} · ${p.ville} · ${T.lbl}</h2>
+      <div class="dacts">
+        <a class="dbtn" href="https://wa.me/33${tel.slice(1)}"><span class="dbico gw"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-12.3 7.4L3 21l2.2-5.6A8.4 8.4 0 1121 11.5z"/></svg></span>WhatsApp</a>
+        <a class="dbtn" href="tel:+33${tel.slice(1)}"><span class="dbico bp"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.2a2 2 0 012.1-.5c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/></svg></span>Appeler</a>
+        <a class="dbtn" target="_blank" href="https://www.google.com/maps/search/${encodeURIComponent((p.rue ? p.rue + " " : "") + p.cp + " " + p.ville)}"><span class="dbico op"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Itinéraire</a>
+      </div>
+      <div class="pdhint">Pas encore planifiée — glisse la carte sur l'agenda pour lui donner une heure.</div>
+    </div>
+    <div class="dcard">
+      <div class="dkvh">Intervention</div>
+      ${kv("Nature", `<span class="mchip m-${m}">${M.ic} ${M.lbl}</span>`)}
+      ${kv("Nuisible", T.ic + " " + T.lbl)}
+      ${kv("Durée estimée", dur)}
+      ${p.urgent ? kv("Priorité", '<span class="urg">URGENT</span>') : ""}
+      ${p.standby ? kv("État", '<span class="sbb">À reprogrammer</span>') : ""}
+      ${p.suivi ? kv("État", '<span class="svb">Suivi</span>') : ""}
+      ${p.rappel ? kv(p.suivi ? "Prévu le" : "Rappel", p.rappel.split("-").reverse().join("/")) : ""}
+    </div>
+    <div class="dcard">
+      <div class="dkvh">Client</div>
+      ${kv("Nom", p.client)}
+      ${kv("Téléphone", telFmt(tel))}
+      ${kv("Adresse", adr)}
+    </div>
+    <div class="dcard">
+      <button class="dbig sec" onclick="trayDrop(${pid})">Retirer du bac</button>
+    </div>`;
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("dveil").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+/* retirer une carte du bac : action reelle, avec Annuler (standard du SaaS) */
+function trayDrop(pid){
+  const i = PENDING.findIndex(x => x.pid === pid);
+  if(i === -1) return;
+  const sauv = PENDING[i];
+  PENDING.splice(i, 1);
+  closeDetail(); renderTray();
+  window.__undoTray = () => { PENDING.splice(i, 0, sauv); renderTray(); toast("↩ Carte remise dans le bac"); };
+  toast("🗑 Carte retirée du bac — Annuler");
+  const t = document.getElementById("toast");
+  if(t){ t.onclick = () => { window.__undoTray(); t.onclick = null; }; }
+}
 
 /* ================= DRAG : À PLANIFIER → AGENDA ================= */
 let pdrag = null;
