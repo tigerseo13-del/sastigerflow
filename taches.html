@@ -187,6 +187,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .dbig:hover{border-color:var(--orange);color:var(--orange-deep)}
 .dbig svg{stroke:var(--orange-deep)}
 .dbig.sec{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+/* 27/07 : le bouton qui valide la creation est le bouton principal — orange
+   plein, comme partout ailleurs dans le SaaS. Le blanc bordé restait pour
+   « Annuler », ce qui mettait les deux actions au meme niveau visuel. */
+.dbig.go{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:800}
+.dbig.go:hover{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+.dbig.go svg{stroke:#fff}
 .dbig.sec:hover{border-color:var(--orange);color:var(--orange-deep)}
 .ddel{width:44px;border-radius:12px;border:1px solid #F3C4C0;background:#fff;color:var(--red);cursor:pointer;font-size:.9rem}
 .ddel:hover{background:var(--red-bg)}
@@ -1094,7 +1100,7 @@ function openNewTask(editId){
 
     <div class="dmain ntfoot">
       <button class="dbig sec" onclick="${EDIT ? 'renderTask()' : 'closeDrawer()'}">Annuler</button>
-      <button class="dbig" onclick="saveTask()">✓ ${EDIT ? "Enregistrer" : "Créer la tâche"}</button>
+      <button class="dbig go" onclick="saveTask()">✓ ${EDIT ? "Enregistrer" : "Créer la tâche"}</button>
     </div>`;
   nRenderSubs();
   nEntType();
@@ -1170,6 +1176,10 @@ function saveTask(){
   const et = document.getElementById("nt-enttype").value;
   t.ent = et ? {type: et, ref: document.getElementById("nt-entref").value} : null;
   t.perso = true;
+  /* 27/07 : marqueur de creation. Les taches rechargees du stockage en portent
+     un petit (1, 2, 3...) ; une tache creee maintenant prend l'horodatage, donc
+     elle passe devant toutes les autres. Sans ca elle repassait derriere. */
+  t._cree = Date.now();
   TASKS.unshift(t);
   persoSync();
   closeDrawer();
