@@ -427,6 +427,13 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 .docx:hover{background:var(--red-bg);color:var(--red)}
 .card-h .act{margin-left:auto;flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;background:var(--orange);color:#fff;font-weight:700;font-size:.78rem;padding:8px 13px;border-radius:11px;border:0;cursor:pointer;font-family:inherit}
 .card-h .act:hover{background:var(--orange-deep)}
+
+/* onglet vide : le message ET le bouton qui le remplit */
+.vempty{text-align:center;color:var(--muted);padding:38px 18px 34px;font-size:.88rem;display:flex;flex-direction:column;align-items:center;gap:16px}
+.vbtn{display:inline-flex;align-items:center;gap:7px;background:var(--orange);color:#fff;font-weight:700;font-size:.82rem;
+  padding:10px 18px;border-radius:11px;border:0;cursor:pointer;font-family:inherit;text-decoration:none;transition:.13s}
+.vbtn:hover{background:var(--orange-deep)}
+.vbtn:active{transform:scale(.97)}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 </head>
@@ -1217,11 +1224,31 @@ function toast(msg, undoFn){
     });
     document.querySelectorAll(".tabs .tab .n").forEach(function(n){ n.textContent = "0"; });
     /* les onglets démarrent vides */
-    var vide = function(msg){ return '<div class="card wide" style="grid-column:1/-1;text-align:center;color:var(--muted);padding:34px 16px;font-size:.88rem">' + msg + '</div>'; };
-    var PANES = {devis:"\ud83e\uddfe Aucun devis pour l'instant \u2014 cr\u00e9e le premier avec \u00ab Nouveau devis \u00bb", fact:"\ud83d\udcb6 Aucune facture pour l'instant", equip:"", ctr:"\ud83d\udcd1 Aucun contrat pour l'instant", histint:"\ud83d\uddd3\ufe0f Aucune intervention pour l'instant \u2014 \u00ab Planifier \u00bb pour cr\u00e9er la premi\u00e8re"};
+    /* 27/07 : un onglet vide disait « crée le premier avec « Nouveau devis » »
+       en renvoyant a un bouton situe ailleurs sur la page. Chaque onglet porte
+       maintenant SON bouton, qui emmene au bon endroit avec le client deja
+       choisi. Rapports n'en a pas : un rapport se redige depuis une
+       intervention, il ne se cree pas a la main. */
+    var qcli = encodeURIComponent(new URLSearchParams(location.search).get("c") || "");
+    var vide = function(msg, lbl, url, act){
+      var bouton = lbl
+        ? (act ? '<button class="vbtn" onclick="' + act + '">+ ' + lbl + '</button>'
+               : '<a class="vbtn" href="' + url + (url.indexOf("?") > -1 ? "&" : "?") + 'c=' + qcli + '">+ ' + lbl + '</a>')
+        : "";
+      return '<div class="card wide vempty" style="grid-column:1/-1">' + msg + bouton + '</div>';
+    };
+    var PANES = {
+      devis:   ["\ud83e\uddfe Aucun devis pour ce client",        "Nouveau devis",     "devis.html"],
+      fact:    ["\ud83d\udcb6 Aucune facture pour ce client",     "Nouvelle facture",  "facture.html"],
+      ctr:     ["\ud83d\udcd1 Aucun contrat pour ce client",      "Nouveau contrat",   "contrat-nouveau.html"],
+      histint: ["\ud83d\uddd3\ufe0f Aucune intervention pour ce client", "Planifier une intervention", "intervention-nouvelle.html"],
+      paie:    ["\ud83d\udcb3 Aucun paiement pour ce client",     "Saisir un paiement", "paiements.html"],
+      equip:   ["\ud83e\uddf0 Aucun équipement installé",          "Ajouter un équipement", "", "toast('Ajout d\\'un équipement — depuis la fiche du site')"],
+      rap:     ["\ud83d\udcca Aucun rapport pour ce client — ils arrivent avec les interventions terminées"]
+    };
     Object.keys(PANES).forEach(function(k){
       var p = document.querySelector('[data-tab="' + k + '"]');
-      if(p) p.innerHTML = PANES[k] ? vide(PANES[k]) : "";
+      if(p) p.innerHTML = vide.apply(null, PANES[k]);
     });
     /* 27/07 : l'onglet Documents n'est PLUS vide par ce chemin — il porte son
        bouton d'ajout et sa grille de vignettes, qui savent deja dire qu'ils sont
