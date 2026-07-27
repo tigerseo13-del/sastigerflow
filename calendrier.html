@@ -90,6 +90,10 @@ h1,.num{font-family:'Sora',sans-serif}
 .sdi:hover{background:var(--bg)}
 .sdi.on{color:var(--ink);font-weight:800}
 .sdck{width:14px;flex:none;color:var(--orange-deep);font-weight:900}
+.sdn{margin-left:auto;font-size:.74rem;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.sdi.on .sdn{color:var(--ink-2)}
+.sdn.r{color:#B3261E}
+.sdlate{margin-left:7px;font-size:.68rem;font-weight:800;background:var(--red-bg);color:#B3261E;padding:2px 8px;border-radius:999px}
 .tdpanel{position:absolute;top:calc(100% + 7px);left:0;z-index:80;background:#fff;border:1px solid var(--line);border-radius:15px;box-shadow:0 14px 38px rgba(23,26,32,.16);padding:9px;min-width:245px;max-height:330px;overflow-y:auto;display:none}
 .tdpanel.open{display:block}
 .tdacts{display:flex;gap:6px;padding:0 2px 8px;border-bottom:1px solid #F2F3F6;margin-bottom:7px}
@@ -788,6 +792,10 @@ button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-sele
 .calbar .datetitle{font-family:'Sora';font-weight:800;font-size:1.06rem;letter-spacing:-.3px;white-space:nowrap}
 .calbar .recap{display:flex;gap:8px;align-items:center}
 .calbar .fsep{width:1px;height:24px;background:var(--line)}
+/* 27/07 : en vue Jour le recapitulatif est vide (ses chiffres sont passes dans
+   le menu des statuts). Ni lui ni son separateur ne doivent laisser d'espace. */
+.calbar .recap:empty{display:none}
+.calbar .recap:empty + .fsep{display:none}
 .calbar .tdrop{position:relative}
 .calbar .helpwrap{position:relative}
 .traywrap{margin-top:14px}
@@ -1336,6 +1344,20 @@ const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août"
 const iso = d => d.toISOString().slice(0,10);
 const hstr = h => String(Math.floor(h)).padStart(2,"0") + ":" + (h%1 ? "30" : "00");
 
+/* ===== etat d'une intervention : UNE seule definition (27/07) =====
+   Le filtre et le compteur du menu s'en servent tous les deux. Tant qu'il y
+   avait deux calculs, ils pouvaient dire deux choses differentes — c'est ce qui
+   avait fait rendre 0 resultat a « En cours » alors que l'ecran en montrait 4.
+   Le badge des cartouches se calcule sur l'HEURE, pas sur le drapeau `started` :
+   cette fonction fait pareil. */
+function etatDe(v){
+  if(v.cancelled) return "cancel";
+  if(v.done) return "done";
+  const auj = v.date === iso(TODAYD);
+  if(v.started || (auj && v.start <= NOWH && NOWH < v.start + v.dur)) return "prog";
+  if(auj && v.start + v.dur <= NOWH) return "late";
+  return "todo";
+}
 function filtered(){
   const el = document.getElementById('agq');
   const q = (el && el.value || "").toLowerCase().trim();
@@ -1343,19 +1365,7 @@ function filtered(){
     VIS.has(v.tech) &&
     /* Etats REELS de l'agenda. Il n'y a pas d'etat « Assigné » : une intervention
        nait avec son technicien, ce serait un filtre qui ne filtre rien. */
-    /* Les quatre etats doivent dire la MEME chose que les pastilles des
-       cartouches, sinon filtrer sur « En cours » ne rendrait pas les cartes qui
-       affichent « En cours ». Le badge est calcule sur l'heure, pas seulement
-       sur le drapeau `started` — le filtre fait pareil. */
-    (FSTAT==="all"
-      || (FSTAT==="done" && v.done)
-      || (FSTAT==="cancel" && v.cancelled)
-      || (FSTAT==="prog" && !v.done && !v.cancelled && (v.started
-            || (v.date === iso(TODAYD) && v.start <= NOWH && NOWH < v.start + v.dur)))
-      || (FSTAT==="late" && !v.done && !v.cancelled && v.date === iso(TODAYD) && v.start + v.dur <= NOWH)
-      || (FSTAT==="todo" && !v.done && !v.cancelled && !v.started
-            && !(v.date === iso(TODAYD) && v.start + v.dur <= NOWH)
-            && !(v.date === iso(TODAYD) && v.start <= NOWH && NOWH < v.start + v.dur))) &&
+    (FSTAT==="all" || etatDe(v) === FSTAT) &&
     (!q || v.client.toLowerCase().includes(q) || v.ville.toLowerCase().includes(q) || v.cp.includes(q)
       || (v.note || "").toLowerCase().includes(q))
   );
@@ -1393,15 +1403,30 @@ const FSTATS = [
   ["done",   "Terminée"],
   ["cancel", "Annulée"]
 ];
+/* Compte des interventions du jour affiche, par etat. Les trois pastilles du
+   recapitulatif faisaient exactement ce travail a cote de ce menu : deux
+   commandes pour une seule action. Elles ont ete retirees le 27/07 (option B),
+   leurs chiffres sont ici. */
+function sdCompte(){
+  const jour = iso(CUR);
+  const evs = INTERVS.filter(v => VIS.has(v.tech) && v.date === jour);
+  const c = {all: evs.length, todo:0, prog:0, late:0, done:0, cancel:0};
+  evs.forEach(v => c[etatDe(v)]++);
+  return c;
+}
 function sdRender(){
   const lb = document.getElementById("sdlabel");
   const lst = document.getElementById("sdlist");
   if(!lb || !lst) return;
+  const c = sdCompte();
   const cur = FSTATS.find(x => x[0] === FSTAT) || FSTATS[0];
-  lb.textContent = cur[1];
+  /* le retard reste visible SUR le bouton : c'est le seul chiffre sur lequel on
+     agit dans la journee. Les autres se lisent en ouvrant le menu. */
+  lb.innerHTML = cur[1] + (FSTAT === "all" && c.late
+    ? ' <span class="sdlate">' + c.late + ' en retard</span>' : "");
   lst.innerHTML = FSTATS.map(([v, l]) =>
     `<button class="sdi${v === FSTAT ? " on" : ""}" onclick="setStat('${v}');document.getElementById('sdpanel').classList.remove('open')">
-       <span class="sdck">${v === FSTAT ? "✓" : ""}</span>${l}</button>`).join("");
+       <span class="sdck">${v === FSTAT ? "✓" : ""}</span>${l}<span class="sdn${v === "late" && c.late ? " r" : ""}">${c[v]}</span></button>`).join("");
 }
 function togSDrop(e){
   if(e) e.stopPropagation();
@@ -1505,11 +1530,9 @@ function renderDay(){
   const collected = evs.filter(v => v.paid && v.paid.m)
     .reduce((s, v) => s + (parseFloat(String(v.paid.m).replace(",", ".")) || 0), 0);
   const eur = n => n.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2});
-  document.getElementById('recap').innerHTML =
-    `<span class="rc prog g ${FSTAT==='done'?'on':''}" onclick="setStat(FSTAT==='done'?'all':'done')" title="${nbDone} terminée${nbDone>1?'s':''} sur ${evs.length} — clic : afficher les terminées / tout">
-       <i class="pr"><b style="width:${evs.length ? Math.round(nbDone/evs.length*100) : 0}%"></b></i>✓ ${nbDone}/${evs.length}</span>` +
-    (nbTodo ? `<span class="rc b ${FSTAT==='todo'?'on':''}" onclick="setStat(FSTAT==='todo'?'all':'todo')" title="Afficher les planifiées">● ${nbTodo} planifiée${nbTodo>1?"s":""}</span>` : "") +
-    (nbLate ? `<span class="rc r ${FSTAT==='late'?'on':''}" onclick="setStat('late')" title="Afficher les retards">${nbLate} en retard</span>` : "");
+  /* 27/07 (option B) : plus de pastilles de recapitulatif — les chiffres sont
+     dans le menu des statuts, qui faisait deja le meme filtrage. */
+  document.getElementById('recap').innerHTML = "";
   const nightZones = `<div class="night" style="top:0;height:${1*64}px"></div>
     <div class="night" style="top:${14*64}px;height:${2*64}px"></div>`;
 
@@ -3327,6 +3350,7 @@ renderTray();
   });
 })();
 render();
+sdRender();   /* le compteur de retards s'affiche des l'ouverture, pas au 1er clic */
 </script>
 <div class="dveil" id="dveil" onclick="closeDetail()"></div>
 <aside class="drawer" id="drawer"><div id="dbody"></div></aside>
