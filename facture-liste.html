@@ -96,6 +96,10 @@ h1,.num{font-family:'Sora',sans-serif}
 .cover h1{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px;position:relative}
 .cover .csub{font-size:.84rem;color:var(--ink-2);margin-top:3px;position:relative}
 .kpi{transition:.13s}
+/* 27/07 : les cartouches filtrent la liste — on le montre. */
+.kpi[role="button"]{cursor:pointer}
+.kpi[role="button"]:hover{transform:translateY(-1px);box-shadow:0 8px 20px -10px rgba(23,26,32,.28)}
+.kpi[role="button"]:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 
 
 .kpi .obar{height:6px;border-radius:99px;background:rgba(10,107,81,.14);margin-top:10px;overflow:hidden}
@@ -403,11 +407,14 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
 
 
     <!-- KPI -->
+    <!-- 27/07 : les cartouches redeviennent cliquables. kfil() et kringSync()
+     existaient toujours dans le code mais plus rien ne les appelait :
+     le clic avait disparu, la mecanique de filtrage etait restee. -->
     <div class="kpis">
-      <div class="kpi k-orange"><div class="lbl">Facturé ce mois</div><div class="num" id="k-tot">0 €</div></div>
-      <div class="kpi k-green"><div class="lbl">Encaissé</div><div class="num" id="k-encaisse">0 €</div><div class="obar"><i id="k-obar"></i></div></div>
-      <div class="kpi k-amber"><div class="lbl">En attente de paiement</div><div class="num" id="k-attente">0 €</div></div>
-      <div class="kpi k-red" style="background:#FCECEA;border-color:#F3C4C0"><div class="lbl">En retard</div><div class="num" id="k-retard" style="color:var(--red)">0 €</div></div>
+      <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="lbl">Facturé ce mois</div><div class="num" id="k-tot">0 €</div></div>
+      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('payee')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('payee')}"><div class="lbl">Encaissé</div><div class="num" id="k-encaisse">0 €</div><div class="obar"><i id="k-obar"></i></div></div>
+      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('attente')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('attente')}"><div class="lbl">En attente de paiement</div><div class="num" id="k-attente">0 €</div></div>
+      <div class="kpi k-red" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('retard')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('retard')}" style="background:#FCECEA;border-color:#F3C4C0"><div class="lbl">En retard</div><div class="num" id="k-retard" style="color:var(--red)">0 €</div></div>
     </div>
 
     <!-- Pipeline -->
@@ -566,7 +573,7 @@ function render(){
   if(sort==="montant-d") list.sort((a,b)=>b.montant-a.montant);
   if(sort==="montant-a") list.sort((a,b)=>a.montant-b.montant);
   if(sort==="client")    list.sort((a,b)=>a.client.localeCompare(b.client,'fr'));
-  if(sort==="recent")    list.sort((a,b)=>b.date.localeCompare(a.date));
+  if(sort==="recent")    list.sort((a,b)=>(b._cree||0)-(a._cree||0) || b.date.localeCompare(a.date));
   if(sort==="echeance")  list.sort((a,b)=>a.valid.localeCompare(b.valid));
 
   window._LISTF = list;
@@ -863,10 +870,17 @@ try{
 }catch(e){}
 /* ===== les factures créées dans l'atelier rejoignent la liste ===== */
 try{
-  JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").reverse().forEach(rec => {
+/* 27/07 — TOUT ENREGISTREMENT CREE PASSE EN TETE.
+   Deux defauts se cumulaient : (1) .reverse() suivi de .unshift() s'annulent,
+   donc avec deux creations d'affilee la plus ANCIENNE remontait ; (2) le tri
+   « Plus recents » compare la DATE du document, et les donnees de demonstration
+   sont datees plus tard que le jour ou l'on cree — un enregistrement neuf
+   coulait donc sous elles. On marque desormais l'instant de creation et il
+   passe avant la date. */
+  JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").forEach((rec, k) => {
     const i = DEVIS.findIndex(d => d.ref === rec.ref);
     if(i > -1) DEVIS[i] = {...DEVIS[i], ...rec};
-    else DEVIS.unshift(rec);
+    else DEVIS.unshift({...rec, _cree: k + 1});
   });
 }catch(e){}
 const FSTKEY = "tigerflow-factures-statuts";
