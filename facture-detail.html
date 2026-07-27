@@ -51,6 +51,11 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;background:rgba(244,245,248,.9);backdrop-filter:blur(12px)}
 .back-m{display:none}
 .crumbs{font-size:.95rem;color:var(--muted)}
+/* icone de page dans la barre du haut (27/07) : inline-grid + vertical-align
+   pour ne pas casser l'ellipse du titre ni son alignement. */
+.pgico{display:inline-grid;place-items:center;vertical-align:middle;width:26px;height:26px;border-radius:8px;background:var(--orange-soft);color:var(--orange-deep);margin-right:9px;flex:none}
+.pgico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+
 .crumbs a{font-weight:600}
 .crumbs .cur{color:var(--ink);font-weight:700;font-size:1.05rem;letter-spacing:-.2px}
 .title-m{display:none;font-weight:700;font-size:1.08rem}
@@ -323,11 +328,6 @@ label[for]{cursor:pointer}
 .umenu .udanger .uic{background:var(--red-bg)}
 
 /* ===== recherche globale ===== */
-.gsbtn{width:40px;padding:0;justify-content:center}
-.gsbtn > :not(svg){display:none}
-.gsbtn{min-width:250px;justify-content:flex-start;background:#fff}
-.gsbtn span{flex:1;text-align:left}
-.gsbtn kbd.slash{margin-left:0}
 .gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line,var(--line));color:var(--muted,var(--muted));font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit}
 .gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,var(--ink-2))}
 .gsbtn svg{width:15px;height:15px;flex:none}
@@ -341,8 +341,11 @@ label[for]{cursor:pointer}
 .gs-in input{flex:1;border:0;font-family:inherit;font-size:1rem;color:var(--ink);background:none;padding:0}
 .gs-in input:focus{outline:none;box-shadow:none}
 .gs-res{max-height:52vh;overflow-y:auto;padding:8px}
-.gsbtn span,.gsbtn kbd{display:none}
-.gsbtn{width:40px;justify-content:center;padding:0}
+
+/* Ces regles avaient perdu leur media query (sequelle du @media non referme
+   du 26/07) : la version telephone de la recherche fuyait sur ordinateur. */
+@media(max-width:760px){.gsbtn{width:40px;padding:0;justify-content:center}.gsbtn > :not(svg){display:none}.gsbtn span,.gsbtn kbd{display:none}.gsbtn{width:40px;justify-content:center;padding:0}}
+@media(min-width:980px){.gsbtn{min-width:250px;justify-content:flex-start;background:#fff}.gsbtn span{flex:1;text-align:left}.gsbtn kbd.slash{margin-left:0}}
 
 /* ===== recherche globale : POSITION FIXE, identique sur toutes les pages =====
    la barre du haut n'a pas la même hauteur partout (6 paddings différents),
@@ -468,8 +471,8 @@ label[for]{cursor:pointer}
 <div class="main">
   <div class="topbar">
     <button class="back-m" onclick="history.length>1?history.back():location.href='facture-liste.html'" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
-    <div class="crumbs"><a href="facture-liste.html">Factures</a> / <span class="cur" id="c-ref">FAC-…</span></div>
-    <div class="title-m" id="c-refm">Facture</div>
+    <div class="crumbs"><span class="pgico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><a href="facture-liste.html">Factures</a> / <span class="cur" id="c-ref">FAC-…</span></div>
+    <div class="title-m" id="c-refm"><span class="pgico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Facture</div>
     <div class="spacer"></div>
   <button class="gsbtn" onclick="gsOpen()" aria-label="Recherche globale">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -1132,7 +1135,7 @@ function noteAdd(){
 
 /* ===== init ===== */
 try{ const dd = new Date(); const pd = x => String(x).padStart(2,"0"); g('p-date').value = dd.getFullYear() + "-" + pd(dd.getMonth()+1) + "-" + pd(dd.getDate()); }catch(e){}
-g('c-ref').textContent = REF; g('c-refm').textContent = "💶 " + REF; g('h-ref').textContent = REF;
+g('c-ref').textContent = REF; g('c-refm').innerHTML = '<span class="pgico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>' + REF; g('h-ref').textContent = REF;
 renderAll(); notesRender();
 
 /* ===== compte : ouvrir le menu, se déconnecter ===== */
