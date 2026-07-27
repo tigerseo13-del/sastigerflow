@@ -730,6 +730,17 @@ function encaisser(id){
 }
 
 /* ================= TIROIR CRÉATION ================= */
+/* 27/07 : la fiche client propose « Saisir un paiement » avec le client dans
+   l'URL. On preremplit, sinon le bouton fait juste changer de page. */
+function payCliURL(){
+  try{
+    const nom = new URLSearchParams(location.search).get("c");
+    if(!nom) return;
+    const sel = g("n-client"); if(!sel) return;
+    const opt = [...(sel.options || [])].find(o => o.value.toLowerCase() === nom.toLowerCase());
+    if(opt) sel.value = opt.value;
+  }catch(e){}
+}
 function openNew(){
   const cliOpts = CLIENTS.map(c => `<option>${c}</option>`).join("");
   g("dbody").innerHTML = `
@@ -771,6 +782,7 @@ function openNew(){
   g("dveil").classList.add("open");
   g("drawer").scrollTop = 0;
   setTimeout(() => { const c = g("n-client"); if(c) c.focus(); }, 60);
+  payCliURL();   /* si on arrive depuis une fiche client */
 }
 function facSync(){
   const cli = g("n-client").value;
