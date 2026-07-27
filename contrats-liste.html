@@ -395,11 +395,14 @@ try{
 }catch(e){}
 /* ===== les contrats créés dans l'atelier rejoignent la liste ===== */
 try{
-  JSON.parse(localStorage.getItem("tigerflow-inbox-contrats") || "[]").reverse().forEach(rec => {
+  /* 27/07 : marqueur de creation. Le stockage garde le plus recent en premier,
+     le .reverse() remet donc du plus ancien au plus recent : l'index croissant
+     donne bien le plus grand marqueur au dernier cree. */
+  JSON.parse(localStorage.getItem("tigerflow-inbox-contrats") || "[]").reverse().forEach((rec, k) => {
     if(!rec || !rec.ref) return;
     const i = CONTRATS.findIndex(c => c.ref === rec.ref);
     if(i > -1) CONTRATS[i] = {...CONTRATS[i], ...rec};
-    else CONTRATS.unshift(rec);
+    else CONTRATS.unshift({...rec, _cree: k + 1});
   });
 }catch(e){}
 const eur = n => n.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
@@ -424,7 +427,11 @@ function filtered(){
   else if(t === "montant-a") list.sort((a,b)=> a.montant - b.montant);
   else if(t === "client") list.sort((a,b)=> a.client.localeCompare(b.client, "fr"));
   else if(t === "fin") list.sort((a,b)=> String(a.fin).localeCompare(String(b.fin)));
-  else list.sort((a,b)=> String(b.ref).localeCompare(String(a.ref)));
+  /* « Plus recents » triait en fait sur la REFERENCE. Ca marchait par chance :
+     le formulaire tire un numero au hasard entre 10000 et 99999, toujours plus
+     grand que ceux de la demonstration. Un contrat au numero plus bas serait
+     parti au fond. La creation prime maintenant, la reference departage. */
+  else list.sort((a,b)=> (b._cree||0)-(a._cree||0) || String(b.ref).localeCompare(String(a.ref)));
   return list;
 }
 function expChip(c){
