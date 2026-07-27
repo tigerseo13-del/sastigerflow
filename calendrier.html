@@ -2045,7 +2045,7 @@ function renderDetail(){
         </div>
         <div class="dcard">
           <div class="dh">Étape 2 — Traitement</div>
-          ${kv("Méthode", r.method)}
+          ${kv("Méthode", [...r.meths].join(", "))}
           ${kv("Produits utilisés", r.prods.filter(p=>p.p).map(p=>(PRODUITS[p.p]||"") + " ×" + p.q).filter(Boolean).join(", "))}
           ${kv("Matériel", st(r.mats))}
           ${kv("Zones traitées", st(r.tzones))}
@@ -2277,7 +2277,7 @@ function seedReports(){
     REPORTS[v.id] = {
       niv:niv, zones:new Set(o[1]), signes:new Set([R_SIGNES[v.id % R_SIGNES.length]]),
       obs:o[0], urg:["Faible","Moyenne","Haute"][v.id % 3],
-      method:R_METH[v.id % R_METH.length],
+      meths:new Set([R_METH[v.id % R_METH.length]]),
       prods:[{p:1 + (v.id % Math.max(1, PRODUITS.length - 1)), q:1 + (v.id % 2)}],
       mats:new Set([R_MATS[v.id % R_MATS.length]]),
       tzones:new Set([R_TZONES[v.id % R_TZONES.length]]),
@@ -2302,7 +2302,7 @@ const R_RECOS  = ["Boucher les fissures et points d'entrée","Améliorer la gest
 
 function openReport(id){
   if(!REPORTS[id]) REPORTS[id] = {niv:"", zones:new Set(), signes:new Set(), obs:"", urg:"Moyenne",
-    method:"", prods:[{p:0,q:1}], mats:new Set(), tzones:new Set(), act:"", temps:"",
+    meths:new Set(), prods:[{p:0,q:1}], mats:new Set(), tzones:new Set(), act:"", temps:"",
     recos:new Set(), quote:false, quoteDesc:"", next:"", notes:""};
   RSTEP = 1;
   renderReport(id);
@@ -2346,7 +2346,7 @@ function renderReport(id){
   else if(RSTEP === 2){
     body = `
       <span class="rlab">Méthode de traitement</span>
-      <div class="rchips">${R_METH.map(m=>`<span class="rchip ${r.method===m?'on':''}" onclick="rOne(${id},'method','${m}',this)">${m}</span>`).join("")}</div>
+      <div class="rchips">${chips(R_METH, r.meths, "meths")}</div>
       <span class="rlab">Produits utilisés</span>
       <div id="r-prods">${r.prods.map((pr,j)=>rProdRow(id,pr,j)).join("")}</div>
       <button class="raddp" onclick="rAddProd(${id})">+ Ajouter un produit</button>
@@ -2491,7 +2491,7 @@ function rText(id){
     + "Signes de présence : " + ([...r.signes].join(", ") || "—") + "\n"
     + (r.obs ? "Observations : " + r.obs + "\n" : "")
     + "\n— TRAITEMENT —\n"
-    + "Méthode : " + (r.method || "—") + "\n"
+    + "Méthode : " + ([...r.meths].join(", ") || "—") + "\n"
     + "Produits :\n" + r.prods.map(p=>"  • " + PRODUITS[p.p] + " × " + p.q).join("\n") + "\n"
     + "Matériel : " + ([...r.mats].join(", ") || "—") + "\n"
     + "Zones traitées : " + ([...r.tzones].join(", ") || "—") + "\n"
@@ -2567,7 +2567,7 @@ function rPdf(id){
       ${kv("Observations", r.obs)}
     </div>
     <div class="rp-sec"><b>2 · Traitement</b>
-      ${kv("Méthode", r.method)}
+      ${kv("Méthode", [...r.meths].join(", "))}
       ${kv("Produits utilisés", r.prods.map(p=>PRODUITS[p.p] + " × " + p.q).join(" · "))}
       ${kv("Matériel", [...r.mats].join(", "))}
       ${kv("Zones traitées", [...r.tzones].join(", "))}
