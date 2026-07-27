@@ -2890,8 +2890,17 @@ scroller.addEventListener('pointermove', e=>{
       const r = b.getBoundingClientRect();
       if(x >= r.left && x <= r.right) target = {b, r};
     });
+    /* 27/07 — BUG : ce test ne regardait que la bande VERTICALE du bac, sans
+       l'abscisse ni la moindre garde. Quand on fait defiler l'agenda pour
+       atteindre le soir, les creneaux de 19h remontent juste sous le bac : un
+       depot a cet endroit tombait dans sa bande et l'intervention repartait
+       « a planifier » — elle disparaissait de l'agenda sans explication.
+       On exige maintenant d'etre reellement dans le rectangle du bac, et que
+       ce rectangle existe (il vaut 0 quand le bac est masque). */
     const trayR = document.getElementById('tray').getBoundingClientRect();
-    const overTray = y >= trayR.top && y <= trayR.bottom;
+    const overTray = trayR.height > 0 && trayR.width > 0
+      && y >= trayR.top && y <= trayR.bottom
+      && x >= trayR.left && x <= trayR.right;
     document.getElementById('tray').classList.toggle('dropover', overTray);
     drag.toTray = overTray;
     if(overTray){ drag.h = null; tipShow(x, y, "📥 Renvoyer au bac À planifier"); return; }
@@ -2935,11 +2944,22 @@ scroller.addEventListener('pointerup', e=>{
   if(drag.moved && drag.toTray){
     const idx = INTERVS.findIndex(x=>x.id===drag.id);
     const v = INTERVS[idx];
-    PENDING.push({pid:PID++, type:v.type, client:v.client, cp:v.cp, ville:v.ville, dur:v.dur});
+    /* la carte garde tout ce qu'elle sait : sans la rue, l'itineraire repartirait
+       du code postal, et sans la nature elle serait deduite a nouveau. */
+    const carte = {pid:PID++, type:v.type, client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
+                   rue:v.rue, mode:v.mode, montant:v.montant};
+    PENDING.unshift(carte);
     INTERVS.splice(idx,1);
     suppressUntil = Date.now() + 450;
     render(); renderTray();
-    toast("📥 " + v.client + " renvoyée à planifier");
+    /* 27/07 : renvoyer au bac retire l'intervention de l'agenda — c'est
+       destructif, donc annulable, comme toute suppression du SaaS. */
+    toast("📥 " + v.client + " renvoyée à planifier", () => {
+      const k = PENDING.findIndex(x => x.pid === carte.pid);
+      if(k > -1) PENDING.splice(k, 1);
+      INTERVS.splice(idx, 0, v);
+      render(); renderTray();
+    });
     drag = null;
     document.body.classList.remove("dragging");
   document.body.classList.remove("dragging");
