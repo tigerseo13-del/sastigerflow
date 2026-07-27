@@ -519,6 +519,28 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
 .remhint{font-size:.74rem;color:var(--muted);margin-top:9px;line-height:1.5}
 .remhint.onv{color:var(--green-d);font-weight:700}
 .icq.on{background:#FFF1E9;border-color:var(--orange);color:#D63B05}
+
+/* vignettes — meme presentation que l'onglet Dossier d'une fiche technicien */
+.pjrow.over{border-color:var(--orange);background:var(--orange-soft)}
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(23,26,32,.04);transition:.14s}
+.doccard.ouvrable{cursor:zoom-in}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 12px 26px -16px rgba(23,26,32,.45);transform:translateY(-2px)}
+.docvue{height:132px;background:#fff;display:grid;place-items:center;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.docvue:has(.docext){background:#F5F6F9}
+.docvue img{width:100%;height:100%;object-fit:cover;display:block}
+.docvue iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+.docvue::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30px;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.92))}
+.docvue:has(.docext)::after{display:none}
+.docext{font-family:'Sora';font-weight:800;font-size:.98rem;color:var(--muted);letter-spacing:.06em}
+.doctag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;background:rgba(23,26,32,.72);color:#fff;padding:2px 7px;border-radius:6px}
+.docvue:has(.docext) .doctag{display:none}
+.doccard figcaption{padding:9px 11px 11px;display:block}
+.doccard figcaption b{display:block;font-size:.75rem;font-weight:700;line-height:1.35;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doccard figcaption small{display:block;font-size:.68rem;color:var(--muted);margin-top:3px}
+.docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--muted);font-size:.72rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.22);opacity:0;transition:.14s}
+.doccard:hover .docx,.docx:focus-visible{opacity:1}
+.docx:hover{background:var(--red-bg);color:var(--red)}
 </style>
 </head>
 <body>
@@ -697,11 +719,17 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
       </div>
       <div class="vcard">
         <div class="vh">Pièces jointes</div>
-        <div class="pjrow" style="margin-top:14px" onclick="toast('📎 Ajout de fichiers — bientôt relié')" title="Clique ou glisse un fichier n'importe où sur cette ligne">
+        <input type="file" id="dpj-in" multiple hidden onchange="dpjAdd(this.files); this.value=''">
+        <div class="pjrow" style="margin-top:14px" onclick="document.getElementById('dpj-in').click()"
+             ondragover="event.preventDefault();this.classList.add('over')"
+             ondragleave="this.classList.remove('over')"
+             ondrop="event.preventDefault();this.classList.remove('over');dpjAdd(event.dataTransfer.files)"
+             title="Clique ou glisse un fichier n'importe où sur cette ligne">
           <button class="pjadd" type="button">📎 Ajouter</button>
-          <span class="pjhint">PDF, JPG, PNG · 10 Mo max</span>
+          <span class="pjhint">PDF, JPG, PNG · aperçu gardé jusqu'à 1,5 Mo</span>
           <span class="pjcount" id="pjcount">0 fichier</span>
         </div>
+        <div class="docgrid" id="dpj-liste" style="margin-top:12px"></div>
       </div>
     </div>
 
@@ -1667,6 +1695,72 @@ function logout(){
   try{ if(typeof toast === "function") toast("Déconnexion…"); }catch(err){}
   setTimeout(function(){ location.href = "connexion.html"; }, 350);
 }
+
+/* ===== pieces jointes du document (27/07) — meme presentation que l'onglet
+   Dossier d'une fiche technicien. La zone affichait « bientot relie » et ne
+   faisait rien, alors que son titre promettait « clique ou glisse un fichier ». */
+const DPJ_MAX = 1500 * 1024;
+const dpjPoids = o => o < 1024 ? o + " o" : o < 1048576 ? Math.round(o/1024) + " Ko" : (o/1048576).toFixed(1).replace(".", ",") + " Mo";
+const dpjKey = () => "tigerflow-devis-pj-" + (typeof DREF !== "undefined" && DREF ? DREF : "x");
+const dpjGet = () => { try{ return JSON.parse(localStorage.getItem(dpjKey())) || []; }catch(e){ return []; } };
+function dpjAdd(files){
+  const liste = [...(files || [])];
+  if(!liste.length) return;
+  let restants = liste.length;
+  const ajoute = rec => {
+    const l = dpjGet(); l.unshift(rec);
+    try{ localStorage.setItem(dpjKey(), JSON.stringify(l.slice(0, 20))); }
+    catch(e){ delete rec.src; try{ localStorage.setItem(dpjKey(), JSON.stringify(l.slice(0, 20))); }catch(e2){}
+      toast("Aperçu non conservé — le stockage du navigateur est plein"); }
+    if(--restants === 0){ dpjRender();
+      toast(liste.length > 1 ? liste.length + " fichiers joints" : "Fichier joint"); }
+  };
+  liste.forEach(f => {
+    const base = {n:f.name, d:new Date().toLocaleDateString("fr-FR"), t:f.type || "", s:f.size};
+    if(f.size <= DPJ_MAX && typeof FileReader !== "undefined"){
+      const r = new FileReader();
+      r.onload = () => ajoute({...base, src:r.result});
+      r.onerror = () => ajoute(base);
+      r.readAsDataURL(f);
+    } else ajoute(base);
+  });
+}
+function dpjDel(i){
+  const l = dpjGet(); const sauv = l[i]; l.splice(i, 1);
+  try{ localStorage.setItem(dpjKey(), JSON.stringify(l)); }catch(e){}
+  dpjRender();
+  toast("🗑 Pièce retirée", () => { const l2 = dpjGet(); l2.splice(i, 0, sauv);
+    try{ localStorage.setItem(dpjKey(), JSON.stringify(l2)); }catch(e){} dpjRender(); });
+}
+function dpjOuvrir(i){
+  const d = dpjGet()[i];
+  if(!d || !d.src){ toast("Cette pièce n'a pas d'aperçu — elle était trop lourde pour être conservée"); return; }
+  const w = window.open();
+  if(w) w.document.write('<title>' + d.n + '</title><body style="margin:0;background:#22252B">' +
+    (/^image\//.test(d.t) ? '<img src="' + d.src + '" style="max-width:100%;display:block;margin:auto">'
+                          : '<iframe src="' + d.src + '" style="border:0;width:100%;height:100vh"></iframe>') + '</body>');
+}
+function dpjRender(){
+  const box = document.getElementById("dpj-liste");
+  const cpt = document.getElementById("pjcount");
+  const l = dpjGet();
+  if(cpt) cpt.textContent = l.length + " fichier" + (l.length > 1 ? "s" : "");
+  if(!box) return;
+  box.innerHTML = l.map((d, i) => {
+    const img = /^image\//.test(d.t || "") && d.src;
+    const pdf = /pdf/.test(d.t || "") && d.src;
+    const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
+    const vue = img ? '<img src="' + d.src + '" alt="">'
+      : pdf ? '<iframe src="' + d.src + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>'
+      : '<span class="docext">' + ext + '</span>';
+    return '<figure class="doccard' + (d.src ? ' ouvrable' : '') + '"' + (d.src ? ' onclick="dpjOuvrir(' + i + ')" title="Ouvrir ' + d.n + '"' : '') + '>' +
+      '<button class="docx" title="Retirer" onclick="event.stopPropagation();dpjDel(' + i + ')">✕</button>' +
+      '<div class="docvue">' + vue + '<span class="doctag">' + ext + '</span></div>' +
+      '<figcaption><b title="' + d.n + '">' + d.n + '</b><small>' + d.d + ' · ' +
+      (d.s ? dpjPoids(d.s) : ext) + (d.src ? '' : ' · aperçu non conservé') + '</small></figcaption></figure>';
+  }).join("");
+}
+setTimeout(dpjRender, 0);
 </script>
 </body>
 </html>
