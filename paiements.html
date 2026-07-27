@@ -584,7 +584,11 @@ function buildRows(){
       ROWS.unshift({id:"PAY-FIC-" + ref.slice(-5) + "-" + (i + 1), fac:ref, client:(FACS[ref] || {}).client || ref,
         m:p.m || 0, mode:p.mode || "Virement", st:"enc", d:p.d || TODAY, note:p.note || "", src:"fiche"});
     }));
-    JSON.parse(localStorage.getItem("tigerflow-paiements-perso") || "[]").forEach((p, k) => ROWS.unshift({...p, _cree: k + 1}));
+    /* le stockage garde le plus recent en premier (box.unshift a l'ecriture) :
+       le marqueur doit donc DECROITRE avec l'index, sinon le tri remonte le
+       plus ancien. */
+    const _box = JSON.parse(localStorage.getItem("tigerflow-paiements-perso") || "[]");
+    _box.forEach((p, k) => ROWS.unshift({...p, _cree: _box.length - k}));
     const ov = JSON.parse(localStorage.getItem("tigerflow-paiements-statuts")) || {};
     ROWS.forEach(r => { const o = ov[r.id]; if(o){ r.st = o.st; if(o.d) r.d = o.d; } });
   }catch(e){}
@@ -839,6 +843,11 @@ function savePay(){
       }
     }
   }catch(e){}
+  /* 27/07 : le paiement n'etait ecrit que dans le stockage. La liste se
+     redessinait a partir de ROWS, inchangee : le paiement cree restait
+     INVISIBLE jusqu'au rechargement de la page. On l'ajoute en memoire, en
+     tete, avec un marqueur de creation qui bat ceux relus du stockage. */
+  ROWS.unshift({...rec, _cree: Date.now()});
   closeAll();
   render();
   toast(rec.st === "enc"
