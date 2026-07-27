@@ -262,19 +262,35 @@ tbody tr:last-child td{border-bottom:0}
 .emptybox{text-align:center;color:var(--muted);padding:30px 10px;font-size:.85rem}
 /* 27/07 : les documents passent d'un tableau de noms a des vignettes — on voit
    le document au lieu de lire son nom de fichier. */
-.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
-.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:16px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;
+  box-shadow:0 1px 2px rgba(23,26,32,.04);transition:.14s}
 .doccard.ouvrable{cursor:zoom-in}
-.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 10px 24px -14px rgba(23,26,32,.4)}
-.docvue{height:132px;background:#F5F6F9;display:grid;place-items:center;overflow:hidden;position:relative}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 12px 26px -16px rgba(23,26,32,.45);transform:translateY(-2px)}
+/* la vignette : fond blanc pour un document, gris pour un type sans apercu */
+.docvue{height:146px;background:#fff;display:grid;place-items:center;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.docvue:has(.docext){background:#F5F6F9}
 .docvue img{width:100%;height:100%;object-fit:cover;display:block}
-.docvue iframe{width:167%;height:167%;border:0;transform:scale(.6);transform-origin:top left;pointer-events:none;background:#fff}
+/* le lecteur PDF ajuste la page a la largeur (view=FitH) : plus de mise a
+   l'echelle a la main, donc plus de barre de defilement ni de coin vide. */
+.docvue iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+/* le bas de l'apercu s'estompe : la coupe devient voulue au lieu d'etre brutale */
+.docvue::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.92))}
+.docvue:has(.docext)::after{display:none}
 .docext{font-family:'Sora';font-weight:800;font-size:1.02rem;color:var(--muted);letter-spacing:.06em}
-.doccard figcaption{padding:9px 11px 11px;display:block}
-.doccard figcaption b{display:block;font-size:.78rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.doccard figcaption small{display:block;font-size:.7rem;color:var(--muted);margin-top:3px}
-.docx{position:absolute;top:7px;right:7px;z-index:2;width:24px;height:24px;border-radius:50%;border:0;background:rgba(255,255,255,.92);
-  color:var(--muted);font-size:.8rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 6px rgba(23,26,32,.18)}
+/* etiquette de type : un nom de fichier en identifiant ne dit rien, le type si */
+.doctag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;
+  background:rgba(23,26,32,.72);color:#fff;padding:2px 7px;border-radius:6px}
+.docvue:has(.docext) .doctag{display:none}
+.doccard figcaption{padding:10px 12px 12px;display:block}
+.doccard figcaption b{display:block;font-size:.76rem;font-weight:700;line-height:1.35;color:var(--ink-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doccard figcaption small{display:block;font-size:.69rem;color:var(--muted);margin-top:4px}
+.docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;
+  background:rgba(255,255,255,.9);color:var(--muted);font-size:.72rem;cursor:pointer;display:grid;place-items:center;
+  box-shadow:0 1px 4px rgba(23,26,32,.22);opacity:0;transition:.14s}
+.doccard:hover .docx,.docx:focus-visible{opacity:1}
 .docx:hover{background:var(--red-bg);color:var(--red)}
 
 /* notes */
@@ -1024,11 +1040,11 @@ function docsRender(){
         const pdf = /pdf/.test(d.t || "") && d.src;
         const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
         const vue = img ? '<img src="' + d.src + '" alt="">'
-          : pdf ? '<iframe src="' + d.src + '#toolbar=0&navpanes=0" tabindex="-1"></iframe>'
+          : pdf ? '<iframe src="' + d.src + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>'
           : '<span class="docext">' + ext + '</span>';
         return '<figure class="doccard' + (d.src ? ' ouvrable' : '') + '"' + (d.src ? ' onclick="docOuvrir(' + i + ')" title="Ouvrir ' + d.n + '"' : '') + '>' +
           '<button class="docx" onclick="event.stopPropagation();docDel(' + i + ')" title="Retirer">✕</button>' +
-          '<div class="docvue">' + vue + '</div>' +
+          '<div class="docvue">' + vue + '<span class="doctag">' + ext + '</span></div>' +
           '<figcaption><b title="' + d.n + '">' + d.n + '</b>' +
           '<small>' + d.d + ' · ' + (d.s ? docPoids(d.s) : ext) + (d.src ? '' : ' · aperçu non conservé') + '</small></figcaption>' +
         '</figure>';
