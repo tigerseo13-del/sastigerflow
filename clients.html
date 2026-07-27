@@ -395,7 +395,7 @@ tbody td .cl b, tbody td.cl b{font-weight:800}
           <th>Client</th>
           <th>Type</th>
           <th>Contrats</th>
-          <th class="sort" onclick="sortCA()">CA total <span class="arr" id="arr">↓</span></th>
+          <th class="sort" onclick="sortCA()">CA total <span class="arr" id="arr" title="Ordre d'ajout — les derniers créés en tête">↕</span></th>
           <th style="text-align:right">À encaisser</th>
           <th>Statut</th>
           <th style="text-align:right;padding-right:18px">Actions</th>
@@ -429,7 +429,10 @@ function inboxMerge(){
   try{
     const box = clientInbox();
     if(!box.length) return;
-    box.slice().reverse().forEach(r => {
+    /* 27/07 : reverse + unshift s'annulaient — avec deux clients crees a la
+       suite, le plus ANCIEN remontait en premier. On parcourt dans l'ordre
+       d'ajout et on empile en tete : le dernier cree finit devant. */
+    box.forEach(r => {
       if(CLIENTS.some(c => c.nom === r.nom)) return;  /* pas de doublon */
       CLIENTS.unshift({
         nom: r.nom, ville: r.ville || "—", cp: r.cp || "",
@@ -535,7 +538,12 @@ const CLIENTS = [
   {nom:"M. Diallo",            ville:"Saint-Ouen",   cp:"93400", type:"Particulier", nb:0, ca:390,   due:0,    st:"actif",   tel:"0661482935", mail:"m.diallo93@gmail.com"},
 ];
 const STL = {actif:["st-actif","Actif"], retard:["st-retard","En retard"], attente:["st-attente","En attente"], inactif:["st-inactif","Inactif"]};
-let FILTER = "all", DESC = true;
+/* 27/07 : la liste etait TOUJOURS triee par CA decroissant. Un client qu'on
+   vient de creer a un CA nul : il partait donc systematiquement en derniere
+   position, alors que le code prend bien soin de l'inserer en tete. Le tri est
+   desormais optionnel — au chargement, l'ordre est celui des ajouts, le plus
+   recent d'abord ; le tri par CA s'active en cliquant la colonne. */
+let FILTER = "all", DESC = true, SORTCA = false;
 
 function euro(n){ return n.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €"; }
 function ini(nom){ return nom.split(" ").map(w=>w[0]).join("").replace(/[^A-ZÀ-Ü]/gi,"").slice(0,2).toUpperCase(); }
@@ -551,8 +559,11 @@ function setFilter(btn){
 }
 function kfil(f){ const b = document.querySelector('.fchip[data-f="' + f + '"]'); if(b) b.click(); }
 function sortCA(){
-  DESC = !DESC;
-  document.getElementById("arr").textContent = DESC ? "↓" : "↑";
+  if(!SORTCA){ SORTCA = true; DESC = true; }      /* 1er clic : CA decroissant */
+  else if(DESC){ DESC = false; }                  /* 2e : croissant */
+  else { SORTCA = false; }                        /* 3e : retour a l'ordre d'ajout */
+  document.getElementById("arr").textContent = !SORTCA ? "↕" : DESC ? "↓" : "↑";
+  document.getElementById("arr").title = !SORTCA ? "Ordre d'ajout — les derniers créés en tête" : "Trié par CA";
   render();
 }
 function videFiltres(){
@@ -567,7 +578,7 @@ function render(){
     (!q || c.nom.toLowerCase().includes(q) || c.ville.toLowerCase().includes(q) || c.cp.includes(q)
          || (c.tel || "").replace(/\D/g,"").includes(q.replace(/\D/g,"") || "§") || (c.mail || "").toLowerCase().includes(q))
   );
-  list.sort((a,b)=> DESC ? b.ca-a.ca : a.ca-b.ca);
+  if(SORTCA) list.sort((a,b)=> DESC ? b.ca-a.ca : a.ca-b.ca);
   void 0; /* compteur hero retiré */
   document.getElementById("empty").style.display = list.length ? "none" : "block";
   document.getElementById("cards").innerHTML = list.map(c => {
