@@ -1089,6 +1089,14 @@ const TECHS = [
 
 /* ================= TYPES DE NUISIBLES ================= */
 /* ===== LE LANGAGE COULEUR TIGERFLOW — un nuisible = une couleur, partout ===== */
+/* 27/07 : un nuisible saisi a la main n'a pas de case dans cette table. On
+   passe desormais par typeDe(), qui rend la case « autre » et remplace son
+   libelle par le texte saisi. Sans ca, des mille-pattes s'affichaient
+   « Deratisation ». Un seul point de lecture, comme etatDe() et modeDe(). */
+const typeDe = x => {
+  const b = (x && TYPES[x.type]) || TYPES.autre;
+  return (x && x.typeLibre) ? {...b, lbl: x.typeLibre} : b;
+};
 const TYPES = {
   punaise : {lbl:"Punaises de lit",    ic:"🛏️", c:"#7C3AED", bg:"#F1EAFD"},   /* violet   */
   rongeur : {lbl:"Dératisation",       ic:"🐀", c:"#B45309", bg:"#FBF0E0"},   /* ambre    */
@@ -1097,7 +1105,12 @@ const TYPES = {
   pigeon  : {lbl:"Dépigeonnage",       ic:"🕊️", c:"#2E5CE6", bg:"#EBF1FE"},   /* bleu     */
   desinf  : {lbl:"Désinfection",       ic:"🧴", c:"#0D9488", bg:"#E0F4F2"},   /* vert d'eau */
   chenille: {lbl:"Chenilles proc.",    ic:"🐛", c:"#65A30D", bg:"#F0F7E2"},   /* vert feuille */
-  fourmi  : {lbl:"Fourmis",            ic:"🐜", c:"#57534E", bg:"#F0EFEE"},   /* terre    */
+  fourmi  : {lbl:"Fourmis",            ic:"🐜", c:"#57534E", bg:"#F0EFEE"},
+  /* 27/07 : un nuisible saisi a la main (« Autre ») n'avait pas de case ici —
+     il etait enregistre comme « rongeur », donc une intervention pour des
+     mille-pattes s'affichait « Deratisation ». Le libelle exact voyage
+     desormais dans le champ `typeLibre`. */
+  autre   : {lbl:"Autre nuisible",     ic:"🔎", c:"#6C7285", bg:"#EFF0F4"},   /* terre    */
 };
 
 /* ================= INTERVENTIONS ================= */
@@ -1298,7 +1311,7 @@ try{
     /* règle simple : le formulaire alimente TOUJOURS le bac « À planifier » —
        le drag sur un technicien reste le seul geste qui place sur l'agenda */
     if(PENDING.some(p => p.client === x.client && p.cp === x.cp)) return;
-    PENDING.push({pid:PID++, type:x.type, client:x.client, rue:x.rue || "", cp:x.cp, ville:x.ville, dur:x.dur || 2,
+    PENDING.push({pid:PID++, type:x.type, typeLibre:x.typeLibre || "", client:x.client, rue:x.rue || "", cp:x.cp, ville:x.ville, dur:x.dur || 2,
       mode: x.mode ? NMODE(x.mode) : "", montant: x.montant || "", encm: x.encm || "",
       since: (x.uid || "").split("-")[0] ? new Date(+(x.uid || "").split("-")[0]).toISOString().slice(0,10) : undefined,
       note: x.note || "", wish: x.date ? (x.date + (x.start ? " · " + x.start + "h" : "")) : ""});
@@ -1318,7 +1331,7 @@ function renderTray(){
   const score = p => isLate(p) ? 0 : p.standby ? 1 : p.urgent ? 2 : p.suivi ? 3 : 4;
   const list = [...PENDING].sort((a, b) => score(a) - score(b));
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
-    const T = TYPES[p.type];
+    const T = typeDe(p);
     return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}" style="--evc:${T.c}"><span class="grip" title="Glisser sur l'agenda">⠿</span>
       <div class="c"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${p.rue ? p.rue + " · " : ""}${p.cp} · ${p.ville}</div>
       <div class="c" style="font-weight:800;color:var(--ink)">${p.client}</div>
@@ -1562,7 +1575,7 @@ function renderDay(){
     const actifs = mine.filter(v=>!v.cancelled);
     const totH = mine.reduce((sum,v)=>sum+v.dur,0);
     const cards = mine.map(v=>{
-      const T = TYPES[v.type];
+      const T = typeDe(v);
       const TC = TECHS[v.tech];
       const top = (Math.max(v.start, DAYSTART) - DAYSTART) * 64;
       const clippedEnd = Math.min(v.start + v.dur, DAYSTART + HOURS);
@@ -1723,7 +1736,7 @@ function renderWeek(){
         <small>${evs.length ? evs.length+" intervention"+(evs.length>1?"s":"") : "—"}</small>
       </div>
       <div class="wbody">${evs.map(v=>{
-        const T = TYPES[v.type], t = TECHS[v.tech];
+        const T = typeDe(v), t = TECHS[v.tech];
         const TC = TECHS[v.tech];
         return `<div class="wev ${v.done?'done':''}" data-id="${v.id}" style="--evc:${TC.c};background:${TC.bg};cursor:pointer">
           <div class="l1"><span class="tlbl">${T.ic} ${T.lbl}</span><span class="tav" style="background:${t.grad}" title="${t.nom}"></span></div>
@@ -1853,7 +1866,7 @@ function pjOpen(src){
 function editTitle(id){
   const v = INTERVS.find(x => x.id === id);
   if(!v) return;
-  const T2 = TYPES[v.type];
+  const T2 = typeDe(v);
   const auto = `${v.cp} ${v.ville} · ${T2.ic} ${T2.lbl}`;
   const h = document.getElementById("dtitle");
   if(!h) return;
@@ -1884,7 +1897,7 @@ function setDTab(t){ DTAB = t; renderDetail(); }
 function renderDetail(){
   const v = INTERVS.find(x=>x.id===DID);
   if(!v) return closeDetail();
-  const T = TYPES[v.type], M = MODES[v.mode], t = TECHS[v.tech];
+  const T = typeDe(v), M = MODES[v.mode], t = TECHS[v.tech];
   const [sc, sl] = statusOf(v);
   const d = new Date(v.date + "T12:00:00");
   const dateTxt = JOURS[d.getDay()] + " " + d.getDate() + " " + MOIS[d.getMonth()];
@@ -1909,7 +1922,7 @@ function renderDetail(){
   } else if(ENCH === v.id){
     mainBtns = `<div class="fin2 encv2">
       <div class="finh">Encaissement</div>
-      <div class="encctx"><span class="mchip m-${v.mode}" style="font-size:.66rem;padding:2.5px 9px">${MODES[v.mode].lbl}</span> ${v.client} · ${TYPES[v.type].lbl}</div>
+      <div class="encctx"><span class="mchip m-${v.mode}" style="font-size:.66rem;padding:2.5px 9px">${MODES[v.mode].lbl}</span> ${v.client} · ${typeDe(v).lbl}</div>
       <div class="encamt"><input id="enc-m" inputmode="decimal" value="${v.montant ? v.montant : (80 + (v.id * 37) % 160).toFixed(2).replace(".", ",")}" oninput="encLbl()"><span>€ TTC</span></div>
       <div class="elab">Mode de paiement</div>
       <div class="encmodes2">
@@ -2224,13 +2237,13 @@ function confirmStandby(id){
   const v = INTERVS[i];
   const rappel = document.getElementById("sb-date").value || iso(TODAYD);
   plannedRemove(v.client, v.cp);
-  PENDING.unshift({pid:PID++, type:v.type, client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
+  PENDING.unshift({pid:PID++, type:v.type, typeLibre:v.typeLibre || "", client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
     standby:true, since:iso(TODAYD), rappel});
   /* tâche de rappel envoyée au module Tâches */
   try{
     const inbox = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]");
     inbox.unshift({iid:Date.now(), titre:"📞 Rappeler " + v.client + " — reprogrammer l'intervention",
-      desc:"Client injoignable le " + iso(TODAYD).split("-").reverse().join("/") + ". " + TYPES[v.type].lbl + " à reprogrammer — " + v.cp + " " + v.ville + ".",
+      desc:"Client injoignable le " + iso(TODAYD).split("-").reverse().join("/") + ". " + typeDe(v).lbl + " à reprogrammer — " + v.cp + " " + v.ville + ".",
       due:rappel, lien:refInt(id)});
     localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(inbox));
   }catch(e){}
@@ -2393,7 +2406,7 @@ function rStepsBar(){
 let RID = null;
 function renderReport(id){
   RID = id;
-  const v = INTERVS.find(x=>x.id===id), r = REPORTS[id], T = TYPES[v.type];
+  const v = INTERVS.find(x=>x.id===id), r = REPORTS[id], T = typeDe(v);
   const chips = (list, set, fn) => list.map(x=>`<span class="rchip ${set.has(x)?'on':''}" onclick="rTogSet(${id},'${fn}','${x.replace(/'/g,"\\'")}',this)">${x}</span>`).join("");
   let body = "";
 
@@ -2593,7 +2606,7 @@ function rSigClear(){
   rsigDirty = false;
 }
 function rText(id){
-  const v = INTERVS.find(x=>x.id===id), r = REPORTS[id], T = TYPES[v.type];
+  const v = INTERVS.find(x=>x.id===id), r = REPORTS[id], T = typeDe(v);
   return "RAPPORT D'INTERVENTION — " + refInt(id) + "\n"
     + "Client : " + v.client + " — " + v.cp + " " + v.ville + "\n"
     + "Prestation : " + T.lbl + " (" + MODES[v.mode].lbl + ")\n\n"
@@ -2630,7 +2643,7 @@ function rSave(id){
   /* Prochain passage conseillé → carte de suivi dans le bac */
   if(r.next && !r._suiviFait){
     r._suiviFait = true;
-    PENDING.push({pid:PID++, type:v.type, client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
+    PENDING.push({pid:PID++, type:v.type, typeLibre:v.typeLibre || "", client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
       suivi:true, since:iso(TODAYD), rappel:r.next});
     renderTray();
     extra += " · 🔁 suivi ajouté au bac";
@@ -2655,7 +2668,7 @@ function rSave(id){
 function rPdf(id){
   const v = INTERVS.find(x=>x.id===id), r = REPORTS[id];
   if(!r){ toast("⚠️ Aucun rapport — crée-le d'abord"); return; }
-  const T = TYPES[v.type];
+  const T = typeDe(v);
   const kv = (k, val) => val ? `<div class="rp-kv"><span class="k">${k}</span><span class="v">${val}</span></div>` : "";
   document.getElementById("rpsheet").innerHTML = `
     <div class="rp-head">
@@ -2820,11 +2833,11 @@ function palFilter(){
   const norm = s => String(s).toLowerCase();
   const hits = INTERVS.filter(v => !v.cancelled && (!q
       || norm(v.client).includes(q) || norm(v.ville).includes(q) || norm(v.cp).includes(q)
-      || norm(refInt(v.id)).includes(q) || norm(TYPES[v.type].lbl).includes(q)))
+      || norm(refInt(v.id)).includes(q) || norm(typeDe(v).lbl).includes(q)))
     .sort((a,b) => a.date < b.date ? 1 : -1).slice(0, 8);
   document.getElementById("palr").innerHTML = hits.length ? hits.map(v =>
     `<div class="palit" onclick="palGo(${v.id})">
-       <b>${v.client}</b><span>${v.cp} ${v.ville} · ${TYPES[v.type].lbl}</span>
+       <b>${v.client}</b><span>${v.cp} ${v.ville} · ${typeDe(v).lbl}</span>
        <small>${v.date.split("-").reverse().join("/")} · ${hstr(v.start)} · ${refInt(v.id)}</small>
      </div>`).join("")
     : '<div class="palnone">Aucun résultat</div>';
@@ -3009,7 +3022,7 @@ scroller.addEventListener('pointerup', e=>{
     const v = INTERVS[idx];
     /* la carte garde tout ce qu'elle sait : sans la rue, l'itineraire repartirait
        du code postal, et sans la nature elle serait deduite a nouveau. */
-    const carte = {pid:PID++, type:v.type, client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
+    const carte = {pid:PID++, type:v.type, typeLibre:v.typeLibre || "", client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
                    rue:v.rue, mode:v.mode, montant:v.montant};
     PENDING.unshift(carte);
     INTERVS.splice(idx,1);
@@ -3115,7 +3128,7 @@ function openPending(pid){
   const p = PENDING.find(x => x.pid === pid);
   if(!p) return;
   PDID = pid;
-  const T = TYPES[p.type], m = modeDe(p.client), M = MODES[m];
+  const T = typeDe(p), m = modeDe(p.client), M = MODES[m];
   const tel = telOf(p);
   const adr = (p.rue ? p.rue + " · " : "") + p.cp + " · " + p.ville;
   const kv = (k, v) => `<div class="dkv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
@@ -3347,7 +3360,7 @@ function hOptions(sel, val){
 function openIv(id){
   const v = INTERVS.find(x=>x.id===id);
   IVCUR = v;
-  const T = TYPES[v.type];
+  const T = typeDe(v);
   document.getElementById('iv-ic').textContent = T.ic;
   document.getElementById('iv-titre').textContent = T.lbl;
   document.getElementById('iv-client').textContent = v.client;
@@ -3407,14 +3420,14 @@ function openTournee(tid){
   document.getElementById('tr-date').textContent = dateTxt;
   document.getElementById('tr-list').innerHTML =
     (list.length ? list.map(v=>{
-      const T = TYPES[v.type];
+      const T = typeDe(v);
       return `<div class="trrow"><b class="h">${hstr(v.start)}</b>
         <div><b>${T.ic} ${T.lbl} — ${v.client}</b>
         <small><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.cp} · ${v.ville} · ${MODES[v.mode].ic} ${MODES[v.mode].lbl}${v.done?" · ✓ terminée":""}</small></div></div>`;
     }).join("") : `<div style="color:var(--muted);padding:8px 0">Aucune intervention ce jour.</div>`)
     + `<div class="trtot">Total : ${list.length} intervention${list.length>1?"s":""} · ${tot%1?Math.floor(tot)+" h 30":tot+" h"}</div>`;
   const txt = "Tournée " + dateTxt + " — " + t.nom + "\n\n" +
-    list.map((v,i)=>(i+1)+". "+hstr(v.start)+" — "+TYPES[v.type].lbl+" ("+MODES[v.mode].lbl+") — "+v.client+", "+v.cp+" "+v.ville).join("\n") +
+    list.map((v,i)=>(i+1)+". "+hstr(v.start)+" — "+typeDe(v).lbl+" ("+MODES[v.mode].lbl+") — "+v.client+", "+v.cp+" "+v.ville).join("\n") +
     "\n\nTotal : "+list.length+" interventions · "+(tot%1?Math.floor(tot)+" h 30":tot+" h")+"\nBonne journée ! — Tiger Hygiène 3D";
   document.getElementById('tr-sms').href = "sms:?&body=" + encodeURIComponent(txt);
   document.getElementById('trm').classList.add('open');
