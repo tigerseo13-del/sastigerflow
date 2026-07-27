@@ -260,6 +260,22 @@ tbody tr:last-child td{border-bottom:0}
 .stt.ok{background:var(--green-bg);color:var(--green-d)}
 .stt.plan{background:var(--blue-bg);color:var(--blue)}
 .emptybox{text-align:center;color:var(--muted);padding:30px 10px;font-size:.85rem}
+/* 27/07 : les documents passent d'un tableau de noms a des vignettes — on voit
+   le document au lieu de lire son nom de fichier. */
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.doccard.ouvrable{cursor:zoom-in}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 10px 24px -14px rgba(23,26,32,.4)}
+.docvue{height:132px;background:#F5F6F9;display:grid;place-items:center;overflow:hidden;position:relative}
+.docvue img{width:100%;height:100%;object-fit:cover;display:block}
+.docvue iframe{width:167%;height:167%;border:0;transform:scale(.6);transform-origin:top left;pointer-events:none;background:#fff}
+.docext{font-family:'Sora';font-weight:800;font-size:1.02rem;color:var(--muted);letter-spacing:.06em}
+.doccard figcaption{padding:9px 11px 11px;display:block}
+.doccard figcaption b{display:block;font-size:.78rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doccard figcaption small{display:block;font-size:.7rem;color:var(--muted);margin-top:3px}
+.docx{position:absolute;top:7px;right:7px;z-index:2;width:24px;height:24px;border-radius:50%;border:0;background:rgba(255,255,255,.92);
+  color:var(--muted);font-size:.8rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 6px rgba(23,26,32,.18)}
+.docx:hover{background:var(--red-bg);color:var(--red)}
 
 /* notes */
 .nrow{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
@@ -1003,18 +1019,60 @@ function docsRender(){
   NB_DOCS = list.length; majDossier();
   const FIC = '<span class="fic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span>';
   g("i-docs").innerHTML = list.length
-    ? '<table><thead><tr><th>Nom du fichier</th><th>Ajouté le</th><th>Par</th><th></th></tr></thead><tbody>' +
-      list.map((d, i) => '<tr><td><div style="display:flex;align-items:center;gap:9px">' + FIC + '<b>' + d.n + '</b></div></td><td>' + d.d + '</td><td>' + d.u + '</td><td style="text-align:right"><button onclick="docDel(' + i + ')" title="Retirer" style="color:var(--muted)">✕</button></td></tr>').join("") +
-      "</tbody></table>"
+    ? '<div class="docgrid">' + list.map((d, i) => {
+        const img = /^image\//.test(d.t || "") && d.src;
+        const pdf = /pdf/.test(d.t || "") && d.src;
+        const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
+        const vue = img ? '<img src="' + d.src + '" alt="">'
+          : pdf ? '<iframe src="' + d.src + '#toolbar=0&navpanes=0" tabindex="-1"></iframe>'
+          : '<span class="docext">' + ext + '</span>';
+        return '<figure class="doccard' + (d.src ? ' ouvrable' : '') + '"' + (d.src ? ' onclick="docOuvrir(' + i + ')" title="Ouvrir ' + d.n + '"' : '') + '>' +
+          '<button class="docx" onclick="event.stopPropagation();docDel(' + i + ')" title="Retirer">✕</button>' +
+          '<div class="docvue">' + vue + '</div>' +
+          '<figcaption><b title="' + d.n + '">' + d.n + '</b>' +
+          '<small>' + d.d + ' · ' + (d.s ? docPoids(d.s) : ext) + (d.src ? '' : ' · aperçu non conservé') + '</small></figcaption>' +
+        '</figure>';
+      }).join("") + '</div>'
     : '<div class="emptybox">Aucun document pour ce technicien.<br><small style="font-size:.75rem">Contrat, Certibiocide, attestations, permis… — bouton « Téléverser un document » en haut à droite.</small></div>';
 }
+/* 27/07 : on ne gardait que le NOM du fichier — impossible d'en montrer quoi que
+   ce soit. On garde maintenant son contenu quand il tient dans le stockage du
+   navigateur (1,5 Mo par fichier) : vraie vignette pour les images, vrai apercu
+   pour les PDF. Au-dela, on garde nom, type et poids, et la carte le DIT. */
+const DOC_MAX = 1500 * 1024;
+function docPoids(o){ return o < 1024 ? o + " o" : o < 1048576 ? Math.round(o/1024) + " Ko" : (o/1048576).toFixed(1).replace(".", ",") + " Mo"; }
 function docAdd(inp){
-  const list = docsGet();
-  [...inp.files].forEach(f => list.unshift({n:f.name, d:new Date().toLocaleDateString("fr-FR"), u:"Thomas Martin"}));
-  try{ localStorage.setItem(DK, JSON.stringify(list.slice(0, 20))); }catch(e){}
-  inp.value = "";
-  docsRender();
-  toast("Document ajouté à la fiche");
+  const fichiers = [...inp.files];
+  if(!fichiers.length) return;
+  let restants = fichiers.length;
+  const ajoute = rec => {
+    const list = docsGet();
+    list.unshift(rec);
+    try{ localStorage.setItem(DK, JSON.stringify(list.slice(0, 20))); }
+    catch(e){
+      delete rec.src;
+      try{ localStorage.setItem(DK, JSON.stringify(list.slice(0, 20))); }catch(e2){}
+      toast("Aperçu non conservé — le stockage du navigateur est plein");
+    }
+    if(--restants === 0){ inp.value = ""; docsRender(); toast(fichiers.length > 1 ? fichiers.length + " documents ajoutés" : "Document ajouté à la fiche"); }
+  };
+  fichiers.forEach(f => {
+    const base = {n:f.name, d:new Date().toLocaleDateString("fr-FR"), u:"Thomas Martin", t:f.type || "", s:f.size};
+    if(f.size <= DOC_MAX && typeof FileReader !== "undefined"){
+      const r = new FileReader();
+      r.onload = () => ajoute({...base, src:r.result});
+      r.onerror = () => ajoute(base);
+      r.readAsDataURL(f);
+    } else ajoute(base);
+  });
+}
+function docOuvrir(i){
+  const d = docsGet()[i];
+  if(!d || !d.src){ toast("Pas d'aperçu : ce fichier était trop lourd pour être conservé"); return; }
+  const w = window.open();
+  if(w) w.document.write('<title>' + d.n + '</title><body style="margin:0;background:#22252B">' +
+    (/^image\//.test(d.t) ? '<img src="' + d.src + '" style="max-width:100%;display:block;margin:auto">'
+                          : '<iframe src="' + d.src + '" style="border:0;width:100%;height:100vh"></iframe>') + '</body>');
 }
 function docDel(i){
   const list = docsGet();
