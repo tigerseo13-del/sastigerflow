@@ -1114,7 +1114,7 @@ function rrap(){
   g("rsteps2").innerHTML = `<div class="rjbar"><i class="rjtrack"></i><i class="rjfill" style="width:${RSTEP === 1 ? 0 : RSTEP === 2 ? 50 : 100}%"></i>${jn(1)}${jn(2)}${jn(3)}</div>
     <div class="rjlabs">${RSLBL.map((lb, i) => `<span class="rjl ${RSTEP > i+1 ? "ok" : RSTEP === i+1 ? "cur" : ""}" ${RSTEP !== i+1 ? `onclick="rapKeep();RSTEP=${i+1};rrap()"` : ""}>${lb}</span>`).join("")}</div>`;
   const m = M[RAPID] || {};
-  RAPD = RAPD || {niv:"", zones:new Set(), ztr:new Set(), recos:new Set(), signes:new Set(), urg:"", meth:"", prods:[], mats:new Set(), quote:false};
+  RAPD = RAPD || {niv:"", zones:new Set(), ztr:new Set(), recos:new Set(), signes:new Set(), urg:"", meths:new Set(), prods:[], mats:new Set(), quote:false};
   if(!RAPD.ztr) RAPD.ztr = new Set();
   if(RAPID != null) RAPDRAFTS[RAPID] = RAPD;
   const rctx = m.client ? `<div class="rctx">
@@ -1146,7 +1146,7 @@ function rrap(){
     <div class="rlab">Photos / preuves</div>
     <button type="button" class="rphoto" onclick="toast('L’appareil photo s’ouvre')"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><b>Ajoute tes photos du constat</b><small>elles partiront sur le rapport client</small></button>`;
   else if(RSTEP === 2) h = `<div class="rlab">Méthode de traitement</div>
-    <div class="rchips">${chips(R_METH, new Set([RAPD.meth]), "rapMeth")}</div>
+    <div class="rchips">${chips(R_METH, RAPD.meths, "rapMeth")}</div>
     <div class="rlab">Produits utilisés <span style="font-weight:500;color:var(--muted)">— n° AMM sur l'étiquette</span></div>
     <div id="r-prods">${RAPD.prods.map((p, i) => `
       <div class="rprod">
@@ -1214,7 +1214,9 @@ function rapLater(){
 }
 function rapNiv(v){ rapKeep(); RAPD.niv = v; rrap(); }
 function rapUrg(v){ rapKeep(); RAPD.urg = v; rrap(); }
-function rapMeth(v){ rapKeep(); RAPD.meth = v; rrap(); }
+/* 27/07 : plusieurs methodes possibles sur une meme intervention (gel + pulverisation,
+   piegeage + exclusion...). C'etait un choix unique, remonte du terrain. */
+function rapMeth(v){ rapKeep(); RAPD.meths.has(v) ? RAPD.meths.delete(v) : RAPD.meths.add(v); rrap(); }
 function rapSigne(s){ rapKeep(); RAPD.signes.has(s) ? RAPD.signes.delete(s) : RAPD.signes.add(s); rrap(); }
 function rapMat(s){ rapKeep(); RAPD.mats.has(s) ? RAPD.mats.delete(s) : RAPD.mats.add(s); rrap(); }
 function rapQuote(v){ rapKeep(); RAPD.quote = v; rrap(); }
