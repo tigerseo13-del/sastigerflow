@@ -57,6 +57,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-s
 .spacer{flex:1}
 .mchip{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:#fff;border-radius:var(--r-md);padding:9px 14px;font-size:0.8rem;font-weight:700;color:var(--ink-2)}
 .mchip svg{width:14px;height:14px;stroke:var(--orange-deep);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mchip{cursor:pointer}
+.mchip:hover{border-color:#D5D8DF}
+.mchip .mcar{width:13px;height:13px;stroke:var(--muted);margin-left:1px;transition:transform .16s}
+.mchip[aria-expanded="true"] .mcar{transform:rotate(180deg)}
+.mwrap{position:relative;display:inline-flex}
+.mpop{position:absolute;top:calc(100% + 8px);right:0;z-index:60;width:252px;background:#fff;border:1px solid var(--line);
+  border-radius:var(--r-lg);box-shadow:var(--sh-3);padding:12px;display:none}
+.mpop.open{display:block}
+.mph{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mph b{font-family:'Sora';font-size:0.95rem}
+.mph button{width:30px;height:30px;border-radius:var(--r-sm);border:1px solid var(--line);background:#fff;display:grid;place-items:center;cursor:pointer}
+.mph button:hover{border-color:var(--orange);background:var(--orange-soft)}
+.mph button svg{width:15px;height:15px;stroke:var(--ink-2);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mpg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mpg button{padding:9px 0;border-radius:var(--r-sm);border:1px solid var(--line);background:#fff;font-family:inherit;
+  font-size:0.78rem;font-weight:700;color:var(--ink-2);cursor:pointer}
+.mpg button:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
+.mpg button.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.mpf{margin-top:10px;font-size:0.68rem;color:var(--muted);text-align:center}
 
 .page{width:100%;padding:24px 30px calc(60px + var(--safe-b))}
 
@@ -374,7 +393,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
       <span>Rechercher clients, pages, actions…</span><kbd class="slash">/</kbd><kbd>⌘K</kbd>
     </button>
-    <span class="mchip"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="c-mois">juil. 2026</span></span>
+    <div class="mwrap">
+      <button class="mchip" id="c-moisbtn" onclick="moisTog(event)" aria-haspopup="dialog" aria-expanded="false" title="Choisir un mois — ouvre l'agenda sur ce mois">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="c-mois">juil. 2026</span>
+        <svg class="mcar" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="mpop" id="mpop" role="dialog" aria-label="Choisir un mois">
+        <div class="mph">
+          <button type="button" onclick="moisAn(-1)" aria-label="Année précédente"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <b id="mpy">2026</b>
+          <button type="button" onclick="moisAn(1)" aria-label="Année suivante"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        </div>
+        <div class="mpg" id="mpg"></div>
+        <div class="mpf">Ouvre l'agenda sur le mois choisi</div>
+      </div>
+    </div>
     <button class="bell" aria-label="Notifications">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
       <span class="dot">2</span>
@@ -591,12 +624,44 @@ function userMenu(e){
   const ouvert = u.classList.toggle("open");
   u.setAttribute("aria-expanded", ouvert ? "true" : "false");
 }
+/* ===== choix du mois : envoie sur l'agenda, positionne dessus =====
+   Le tableau de bord n'a aucun chiffre qui depende d'un mois : le choix ne
+   filtre donc rien ici, il emmene la ou le mois veut dire quelque chose. */
+const MOIS12 = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+let MPY = new Date().getFullYear();
+function moisDraw(){
+  const now = new Date();
+  g("mpy").textContent = MPY;
+  g("mpg").innerHTML = MOIS12.map(function(m, i){
+    const cur = (MPY === now.getFullYear() && i === now.getMonth());
+    return '<button type="button" class="' + (cur ? "on" : "") + '" onclick="moisGo(' + i + ')">' + m + '</button>';
+  }).join("");
+}
+function moisTog(e){
+  e.stopPropagation();
+  const p = g("mpop"), b = g("c-moisbtn");
+  const ouvert = p.classList.toggle("open");
+  b.setAttribute("aria-expanded", ouvert ? "true" : "false");
+  if(ouvert){ MPY = new Date().getFullYear(); moisDraw(); }
+}
+function moisFerme(){
+  const p = g("mpop"); if(!p || !p.classList.contains("open")) return;
+  p.classList.remove("open"); g("c-moisbtn").setAttribute("aria-expanded", "false");
+}
+function moisAn(k){ MPY += k; moisDraw(); }
+function moisGo(i){
+  location.href = "calendrier.html?m=" + MPY + "-" + String(i + 1).padStart(2, "0");
+}
+moisDraw();
+
 document.addEventListener("click", function(){
+  moisFerme();
   const u = document.getElementById("side-user");
   if(u && u.classList.contains("open")){ u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
 });
 document.addEventListener("keydown", function(e){
   const u = document.getElementById("side-user");
+  if(e.key === "Escape") moisFerme();
   if(e.key === "Escape" && u) { u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
   if((e.key === "Enter" || e.key === " ") && document.activeElement === u){ e.preventDefault(); userMenu(); }
 });
