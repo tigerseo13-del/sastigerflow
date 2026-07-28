@@ -1264,13 +1264,27 @@ const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb
 async function cliBase(){
   try{
     if(typeof SB === "undefined" || typeof CLIENTS === "undefined") return;
-    const {data, error} = await SB.from("clients").select("*");
-    if(error || !data) return;
+    /* 28/07 — FILET. Si la base ne repond pas ici (droits, reseau, colonne
+       renommee), on prend la copie laissee par la page Clients. Sans ca, un
+       client cree devient invisible au moment ou on en a besoin — et l'appel
+       rate en silence, ce qui est pire. */
+    let source = [];
+    try{
+      const {data, error} = await SB.from("clients").select("*");
+      if(error) throw error;
+      source = data || [];
+    }catch(e){
+      try{ source = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e2){ source = []; }
+      if(!source.length && typeof toast === "function") toast("⚠️ Liste des clients incomplète — ouvre la page Clients une fois");
+    }
+    if(!source.length){
+      try{ source = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e){}
+    }
     /* ICI le selecteur est REFABRIQUE a chaque ouverture du formulaire, a partir
        du tableau CLIENTS. Completer le <select> ne servirait a rien : la
        prochaine ouverture l'ecraserait. On complete la source. */
     const connus = new Set(CLIENTS.map(c => String(c).trim().toLowerCase()));
-    data.forEach(c => {
+    source.forEach(c => {
       if(!c || !c.nom) return;
       if(connus.has(String(c.nom).trim().toLowerCase())) return;
       CLIENTS.push(c.nom); connus.add(String(c.nom).trim().toLowerCase());
