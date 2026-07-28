@@ -559,6 +559,11 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
 .docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--muted);font-size:.72rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.22);opacity:0;transition:.14s}
 .doccard:hover .docx,.docx:focus-visible{opacity:1}
 .docx:hover{background:var(--red-bg);color:var(--red)}
+
+/* 28/07 : la mention pro forma dans le resume — meme violet que la pastille de
+   la liste des factures, pour qu'on reconnaisse la meme chose. */
+.srow.spf b{color:#5B3BC4}
+.pfnote{font-size:.76rem;color:#5B3BC4;background:#F1EAFD;border-radius:9px;padding:8px 11px;margin:2px 0 8px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -1687,7 +1692,17 @@ function savedOpen(){
   const cli = g("v-client").value, tot = g("v-ttc").textContent;
   const bc = (g("v-bc") || {value:""}).value.trim(), ct = (g("v-contrat") || {value:""}).value.trim();
   const ech = (g("v-valid") || {value:"30"}).value;
+  /* 28/07 : quand la facture a deja ete envoyee en PRO FORMA, le resume doit le
+     dire. Sans ca on relit « Valider la facture » sans savoir qu'un document
+     provisoire est deja parti chez le client — et on ne sait pas non plus
+     quand. Le statut de travail reste « brouillon », c'est normal : une pro
+     forma n'est pas une facture emise. */
+  const _env = (() => { try{ return (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[DREF] || null; }catch(e){ return null; } })();
+  const _pf = _env && _env.proforma;
   g("savedrecap").innerHTML =
+    (_pf ? '<div class="srow spf"><span>Document</span><b>Pro forma envoyée le ' + (_env.date || "—") +
+           '</b></div><div class="pfnote">Document provisoire, non valable pour paiement. ' +
+           '« Valider la facture » la transforme en facture définitive.</div>' : '') +
     '<div class="srow"><span>Référence</span><b>' + DREF + '</b></div>' +
     '<div class="srow"><span>Client</span><b>' + cli + '</b></div>' +
     '<div class="srow"><span>Objet</span><b>' + ((g("v-objet") || {value:""}).value || "—") + '</b></div>' +
