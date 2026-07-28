@@ -81,7 +81,9 @@ textarea{resize:vertical;min-height:76px}
 .btn2.primary:hover{background:var(--orange-deep)}
 
 /* ===== page / cartes ===== */
-.page{max-width:1400px;margin:0 auto;padding:24px 30px calc(60px + var(--safe-b))}
+/* 1080 = largeur de lecture d'une colonne unique. À 1400 les libellés
+   se détachaient de leur champ à l'autre bout de l'écran. */
+.page{max-width:1080px;margin:0 auto;padding:24px 30px calc(60px + var(--safe-b))}
 .card{background:var(--card);border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:16px}
 .card-h{font-family:'Sora';font-weight:800;font-size:.98rem;display:flex;align-items:center;gap:10px;margin-bottom:15px}
 .steph{display:flex;align-items:center;gap:11px;margin:26px 2px 12px;font-family:'Sora';font-weight:800;font-size:1.02rem;letter-spacing:-.2px}
@@ -172,21 +174,18 @@ textarea{resize:vertical;min-height:76px}
 .toast{position:fixed;left:50%;bottom:calc(30px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ===== disposition : formulaire + rail récapitulatif ===== */
+/* ===== disposition : une seule colonne, comme l'éditeur de devis =====
+   28/07 — la grille 2 colonnes laissait un trou sous chaque carte courte
+   (Période à côté d'Informations, Matériel à côté de Catégories) : deux
+   cartes côte à côte n'ont jamais la même hauteur, et `align-items:start`
+   rendait l'écart visible. Une colonne unique centrée ne peut pas creuser
+   de trou, et donne le même rythme vertical aux 4 étapes. La densité
+   horizontale est reprise DANS les cartes (fgrid3, fgrid4, pick). */
 .layout{display:block;padding-bottom:88px}
-@media(min-width:1250px){
-  .col{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start}
-  .col > .steph{grid-column:1 / -1}
-  .col > .card{margin-bottom:16px}
-  .col > .actbar{grid-column:1 / -1}
-}
 .actbar{position:fixed;left:238px;right:0;bottom:0;z-index:45;display:flex;align-items:center;gap:11px;padding:12px 26px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
 .ab-ttc small{display:block;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .ab-ttc b{font-family:'Sora';font-size:1.18rem;letter-spacing:-.3px}
 @media(max-width:900px){.actbar{left:0;padding:11px 14px}}
-.rcard h3 .tick{width:4px;height:15px;border-radius:3px;background:var(--orange);flex:none}
-.rline .k{color:var(--muted);flex:none}
-.rbtns .btn2{justify-content:center;width:100%}
 
 
 /* ===== mobile ===== */
@@ -246,7 +245,6 @@ label[for]{cursor:pointer}
 .pick button.on small{color:#C2571F}
 
 /* ===== sections facultatives repliables ===== */
-.card.wide{grid-column:1 / -1}
 .fold-h{cursor:pointer;user-select:none}
 .fold-h .opt{margin-left:auto;font-family:'Inter';font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:#F1F2F5;border-radius:999px;padding:3px 9px}
 .fold-h .fchev{width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-left:9px;transition:transform .18s;flex:none}
@@ -619,32 +617,35 @@ label[for]{cursor:pointer}
       </div>
     </div>
 
-    <!-- ===== 5. MATÉRIEL À APPORTER ===== -->
-    <div class="card fold" id="fold-mat">
+    <!-- ===== 5. MATÉRIEL À APPORTER =====
+         28/07 — ouverte au chargement (classe `open`) : c'est ce que le
+         technicien lit avant de partir, la cacher derrière un chevron la
+         faisait oublier. Le chevron reste, on peut toujours la replier.
+         Attention : les trois cartes repliables avaient chacune une balise
+         de fermeture en trop, qui fermait `.col` avant les étapes 3 et 4 —
+         d'où deux étapes en grille et deux étapes hors grille sur la même
+         page. Ne pas écrire de balise littérale dans ces commentaires. -->
+    <div class="card fold open" id="fold-mat">
       <div class="card-h fold-h" onclick="foldTog('mat')"><span class="tick"></span>Matériel à apporter <small>— visible par le technicien avant chaque passage</small><span class="opt">facultatif</span><svg class="fchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
       <div class="fold-b">
-      <div id="v-mats"><div class="emptyline" id="mats-empty">Aucun élément ajouté.</div></div>
-      <button class="addrowbtn" onclick="matAdd()"><b>＋</b> Ajouter du matériel</button>
+        <div id="v-mats"><div class="emptyline" id="mats-empty">Aucun élément ajouté.</div></div>
+        <button class="addrowbtn" onclick="matAdd()"><b>＋</b> Ajouter du matériel</button>
+      </div>
     </div>
 
     <!-- ===== 6. RÉCAPITULATIF D'INTERVENTION ===== -->
-      </div>
-    </div>
-
-    <div class="card fold" id="fold-rec">
+    <div class="card fold open" id="fold-rec">
       <div class="card-h fold-h" onclick="foldTog('rec')"><span class="tick"></span>Récapitulatif d'intervention <small>— la checklist cochée à chaque passage</small><span class="opt">facultatif</span><svg class="fchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
       <div class="fold-b">
-      <div id="v-cks"><div class="emptyline" id="cks-empty">Aucun élément de checklist.</div></div>
-      <button class="addrowbtn" onclick="ckAdd()"><b>＋</b> Ajouter une étape</button>
+        <div id="v-cks"><div class="emptyline" id="cks-empty">Aucun élément de checklist.</div></div>
+        <button class="addrowbtn" onclick="ckAdd()"><b>＋</b> Ajouter une étape</button>
+      </div>
     </div>
 
     <!-- ===== 7. PLANIFICATION ===== -->
-      </div>
-    </div>
-
     <div class="steph"><span>3</span>La planification <small>— le rythme des passages</small></div>
 
-    <div class="card wide">
+    <div class="card">
       <div class="card-h"><span class="tick"></span>Planification des interventions</div>
       <div class="fgrid" style="margin-bottom:14px">
         <div>
@@ -724,20 +725,18 @@ label[for]{cursor:pointer}
     <div class="card fold" id="fold-pj">
       <div class="card-h fold-h" onclick="foldTog('pj')"><span class="tick"></span>Pièces jointes <small>— PDF, JPG, PNG · aperçu gardé jusqu'à 1,5 Mo</small><span class="opt">facultatif</span><svg class="fchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
       <div class="fold-b">
-      <div class="pjrow" id="v-pjs">
+        <div class="pjrow" id="v-pjs">
         <label class="pjadd"><svg class="bic" viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg> Téléverser un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label>
         <button class="pjadd" onclick="toast('Bibliothèque de documents — bientôt reliée à la base')"><svg class="bic" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> Bibliothèque de documents</button>
       </div>
-      <div class="pjhint" id="pjempty">Aucun fichier sélectionné.</div>
-      <div class="docgrid" id="cpj-liste" style="margin-top:12px"></div>
+        <div class="pjhint" id="pjempty">Aucun fichier sélectionné.</div>
+        <div class="docgrid" id="cpj-liste" style="margin-top:12px"></div>
+      </div>
     </div>
 
    </div><!-- /.col -->
 
    <!-- ===== BARRE D'ACTION ===== -->
-      </div>
-    </div>
-
     <div class="actbar">
      <div class="ab-ttc"><small>Montant annuel TTC</small><b id="r-ttc">0,00 €</b></div>
      <span style="flex:1"></span>
