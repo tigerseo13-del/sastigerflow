@@ -783,15 +783,19 @@ function setView(v){
   document.getElementById("kbwrap").style.display = v==="kb" ? "" : "none";
   render();
 }
-function setStat(s){
-  FSTAT = FSTAT === s ? "all" : s;
+/* 28/07 : l'application d'un filtre est ecrite UNE fois. Elle sert au menu, aux
+   cartouches, et a la bascule automatique quand une tache change de statut. */
+function appliqueFiltre(v){
+  FSTAT = v;
   PAGE = 1;
   const sel = document.getElementById("f-stat");
   if(sel) sel.value = FSTAT;
-  /* le KPI filtrant s'allume */
   document.querySelectorAll(".kpi[onclick]").forEach(k => k.style.outline = "");
   const _kt = {todo:".kpi.k-blue", prog:".kpi.k-amber", done:".kpi.k-green"}[FSTAT];
   if(_kt){ const k = document.querySelector(_kt); if(k) k.style.outline = "2.5px solid var(--orange)"; }
+}
+function setStat(s){
+  appliqueFiltre(FSTAT === s ? "all" : s);
   render();
 }
 function actIcons(t){
@@ -957,8 +961,25 @@ function setTaskStat(id, st){
   if(st === "done" && t.iid) inboxRemove(t.iid);
   t.hist.push({s:st, d:TODAY, u:"Thomas Martin"});
   extraSync(t);
-  render(); renderTask();
-  toast(st === "done" ? "✓ Tâche terminée" : "Statut mis à jour — " + STATS[st][1]);
+  /* 28/07 — BUG. Avec un filtre de statut actif, passer une tache de « A faire »
+     a « Terminee » la faisait SORTIR du filtre : elle disparaissait de la liste
+     sous les yeux, sans un mot. Le filtrage etait juste, l'ecran incomprehensible.
+     On elargit a « Tous les statuts » pour qu'elle reste visible avec son
+     nouveau statut — et on le dit. */
+  const sortie = FSTAT !== "all" && FSTAT !== st;
+  if(sortie) appliqueFiltre("all");
+  render();
+  /* elargir le filtre ne suffit pas : une tache terminee glisse en bas de liste
+     et peut tomber sur une AUTRE PAGE. On se place sur la sienne, sinon elle
+     reste invisible pour une deuxieme raison. */
+  const rang = filtered().findIndex(x => x.id === id);
+  if(rang > -1){
+    const pv = Math.floor(rang / PER) + 1;
+    if(pv !== PAGE){ PAGE = pv; render(); }
+  }
+  renderTask();
+  toast((st === "done" ? "✓ Tâche terminée" : "Statut mis à jour — " + STATS[st][1])
+    + (sortie ? " · filtre élargi pour la garder à l'écran" : ""));
 }
 function togSub(id, j){
   const t = TASKS.find(x=>x.id===id);
