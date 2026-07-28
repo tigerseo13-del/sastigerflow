@@ -104,6 +104,21 @@ const libelle = w => {
     ap && /facture/i.test(ap.textContent),
     "bouton : « " + (ap ? ap.textContent.trim() : "?") + " »");
 
+  /* 28/07 — il etait le seul bouton de la barre sans icone. */
+  t("le bouton principal porte une icone",
+    ap && ap.querySelector("svg"), "aucun svg dans le bouton");
+  t("l'icone correspond a l'action : carte pour la transformation en facture",
+    ap && /rect/.test(ap.innerHTML), "l'avion en papier n'a rien a faire ici");
+
+  w.statutPick("brouillon");
+  const ap2 = w.document.getElementById("a-primary");
+  t("un brouillon propose l'envoi, avec l'avion en papier",
+    ap2 && /Envoyer/.test(ap2.textContent) && /M22 2L11 13/.test(ap2.innerHTML),
+    "bouton : « " + (ap2 ? ap2.textContent.trim() : "?") + " »");
+  t("l'icone est la meme que dans l'atelier",
+    fs.readFileSync(path.join(__dirname, "..", "devis.html"), "utf8").includes("M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"),
+    "les deux ecrans doivent montrer le meme avion");
+
   /* ===== 4. LE MENU S'OUVRE ET SE FERME =============================== */
   w = await fiche();
   const menu = w.document.getElementById("stmenu");

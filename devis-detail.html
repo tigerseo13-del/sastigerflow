@@ -722,7 +722,7 @@ label[for]{cursor:pointer}
 
 <script>
 const g = id => document.getElementById(id);
-const eur = n => (Math.round(n*100)/100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
+const eur = n => (Math.round(n*100)/100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
 let TT=null;
 function toast(m){ const t=g('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(TT); TT=setTimeout(()=>t.classList.remove('show'),2600); }
 /* ===== menu ⋯ : dupliquer / supprimer ===== */
@@ -931,6 +931,15 @@ function effStatut(){
    markup, et rien dans le code pour le remplir. On voyait une pastille orange
    sans texte, et on ne pouvait pas deviner ce qu'elle faisait. Il dit
    maintenant ce qu'on attend du devis a cet instant. */
+/* 28/07 — le bouton principal etait le SEUL de la barre sans icone : les
+   voisins (Voir le PDF, le menu) en ont une, et l'atelier affiche un avion en
+   papier sur le meme « Envoyer au client ». Deux icones, une par action :
+   l'avion pour un envoi, la carte pour la transformation en facture. Memes
+   traces que devis.html, pour que les deux ecrans se ressemblent. */
+const AP_IC = {
+  envoyer:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
+  versFacture: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>'
+};
 const AP = {
   brouillon: ["Envoyer au client",     "envoyer"],
   envoye:    ["Relancer le client",    "envoyer"],
@@ -941,7 +950,8 @@ const AP = {
 function apMaj(){
   const b = g("a-primary"); if(!b) return;
   const a = AP[effStatut()] || AP.brouillon;
-  b.textContent = a[0];
+  /* innerHTML et non textContent : le libelle vient d'AP, jamais d'une saisie. */
+  b.innerHTML = (AP_IC[a[1]] || "") + a[0];
   b.dataset.act = a[1];
 }
 function apAction(){
