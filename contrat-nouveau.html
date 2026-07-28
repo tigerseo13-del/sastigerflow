@@ -412,6 +412,27 @@ label[for]{cursor:pointer}
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
+
+/* vignettes — identiques a l'onglet Dossier d'une fiche technicien */
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(23,26,32,.04);transition:.14s}
+.doccard.ouvrable{cursor:zoom-in}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 12px 26px -16px rgba(23,26,32,.45);transform:translateY(-2px)}
+.docvue{height:132px;background:#fff;display:grid;place-items:center;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.docvue:has(.docext){background:#F5F6F9}
+.docvue img{width:100%;height:100%;object-fit:cover;display:block}
+.docvue iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+.docvue::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30px;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.92))}
+.docvue:has(.docext)::after{display:none}
+.docext{font-family:'Sora';font-weight:800;font-size:.98rem;color:var(--muted);letter-spacing:.06em}
+.doctag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;background:rgba(23,26,32,.72);color:#fff;padding:2px 7px;border-radius:6px}
+.docvue:has(.docext) .doctag{display:none}
+.doccard figcaption{padding:9px 11px 11px;display:block}
+.doccard figcaption b{display:block;font-size:.75rem;font-weight:700;line-height:1.35;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doccard figcaption small{display:block;font-size:.68rem;color:var(--muted);margin-top:3px}
+.docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--muted);font-size:.72rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.22);opacity:0;transition:.14s}
+.doccard:hover .docx,.docx:focus-visible{opacity:1}
+.docx:hover{background:var(--red-bg);color:var(--red)}
 </style>
 </head>
 <body>
@@ -701,13 +722,14 @@ label[for]{cursor:pointer}
 
     <!-- ===== 9. PIÈCES JOINTES ===== -->
     <div class="card fold" id="fold-pj">
-      <div class="card-h fold-h" onclick="foldTog('pj')"><span class="tick"></span>Pièces jointes <small>— PDF, JPG, PNG · 10 Mo max par fichier</small><span class="opt">facultatif</span><svg class="fchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="card-h fold-h" onclick="foldTog('pj')"><span class="tick"></span>Pièces jointes <small>— PDF, JPG, PNG · aperçu gardé jusqu'à 1,5 Mo</small><span class="opt">facultatif</span><svg class="fchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
       <div class="fold-b">
       <div class="pjrow" id="v-pjs">
         <label class="pjadd"><svg class="bic" viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg> Téléverser un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label>
         <button class="pjadd" onclick="toast('Bibliothèque de documents — bientôt reliée à la base')"><svg class="bic" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> Bibliothèque de documents</button>
       </div>
       <div class="pjhint" id="pjempty">Aucun fichier sélectionné.</div>
+      <div class="docgrid" id="cpj-liste" style="margin-top:12px"></div>
     </div>
 
    </div><!-- /.col -->
@@ -870,16 +892,59 @@ function renPrev(){
 }
 
 /* ================= PIÈCES JOINTES ================= */
+/* ===== pieces jointes du contrat (28/07) — meme presentation que l'onglet
+   Dossier d'une fiche technicien. On ne gardait que le NOM du fichier : la
+   pastille disait « Facture_F2026-003 (1).pdf » et rien d'autre. ===== */
+const CPJ_MAX = 1500 * 1024;
+let CPJ = [];
+const cpjPoids = o => o < 1024 ? o + " o" : o < 1048576 ? Math.round(o/1024) + " Ko" : (o/1048576).toFixed(1).replace(".", ",") + " Mo";
 function pjAdd(inp){
-  const e = g("pjempty"); if(e) e.style.display = "none";
-  [...inp.files].forEach(f => {
-    const s = document.createElement("span");
-    s.className = "pjc";
-    s.innerHTML = '<svg class="bic" viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg> ' + f.name + ' <button onclick="this.parentNode.remove()" title="Retirer">✕</button>';
-    g("v-pjs").appendChild(s);
+  const liste = [...inp.files];
+  if(!liste.length) return;
+  let restants = liste.length;
+  const fin = () => { if(--restants === 0){ inp.value = ""; cpjRender();
+    toast(liste.length > 1 ? liste.length + " fichiers joints au contrat" : "Fichier joint au contrat"); } };
+  liste.forEach(f => {
+    const base = {n:f.name, d:new Date().toLocaleDateString("fr-FR"), t:f.type || "", s:f.size};
+    if(f.size <= CPJ_MAX && typeof FileReader !== "undefined"){
+      const r = new FileReader();
+      r.onload = () => { CPJ.unshift({...base, src:r.result}); fin(); };
+      r.onerror = () => { CPJ.unshift(base); fin(); };
+      r.readAsDataURL(f);
+    } else { CPJ.unshift(base); fin(); }
   });
-  inp.value = "";
-  toast("Fichier ajouté — il partira avec le contrat");
+}
+function cpjDel(k){
+  const sauv = CPJ[k];
+  CPJ.splice(k, 1); cpjRender();
+  toast("🗑 Pièce retirée", () => { CPJ.splice(k, 0, sauv); cpjRender(); });
+}
+function cpjOuvrir(k){
+  const d = CPJ[k];
+  if(!d || !d.src){ toast("Cette pièce n'a pas d'aperçu — elle était trop lourde pour être conservée"); return; }
+  const w = window.open();
+  if(w) w.document.write('<title>' + d.n + '</title><body style="margin:0;background:#22252B">' +
+    (/^image\//.test(d.t) ? '<img src="' + d.src + '" style="max-width:100%;display:block;margin:auto">'
+                          : '<iframe src="' + d.src + '" style="border:0;width:100%;height:100vh"></iframe>') + '</body>');
+}
+function cpjRender(){
+  const box = document.getElementById("cpj-liste");
+  const vide = document.getElementById("pjempty");
+  if(vide) vide.style.display = CPJ.length ? "none" : "";
+  if(!box) return;
+  box.innerHTML = CPJ.map((d, k) => {
+    const img = /^image\//.test(d.t || "") && d.src;
+    const pdf = /pdf/.test(d.t || "") && d.src;
+    const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
+    const vue = img ? '<img src="' + d.src + '" alt="">'
+      : pdf ? '<iframe src="' + d.src + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>'
+      : '<span class="docext">' + ext + '</span>';
+    return '<figure class="doccard' + (d.src ? ' ouvrable' : '') + '"' + (d.src ? ' onclick="cpjOuvrir(' + k + ')" title="Ouvrir ' + d.n + '"' : '') + '>' +
+      '<button class="docx" title="Retirer" onclick="event.stopPropagation();cpjDel(' + k + ')">✕</button>' +
+      '<div class="docvue">' + vue + '<span class="doctag">' + ext + '</span></div>' +
+      '<figcaption><b title="' + d.n + '">' + d.n + '</b><small>' + d.d + ' · ' +
+      (d.s ? cpjPoids(d.s) : ext) + (d.src ? '' : ' · aperçu non conservé') + '</small></figcaption></figure>';
+  }).join("");
 }
 
 /* ================= ENREGISTREMENT ================= */
