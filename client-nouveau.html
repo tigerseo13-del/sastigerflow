@@ -580,9 +580,15 @@ function saveClient(){
     document.querySelector(".err").scrollIntoView({behavior:"smooth", block:"center"});
     return;
   }
-  const nom = TYPE === "part"
+  /* En modification, le nom est celui d'ORIGINE, jamais une recomposition.
+     Rendre le champ « lecture seule » ne suffisait pas : pour un particulier
+     le nom est recolle a partir du prenom ET du nom de famille, et la
+     recomposition rallongeait le nom a chaque enregistrement
+     (« tiger tiger » devenait « tiger tiger tiger »). Le client se serait
+     detache de ses devis et contrats sans un message. */
+  const nom = EDIT || (TYPE === "part"
     ? (document.getElementById("f-prenom").value.trim() + " " + document.getElementById("f-nomp").value.trim()).trim()
-    : document.getElementById("f-nom").value.trim();
+    : document.getElementById("f-nom").value.trim());
   try{ localStorage.removeItem(CKEY); }catch(e){}
   sbSave(nom);
 }
@@ -591,8 +597,22 @@ const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb
 function inboxPush(row){
   try{
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]");
-    box.push(row);
+    /* En modification on REMPLACE la ligne du meme nom au lieu d'en empiler
+       une seconde : sans ca, le client apparaissait deux fois dans la liste
+       apres chaque enregistrement. */
+    const i = box.findIndex(x => x.nom === row.nom);
+    if(i >= 0) box[i] = row; else box.push(row);
     localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(box));
+  }catch(e){}
+  /* Le cache clients alimente les selecteurs des devis, contrats et
+     paiements : sans cette mise a jour, ils gardaient l'ancienne adresse. */
+  try{
+    const c = JSON.parse(localStorage.getItem("tigerflow-clients-cache") || "[]");
+    const j = c.findIndex(x => x.nom === row.nom);
+    const vue = {nom:row.nom, ville:row.ville || "", cp:row.cp || "",
+                 adresse:row.adresse || "", tel:row.tel || "", mail:row.email || ""};
+    if(j >= 0) c[j] = vue; else c.push(vue);
+    localStorage.setItem("tigerflow-clients-cache", JSON.stringify(c));
   }catch(e){}
 }
 async function sbSave(nom){
@@ -612,13 +632,23 @@ async function sbSave(nom){
     const {data:{session}} = await SB.auth.getSession();
     if(!session){
       inboxPush(row);
-      toast("✓ « " + nom + " » créé — il sera versé dans la base à ta prochaine connexion");
+      toast(EDIT
+        ? "✓ « " + nom + " » modifié — la base recevra le changement à ta prochaine connexion"
+        : "✓ « " + nom + " » créé — il sera versé dans la base à ta prochaine connexion");
       setTimeout(()=>{ if(INPANEL && window.parent !== window){ window.parent.postMessage("tigerflow-client-saved", "*"); } else { location.href = "clients.html"; } }, 1300);
       return;
     }
-    const {error} = await SB.from("clients").insert(row);
+    /* Modification : on met a jour la ligne existante. Le nom est verrouille
+       dans le formulaire, donc EDIT et row.nom sont le meme client — on
+       retrouve la ligne par ce nom, faute d'identifiant stable. */
+    const {error} = EDIT
+      ? await SB.from("clients").update(row).eq("nom", EDIT)
+      : await SB.from("clients").insert(row);
     if(error) throw error;
-    toast("✅ « " + nom + " » enregistré dans la base — visible sur tous vos appareils");
+    inboxPush(row);   /* le cache local suit la base, sinon les selecteurs retardent */
+    toast(EDIT
+      ? "✅ « " + nom + " » mis a jour dans la base"
+      : "✅ « " + nom + " » enregistré dans la base — visible sur tous vos appareils");
     setTimeout(()=>{ if(INPANEL && window.parent !== window){ window.parent.postMessage("tigerflow-client-saved", "*"); } else { location.href = "clients.html"; } }, 1300);
   }catch(e){
     inboxPush(row);
@@ -731,7 +761,93 @@ let _ch = null;
 const cTouch = ()=>{ clearTimeout(_ch); _ch = setTimeout(cDraftSave, 700); };
 document.addEventListener("input", cTouch);
 document.addEventListener("click", cTouch);
-cDraftRestore();
+
+/* ===== MODE MODIFICATION (28/07) =====
+   « Modifier la fiche », dans le menu de la fiche client, n'affichait qu'un
+   message : le bouton n'avait jamais été branché. Il n'existait aucune page
+   capable de modifier un client — seulement d'en créer un. C'est cette page
+   qui sert aux deux, selon qu'elle reçoit ?c=<nom> ou non.
+
+   LE NOM EST VERROUILLÉ, et c'est une décision, pas un oubli. Tout le
+   logiciel désigne un client PAR SON NOM : contrat.rec.client, les devis, les
+   factures, client.html?c=<nom>. Renommer ici détacherait silencieusement le
+   client de tous ses documents, sans le moindre message. Tant qu'il n'y a pas
+   d'identifiant stable, on ne renomme pas. */
+const EDIT = (new URLSearchParams(location.search).get("c") || "").trim();
+
+function cliLocal(nom){
+  for(const cle of ["tigerflow-inbox-clients", "tigerflow-clients-cache"]){
+    try{
+      const c = (JSON.parse(localStorage.getItem(cle) || "[]")).find(x => x.nom === nom);
+      if(c) return c;
+    }catch(e){}
+  }
+  return null;
+}
+
+async function cliCharge(){
+  let c = null;
+  try{
+    const {data:{session}} = await SB.auth.getSession();
+    if(session){
+      const {data, error} = await SB.from("clients").select("*").eq("nom", EDIT).limit(1);
+      if(!error && data && data[0]) c = data[0];
+    }
+  }catch(e){}
+  if(!c) c = cliLocal(EDIT);
+
+  if(!c){
+    toast("⚠️ « " + EDIT + " » introuvable — la fiche s'ouvre en création");
+    return;
+  }
+
+  /* Le type d'abord : il change les champs affichés. */
+  const t = c.type === "particulier" ? "part" : (c.type === "syndic" ? "syndic" : "pro");
+  const card = document.querySelector('.tcard[data-t="' + t + '"]');
+  if(card && t !== TYPE) setType(card);
+
+  const put = (id, v) => { const el = document.getElementById(id); if(el && v) el.value = v; };
+  if(t === "part"){
+    /* Le nom d'un particulier est « Prénom Nom » recollé à l'enregistrement :
+       on le redécoupe, le prénom étant le premier mot. */
+    /* `c.contact || mots.shift()` etait un piege : quand contact existait,
+       shift() n'etait jamais evalue et le prenom restait dans le nom de
+       famille. On calcule les deux morceaux separement. */
+    const complet = (c.nom || "").trim();
+    const prenom  = (c.contact || complet.split(/\s+/)[0] || "").trim();
+    const famille = complet.startsWith(prenom) ? complet.slice(prenom.length).trim() : complet;
+    put("f-prenom", prenom);
+    put("f-nomp", famille || complet);
+  }else{
+    put("f-nom", c.nom);
+    put("f-prenom", c.contact);
+  }
+  put("f-tel1", c.tel); put("f-adr", c.adresse);
+  put("f-cp", c.cp); put("f-ville", c.ville); put("f-siret", c.siret);
+
+  /* Le champ du nom devient lecture seule, avec la raison écrite à l'écran —
+     un champ grisé sans explication passe pour une panne. */
+  const champNom = document.getElementById(t === "part" ? "f-nomp" : "f-nom");
+  if(champNom){
+    champNom.readOnly = true;
+    champNom.style.background = "#F4F5F7";
+    champNom.style.color = "var(--muted)";
+    champNom.title = "Le nom identifie le client dans ses devis, contrats et factures — il ne peut pas être changé ici.";
+    const note = document.createElement("div");
+    note.style.cssText = "font-size:.74rem;color:var(--muted);margin-top:5px;line-height:1.5";
+    note.textContent = "Le nom relie ce client à ses devis, contrats et factures : il n'est pas modifiable.";
+    champNom.insertAdjacentElement("afterend", note);
+  }
+
+  const h1 = document.querySelector("h1");
+  if(h1) h1.textContent = "Modifier " + c.nom;
+  document.title = "TigerFlow — modifier " + c.nom;
+  document.querySelectorAll("button.primary, .ctr").forEach(b => {
+    if(/Enregistrer/.test(b.textContent)) b.textContent = b.textContent.replace("Enregistrer le client", "Enregistrer les modifications");
+  });
+}
+
+if(EDIT) cliCharge(); else cDraftRestore();
 
 /* ===== Focus initial (ordinateur seulement) ===== */
 if(matchMedia("(min-width:761px)").matches){
