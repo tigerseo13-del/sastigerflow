@@ -375,7 +375,7 @@ details.acc > *:not(summary){padding:0 14px 13px}
 .skchip input{position:absolute;opacity:0;pointer-events:none}
 .skchip:has(input:checked){border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
 /* 27/07 (choix patron) : les JOURS TRAVAILLES cochés passent en vert. Regle
-   ajoutee a cote de .skchip plutot qu'a la place : le materiel embarque et
+   ajoutee a cote de .skchip plutot qu'a la place : le materiel du vehicule et
    « travaille le week-end » gardent l'orange, qui reste la couleur de la
    selection ailleurs dans le formulaire. */
 #a-jours .skchip:has(input:checked){border-color:var(--green);background:var(--green-bg);color:var(--green-d)}
@@ -666,7 +666,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         </div>
 
         <details class="acc" id="acc-mat">
-          <summary id="sum-mat">Matériel embarqué · aucun</summary>
+          <summary id="sum-mat">Matériel du véhicule · aucun</summary>
           <div class="skchips" id="a-mat" style="padding-top:4px"></div>
         </details>
       </div>
@@ -704,7 +704,7 @@ const SKILLS = ["Rongeurs","Cafards","Punaises de lit","Guêpes / Frelons","Chen
 const SKKEY = "tigerflow-techs-skills";
 const ALL_SKILLS = [];   /* le rôle a remplacé cette habilitation */
 const ALL_MAT = ["Pulvérisateur", "Vapeur sèche", "Nacelle", "Postes d'appâtage", "Gel appât", "Pics anti-pigeons", "Nébulisateur"];
-/* ===== matériel embarqué : la liste ci-dessus n'est qu'un point de départ =====
+/* ===== matériel du véhicule : la liste ci-dessus n'est qu'un point de départ =====
    MATLIST est la liste vivante du formulaire : les 7 propositions + tout ce que le
    patron tape lui-même. On ne touche pas à ALL_MAT, qui reste le référentiel. */
 let MATLIST = ALL_MAT.slice();
@@ -1002,7 +1002,7 @@ try{
   TECHS.forEach(t => { const o = _ov[(t.prenom + " " + (t.nom || "")).trim()]; if(o){ t.dispo = o.dispo; t.dispoD = o.dispoD; } });
 }catch(e){}
 const TODAY = new Date("2026-08-25");
-const fmt = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
+const fmt = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
 const fdate = iso => { const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; };
 const jours = iso => Math.ceil((new Date(iso) - TODAY) / 86400000);
 function confStatut(iso){
@@ -1425,7 +1425,7 @@ function openAdd(){
     const nsk = SKILLS.filter((x, i) => { const el = document.getElementById('ask-' + i); return el && el.checked; }).length;
     document.getElementById('sum-skills').textContent = "— " + (nsk ? nsk + " sélectionnée" + (nsk > 1 ? "s" : "") : "aucune sélectionnée");
     const nm = matCoches().length;
-    document.getElementById('sum-mat').textContent = "Matériel embarqué · " + (nm ? nm + " coché" + (nm > 1 ? "s" : "") : "aucun");
+    document.getElementById('sum-mat').textContent = "Matériel du véhicule · " + (nm ? nm + " coché" + (nm > 1 ? "s" : "") : "aucun");
   };
   document.getElementById('acc-skills').addEventListener('change', updSums);
   document.getElementById('acc-mat').addEventListener('change', updSums);

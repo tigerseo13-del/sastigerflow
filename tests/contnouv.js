@@ -69,7 +69,7 @@ const pj  = d.getElementById("fold-pj");
 /* Demande du 28/07 : le technicien lit le matériel et la checklist avant de
    partir. Repliées, elles étaient oubliées. Le chevron reste : on peut les
    refermer, mais l'état d'ARRIVÉE est ouvert. */
-t("« Matériel à apporter » est ouverte au chargement", mat && mat.classList.contains("open"));
+t("« Matériel à emporter » est ouverte au chargement", mat && mat.classList.contains("open"));
 t("« Récapitulatif d'intervention » est ouverte au chargement", rec && rec.classList.contains("open"));
 /* Pièces jointes reste repliée : c'est le seul bloc vraiment accessoire, et
    il faut qu'au moins un repli subsiste pour que le mécanisme garde un sens. */
