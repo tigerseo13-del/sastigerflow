@@ -116,8 +116,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 /* 27/07 : le bouton d'en-tete est un element flex — il RETRECISSAIT quand la
    place manquait et son libelle debordait de la pastille orange. C'est ce qui
    donnait ce bouton coupe en haut a droite. Il ne se comprime plus. */
-.card-h .act{margin-left:auto;flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;background:var(--orange);color:#fff;font-weight:700;font-size:.79rem;padding:9px 14px;border-radius:11px}
-.card-h .act:hover{background:var(--orange-deep)}
+/* 27/07 — CAUSE REELLE du bouton coupe. Sur cette page `.act` designe un bouton
+   ICONE de 32x32 (button.act{width:32px;height:32px}). Les huit boutons
+   « + Ajouter », qui portent du TEXTE, heritaient donc d'une largeur de 32 px :
+   leur libelle debordait de la pastille orange. Mes deux corrections
+   precedentes (flex:none, puis min-width:0 sur la grille) traitaient des
+   symptomes reels mais pas celui-la. Ils ont leur propre classe maintenant. */
+.addbtn{margin-left:auto;flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;
+  background:var(--orange);color:#fff;font-weight:700;font-size:.79rem;padding:9px 15px;border-radius:11px;
+  border:0;cursor:pointer;font-family:inherit;transition:.13s}
+.addbtn:hover{background:var(--orange-deep)}
+.addbtn:active{transform:scale(.97)}
 
 .dt{width:100%;border-collapse:collapse;font-size:.85rem}
 .dt th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;padding:12px 14px;border-bottom:1px solid var(--line);background:#FBFBFC;white-space:nowrap}
@@ -596,7 +605,7 @@ function uDel(i){ const u = USERS[i]; USERS.splice(i, 1); spRender(); toast(u.p 
 function uFilter(){ UFROLE = $id("uf-role").value; UFST = $id("uf-st").value; UFQ = ($id("uf-q").value || "").toLowerCase().trim(); $id("utbody").innerHTML = urows(); $id("ucount").textContent = document.querySelectorAll("#utbody tr").length; }
 R.users = () => `
   <div class="card">
-    <div class="card-h">Gestion des utilisateurs<button class="act" onclick="uAdd()">+ Ajouter</button></div>
+    <div class="card-h">Gestion des utilisateurs<button class="addbtn" onclick="uAdd()">+ Ajouter</button></div>
     <div class="utools">
       <select id="uf-role" onchange="uFilter()"><option value="all">Rôle</option><option>Administrateur</option><option>Manager</option><option>Opérateur</option></select>
       <select id="uf-st" onchange="uFilter()"><option value="all">Statut</option><option value="actif">Actif</option><option value="inactif">Inactif</option></select>
@@ -713,7 +722,7 @@ function fSave(){
 }
 R.feries = () => `
   <div class="card">
-    <div class="card-h">Jours fériés<button class="act" onclick="fAdd()">+ Ajouter</button></div>
+    <div class="card-h">Jours fériés<button class="addbtn" onclick="fAdd()">+ Ajouter</button></div>
     <div class="tscroll"><table class="dt"><thead><tr><th>Nom</th><th>Date</th><th>Statut</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${frows()}</tbody></table></div>
     <div class="tfoot"><span>1-${FERIES.length} sur ${FERIES.length} affichés</span><span>Par page&nbsp;<b>20</b></span></div>
@@ -722,7 +731,7 @@ R.feries = () => `
 /* ----- catégories de services ----- */
 R.cats = () => `
   <div class="card">
-    <div class="card-h">Gestion des catégories de services<button class="act" onclick="toast('Nouvelle catégorie — nom + prestations associées')" title="Changer le statut">+ Ajouter</button></div>
+    <div class="card-h">Gestion des catégories de services<button class="addbtn" onclick="toast('Nouvelle catégorie — nom + prestations associées')" title="Changer le statut">+ Ajouter</button></div>
     <div class="tscroll"><table class="dt"><thead><tr><th>Nom</th><th>Statut</th><th>Nombre de prestations</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${CATS.map((c, i) => `<tr onclick="toast('Modification de « ${c.n} »')">
       <td><b>${c.n}</b></td>
@@ -750,7 +759,7 @@ R.prest = () => {
     <div style="background:#E8F9EE;border:1px solid #BFE5D8;border-radius:18px;padding:18px 20px"><div style="font-family:'Sora';font-size:1.65rem;font-weight:800;letter-spacing:-.5px;color:#0A6B51">33</div><div style="font-size:.78rem;font-weight:600;color:var(--ink-2);margin-top:3px">Prestations actives</div></div>
   </div>
   <div class="card">
-    <div class="card-h">Prestations<button class="act" onclick="pAdd()">+ Ajouter</button></div>
+    <div class="card-h">Prestations<button class="addbtn" onclick="pAdd()">+ Ajouter</button></div>
     <div class="tscroll"><table class="dt">
     <thead><tr><th>Nom</th><th>Prix unitaire</th><th>Unité</th><th>TVA</th><th>Statut</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${cats.map(c => `<tr><td colspan="6" style="background:#FBFBFC;font-weight:800;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)">${c}</td></tr>` +
@@ -797,7 +806,7 @@ function pSave(){
 /* ----- taux de TVA ----- */
 R.tva = () => `
   <div class="card">
-    <div class="card-h">Taux de TVA<button class="act" onclick="tvaAdd()">+ Ajouter un taux de TVA</button></div>
+    <div class="card-h">Taux de TVA<button class="addbtn" onclick="tvaAdd()">+ Ajouter un taux de TVA</button></div>
     <div class="tscroll"><table class="dt"><thead><tr><th>Nom</th><th>Taux</th><th>Par défaut</th><th>Statut</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${TVAS.map((t, i) => `<tr>
       <td><b>${t.n}</b></td><td style="font-variant-numeric:tabular-nums">% ${t.t}</td>
@@ -902,7 +911,7 @@ function docrOuvrir(i){
 let RULES = [ {n:"CGV sur devis", j:"Devis", doc:"Terms and Condition", on:true} ];
 R.docs = () => `
   <div class="card">
-    <div class="card-h">Documents réutilisables<button class="act" onclick="document.getElementById('docr-in').click()" title="PDF, DOCX ou image">+ Téléverser</button></div>
+    <div class="card-h">Documents réutilisables<button class="addbtn" onclick="document.getElementById('docr-in').click()" title="PDF, DOCX ou image">+ Téléverser</button></div>
     <input type="file" id="docr-in" multiple hidden onchange="docrAdd(this)">
     <div class="docgrid">${DOCSR.map((d, i) => {
       const img = /^image\//.test(d.mime || "") && d.src;
@@ -920,7 +929,7 @@ R.docs = () => `
     }).join("") || '<div class="emptybox" style="grid-column:1/-1">Aucun document réutilisable.<br><small style="font-size:.75rem">Contrat type, CGV, attestation — ils deviennent joignables aux devis et factures.</small></div>'}</div>
   </div>
   <div class="card">
-    <div class="card-h" style="margin-top:2px">Règles de pièces jointes<button class="act" onclick="toast('Une règle joint automatiquement un document à un type d\\'envoi')">+ Ajouter une règle</button></div>
+    <div class="card-h" style="margin-top:2px">Règles de pièces jointes<button class="addbtn" onclick="toast('Une règle joint automatiquement un document à un type d\\'envoi')">+ Ajouter une règle</button></div>
     <div class="tscroll"><table class="dt"><thead><tr><th>Nom de la règle</th><th>Joindre à</th><th>Document</th><th>Statut</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${RULES.map((r, i) => `<tr>
       <td><b>${r.n}</b></td><td>${r.j}</td><td>${r.doc}</td>
@@ -939,7 +948,7 @@ function tplPanel(key){
   const list = TPLS[key];
   return `
   <div class="card">
-    <div class="card-h">${TPL_LBL[key]}<button class="act" onclick="tplAdd('${key}')">+ Ajouter</button></div>
+    <div class="card-h">${TPL_LBL[key]}<button class="addbtn" onclick="tplAdd('${key}')">+ Ajouter</button></div>
     <div class="tscroll"><table class="dt"><thead><tr><th>Nom</th><th>Par défaut</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${list.length ? list.map((t, i) => `<tr>
       <td><b>${t.n}</b></td>
