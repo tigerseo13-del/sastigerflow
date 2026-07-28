@@ -964,6 +964,40 @@ function cpjRender(){
 }
 
 /* ================= ENREGISTREMENT ================= */
+/* ===== 28/07 — LES CONTRATS N'ALLAIENT NULLE PART ====================
+   Cette page n'avait AUCUN code d'ecriture vers Supabase : elle se contentait
+   du stockage local. Un contrat signe ne vivait donc que dans le navigateur de
+   celui qui l'avait saisi. Colonnes deduites de ce que lisent contrats-liste
+   et contrat.html : numero, client, titre, montant_ttc, frequence, statut,
+   date_fin, passages_prevus, renouvellement.
+
+   Comme pour les devis, l'echec n'est jamais muet : le contrat reste en local
+   et on le dit. */
+async function sbSaveContrat(rec){
+  try{
+    if(typeof SB === "undefined") return;
+    const {data} = await SB.auth.getSession();
+    if(!data || !data.session){
+      toast("💾 Contrat " + rec.ref + " gardé en local — connecte-toi pour l'enregistrer en base");
+      return;
+    }
+    const {error} = await SB.from("contrats").insert({
+      numero: rec.ref,
+      client: rec.client || null,
+      titre: rec.titre || null,
+      montant_ttc: rec.montant || 0,
+      frequence: rec.freq || null,
+      statut: rec.statut || "actif",
+      date_fin: rec.fin || null,
+      passages_prevus: rec.nbint || 0,
+      renouvellement: rec.renouv ? (rec.fin || null) : null
+    });
+    if(error) throw error;
+    toast("☁️ Contrat " + rec.ref + " enregistré en base");
+  }catch(e){
+    toast("⚠️ Base injoignable — " + rec.ref + " reste local : " + (e.message || "erreur"));
+  }
+}
 function saveContrat(statut){
   /* champs obligatoires */
   let missing = false;
@@ -1012,6 +1046,8 @@ function saveContrat(statut){
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-contrats", JSON.stringify(box.slice(0, 30)));
   }catch(e){}
+  /* le local d'abord — il ne peut pas echouer — puis la base */
+  sbSaveContrat(rec);
   toast(statut === "brouillon"
     ? "Brouillon " + ref + " enregistré — visible dans la liste des contrats"
     : "Contrat " + ref + " enregistré et envoyé à " + rec.client);

@@ -1542,24 +1542,40 @@ async function cliBase(){
 cliBase();
 async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
 
+/* ===== 28/07 — L'ECRITURE EN BASE NE MARCHAIT PAS =====================
+   Cette fonction lisait cinq champs qui N'EXISTENT PAS : f-num, f-client,
+   f-titre, f-valid, t-ttc. Les ateliers emploient v-client, v-objet, v-ttc,
+   v-valid, et la reference vit dans DREF. La toute premiere ligne levait donc
+   « Cannot read properties of null », et le catch l'avalait en mode
+   silencieux — celui de l'enregistrement automatique. Resultat : AUCUN devis
+   ni AUCUNE facture n'est jamais arrive dans Supabase, sans le moindre signal.
+
+   L'echec ne doit plus etre muet : on previent, meme en mode silencieux,
+   parce qu'une piece qui n'atteint pas la base n'est sauvegardee nulle part. */
+/* Et elle inserait dans la table DEVIS : les factures partaient dans le mauvais
+   tuyau. La table factures attend « montant » et « echeance », pas
+   « montant_ttc » ni « date_validite » — schema deduit de facture-liste.html. */
 async function sbSaveDevis(statut, silent){
+  const g0 = id => document.getElementById(id);
   try{
-    if(!await sbSession()){ if(!silent) toast("💾 Brouillon local (connecte-toi pour enregistrer en base)"); return; }
-    const ttc = parseFloat((document.getElementById("t-ttc").textContent || "0").replace(/\s/g,"").replace(",",".")) || 0;
-    const {error} = await SB.from("devis").insert({
-      numero: document.getElementById("f-num").value,
-      client: document.getElementById("f-client").value || null,
-      titre: document.getElementById("f-titre").value || null,
-      montant_ttc: ttc,
-      statut,
-      lignes: LIGNES.map(l => ({d:l.designation, q:l.qte, pu:l.pu, tva:l.tva})),
-      date_validite: document.getElementById("f-valid").value || null
+    if(!await sbSession()){ if(!silent) toast("💾 Pro forma locale (connecte-toi pour enregistrer en base)"); return; }
+    const ttc = parseFloat((document.getElementById("v-ttc") || {textContent:"0"}).textContent.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
+    const {error} = await SB.from("factures").insert({
+      numero: DREF,
+      client: (g0("v-client") || {}).value || null,
+      titre:  (g0("v-objet")  || {}).value || null,
+      montant: ttc,
+      statut: statut || CURSTAT || "brouillon",
+      lignes: (typeof LIGNES !== "undefined" ? LIGNES : []).map(l => ({d:l.designation, q:l.qte, pu:l.pu, tva:l.tva})),
+      echeance: (g0("v-valid") || {}).value || null
     });
     if(error) throw error;
-    if(!silent) toast("💾 Devis enregistré dans la base ✓");
-    else toast("📤 Devis « " + document.getElementById("f-num").value + " » enregistré en base");
-  }catch(e){ if(!silent) toast("⚠️ Enregistrement impossible : " + (e.message || "erreur")); }
+    toast(silent ? "☁️ Facture " + DREF + " enregistrée en base" : "💾 Facture enregistrée dans la base ✓");
+  }catch(e){
+    toast("⚠️ Base injoignable — " + DREF + " reste locale : " + (e.message || "erreur"));
+  }
 }
+
 
 </script>
 <div class="sendveil" id="savedveil" onclick="if(event.target===this)savedClose()">
@@ -1568,7 +1584,10 @@ async function sbSaveDevis(statut, silent){
     <div class="srecap" id="savedrecap"></div>
     <div class="savedacts">
       <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
-      <button class="btn2" onclick="dupFacture()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Dupliquer la facture</button>
+          <!-- 28/07 (choix patron) : « Dupliquer la facture » retiree d'ici.
+               On vient de creer la facture : la dupliquer dans la seconde ne
+               repond a aucun besoin. La duplication garde tout son sens sur la
+               fiche et dans la liste, ou l'on reprend une facture existante. -->
       <button class="btn2 danger2" onclick="delBrouillon()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/></svg>Supprimer la pro forma</button>
       <button class="btn2 primary" onclick="validerFacture()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Valider la facture</button>
     </div>

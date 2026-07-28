@@ -1510,24 +1510,39 @@ async function cliBase(){
 cliBase();
 async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
 
+/* ===== 28/07 — L'ECRITURE EN BASE NE MARCHAIT PAS =====================
+   Cette fonction lisait cinq champs qui N'EXISTENT PAS : f-num, f-client,
+   f-titre, f-valid, t-ttc. Les ateliers emploient v-client, v-objet, v-ttc,
+   v-valid, et la reference vit dans DREF. La toute premiere ligne levait donc
+   « Cannot read properties of null », et le catch l'avalait en mode
+   silencieux — celui de l'enregistrement automatique. Resultat : AUCUN devis
+   ni AUCUNE facture n'est jamais arrive dans Supabase, sans le moindre signal.
+
+   L'echec ne doit plus etre muet : on previent, meme en mode silencieux,
+   parce qu'une piece qui n'atteint pas la base n'est sauvegardee nulle part. */
 async function sbSaveDevis(statut, silent){
+  const g0 = id => document.getElementById(id);
   try{
     if(!await sbSession()){ if(!silent) toast("💾 Brouillon local (connecte-toi pour enregistrer en base)"); return; }
-    const ttc = parseFloat((document.getElementById("t-ttc").textContent || "0").replace(/\s/g,"").replace(",",".")) || 0;
+    const ttc = parseFloat((document.getElementById("v-ttc") || {textContent:"0"}).textContent.replace(/[^\d,.-]/g, "").replace(",", ".")) || 0;
     const {error} = await SB.from("devis").insert({
-      numero: document.getElementById("f-num").value,
-      client: document.getElementById("f-client").value || null,
-      titre: document.getElementById("f-titre").value || null,
+      numero: DREF,
+      client: (g0("v-client") || {}).value || null,
+      titre:  (g0("v-objet")  || {}).value || null,
       montant_ttc: ttc,
-      statut,
-      lignes: LIGNES.map(l => ({d:l.designation, q:l.qte, pu:l.pu, tva:l.tva})),
-      date_validite: document.getElementById("f-valid").value || null
+      statut: statut || CURSTAT || "brouillon",
+      lignes: (typeof LIGNES !== "undefined" ? LIGNES : []).map(l => ({d:l.designation, q:l.qte, pu:l.pu, tva:l.tva})),
+      date_validite: (g0("v-valid") || {}).value || null
     });
     if(error) throw error;
-    if(!silent) toast("💾 Devis enregistré dans la base ✓");
-    else toast("📤 Devis « " + document.getElementById("f-num").value + " » enregistré en base");
-  }catch(e){ if(!silent) toast("⚠️ Enregistrement impossible : " + (e.message || "erreur")); }
+    toast(silent ? "☁️ Devis " + DREF + " enregistré en base" : "💾 Devis enregistré dans la base ✓");
+  }catch(e){
+    /* JAMAIS silencieux : une piece qui n'atteint pas la base n'existe que
+       dans ce navigateur. */
+    toast("⚠️ Base injoignable — " + DREF + " reste local : " + (e.message || "erreur"));
+  }
 }
+
 
 </script>
 <div class="sendveil" id="sendveil" onclick="if(event.target===this)sendClose()">
