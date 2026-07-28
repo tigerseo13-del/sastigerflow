@@ -514,8 +514,8 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
       <div class="frow">
         <div class="fgroup">
-          <label for="f-clientn-7">Source du client</label>
-          <select id="f-clientn-7">
+          <label for="f-source">Source du client</label>
+          <select id="f-source">
             <option value="">Sélectionner…</option>
             <option>Appel direct</option><option>Site web</option><option>Recommandation</option>
             <option>Google / Avis</option><option>Passage sur place</option><option>Partenaire</option>
@@ -609,7 +609,8 @@ function inboxPush(row){
     const c = JSON.parse(localStorage.getItem("tigerflow-clients-cache") || "[]");
     const j = c.findIndex(x => x.nom === row.nom);
     const vue = {nom:row.nom, ville:row.ville || "", cp:row.cp || "",
-                 adresse:row.adresse || "", tel:row.tel || "", mail:row.email || ""};
+                 adresse:row.adresse || "", tel:row.tel || "", mail:row.email || "",
+                 source:row.source || ""};
     if(j >= 0) c[j] = vue; else c.push(vue);
     localStorage.setItem("tigerflow-clients-cache", JSON.stringify(c));
   }catch(e){}
@@ -626,6 +627,10 @@ async function sbSave(nom){
     cp: g("f-cp") || null,
     ville: g("f-ville") || null,
     siret: g("f-siret") || null,
+    /* 28/07 — la source etait demandee au formulaire et jetee : jamais
+       enregistree, donc jamais affichable. La fiche client repliait sur
+       « Cree a la main », qui ne dit rien d'utile sur le client. */
+    source: g("f-source") || null,
   };
   try{
     const {data:{session}} = await SB.auth.getSession();
@@ -804,6 +809,7 @@ async function cliCharge(){
   }
   put("f-tel1", c.tel); put("f-adr", c.adresse);
   put("f-cp", c.cp); put("f-ville", c.ville); put("f-siret", c.siret);
+  put("f-source", c.source);
 
   /* Le champ du nom devient lecture seule, avec la raison écrite à l'écran —
      un champ grisé sans explication passe pour une panne. */

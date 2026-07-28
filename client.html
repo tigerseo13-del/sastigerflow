@@ -176,7 +176,10 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .tab.active .n{background:rgba(255,255,255,.25);color:#fff}
 
 /* ============ CARTES ============ */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+/* 28/07 — sans align-items:start, une carte courte s'etire a la hauteur de sa
+   voisine : la carte Contacts, avec un seul contact, occupait toute la hauteur
+   des notes internes. Chaque carte prend desormais sa hauteur naturelle. */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
 .grid .wide{grid-column:span 2}
 .grid .full{grid-column:1/-1}
 .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px 22px;border:1px solid #F0F1F4}
@@ -204,6 +207,20 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .tx-green{background:var(--green-bg);color:var(--green-d)}
 
 /* Contacts */
+.qic.q-late{background:var(--red-bg);color:var(--red)}
+#q-du b{color:var(--red)}
+#q-du b em{color:var(--muted);font-weight:500}
+.vinner{text-align:center;padding:26px 14px;color:var(--muted);font-size:.9rem}
+.vinner .vbtn{margin-top:12px}
+.actl{list-style:none;margin:0;padding:0}
+.actl li{display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px dashed var(--line)}
+.actl li:last-child{border-bottom:0}
+.actl .ic{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:.9rem}
+.actl .tx{flex:1;min-width:0}
+.actl .tx b{display:block;font-size:.87rem;font-weight:700}
+.actl .tx small{display:block;font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actl .dt{font-size:.78rem;color:var(--muted);white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}
+.actl .vide{color:var(--muted);font-size:.85rem;padding:14px 2px}
 .contact{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}
 .contact:last-child{margin-bottom:0}
 .contact .cph{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:.72rem;font-family:'Sora';flex:none;background:var(--blue)}
@@ -537,6 +554,14 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <span class="sep">·</span><span id="h-depuis">Client depuis décembre 2025</span>
       </div>
       <div class="quick">
+        <!-- 28/07 — « A encaisser » n'apparait QUE si le client doit quelque
+             chose. Une cartouche a zero sur tous les bons payeurs occuperait
+             la place sans rien dire ; celle-ci se voit precisement quand il
+             faut agir. -->
+        <div class="q" id="q-du" style="display:none">
+          <span class="qic q-late"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <div><small>À encaisser</small><b id="q-du-m">—</b></div>
+        </div>
         <div class="q">
           <span class="qic q-money"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
           <div><small>CA total</small><b>3 840 €</b></div>
@@ -623,7 +648,15 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         </div>
       </div>
 
-      
+      <!-- 28/07 — resume d'activite du client. Il n'existait nulle part : la
+           fiche montrait les contacts et les notes, mais rien qui reponde a
+           « ou en est-on avec ce client ». Construit sur les VRAIES pieces —
+           devis, contrats, factures, interventions — pas sur un exemple. -->
+      <div class="card full">
+        <div class="card-h"><span class="chsq c"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>Activité récente<span class="more" id="act-n"></span></div>
+        <ul class="actl" id="actlist"></ul>
+      </div>
+
 
     </div>
 
@@ -874,10 +907,105 @@ function cliDel(e){
   cliMenuClose(); toast('🗑 Client supprimé — bientôt relié à la base');
 }
 
+
+/* ===== Activité récente : les vraies pieces de CE client (28/07) =====
+   On lit les stocks du logiciel et on ne garde que ce qui porte le nom du
+   client affiche. Aucune donnee d'exemple : une fiche neuve affiche une
+   ligne « rien encore », ce qui est l'information juste. */
+(function(){
+  var el = document.getElementById("actlist");
+  if(!el) return;
+  var nom = "";
+  try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
+  var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+  var mien = function(x){ return x && (!nom || x.client === nom); };
+  var ev = [];
+
+  J("tigerflow-inbox-devis").filter(mien).forEach(function(d){
+    ev.push({d:d.date, ic:"🧾", bg:"var(--blue-bg)", b:"Devis " + d.ref, s:d.titre || "", h:"devis-detail.html?ref=" + encodeURIComponent(d.ref)});
+  });
+  J("tigerflow-inbox-factures").filter(mien).forEach(function(f){
+    ev.push({d:f.date, ic:"💶", bg:"var(--green-bg)", b:"Facture " + f.ref, s:f.titre || "", h:"facture-detail.html?ref=" + encodeURIComponent(f.ref)});
+  });
+  J("tigerflow-inbox-contrats").filter(mien).forEach(function(c){
+    ev.push({d:c.deb, ic:"📄", bg:"var(--orange-soft)", b:"Contrat " + c.ref, s:c.titre || "", h:"contrat.html?n=" + encodeURIComponent(c.ref)});
+  });
+  J("tigerflow-added-interventions").filter(mien).forEach(function(i){
+    ev.push({d:i.date, ic:"🗓️", bg:"var(--amber-bg)", b:"Intervention planifiée", s:[i.ville, i.type].filter(Boolean).join(" · "), h:"calendrier.html"});
+  });
+
+  ev.sort(function(a2, b2){ return String(b2.d || "").localeCompare(String(a2.d || "")); });
+  var n = document.getElementById("act-n");
+  if(n) n.textContent = ev.length ? ev.length + (ev.length > 1 ? " évènements" : " évènement") : "";
+
+  var fd = function(x){
+    if(!x) return "—";
+    var p = String(x).split("-");
+    return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : String(x);
+  };
+  el.innerHTML = ev.length
+    ? ev.slice(0, 8).map(function(e){
+        return '<li onclick="location.href=\'' + e.h + '\'" style="cursor:pointer">' +
+          '<span class="ic" style="background:' + e.bg + '">' + e.ic + '</span>' +
+          '<span class="tx"><b>' + e.b + '</b><small>' + (e.s || "") + '</small></span>' +
+          '<span class="dt">' + fd(e.d) + '</span></li>';
+      }).join("")
+    : '<li class="vide">Rien encore sur ce client — le premier devis ou la première intervention apparaîtra ici.</li>';
+})();
+
+
+/* ===== Reste a encaisser (28/07) ====================================
+   Somme des factures NON soldees de ce client, paiements et avoirs deduits.
+   Rien n'affichait cette information sur la fiche : il fallait ouvrir
+   l'onglet Factures et faire le compte a la main. */
+(function(){
+  var box = document.getElementById("q-du");
+  if(!box) return;
+  var nom = "";
+  try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
+  var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || {}; }catch(e){ return {}; } };
+  var A = function(k){ var v = J(k); return Array.isArray(v) ? v : []; };
+
+  var paiements = J("tigerflow-factures-paiements");
+  var avoirs    = J("tigerflow-factures-avoirs");
+  var statuts   = J("tigerflow-factures-statuts");
+  var somme = function(t){ return (t || []).reduce(function(a, x){ return a + (+x.m || 0); }, 0); };
+
+  var du = 0, nb = 0, retard = false;
+  var auj = new Date().toISOString().slice(0, 10);
+  A("tigerflow-inbox-factures").forEach(function(f){
+    if(!f || (nom && f.client !== nom)) return;
+    var st = statuts[f.ref] || f.statut || "brouillon";
+    if(st === "brouillon" || st === "proforma") return;   /* une pro forma ne se reclame pas */
+    var reste = (+f.montant || 0) - somme(paiements[f.ref]) - somme(avoirs[f.ref]);
+    if(reste > 0.005){
+      du += reste; nb++;
+      if(f.valid && f.valid < auj) retard = true;
+    }
+  });
+
+  if(du <= 0.005) return;   /* bon payeur : la cartouche reste invisible */
+  var eur = function(n){
+    return n.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2})
+      .replace(/\u202f/g, "\u00a0") + "\u00a0\u20AC";
+  };
+  document.getElementById("q-du-m").innerHTML = eur(du) +
+    ' <em>' + nb + ' facture' + (nb > 1 ? 's' : '') + (retard ? ' · en retard' : '') + '</em>';
+  box.style.display = "";
+})();
+
 /* ---- notes horodatées, persistées par client ---- */
-const NKEY = 'tigerflow-notes-CLI-2026-00013';
+/* 28/07 — la cle etait FIGEE sur un seul identifiant : toutes les fiches
+   partageaient les memes notes internes. Une note ecrite sur un client
+   s'affichait chez tous les autres — codes d'acces compris. La cle suit
+   desormais le client affiche. */
+const NKEY = 'tigerflow-notes-' + encodeURIComponent(
+  (function(){ try{ return new URLSearchParams(location.search).get("c") || "demo"; }catch(e){ return "demo"; } })());
 function notesGet(){
   try{ const v = JSON.parse(localStorage.getItem(NKEY)); if(Array.isArray(v)) return v; }catch(err){}
+  /* Les notes d'exemple n'ont de sens que sur la fiche de demonstration :
+     un client reel demarre avec un carnet vide. */
+  if(NKEY !== "tigerflow-notes-demo") return [];
   return [
     {t:"12/06/2026 09:12", a:"Thomas Martin", txt:"Accès par la cour intérieure — code 4512B. Prévenir Sarah Meyer 30 min avant le passage."},
     {t:"03/04/2026 17:40", a:"Karim M.", txt:"Sensible au bruit : privilégier le samedi matin. Chat dans les locaux → postes sécurisés uniquement."},
@@ -1195,6 +1323,7 @@ function toast(msg, undoFn){
       email: (r && r.email) || "",
       ref: "Nouveau client",
       siret: (r && r.siret) ? r.siret : (r && r.type === "particulier" ? "\u2014 (particulier)" : "\u2014 (\u00e0 compl\u00e9ter)"),
+      source: (r && r.source) || "",
       depuis: mois.charAt(0).toUpperCase() + mois.slice(1)
     };
   }
@@ -1233,11 +1362,23 @@ function toast(msg, undoFn){
     if(_a2) _a2.innerHTML = f.adr
       ? '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(f.adr) + '" target="_blank" rel="noopener">' + f.adr + ' \u00b7 Itin\u00e9raire</a>'
       : "Adresse \u00e0 compl\u00e9ter";
+    /* 28/07 — ce badge est celui de la SOURCE du client : d'ou il vient. Il
+       affichait « Cree a la main », qui parle de la saisie et non du client,
+       et occupait la place d'une information commerciale utile. Sans source
+       renseignee on ne met rien : un badge vide vaut mieux qu'un badge creux. */
     var srcb = document.querySelector(".hero .srcb");
-    if(srcb) srcb.textContent = "Cr\u00e9\u00e9 \u00e0 la main";
+    if(srcb){
+      if(f.source) srcb.textContent = f.source;
+      else srcb.style.display = "none";
+    }
     /* compteurs à zéro : un nouveau client n'a encore rien fait */
     var zed = [["CA total","0 \u20ac",""],["Interventions","0","aucune pour l'instant"],["Contrat","\u2014","aucun contrat actif"],["Prochaine visite","\u2014","rien de planifi\u00e9"]];
-    document.querySelectorAll(".hero .quick .q").forEach(function(el, i){
+    /* 28/07 — cette boucle ecrit PAR POSITION : zed[0] dans la premiere
+       cartouche, zed[1] dans la deuxieme, etc. Ajouter une cartouche en tete
+       decalait tout d'un cran — le CA total atterrissait dans « A encaisser ».
+       Meme piege que le brouillon du formulaire client, corrige ce matin.
+       On exclut explicitement la cartouche qui ne fait pas partie du jeu. */
+    document.querySelectorAll(".hero .quick .q:not(#q-du)").forEach(function(el, i){
       var z = zed[i]; if(!z) return;
       var sm = el.querySelector("small"), b = el.querySelector("b");
       if(sm) sm.textContent = z[0];
@@ -1267,9 +1408,33 @@ function toast(msg, undoFn){
       equip:   ["\ud83e\uddf0 Aucun équipement installé",          "Ajouter un équipement", "", "toast('Ajout d\\'un équipement — depuis la fiche du site')"],
       rap:     ["\ud83d\udcca Aucun rapport pour ce client — ils arrivent avec les interventions terminées"]
     };
+    /* 28/07 — on ne remplace PLUS l'onglet entier. L'ancienne version ecrasait
+       tout le panneau, donc l'en-tete de la carte partait avec le contenu : sur
+       un client neuf, l'onglet Devis n'avait plus ni titre, ni « Tous les
+       devis », ni « + Creer un devis ». Le bouton d'action changeait de place
+       d'un client a l'autre — en haut a droite chez les uns, au milieu du vide
+       chez les autres. La meme lecon avait ete tiree le 27/07 pour l'onglet
+       Documents, sans etre generalisee.
+       On garde donc l'en-tete et on ne vide que ce qu'il y a dessous. */
     Object.keys(PANES).forEach(function(k){
       var p = document.querySelector('[data-tab="' + k + '"]');
-      if(p) p.innerHTML = vide.apply(null, PANES[k]);
+      if(!p) return;
+      var carte = p.querySelector(".card"), tete = carte && carte.querySelector(".card-h");
+      if(!tete){ p.innerHTML = vide.apply(null, PANES[k]); return; }
+      /* l'en-tete reste, le reste de la carte cede la place au message */
+      while(tete.nextSibling) carte.removeChild(tete.nextSibling);
+      var d = document.createElement("div");
+      d.className = "vinner";
+      d.innerHTML = vide.apply(null, PANES[k]).replace(/^<div class="card wide vempty"[^>]*>/, "").replace(/<\/div>$/, "");
+      carte.appendChild(d);
+      /* les liens d'action de l'en-tete emportent le client courant */
+      tete.querySelectorAll("a.addbtn, a.more").forEach(function(a2){
+        var h = a2.getAttribute("href") || "";
+        /* uniquement les vraies pages : un href="#" deviendrait "#?c=…" */
+        if(h.indexOf(".html") > -1 && h.indexOf("c=") < 0 && qcli){
+          a2.setAttribute("href", h + (h.indexOf("?") > -1 ? "&" : "?") + "c=" + qcli);
+        }
+      });
     });
     /* 27/07 : l'onglet Documents n'est PLUS vide par ce chemin — il porte son
        bouton d'ajout et sa grille de vignettes, qui savent deja dire qu'ils sont

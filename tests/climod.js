@@ -152,6 +152,171 @@ const val = (w, id) => { const e = w.document.getElementById(id); return e ? e.v
     !/els\[i\]/.test(srcNouv),
     "c'est la restauration par index qui decalait les champs");
 
+  /* ===== 4 ter. LA SOURCE DU CLIENT ================================== */
+  /* 28/07 — le formulaire demandait « Source du client » et jetait la reponse :
+     elle n'etait enregistree nulle part. La fiche affichait donc un badge
+     « Cree a la main », qui parle de la SAISIE et non du client, a la place
+     d'une information commerciale utile. */
+  const srcW = await ouvrirEnModification({
+    nom: CLIENT.nom, session: true,
+    enBase: { ...CLIENT, source: "Recommandation" }
+  });
+  t("le champ Source porte un identifiant explicite",
+    !!srcW.document.getElementById("f-source"),
+    "il s'appelait f-clientn-7, un identifiant genere");
+  t("la source est reproposee en modification",
+    val(srcW, "f-source") === "Recommandation",
+    "vu : " + val(srcW, "f-source"));
+
+  srcW.document.getElementById("f-source").value = "Partenaire";
+  srcW.saveClient();
+  await new Promise(r => setTimeout(r, 60));
+  t("la source part vers la base",
+    srcW.__ecrit && srcW.__ecrit.r.source === "Partenaire",
+    "envoye : " + JSON.stringify(srcW.__ecrit && srcW.__ecrit.r.source));
+
+  const cacheSrc = JSON.parse(srcW.localStorage.getItem("tigerflow-clients-cache") || "[]");
+  t("la copie locale transporte aussi la source",
+    (cacheSrc.find(x => x.nom === CLIENT.nom) || {}).source === "Partenaire");
+
+  /* Le badge de la fiche ne doit plus jamais annoncer le mode de saisie. */
+  t("la fiche client n'affiche plus « Créé à la main »",
+    !/Cr\\u00e9\\u00e9 \\u00e0 la main|Créé à la main/.test(srcFiche),
+    "ce badge parle de la saisie, pas du client");
+  t("le badge est masqué quand aucune source n'est renseignée",
+    /srcb\.style\.display = "none"/.test(srcFiche),
+    "un badge vide vaut mieux qu'un badge creux");
+
+  /* ===== 4 quater. LA FICHE CLIENT ================================== */
+  const ficheClient = (c, seed) => new Promise(resolve => {
+    const dom = new JSDOM(srcFiche, {
+      runScripts: "dangerously", url: "https://x/client.html?c=" + encodeURIComponent(c),
+      beforeParse(w) {
+        w.matchMedia = () => ({ matches:false, addListener(){}, removeListener(){}, addEventListener(){}, removeEventListener(){} });
+        w.HTMLCanvasElement.prototype.getContext = () => null;
+        w.Element.prototype.scrollIntoView = function(){}; w.scrollTo = () => {};
+        w.supabase = { createClient: () => ({ auth:{getSession:async()=>({data:{session:null}})}, from:()=>({select:()=>({eq:()=>({limit:async()=>({data:[],error:null})})})}) }) };
+        Object.keys(seed || {}).forEach(k => w.localStorage.setItem(k, JSON.stringify(seed[k])));
+      }
+    });
+    setTimeout(() => resolve(dom.window), 600);
+  });
+
+  const SEED = {
+    "tigerflow-inbox-devis": [{ ref:"DEV-1", client:"belfort jordan", titre:"Cafards", date:"2026-07-28" }],
+    "tigerflow-inbox-factures": [{ ref:"FAC-1", client:"belfort jordan", titre:"Désinfection", date:"2026-07-26" }],
+    "tigerflow-added-interventions": [{ client:"belfort jordan", ville:"Versailles", type:"rongeur", date:"2026-08-02" }]
+  };
+
+  /* LA FUITE DES NOTES. La cle etait figee sur un seul identifiant : toutes
+     les fiches partageaient les memes notes internes, codes d'acces compris. */
+  const wA = await ficheClient("belfort jordan", SEED);
+  const wB = await ficheClient("Hôtel du Parc", SEED);
+  t("la clé des notes suit le client affiché",
+    wA.eval("NKEY") !== wB.eval("NKEY"),
+    "deux clients partagent le même carnet : " + wA.eval("NKEY"));
+  t("un client réel démarre avec un carnet vide",
+    wA.eval("notesGet()").length === 0,
+    "il héritait des notes de démonstration d'un autre dossier");
+
+  /* Le resume d'activite, construit sur les vraies pieces. */
+  const lignes = [...wA.document.querySelectorAll("#actlist li")];
+  t("la fiche client montre un résumé d'activité", lignes.length === 3,
+    lignes.length + " ligne(s) au lieu de 3");
+  t("le résumé est trié du plus récent au plus ancien",
+    /Intervention/.test(lignes[0].textContent) && /Facture/.test(lignes[2].textContent),
+    lignes.map(l => l.textContent.replace(/\s+/g, " ").trim().slice(0, 24)).join(" | "));
+  t("chaque ligne mène à sa pièce",
+    lignes.every(l => /location\.href/.test(l.getAttribute("onclick") || "")));
+
+  const vide = await ficheClient("client sans rien", SEED);
+  t("un client sans historique le dit au lieu d'un exemple",
+    /Rien encore/.test(vide.document.querySelector("#actlist li").textContent));
+
+  /* Les cartes ne s'etirent plus l'une sur l'autre. */
+  t("les cartes prennent leur hauteur naturelle",
+    /\.grid\{[^}]*align-items:start/.test(srcFiche),
+    "la carte Contacts s'etirait a la hauteur des notes");
+
+  /* ===== 4 quinquies. LE RESTE À ENCAISSER ========================== */
+  /* Rien n'affichait cette information sur la fiche : il fallait ouvrir
+     l'onglet Factures et faire le compte a la main. */
+  const FACT = {
+    "tigerflow-inbox-factures": [
+      { ref:"FAC-1", client:"Hôtel du Parc", montant:1596, date:"2026-07-01", valid:"2026-07-20" },
+      { ref:"FAC-2", client:"Hôtel du Parc", montant:500,  date:"2026-07-10", valid:"2026-09-01" },
+      { ref:"FAC-3", client:"Bon Payeur",    montant:300,  date:"2026-07-01", valid:"2026-08-01" },
+      { ref:"FAC-4", client:"Pro Forma SA",  montant:900,  date:"2026-07-01", valid:"2026-08-01" }],
+    "tigerflow-factures-paiements": { "FAC-1":[{m:596}], "FAC-3":[{m:300}] },
+    "tigerflow-factures-statuts": { "FAC-1":"attente", "FAC-2":"attente", "FAC-3":"payee", "FAC-4":"brouillon" }
+  };
+  const du = async c => {
+    const w2 = await ficheClient(c, FACT);
+    const b2 = w2.document.getElementById("q-du");
+    return { visible: b2 && b2.style.display !== "none",
+             txt: (w2.document.getElementById("q-du-m") || {}).textContent || "",
+             w: w2 };
+  };
+
+  let r = await du("Hôtel du Parc");
+  t("un client qui doit de l'argent voit son reste à encaisser", r.visible);
+  t("le montant déduit les paiements déjà reçus",
+    /1\s*500,00/.test(r.txt), "affiché : « " + r.txt.replace(/\s+/g, " ").trim() + " »");
+  t("le nombre de factures concernées est indiqué", /2 factures/.test(r.txt));
+  t("le retard est signalé quand une échéance est dépassée", /en retard/.test(r.txt));
+
+  r = await du("Bon Payeur");
+  t("un client à jour ne voit aucune cartouche",
+    !r.visible, "une cartouche à zéro occuperait la place sans rien dire");
+
+  r = await du("Pro Forma SA");
+  t("une pro forma n'est pas réclamée", !r.visible,
+    "un document non validé ne se réclame pas");
+
+  /* LE PIÈGE : la fiche réécrit les cartouches PAR POSITION. Ajouter une
+     cartouche en tête décalait tout d'un cran — le CA total atterrissait
+     dans « À encaisser ». Même piège que le brouillon du formulaire. */
+  const cart = [...r.w.document.querySelectorAll(".hero .quick .q")]
+    .map(x => (x.querySelector("small") || {}).textContent);
+  t("les autres cartouches n'ont pas été décalées",
+    cart[1] === "CA total" && cart[2] === "Interventions",
+    "vues : " + cart.join(" | "));
+
+  /* ===== 4 sexies. LES ONGLETS D'UN CLIENT NEUF ==================== */
+  /* 28/07 — les onglets d'un client sans historique etaient ECRASES en entier :
+     l'en-tete de la carte partait avec le contenu, donc plus de titre, plus de
+     « Tous les devis », plus de « + Creer un devis ». Le bouton d'action
+     changeait de place d'un client a l'autre — en haut a droite chez les uns,
+     au milieu du vide chez les autres. */
+  const neuf = await ficheClient("jordan belfort", {});
+  const ONGLETS = ["devis", "ctr", "fact", "histint", "equip"];
+  const sansTete = ONGLETS.filter(k => {
+    const p = neuf.document.querySelector('[data-tab="' + k + '"]');
+    return !p || !p.querySelector(".card-h");
+  });
+  t("chaque onglet garde son en-tête, même sans contenu",
+    sansTete.length === 0, "sans en-tête : " + sansTete.join(", "));
+
+  const sansBouton = ONGLETS.filter(k => {
+    const te = neuf.document.querySelector('[data-tab="' + k + '"] .card-h');
+    return !te || !te.querySelector(".addbtn");
+  });
+  t("le bouton d'action reste en haut de la carte",
+    sansBouton.length <= 1, "sans bouton : " + sansBouton.join(", "));
+
+  t("le message « aucun … » vient sous l'en-tête, pas à sa place",
+    ONGLETS.every(k => neuf.document.querySelector('[data-tab="' + k + '"] .vinner')));
+
+  const lien = neuf.document.querySelector('[data-tab="devis"] .card-h .addbtn');
+  t("le bouton emporte le client courant",
+    /devis\.html\?c=jordan/.test(lien.getAttribute("href") || ""),
+    "lien : " + lien.getAttribute("href"));
+
+  /* Un href="#" ne doit pas devenir "#?c=…". */
+  const liens = [...neuf.document.querySelectorAll('.card-h a')].map(a2 => a2.getAttribute("href") || "");
+  t("aucun lien creux n'a reçu le paramètre",
+    !liens.some(h => h.startsWith("#?")), liens.filter(h => h.startsWith("#?")).join(" "));
+
   /* ===== 5. SANS ?c=, C'EST TOUJOURS UNE CRÉATION ===================== */
   const dom = new JSDOM(srcNouv, {
     runScripts: "dangerously", url: "https://x/client-nouveau.html",
