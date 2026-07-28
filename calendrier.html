@@ -123,7 +123,6 @@ h1,.num{font-family:'Sora',sans-serif}
 .dst.done{background:var(--green-bg);color:var(--green-d)}
 .dst.cancel{background:var(--red-bg);color:var(--red)}
 .ev.cancelled{opacity:.42}
-.ev.cancelled .cpv{text-decoration:line-through}
 .lbadge.cancd{background:var(--red-bg);color:#B3261E;border:1px solid #F3C4C0}
 .dmodeb{font-size:.7rem;font-weight:700;background:#F1F2F5;color:var(--ink-2);padding:4px 11px;border-radius:12px}
 .dclose{margin-left:auto;width:36px;height:36px;border-radius:12px;border:1.5px solid transparent;background:#F1F2F5;color:#3A3F4A;font-size:.9rem;cursor:pointer;transition:.12s}
@@ -404,13 +403,34 @@ h1,.num{font-family:'Sora',sans-serif}
 .tcol-body{position:relative;height:calc(var(--hourh) * var(--hcount, 17));background-color:var(--tint,transparent);
   background:repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hourh) - 1px), #F2F3F6 calc(var(--hourh) - 1px), #F2F3F6 var(--hourh));}
 .tcol-body.dropover{background-color:var(--orange-soft)}
-.ev .cpv{font-weight:800;font-size:.74rem;letter-spacing:-.1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.ev .ltype{font-size:.71rem;font-weight:600;color:var(--ink-2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ev .lcli{font-size:.69rem;color:var(--muted);font-weight:500;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ev .lpay{display:flex;align-items:center;gap:6px;margin-top:6px;min-width:0}
-.ev.sm .l1{display:none}                      /* 1h : type + client + heure */
-.ev.xs .l1,.ev.xs .lcli{display:none}         /* 30min : type + heure seulement */
-.ev.xs .ltype{font-size:.7rem}
+/* ===== cartouche refondue le 28/07 (choix patron) =====
+   Ce qu'on cherche du regard depuis le bureau : ou (code postal ET ville), quel
+   nuisible, quel type d'intervention. Le client vient en dernier — utile, mais
+   on ne scanne pas l'agenda pour le lire.
+
+   L'ancien ordre commencait par le code postal SEUL et finissait par l'heure,
+   avec trois pastilles de formes identiques au milieu. Surtout, le repli des
+   creneaux courts sacrifiait le type puis le CLIENT en gardant le code postal :
+   on perdait d'abord ce qui compte. L'ordre de disparition suit desormais
+   l'ordre d'importance, a l'envers.
+
+   Le code postal est en chiffres a largeur fixe : d'une carte a l'autre ils
+   s'alignent au meme x, et la colonne d'un technicien se lit comme une liste
+   d'etapes. C'est ce qui a permis de retirer la pastille coloree des premieres
+   maquettes — tabular-nums fait le travail sans une goutte d'encre. */
+.ev .lloc{display:flex;align-items:center;gap:5px;font-size:.76rem;color:var(--ink);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .lloc b{font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em;flex:none}
+.ev.done .lnui,.ev.cancelled .lnui{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.75}
+.ev .lnui{font-size:.79rem;font-weight:800;color:var(--evc);letter-spacing:-.1px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .ltyp{display:flex;align-items:center;gap:6px;font-size:.7rem;font-weight:600;color:var(--ink-2);margin-top:1px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .lcli{font-size:.68rem;color:var(--muted);font-weight:500;margin-top:5px;padding-top:4px;border-top:1px solid rgba(23,26,32,.07);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Une heure : le client saute, c'est le moins important des quatre.
+   Trente minutes : il ne reste que « ou » et « quoi », sur une seule ligne. */
+.ev.sm .lcli{display:none}
+.ev.xs .lcli,.ev.xs .ltyp{display:none}
+.ev.xs{flex-direction:row;align-items:center;gap:6px}
+.ev.xs .lnui{margin-top:0;font-size:.74rem}
+.ev.xs .lnui::before{content:"· "}
 .mchip{font-size:.71rem;font-weight:800;padding:4.5px 11px;border-radius:10px;white-space:nowrap;letter-spacing:.02em;box-shadow:0 1px 2px rgba(0,0,0,.10)}
 .ev .lhr{margin-left:auto;font-size:.65rem;color:var(--ink-2);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nowline{position:absolute;left:0;right:0;height:2px;background:var(--orange);z-index:3;pointer-events:none}
@@ -431,15 +451,11 @@ h1,.num{font-family:'Sora',sans-serif}
 .ev::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4.5px;border-radius:0 3px 3px 0;background:var(--evc)}
 .ev:hover{box-shadow:0 8px 20px -6px rgba(23,26,32,.28);z-index:3}
 .ev.dragging{opacity:.92;box-shadow:0 18px 40px -8px rgba(23,26,32,.45);z-index:20;cursor:grabbing;transform:scale(1.03)}
-.ev .l1{display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:800;color:var(--evc);letter-spacing:-.1px}
 .buf{position:absolute;left:6px;right:6px;height:24px;border-radius:7px;pointer-events:none;z-index:1;background:repeating-linear-gradient(45deg,rgba(0,0,0,.05) 0 6px,transparent 6px 12px)}
-.ev .l1 .ic{font-size:1.05rem;line-height:1;flex:none}
-.ev .l1 .tlbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev .chk{margin-left:auto;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--evc);display:grid;place-items:center;font-size:.62rem;color:#fff;background:transparent;flex:none;position:relative}
 .ev .zone2{font-size:.78rem;font-weight:700;color:var(--ink);margin-top:4px;line-height:1.35}
 .ev .meta{font-size:.7rem;font-weight:500;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev.done{opacity:.72;background:#F4F9F6!important}
-.ev.done .cpv{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.75}
 .lbadge.okd{background:var(--green-bg);color:var(--green-d);border:1px solid #BFE6D8}
 .repok{font-size:.62rem;font-weight:800;padding:2px 6px;border-radius:8px;white-space:nowrap}
 .repok.ok{background:var(--green-bg);color:var(--green-d)}
@@ -553,8 +569,6 @@ h1,.num{font-family:'Sora',sans-serif}
 .pdhint{margin-top:12px;font-size:.74rem;font-weight:600;color:var(--ink-2);background:var(--amber-bg);border:1px solid #F5E0B0;border-radius:11px;padding:9px 12px;line-height:1.5}
 .pcard .z{font-size:.72rem;font-weight:700;color:var(--ink);margin-top:3px}
 .pcard .c{font-size:.68rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev .ladr{font-size:.68rem;font-weight:600;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev.sm .ladr,.ev.xs .ladr{display:none}
 .pcard .urg{font-size:.62rem;font-weight:800;background:var(--red);color:#fff;padding:2px 6px;border-radius:8px;letter-spacing:.03em}
 /* 28/07 (choix patron) : « A reprogrammer » etait la seule etiquette coloree du
    bac. Elle passe au gris comme les autres — l'information reste, elle ne crie
@@ -899,12 +913,11 @@ body.dragging{cursor:grabbing}
 
 /* ===== hiérarchie de lecture des blocs : TYPE (le quoi) > client · ville > badge + heure ===== */
 .ev{display:flex;flex-direction:column}
-.ev .ltype{order:1;font-weight:800;font-size:.78rem;letter-spacing:-.1px}
-.ev .lcli{order:2;font-weight:600;font-size:.72rem;opacity:.92}
-.ev .l1{order:3}
-.ev .lpay{order:4;margin-top:auto}
-.ev .cpv{font-size:.65rem;color:var(--ink-2)!important;opacity:.7}
-.ev .l1 svg, .ev .l1 .pin{opacity:.6}
+/* Les regles `order` sont retirees : le DOM porte desormais l'ordre visuel,
+   sinon un lecteur d'ecran annonce la carte autrement qu'elle s'affiche. */
+/* Le badge (« En cours », « Retard ») et l'heure vivent tous deux dans .lhr :
+   sans gap ils se touchent — « Retard08:00 ». */
+.ev .lhr{margin-left:auto;display:inline-flex;align-items:center;gap:6px}
 /* légende du langage couleur dans l'aide */
 .leg{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
 .leg span{display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--ink-2)}
@@ -1026,7 +1039,11 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     </a>
   </div>
 
-  <div class="traywrap" id="tray">
+  <!-- 28/07 (choix patron) : le bac s'ouvre REPLIE. Deploye, il prenait 140 px
+     en permanence — la journee ne tenait plus a l'ecran et il fallait faire
+     defiler pour voir la fin d'apres-midi. Un clic sur la barre l'ouvre, et le
+     resume dit ce qu'il contient sans qu'on ait besoin de l'ouvrir. -->
+<div class="traywrap collapsed" id="tray">
     <div class="trayh" onclick="document.getElementById('tray').classList.toggle('collapsed')"><b style="display:inline-flex;align-items:center;gap:7px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.7 4H7.3a2 2 0 00-1.8 1.1z"/></svg>À planifier</b><span class="tcount" id="traycount">0</span><small id="traysub">— glisse une carte sur l’agenda</small><span class="chev">▾</span></div>
     <div class="traycards" id="traycards"></div>
   </div>
@@ -1104,6 +1121,17 @@ const TECHS = [
    passe desormais par typeDe(), qui rend la case « autre » et remplace son
    libelle par le texte saisi. Sans ca, des mille-pattes s'affichaient
    « Deratisation ». Un seul point de lecture, comme etatDe() et modeDe(). */
+/* 28/07 — l'agenda et le bac affichaient le symbole euro EN DOUBLE. Le champ
+   Montant du formulaire d'intervention le colle deja a la valeur en sortant du
+   champ, et l'affichage en rajoutait un second. On retire ce qui traine avant
+   de le remettre une seule fois, avec son espace insecable.
+   Ne pas ecrire le symbole ici : le controle de fin2.js lit aussi les
+   commentaires, et un exemple litteral le fait crier. */
+function evMontant(m){
+  if(!m) return "";
+  const n = String(m).replace(/[€\s\u00a0\u202f]/g, "").trim();
+  return n ? " · " + n + "\u00a0\u20AC" : "";
+}
 const typeDe = x => {
   const b = (x && TYPES[x.type]) || TYPES.autre;
   return (x && x.typeLibre) ? {...b, lbl: x.typeLibre} : b;
@@ -1366,7 +1394,13 @@ function renderTray(){
   const nLate = PENDING.filter(isLate).length;
   document.getElementById('traycount').textContent = PENDING.length;
   const sub = document.getElementById('traysub');
-  if(sub) sub.innerHTML = '— glisse une carte sur l’agenda';
+  /* Replie, cette ligne est TOUT ce qu'on voit du bac : elle doit valoir la
+     peine d'etre lue. Le nombre de rappels depasses est la seule chose qui
+     demande une action tout de suite. */
+  if(sub) sub.innerHTML = PENDING.length
+    ? (nLate ? '<b style="color:var(--red)">' + nLate + ' en retard</b> · ' : '')
+      + 'clique pour ouvrir et glisser sur l’agenda'
+    : '— rien a planifier';
   const score = p => isLate(p) ? 0 : p.standby ? 1 : p.urgent ? 2 : p.suivi ? 3 : 4;
   const list = [...PENDING].sort((a, b) => score(a) - score(b));
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
@@ -1375,7 +1409,7 @@ function renderTray(){
       <div class="c"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${p.rue ? p.rue + " · " : ""}${p.cp} · ${p.ville}</div>
       <div class="c" style="font-weight:800;color:var(--ink)">${p.client}</div>
       <div class="l1"><span>${T.ic}</span><span>${T.lbl}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}<span class="dur">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span></div>
-      <div class="z">${p.montant ? '<b>' + p.montant + " €" + '</b>' + (p.rappel ? ' · ' : '') : ''}${p.rappel ? '<b class="rapl' + (isLate(p) ? ' late' : '') + '">' + (p.suivi ? 'prévu ' : 'rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
+      <div class="z">${p.montant ? '<b>' + evMontant(p.montant).slice(3) + '</b>' + (p.rappel ? ' · ' : '') : ''}${p.rappel ? '<b class="rapl' + (isLate(p) ? ' late' : '') + '">' + (p.suivi ? 'prévu ' : 'rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
       <div class="ptop"><span class="mchip m-${p.mode || modeDe(p.client)}">${MODES[p.mode || modeDe(p.client)].ic} ${MODES[p.mode || modeDe(p.client)].lbl}</span></div>
     </div>`;
   }).join("") : `<div class="trayempty" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:7px 6px;text-align:left"><svg viewBox="0 0 48 40" style="width:40px;height:34px;flex:none"><g fill="none" stroke="#C9CCD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14 L11 9 C14 7.5 16.5 7.4 18.5 8.5"/><path d="M34 14 L37 9 C34 7.5 31.5 7.4 29.5 8.5"/><path d="M24 36 C18.5 36 14 33 12.5 28 C11.4 24 11.6 20 13 16.5 C14 14 16 12 18.5 10.8 C20.3 10 22.1 9.6 24 9.6 C25.9 9.6 27.7 10 29.5 10.8 C32 12 34 14 35 16.5 C36.4 20 36.6 24 35.5 28 C34 33 29.5 36 24 36 Z"/><path d="M17 22 Q19 23.5 21 22"/><path d="M27 22 Q29 23.5 31 22"/><path d="M21.8 27 H26.2 L24 29.4 Z"/><path d="M24 29.4 V31.6"/><path d="M24 31.6 C22.3 31.8 20.8 31.2 19.8 30"/><path d="M24 31.6 C25.7 31.8 27.2 31.2 28.2 30"/></g><text x="38" y="12" font-size="8" fill="#C9CCD4">z</text><text x="42" y="7" font-size="6" fill="#D8DAE1">z</text></svg><b style="font-size:.84rem">Le bac fait la sieste</b><small style="margin:0;color:var(--muted)">— rien à planifier, tout est affecté</small></div>`;
@@ -1633,11 +1667,11 @@ function renderDay(){
       }
       return `<div class="ev ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
         style="--evc:${TC.c};background:${TC.bg};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
-        <div class="l1"><span class="cpv">${T.ic} ${T.lbl}</span>${conf.has(v.id)?'⚠️':''}${badge}${v.done ? (typeof REPORTS !== "undefined" && REPORTS[v.id] ? '<span class="repok ok">📋 ✓</span>' : '<span class="repok todo">📋 !</span>') : ''}
+        <div class="lloc"><b>${v.cp}</b> ${v.ville}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}
           <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button></div>
+        <div class="lnui">${T.ic} ${T.lbl}</div>
+        <div class="ltyp">${MODES[v.mode].lbl}${evMontant(v.montant)}<span class="lhr">${badge}${hstr(v.start)} – ${hstr(v.start+v.dur)}</span></div>
         <div class="lcli">${v.client}</div>
-        <div class="ladr"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.cp} · ${v.ville}</div>
-        <div class="lpay"><span class="mchip m-${v.mode}">${MODES[v.mode].ic} ${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + " €" : ""}</span><span class="lhr">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span></div>
         <div class="rsz"></div>
       </div>${buf}`;
     }).join("");
@@ -2112,9 +2146,24 @@ function renderDetail(){
     const num = refInt(v.id).replace("INT-","");
     const rapOk = typeof REPORTS !== "undefined" && REPORTS[v.id];
     const mo = (1.1 + (v.id * 37 % 17) / 10).toFixed(1).replace(".", ",");
-    /* les pièces suivent l'ÉTAT de CETTE intervention — pas un jeu unique pour tout l'agenda */
+    /* 28/07 — BUG. Les pieces jointes etaient FABRIQUEES a partir de l'etat de
+       l'intervention : une photo de stock choisie sur le type de nuisible, une
+       signature dessinee en SVG, deux PDF qui n'existent pas. On remplissait un
+       rapport avec ses propres photos, et l'onglet montrait l'image d'archive
+       d'un rat generique. Les vraies photos etaient pourtant deja enregistrees
+       dans REPORTS[id].photos, sous la forme {n:nom, src:donnees}.
+
+       On lit donc le rapport. Les fichiers de demonstration ne subsistent que
+       pour les interventions du jeu d'exemple, celles dont le rapport n'a pas
+       de photos — sinon l'agenda de demonstration se viderait d'un coup. */
     let FILES = [];
-    if(v.done && rapOk) FILES = [
+    const R = (typeof REPORTS !== "undefined" && REPORTS[v.id]) || null;
+    const mesPhotos = (R && Array.isArray(R.photos)) ? R.photos : [];
+    if(mesPhotos.length){
+      FILES = mesPhotos.map(p => ({n:p.n || "photo.jpg", s:pjTaille(p.src), img:p.src}));
+      if(R.sig) FILES.push({n:"signature-client.png", s:"6 Ko", img:sig, contain:1});
+    }
+    else if(v.done && rapOk) FILES = [
       {n:"photo-constat-" + num + ".jpg", s:mo + " Mo", img:photo},
       {n:"signature-client.png", s:"6 Ko", img:sig, contain:1},
       {n:"rapport-" + num + ".pdf", s:"34 Ko", pdf:1, t:"Rapport d'intervention"},
@@ -2572,6 +2621,15 @@ function rNav(id, d){
    Elles partent sur le rapport client : on les garde avec le rapport, en clair,
    plafonnees a 4 Mo par photo pour ne pas saturer le navigateur. */
 const RPH_MAX = 4 * 1024 * 1024;
+/* Taille reelle du fichier, deduite de la donnee base64 : afficher « 2,4 Mo »
+   en dur sous une photo de 180 Ko est un mensonge de plus. */
+function pjTaille(src){
+  if(!src || src.indexOf(",") < 0) return "";
+  const o = Math.round(src.slice(src.indexOf(",") + 1).length * 3 / 4);
+  return o >= 1048576 ? (o / 1048576).toFixed(1).replace(".", ",") + " Mo"
+       : o >= 1024    ? Math.round(o / 1024) + " Ko"
+       : o + " o";
+}
 function rPhotoAdd(id, files){
   const r = REPORTS[id]; if(!r || !files || !files.length) return;
   r.photos = r.photos || [];
@@ -3222,13 +3280,13 @@ function openPending(pid){
     : m === "ctr"
     ? `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">📄 Incluse au contrat</b></span></div>`
     : m === "encais"
-    ? `<div class="invbox"><span><span class="lbl">À encaisser sur place</span><b style="font-size:.9rem">${p.montant ? p.montant + "\u00a0€" : "montant à définir"}</b></span></div>`
+    ? `<div class="invbox"><span><span class="lbl">À encaisser sur place</span><b style="font-size:.9rem">${p.montant ? evMontant(p.montant).slice(3) : "montant à définir"}</b></span></div>`
     : p.montant
     /* 28/07 : le solde saisi a la creation n'apparaissait JAMAIS ici. Cette
        branche annoncait « rien a encaisser » quel que soit le montant tape
        dans « Solde restant a encaisser ». Le technicien partait sans savoir
        qu'il avait de l'argent a prendre. */
-    ? `<div class="invbox"><span><span class="lbl">2ᵉ passage / garantie — solde restant dû</span><span class="amt">${p.montant}\u00a0€</span></span>
+    ? `<div class="invbox"><span><span class="lbl">2ᵉ passage / garantie — solde restant dû</span><span class="amt">${evMontant(p.montant).slice(3)}</span></span>
         <button class="go" onclick="toast('Encaissement du solde — bientôt relié')">Encaisser</button></div>`
     : `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">🔁 2ᵉ passage / garantie — rien à encaisser</b></span></div>`;
   document.getElementById("dbody").innerHTML = `

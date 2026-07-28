@@ -111,6 +111,87 @@ const combien = (w, nom) => (bac(w).match(new RegExp(nom, "g")) || []).length;
   t("la mise à jour est bien consommée",
     w.localStorage.getItem("tigerflow-update-intervention") === null);
 
+  /* ===== 5. LA CARTOUCHE REFONDUE (28/07) ============================ */
+  /* Ce qu'on scanne depuis le bureau : ou, quel nuisible, quel type. */
+  w = await agenda({ boite: [inter({ client: "Roger Seguin", cp: "77860", ville: "Xouilluy Pont au Dame" })] });
+  const src = fs.readFileSync(path.join(__dirname, "..", "calendrier.html"), "utf8");
+
+  t("la cartouche porte le code postal ET la ville sur la meme ligne",
+    /<div class="lloc"><b>\$\{v\.cp\}<\/b> \$\{v\.ville\}/.test(src),
+    "la ville etait reléguée sous le type");
+  t("le nuisible a sa propre ligne", /<div class="lnui">/.test(src));
+  t("le type d'intervention a la sienne", /<div class="ltyp">/.test(src));
+  t("le client vient en dernier dans le DOM",
+    src.indexOf('<div class="lcli">') > src.indexOf('<div class="ltyp">'),
+    "l'ordre du DOM doit suivre l'ordre visuel, pour les lecteurs d'ecran");
+
+  /* LE TEST QUI COMPTE : l'ordre de disparition. Avant, un creneau d'une heure
+     masquait le type puis le client, en gardant le code postal seul — on
+     perdait d'abord ce qui compte. */
+  t("sur une heure, c'est le CLIENT qui disparait",
+    /\.ev\.sm \.lcli\{display:none\}/.test(src),
+    "le moins important doit partir en premier");
+  t("sur trente minutes, il reste « ou » et « quoi »",
+    /\.ev\.xs \.lcli,\.ev\.xs \.ltyp\{display:none\}/.test(src));
+  t("le code postal n'est jamais masque",
+    !/\.ev\.(sm|xs)[^{]*\.lloc\{display:none\}/.test(src));
+
+  /* Les regles `order` faisaient diverger l'ordre lu de l'ordre affiche. */
+  t("plus aucune regle `order` sur la cartouche",
+    !/\.ev \.[a-z0-9]+\{order:/.test(src));
+
+  /* Le code postal s'aligne d'une carte a l'autre : c'est ce qui remplace la
+     pastille coloree des maquettes. */
+  t("le code postal est en chiffres a largeur fixe",
+    /\.ev \.lloc b\{[^}]*tabular-nums/.test(src),
+    "sans cela les codes postaux ne s'alignent pas en colonne");
+
+  /* ===== 6. LE MONTANT EN DOUBLE ==================================== */
+  /* Le champ Montant se formate en « 80,00 € » a la saisie, et l'affichage
+     rajoutait un euro : « 80,00 € € ». */
+  const evM = new Function("m", src.match(/function evMontant\(m\)\{[\s\S]*?\n\}/)[0].replace(/^function evMontant\(m\)\{/, "").replace(/\n\}$/, ""));
+  t("un montant deja formate ne recoit pas un second euro",
+    evM("80,00 €") === " · 80,00\u00a0€", "obtenu : " + JSON.stringify(evM("80,00 €")));
+  t("un montant nu recoit son euro",
+    evM("80,00") === " · 80,00\u00a0€", "obtenu : " + JSON.stringify(evM("80,00")));
+  t("un montant vide n'affiche rien", evM("") === "" && evM(null) === "");
+
+  /* ===== 7. LE BAC EST REPLIE AU CHARGEMENT ======================== */
+  w = await agenda({ boite: [inter()] });
+  const tray = w.document.getElementById("tray");
+  t("le bac s'ouvre replie", tray && tray.classList.contains("collapsed"),
+    "deploye, il prend 140 px en permanence");
+  t("le resume du bac annonce ce qu'il contient",
+    /clique pour ouvrir/.test((w.document.getElementById("traysub") || {}).innerHTML || ""),
+    "replie, cette ligne est tout ce qu'on voit du bac");
+
+  /* ===== 8. LES PIECES JOINTES VIENNENT DU RAPPORT ================= */
+  /* 28/07 — l'onglet fabriquait sa liste a partir de l'ETAT de l'intervention :
+     une photo de stock choisie sur le type de nuisible, une signature dessinee
+     en SVG, deux PDF inexistants. On remplissait un rapport avec ses propres
+     photos et l'onglet montrait un rat d'archive. */
+  const srcCal = fs.readFileSync(path.join(__dirname, "..", "calendrier.html"), "utf8");
+
+  t("les pieces jointes lisent les photos du rapport",
+    /REPORTS\[v\.id\]/.test(srcCal) && /R\.photos/.test(srcCal),
+    "elles etaient fabriquees a partir de l'etat de l'intervention");
+  t("les photos du rapport passent AVANT le jeu de demonstration",
+    srcCal.indexOf("if(mesPhotos.length)") < srcCal.indexOf('else if(v.done && rapOk)'),
+    "sinon la demonstration continuerait a masquer les vraies photos");
+  t("la taille affichee est deduite du fichier",
+    /function pjTaille/.test(srcCal),
+    "afficher « 2,4 Mo » en dur sous une photo de 180 Ko est un mensonge de plus");
+
+  /* On verifie le calcul de taille : c'est la seule partie qui produit un
+     chiffre montre a l'utilisateur. */
+  const pjT = new Function("return " + srcCal.match(/function pjTaille[\s\S]*?\n\}/)[0])();
+  const faux = (n) => "data:image/jpeg;base64," + "A".repeat(Math.ceil(n * 4 / 3));
+  t("une photo de 180 Ko s'annonce en Ko", /Ko$/.test(pjT(faux(180 * 1024))),
+    "obtenu : " + pjT(faux(180 * 1024)));
+  t("une photo de 2 Mo s'annonce en Mo", /Mo$/.test(pjT(faux(2 * 1048576))),
+    "obtenu : " + pjT(faux(2 * 1048576)));
+  t("une source vide ne produit pas de taille", pjT("") === "" && pjT(null) === "");
+
   console.log("\n  " + ok + " vert" + (ok > 1 ? "s" : "") + ", " + ko + " rouge" + (ko > 1 ? "s" : "") + "\n");
   process.exit(ko ? 1 : 0);
 })();
