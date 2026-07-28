@@ -82,6 +82,16 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .fhead .ref{font-family:'Sora';font-weight:800;font-size:1.4rem;letter-spacing:-.4px}
 .badge{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:.72rem;padding:6px 12px;border-radius:999px}
 .badge i{width:8px;height:8px;border-radius:50%}
+/* menu de statut — memes valeurs que devis.html, pour que l'atelier et la
+   fiche se comportent pareil. */
+.badge{cursor:pointer;border:0;font-family:inherit}
+.badge .caret{font-style:normal;font-size:.68rem;margin-left:4px;opacity:.7}
+.stwrap{position:relative;display:inline-flex}
+.stmenu{position:absolute;left:0;top:38px;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 38px -10px rgba(23,26,32,.3);padding:6px;min-width:170px;z-index:90;display:none}
+.stmenu.open{display:flex;flex-direction:column;gap:3px}
+.stc{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:10px 14px;font-size:.79rem;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit;display:inline-flex;align-items:center;gap:7px;justify-content:flex-start;width:100%;transition:.13s}
+.stc i{width:8px;height:8px;border-radius:50%}
+.stc.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
 .btn2{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.84rem;padding:11px 16px;border-radius:12px;cursor:pointer;font-family:inherit;border:1px solid var(--line);background:#fff;color:var(--ink-2);text-decoration:none;transition:.13s}
 .btn2:hover{border-color:#CFD3DC;background:#FAFBFC}
 .btn2.encaisser{border:1.5px solid var(--green);color:var(--green-d);font-weight:700}
@@ -556,7 +566,17 @@ label[for]{cursor:pointer}
     <div class="fhead">
       <span class="hcli" id="h-client">—</span>
       <span class="ref" id="h-ref">FAC-…</span>
-      <span class="badge" id="h-badge"><i></i><span>—</span></span>
+      <!-- 28/07 : le statut se change ICI comme dans l'atelier. La fiche etait
+           le seul ecran ou on voyait le statut sans pouvoir le corriger. -->
+      <span class="stwrap">
+        <button class="badge" id="h-badge" onclick="stMenu(event)" title="Changer le statut du devis"><i></i><span>—</span><em class="caret">▾</em></button>
+        <div class="stmenu" id="stmenu">
+          <button class="stc" data-s="brouillon" onclick="statutPick('brouillon')"><i style="background:#9CA1AD"></i> Brouillon</button>
+          <button class="stc" data-s="envoye" onclick="statutPick('envoye')"><i style="background:var(--blue)"></i> Envoyé</button>
+          <button class="stc" data-s="gagne" onclick="statutPick('gagne')"><i style="background:var(--green)"></i> Gagné</button>
+          <button class="stc" data-s="perdu" onclick="statutPick('perdu')"><i style="background:var(--red)"></i> Perdu</button>
+        </div>
+      </span>
       <div class="spacer"></div>
       <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
       
@@ -873,8 +893,17 @@ REF = REC.ref;
 const STK = "tigerflow-devis-statuts";
 function statutGet(){ try{ return (JSON.parse(localStorage.getItem(STK)) || {})[REF] || REC.statut || "attente"; }catch(e){ return "attente"; } }
 function statutSet(st){ try{ const m = JSON.parse(localStorage.getItem(STK)) || {}; m[REF] = st; localStorage.setItem(STK, JSON.stringify(m)); }catch(e){} }
-const STL = {brouillon:["#EEF0F3","#6C7285","#9CA1AD","Brouillon"], attente:["var(--blue-bg)","var(--blue-d)","var(--blue)","En attente"],
-             payee:["var(--green-bg)","var(--green-d)","var(--green)","Payée"], retard:["var(--red-bg)","var(--red)","var(--red)","En retard"]};
+/* 28/07 — cette table etait celle des FACTURES (brouillon / attente / payee /
+   retard), venue du clonage de facture-detail.html. Or effStatut() rend des
+   statuts de DEVIS : envoye, gagne, perdu, expire n'y figuraient pas, donc
+   STL[st] valait undefined et la pastille retombait sur « En attente ». Un
+   devis gagne s affichait « En attente », en bleu. Meme vocabulaire et memes
+   couleurs que l atelier et la liste des devis. */
+const STL = {brouillon:["#EEF0F3","#6C7285","#9CA1AD","Brouillon"],
+             envoye:["var(--blue-bg)","var(--blue-d)","var(--blue)","Envoyé"],
+             gagne:["var(--green-bg)","var(--green-d)","var(--green)","Gagné"],
+             perdu:["var(--red-bg)","var(--red)","var(--red)","Perdu"],
+             expire:["var(--red-bg)","var(--red)","var(--red)","Expiré"]};
 
 /* avoirs : registre persistant */
 const AK = "tigerflow-factures-avoirs";
@@ -927,8 +956,22 @@ function apAction(){
    les 27 pages), puis ouvrait l'editeur avec le seul nom du client : les
    lignes et le montant du devis etaient perdus, il fallait tout retaper.
    Elle ecrasait la version qui fait le travail, definie plus haut. Retiree. */
+function stMenu(e){ e.stopPropagation(); document.getElementById("stmenu").classList.toggle("open"); }
+function stMenuClose(){ const m = document.getElementById("stmenu"); if(m) m.classList.remove("open"); }
+document.addEventListener("click", stMenuClose);
+/* Changer le statut ECRIT dans le registre partage avec la liste et l'atelier
+   (tigerflow-devis-statuts) : les trois ecrans disent la meme chose tout de
+   suite. renderAll() suit, parce que le statut commande aussi le bouton
+   principal et les cartouches. */
+function statutPick(st){
+  statutSet(st);
+  stMenuClose();
+  renderAll();
+  toast("Devis marqué « " + (STL[st] ? STL[st][3] : st) + " »");
+}
 function badge(){
-  const st = effStatut(), c = STL[st] || STL.attente;
+  const st = effStatut(), c = STL[st] || STL.brouillon;
+  document.querySelectorAll("#stmenu .stc").forEach(b => b.classList.toggle("on", b.dataset.s === statutGet()));
   const b = g('h-badge');
   b.style.background = c[0]; b.style.color = c[1];
   b.querySelector('i').style.background = c[2];
