@@ -233,6 +233,33 @@ const val = (w, id) => { const e = w.document.getElementById(id); return e ? e.v
   t("un client sans historique le dit au lieu d'un exemple",
     /Rien encore/.test(vide.document.querySelector("#actlist li").textContent));
 
+  /* 28/07 — « !nom || … » laissait TOUT passer quand l'URL ne portait pas de
+     client : la fiche affichait les devis et factures de TOUS les clients,
+     alors que ses propres compteurs annonçaient zéro. */
+  const sansC = await new Promise(resolve => {
+    const dom = new JSDOM(srcFiche, {
+      runScripts: "dangerously", url: "https://x/client.html",
+      beforeParse(w) {
+        w.matchMedia = () => ({ matches:false, addListener(){}, removeListener(){}, addEventListener(){}, removeEventListener(){} });
+        w.HTMLCanvasElement.prototype.getContext = () => null;
+        w.Element.prototype.scrollIntoView = function(){}; w.scrollTo = () => {};
+        w.supabase = { createClient: () => ({ auth:{getSession:async()=>({data:{session:null}})}, from:()=>({select:()=>({eq:()=>({limit:async()=>({data:[],error:null})})})}) }) };
+        Object.keys(SEED).forEach(k => w.localStorage.setItem(k, JSON.stringify(SEED[k])));
+      }
+    });
+    setTimeout(() => resolve(dom.window), 600);
+  });
+  const lig = [...sansC.document.querySelectorAll("#actlist li")];
+  t("sans client dans l'URL, aucune pièce d'autrui n'est affichée",
+    lig.length === 1 && /Ouvrez la fiche/.test(lig[0].textContent),
+    lig.length + " ligne(s) : " + lig.map(l => l.textContent.trim().slice(0, 22)).join(" | "));
+
+  /* Les noms de classes generiques (.ic, .tx, .dt, .vide) entraient en
+     collision avec le reste de la page — .dt habille aussi les tableaux. */
+  t("les classes du résumé sont préfixées",
+    /\.act-ic|\.act-tx|\.act-dt/.test(srcFiche) && !/\.actl \.dt\{/.test(srcFiche),
+    "des noms génériques entrent en collision dans une page de cette taille");
+
   /* Les cartes ne s'etirent plus l'une sur l'autre. */
   t("les cartes prennent leur hauteur naturelle",
     /\.grid\{[^}]*align-items:start/.test(srcFiche),

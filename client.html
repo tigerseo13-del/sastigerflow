@@ -215,12 +215,12 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .actl{list-style:none;margin:0;padding:0}
 .actl li{display:flex;align-items:center;gap:13px;padding:11px 2px;border-bottom:1px dashed var(--line)}
 .actl li:last-child{border-bottom:0}
-.actl .ic{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:.9rem}
-.actl .tx{flex:1;min-width:0}
-.actl .tx b{display:block;font-size:.87rem;font-weight:700}
-.actl .tx small{display:block;font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.actl .dt{font-size:.78rem;color:var(--muted);white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}
-.actl .vide{color:var(--muted);font-size:.85rem;padding:14px 2px}
+.actl .act-ic{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:.9rem}
+.actl .act-tx{flex:1;min-width:0}
+.actl .act-tx b{display:block;font-size:.87rem;font-weight:700}
+.actl .act-tx small{display:block;font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actl .act-dt{font-size:.78rem;color:var(--muted);white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}
+.act-vide{color:var(--muted);font-size:.85rem;padding:14px 2px}
 .contact{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}
 .contact:last-child{margin-bottom:0}
 .contact .cph{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:.72rem;font-family:'Sora';flex:none;background:var(--blue)}
@@ -918,7 +918,12 @@ function cliDel(e){
   var nom = "";
   try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
   var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
-  var mien = function(x){ return x && (!nom || x.client === nom); };
+  /* 28/07 — « !nom || … » laissait TOUT passer quand l'URL ne portait pas de
+     client : la fiche affichait les devis et factures de tous les clients du
+     logiciel, alors que ses propres compteurs annonçaient zero. Sans client
+     identifie, on n'affiche rien. */
+  if(!nom){ el.innerHTML = '<li class="act-vide">Ouvrez la fiche depuis la liste des clients pour voir son activité.</li>'; return; }
+  var mien = function(x){ return x && x.client === nom; };
   var ev = [];
 
   J("tigerflow-inbox-devis").filter(mien).forEach(function(d){
@@ -946,11 +951,11 @@ function cliDel(e){
   el.innerHTML = ev.length
     ? ev.slice(0, 8).map(function(e){
         return '<li onclick="location.href=\'' + e.h + '\'" style="cursor:pointer">' +
-          '<span class="ic" style="background:' + e.bg + '">' + e.ic + '</span>' +
-          '<span class="tx"><b>' + e.b + '</b><small>' + (e.s || "") + '</small></span>' +
-          '<span class="dt">' + fd(e.d) + '</span></li>';
+          '<span class="act-ic" style="background:' + e.bg + '">' + e.ic + '</span>' +
+          '<span class="act-tx"><b>' + e.b + '</b><small>' + (e.s || "") + '</small></span>' +
+          '<span class="act-dt">' + fd(e.d) + '</span></li>';
       }).join("")
-    : '<li class="vide">Rien encore sur ce client — le premier devis ou la première intervention apparaîtra ici.</li>';
+    : '<li class="act-vide">Rien encore sur ce client — le premier devis ou la première intervention apparaîtra ici.</li>';
 })();
 
 
