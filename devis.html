@@ -1458,13 +1458,27 @@ const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb
    client deja choisi. */
 async function cliBase(){
   try{
-    const {data, error} = await SB.from("clients").select("*");
-    if(error || !data) return;
+    /* 28/07 — FILET. Si la base ne repond pas ici (droits, reseau, colonne
+       renommee), on prend la copie laissee par la page Clients. Sans ca, un
+       client cree devient invisible au moment ou on en a besoin — et l'appel
+       rate en silence, ce qui est pire. */
+    let source = [];
+    try{
+      const {data, error} = await SB.from("clients").select("*");
+      if(error) throw error;
+      source = data || [];
+    }catch(e){
+      try{ source = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e2){ source = []; }
+      if(!source.length && typeof toast === "function") toast("⚠️ Liste des clients incomplète — ouvre la page Clients une fois");
+    }
+    if(!source.length){
+      try{ source = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e){}
+    }
     const sel = document.getElementById("v-client");
     if(!sel) return;
     const garde = sel.value;
     let ajout = 0;
-    data.forEach(c => {
+    source.forEach(c => {
       if(!c || !c.nom || CLIENTS[c.nom]) return;
       CLIENTS[c.nom] = {
         adr: [c.adresse, c.cp, c.ville].filter(Boolean).join(", ") || "Adresse à compléter",
