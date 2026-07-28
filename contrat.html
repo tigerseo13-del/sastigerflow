@@ -944,23 +944,79 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
 const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
 async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
 
+/* ===== chargement de la fiche (28/07) =====
+   BUG CORRIGÉ : on créait un contrat, la liste l'affichait, on l'ouvrait — et
+   la fiche montrait « Ironwood Solutions », le contrat de démonstration figé
+   dans le HTML. Montrer les données d'un AUTRE client est plus grave qu'une
+   page vide : rien n'indiquait que ce n'était pas le bon contrat.
+
+   Cause réelle : la création (contrat-nouveau.html) écrit dans
+   localStorage["tigerflow-inbox-contrats"] et JAMAIS dans la base. La liste
+   lit les deux sources, la fiche ne lisait que la base. Elle ne trouvait rien,
+   sortait par `if(!c) return`, et la démo restait affichée.
+
+   Trois sorties silencieuses menaient au même écran trompeur : pas de session,
+   contrat introuvable, et un `catch` qui avalait toute erreur. Aucune ne disait
+   rien. Même repli que pour les sélecteurs de client (mémoire du 28/07) : la
+   base d'abord, la copie locale ensuite, un état honnête si les deux se taisent. */
 (async function(){
-  if(!await sbSession()) return;
-  const num = new URLSearchParams(location.search).get("n") || "CTR-2026-04729";
-  try{
-    const {data} = await SB.from("contrats").select("*").eq("numero", num).limit(1);
-    const c = data && data[0];
-    if(!c) return;
-    const eur2 = n => (+n).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";
-    const dfr = d => d ? new Date(d + "T12:00:00").toLocaleDateString("fr-FR") : "—";
-    /* identité */
+  const num = new URLSearchParams(location.search).get("n");
+  /* Sans ?n=, on est arrivé par « ＋ Contrat » : la page de démonstration reste
+     telle quelle, c'est sa raison d'être. */
+  if(!num) return;
+
+  const eur2 = n => (+n || 0).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}) + " €";  /* espace insécable ÉCRIT EN CLAIR : en séquence \u00a0 il échappe au contrôle de fin2.js, qui lit le texte du fichier */
+  const dfr  = d => d ? new Date(d + "T12:00:00").toLocaleDateString("fr-FR") : "—";
+  const q1   = s => document.querySelector(s);
+
+  /* La copie locale n'a pas la forme d'une ligne de base : on la traduit ICI et
+     nulle part ailleurs, pour que le remplissage reste unique. */
+  function contratLocal(ref){
+    try{
+      const box = JSON.parse(localStorage.getItem("tigerflow-inbox-contrats") || "[]");
+      const r = box.find(x => x.ref === ref);
+      if(!r) return null;
+      return {
+        numero: r.ref, client: r.client, titre: r.titre,
+        montant_ttc: r.montant, frequence: r.freq,
+        passages_faits: 0, passages_prevus: r.nbint || 0,
+        renouvellement: r.fin, statut: r.statut
+      };
+    }catch(e){ return null; }
+  }
+
+  /* L'adresse : la démo affichait celle d'Ironwood quelle que soit la fiche —
+     l'ancien code n'y touchait même pas en chargeant depuis la base. On la
+     reprend du cache clients ; introuvable, on masque la ligne plutôt que
+     d'afficher l'adresse de quelqu'un d'autre. */
+  function adresse(nomClient){
+    try{
+      const cl = (JSON.parse(localStorage.getItem("tigerflow-clients-cache") || "[]"))
+        .find(x => x.nom === nomClient);
+      if(!cl) return null;
+      return [cl.adresse, [cl.cp, cl.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") || null;
+    }catch(e){ return null; }
+  }
+
+  function remplir(c){
     document.title = "TigerFlow — " + c.numero;
-    const cur = document.querySelector(".crumbs .cur");
+    const cur = q1(".crumbs .cur");
     if(cur) cur.textContent = c.numero;
-    const h1 = document.querySelector(".hero h1");
+
+    const h1 = q1(".hero h1");
     if(h1 && h1.childNodes.length) h1.childNodes[0].nodeValue = (c.client || "Contrat") + " ";
-    /* la ligne grise d'identifiants */
-    const ids = document.querySelector(".hids");
+    if(c.statut){
+      const b = q1(".hero h1 .badge");
+      if(b && b.lastChild) b.lastChild.nodeValue = c.statut === "brouillon" ? "Brouillon" : "Actif";
+    }
+
+    const adr = q1(".hadr");
+    if(adr){
+      const a = adresse(c.client);
+      if(a) adr.textContent = "📍 " + a; else adr.style.display = "none";
+    }
+
+    const ids = q1(".hids");
     if(ids){
       const ref = ids.querySelector(".copyref");
       if(ref) ref.textContent = c.numero;
@@ -969,13 +1025,62 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
       const lk = ids.querySelector("a");
       if(lk){ lk.textContent = (c.client || "") + " →"; lk.href = "client.html?c=" + encodeURIComponent(c.client || ""); }
     }
-    /* les 4 signes vitaux */
+
     const bs = document.querySelectorAll(".hero .quick .q b");
     if(bs[0]) bs[0].childNodes[0].nodeValue = eur2(c.montant_ttc) + " ";
-    if(bs[1]) bs[1].childNodes[0].nodeValue = c.passages_faits + " / " + c.passages_prevus + " ";
+    if(bs[1]) bs[1].childNodes[0].nodeValue = (c.passages_faits || 0) + " / " + (c.passages_prevus || 0) + " ";
     if(bs[2]) bs[2].childNodes[0].nodeValue = (c.frequence || "Mensuelle") + " ";
     if(bs[3]) bs[3].childNodes[0].nodeValue = dfr(c.renouvellement) + " ";
+
+    videHistorique();
+  }
+
+  /* L'onglet Historique contient trois évènements de démonstration en dur,
+     dont « signé par John Thompson (Ironwood Solutions) ». Ils restaient
+     affichés sous le nom du contrat qu'on venait d'ouvrir : encore les
+     données d'un autre client. On les retire faute de mieux — il n'existe
+     pas encore de table d'évènements. À rebrancher le jour où elle existera,
+     plutôt qu'à re-remplir à la main. */
+  function videHistorique(){
+    const h = q1("ul.hist");
+    if(h) h.innerHTML = '<li style="color:var(--muted);font-size:.84rem;list-style:none">Aucun évènement enregistré pour ce contrat.</li>';
+  }
+
+  /* Ni en base, ni en local : on le DIT. Laisser la démo revenait à présenter
+     le contrat d'un autre client comme étant celui demandé. */
+  function introuvable(ref){
+    document.title = "TigerFlow — " + ref + " introuvable";
+    const cur = q1(".crumbs .cur"); if(cur) cur.textContent = ref;
+    const h1 = q1(".hero h1");
+    if(h1 && h1.childNodes.length) h1.childNodes[0].nodeValue = "Contrat introuvable ";
+    const b = q1(".hero h1 .badge"); if(b) b.style.display = "none";
+    const adr = q1(".hadr");
+    if(adr) adr.textContent = "Aucun contrat ne porte la référence " + ref + " — il a pu être supprimé.";
+    const ids = q1(".hids");
+    if(ids){
+      const r2 = ids.querySelector(".copyref"); if(r2) r2.textContent = ref;
+      const spans = ids.querySelectorAll("span:not(.sep):not(.copyref)");
+      if(spans[0]) spans[0].textContent = "—";
+      /* On EFFACE le texte, on ne se contente pas de masquer : un display:none
+         laisse le nom de l'autre client dans la page, copiable et lisible par
+         un lecteur d'écran. */
+      const lk = ids.querySelector("a"); if(lk){ lk.textContent = ""; lk.style.display = "none"; }
+    }
+    document.querySelectorAll(".hero .quick .q b").forEach(x => { if(x.childNodes[0]) x.childNodes[0].nodeValue = "— "; });
+    videHistorique();
+  }
+
+  let c = null;
+  try{
+    if(await sbSession()){
+      const {data, error} = await SB.from("contrats").select("*").eq("numero", num).limit(1);
+      if(!error && data && data[0]) c = data[0];
+    }
   }catch(e){}
+
+  if(!c) c = contratLocal(num);
+  if(!c){ introuvable(num); return; }
+  remplir(c);
 })();
 
 </script>
