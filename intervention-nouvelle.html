@@ -875,6 +875,8 @@ function saveInter(){
       /* un nuisible saisi a la main n'entre dans aucune case connue : on le
          range en « autre » et on emporte son libelle, au lieu de le faire
          passer pour une deratisation. */
+      pid: EDITBAC ? EDITPID : undefined,
+      bac: EDITBAC || undefined,
       type: P2K[[...PESTS][0]] || "autre",
       typeLibre: P2K[[...PESTS][0]] ? "" : ([...PESTS][0] || ""),
       mode: PAY2M[PAY] || "devis",
@@ -1053,6 +1055,7 @@ function iDraftRestore(){
 try{ localStorage.removeItem(IKEY); }catch(e){}
 
 /* ===== MODE ÉDITION : arrivée depuis le bouton Modifier de l'agenda ===== */
+let EDITBAC = false, EDITPID = null;
 let EDITRID = null, EDITUID = null, EDITSB = null;
 try{
   if(new URLSearchParams(location.search).get("edit") === "1"){
@@ -1078,6 +1081,11 @@ try{
         guepe:"Guêpes / Frelons", fourmi:"Fourmis", pigeon:"Pigeons", desinf:"Autre", chenille:"Autre"};
       const chip = document.querySelector('#pests .chip[data-v="' + (K2CHIP[ed.type] || "Autre") + '"]');
       if(chip && !chip.classList.contains("on")) chip.click();
+      /* 28/07 : une carte du BAC n'a ni date ni heure — c'est sa definition.
+         On saute donc tout le bloc horaire, sinon hh(null) casse le formulaire
+         et la modification s'arrete la, sans message. */
+      EDITBAC = !!ed.bac; EDITPID = ed.pid != null ? ed.pid : null;
+      if(!EDITBAC){
       /* date + créneau personnalisé exact */
       g("f-date").removeAttribute("min");
       g("f-date").value = ed.date;
@@ -1085,6 +1093,7 @@ try{
       if(perso) perso.click();
       const hh = h => String(Math.floor(h)).padStart(2, "0") + ":" + (h % 1 ? "30" : "00");
       if(g("f-ct1")){ g("f-ct1").value = hh(ed.start); g("f-ct2").value = hh(ed.start + ed.dur); if(typeof cslot === "function") cslot(); }
+      }
       /* technicien */
       const tr = document.querySelector('#techs .tech[data-v="' + ed.tech + '"]');
       if(tr && !tr.classList.contains("on")) tr.click();
@@ -1092,14 +1101,17 @@ try{
       const ta = document.getElementById("f-note");
       if(ta && ed.note) ta.value = ed.note;
       /* habillage édition */
-      document.title = "TigerFlow — Modifier l'intervention";
-      const tm = document.querySelector(".title-m"); if(tm) tm.textContent = "Modifier l'intervention";
+      document.title = EDITBAC ? "TigerFlow — Modifier la demande" : "TigerFlow — Modifier l'intervention";
+      const tm = document.querySelector(".title-m");
+      if(tm) tm.textContent = EDITBAC ? "Modifier la demande à planifier" : "Modifier l'intervention";
       document.querySelectorAll("button, a").forEach(el => {
         if(/Planifier l'intervention|Enregistrer$/.test(el.textContent.trim()) && (el.getAttribute("onclick") || "").includes("saveInter"))
           el.childNodes[el.childNodes.length - 1].nodeValue = el.textContent.includes("✓") ? " Enregistrer les modifications" : "Enregistrer les modifications";
       });
       if(typeof resume === "function") resume();
-      if(typeof toast === "function") setTimeout(()=>toast("✏️ Modification de l'intervention « " + ed.client + " »"), 400);
+      if(typeof toast === "function") setTimeout(()=>toast(EDITBAC
+        ? "✏️ Modification de la demande « " + ed.client + " » — elle reste dans le bac tant qu'aucune date n'est posée"
+        : "✏️ Modification de l'intervention « " + ed.client + " »"), 400);
     }
     localStorage.removeItem("tigerflow-edit-intervention");
   }
