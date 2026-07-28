@@ -204,6 +204,18 @@ h1,.num{font-family:'Sora',sans-serif}
 .dsheet .dref{margin:0;padding:9px 0;border-bottom:1px solid #F2F3F6;background:#FAFBFC}
 .dh::before{content:"";width:4px;height:15px;border-radius:3px;background:var(--orange)}
 .dh .dre{margin-left:auto;font-size:.74rem;font-weight:700;color:var(--orange-deep);background:none;border:0;cursor:pointer;font-family:inherit}
+/* 27/07 : « Modifier » et « Supprimer » etaient deux mots en orange poses a cote
+   du titre de section. L'orange est la couleur de l'action principale de
+   l'ecran — ici « Creer le devis » — et deux liens de plus la lui disputaient
+   pour des actions secondaires. Ce sont maintenant deux icones discretes, qui
+   ne se colorent qu'au survol. */
+.dh .dacts2{margin-left:auto;display:inline-flex;gap:4px}
+.dh .dic{width:28px;height:28px;border-radius:9px;border:0;background:none;color:var(--muted);
+  cursor:pointer;display:grid;place-items:center;transition:.13s;flex:none}
+.dh .dic svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dh .dic:hover{background:var(--orange-soft);color:var(--orange-deep)}
+.dh .dic.del:hover{background:var(--red-bg);color:var(--red)}
+.dh .dic:focus-visible{outline:2px solid var(--orange);outline-offset:1px}
 .dh .dre:hover{text-decoration:underline}
 .dkv{display:flex;justify-content:space-between;gap:14px;padding:11px 2px;border-bottom:1px solid var(--bg);font-size:.85rem;align-items:center;border-radius:7px;transition:background .12s}
 .dkv:hover{background:#FAFBFC}
@@ -1995,7 +2007,10 @@ function renderDetail(){
 
     body = `
     <div class="dcard">
-      <div class="dh">Note pour le technicien ${(v.note && NEDIT !== v.id) ? `<button class="dre" onclick="editNote(${v.id})">Modifier</button><button class="dre" style="color:var(--red)" onclick="delNote(${v.id})">Supprimer</button>` : ""}</div>
+      <div class="dh">Note pour le technicien ${(v.note && NEDIT !== v.id) ? `<span class="dacts2">
+        <button class="dic" title="Modifier la note" onclick="editNote(${v.id})"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+        <button class="dic del" title="Supprimer la note" onclick="delNote(${v.id})"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+      </span>` : ""}</div>
       ${NEDIT === v.id
         ? `<textarea id="notearea" rows="3" placeholder="Code portail, étage, consignes d'accès…"
              style="width:100%;border:1.5px solid var(--orange);border-radius:11px;padding:11px 13px;font:600 .84rem Inter,sans-serif;background:#FFFDF6;outline:none;resize:vertical;box-sizing:border-box">${v.note || ""}</textarea>
