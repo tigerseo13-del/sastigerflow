@@ -952,13 +952,31 @@ function details(){
     (REC.contrat ? row(DI.tag, "din", "Contrat", REC.contrat) : '') +
     '</div>';
 }
+/* 28/07 — les lignes de la fiche affichaient un emoji la ou l'atelier montre la
+   VRAIE photo du catalogue. Deux raisons : les devis enregistres avant
+   aujourd'hui ne portent pas d'image, et les lignes ajoutees a la main non plus.
+   On retrouve donc la photo par le NOM de la prestation, en dernier recours. */
+const CAT_PHOTO = {
+  "Dératisation — pose de postes sécurisés": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/96px-WildRat.jpg",
+  "Destruction nid de guêpes / frelons": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/96px-European_wasp_white_bg.jpg",
+  "Traitement cafards — gel + pulvérisation": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/96px-Blattella_germanica_p1160206.jpg",
+  "Traitement punaises de lit — 2 passages": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg",
+  "Désinfection locaux — norme HACCP": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/96px-Fogging.jpg",
+  "Dépigeonnage — pics anti-pigeons": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/96px-Rock_dove_-_natures_pics.jpg",
+  "Frais de déplacement Île-de-France": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/96px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg",
+  "Diagnostic complet du logement": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg",
+  "Traitement chimique — 2 passages": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/96px-Fogging.jpg",
+  "Housses anti-punaises (lit 140×190)": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg"
+};
+const photoDe = l => l.img || CAT_PHOTO[(l.designation || "").trim()] || "";
 function lignes(){
   const L = REC.lignes || [];
   let ht = 0, tva = 0;
   g('lbody').innerHTML = L.map(l => {
     const lht = (l.qte||0) * (l.pu||0); ht += lht; tva += lht * (l.tva||10) / 100;
-    const vis = l.img
-      ? '<img class="lph" src="' + l.img + '" alt="" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;lemoji&quot;>' + (l.emo||"🧾") + '</span>\'">'
+    const ph = photoDe(l);
+    const vis = ph
+      ? '<img class="lph" src="' + ph + '" alt="" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;lemoji&quot;>' + (l.emo||"🧾") + '</span>\'">'
       : '<span class="lemoji">' + (l.emo||"🧾") + '</span>';
     return '<tr><td style="width:52px">' + vis + '</td><td><b>' + (l.designation||"—") + '</b></td>' +
       '<td class="r">' + (l.qte||0) + '</td><td class="r">' + eur(l.pu||0) + '</td><td class="r">' + (l.tva||10) + ' %</td>' +
