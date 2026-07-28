@@ -1537,6 +1537,10 @@ let CURSTAT = "brouillon";
 /* ===== le pont vers la liste des devis ===== */
 let DREF = null, DRAFT = null;
 try{ DRAFT = new URLSearchParams(location.search).get("draft"); }catch(e){}
+/* 28/07 : l'intervention d'ou vient la facture, quand elle vient de l'agenda.
+   Vide quand elle est etablie au bureau. */
+let FINT = "";
+try{ FINT = new URLSearchParams(location.search).get("ref") || ""; }catch(e){}
 if(DRAFT){ DREF = DRAFT; try{ sessionStorage.setItem("tigerflow-facture-ref", DREF); }catch(e){} }
 if(!DREF){ try{ DREF = sessionStorage.getItem("tigerflow-facture-ref"); }catch(e){} }
 if(!DREF){
@@ -1552,7 +1556,7 @@ function pushDevisInbox(){
     const vd = parseInt((document.getElementById("v-valid") || {value:"30"}).value) || 30;
     const d = new Date(); const iso = x => x.toISOString().slice(0, 10);
     const dv = new Date(); dv.setDate(dv.getDate() + vd);
-    const rec = {ref:DREF, pro:false, client:cli, ct:"", titre:(document.getElementById("v-objet") || {value:""}).value,
+    const rec = {ref:DREF, inter:FINT, pro:false, client:cli, ct:"", titre:(document.getElementById("v-objet") || {value:""}).value,
       montant, statut:CURSTAT, date:iso(d), valid:iso(dv),
       bc:(document.getElementById("v-bc") || {value:""}).value.trim(),
       contrat:(document.getElementById("v-contrat") || {value:""}).value.trim(),
