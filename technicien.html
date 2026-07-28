@@ -196,6 +196,13 @@ a.srow:hover b{color:var(--orange-deep)}
 .kv:last-child{border-bottom:0}
 .dline .k{color:var(--muted)}
 .chiprow{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+/* 28/07 : titres de section dans la carte Logistique. Meme grammaire que les
+   titres de l'assistant : petit, en majuscules, avec son compte a droite. */
+.lsec{display:flex;align-items:center;gap:8px;font-family:'Inter';font-size:.66rem;font-weight:800;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 9px}
+.lsec::before{content:"";width:3px;height:11px;border-radius:2px;background:var(--orange);flex:none}
+.lsec span{margin-left:auto;font-size:.66rem;font-weight:700;letter-spacing:0;text-transform:none;color:#A6ABBB}
+.lsec2{margin-top:16px;padding-top:15px;border-top:1px solid var(--line)}
 .eqc{font-size:.74rem;font-weight:600;padding:5px 11px;border-radius:11px;background:#F1F2F5;color:var(--ink-2)}
 /* planning visuel */
 .dayrow{display:flex;gap:6px;margin:2px 0 4px}
@@ -635,7 +642,12 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
             </div>
             <div class="card">
               <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M1 4h14v12H1zM15 9h4l4 4v3h-8z"/><circle cx="5.5" cy="18.5" r="2.2"/><circle cx="18" cy="18.5" r="2.2"/></svg></span>Logistique</div>
+              <!-- 28/07 : vehicule et materiel etaient empiles sans separation.
+                   On lisait « Renault Kangoo » puis des pastilles, sans savoir ou
+                   commencait quoi. Deux sections titrees, comme ailleurs. -->
+              <div class="lsec">Véhicule<span id="i-vehn"></span></div>
               <div id="i-vehs"></div>
+              <div class="lsec lsec2">Équipements embarqués<span id="i-eqn"></span></div>
               <div class="chiprow" id="i-equip"></div>
             </div>
           </div>
@@ -954,11 +966,15 @@ function profil(){
   const rb = g("rad-b"); if(rb) rb.textContent = (T.rayon ? T.rayon : "30") + " km";
   const TRK = '<svg viewBox="0 0 24 24"><path d="M1 4h14v12H1zM15 9h4l4 4v3h-8z"/><circle cx="5.5" cy="18.5" r="2.2"/><circle cx="18" cy="18.5" r="2.2"/></svg>';
   const vb = (nom, sub, plaque) => '<div class="vehbox"><span class="vic">' + TRK + '</span><div><b>' + nom + '</b><small>' + sub + '</small></div>' + (plaque && plaque !== "—" ? '<span class="plate">' + plaque + '</span>' : "") + '</div>';
+  const nVeh = (T.veh && T.veh !== "—" ? 1 : 0) + (T.veh2 ? 1 : 0);
+  const tv = g("i-vehn"); if(tv) tv.textContent = nVeh > 1 ? nVeh + " véhicules" : "";
   g("i-vehs").innerHTML =
     (T.veh && T.veh !== "—" ? vb(T.veh, "Véhicule principal", T.plaque) : vb("—", "Véhicule à renseigner", "")) +
     (T.veh2 ? vb(T.veh2, "Véhicule secondaire", T.plaque2) : "");
   const eqFull = (Array.isArray(T.mat) && T.mat.length && Array.isArray(T.mat[0])) ? T.mat : null;
   const eq = SK && SK.mat && SK.mat.length ? SK.mat : (eqFull ? eqFull.map(m => m[0]) : []);
+  const nEq = eqFull ? eqFull.length : eq.length;
+  const te = g("i-eqn"); if(te) te.textContent = nEq ? nEq + (nEq > 1 ? " pièces" : " pièce") : "";
   g("i-equip").innerHTML = eqFull
     ? eqFull.map(m => '<span class="eqc">' + m[0] + (m[1] > 1 ? '<span class="qty">×' + m[1] + '</span>' : "") + '</span>').join("")
     : (eq.length
