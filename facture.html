@@ -628,19 +628,23 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
     <div class="abar">
       <b class="drefb" id="dref2">FAC-2026-•••••</b>
       <span class="stwrap">
-        <button class="dstatb2" id="dstatb2" onclick="stMenu(event)" title="Changer le statut de la facture"><i></i>Brouillon<em class="caret">▾</em></button>
+        <button class="dstatb2" id="dstatb2" onclick="stMenu(event)" title="Changer le statut de la facture"><i></i>Pro forma<em class="caret">▾</em></button>
         <div class="stmenu" id="stmenu">
-          <button class="stc on" data-s="brouillon" onclick="setStat2('brouillon',this);stMenuClose()"><i style="background:#9CA1AD"></i> Brouillon</button>
-          <button class="stc" data-s="attente" onclick="setStat2('attente',this);stMenuClose()"><i style="background:var(--blue)"></i> Envoyée</button>
+          <button class="stc on" data-s="brouillon" onclick="setStat2('brouillon',this);stMenuClose()"><i style="background:#9CA1AD"></i> Pro forma</button>
+          <button class="stc" data-s="attente" onclick="setStat2('attente',this);stMenuClose()"><i style="background:var(--blue)"></i> À payer</button>
           <button class="stc" data-s="payee" onclick="setStat2('payee',this);stMenuClose()"><i style="background:var(--green)"></i> Payée</button>
-          <button class="stc" data-s="retard" onclick="setStat2('retard',this);stMenuClose()"><i style="background:var(--red,#D63B33)"></i> En retard</button>
+          <!-- 28/07 : « En retard » retire du menu. Ce n'est pas un choix, c'est
+               « À payer » + echeance depassee — effStatut() le calcule. -->
         </div>
       </span>
       <span class="autosave2">✓ enregistré <b id="asago">à l'instant</b></span>
       <span class="autosave2" id="envinfo" style="display:none;color:var(--blue,#2E5CE6)"></span>
       <div class="spacer"></div>
+      <!-- 28/07 : la facture n'avait pas d'apercu client. Meme page que le devis,
+           qui sert desormais les deux types selon la reference passee. -->
+      <a class="btn2" href="#" onclick="apercuClient();return false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Aperçu client</a>
       <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>PDF</button>
-      <button class="btn2" onclick="saveDevis()" title="Enregistrer sans envoyer — le devis reste en brouillon dans la liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Enregistrer</button>
+      <button class="btn2" onclick="saveDevis()" title="Enregistrer sans envoyer — la facture reste en pro forma dans la liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Enregistrer</button>
       <button class="btn2 primary" onclick="sendGuard()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Envoyer au client</button>
       <div class="morewrap">
         <button class="btn2" onclick="moreMenu(event)" aria-label="Plus d'actions" title="Plus d'actions">⋯</button>
@@ -649,7 +653,7 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
           <div class="msep"></div>
           <button onclick="toast('🧾 Avoir créé à partir de cette facture — bientôt relié')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Créer un avoir</button>
           <div class="msep"></div>
-          <button class="mdanger" id="mdel" onclick="delOrCancel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/></svg>Supprimer le brouillon</button>
+          <button class="mdanger" id="mdel" onclick="delOrCancel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/></svg>Supprimer la pro forma</button>
         </div>
       </div>
     </div>
@@ -885,7 +889,7 @@ function setStat2(k, el){
   document.querySelectorAll(".stc").forEach(c => c.classList.remove("on"));
   el.classList.add("on");
   const b = g("dstatb2");
-  const conf = {brouillon:["#9CA1AD","Brouillon",""], attente:["var(--blue)","Envoyée","sent"], payee:["var(--green)","Payée","ok"], retard:["var(--red,#D63B33)","En retard","ko"]}[k] || ["#9CA1AD",k,""];
+  const conf = {brouillon:["#9CA1AD","Pro forma",""], proforma:["#9CA1AD","Pro forma",""], attente:["var(--blue)","À payer","sent"], payee:["var(--green)","Payée","ok"], retard:["var(--red,#D63B33)","En retard","ko"]}[k] || ["#9CA1AD",k,""];
   document.body.classList.toggle("proforma-on", k === "brouillon");   /* PDF pro forma tant que non validée */
   b.className = "dstatb2 " + conf[2];
   b.innerHTML = "<i style='background:" + conf[0] + "'></i>" + conf[1];
@@ -1024,7 +1028,12 @@ function calc(){
   const tva = d10 + d20;
   const fr = frH;
   const ttc = ht + tva + frH;
-  g("v-nl").textContent = LIGNES.length + " prestation" + (LIGNES.length > 1 ? "s" : "") + " · " + eur(ttc);
+  /* 28/07 — une ligne vide comptait pour une prestation. « + Ligne libre » en
+     insere une a blanc, et l'en-tete annoncait « 2 prestations » pour une
+     seule vraie ligne plus un gabarit. On ne compte que ce qui porte une
+     designation ou un prix. */
+  const nReel = LIGNES.filter(l => (l.designation || "").trim() || +l.pu > 0).length;
+  g("v-nl").textContent = nReel + " prestation" + (nReel > 1 ? "s" : "") + " · " + eur(ttc);
   const vd = (g("v-valid") || {value:"30"}).value;
   if(g("lf-valid")) g("lf-valid").textContent = vd;
   g("v-ht").textContent = eur(ht);
@@ -1560,7 +1569,7 @@ async function sbSaveDevis(statut, silent){
     <div class="savedacts">
       <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
       <button class="btn2" onclick="dupFacture()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Dupliquer la facture</button>
-      <button class="btn2 danger2" onclick="delBrouillon()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/></svg>Supprimer le brouillon</button>
+      <button class="btn2 danger2" onclick="delBrouillon()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/></svg>Supprimer la pro forma</button>
       <button class="btn2 primary" onclick="validerFacture()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Valider la facture</button>
     </div>
   </div>
@@ -1766,11 +1775,23 @@ function dupFacture(){
   savedOpen();
   toast("📑 Facture dupliquée — nouvelle référence " + DREF);
 }
+function apercuClient(){
+  location.href = "devis-client.html" + (DREF ? "?ref=" + encodeURIComponent(DREF) : "");
+}
 function envInfoShow(){
   try{
     const m = JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {};
     const e = m[DREF]; const el = document.getElementById("envinfo");
-    if(el && e){ el.textContent = "📤 envoyé le " + e.date + (e.to ? " · " + e.to : ""); el.style.display = ""; }
+    /* 28/07 — la ligne annoncait « envoye le … » a cote d'un statut resté
+       « Brouillon » : incomprehensible. Ce n'est pas un bug, c'est une PRO
+       FORMA qui est partie, et une pro forma ne transforme pas la facture. La
+       ligne dit donc CE QUI a ete envoye, et pourquoi le statut n'a pas bouge. */
+    if(el && e){
+      el.textContent = e.proforma
+        ? "📄 pro forma envoyée le " + e.date + (e.to ? " · " + e.to : "") + " — la facture n'est pas encore émise"
+        : "📤 envoyée le " + e.date + (e.to ? " · " + e.to : "");
+      el.style.display = "";
+    }
   }catch(e){}
 }
 envInfoShow();
@@ -1826,7 +1847,7 @@ function syncDel(){
   if(!b) return;
   const trash = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/></svg>';
   const ban = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.9 4.9l14.2 14.2"/></svg>';
-  b.innerHTML = CURSTAT === "brouillon" ? trash + "Supprimer le brouillon" : ban + "Annuler la facture (avoir)";
+  b.innerHTML = CURSTAT === "brouillon" ? trash + "Supprimer la pro forma" : ban + "Annuler la facture (avoir)";
   b.title = CURSTAT === "brouillon" ? "" : "Une facture émise ne se supprime pas : elle s'annule par un avoir (traçabilité légale)";
 }
 function delOrCancel(){

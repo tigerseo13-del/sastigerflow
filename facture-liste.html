@@ -429,7 +429,7 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
     <div class="kpis">
       <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="lbl">Facturé ce mois</div><div class="num" id="k-tot">0 €</div></div>
       <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('payee')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('payee')}"><div class="lbl">Encaissé</div><div class="num" id="k-encaisse">0 €</div><div class="obar"><i id="k-obar"></i></div></div>
-      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('attente')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('attente')}"><div class="lbl">En attente de paiement</div><div class="num" id="k-attente">0 €</div></div>
+      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('attente')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('attente')}"><div class="lbl">À payer</div><div class="num" id="k-attente">0 €</div></div>
       <div class="kpi k-red" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('retard')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('retard')}" style="background:#FCECEA;border-color:#F3C4C0"><div class="lbl">En retard</div><div class="num" id="k-retard" style="color:var(--red)">0 €</div></div>
     </div>
 
@@ -442,8 +442,8 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
       </div>
       <div class="chips" id="chips">
         <button class="chip on" data-f="all">Toutes <span class="n" id="n-all"></span></button>
-        <button class="chip" data-f="brouillon">Brouillon <span class="n" id="n-brouillon"></span></button>
-        <button class="chip" data-f="attente">En attente <span class="n" id="n-attente"></span></button>
+        <button class="chip" data-f="brouillon">Pro forma <span class="n" id="n-brouillon"></span></button>
+        <button class="chip" data-f="attente">À payer <span class="n" id="n-attente"></span></button>
         <button class="chip" data-f="payee">Payée <span class="n" id="n-payee"></span></button>
         <button class="chip" data-f="retard">En retard <span class="n" id="n-retard"></span></button>
       </div>
@@ -505,7 +505,26 @@ const DEVIS = [
   {ref:"FAC-2026-00862", client:"Résidence Beau Site",  ct:"Syndic Citya",    titre:"Chenilles processionnaires — 4 pins",   montant:890.00,  statut:"payee",     date:"2026-06-15", valid:"2026-07-15"},
 ];
 
-const LBL = {payee:"Payée", retard:"En retard", attente:"En attente", brouillon:"Brouillon", partiel:"Partielle", proforma:"Pro forma"};
+/* ===== VOCABULAIRE DES STATUTS — remis a plat le 28/07 (choix patron) =====
+   Le logiciel avait DEUX mots pour un seul etat : « Brouillon » et
+   « Pro forma ». Or une facture non validee EST une pro forma — c'est ce que
+   dit le panneau de validation lui-meme. Les deux mots se melangeaient selon
+   l'ecran, d'ou des « Brouillon » affiches a cote d'un « envoye le 28/07 ».
+
+   Un mot par etat :
+     Pro forma              — pas validee, modifiable, ne vaut pas facture
+     A payer                — validee et envoyee, pas encore soldee
+     Partiellement payee    — un acompte est tombe
+     Payee                  — solde a zero
+   « En retard » N'EST PLUS un statut : c'est « A payer » + echeance depassee,
+   calcule par effStatut(). Un etat qu'on ne choisit jamais n'a rien a faire
+   dans un menu de choix.
+
+   Les CLES internes ne changent pas (brouillon, attente, partiel, payee,
+   retard) : les factures deja enregistrees continuent de s'afficher. Seuls
+   les libelles changent. La cle « proforma » pointe sur le meme libelle que
+   « brouillon » — c'est la fusion, vue de l'ecran. */
+const LBL = {payee:"Payée", retard:"En retard", attente:"À payer", brouillon:"Pro forma", partiel:"Partiellement payée", proforma:"Pro forma"};
 /* ===== 28/07 — PRO FORMA =====
    Une facture envoyee en pro forma reste un BROUILLON : c'est un document
    provisoire, non valable pour paiement, et il doit pouvoir etre modifie.
@@ -1023,8 +1042,8 @@ function pipeline(){
   const sum = f => DEVIS.filter(d=>d.statut===f).reduce((s,d)=>s+d.montant,0);
   const tot = DEVIS.reduce((s,d)=>s+d.montant,0) || 1;
   const seg = [
-    ["pg","Encaissé",sum("payee")], ["pa","En attente",sum("attente")],
-    ["pp","En retard",sum("retard")], ["px","Brouillon",sum("brouillon")]
+    ["pg","Encaissé",sum("payee")], ["pa","À payer",sum("attente")],
+    ["pp","En retard",sum("retard")], ["px","Pro forma",sum("brouillon")]
   ];
   (document.getElementById('pipe') || {innerHTML:null,style:{}}).innerHTML =
     seg.filter(x=>x[2]>0).map(x=>`<i class="${x[0]}" style="width:${x[2]/tot*100}%" title="${x[1]}"></i>`).join("");

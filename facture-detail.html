@@ -567,6 +567,11 @@ label[for]{cursor:pointer}
       <span class="fmenu-wrap">
         <button class="btn2" onclick="fMenu(event)" title="Plus d'actions" aria-label="Plus d'actions">⋯</button>
         <div class="fmenu" id="fmenu">
+          <!-- 28/07 : l'envoi reste atteignable EN PERMANENCE. Un client qui
+               rappelle six mois plus tard pour reclamer sa facture est un cas
+               courant, pas une exception. -->
+          <button onclick="envoyer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> <span id="fsend-lbl">Envoyer la facture</span></button>
+          <div class="sep"></div>
           <button onclick="dupFacture2()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Dupliquer la facture</button>
           <div class="sep"></div>
           <button class="danger" id="fdel" onclick="delFacture2(event)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg> <span id="fdel-lbl">Supprimer la facture</span></button>
@@ -584,10 +589,14 @@ label[for]{cursor:pointer}
 
     <!-- onglets -->
     <div class="tabs">
+      <!-- 28/07 (choix patron) — les onglets se rangent par frequence d'usage,
+           pas par logique comptable. Avoirs passait en deuxieme alors qu'il
+           affiche 0 sur la quasi-totalite des factures : l'exception occupait
+           la place de la question quotidienne, « est-ce paye ». -->
       <button class="tab active" onclick="showTab('det',this)">Détails</button>
-      <button class="tab" onclick="showTab('avoirs',this)">Avoirs <span class="n" id="n-avoirs">0</span></button>
       <button class="tab" onclick="showTab('pai',this)">Paiements <span class="n" id="n-pai">0</span></button>
       <button class="tab" onclick="showTab('hist',this)">Historique</button>
+      <button class="tab" onclick="showTab('avoirs',this)">Avoirs <span class="n" id="n-avoirs">0</span></button>
     </div>
 
     <!-- ═══ DÉTAILS ═══ -->
@@ -780,7 +789,7 @@ function dupFacture2(){
     m[nref] = "brouillon"; localStorage.setItem("tigerflow-factures-statuts", JSON.stringify(m));
   }catch(e){}
   g("fmenu").classList.remove("open");
-  toast("Dupliquée en brouillon — " + nref + " s'ouvre en atelier");
+  toast("Dupliquée en pro forma — " + nref + " s'ouvre en atelier");
   setTimeout(() => {
     try{ sessionStorage.setItem("tigerflow-facture-ref", nref); }catch(e){}
     location.href = "facture.html?draft=" + nref;
@@ -873,13 +882,22 @@ function fpjRender(){
   if(cpt) cpt.textContent = l.length + " fichier" + (l.length > 1 ? "s" : "");
   if(box) box.innerHTML = l.map((d, i) => fpjVignette(d, i, true)).join("");
 }
-try{ REF = sessionStorage.getItem("tigerflow-facture-detail"); }catch(e){}
+/* 28/07 — la fiche ne lisait la reference QUE dans sessionStorage : tout lien
+   « facture-detail.html?ref=FAC-… » etait ignore et retombait sur la derniere
+   facture consultee, voire sur l'exemple. La fiche devis, elle, lit deja
+   l'URL en premier. Consequence directe : les resultats « Facture » de la
+   recherche globale, branchee ce matin, ne menaient nulle part de fiable.
+   L'URL fait foi ; sessionStorage n'est que le repli pour les ouvertures
+   internes qui ne passent pas de parametre. */
+try{ REF = new URLSearchParams(location.search).get("ref") || sessionStorage.getItem("tigerflow-facture-detail"); }catch(e){}
 let REC = null;
 try{
   const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]");
-  REC = box.find(x => x.ref === REF) || box[0] || null;
+  /* Si une reference est demandee, on ne se rabat PAS sur une autre facture :
+     afficher le dossier du voisin est pire qu'un ecran vide. */
+  REC = REF ? (box.find(x => x.ref === REF) || null) : (box[0] || null);
 }catch(e){}
-if(!REC){
+if(!REC && !REF){
   REC = {ref:"FAC-2026-00873", client:"Ironwood Solutions", titre:"Punaises de lit — appartement T3",
     montant:616, date:"2026-07-23", valid:"2026-08-22", bc:"", contrat:"",
     lignes:[
@@ -888,13 +906,43 @@ if(!REC){
       {designation:"Housses anti-punaises (lit 140×190)", qte:2, pu:45, tva:10, emo:"🛡️"},
     ]};
 }
+if(!REC){
+  /* Reference demandee mais absente du stock : on l'annonce au lieu de montrer
+     la facture d'un autre client. */
+  REC = {ref:REF, client:"", titre:"Facture introuvable", montant:0, date:"", valid:"", lignes:[], _absente:true};
+}
 REF = REC.ref;
 
 /* statut : registre partagé avec la liste et l'atelier */
 const STK = "tigerflow-factures-statuts";
-function statutGet(){ try{ return (JSON.parse(localStorage.getItem(STK)) || {})[REF] || REC.statut || "attente"; }catch(e){ return "attente"; } }
+function statutGet(){ try{ return (JSON.parse(localStorage.getItem(STK)) || {})[REF] || REC.statut || "brouillon"   /* 28/07 : une facture qui n'a jamais ete
+  validee n'est pas « A payer » — c'est une PRO FORMA. Le defaut etait
+  "attente", si bien qu'une facture neuve s'annoncait payable, et que la
+  bascule « si brouillon alors a payer » de l'envoi n'etait JAMAIS vraie :
+  le registre des statuts restait vide de bout en bout. */; }catch(e){ return "attente"; } }
 function statutSet(st){ try{ const m = JSON.parse(localStorage.getItem(STK)) || {}; m[REF] = st; localStorage.setItem(STK, JSON.stringify(m)); }catch(e){} }
-const STL = {brouillon:["#EEF0F3","#6C7285","#9CA1AD","Brouillon"], attente:["var(--blue-bg)","var(--blue-d)","var(--blue)","En attente"],
+/* ===== VOCABULAIRE DES STATUTS — remis a plat le 28/07 (choix patron) =====
+   Le logiciel avait DEUX mots pour un seul etat : « Brouillon » et
+   « Pro forma ». Or une facture non validee EST une pro forma — c'est ce que
+   dit le panneau de validation lui-meme. Les deux mots se melangeaient selon
+   l'ecran, d'ou des « Brouillon » affiches a cote d'un « envoye le 28/07 ».
+
+   Un mot par etat :
+     Pro forma              — pas validee, modifiable, ne vaut pas facture
+     A payer                — validee et envoyee, pas encore soldee
+     Partiellement payee    — un acompte est tombe
+     Payee                  — solde a zero
+   « En retard » N'EST PLUS un statut : c'est « A payer » + echeance depassee,
+   calcule par effStatut(). Un etat qu'on ne choisit jamais n'a rien a faire
+   dans un menu de choix.
+
+   Les CLES internes ne changent pas (brouillon, attente, partiel, payee,
+   retard) : les factures deja enregistrees continuent de s'afficher. Seuls
+   les libelles changent. La cle « proforma » pointe sur le meme libelle que
+   « brouillon » — c'est la fusion, vue de l'ecran. */
+const STL = {brouillon:["#EEF0F3","#6C7285","#9CA1AD","Pro forma"], proforma:["#EEF0F3","#6C7285","#9CA1AD","Pro forma"],
+             partiel:["var(--amber-bg)","var(--amber)","var(--amber)","Partiellement payée"],
+             attente:["var(--blue-bg)","var(--blue-d)","var(--blue)","À payer"],
              payee:["var(--green-bg)","var(--green-d)","var(--green)","Payée"], retard:["var(--red-bg)","var(--red)","var(--red)","En retard"]};
 
 /* avoirs : registre persistant */
@@ -978,9 +1026,25 @@ function kpis(){
     }
     enc.title = done ? "Facture déjà soldée — rien à encaisser ✓" : "Ouvre l'onglet Paiements avec le solde pré-rempli";
   }
-  /* le bouton principal suit la situation */
+  /* le bouton principal suit la situation.
+
+     28/07 — BUG. Une facture soldee affichait « Telecharger le recu » et
+     l'envoi DISPARAISSAIT de l'ecran : plus aucun moyen d'envoyer la facture
+     au client. Or une facture peut etre payee sans avoir jamais ete envoyee —
+     paiement sur place, virement d'avance, encaissement par le technicien — et
+     c'est precisement ce cas qui se produisait. Le client appelle pour reclamer
+     sa facture, et on ne peut rien lui envoyer.
+
+     Envoyer la facture est une obligation ; telecharger un recu est un
+     confort. Tant qu'elle n'est PAS partie, l'envoi passe donc devant tout le
+     reste, soldee ou non. */
   const a = g('a-primary');
-  if(st === "retard" && solde > 0){
+  let envoye = null;
+  try{ envoye = (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[REF] || null; }catch(e){}
+  if(!envoye){
+    a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Envoyer au client';
+    a.setAttribute("onclick", "envoyer()");
+  } else if(st === "retard" && solde > 0){
     a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/></svg>Relancer le paiement';
     a.setAttribute("onclick", "relancer()");
   } else if(solde <= 0){
@@ -990,6 +1054,13 @@ function kpis(){
     a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Envoyer au client';
     a.setAttribute("onclick", "envoyer()");
   }
+  sendLbl(envoye);
+}
+/* « Envoyer » la premiere fois, « Renvoyer » ensuite : le mot doit dire si le
+   client a deja recu quelque chose. */
+function sendLbl(envoye){
+  const l = g('fsend-lbl');
+  if(l) l.textContent = envoye ? "Renvoyer la facture" : "Envoyer la facture";
 }
 function goEncaisser(){
   const tb = [...document.querySelectorAll('.tab')].find(t => t.textContent.includes('Paiements'));
@@ -1061,7 +1132,7 @@ function details(){
     row(DI.doc, "dib", "N° facture", REF + ' <span class="k2">· émise le ' + fdate(REC.date) + '</span>') +
     row(DI.cal, "dia", "Échéance", fdate(REC.valid) + ' <span class="' + echCls2 + '">' + echTxt.split("· ")[1] + '</span>') +
     (env
-      ? row(DI.send, "dig", "Envoyée au client", env.date + (env.to ? ' <span class="k2">à ' + env.to + '</span>' : '') + (env.pay ? ' <span class="k2">· paiement en ligne</span>' : ''))
+      ? row(DI.send, "dig", env.proforma ? "Pro forma envoyée" : "Envoyée au client", env.date + (env.to ? ' <span class="k2">à ' + env.to + '</span>' : '') + (env.pay ? ' <span class="k2">· paiement en ligne</span>' : ''))
       : row(DI.send, "din", "Envoi", '<span class="noc">Pas encore envoyée</span>')) +
     (REC.bc ? row(DI.tag, "din", "Bon de commande", REC.bc) : '') +
     (REC.contrat ? row(DI.tag, "din", "Contrat", REC.contrat) : '') +
@@ -1136,7 +1207,13 @@ function histo(){
     ok: '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>'
   };
   items.push({ic:HI.doc, bg:"var(--orange-soft)", b:"Facture créée", s:"le " + fdate(REC.date) + " — " + eur(REC.montant) + " TTC"});
-  if(env && env.date) items.push({ic:HI.send, bg:"var(--blue-bg)", b:"Envoyée au client", s:env.date + (env.to ? " · " + env.to : "")});
+  /* 28/07 — une PRO FORMA envoyee n'est pas la facture : elle ne transforme pas
+     le document et ne fait pas courir l'echeance. L'historique doit distinguer
+     les deux, sinon on croit la facture partie alors qu'elle est encore en
+     brouillon. */
+  if(env && env.date) items.push({ic:HI.send, bg:"var(--blue-bg)",
+    b: env.proforma ? "Pro forma envoyée" : "Envoyée au client",
+    s: env.date + (env.to ? " · " + env.to : "") + (env.proforma ? " — la facture n'est pas encore émise" : "")});
   if(env && env.relance) items.push({ic:HI.mail, bg:"var(--amber-bg)", b:"Relance de paiement envoyée", s:env.relance + (env.to ? " · " + env.to : "")});
   avoirs().forEach(a => items.push({ic:HI.doc, bg:"var(--red-bg)", b:"Avoir " + a.num + " émis — − " + eur(a.m), s:a.motif + " · " + a.t + (a.desc ? " · " + a.desc : "")}));
   pays().forEach(p => items.push({ic:HI.euro, bg:"var(--green-bg)", b:"Paiement reçu — " + eur(p.m), s:p.mode + " · " + (p.d ? "encaissé le " + fdate(p.d) : p.t) + (p.note ? " · " + p.note : "")}));
@@ -1249,7 +1326,12 @@ function payAdd(montant){
   g('p-montant').value = ""; if(g('p-note')) g('p-note').value = "";
   const paye = arr.reduce((a,p) => a + p.m, 0);
   const avT = avoirs().reduce((a,x) => a + x.m, 0);
+  /* 28/07 — un acompte ne changeait rien : la facture restait « A payer »
+     comme si rien n'etait tombe. L'etat « Partiellement payee » existait dans
+     les libelles et dans le calcul du reste a encaisser, mais personne ne le
+     posait jamais. */
   if(paye + avT >= REC.montant - 0.005){ statutSet("payee"); toast("🎉 Facture soldée — statut Payée !"); }
+  else if(paye + avT > 0.005 && statutGet() !== "brouillon"){ statutSet("partiel"); }
   else toast("💶 Paiement de " + eur(m) + " enregistré — reste " + eur(REC.montant - paye - avT));
   renderAll();
 }
