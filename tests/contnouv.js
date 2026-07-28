@@ -121,33 +121,69 @@ const boutons = ["saveContrat('brouillon')", "saveContrat('actif')"];
 t("les deux boutons d'enregistrement sont toujours câblés",
   boutons.every(b => src.includes(b)));
 
-/* ===== 7. JOURS PRÉFÉRÉS EN VERT ====================================== */
-/* Demande du 28/07. Le vert est la couleur de la disponibilité dans tout le
-   logiciel — mêmes valeurs que #a-jours sur techniciens.html, sinon les deux
-   écrans afficheraient deux verts différents pour la même idée. */
-t("les jours cochés passent en vert",
-  /#v-jours \.skchip:has\(input:checked\)\{[^}]*var\(--green-bg\)/.test(src));
+/* ===== 7. TOUT CE QUI EST RETENU EST VERT ============================= */
+/* Demande du 28/07 : sur cette page, tout etat « choisi » passe en vert.
+   Le test ne verifie pas une liste ecrite a la main — il RELIT le CSS, y
+   cherche tout etat selectionne encore en orange, et exige pour chacun une
+   contrepartie verte sous .layout. Un groupe ajoute demain sans son vert
+   fera echouer ce test tout seul. */
+const css = (src.match(/<style[^>]*>([\s\S]*?)<\/style>/) || ["", ""])[1];
+const regles = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].map(m => ({ sel: m[1].trim(), corps: m[2] }));
 
-/* LE GARDE-FOU. .skchip est partagée par les 26 pages : si la règle verte
-   avait été écrite À LA PLACE de la règle orange au lieu d'à côté, tout le
-   logiciel changerait de couleur d'un coup. Ce test échoue si quelqu'un
-   « simplifie » un jour en fusionnant les deux. */
-t("la règle .skchip partagée reste orange",
-  /^\.skchip:has\(input:checked\)\{[^}]*var\(--orange-soft\)/m.test(src));
+const estSelection = r => /:checked|\.on\b/.test(r.sel);
+const estOrange = r => /--orange|#FFF1E9|#C2571F/.test(r.corps);
+const estVert = r => /--green/.test(r.corps);
 
-/* Sur cette page, l'orange dit CE QU'ON VEND, le vert dit QUAND ON PASSE.
-   Catégories, type de contrat et créneaux restent donc orange. */
-["#v-cats", "#typechips", "#v-creneaux"].forEach(sel => {
-  t("aucun vert ajouté sur " + sel,
-    !new RegExp(sel + " \\.skchip:has\\(input:checked\\)").test(src));
+/* Un etat ne compte que s'il vit DANS le formulaire. `.bnv a.on` marque la
+   page courante dans la barre de navigation — bloc partage par 22 pages, ce
+   n'est pas un choix de l'utilisateur et il garde l'orange. On tranche sur
+   l'arbre reel, pas sur l'allure du selecteur. */
+const layout = d.querySelector(".layout");
+const dansLeFormulaire = sel => {
+  const simple = sel.split(",")[0]
+    .replace(/:has\([^)]*\)/g, "").replace(/:checked/g, "")
+    .replace(/\s*\+\s*\w+/g, "")
+    /* `.on` est posee par le script au clic : elle n'existe pas dans le HTML
+       au repos. Sans cette ligne, `.pick button.on` ne trouvait aucun element
+       et sortait du controle EN SILENCE, au lieu de passer au rouge. */
+    .replace(/\.on\b/g, "").trim();
+  try { return [...d.querySelectorAll(simple)].some(e => layout.contains(e)); }
+  catch { return false; }
+};
+
+const orangeRestants = regles.filter(r =>
+  estSelection(r) && estOrange(r) && !r.sel.startsWith(".layout") && dansLeFormulaire(r.sel));
+const vertsPage = regles.filter(r => estSelection(r) && estVert(r) && r.sel.startsWith(".layout"));
+
+t("au moins un etat vert est defini sous .layout", vertsPage.length >= 4,
+  vertsPage.length + " trouve(s)");
+
+/* Chaque etat orange doit avoir sa contrepartie verte de page. */
+orangeRestants.forEach(r => {
+  const noyau = r.sel.replace(/^\s*/, "");
+  const couvert = vertsPage.some(v => v.sel.includes(noyau.split(",")[0].trim()));
+  t("l'etat « " + noyau.slice(0, 42) + " » a bien son vert de page", couvert);
 });
 
-/* Le vert doit être identique à celui de la fiche technicien. */
+/* LE GARDE-FOU. Les regles de base sont partagees avec les autres pages :
+   si le vert avait ete ecrit A LA PLACE de l'orange au lieu d'en surcharge,
+   la selection changerait de couleur dans tout le logiciel. */
+[[".skchip:has(input:checked)", "--orange"],
+ [".pick button.on", "--orange"],
+ [".sw input:checked \\+ i", "--orange"]].forEach(([sel, attendu]) => {
+  const base = regles.find(r => r.sel === sel.replace("\\+", "+"));
+  t("la regle partagee " + sel.replace("\\+", "+") + " reste orange",
+    !!base && new RegExp(attendu).test(base.corps));
+});
+
+/* Le vert doit etre celui du reste du logiciel, pas un vert invente. */
 const tech = fs.readFileSync(path.join(__dirname, "..", "techniciens.html"), "utf8");
-const vert = r => (r.match(/border-color:var\(--green\);background:var\(--green-bg\);color:var\(--green-d\)/) || [])[0];
-t("même vert que #a-jours sur techniciens.html",
-  vert(src.match(/#v-jours \.skchip:has\(input:checked\)\{[^}]*\}/)[0]) ===
-  vert(tech.match(/#a-jours \.skchip:has\(input:checked\)\{[^}]*\}/)[0]));
+t("meme vert que les jours travailles de techniciens.html",
+  /--green-bg:#DFF3ED/.test(src) && /--green-bg:#DFF3ED/.test(tech) &&
+  /--green-d:#0A6B51/.test(src) && /--green-d:#0A6B51/.test(tech));
+
+/* .icq n'existait plus dans le HTML : regle orpheline supprimee. */
+t("plus de regle orpheline .icq", !/^\.icq/m.test(src));
 
 console.log("\n  " + ok + " vert" + (ok > 1 ? "s" : "") + ", " + ko + " rouge" + (ko > 1 ? "s" : "") + "\n");
 process.exit(ko ? 1 : 0);
