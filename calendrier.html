@@ -3453,6 +3453,23 @@ renderTray();
    Le selecteur du tableau de bord n'y filtre rien (aucun de ses chiffres ne
    depend d'un mois) : il envoie ici, ou le mois veut dire quelque chose. */
 (function(){
+  /* 28/07 : on peut arriver ici depuis un devis ou une facture, avec le numero
+     d'intervention dans l'adresse — calendrier.html?int=INT-2026-1003. On se
+     place sur son jour et on ouvre son panneau. */
+  try{
+    var qi = new URLSearchParams(location.search).get("int");
+    if(qi){
+      var id = parseInt(String(qi).split("-").pop(), 10) - 1000;
+      var v = INTERVS.find(function(x){ return x.id === id; });
+      if(v){
+        CUR = new Date(v.date + "T12:00:00");
+        VIEW = "day"; render();
+        setTimeout(function(){ openDetail(v.id); }, 60);
+      } else {
+        toast("Cette intervention n'est plus à l'agenda");
+      }
+    }
+  }catch(e){}
   var q = new URLSearchParams(location.search).get("m");
   if(!q || !/^\d{4}-\d{2}$/.test(q)) return;
   var a = +q.slice(0,4), m = +q.slice(5,7);
