@@ -93,6 +93,29 @@ const contenu = d => d.querySelector(".page").textContent;
   t("l'adresse est celle du client, pas celle de la démonstration",
     txt(d, ".hadr").includes("Lilas"), "vu : « " + txt(d, ".hadr") + " »");
 
+  /* ===== 1 bis. LE RESTE DE LA DÉMONSTRATION ========================== */
+  /* Le contrat vient d'être créé : aucune intervention n'est programmée,
+     aucun document n'est joint. Annoncer « Prochaine intervention : samedi
+     29 août » ou un « contrat-signe.pdf » est pire qu'une carte vide. */
+  const nx = d.querySelector(".next");
+  t("aucun bandeau « Prochaine intervention » sans date programmée",
+    !nx || nx.style.display === "none",
+    "le bandeau de démonstration est encore affiché");
+  t("les interventions de démonstration ont disparu",
+    !contenu(d).includes("Contrôle mensuel"),
+    "quatre contrôles signés Pablo étaient encore listés");
+  t("les documents de démonstration ont disparu",
+    !contenu(d).includes("contrat-signe.pdf"),
+    "un contrat signé qui n'existe pas est pire qu'une liste vide");
+  t("les compteurs d'onglets sont remis à zéro",
+    [...d.querySelectorAll(".tn")].every(n => n.textContent === "0"),
+    "vus : " + [...d.querySelectorAll(".tn")].map(n => n.textContent).join(", "));
+  t("le sous-texte de facturation n'annonce plus 62,54 € / mois",
+    !contenu(d).includes("62,54"),
+    "montant du contrat de démonstration, sous une facturation annuelle");
+  t("une facturation annuelle est décrite comme telle",
+    contenu(d).includes("1 facture / an"));
+
   /* ===== 2. RÉFÉRENCE INCONNUE : ON LE DIT ============================= */
   /* Avant, une référence inconnue laissait la démonstration : on présentait
      le contrat d'un autre client comme étant celui demandé. */

@@ -1033,6 +1033,45 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
     if(bs[3]) bs[3].childNodes[0].nodeValue = dfr(c.renouvellement) + " ";
 
     videHistorique();
+    videDemo();
+    cartouches(c);
+  }
+
+  /* 28/07 — TOUT le reste de la fiche est de la démonstration figée dans le
+     HTML : le bandeau « Prochaine intervention : samedi 29 août », quatre
+     contrôles mensuels signés Pablo, trois PDF dont un « contrat-signe.pdf »,
+     le matériel à emporter, la planification, et les compteurs d'onglets.
+     Sur un contrat qu'on vient de créer, tout cela est faux — et un contrat
+     signé qui n'existe pas est pire qu'une carte vide. On vide, on annonce
+     l'attente, on remplira quand les données existeront. */
+  function videDemo(){
+    /* Le bandeau : aucune intervention n'est encore programmée. */
+    const nx = q1(".next");
+    if(nx) nx.style.display = "none";
+
+    const vide = (sel, msg) => document.querySelectorAll(sel).forEach(u => {
+      u.innerHTML = '<li style="color:var(--muted);font-size:.84rem;list-style:none;padding:11px 0">' + msg + '</li>';
+    });
+    vide("ul.tl",    "Aucune intervention programmée pour ce contrat.");
+    vide("ul.docs",  "Aucun document joint.");
+    vide("ul.items", "Aucun matériel renseigné.");
+
+    /* Les compteurs d'onglets annonçaient 5 évènements et 12 interventions. */
+    document.querySelectorAll(".tn").forEach(n => n.textContent = "0");
+  }
+
+  /* Les sous-textes des cartouches étaient ceux du contrat de démonstration :
+     un montant mensuel affiché sous une facturation annuelle, et un préavis
+     inventé. On calcule ce qu'on peut, on efface le reste. */
+  const PAR_AN = {Mensuelle:12, Trimestrielle:4, Semestrielle:2, Annuelle:1};
+  function cartouches(c){
+    const em = document.querySelectorAll(".hero .quick .q b em");
+    if(em[0]) em[0].textContent = "réalisés";
+    if(em[1]){
+      const n = PAR_AN[c.frequence] || 0;
+      em[1].textContent = n > 1 ? eur2((+c.montant_ttc || 0) / n) + " / échéance" : "1 facture / an";
+    }
+    if(em[2]) em[2].textContent = "";   /* le préavis n'est pas saisi : on n'invente pas */
   }
 
   /* L'onglet Historique contient trois évènements de démonstration en dur,
@@ -1067,7 +1106,9 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
       const lk = ids.querySelector("a"); if(lk){ lk.textContent = ""; lk.style.display = "none"; }
     }
     document.querySelectorAll(".hero .quick .q b").forEach(x => { if(x.childNodes[0]) x.childNodes[0].nodeValue = "— "; });
+    document.querySelectorAll(".hero .quick .q b em").forEach(e => e.textContent = "");
     videHistorique();
+    videDemo();
   }
 
   let c = null;
