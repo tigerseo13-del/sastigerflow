@@ -1333,25 +1333,35 @@ function logout(){
 </div>
 <script>
 (function(){
-  var CL = [
-    {n:"Ironwood Solutions", s:"Paris 11e - 06 12 34 56 78", h:"client.html?c=Ironwood%20Solutions"},
-    {n:"Boulangerie Dupont", s:"Asnieres - 06 45 22 18 90", h:"client.html?c=Boulangerie%20Dupont"},
-    {n:"Pharmacie Centrale", s:"Paris 15e - 01 45 32 10 87", h:"client.html?c=Pharmacie%20Centrale"},
-    {n:"Hotel du Parc", s:"Vincennes - 01 43 28 55 12", h:"client.html?c=H%C3%B4tel%20du%20Parc"},
-    {n:"Restaurant Le Baobab", s:"Paris 18e - 06 52 30 41 78", h:"client.html?c=Restaurant%20Le%20Baobab"},
-    {n:"M. Diallo", s:"Saint-Ouen - 06 61 44 28 03", h:"client.html?c=M.%20Diallo"},
-    {n:"Mme Perrin", s:"Paris 13e - 06 78 12 45 66", h:"client.html?c=Mme%20Perrin"},
-    {n:"Mme Ferreira", s:"Ivry - 06 33 90 71 25", h:"client.html?c=Mme%20Ferreira"},
-    {n:"Syndic Foncia Lilas", s:"Paris 20e - 01 40 31 62 00", h:"client.html?c=Syndic%20Foncia%20Lilas"},
-    {n:"Entrepot Central", s:"Pantin - 01 48 91 07 33", h:"client.html?c=Entrep%C3%B4t%20Central"},
-    {n:"Camping Val de Seine", s:"Draveil - 01 69 03 88 21", h:"client.html?c=Camping%20Val%20de%20Seine"}
-  ];
-  var DOC = [
-    {n:"DEV-2026-01287", s:"Devis - punaises de lit", h:"devis.html"},
-    {n:"FAC-2026-00873", s:"Facture - Ironwood Solutions", h:"facture.html"},
-    {n:"FAC-2026-00858", s:"Facture en retard - 1 250 EUR", h:"facture-liste.html"},
-    {n:"CTR-2026-04729", s:"Contrat annuel - Ironwood", h:"contrat.html"}
-  ];
+  /* 28/07 — lit les vraies donnees, plus une liste de demonstration en dur.
+     Bloc recopie sur 23 pages : garder ce commentaire court, chaque octet y
+     compte 23 fois. Detail dans le commit. PG (navigation) reste en dur. */
+  var CL = [], DOC = [];
+  (function(){
+    var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+    var vu = {};
+    J("tigerflow-inbox-clients").concat(J("tigerflow-clients-cache")).forEach(function(c){
+      if(!c || !c.nom || vu[c.nom]) return;   /* un client est dans les deux stocks */
+      vu[c.nom] = 1;
+      CL.push({n:c.nom, s:[c.ville, c.tel].filter(Boolean).join(" - "),
+               h:"client.html?c=" + encodeURIComponent(c.nom)});
+    });
+    var piece = function(cle, mot, page, param){
+      J(cle).forEach(function(x){
+        if(!x || !x.ref) return;
+        DOC.push({n:x.ref, s:mot + (x.client ? " - " + x.client : ""),
+                  h:page + "?" + param + "=" + encodeURIComponent(x.ref)});
+      });
+    };
+    piece("tigerflow-inbox-devis",    "Devis",    "devis-detail.html", "ref");
+    piece("tigerflow-inbox-contrats", "Contrat",  "contrat.html",      "n");
+    piece("tigerflow-inbox-factures", "Facture",  "facture-detail.html","ref");
+    J("tigerflow-added-interventions").forEach(function(i){
+      if(!i || !i.client) return;
+      DOC.push({n:i.client + " - intervention", s:[i.date, i.ville].filter(Boolean).join(" - "),
+                h:"calendrier.html"});
+    });
+  })();
   var PG = [
     {n:"Tableau de bord", i:"🏠", h:"index.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},{n:"Tournees", i:"🗺️", h:"tournee.html"},
     {n:"Clients", i:"👥", h:"clients.html"},{n:"Nouveau client", i:"➕", h:"client-nouveau.html"},
