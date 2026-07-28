@@ -122,6 +122,36 @@ const val = (w, id) => { const e = w.document.getElementById(id); return e ? e.v
     vu && vu.adresse === "9 avenue Neuve",
     "sinon devis et contrats gardent l'ancienne");
 
+  /* ===== 4 bis. LE FORMULAIRE S'OUVRE VIERGE ========================= */
+  /* Le brouillon automatique pre-remplissait « Ajouter un client » avec la
+     saisie precedente. Il etait enregistre PAR POSITION de champ : au moindre
+     changement de forme du formulaire — type de client, blocs deplies — tout
+     se decalait d'un cran et l'adresse recevait le code postal. */
+  const vierge = await new Promise(resolve => {
+    const dom = new JSDOM(srcNouv, {
+      runScripts: "dangerously", url: "https://x/client-nouveau.html",
+      beforeParse(w) {
+        w.matchMedia = () => ({ matches:false, addListener(){}, removeListener(){}, addEventListener(){}, removeEventListener(){} });
+        w.HTMLCanvasElement.prototype.getContext = () => null;
+        w.supabase = { createClient: () => ({ auth:{getSession:async()=>({data:{session:null}})}, from:()=>({}) }) };
+        /* un brouillon comme il en trainait dans les navigateurs */
+        w.localStorage.setItem("tigerflow-client-brouillon", JSON.stringify(
+          {vals:["francis","UNDERWOOD","04 44 44 44 44","75011","Paris","France"], TYPE:"part", revealed:[]}));
+      }
+    });
+    setTimeout(() => resolve(dom.window), 120);
+  });
+  t("le formulaire de creation s'ouvre vierge",
+    ["f-nom","f-nomp","f-prenom","f-tel1","f-adr","f-cp","f-ville"]
+      .every(id => { const e = vierge.document.getElementById(id); return !e || !e.value; }),
+    "champs remplis : " + ["f-nom","f-nomp","f-prenom","f-tel1","f-adr","f-cp","f-ville"]
+      .filter(id => { const e = vierge.document.getElementById(id); return e && e.value; }).join(", "));
+  t("le brouillon qui trainait est efface du navigateur",
+    vierge.localStorage.getItem("tigerflow-client-brouillon") === null);
+  t("plus aucune restauration par position dans le code",
+    !/els\[i\]/.test(srcNouv),
+    "c'est la restauration par index qui decalait les champs");
+
   /* ===== 5. SANS ?c=, C'EST TOUJOURS UNE CRÉATION ===================== */
   const dom = new JSDOM(srcNouv, {
     runScripts: "dangerously", url: "https://x/client-nouveau.html",

@@ -589,7 +589,6 @@ function saveClient(){
   const nom = EDIT || (TYPE === "part"
     ? (document.getElementById("f-prenom").value.trim() + " " + document.getElementById("f-nomp").value.trim()).trim()
     : document.getElementById("f-nom").value.trim());
-  try{ localStorage.removeItem(CKEY); }catch(e){}
   sbSave(nom);
 }
 /* ===== Enregistrement Supabase (repli : mode démo si non connecté) ===== */
@@ -726,41 +725,22 @@ fcp.addEventListener("input", ()=>{
 fville.addEventListener("input", ()=>{ delete fville.dataset.auto; });
 
 /* ===== Brouillon automatique ===== */
-const CKEY = "tigerflow-client-brouillon";
-function cDraftSave(){
-  try{
-    const vals = [...document.querySelectorAll("input,select,textarea")].map(e=>e.value);
-    const revealed = ["more-contact","more-acces","more-note"].filter(id=>{
-      const el = document.getElementById(id);
-      return el && el.style.display !== "none";
-    });
-    localStorage.setItem(CKEY, JSON.stringify({vals, TYPE, revealed}));
-  }catch(e){}
-}
-function cDraftRestore(){
-  try{
-    const raw = localStorage.getItem(CKEY);
-    if(!raw) return;
-    const d = JSON.parse(raw);
-    if(d.TYPE && d.TYPE !== TYPE){
-      const card = document.querySelector('.tcard[data-t="' + d.TYPE + '"]');
-      if(card) setType(card);
-    }
-    (d.revealed || []).forEach(id=>{
-      const el = document.getElementById(id);
-      if(el){ el.style.display = ""; }
-      const btn = [...document.querySelectorAll(".morelink")].find(b=>(b.getAttribute("onclick")||"").includes(id));
-      if(btn) btn.remove();
-    });
-    const els = [...document.querySelectorAll("input,select,textarea")];
-    (d.vals || []).forEach((v,i)=>{ if(els[i] && v) els[i].value = v; });
-    if((d.vals || []).some(v=>v)) toast("📝 Brouillon restauré");
-  }catch(e){}
-}
-let _ch = null;
-const cTouch = ()=>{ clearTimeout(_ch); _ch = setTimeout(cDraftSave, 700); };
-document.addEventListener("input", cTouch);
-document.addEventListener("click", cTouch);
+/* ===== brouillon de saisie : RETIRE le 28/07 =====
+   Le formulaire se pre-remplissait tout seul avec la saisie precedente : on
+   cliquait « Ajouter un client » et on retrouvait le client d'avant.
+
+   Pire que genant : le brouillon etait enregistre comme une LISTE DE VALEURS
+   PAR POSITION (tous les input/select/textarea dans l'ordre du document), puis
+   reinjecte dans le meme ordre. Or le nombre de champs change avec le type de
+   client (particulier / entreprise / syndic) et avec les blocs deplies
+   (2e telephone, details d'acces). Au moindre ecart, tout se decalait d'un
+   cran : l'adresse recevait le code postal, le code postal recevait la ville,
+   la ville recevait le pays. Un client enregistre dans cet etat porte des
+   coordonnees fausses sans que rien ne le signale.
+
+   Si un filet de securite est souhaite un jour, il devra restaurer PAR
+   IDENTIFIANT de champ, et proposer la restauration au lieu de l'imposer. */
+try{ localStorage.removeItem("tigerflow-client-brouillon"); }catch(e){}
 
 /* ===== MODE MODIFICATION (28/07) =====
    « Modifier la fiche », dans le menu de la fiche client, n'affichait qu'un
@@ -847,7 +827,7 @@ async function cliCharge(){
   });
 }
 
-if(EDIT) cliCharge(); else cDraftRestore();
+if(EDIT) cliCharge();   /* sinon : formulaire vierge, voir plus haut */
 
 /* ===== Focus initial (ordinateur seulement) ===== */
 if(matchMedia("(min-width:761px)").matches){
