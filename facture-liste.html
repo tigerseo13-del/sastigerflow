@@ -147,6 +147,9 @@ h1,.num{font-family:'Sora',sans-serif}
 .dt .go{color:var(--orange);font-weight:600;white-space:nowrap}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:16px;white-space:nowrap}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+/* 28/07 : la pro forma se distingue au premier coup d'oeil — c'est tout
+   l'interet. Violet, comme le document provisoire qu'elle est. */
+.st.st-proforma{color:#5B3BC4;font-weight:800;background:#F1EAFD}
 .empty-row{text-align:center;padding:40px;color:var(--muted)}
 
 /* ============ CARTES (mobile) ============ */
@@ -489,7 +492,16 @@ const DEVIS = [
   {ref:"FAC-2026-00862", client:"Résidence Beau Site",  ct:"Syndic Citya",    titre:"Chenilles processionnaires — 4 pins",   montant:890.00,  statut:"payee",     date:"2026-06-15", valid:"2026-07-15"},
 ];
 
-const LBL = {payee:"Payée", retard:"En retard", attente:"En attente", brouillon:"Brouillon", partiel:"Partielle"};
+const LBL = {payee:"Payée", retard:"En retard", attente:"En attente", brouillon:"Brouillon", partiel:"Partielle", proforma:"Pro forma"};
+/* ===== 28/07 — PRO FORMA =====
+   Une facture envoyee en pro forma reste un BROUILLON : c'est un document
+   provisoire, non valable pour paiement, et il doit pouvoir etre modifie.
+   Mais la liste l'affichait « Brouillon » comme les autres — impossible de
+   savoir laquelle avait deja ete envoyee au client. Le statut de travail ne
+   change pas ; c'est son LIBELLE qui le dit. */
+const ENVOIS = (() => { try{ return JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {}; }catch(e){ return {}; } })();
+const estPF = ref => { const e = ENVOIS[ref]; return !!(e && e.proforma); };
+const stAff = d => (d.statut === "brouillon" && estPF(d.ref)) ? "proforma" : d.statut;
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
 const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014"; const [y,m,d]=String(iso).split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
@@ -585,7 +597,7 @@ function render(){
       <td class="cl"><b>${d.client}</b><small>${d.ct}</small></td>
       <td>${d.titre}</td>
       <td class="amt">${eur(d.montant)}</td>
-      <td><span class="st st-${d.statut}">${LBL[d.statut]}</span></td>
+      <td><span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span></td>
       <td class="dte">${fdate(d.valid)}${expChip(d)}</td>
       <td>${actionsHTML(d)}</td>
     </tr>`).join("")
@@ -593,7 +605,7 @@ function render(){
 
   document.getElementById('cards').innerHTML = slice.length ? slice.map(d=>`
     <a class="dcard" href="facture.html">
-      <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${d.statut}">${LBL[d.statut]}</span></div>
+      <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span></div>
       <b class="t">${d.titre}</b>
       <div class="cl">${d.client} · ${d.ct}</div>
       <div class="l2"><span class="amt">${eur(d.montant)}</span><span class="dte">éch. ${fdate(d.valid)} ${expChip(d)}</span></div>
@@ -785,7 +797,7 @@ function openFac(ref){
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead2">
       <div class="drow1">
-        <span class="st st-${d.statut}">${LBL[d.statut]}</span>
+        <span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span>
         <button class="dclose" onclick="closeFac()">✕</button>
       </div>
       <h2>${d.client}</h2>
