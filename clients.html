@@ -496,6 +496,16 @@ async function sbLoad(silent){
   try{
     const {data, error} = await SB.from("clients").select("*").order("created_at", {ascending:false});
     if(error) throw error;
+    /* 28/07 : on garde une COPIE LOCALE de la liste chargee. Les editeurs
+       (devis, facture, contrat, intervention, paiement) interrogent la base de
+       leur cote, mais si cet appel echoue chez eux — droits, reseau, colonne
+       renommee — leur selecteur de client se retrouve vide de tout ce qui a ete
+       cree. Avec cette copie, ils affichent au moins ce que cette page a vu. */
+    try{
+      localStorage.setItem("tigerflow-clients-cache", JSON.stringify(
+        (data || []).map(c => ({nom:c.nom, ville:c.ville || "", cp:c.cp || "",
+                                adresse:c.adresse || "", tel:c.tel || "", mail:c.mail || ""}))));
+    }catch(e){}
     CLIENTS.length = 0;
     (data || []).forEach(c => CLIENTS.push({
       nom: c.nom,
