@@ -92,8 +92,43 @@ const primaire = w => { const p = w.document.getElementById("a-primary"); return
   t("une facture jamais validée s'annonce « Pro forma »",
     badge(w) === "Pro forma",
     "elle affichait « À payer » : un document non validé se présentait comme payable");
-  t("et elle propose l'envoi", /Envoyer/.test(primaire(w)),
+  /* Cette attente disait « et elle propose l'envoi ». Elle datait d'avant la
+     separation des deux modes : sur une pro forma, le geste qui compte est la
+     VALIDATION, pas l'envoi. L'envoi en pro forma reste dans le menu. */
+  t("et elle propose de la valider", /Valider/.test(primaire(w)),
     "bouton : « " + primaire(w) + " »");
+
+  /* ===== 1 bis. UNE PRO FORMA N'EST PAS UNE FACTURE ================= */
+  /* 28/07 — la fiche affichait toute la machinerie d'une facture sur un
+     document non valide : « Encaisser la facture », les onglets Paiements et
+     Avoirs, un « solde du a encaisser ». Une pro forma ne se paie pas, ne
+     recoit pas d'avoir, et ne doit rien. C'est ce melange qui rendait le
+     parcours incomprehensible. */
+  const vu = (w2, id) => { const e = w2.document.getElementById(id); return e && e.style.display !== "none"; };
+
+  t("sur une pro forma, le bouton principal propose de VALIDER",
+    /Valider la facture/.test(primaire(w)), "bouton : « " + primaire(w) + " »");
+  t("« Encaisser » est masqué sur une pro forma", !vu(w, "a-encaisser"),
+    "on ne peut pas encaisser un document qui ne vaut pas facture");
+  t("l'onglet Paiements est masqué", !vu(w, "tab-pai"));
+  t("l'onglet Avoirs est masqué", !vu(w, "tab-avoirs"),
+    "un avoir corrige une facture emise, pas une pro forma");
+  t("le « solde dû » est masqué", !vu(w, "k-solde-tile"),
+    "une pro forma ne doit rien");
+
+  /* Validation depuis la fiche. */
+  w.validerFacture2();
+  await new Promise(r => setTimeout(r, 60));
+  t("après validation, la facture passe « À payer »", badge(w) === "À payer",
+    "affiché : « " + badge(w) + " »");
+  t("« Encaisser » réapparaît", vu(w, "a-encaisser"));
+  t("les onglets Paiements et Avoirs réapparaissent",
+    vu(w, "tab-pai") && vu(w, "tab-avoirs"));
+  t("le bouton principal redevient l'envoi", /Envoyer/.test(primaire(w)),
+    "bouton : « " + primaire(w) + " »");
+
+  /* On repart d'une fiche neuve pour la suite du parcours. */
+  w = await fiche();
 
   /* ===== 2. ENVOI ==================================================== */
   w.envoyer();

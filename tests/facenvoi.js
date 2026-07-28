@@ -38,7 +38,12 @@ const FACTURE = {
 };
 
 /* `paiements` solde la facture, `envois` dit si elle est partie. */
-function fiche({ paiements = [], envois = {} } = {}) {
+/* 28/07 — ces essais posaient des paiements SANS valider la facture. Depuis
+   la separation des deux modes, une facture non validee reste une pro forma :
+   elle ne s'encaisse pas et son bouton propose la validation. Les jeux d'essai
+   valident donc explicitement, ce qui correspond au parcours reel — on ne
+   recoit pas d'argent sur un document qui ne vaut pas facture. */
+function fiche({ paiements = [], envois = {}, statut = "attente" } = {}) {
   return new Promise(resolve => {
     const dom = new JSDOM(src, {
       runScripts: "dangerously", url: "https://x/facture-detail.html?ref=" + encodeURIComponent(REF),
@@ -55,6 +60,7 @@ function fiche({ paiements = [], envois = {} } = {}) {
         w.localStorage.setItem("tigerflow-inbox-factures", JSON.stringify([FACTURE]));
         w.localStorage.setItem("tigerflow-factures-paiements", JSON.stringify({ [REF]: paiements }));
         w.localStorage.setItem("tigerflow-factures-envois", JSON.stringify(envois));
+        w.localStorage.setItem("tigerflow-factures-statuts", JSON.stringify(statut ? { [REF]: statut } : {}));
       }
     });
     setTimeout(() => resolve(dom.window), 700);
@@ -94,7 +100,7 @@ const menu = w => (w.document.getElementById("fmenu") || { textContent: "" }).te
     /Renvoyer/.test(menu(w)), "menu : " + menu(w).replace(/\s+/g, " ").trim().slice(0, 70));
 
   /* ===== 3. LE MOT SUIT L'ÉTAT ====================================== */
-  w = await fiche();
+  w = await fiche({ statut: "attente" });
   t("le menu dit « Envoyer » tant qu'elle n'est pas partie",
     /Envoyer la facture/.test(menu(w)) && !/Renvoyer/.test(menu(w)),
     "menu : " + menu(w).replace(/\s+/g, " ").trim().slice(0, 70));
@@ -127,6 +133,15 @@ const menu = w => (w.document.getElementById("fmenu") || { textContent: "" }).te
   t("Paiements passe avant Avoirs",
     onglets.indexOf("pai") < onglets.indexOf("avoirs"),
     "un onglet a zero ne doit pas preceder celui qu'on consulte tous les jours");
+
+  /* Et le cas inverse : une facture NON validee ne propose pas l'envoi mais
+     la validation — c'est le mode pro forma. */
+  const pf = await fiche({ statut: "brouillon" });
+  t("une pro forma propose la validation, pas l'envoi",
+    /Valider/.test((primaire(pf) || {}).textContent || ""),
+    "bouton : « " + (primaire(pf) || {}).textContent + " »");
+  t("mais l'envoi en pro forma reste dans le menu",
+    /Envoyer/i.test(menu(pf)));
 
   console.log("\n  " + ok + " vert" + (ok > 1 ? "s" : "") + ", " + ko + " rouge" + (ko > 1 ? "s" : "") + "\n");
   process.exit(ko ? 1 : 0);

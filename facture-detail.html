@@ -582,10 +582,10 @@ label[for]{cursor:pointer}
     <!-- compteurs -->
     <div class="kpis">
       <div class="kpi k-orange"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div></div>
-      <div class="kpi k-green" onclick="goEncaisser()" style="cursor:pointer" title="Voir les paiements"><div class="lbl">Montant payé</div><div class="num" id="k-paye">—</div></div>
+      <div class="kpi k-green" id="k-paye-tile" onclick="goEncaisser()" style="cursor:pointer" title="Voir les paiements"><div class="lbl">Montant payé</div><div class="num" id="k-paye">—</div></div>
       <div class="kpi k-blue" id="k-solde-tile" style="cursor:pointer" title="Encaisser — ouvre les paiements"><div class="lbl">Solde dû</div><div class="num" id="k-solde">—</div><span class="sub" id="k-solde-sub"></span></div>
     </div>
-    <div class="paywrap"><div class="paybar"><i id="paybarfill"></i></div><span id="paybartxt">—</span></div>
+    <div class="paywrap" id="paywrap"><div class="paybar"><i id="paybarfill"></i></div><span id="paybartxt">—</span></div>
 
     <!-- onglets -->
     <div class="tabs">
@@ -594,9 +594,9 @@ label[for]{cursor:pointer}
            affiche 0 sur la quasi-totalite des factures : l'exception occupait
            la place de la question quotidienne, « est-ce paye ». -->
       <button class="tab active" onclick="showTab('det',this)">Détails</button>
-      <button class="tab" onclick="showTab('pai',this)">Paiements <span class="n" id="n-pai">0</span></button>
+      <button class="tab" id="tab-pai" onclick="showTab('pai',this)">Paiements <span class="n" id="n-pai">0</span></button>
       <button class="tab" onclick="showTab('hist',this)">Historique</button>
-      <button class="tab" onclick="showTab('avoirs',this)">Avoirs <span class="n" id="n-avoirs">0</span></button>
+      <button class="tab" id="tab-avoirs" onclick="showTab('avoirs',this)">Avoirs <span class="n" id="n-avoirs">0</span></button>
     </div>
 
     <!-- ═══ DÉTAILS ═══ -->
@@ -1039,6 +1039,16 @@ function kpis(){
      confort. Tant qu'elle n'est PAS partie, l'envoi passe donc devant tout le
      reste, soldee ou non. */
   const a = g('a-primary');
+  /* Une pro forma ne s'envoie pas « au client » comme une facture : le geste
+     qui compte est de la VALIDER. L'envoi en pro forma reste dans le menu. */
+  if(modeProForma()){
+    a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Valider la facture';
+    a.setAttribute("onclick", "validerFacture2()");
+    a.title = "Une fois validée, la facture ne se modifie plus : toute correction passe par un avoir.";
+    sendLbl(null);
+    return;
+  }
+  a.title = "";
   let envoye = null;
   try{ envoye = (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[REF] || null; }catch(e){}
   if(!envoye){
@@ -1061,6 +1071,41 @@ function kpis(){
 function sendLbl(envoye){
   const l = g('fsend-lbl');
   if(l) l.textContent = envoye ? "Renvoyer la facture" : "Envoyer la facture";
+}
+/* ===== 28/07 — UNE PRO FORMA N'EST PAS UNE FACTURE ====================
+   La fiche affichait toute la machinerie d'une facture sur un document non
+   valide : « Encaisser la facture », les onglets Paiements et Avoirs, un
+   « solde du a encaisser ». Rien de tout cela n'existe sur une pro forma —
+   elle ne se paie pas, ne recoit pas d'avoir, et ne doit rien.
+
+   La fiche a donc DEUX modes. Tant que la facture n'est pas validee, le seul
+   geste qui compte est de la valider ; le reste est masque. Une fois validee,
+   la machinerie apparait. C'est le parcours francais, et c'est ce que le
+   panneau de validation de l'atelier annonce deja. */
+function validerFacture2(){
+  statutSet("attente");
+  renderAll();
+  toast("✅ Facture " + REF + " validée — elle peut maintenant être envoyée et encaissée");
+}
+function modeProForma(){
+  const st = statutGet();
+  const pf = (st === "brouillon" || st === "proforma");
+  const cacher = (id, v) => { const e = g(id); if(e) e.style.display = v ? "none" : ""; };
+  cacher("a-encaisser", pf);
+  cacher("tab-pai", pf);
+  cacher("tab-avoirs", pf);
+  cacher("k-solde-tile", pf);
+  cacher("k-paye-tile", pf);
+  cacher("paywrap", pf);
+  /* si un onglet masque etait ouvert, on revient sur Details */
+  if(pf){
+    const act = document.querySelector(".tab.active");
+    if(act && (act.id === "tab-pai" || act.id === "tab-avoirs")){
+      const det = document.querySelector(".tab");
+      if(det) showTab("det", det);
+    }
+  }
+  return pf;
 }
 function goEncaisser(){
   const tb = [...document.querySelectorAll('.tab')].find(t => t.textContent.includes('Paiements'));
@@ -1144,17 +1189,22 @@ function details(){
    devis-detail.html, retrouvee par le NOM de la prestation. Les deux fiches
    montrent donc la meme vignette que la bibliotheque de l'atelier.
    A remplacer par un vrai champ photo du catalogue le jour ou il existera. */
+/* 28/07 (2e passe) — les fiches montraient un emoji la ou la bibliotheque
+   montre une photo. Le markup etait pourtant correct : c'est l'IMAGE qui ne se
+   chargeait pas, et le repli onerror prenait le relais sans rien dire.
+   La bibliotheque emploie les vignettes 160 px, les fiches employaient des
+   96 px recopiees a la main — une seconde liste qui pouvait deriver, et qui a
+   derive. Cette table est desormais DERIVEE de CAT_T160 de devis.html : memes
+   noms, memes URL, aux memes tailles. tests/photos.js compare les deux
+   fichiers et tombe au rouge a la premiere divergence. */
 const CAT_PHOTO = {
-  "Dératisation — pose de postes sécurisés": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/96px-WildRat.jpg",
-  "Destruction nid de guêpes / frelons": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/96px-European_wasp_white_bg.jpg",
-  "Traitement cafards — gel + pulvérisation": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/96px-Blattella_germanica_p1160206.jpg",
-  "Traitement punaises de lit — 2 passages": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg",
-  "Désinfection locaux — norme HACCP": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/96px-Fogging.jpg",
-  "Dépigeonnage — pics anti-pigeons": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/96px-Rock_dove_-_natures_pics.jpg",
-  "Frais de déplacement Île-de-France": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/96px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg",
-  "Diagnostic complet du logement": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg",
-  "Traitement chimique — 2 passages": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/96px-Fogging.jpg",
-  "Housses anti-punaises (lit 140×190)": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg"
+  "Dératisation — pose de postes sécurisés": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/160px-WildRat.jpg",
+  "Destruction nid de guêpes / frelons": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/160px-European_wasp_white_bg.jpg",
+  "Traitement cafards — gel + pulvérisation": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/160px-Blattella_germanica_p1160206.jpg",
+  "Traitement punaises de lit — 2 passages": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/160px-Bed_bug,_Cimex_lectularius.jpg",
+  "Désinfection locaux — norme HACCP": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/160px-Fogging.jpg",
+  "Dépigeonnage — pics anti-pigeons": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/160px-Rock_dove_-_natures_pics.jpg",
+  "Frais de déplacement Île-de-France": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/160px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg",
 };
 const photoDe = l => l.img || CAT_PHOTO[(l.designation || "").trim()] || "";
 function lignes(){
