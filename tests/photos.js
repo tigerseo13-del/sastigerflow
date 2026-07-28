@@ -78,15 +78,32 @@ const divergentes = PRESTATIONS.filter(p => url(dd, p) !== url(fd, p));
 t("les deux fiches montrent la même photo pour une même prestation",
   divergentes.length === 0, "divergent : " + divergentes.join(" | "));
 
-/* Les vignettes de l'atelier et des fiches viennent du même fonds. */
-t("les photos des fiches sont celles de la bibliothèque de l'atelier",
-  PRESTATIONS.every(p => {
-    const u = url(dd, p);
-    if (!u) return false;
-    const fichier = u.split("/").pop().replace(/^\d+px-/, "");
-    return dev.includes(fichier);
-  }),
-  "une fiche montre une image absente de la bibliothèque");
+/* ===== LES FICHES MONTRENT EXACTEMENT L'IMAGE DE LA BIBLIOTHÈQUE =====
+   28/07, 2e passe. Le markup etait correct mais l'IMAGE ne se chargeait pas,
+   et le repli emoji prenait le relais sans rien dire. Les fiches employaient
+   des vignettes 96 px recopiees a la main, la bibliotheque des 160 px : une
+   seconde liste qui pouvait deriver, et qui a derive.
+   On ne compare plus « le meme fichier » mais « la meme URL, au pixel pres ». */
+/* On borne a LA LIGNE de CAT_T160 : sans cela l'extraction attrape aussi
+   CAT_T96, declaree juste apres, et compte seize vignettes pour sept. */
+const ligneT160 = dev.slice(dev.indexOf("const CAT_T160")).split("\n")[0];
+const T160 = (ligneT160.match(/"(https:[^"]+)"/g) || []).map(x => x.slice(1, -1));
+t("la bibliothèque expose autant de vignettes que de prestations",
+  T160.length === PRESTATIONS.length, T160.length + " vignettes / " + PRESTATIONS.length + " prestations");
+
+const divergentes2 = PRESTATIONS.filter((p, i) => url(dd, p) !== T160[i]);
+t("la fiche devis montre EXACTEMENT l'URL de la bibliothèque",
+  divergentes2.length === 0,
+  divergentes2.map(p => p + " → " + url(dd, p)).join(" | "));
+
+const divergentes3 = PRESTATIONS.filter((p, i) => url(fd, p) !== T160[i]);
+t("la fiche facture aussi",
+  divergentes3.length === 0,
+  divergentes3.map(p => p + " → " + url(fd, p)).join(" | "));
+
+t("plus aucune vignette 96 px dans les fiches",
+  !/96px-/.test(dd) && !/96px-/.test(fd),
+  "les fiches employaient une seconde taille, recopiee a la main");
 
 console.log("\n  " + ok + " vert" + (ok > 1 ? "s" : "") + ", " + ko + " rouge" + (ko > 1 ? "s" : "") + "\n");
 process.exit(ko ? 1 : 0);
