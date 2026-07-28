@@ -703,9 +703,14 @@ function filtered(){
      Le tri par défaut est l'échéance croissante : une tâche neuve datée loin
      tombait tout en bas. Le tri est stable, donc les autres gardent leur ordre. */
   list.sort((a, b) => (b._cree || 0) - (a._cree || 0));
-  /* les terminées glissent en bas : la liste montre d'abord le travail restant */
+  /* les terminées glissent en bas : la liste montre d'abord le travail restant.
+     28/07 — SAUF celle qu'on vient de changer. Marquer une tache « terminée »
+     l'envoyait au fond d'une liste paginee : elle passait page 2 et
+     disparaissait de l'ecran. Vue du patron, elle etait effacee. Elle garde sa
+     place jusqu'au prochain chargement, le temps qu'on voie ce qu'on a fait. */
   const fini = x => (x.st === "done" || x.st === "annul") ? 1 : 0;
-  if(FSTAT === "all") list.sort((a, b) => fini(a) - fini(b));
+  const gele = x => (x._juste && Date.now() - x._juste < 60000) ? 0 : fini(x);
+  if(FSTAT === "all") list.sort((a, b) => gele(a) - gele(b));
   return list;
 }
 function videFiltres(){
@@ -843,6 +848,7 @@ function quickDone(id){
     if(document.getElementById('drawer').classList.contains('open') && DID === id) renderTask();
     toast("↩️ Tâche rouverte — statut " + STATS[t.st][1]);
   }
+  { const _t = TASKS.find(x=>x.id===id); if(_t) _t._juste = Date.now(); }
 }
 function undoDone(id){
   const t = TASKS.find(x=>x.id===id);
@@ -864,9 +870,14 @@ function toastU(msg, id){
 function cycleStat(id){
   const t = TASKS.find(x=>x.id===id);
   const next = {todo:"prog", prog:"done", done:"todo"};
+  const avant = t.st;
   setTaskStatSilent(t, next[t.st]);
+  t._juste = Date.now();          /* elle reste sous les yeux, cf. gele() */
   render();
-  toast("Statut → " + STATS[t.st][1]);
+  /* annulable : un mauvais clic sur une liste de 20 taches arrive vite */
+  toast("Statut → " + STATS[t.st][1], () => {
+    setTaskStatSilent(t, avant); t._juste = Date.now(); render();
+  });
 }
 function setTaskStatSilent(t, st){
   t.st = st;
