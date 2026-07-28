@@ -1558,6 +1558,10 @@ function sendConfirm(){
 let CURSTAT = "brouillon";
 /* ===== le pont vers la liste des devis ===== */
 let DREF = null, DRAFT = null;
+/* 28/07 : le technicien qui a fait le devis sur place. Vide quand c'est le
+   bureau qui l'a redige — c'est une information, pas un trou a combler. */
+let DTECH = "";
+try{ DTECH = new URLSearchParams(location.search).get("tech") || ""; }catch(e){}
 try{ DRAFT = new URLSearchParams(location.search).get("draft"); }catch(e){}
 if(DRAFT){ DREF = DRAFT; try{ sessionStorage.setItem("tigerflow-devis-ref", DREF); }catch(e){} }
 if(!DREF){ try{ DREF = sessionStorage.getItem("tigerflow-devis-ref"); }catch(e){} }
@@ -1574,7 +1578,7 @@ function pushDevisInbox(){
     const vd = parseInt((document.getElementById("v-valid") || {value:"30"}).value) || 30;
     const d = new Date(); const iso = x => x.toISOString().slice(0, 10);
     const dv = new Date(); dv.setDate(dv.getDate() + vd);
-    const rec = {ref:DREF, pro:false, client:cli, ct:"", titre:(document.getElementById("v-objet") || {value:""}).value,
+    const rec = {ref:DREF, pro:false, client:cli, ct:"", tech:DTECH, titre:(document.getElementById("v-objet") || {value:""}).value,
       montant, statut:CURSTAT, date:iso(d), valid:iso(dv),
       lignes: LIGNES.map(l => ({designation:l.designation, desc:l.desc || "", qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""}))};
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").filter(x => x.ref !== DREF);
@@ -1634,7 +1638,6 @@ function saveDevis(){
   const cli = g("v-client").value;
   if(!cli){ toast("👤 Choisis d'abord un client pour enregistrer le devis"); g("v-client").focus(); return; }
   pushDevisInbox();
-  savedOpen();          /* 28/07 : on montre ce qui vient d'etre enregistre */
   /* 27/07 — BUG MAJEUR. La reference etait memorisee en sessionStorage pour
      survivre a un rechargement. Mais elle etait aussi REPRISE a l'ouverture
      suivante : deux documents crees a la suite dans le meme onglet portaient
@@ -1644,6 +1647,15 @@ function saveDevis(){
      en cours survit toujours au rechargement, mais le document suivant repart
      sur une reference neuve. */
   try{ sessionStorage.removeItem("tigerflow-devis-ref"); }catch(e){}
+  /* 28/07 : « Enregistrer » emmene sur la FICHE du devis, comme une facture
+     enregistree ouvre sa fiche.
+     ATTENTION — cette redirection doit venir APRES la liberation de la
+     reference ci-dessus. Placee avant, elle sautait par-dessus (return) et
+     ressuscitait le bug du 27/07 : deux devis d'affilee partageaient leur
+     reference et le second effaçait le premier. refdoc.js l'a rattrape. */
+  try{ sessionStorage.setItem("tigerflow-devis-detail", DREF); }catch(e){}
+  toast("💾 Devis " + DREF + " enregistré — ouverture de la fiche…");
+  setTimeout(() => { location.href = "devis-detail.html"; }, 700);
   toast("💾 Devis " + DREF + " enregistré" + (CURSTAT === "brouillon" ? " en brouillon" : "") + " — il t'attend dans la liste");
   setTimeout(() => { location.href = "devis-liste.html"; }, 900);
 }
