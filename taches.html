@@ -688,8 +688,12 @@ function filtered(){
     if(du || au){ _pl.textContent = (du ? fdate(du) : "…") + " → " + (au ? fdate(au) : "…"); _pb.classList.add("fon"); }
     else { _pl.textContent = "Période"; _pb.classList.remove("fon"); }
   }
+  /* 28/07 — une tache qu'on vient de toucher reste affichee, meme si son
+     nouveau statut ne correspond plus au filtre en cours. Sinon : on est sur
+     « À faire », on passe une tache « En cours », et elle s'evapore sous le
+     curseur. Vue du bureau, elle a disparu. */
   const list = TASKS.filter(t =>
-    (FSTAT === "all" || t.st === FSTAT) &&
+    (FSTAT === "all" || t.st === FSTAT || t._juste) &&
     (pr === "all" || t.prio === pr) &&
     (wh === "all" || t.who === wh) &&
     (!du || t.due >= du) &&
@@ -704,13 +708,18 @@ function filtered(){
      tombait tout en bas. Le tri est stable, donc les autres gardent leur ordre. */
   list.sort((a, b) => (b._cree || 0) - (a._cree || 0));
   /* les terminées glissent en bas : la liste montre d'abord le travail restant.
-     28/07 — SAUF celle qu'on vient de changer. Marquer une tache « terminée »
-     l'envoyait au fond d'une liste paginee : elle passait page 2 et
-     disparaissait de l'ecran. Vue du patron, elle etait effacee. Elle garde sa
-     place jusqu'au prochain chargement, le temps qu'on voie ce qu'on a fait. */
+     SAUF celle qu'on vient de changer.
+
+     28/07, deuxieme passe. La premiere version gelait la position 60 secondes :
+     passe ce delai, la tache repartait au fond toute seule, sans qu'on ait rien
+     fait. Un changement d'etat ne doit RIEN deplacer. Elle garde donc sa place
+     tant qu'on est sur la page ; le rangement se fait au prochain chargement,
+     quand on ne regarde plus. */
   const fini = x => (x.st === "done" || x.st === "annul") ? 1 : 0;
-  const gele = x => (x._juste && Date.now() - x._juste < 60000) ? 0 : fini(x);
-  if(FSTAT === "all") list.sort((a, b) => gele(a) - gele(b));
+  const gele = x => x._juste ? 0 : fini(x);
+  /* Le gel s'applique aussi sous filtre : sans cela, la ligne rendue visible
+     par le filtre elargi ci-dessus irait quand meme se ranger en bas. */
+  list.sort((a, b) => gele(a) - gele(b));
   return list;
 }
 function videFiltres(){

@@ -77,5 +77,26 @@ ATTENDU.forEach(([a], i) => ATTENDU.slice(i + 1).forEach(([b]) => {
 }));
 t("les quatre termes sont bien distincts les uns des autres", paires.length === 0, paires.join(" | "));
 
+/* ===== LES PUCES DE COMPÉTENCE DU TABLEAU ========================== */
+/* 28/07 — elles heritaient du style du panneau d'edition, declare plus bas et
+   donc gagnant : bordure, gros calage, curseur main. Deux fois trop grosses,
+   elles debordaient sur quatre lignes et chaque technicien avait une hauteur
+   de ligne differente. */
+const tech = lire("techniciens.html");
+t("le tableau impose le style de SES puces",
+  /\.skwrap \.skc\{/.test(tech),
+  "sans cette regle elles reprennent celle du panneau d'edition");
+t("les puces du tableau n'ont ni bordure ni curseur main",
+  /\.skwrap \.skc\{border:0[^}]*cursor:default/.test(tech));
+/* 28/07 (choix patron) : TOUTES les competences s'affichent. Une premiere
+   version en montrait trois avec un compteur — plus regulier, mais il fallait
+   survoler pour savoir ce que le technicien sait faire. */
+t("le tableau affiche toutes les compétences",
+  !/sk\.slice\(0, 3\)/.test(tech) && /sk\.map\(x =>/.test(tech),
+  "elles sont tronquées à trois");
+t("aucun compteur ne masque de compétence",
+  !/skmore/.test(tech.replace(/\/\*[\s\S]*?\*\//g, "")),
+  "un « +2 » oblige à survoler pour savoir");
+
 console.log("\n  " + ok + " vert" + (ok > 1 ? "s" : "") + ", " + ko + " rouge" + (ko > 1 ? "s" : "") + "\n");
 process.exit(ko ? 1 : 0);
