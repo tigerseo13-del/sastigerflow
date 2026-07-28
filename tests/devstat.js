@@ -131,6 +131,35 @@ const libelle = w => {
   w.document.body.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
   t("un clic ailleurs referme le menu", !menu.classList.contains("open"));
 
+  /* ===== 5. ENVOYER FAIT PASSER LE DEVIS EN « ENVOYÉ » ============== */
+  /* 28/07 — on envoyait le devis et il restait affiche « Brouillon » : le
+     statut passait a "attente", qui est un statut de FACTURE et n'existe pas
+     dans la table des devis. */
+  w = await fiche();
+  t("un devis neuf est bien un brouillon", libelle(w) === "Brouillon");
+  w.document.getElementById("s-to").value = "tiger.tiger@exemple.fr";
+  w.document.getElementById("s-obj").value = "Votre devis";
+  w.sendConfirm();
+  await new Promise(r => setTimeout(r, 60));
+  t("apres envoi, le devis passe en « Envoyé »",
+    libelle(w) === "Envoyé", "affiche « " + libelle(w) + " »");
+  t("le statut « attente » (facture) n'est plus jamais pose",
+    !/statutSet\("attente"\)/.test(src));
+
+  const reg2 = JSON.parse(w.localStorage.getItem("tigerflow-devis-statuts") || "{}");
+  t("le registre partage recoit « envoye »", reg2[REF] === "envoye",
+    "registre : " + JSON.stringify(reg2));
+
+  /* ===== 6. L'HISTORIQUE PARLE DE DEVIS, PAS DE FACTURE ============ */
+  const hist = (w.document.getElementById("histlist") || {}).textContent || "";
+  t("l'historique trace l'envoi", /Envoyé au client/.test(hist),
+    "historique : " + hist.replace(/\s+/g, " ").trim().slice(0, 70));
+  t("plus d'avoirs ni de paiements dans l'historique d'un devis",
+    !/Avoir|Paiement reçu|soldée/.test(hist),
+    "un devis ne se paie pas et ne recoit pas d'avoir");
+  t("« Devis créé » est accorde au masculin",
+    /Devis créé/.test(hist) && !/Devis créée/.test(hist));
+
   console.log("\n  " + ok + " vert" + (ok > 1 ? "s" : "") + ", " + ko + " rouge" + (ko > 1 ? "s" : "") + "\n");
   process.exit(ko ? 1 : 0);
 })();

@@ -617,8 +617,8 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
       <span class="autosave2">✓ enregistré <b id="asago">à l'instant</b></span>
       <span class="autosave2" id="envinfo" style="display:none;color:var(--blue,#2E5CE6)"></span>
       <div class="spacer"></div>
-      <a class="btn2" href="devis-client.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Aperçu client</a>
-      <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>PDF</button>
+      <a class="btn2" href="#" onclick="apercuClient();return false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Aperçu client</a>
+      <button class="btn2" onclick="pdfDevis()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>PDF</button>
       <button class="btn2" onclick="saveDevis()" title="Enregistrer sans envoyer — le devis reste en brouillon dans la liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Enregistrer</button>
       <button class="btn2 primary" onclick="sendV2()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Envoyer au client</button>
       <div class="morewrap">
@@ -1004,7 +1004,12 @@ function calc(){
   const tva = d10 + d20;
   const fr = frH;
   const ttc = ht + tva + frH;
-  g("v-nl").textContent = LIGNES.length + " prestation" + (LIGNES.length > 1 ? "s" : "") + " · " + eur(ttc);
+  /* 28/07 — une ligne vide comptait pour une prestation. « + Ligne libre » en
+     insere une a blanc, et l'en-tete annoncait « 2 prestations » pour une
+     seule vraie ligne plus un gabarit. On ne compte que ce qui porte une
+     designation ou un prix. */
+  const nReel = LIGNES.filter(l => (l.designation || "").trim() || +l.pu > 0).length;
+  g("v-nl").textContent = nReel + " prestation" + (nReel > 1 ? "s" : "") + " · " + eur(ttc);
   const vd = (g("v-valid") || {value:"30"}).value;
   if(g("lf-valid")) g("lf-valid").textContent = vd;
   g("v-ht").textContent = eur(ht);
@@ -1641,6 +1646,35 @@ try{
     localStorage.setItem("tigerflow-tip-ttc2", "1");
   }
 }catch(e){}
+/* ===== nom du fichier PDF (28/07, choix patron) =====
+   Le bouton PDF ouvre l'impression du navigateur. Le nom propose pour le
+   fichier est celui du TITRE DE LA PAGE — d'ou des « TigerFlow — Devis.pdf »
+   impossibles a retrouver dans un dossier de telechargements.
+   On pose donc le titre voulu juste avant d'imprimer, et on le remet ensuite,
+   sinon l'onglet garde ce nom pour le reste de la session.
+   Les caracteres interdits dans un nom de fichier sont retires : un client
+   nomme « Dupont / Fils » aurait cree un sous-dossier fantome. */
+function pdfNom(ref, client, montant){
+  const propre = x => String(x || "").replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim();
+  return [propre(ref), propre(client), propre(montant)].filter(Boolean).join(" - ");
+}
+function pdfImprimer(nom){
+  const avant = document.title;
+  if(nom) document.title = nom;
+  window.print();
+  setTimeout(function(){ document.title = avant; }, 1200);
+}
+/* 28/07 — « Apercu client » ouvrait la maquette figee, la meme pour tous les
+   devis. Elle lit maintenant ?ref= : on lui passe la reference a l'ecran. */
+function apercuClient(){
+  var r = (document.getElementById("dref2") || {textContent:""}).textContent.trim();
+  location.href = "devis-client.html" + (r && r.indexOf("•") < 0 ? "?ref=" + encodeURIComponent(r) : "");
+}
+function pdfDevis(){
+  const cli = (document.getElementById("v-client") || {}).value || "";
+  const ttc = (document.getElementById("v-ttc") || {}).textContent || "";
+  pdfImprimer(pdfNom((document.getElementById("dref2") || {}).textContent, cli, ttc));
+}
 function saveDevis(){
   const cli = g("v-client").value;
   if(!cli){ toast("👤 Choisis d'abord un client pour enregistrer le devis"); g("v-client").focus(); return; }

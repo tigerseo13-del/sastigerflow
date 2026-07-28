@@ -578,7 +578,7 @@ label[for]{cursor:pointer}
         </div>
       </span>
       <div class="spacer"></div>
-      <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
+      <button class="btn2" onclick="pdfDevis()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
       
       <button class="btn2 primary" id="a-primary" onclick="apAction()"></button>
       <span class="fmenu-wrap">
@@ -979,6 +979,27 @@ function statutPick(st){
   renderAll();
   toast("Devis marqué « " + (STL[st] ? STL[st][3] : st) + " »");
 }
+/* ===== nom du fichier PDF (28/07, choix patron) =====
+   Le bouton PDF ouvre l'impression du navigateur. Le nom propose pour le
+   fichier est celui du TITRE DE LA PAGE — d'ou des « TigerFlow — Devis.pdf »
+   impossibles a retrouver dans un dossier de telechargements.
+   On pose donc le titre voulu juste avant d'imprimer, et on le remet ensuite,
+   sinon l'onglet garde ce nom pour le reste de la session.
+   Les caracteres interdits dans un nom de fichier sont retires : un client
+   nomme « Dupont / Fils » aurait cree un sous-dossier fantome. */
+function pdfNom(ref, client, montant){
+  const propre = x => String(x || "").replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim();
+  return [propre(ref), propre(client), propre(montant)].filter(Boolean).join(" - ");
+}
+function pdfImprimer(nom){
+  const avant = document.title;
+  if(nom) document.title = nom;
+  window.print();
+  setTimeout(function(){ document.title = avant; }, 1200);
+}
+function pdfDevis(){
+  pdfImprimer(pdfNom(REC.numero || REF, REC.client, eur(REC.montant)));
+}
 function badge(){
   const st = effStatut(), c = STL[st] || STL.brouillon;
   document.querySelectorAll("#stmenu .stc").forEach(b => b.classList.toggle("on", b.dataset.s === statutGet()));
@@ -1090,12 +1111,17 @@ function histo(){
     euro: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>',
     ok: '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>'
   };
-  items.push({ic:HI.doc, bg:"var(--orange-soft)", b:"Devis créée", s:"le " + fdate(REC.date) + " — " + eur(REC.montant) + " TTC"});
+  /* 28/07 — l'historique etait celui d'une FACTURE : avoirs emis, paiements
+     recus, « Devis soldee ». Un devis ne se paie pas et ne recoit pas d'avoir ;
+     il est accepte, refuse, ou il expire. Reste du clonage de
+     facture-detail.html, comme la table des statuts et l'entree de menu. */
+  items.push({ic:HI.doc, bg:"var(--orange-soft)", b:"Devis créé", s:"le " + fdate(REC.date) + " — " + eur(REC.montant) + " TTC"});
   if(env && env.date) items.push({ic:HI.send, bg:"var(--blue-bg)", b:"Envoyé au client", s:env.date + (env.to ? " · " + env.to : "")});
   if(env && env.relance) items.push({ic:HI.mail, bg:"var(--amber-bg)", b:"Relance envoyée", s:env.relance + (env.to ? " · " + env.to : "")});
-  avoirs().forEach(a => items.push({ic:HI.doc, bg:"var(--red-bg)", b:"Avoir " + a.num + " émis — − " + eur(a.m), s:a.motif + " · " + a.t + (a.desc ? " · " + a.desc : "")}));
-  pays().forEach(p => items.push({ic:HI.euro, bg:"var(--green-bg)", b:"Paiement reçu — " + eur(p.m), s:p.mode + " · " + (p.d ? "encaissé le " + fdate(p.d) : p.t) + (p.note ? " · " + p.note : "")}));
-  if(statutGet() === "payee") items.push({ic:HI.ok, bg:"var(--green-bg)", b:"Devis soldée", s:"le solde est à zéro — rien à relancer"});
+  const stf = statutGet();
+  if(stf === "gagne") items.push({ic:HI.ok, bg:"var(--green-bg)", b:"Devis accepté", s:"le client a donné son accord — transformable en facture"});
+  if(stf === "perdu") items.push({ic:HI.doc, bg:"var(--red-bg)", b:"Devis refusé", s:"le client n'a pas donné suite"});
+  if(effStatut() === "expire") items.push({ic:HI.doc, bg:"var(--red-bg)", b:"Devis expiré", s:"validité dépassée le " + fdate(REC.valid)});
   items.reverse();   /* le dernier événement d'abord */
   g('histlist').innerHTML = items.map(i => '<li><span class="hic" style="background:' + i.bg + '">' + i.ic + '</span><div><b>' + i.b + '</b><small>' + i.s + '</small></div></li>').join('');
 }
@@ -1135,7 +1161,12 @@ function sendConfirm(){
       m[REF].relance = stamp(); m[REF].to = m[REF].to || to;
     } else {
       m[REF] = {date: stamp(), to: to, pay: g('sw-pay').classList.contains('on'), rib: g('sw-rib').classList.contains('on')};
-      if(statutGet() === "brouillon") statutSet("attente");
+      /* 28/07 — BUG. On envoyait le devis au client et il restait affiche
+         « Brouillon ». Le statut passait a "attente", qui est un statut de
+         FACTURE : la table des devis (brouillon / envoye / gagne / perdu /
+         expire) ne le connait pas, l'affichage retombait donc sur le premier.
+         Encore un reste du clonage de facture-detail.html. */
+      if(statutGet() === "brouillon") statutSet("envoye");
     }
     localStorage.setItem("tigerflow-factures-envois", JSON.stringify(m));
   }catch(e){}
