@@ -3183,7 +3183,13 @@ function openPending(pid){
   const p = PENDING.find(x => x.pid === pid);
   if(!p) return;
   PDID = pid;
-  const T = typeDe(p), m = modeDe(p.client), M = MODES[m];
+  /* 28/07 — BUG. Le panneau du bac deduisait le mode de facturation du CLIENT
+     (modeDe) en ignorant celui choisi a la creation. Une intervention creee en
+     « 2ᵉ passage » s'affichait donc « Devis a etablir » si le client n'a pas de
+     contrat, et son solde disparaissait avec. La carte, elle, respecte deja le
+     mode porte par l'intervention depuis le 27/07 : les deux se contredisaient
+     a trois centimetres d'ecart. */
+  const T = typeDe(p), m = p.mode || modeDe(p.client), M = MODES[m] || MODES.devis;
   const tel = telOf(p);
   const adr = (p.rue ? p.rue + " · " : "") + p.cp + " · " + p.ville;
   const kv = (k, v) => `<div class="dkv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
@@ -3201,6 +3207,13 @@ function openPending(pid){
     ? `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">📄 Incluse au contrat</b></span></div>`
     : m === "encais"
     ? `<div class="invbox"><span><span class="lbl">À encaisser sur place</span><b style="font-size:.9rem">${p.montant ? p.montant + "\u00a0€" : "montant à définir"}</b></span></div>`
+    : p.montant
+    /* 28/07 : le solde saisi a la creation n'apparaissait JAMAIS ici. Cette
+       branche annoncait « rien a encaisser » quel que soit le montant tape
+       dans « Solde restant a encaisser ». Le technicien partait sans savoir
+       qu'il avait de l'argent a prendre. */
+    ? `<div class="invbox"><span><span class="lbl">2ᵉ passage / garantie — solde restant dû</span><span class="amt">${p.montant}\u00a0€</span></span>
+        <button class="go" onclick="toast('Encaissement du solde — bientôt relié')">Encaisser</button></div>`
     : `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">🔁 2ᵉ passage / garantie — rien à encaisser</b></span></div>`;
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead">
