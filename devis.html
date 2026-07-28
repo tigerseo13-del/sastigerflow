@@ -1446,6 +1446,39 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
 <script>
 
 const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+
+/* ===== 28/07 — LES CLIENTS DE LA BASE MANQUAIENT DANS LE SELECTEUR =====
+   Le selecteur se remplissait avec le catalogue de demonstration + les clients
+   crees en local. Mais un client cree passe aussi par la BASE (table clients,
+   cf. clients.html) — et cette page-la ne l'interrogeait pas. Resultat : un
+   client visible dans la liste des clients etait introuvable au moment de lui
+   faire un devis ou une facture.
+   On complete le selecteur des que la base repond. C'est asynchrone : on ne
+   bloque pas l'ecran, on ajoute ce qui manque quand ca arrive, en gardant le
+   client deja choisi. */
+async function cliBase(){
+  try{
+    const {data, error} = await SB.from("clients").select("*");
+    if(error || !data) return;
+    const sel = document.getElementById("v-client");
+    if(!sel) return;
+    const garde = sel.value;
+    let ajout = 0;
+    data.forEach(c => {
+      if(!c || !c.nom || CLIENTS[c.nom]) return;
+      CLIENTS[c.nom] = {
+        adr: [c.adresse, c.cp, c.ville].filter(Boolean).join(", ") || "Adresse à compléter",
+        mail: c.mail || c.email || "", tel: c.tel || ""
+      };
+      const o = document.createElement("option");
+      o.value = c.nom; o.textContent = c.nom;
+      sel.appendChild(o);
+      ajout++;
+    });
+    if(ajout && garde) sel.value = garde;   /* on ne perd pas le choix en cours */
+  }catch(e){}
+}
+cliBase();
 async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
 
 async function sbSaveDevis(statut, silent){
