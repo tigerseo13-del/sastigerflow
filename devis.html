@@ -1562,6 +1562,10 @@ let DREF = null, DRAFT = null;
    bureau qui l'a redige — c'est une information, pas un trou a combler. */
 let DTECH = "";
 try{ DTECH = new URLSearchParams(location.search).get("tech") || ""; }catch(e){}
+/* 28/07 : l'intervention d'ou vient le devis. Vide quand il est parti du
+   bureau, sans rendez-vous derriere. */
+let DINT = "";
+try{ DINT = new URLSearchParams(location.search).get("ref") || ""; }catch(e){}
 try{ DRAFT = new URLSearchParams(location.search).get("draft"); }catch(e){}
 if(DRAFT){ DREF = DRAFT; try{ sessionStorage.setItem("tigerflow-devis-ref", DREF); }catch(e){} }
 if(!DREF){ try{ DREF = sessionStorage.getItem("tigerflow-devis-ref"); }catch(e){} }
@@ -1578,7 +1582,7 @@ function pushDevisInbox(){
     const vd = parseInt((document.getElementById("v-valid") || {value:"30"}).value) || 30;
     const d = new Date(); const iso = x => x.toISOString().slice(0, 10);
     const dv = new Date(); dv.setDate(dv.getDate() + vd);
-    const rec = {ref:DREF, pro:false, client:cli, ct:"", tech:DTECH, titre:(document.getElementById("v-objet") || {value:""}).value,
+    const rec = {ref:DREF, pro:false, client:cli, ct:"", tech:DTECH, inter:DINT, titre:(document.getElementById("v-objet") || {value:""}).value,
       montant, statut:CURSTAT, date:iso(d), valid:iso(dv),
       lignes: LIGNES.map(l => ({designation:l.designation, desc:l.desc || "", qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""}))};
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").filter(x => x.ref !== DREF);
@@ -1653,11 +1657,12 @@ function saveDevis(){
      reference ci-dessus. Placee avant, elle sautait par-dessus (return) et
      ressuscitait le bug du 27/07 : deux devis d'affilee partageaient leur
      reference et le second effaçait le premier. refdoc.js l'a rattrape. */
+  /* 28/07 : « Enregistrer » ouvre le RESUME (demande patron) et s'arrete la.
+     Il y avait ici deux redirections concurrentes — vers devis-detail.html a
+     700 ms et vers devis-liste.html a 900 ms — plus deux messages qui se
+     recouvraient. Les trois se disputaient l'ecran par-dessus le resume, qui
+     propose deja la suite : PDF, dupliquer, supprimer, envoyer. */
   try{ sessionStorage.setItem("tigerflow-devis-detail", DREF); }catch(e){}
-  toast("💾 Devis " + DREF + " enregistré — ouverture de la fiche…");
-  setTimeout(() => { location.href = "devis-detail.html"; }, 700);
-  toast("💾 Devis " + DREF + " enregistré" + (CURSTAT === "brouillon" ? " en brouillon" : "") + " — il t'attend dans la liste");
-  setTimeout(() => { location.href = "devis-liste.html"; }, 900);
 }
 function envInfoShow(){
   try{
