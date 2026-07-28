@@ -560,7 +560,7 @@ label[for]{cursor:pointer}
       <div class="spacer"></div>
       <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
       
-      <button class="btn2 primary" id="a-primary" onclick="envoyer()"></button>
+      <button class="btn2 primary" id="a-primary" onclick="apAction()"></button>
       <span class="fmenu-wrap">
         <button class="btn2" onclick="fMenu(event)" title="Plus d'actions" aria-label="Plus d'actions">⋯</button>
         <div class="fmenu" id="fmenu">
@@ -847,6 +847,40 @@ function effStatut(){
   if(st === "envoye" && joursEch() <= 0) return "expire";
   return st;
 }
+/* 28/07 — le bouton principal de l'en-tete etait VIDE : aucun libelle dans le
+   markup, et rien dans le code pour le remplir. On voyait une pastille orange
+   sans texte, et on ne pouvait pas deviner ce qu'elle faisait. Il dit
+   maintenant ce qu'on attend du devis a cet instant. */
+const AP = {
+  brouillon: ["Envoyer au client",     "envoyer"],
+  envoye:    ["Relancer le client",    "envoyer"],
+  gagne:     ["Transformer en facture","versFacture"],
+  perdu:     ["Renvoyer une offre",    "envoyer"],
+  expire:    ["Renvoyer une offre",    "envoyer"]
+};
+function apMaj(){
+  const b = g("a-primary"); if(!b) return;
+  const a = AP[effStatut()] || AP.brouillon;
+  b.textContent = a[0];
+  b.dataset.act = a[1];
+}
+function apAction(){
+  const b = g("a-primary");
+  if(b && b.dataset.act === "versFacture") return versFacture();
+  envoyer();
+}
+/* un devis accepte se transforme en facture : c'est la suite naturelle, et
+   c'etait deja propose depuis la liste des devis. */
+function versFacture(){
+  try{
+    sessionStorage.setItem("tigerflow-facture-ref", "");
+    localStorage.setItem("tigerflow-devis-vers-facture", JSON.stringify({
+      client: REC.client, titre: REC.titre, montant: REC.montant, ref: REF
+    }));
+  }catch(e){}
+  toast("💶 Facture créée depuis le devis " + REF);
+  setTimeout(() => { location.href = "facture.html?c=" + encodeURIComponent(REC.client || ""); }, 700);
+}
 function badge(){
   const st = effStatut(), c = STL[st] || STL.attente;
   const b = g('h-badge');
@@ -948,7 +982,7 @@ function histo(){
   items.reverse();   /* le dernier événement d'abord */
   g('histlist').innerHTML = items.map(i => '<li><span class="hic" style="background:' + i.bg + '">' + i.ic + '</span><div><b>' + i.b + '</b><small>' + i.s + '</small></div></li>').join('');
 }
-function renderAll(){ badge(); kpis(); details(); lignes(); histo(); fpjRender(); }
+function renderAll(){ badge(); kpis(); details(); lignes(); histo(); fpjRender(); apMaj(); }
 
 /* ===== actions ===== */
 let PPJ = null;
