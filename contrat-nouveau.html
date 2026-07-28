@@ -1257,5 +1257,39 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
 })();
 
 </script>
+<!-- 28/07 : la librairie de base n'etait pas chargee sur cette page, donc
+     son selecteur de client ignorait les clients enregistres en base. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+
+/* ===== 28/07 — LES CLIENTS DE LA BASE MANQUAIENT ICI AUSSI =====
+   Meme trou que sur les devis et les factures : le selecteur se remplissait
+   avec le catalogue de demonstration et les clients enregistres en LOCAL, mais
+   pas ceux de la base — alors que c'est la que part un client cree. On complete
+   des que la base repond, sans bloquer l'ecran ni perdre le choix en cours. */
+async function cliBase(){
+  try{
+    if(typeof SB === "undefined") return;
+    const {data, error} = await SB.from("clients").select("*");
+    if(error || !data) return;
+    const sel = document.getElementById("v-client");
+    if(!sel) return;
+    const garde = sel.value;
+    const connus = new Set([...sel.options].map(o => (o.textContent || "").split("—")[0].trim().toLowerCase()));
+    let n = 0;
+    data.forEach(c => {
+      if(!c || !c.nom) return;
+      if(connus.has(String(c.nom).trim().toLowerCase())) return;
+      const o = document.createElement("option");
+      o.value = c.nom;
+      o.textContent = c.nom;
+      sel.appendChild(o); connus.add(String(c.nom).trim().toLowerCase()); n++;
+    });
+    if(n && garde) sel.value = garde;
+  }catch(e){}
+}
+cliBase();
+</script>
 </body>
 </html>
