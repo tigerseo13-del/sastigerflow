@@ -541,6 +541,13 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
 .docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--muted);font-size:.72rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.22);opacity:0;transition:.14s}
 .doccard:hover .docx,.docx:focus-visible{opacity:1}
 .docx:hover{background:var(--red-bg);color:var(--red)}
+
+/* resume apres enregistrement — meme habillage que sur les factures */
+.savedacts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.savedacts .btn2{justify-content:center;padding:10px 10px;font-size:.8rem}
+.btn2.danger2{color:var(--red);border-color:#F3C1BD}
+.btn2.danger2:hover{background:var(--red-bg)}
+@media(max-width:560px){.savedacts{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1467,6 +1474,22 @@ async function sbSaveDevis(statut, silent){
 }
 
 </script>
+<!-- 28/07 : page de resume apres enregistrement, comme sur les factures. On
+     enregistrait un devis et il ne se passait rien de visible — on ne savait ni
+     ce qui avait ete enregistre, ni quoi en faire ensuite. -->
+<div class="sendveil" id="savedveil" onclick="if(event.target===this)savedClose()">
+  <div class="sendbox" style="width:min(470px,92vw);padding:18px 20px">
+    <div class="sh">💾 Devis enregistré<button class="cmx" style="float:right;background:none;border:0;font-size:1rem;cursor:pointer;color:var(--muted)" onclick="savedClose()">✕</button></div>
+    <div class="srecap" id="savedrecap"></div>
+    <div class="savedacts">
+      <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>Aperçu PDF</button>
+      <button class="btn2" onclick="dupDevis()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Dupliquer</button>
+      <button class="btn2 danger2" onclick="delBrouillonDevis()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14H6L5 6"/></svg>Supprimer</button>
+      <button class="btn2 primary" onclick="savedClose();sendV2()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>Envoyer au client</button>
+    </div>
+  </div>
+</div>
+
 <div class="sendveil" id="sendveil" onclick="if(event.target===this)sendClose()">
   <div class="sendbox">
     <div class="sh">📤 Envoyer le devis</div>
@@ -1485,6 +1508,42 @@ async function sbSaveDevis(statut, silent){
 </div>
 <script>
 function sendClose(){ document.getElementById("sendveil").classList.remove("open"); }
+/* ===== resume apres enregistrement (28/07) ===== */
+function savedClose(){ g("savedveil").classList.remove("open"); }
+function savedOpen(){
+  const cli = g("v-client").value;
+  const tot = g("v-ttc") ? g("v-ttc").textContent : "";
+  const val = (g("v-valid") || {value:"30"}).value;
+  const nl  = LIGNES.length;
+  g("savedrecap").innerHTML =
+    '<div class="srow"><span>Référence</span><b>' + DREF + '</b></div>' +
+    '<div class="srow"><span>Client</span><b>' + (cli || "—") + '</b></div>' +
+    '<div class="srow"><span>Objet</span><b>' + ((g("v-objet") || {value:""}).value || "—") + '</b></div>' +
+    '<div class="srow"><span>Prestations</span><b>' + nl + (nl > 1 ? " lignes" : " ligne") + '</b></div>' +
+    '<div class="srow"><span>Validité</span><b>' + val + ' jours</b></div>' +
+    '<div class="srow sttc"><span>Total TTC</span><b>' + tot + '</b></div>';
+  g("savedveil").classList.add("open");
+}
+function dupDevis(){
+  const maxN = Math.max(0, ...String(DREF).split("-").slice(2).map(Number).filter(Number.isFinite));
+  DREF = "DEV-2026-" + String(10000 + Math.floor(Math.random() * 89999));
+  try{ sessionStorage.setItem("tigerflow-devis-ref", DREF); }catch(e){}
+  const r = document.getElementById("dref2"); if(r) r.textContent = DREF;
+  const r2 = document.getElementById("f-num"); if(r2) r2.value = DREF;
+  setStat2("brouillon", document.querySelector('.stc[data-s="brouillon"]'));
+  pushDevisInbox();
+  savedOpen();
+  toast("⧉ Devis dupliqué — nouvelle référence " + DREF);
+}
+function delBrouillonDevis(){
+  try{
+    const box = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").filter(x => x.ref !== DREF);
+    localStorage.setItem("tigerflow-inbox-devis", JSON.stringify(box));
+  }catch(e){}
+  savedClose();
+  toast("🗑 Brouillon " + DREF + " supprimé");
+  setTimeout(() => { location.href = "devis-liste.html"; }, 900);
+}
 function sendConfirm(){
   const to = document.getElementById("s-to").value.trim();
   if(!to || !to.includes("@")){ toast("⚠️ Renseigne l'adresse e-mail du client"); document.getElementById("s-to").focus(); return; }
@@ -1575,6 +1634,7 @@ function saveDevis(){
   const cli = g("v-client").value;
   if(!cli){ toast("👤 Choisis d'abord un client pour enregistrer le devis"); g("v-client").focus(); return; }
   pushDevisInbox();
+  savedOpen();          /* 28/07 : on montre ce qui vient d'etre enregistre */
   /* 27/07 — BUG MAJEUR. La reference etait memorisee en sessionStorage pour
      survivre a un rechargement. Mais elle etait aussi REPRISE a l'ouverture
      suivante : deux documents crees a la suite dans le meme onglet portaient
