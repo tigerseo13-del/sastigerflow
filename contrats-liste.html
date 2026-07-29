@@ -391,7 +391,7 @@ tr.torenew{box-shadow:inset 3px 0 0 #D9A408}
     <div class="tablecard">
       <table class="dt">
         <thead><tr>
-          <th>N° contrat</th><th>Client</th><th>Objet</th><th>Montant / an</th><th>Fréquence</th><th>Statut</th><th>Échéance</th><th></th>
+          <th>Client</th><th>Objet</th><th>Montant / an</th><th>Statut</th><th>Fréquence</th><th>Durée</th><th>Échéance</th><th>N° contrat</th><th></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -476,6 +476,17 @@ function filtered(){
   else list.sort((a,b)=> (b._cree||0)-(a._cree||0) || String(b.ref).localeCompare(String(a.ref)));
   return list;
 }
+/* Duree du contrat : entre sa mise en service et son echeance. Affichee en
+   mois pour rester comparable d'une ligne a l'autre. */
+function duree(c){
+  if(!c.cree || !c.fin) return "—";
+  const a = new Date(c.cree), b = new Date(c.fin);
+  if(isNaN(a) || isNaN(b)) return "—";
+  let m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if(b.getDate() >= a.getDate()) m += 0; else m -= 1;
+  if(m < 1) return "moins d'un mois";
+  return m + " mois";
+}
 function expChip(c){
   if(c.statut === "resilie" || c.statut === "expire") return "";
   const j = Math.ceil((new Date(c.fin) - new Date()) / 864e5);
@@ -499,13 +510,14 @@ function render(){
   const list = filtered();
   document.getElementById("tbody").innerHTML = list.length ? list.map(c => `
     <tr onclick="ouvrirContrat('${c.ref}')" class="${c.statut==='renouveler' ? 'torenew' : ''}">
-      <td class="ref">${c.ref}</td>
       <td class="cl"><b>${c.client}</b><small>${c.ct}</small></td>
       <td>${c.titre}</td>
       <td class="amt">${eur(c.montant)}</td>
-      <td class="dte">${c.freq}</td>
       <td><span class="st st-${c.statut}">${LBL[c.statut]}</span></td>
+      <td class="dte">${c.freq}</td>
+      <td class="dte">${duree(c)}</td>
       <td class="dte">${fdate(c.fin)}${expChip(c)}</td>
+      <td class="ref">${c.ref}</td>
       <td class="acti" onclick="event.stopPropagation()">
         <button class="aic" onclick="ouvrirContrat('${c.ref}')" title="Voir le contrat"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <button class="aic" onclick="toast('Modification du contrat — bientôt reliée à l\'atelier')" title="Modifier"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>
@@ -513,7 +525,7 @@ function render(){
         <button class="aic del" onclick="ctrDel(event,'${c.ref}')" title="Supprimer"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
       </td>
     </tr>`).join("")
-    : `<tr><td colspan="8" class="empty-row">Aucun contrat ne correspond à cette recherche.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><a class="ebtn primary" href="contrat.html">＋ Nouveau contrat</a></div></td></tr>`;
+    : `<tr><td colspan="9" class="empty-row">Aucun contrat ne correspond à cette recherche.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><a class="ebtn primary" href="contrat.html">＋ Nouveau contrat</a></div></td></tr>`;
 
   document.getElementById("cards").innerHTML = list.length ? list.map(c => `
     <a class="ccard" href="contrat.html?n=${encodeURIComponent(c.ref)}">
