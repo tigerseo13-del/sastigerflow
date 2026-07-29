@@ -404,9 +404,9 @@ tbody td .cl b, tbody td.cl b{font-weight:800}
      le clic avait disparu, la mecanique de filtrage etait restee. -->
     <div class="kpis">
       <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="lbl">Clients</div><div class="num" id="k-n">0</div></div>
-      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('actif')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('actif')}"><div class="kico"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lbl">Chiffre d'affaires</div><div class="num" id="k-ca">0 €</div></div>
+      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('ca')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('actif')}"><div class="kico"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lbl">Chiffre d'affaires</div><div class="num" id="k-ca">0 €</div></div>
       <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('due')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('due')}"><div class="kico"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="lbl">À encaisser</div><div class="num" id="k-due">0 €</div></div>
-      <div class="kpi k-slate"><div class="kico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg></div><div class="lbl">Contrats &amp; suivis</div><div class="num" id="k-nb">0</div></div>
+      <div class="kpi k-slate" role="button" tabindex="0" title="Voir seulement les clients sous contrat" onclick="kfil('ctr')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('ctr')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg></div><div class="lbl">Contrats &amp; suivis</div><div class="num" id="k-nb">0</div></div>
     </div>
 
 <!-- ===== RECHERCHE + FILTRES ===== -->
@@ -633,7 +633,19 @@ function setFilter(btn){
   if(map[FILTER]){ const el = document.querySelector(".kpi." + map[FILTER]); if(el) el.classList.add("on"); }
   render();
 }
-function kfil(f){ const b = document.querySelector('.fchip[data-f="' + f + '"]'); if(b) b.click(); }
+let KFIL = "all";
+function kfil(f){
+  const map = {all:"k-orange", ca:"k-green", due:"k-amber", ctr:"k-slate"};
+  document.querySelectorAll(".kpi").forEach(k => k.classList.remove("on"));
+  if(f !== "all"){ const el = document.querySelector(".kpi." + map[f]); if(el) el.classList.add("on"); }
+  if(f === "all"){
+    KFIL = "all"; SORTCA = false;
+    ["f-type","f-stat","f-source","f-du","f-au"].forEach(id => { const e = document.getElementById(id); if(e) e.value = ""; });
+    applyF(); return;
+  }
+  if(f === "ca"){ KFIL = "all"; SORTCA = true; DESC = true; render(); return; }
+  KFIL = f; render();
+}
 function sortCA(){
   if(!SORTCA){ SORTCA = true; DESC = true; }      /* 1er clic : CA decroissant */
   else if(DESC){ DESC = false; }                  /* 2e : croissant */
@@ -666,6 +678,8 @@ function render(){
   const q = document.getElementById("q").value.toLowerCase().trim();
   const TYPMAP = {"Particulier":"Particulier","Société":"Pro","Société de gestion immobilière":"Syndic"};
   let list = CLIENTS.filter(c =>
+    (KFIL !== "due" || (c.due || 0) > 0) &&
+    (KFIL !== "ctr" || (c.nb || 0) > 0) &&
     (!F.type   || c.type === TYPMAP[F.type]) &&
     (!F.stat   || (F.stat === "Inactif" ? c.st === "inactif" : c.st !== "inactif")) &&
     (!F.source || c.source === F.source) &&
@@ -1144,6 +1158,8 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fdatepop label{display:block;font-size:.72rem;font-weight:700;color:var(--ink-2);margin-bottom:9px}
 .fdatepop input{width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:.82rem;color:var(--ink)}
 .fdateclr{font-size:.72rem;color:var(--muted);background:none;border:0;cursor:pointer;padding:3px 0;font-weight:600}
+.kpi.on{outline:2px solid rgba(23,26,32,.20);outline-offset:1px}
+.kpi.k-slate[role="button"]{cursor:pointer}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
