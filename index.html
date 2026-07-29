@@ -92,9 +92,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-s
 /* 27/07 : meme raison que la barre d'outils de l'agenda. Le bandeau d'accueil
    passe en clair, l'orange reste dans la barre du haut. Le prenom garde son
    degrade : l'accent chaud demeure, la bande orange en double disparait. */
+/* 29/07 (choix patron, piste A) : le damier disparait. Le bandeau porte un
+   voile chaleureux — un blanc qui se rechauffe vers la droite jusqu'a un
+   orange a peine perceptible — le meme principe que le bouton de recherche
+   du calendrier (.gsbtn). Il fait la poignee de main avec la barre du haut
+   sans ajouter de couleur franche. */
 .cover{position:relative;border-radius:var(--r-xl);overflow:hidden;border:1px solid var(--line,#E7E9EF);
-  padding:22px 26px;margin-bottom:22px;background:#fff}
-.cover::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(23,26,32,.035) 1px,transparent 1px),linear-gradient(rgba(23,26,32,.035) 1px,transparent 1px);background-size:27px 27px}
+  padding:22px 26px;margin-bottom:22px;
+  background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 30%,#FFF8F4 65%,#FFF3EC 100%)}
 .cover h1{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px;position:relative}
 .cover .sub{font-size:0.86rem;color:var(--ink-2);margin-top:4px;position:relative}
 
@@ -474,7 +479,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
     <!-- ===== BANDEAU ===== -->
     <section class="cover">
-      <h1>Bonjour Thomas</h1>
+      <!-- 29/07 : fini le Thomas en dur — le prenom vient du compte connecte
+           (Reglages), et le bonjour devient bonsoir apres 18 h. -->
+      <h1 id="c-hello">Bonjour</h1>
       <div class="sub" id="c-date">—</div>
     </section>
 
@@ -926,6 +933,15 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   function appliqueCompte(){
     var c = null;
     try{ c = JSON.parse(localStorage.getItem("tigerflow-compte")); }catch(e){}
+    /* le bandeau d'accueil salue le compte connecte — meme sans compte
+       enregistre, il salue tout court, jamais un prenom invente */
+    var hello = document.getElementById("c-hello");
+    if(hello){
+      var h = new Date().getHours();
+      var salut = (h >= 18 || h < 4) ? "Bonsoir" : "Bonjour";
+      var prenom = (c && c.nom) ? String(c.nom).trim().split(/\s+/)[0] : "";
+      hello.textContent = salut + (prenom ? " " + prenom : "");
+    }
     if(!c) return;
     var box = document.getElementById("side-user");
     if(!box) return;
