@@ -15,7 +15,7 @@
   --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
   --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
   --line:#EBECF1; --bg:#F4F5F8; --card:#FFFFFF;
-  --green:#17A87E; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
   --blue:#2E5CE6; --blue-bg:#EBF1FE; --amber:#A16207; --amber-bg:#FBF3D9;
   --red:#D63B33; --red-bg:#FCECEA;
   --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
@@ -591,8 +591,8 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
   <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
-    <span class="ph">JJ</span>
-    <div><b>Jo Jo</b><span>Administrateur</span></div>
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
     <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
     <div class="umenu" id="umenu">
       <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
@@ -749,7 +749,7 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
     <div class="duo">
       <div class="vcard">
         <div class="vh">Notes pour le client</div>
-        <div style="margin-top:14px"><textarea class="vfld" rows="3" placeholder="Conditions particulières, accès, consignes…">Facture payable sous 30 jours, par virement (RIB en bas de la facture) ou en ligne. Produits certifiés Certibiocide — fiches de sécurité fournies. Merci de rappeler la référence en règlement.</textarea></div>
+        <div style="margin-top:14px"><textarea class="vfld" rows="3" placeholder="Conditions particulières, accès, consignes…">Facture payable sous 30 jours, par virement (RIB joint) ou en ligne. Produits certifiés Certibiocide — fiches de sécurité fournies. Merci de rappeler la référence en règlement.</textarea></div>
       </div>
       <div class="vcard">
         <div class="vh">Pièces jointes</div>
@@ -889,7 +889,7 @@ function setStat2(k, el){
   document.querySelectorAll(".stc").forEach(c => c.classList.remove("on"));
   el.classList.add("on");
   const b = g("dstatb2");
-  const conf = {brouillon:["#7C5CE0","Pro forma",""], proforma:["#7C5CE0","Pro forma",""], attente:["var(--blue)","À payer","sent"], payee:["var(--green)","Payée","ok"], retard:["var(--red,#D63B33)","En retard","ko"]}[k] || ["#9CA1AD",k,""];
+  const conf = {brouillon:["#9CA1AD","Pro forma",""], proforma:["#9CA1AD","Pro forma",""], attente:["var(--blue)","À payer","sent"], payee:["var(--green)","Payée","ok"], retard:["var(--red,#D63B33)","En retard","ko"]}[k] || ["#9CA1AD",k,""];
   document.body.classList.toggle("proforma-on", k === "brouillon");   /* PDF pro forma tant que non validée */
   b.className = "dstatb2 " + conf[2];
   b.innerHTML = "<i style='background:" + conf[0] + "'></i>" + conf[1];
@@ -1056,14 +1056,14 @@ function sendV2(){
   /* l'e-mail s'écrit tout seul — modifiable avant envoi */
   const realMail = (typeof CLIENTS !== "undefined" && CLIENTS[cli] && CLIENTS[cli].mail) ? CLIENTS[cli].mail : "";
   document.getElementById("s-to").value = realMail || (cli.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr");
-  document.getElementById("s-obj").value = "Votre facture " + ((document.getElementById("dref2") || {}).textContent || "").trim() + " — " + societe();
+  document.getElementById("s-obj").value = "Votre facture " + ((document.getElementById("dref2") || {}).textContent || "").trim() || "Votre facture — TigerFlow 3D";
   document.getElementById("s-body").value =
 "Bonjour " + cli + ",\n\n" +
 "Veuillez trouver ci-joint votre facture" + (tot ? " d'un montant de " + tot + " TTC" : "") + ".\n" +
 ((document.getElementById("v-bc") || {value:""}).value.trim() ? "Référence bon de commande : " + document.getElementById("v-bc").value.trim() + "\n" : "") +
 ((document.getElementById("v-contrat") || {value:""}).value.trim() ? "Contrat rattaché : " + document.getElementById("v-contrat").value.trim() + "\n" : "") + "\n" +
-"Elle est payable sous " + ((document.getElementById("v-valid") || {value:"30"}).value) + " jours, par virement (RIB en bas de la facture) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
-"Bien cordialement,\nL'équipe " + societe();
+"Elle est payable sous " + ((document.getElementById("v-valid") || {value:"30"}).value) + " jours, par virement (RIB joint) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
+"Bien cordialement,\nL'équipe TigerFlow 3D";
   document.getElementById("sendveil").classList.add("open");
   setTimeout(() => { const f = document.getElementById("s-to"); if(f){ f.focus(); f.select(); } }, 120);
 }
@@ -1077,11 +1077,11 @@ function doSend(sign, pay){
     const d = new Date(); const pad = x => String(x).padStart(2, "0");
     const stamp = pad(d.getDate()) + "/" + pad(d.getMonth()+1) + "/" + d.getFullYear() + " à " + pad(d.getHours()) + ":" + pad(d.getMinutes());
     const m = JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {};
-    m[DREF] = {date: stamp, to: to, pay: !!pay, proforma: PFMODE};
+    m[DREF] = {date: stamp, to: to, sign: !!sign, pay: !!pay, proforma: PFMODE};
     localStorage.setItem("tigerflow-factures-envois", JSON.stringify(m));
   }catch(e){}
   if(typeof envInfoShow === "function") envInfoShow();
-  toast(PFMODE ? "📄 PRO FORMA envoyée à " + cli + " — la facture reste en brouillon" : "📤 Facture envoyée à " + cli + "" + (pay ? " · paiement en ligne activé" : ""));
+  toast(PFMODE ? "📄 PRO FORMA envoyée à " + cli + " — la facture reste en brouillon" : "📤 Facture envoyée à " + cli + (sign ? " — RIB joint" : "") + (pay ? " · paiement en ligne activé" : ""));
   PFMODE = false;
   setTimeout(() => { location.href = "facture-liste.html"; }, 1200);   /* retour à la liste */
 }
@@ -1602,6 +1602,7 @@ async function sbSaveDevis(statut, silent){
     <div class="sfld"><label for="s-obj">Objet <b class="req">*</b></label><input id="s-obj"></div>
     <div class="sfld"><label for="s-body">Message</label><textarea id="s-body" rows="8"></textarea></div>
     <div class="spj">📎 Le PDF du devis sera joint automatiquement à cet e-mail.</div>
+    <div class="tgl"><div><b>🏦 Joindre le RIB</b><small>Coordonnées bancaires incluses pour le règlement par virement</small></div><div class="sw on" id="sw-sign" onclick="this.classList.toggle('on')"></div></div>
     <div class="tgl"><div><b>💳 Paiement en ligne</b><small>Carte / Apple Pay en 2 clics</small></div><div class="sw on" id="sw-pay" onclick="this.classList.toggle('on')"></div></div>
     <div class="sbtns">
       <button class="btn2" onclick="sendClose()">Annuler</button>
@@ -1616,7 +1617,7 @@ function sendConfirm(){
   if(!to || !to.includes("@")){ toast("⚠️ Renseigne l'adresse e-mail du client"); document.getElementById("s-to").focus(); return; }
   if(!document.getElementById("s-obj").value.trim()){ toast("⚠️ L'objet est obligatoire"); document.getElementById("s-obj").focus(); return; }
   sendClose();
-  const sign = false; /* le RIB n'est plus joint a l'e-mail : il figure au pied de la facture */
+  const sign = document.getElementById("sw-sign").classList.contains("on");
   const pay = document.getElementById("sw-pay").classList.contains("on");
   doSend(sign, pay);
 }
@@ -1728,6 +1729,7 @@ function pfEnvoyerProforma(){
 function saveDevis(){
   const cli = g("v-client").value;
   if(!cli){ toast("👤 Choisis d'abord un client pour enregistrer la facture"); g("v-client").focus(); return; }
+  CURSTAT = "brouillon";           /* enregistrer = pro forma, pas une facture emise */
   pushDevisInbox();
   /* 27/07 — MEME BUG QUE SUR LES DEVIS. La reference etait memorisee en
      sessionStorage pour survivre a un rechargement, mais elle etait aussi
@@ -1736,7 +1738,13 @@ function saveDevis(){
      d'abord toute entree de meme reference, la seconde effacait la premiere.
      On libere la reference une fois la facture enregistree. */
   try{ sessionStorage.removeItem("tigerflow-facture-ref"); }catch(e){}
-  savedOpen();
+  /* 29/07 : « Enregistrer » emmene directement au resume de la facture, en pro
+     forma. La fenetre intermediaire ne faisait que reafficher ce que la fiche
+     montre en mieux, et obligeait a un clic de plus pour y arriver. */
+  toast("💾 Facture enregistrée en pro forma");
+  setTimeout(function(){
+    location.href = "facture-detail.html?ref=" + encodeURIComponent(DREF);
+  }, 350);
 }
 /* ===== le résumé après enregistrement : PDF · valider · supprimer · dupliquer ===== */
 function savedOpen(){
@@ -1990,88 +1998,6 @@ function dpjRender(){
   }).join("");
 }
 setTimeout(dpjRender, 0);
-</script>
-<script>
-/* Compte connecté : le bloc en bas à gauche reflète la photo, le nom et le rôle
-   choisis dans Réglages > Utilisateurs (sauvegardés dans le navigateur). */
-(function(){
-  function appliqueCompte(){
-    var c = null;
-    try{ c = JSON.parse(localStorage.getItem("tigerflow-compte")); }catch(e){}
-    if(!c) return;
-    var box = document.getElementById("side-user");
-    if(!box) return;
-    var ph = box.querySelector(".ph");
-    if(ph){
-      if(c.photo){
-        ph.textContent = "";
-        ph.style.backgroundImage = "url(" + c.photo + ")";
-        ph.style.backgroundSize = "cover";
-        ph.style.backgroundPosition = "center";
-      } else {
-        ph.style.backgroundImage = "";
-        if(c.ini) ph.textContent = c.ini;
-      }
-    }
-    var info = null;
-    for(var i = 0; i < box.children.length; i++){
-      var el = box.children[i];
-      if(el.tagName === "DIV" && !el.classList.contains("umenu")){ info = el; break; }
-    }
-    if(info){
-      var b = info.querySelector("b"), r = info.querySelector("span");
-      if(b && c.nom) b.textContent = c.nom;
-      if(r && c.role) r.textContent = c.role;
-    }
-  }
-  window.appliqueCompte = appliqueCompte;
-  if(document.readyState !== "loading") appliqueCompte();
-  else document.addEventListener("DOMContentLoaded", appliqueCompte);
-})();
-</script>
-<script>
-/* Nom de la societe : celui saisi dans Reglages > Identite. Il alimente l'objet
-   et la signature des e-mails, pour que le client voie TA societe. */
-function societe(){
-  try{
-    var r = JSON.parse(localStorage.getItem("tigerflow-reglages")) || {};
-    var v = (r.info || {})["f-reglage-1"];
-    if(v && String(v).trim()) return String(v).trim();
-  }catch(e){}
-  return "TigerFlow 3D";
-}
-
-/* Fenetre d'envoi : le message s'affiche en entier, sans avoir a faire defiler.
-   Le champ prend la hauteur de son texte (plafonnee pour que la fenetre tienne
-   a l'ecran) et se reajuste des qu'on ecrit. */
-(function(){
-  function fit(){
-    var t = document.getElementById("s-body");
-    if(!t) return;
-    t.style.height = "auto";
-    var max = Math.round(window.innerHeight * 0.46);
-    var h = t.scrollHeight + 2;
-    t.style.height = Math.min(h, max) + "px";
-    t.style.overflowY = (h > max) ? "auto" : "hidden";
-  }
-  window.fitBody = fit;
-  document.addEventListener("input", function(e){
-    if(e.target && e.target.id === "s-body") fit();
-  });
-  window.addEventListener("resize", function(){
-    var v = document.getElementById("sendveil");
-    if(v && v.classList.contains("open")) fit();
-  });
-  function watch(){
-    var v = document.getElementById("sendveil");
-    if(!v || !window.MutationObserver) return;
-    new MutationObserver(function(){
-      if(v.classList.contains("open")) setTimeout(fit, 30);
-    }).observe(v, {attributes:true, attributeFilter:["class"]});
-  }
-  if(document.readyState !== "loading") watch();
-  else document.addEventListener("DOMContentLoaded", watch);
-})();
 </script>
 </body>
 </html>
