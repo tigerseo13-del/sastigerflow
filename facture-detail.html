@@ -1164,7 +1164,7 @@ function relancer(){
     (solde < REC.montant ? " pour un solde de " + eur(Math.max(0, solde)) : "") + ".\n\n" +
     "Nous vous remercions de bien vouloir procéder à son règlement par virement (RIB en bas de la facture, référence " + REF + " en libellé) ou en ligne via le lien inclus.\n" +
     "Si votre règlement s'est croisé avec ce message, merci de ne pas en tenir compte.\n\n" +
-    "Bien cordialement,\nL'équipe TigerFlow 3D";
+    "Bien cordialement,\nL'équipe " + societe();
   g('sendveil').classList.add('open');
   setTimeout(() => { const f = g('s-to'); if(f){ f.focus(); f.select(); } }, 120);
 }
@@ -1420,13 +1420,13 @@ function envoyer(){
     '<div class="srow"><span>Référence</span><b>' + REF + '</b></div>' +
     '<div class="srow sttc"><span>Total TTC</span><b>' + eur(REC.montant) + '</b></div>';
   g('s-to').value = CLIMAILS[REC.client] || ((REC.client || "client").toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr");
-  g('s-obj').value = "Votre facture " + REF + " — TigerFlow 3D";
+  g('s-obj').value = "Votre facture " + REF + " — " + societe();
   g('s-body').value = "Bonjour " + (REC.client || "") + ",\n\n" +
     "Veuillez trouver ci-joint votre facture " + REF + " d'un montant de " + eur(REC.montant) + " TTC" +
     (solde < REC.montant ? " (reste à payer : " + eur(Math.max(0, solde)) + ")" : "") + ".\n" +
     (REC.bc ? "Référence bon de commande : " + REC.bc + "\n" : "") +
     "\nElle est payable avant le " + fdate(REC.valid) + ", par virement (RIB en bas de la facture) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
-    "Bien cordialement,\nL'équipe TigerFlow 3D";
+    "Bien cordialement,\nL'équipe " + societe();
   g('sendveil').classList.add('open');
   setTimeout(() => { const f = g('s-to'); if(f){ f.focus(); f.select(); } }, 120);
 }
@@ -1728,6 +1728,17 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
 })();
 </script>
 <script>
+/* Nom de la societe : celui saisi dans Reglages > Identite. Il alimente l'objet
+   et la signature des e-mails, pour que le client voie TA societe. */
+function societe(){
+  try{
+    var r = JSON.parse(localStorage.getItem("tigerflow-reglages")) || {};
+    var v = (r.info || {})["f-reglage-1"];
+    if(v && String(v).trim()) return String(v).trim();
+  }catch(e){}
+  return "TigerFlow 3D";
+}
+
 /* Fenetre d'envoi : le message s'affiche en entier, sans avoir a faire defiler.
    Le champ prend la hauteur de son texte (plafonnee pour que la fenetre tienne
    a l'ecran) et se reajuste des qu'on ecrit. */

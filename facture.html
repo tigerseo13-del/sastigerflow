@@ -1056,14 +1056,14 @@ function sendV2(){
   /* l'e-mail s'écrit tout seul — modifiable avant envoi */
   const realMail = (typeof CLIENTS !== "undefined" && CLIENTS[cli] && CLIENTS[cli].mail) ? CLIENTS[cli].mail : "";
   document.getElementById("s-to").value = realMail || (cli.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr");
-  document.getElementById("s-obj").value = "Votre facture " + ((document.getElementById("dref2") || {}).textContent || "").trim() || "Votre facture — TigerFlow 3D";
+  document.getElementById("s-obj").value = "Votre facture " + ((document.getElementById("dref2") || {}).textContent || "").trim() + " — " + societe();
   document.getElementById("s-body").value =
 "Bonjour " + cli + ",\n\n" +
 "Veuillez trouver ci-joint votre facture" + (tot ? " d'un montant de " + tot + " TTC" : "") + ".\n" +
 ((document.getElementById("v-bc") || {value:""}).value.trim() ? "Référence bon de commande : " + document.getElementById("v-bc").value.trim() + "\n" : "") +
 ((document.getElementById("v-contrat") || {value:""}).value.trim() ? "Contrat rattaché : " + document.getElementById("v-contrat").value.trim() + "\n" : "") + "\n" +
 "Elle est payable sous " + ((document.getElementById("v-valid") || {value:"30"}).value) + " jours, par virement (RIB en bas de la facture) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
-"Bien cordialement,\nL'équipe TigerFlow 3D";
+"Bien cordialement,\nL'équipe " + societe();
   document.getElementById("sendveil").classList.add("open");
   setTimeout(() => { const f = document.getElementById("s-to"); if(f){ f.focus(); f.select(); } }, 120);
 }
@@ -2030,6 +2030,17 @@ setTimeout(dpjRender, 0);
 })();
 </script>
 <script>
+/* Nom de la societe : celui saisi dans Reglages > Identite. Il alimente l'objet
+   et la signature des e-mails, pour que le client voie TA societe. */
+function societe(){
+  try{
+    var r = JSON.parse(localStorage.getItem("tigerflow-reglages")) || {};
+    var v = (r.info || {})["f-reglage-1"];
+    if(v && String(v).trim()) return String(v).trim();
+  }catch(e){}
+  return "TigerFlow 3D";
+}
+
 /* Fenetre d'envoi : le message s'affiche en entier, sans avoir a faire defiler.
    Le champ prend la hauteur de son texte (plafonnee pour que la fenetre tienne
    a l'ecran) et se reajuste des qu'on ecrit. */
