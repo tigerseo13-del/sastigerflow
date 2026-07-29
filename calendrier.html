@@ -2709,7 +2709,9 @@ function renderReport(id){
   const v = INTERVS.find(x=>x.id===id), r = REPORTS[id], T = typeDe(v);
   const chips = (list, set, fn) => list.map(x=>`<span class="rchip multi ${set.has(x)?'on':''}" onclick="rTogSet(${id},'${fn}','${x.replace(/'/g,"\\'")}',this)">${x}</span>`).join("");
   /* titre de section a choix multiple : compteur vivant + mention */
-  const mlab = (titre, key, set) => `<span class="rlab">${titre} <b class="rlc" id="rlc-${key}">${set.size ? "· " + set.size : ""}</b><small class="rmulti">plusieurs réponses</small></span>`;
+  /* 29/07 (patron) : la mention grise « plusieurs réponses » alourdissait les
+     titres — les coches ✓ et le compteur disent deja le multiple. */
+  const mlab = (titre, key, set) => `<span class="rlab">${titre} <b class="rlc" id="rlc-${key}">${set.size ? "· " + set.size : ""}</b></span>`;
   let body = "";
 
   if(RSTEP === 1){
@@ -2751,7 +2753,7 @@ function renderReport(id){
            coche gagne sa ligne de detail (concentration + quantite),
            facultative. Le menu deroulant illisible disparait. */
         const sel = r.prods.filter(x => x.p !== 0);
-        return `<span class="rlab">Produits utilisés <b class="rlc">${sel.length ? "· " + sel.length : ""}</b><small class="rmulti">plusieurs réponses</small></span>
+        return `<span class="rlab">Produits utilisés <b class="rlc">${sel.length ? "· " + sel.length : ""}</b></span>
       <div class="rchips">${PRODUITS.map((p,k) => k === 0 ? "" :
         `<span class="rchip multi ${r.prods.some(x => x.p === k) ? 'on' : ''}" onclick="rProdTog(${id},${k})">${p}</span>`).join("")}${r.prods.filter(x => x.p === -1).map(x =>
         `<span class="rchip multi on" onclick="rProdDelCustom(${id},'${(x.nom||"").replace(/'/g,"\\'")}')" title="Retirer">${x.nom}</span>`).join("")}<span class="rchip autre" onclick="rPrOpen(${id})">+ Autre…</span></div>
