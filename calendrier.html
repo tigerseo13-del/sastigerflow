@@ -649,7 +649,9 @@ body.dragging .busyzone{opacity:1}
   @page{size:A4 portrait;margin:8mm}
 }
 .rsz{position:absolute;left:0;right:0;bottom:0;height:15px;cursor:ns-resize;touch-action:none}
-.rsz::after{content:"";position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:26px;height:3.5px;border-radius:2px;background:var(--evc);opacity:.4}
+/* 29/07 : la prise de redimensionnement ne se montre qu'au survol — en
+   permanence, ce petit trait chargeait le pied de chaque carte pour rien. */
+.rsz::after{content:"";position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:26px;height:3.5px;border-radius:2px;background:var(--evc);opacity:0;transition:opacity .13s}
 .ev:hover .rsz::after{opacity:.8}
 .lbadge{font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:9px;background:var(--blue-bg);color:var(--blue-d);letter-spacing:.02em;text-transform:uppercase}
 .lbadge.late{background:var(--red-bg);color:var(--red)}
@@ -1692,7 +1694,7 @@ function renderDay(){
          couleur de donnees ; type en pastille teintee ; client en pied avec
          les badges. Le badge existe en double (en-tete/pied) : le CSS montre
          l'un OU l'autre selon la hauteur du creneau. */
-      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
+      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
         style="--evc:${TC.c};--evg:${TC.grad};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
         <div class="evhead" title="${v.cp} ${v.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
           <b>${v.cp}</b><i>${v.ville}</i>
@@ -4124,7 +4126,11 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
    demi-heure : l'en-tete seul, qui porte deja lieu + heure + coche. */
 .ev.ticket{display:flex;flex-direction:column;align-items:stretch;padding:0;background:#fff;overflow:hidden}
 .ev.ticket::before{display:none}
-.ev.ticket .evhead{display:flex;align-items:center;gap:6px;flex:none;background:var(--evg,var(--evc));color:#fff;padding:3.5px 9px 3.5px 11px;min-height:23px}
+/* 29/07 (patron) : les cartes de 2 h et plus respirent — en-tete plus haut,
+   corps plus large, pied decolle. Les cartes d'1 h 30 (.md) gardent le reglage
+   serre : leur contenu frole deja la hauteur du creneau, aerer les couperait. */
+.ev.ticket .evhead{display:flex;align-items:center;gap:7px;flex:none;background:var(--evg,var(--evc));color:#fff;padding:5px 10px 5px 12px;min-height:26px}
+.ev.ticket.md .evhead{gap:6px;padding:3.5px 9px 3.5px 11px;min-height:23px}
 .ev.ticket .evhead b{font-family:ui-monospace,'SF Mono',monospace;font-size:.7rem;font-weight:800;letter-spacing:.02em;flex:none}
 .ev.ticket .evhead i{font-style:normal;font-size:.61rem;font-weight:700;opacity:.92;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ev.ticket .evhead .hh{margin-left:auto;font-size:.61rem;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;opacity:.96}
@@ -4133,7 +4139,9 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 /* badge d'etat dans l'en-tete : masque par defaut, revele sur les petits creneaux */
 .ev.ticket .evhead .hbdg{display:none;flex:none}
 .ev.ticket .evhead .hbdg .lbadge{background:#fff}
-.ev.ticket .evbody{flex:1;min-width:0;min-height:0;padding:6px 10px;display:flex;flex-direction:column}
+.ev.ticket .evbody{flex:1;min-width:0;min-height:0;padding:9px 12px 8px;display:flex;flex-direction:column}
+.ev.ticket.md .evbody{padding:6px 10px}
+.ev.ticket.md .ltyp{margin-top:4px}
 .ev.ticket .lnui{display:flex;align-items:center;gap:7px;font-family:'Sora','Inter';font-size:.8rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.25;margin:0;white-space:nowrap}
 /* 29/07 (patron) : plus de temoin colore pour le nuisible — trop de couleurs
    pour rien. Il se reconnait a son icone, la meme que sur la fiche et la vue
@@ -4141,7 +4149,7 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
    pastille = type d'intervention. */
 .ev.ticket .lnui .nic{font-size:.78rem;flex:none;line-height:1}
 .ev.ticket .lnui span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ev.ticket .ltyp{display:inline-flex;align-self:flex-start;align-items:center;margin-top:5px;font-size:.59rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);background:#F1F2F5;border-radius:7px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.ticket .ltyp{display:inline-flex;align-self:flex-start;align-items:center;margin-top:7px;font-size:.59rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);background:#F1F2F5;border-radius:7px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* ===== 29/07 (patron) — UNE COULEUR = UN TYPE D'INTERVENTION, stable sur tout
    le logiciel (palette issue de l'apercu v4) : Visite devis BLEU, Ponctuel
    AMBRE, Sous contrat VERT, 2e passage / garantie VIOLET. Avant, la pastille
@@ -4152,7 +4160,8 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket .ltyp.m-encais,.mchip.m-encais{background:#FEF3E2;color:#9A4A07;box-shadow:inset 0 0 0 1px #F3D28B}
 .ev.ticket .ltyp.m-ctr,.mchip.m-ctr{background:#E7F6EF;color:#0A6B51;box-shadow:inset 0 0 0 1px #BFE5D8}
 .ev.ticket .ltyp.m-suite,.mchip.m-suite,.ev.ticket .ltyp.m-gar,.mchip.m-gar{background:#F1EAFD;color:#6D3BC4;box-shadow:inset 0 0 0 1px #DCC9F8}
-.ev.ticket .lfoot{display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:4px;border-top:1px solid rgba(23,26,32,.06)}
+.ev.ticket .lfoot{display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:6px;border-top:1px solid rgba(23,26,32,.06)}
+.ev.ticket.md .lfoot{padding-top:4px}
 .ev.ticket .lcli{font-size:.66rem;color:var(--muted);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;padding:0;border:0}
 .ev.ticket .lbdg{margin-left:auto;display:inline-flex;align-items:center;gap:4px;flex:none}
 /* 1 h : en-tete + nuisible seulement, badge dans l'en-tete */
