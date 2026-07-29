@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TigerFlow — 3 designs pour la carte profil</title>
+<style>
+  :root{
+    --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+    --blue:#2E5CE6; --blue-bg:#EAF1FE; --blue-d:#2148C0;
+    --green:#17A87E; --green-bg:#E7F6EF; --green-d:#0F7A57;
+    --ink:#1A1D23; --ink-2:#4A4F58; --muted:#8A9099;
+    --line:#E6E8EC; --bg:#F3F4F6; --card:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);padding:34px 20px 60px;-webkit-font-smoothing:antialiased}
+  .head{max-width:1180px;margin:0 auto 30px}
+  .head h1{font-size:1.5rem;font-weight:800;letter-spacing:-.5px}
+  .head p{color:var(--ink-2);font-size:.92rem;margin-top:7px;max-width:720px;line-height:1.5}
+  .grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  @media(max-width:980px){.grid{grid-template-columns:1fr;max-width:380px}}
+  .col{}
+  .col > .tag{display:flex;align-items:baseline;gap:9px;margin-bottom:13px}
+  .col > .tag b{font-size:.98rem;font-weight:800}
+  .col > .tag span{font-size:.76rem;color:var(--muted)}
+  .col > .note{font-size:.76rem;color:var(--ink-2);line-height:1.5;margin-top:14px;padding:0 3px}
+
+  /* ---- carte de base (commune aux 3) ---- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 20px;box-shadow:0 10px 30px -22px rgba(23,26,32,.5)}
+  .avatar{width:88px;height:88px;border-radius:22px;margin:2px auto 0;display:grid;place-items:center;color:#fff;font-family:'Sora','Inter';font-weight:800;font-size:2rem;background:linear-gradient(135deg,#5B82F0,#2E5CE6)}
+  .name{text-align:center;font-size:1.18rem;font-weight:800;letter-spacing:-.4px}
+  .badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+  .bdg{font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}
+  .bdg.green{background:var(--green-bg);color:var(--green-d)}
+  .bdg.blue{background:var(--blue-bg);color:var(--blue-d)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+  .contacts{display:flex;gap:9px}
+  .cbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;border-radius:11px;background:#F4F5F8;border:1.5px solid var(--line);color:var(--ink-2);font-size:.78rem;font-weight:700}
+  .cbtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .stt{border-radius:13px;padding:11px 6px;text-align:center}
+  .stt b{display:block;font-size:1.1rem;font-weight:800}
+  .stt small{display:block;font-size:.62rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:2px;color:var(--ink-2)}
+  .stt.b{background:var(--blue-bg)} .stt.b b{color:var(--blue-d)}
+  .stt.g{background:var(--green-bg)} .stt.g b{color:var(--green-d)}
+  .stt.o{background:var(--orange-soft)} .stt.o b{color:var(--orange-deep)}
+  .conge{width:100%;height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:.82rem;font-weight:700;color:var(--ink)}
+  .conge svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+  .srow{display:flex;align-items:flex-start;gap:11px}
+  .srow .ic{width:34px;height:34px;border-radius:10px;background:#F4F5F8;display:grid;place-items:center;flex:none;color:var(--muted)}
+  .srow .ic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+  .srow .tx b{display:block;font-size:.86rem;font-weight:700;color:var(--ink)}
+  .srow .tx small{display:block;font-size:.72rem;color:var(--muted);margin-top:1px}
+
+  /* ============ DESIGN 1 — aération uniforme ============ */
+  .d1 .card{display:flex;flex-direction:column;gap:22px}
+  .d1 .idblock{display:flex;flex-direction:column;gap:11px}
+  .d1 .coords{display:flex;flex-direction:column;gap:16px}
+
+  /* ============ DESIGN 2 — sections détachées ============ */
+  .d2 .card{display:flex;flex-direction:column;gap:0}
+  .d2 .zone{display:flex;flex-direction:column;gap:11px;padding:18px 0}
+  .d2 .zone:first-child{padding-top:2px}
+  .d2 .zone:last-child{padding-bottom:2px}
+  .d2 .zone + .zone{border-top:1px solid var(--line)}
+  .d2 .zlab{font-size:.64rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+  .d2 .coords{display:flex;flex-direction:column;gap:13px}
+
+  /* ============ DESIGN 3 — sous-blocs en relief ============ */
+  .d3 .card{display:flex;flex-direction:column;gap:16px}
+  .d3 .idblock{display:flex;flex-direction:column;gap:11px}
+  .d3 .panel{background:#F7F8FA;border:1px solid #EDEFF3;border-radius:15px;padding:14px}
+  .d3 .panel + .panel{margin-top:2px}
+  .d3 .plab{font-size:.64rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .d3 .coords{display:flex;flex-direction:column;gap:13px}
+  .d3 .srow .ic{background:#fff}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>Carte profil technicien — 3 pistes d'aération</h1>
+    <p>Même contenu dans les trois, seule l'organisation de l'espace change. Regarde laquelle « respire » le mieux pour toi et dis-moi son numéro — je l'appliquerai à la vraie fiche (Pablo pris en exemple).</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ DESIGN 1 ============ -->
+    <div class="col d1">
+      <div class="tag"><b>Design 1</b><span>Aération uniforme</span></div>
+      <div class="card">
+        <div class="idblock">
+          <div class="avatar">P</div>
+          <div class="name">Pablo Flocarri</div>
+          <div class="badges">
+            <span class="bdg green"><span class="dot"></span>Actif</span>
+            <span class="bdg blue">Commercial</span>
+          </div>
+        </div>
+        <div class="contacts">
+          <span class="cbtn"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.4-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/></svg>Appeler</span>
+          <span class="cbtn"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-11.9 7.6L3 21l1.9-6a8.4 8.4 0 1116.1-3.5z"/></svg>WhatsApp</span>
+          <span class="cbtn"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+        </div>
+        <div class="stats">
+          <div class="stt b"><b>0</b><small>Missions</small></div>
+          <div class="stt g"><b>—</b><small>Réussite</small></div>
+          <div class="stt o"><b>0€</b><small>CA mois</small></div>
+        </div>
+        <button class="conge"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Poser un congé</button>
+        <div class="coords">
+          <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.4-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/></svg></span><span class="tx"><b>06 12 45 78 90</b><small>Cliquer pour copier</small></span></div>
+          <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><span class="tx"><b>pablo@tiger-hygiene3d.fr</b></span></div>
+          <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="tx"><b>7 avenue des Ternes</b><small>75017 Paris · France</small></span></div>
+          <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg></span><span class="tx"><b>Certibiocide : n° 245871</b></span></div>
+        </div>
+      </div>
+      <div class="note"><b>Le plus sûr.</b> Rien ne change de place, tout est juste desserré. Idéal si tu veux régler le « trop tassé » sans repenser la carte.</div>
+    </div>
+
+    <!-- ============ DESIGN 2 ============ -->
+    <div class="col d2">
+      <div class="tag"><b>Design 2</b><span>Sections détachées</span></div>
+      <div class="card">
+        <div class="zone">
+          <div class="avatar">P</div>
+          <div class="name">Pablo Flocarri</div>
+          <div class="badges">
+            <span class="bdg green"><span class="dot"></span>Actif</span>
+            <span class="bdg blue">Commercial</span>
+          </div>
+        </div>
+        <div class="zone">
+          <div class="zlab">Contact rapide</div>
+          <div class="contacts">
+            <span class="cbtn"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.4-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/></svg>Appeler</span>
+            <span class="cbtn"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-11.9 7.6L3 21l1.9-6a8.4 8.4 0 1116.1-3.5z"/></svg>WhatsApp</span>
+            <span class="cbtn"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+          </div>
+        </div>
+        <div class="zone">
+          <div class="zlab">Chiffres du mois</div>
+          <div class="stats">
+            <div class="stt b"><b>0</b><small>Missions</small></div>
+            <div class="stt g"><b>—</b><small>Réussite</small></div>
+            <div class="stt o"><b>0€</b><small>CA mois</small></div>
+          </div>
+          <button class="conge"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Poser un congé</button>
+        </div>
+        <div class="zone">
+          <div class="zlab">Coordonnées</div>
+          <div class="coords">
+            <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.4-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/></svg></span><span class="tx"><b>06 12 45 78 90</b><small>Cliquer pour copier</small></span></div>
+            <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><span class="tx"><b>pablo@tiger-hygiene3d.fr</b></span></div>
+            <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="tx"><b>7 avenue des Ternes</b><small>75017 Paris · France</small></span></div>
+            <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg></span><span class="tx"><b>Certibiocide : n° 245871</b></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><b>Mon préféré.</b> Un fin trait sépare chaque zone et un petit intitulé dit « où on est ». On aère entre les groupes sans alourdir l'intérieur.</div>
+    </div>
+
+    <!-- ============ DESIGN 3 ============ -->
+    <div class="col d3">
+      <div class="tag"><b>Design 3</b><span>Sous-blocs en relief</span></div>
+      <div class="card">
+        <div class="idblock">
+          <div class="avatar">P</div>
+          <div class="name">Pablo Flocarri</div>
+          <div class="badges">
+            <span class="bdg green"><span class="dot"></span>Actif</span>
+            <span class="bdg blue">Commercial</span>
+          </div>
+        </div>
+        <div class="contacts">
+          <span class="cbtn"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.4-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/></svg>Appeler</span>
+          <span class="cbtn"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 01-11.9 7.6L3 21l1.9-6a8.4 8.4 0 1116.1-3.5z"/></svg>WhatsApp</span>
+          <span class="cbtn"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+        </div>
+        <div class="panel">
+          <div class="plab">Chiffres du mois</div>
+          <div class="stats">
+            <div class="stt b"><b>0</b><small>Missions</small></div>
+            <div class="stt g"><b>—</b><small>Réussite</small></div>
+            <div class="stt o"><b>0€</b><small>CA mois</small></div>
+          </div>
+        </div>
+        <button class="conge"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Poser un congé</button>
+        <div class="panel">
+          <div class="plab">Coordonnées</div>
+          <div class="coords">
+            <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.4 2.1L8.1 9.9a16 16 0 006 6l1.4-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/></svg></span><span class="tx"><b>06 12 45 78 90</b><small>Cliquer pour copier</small></span></div>
+            <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span><span class="tx"><b>pablo@tiger-hygiene3d.fr</b></span></div>
+            <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="tx"><b>7 avenue des Ternes</b><small>75017 Paris · France</small></span></div>
+            <div class="srow"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg></span><span class="tx"><b>Certibiocide : n° 245871</b></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><b>Le plus moderne.</b> Les chiffres et les coordonnées deviennent des « cartes dans la carte » sur fond gris clair. Très aéré, mais un peu plus « chargé » en matière.</div>
+    </div>
+
+  </div>
+</body>
+</html>
