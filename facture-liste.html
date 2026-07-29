@@ -60,9 +60,23 @@ h1,.num{font-family:'Sora',sans-serif}
 
 /* ============ TOPBAR ============ */
 .main{flex:1;margin-left:238px;min-width:0}
-.topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;background:rgba(244,245,248,.9);backdrop-filter:blur(12px)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;
+  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.2) 0, transparent 45%),
+  radial-gradient(circle at 92% -60%, rgba(255,90,31,.14) 0, transparent 45%),
+  linear-gradient(115deg,#FFF8F3,#FFEFE4 55%,#FFF4EC);
+  border-bottom:1px solid #FFE2D2;backdrop-filter:blur(12px)}
+.topbar::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(234,74,16,.04) 1px,transparent 1px),
+  linear-gradient(rgba(234,74,16,.04) 1px,transparent 1px);background-size:22px 22px}
+.topbar>*{position:relative}
+
 .crumbs{font-size:.9rem;color:var(--muted)}
-.crumbs .cur{color:var(--ink);font-weight:600}
+/* icone de page dans la barre du haut (27/07) : inline-grid + vertical-align
+   pour ne pas casser l'ellipse du titre ni son alignement. */
+.pgico{display:inline-grid;place-items:center;vertical-align:middle;width:26px;height:26px;border-radius:8px;background:var(--orange-soft);color:var(--orange-deep);margin-right:9px;flex:none}
+.pgico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
 .title-m{display:none;font-weight:700;font-size:1.02rem}
 .spacer{flex:1}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;font-size:.87rem;font-weight:600;transition:.15s;white-space:nowrap}
@@ -73,14 +87,19 @@ h1,.num{font-family:'Sora',sans-serif}
 .page{padding:24px 30px 90px}
 
 /* ============ KPI ============ */
-.cover{position:relative;border-radius:20px;overflow:hidden;border:1px solid #FFE2D2;padding:20px 24px;margin-bottom:22px;
-  background:radial-gradient(circle at 10% 130%, rgba(255,90,31,.24) 0, transparent 50%),
-  radial-gradient(circle at 90% -40%, rgba(255,90,31,.16) 0, transparent 45%),
-  linear-gradient(115deg,#FFF8F3,#FFEFE4 55%,#FFF4EC)}
-.cover::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(234,74,16,.045) 1px,transparent 1px),linear-gradient(rgba(234,74,16,.045) 1px,transparent 1px);background-size:27px 27px}
+/* 27/07 : une seule zone chaude par page, et elle est en haut. Depuis que
+   la barre du haut porte l'orange, ce bandeau le rend : deux bandes orange
+   qui se touchent, on ne sait plus laquelle est la navigation. */
+.cover{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line,#E7E9EF);padding:20px 24px;margin-bottom:22px;
+  background:#fff}
+.cover::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(23,26,32,.035) 1px,transparent 1px),linear-gradient(rgba(23,26,32,.035) 1px,transparent 1px);background-size:27px 27px}
 .cover h1{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px;position:relative}
 .cover .csub{font-size:.84rem;color:var(--ink-2);margin-top:3px;position:relative}
 .kpi{transition:.13s}
+/* 27/07 : les cartouches filtrent la liste — on le montre. */
+.kpi[role="button"]{cursor:pointer}
+.kpi[role="button"]:hover{transform:translateY(-1px);box-shadow:0 8px 20px -10px rgba(23,26,32,.28)}
+.kpi[role="button"]:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 
 
 .kpi .obar{height:6px;border-radius:99px;background:rgba(10,107,81,.14);margin-top:10px;overflow:hidden}
@@ -128,6 +147,9 @@ h1,.num{font-family:'Sora',sans-serif}
 .dt .go{color:var(--orange);font-weight:600;white-space:nowrap}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:16px;white-space:nowrap}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+/* 28/07 : la pro forma se distingue au premier coup d'oeil — c'est tout
+   l'interet. Violet, comme le document provisoire qu'elle est. */
+.st.st-proforma{color:#5B3BC4;font-weight:800;background:#F1EAFD}
 .empty-row{text-align:center;padding:40px;color:var(--muted)}
 
 /* ============ CARTES (mobile) ============ */
@@ -224,12 +246,17 @@ h1,.num{font-family:'Sora',sans-serif}
 .fck{width:16px;height:16px;accent-color:var(--orange);cursor:pointer}
 tr.selrow{background:var(--orange-soft)}
 tr.selrow:hover{background:#FFE8DC}
-.bulkbar{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);z-index:80;display:flex;align-items:center;gap:13px;background:var(--ink);color:#fff;border-radius:15px;padding:12px 12px 12px 19px;box-shadow:0 16px 44px rgba(16,18,22,.4);transition:transform .22s cubic-bezier(.2,.8,.2,1);max-width:calc(100vw - 26px);flex-wrap:wrap}
-.bulkbar.show{transform:translateX(-50%) translateY(0)}
-.bulkbar b{font-family:'Sora';font-size:.88rem;white-space:nowrap}
-.bulkbar span{font-size:.76rem;color:#9BA1AE;white-space:nowrap}
-.bk{padding:10px 15px;border-radius:11px;font-size:.8rem;font-weight:700;border:1px solid #2C3039;background:#1F222A;color:#C7CBD4;cursor:pointer;font-family:inherit;white-space:nowrap}
-.bk:hover{color:#fff;border-color:#3A3F4A}
+/* 27/07 : la barre d'actions passe du bas de l'ecran au-dessus du tableau,
+   dans le flux. Elle n'apparait toujours QUE s'il y a une selection. */
+.bulkbar{display:none;align-items:center;gap:12px;flex-wrap:wrap;background:var(--orange-soft);
+  border:1px solid #FFD3BF;border-radius:14px;padding:11px 9px 11px 15px;margin-bottom:14px}
+.bulkbar.show{display:flex;animation:bfad .18s ease}
+@keyframes bfad{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.bulkbar .bk:first-of-type{margin-left:auto}
+.bulkbar b{font-family:'Sora';font-size:.88rem;white-space:nowrap;color:var(--ink)}
+.bulkbar span{font-size:.76rem;color:var(--orange-deep);font-weight:600;white-space:nowrap}
+.bk{padding:9px 14px;border-radius:11px;font-size:.8rem;font-weight:700;border:1px solid #FFD3BF;background:#fff;color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap}
+.bk:hover{color:var(--orange-deep);border-color:var(--orange)}
 .bk.primary{background:var(--orange);border-color:var(--orange);color:#fff}
 .bk.primary:hover{background:var(--orange-deep)}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
@@ -239,7 +266,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:760px){.gsbtn{width:40px;padding:0;justify-content:center}.gsbtn > :not(svg){display:none}}
 a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .crumbs{font-size:.95rem}
-.crumbs .cur{font-size:1.05rem;font-weight:700;letter-spacing:-.2px}
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
 .crumbs a{font-weight:600}
 .title-m{font-size:1.08rem}
 
@@ -319,6 +346,19 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
 .sumline b{color:var(--ink);font-variant-numeric:tabular-nums}
 .sumline .lt{color:#B3261E;font-weight:700}
 .icq.on{background:#FFF1E9;border-color:var(--orange);color:#D63B05}
+
+/* colonne Intervention associee */
+.dt .inter a{color:var(--orange-deep);font-weight:600;text-decoration:none;white-space:nowrap}
+.dt .inter a:hover{text-decoration:underline}
+.dt .inter .sansint{color:#C4C8D2;font-weight:600}
+
+/* 28/07 : meme correction que sur les devis — un « En retard » doit se voir
+   sans etre lu. La pro forma garde son violet, pose plus haut. */
+.st-brouillon{color:#6C7285;background:#F1F2F5}
+.st-attente  {color:var(--amber);background:var(--amber-bg)}
+.st-payee    {color:var(--green);background:var(--green-bg)}
+.st-retard   {color:var(--red);background:var(--red-bg)}
+.st-partiel  {color:var(--blue);background:#EBF1FE}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 </head>
@@ -363,16 +403,18 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
 <!-- ============ MAIN ============ -->
 <div class="main">
   <div class="topbar">
-    <div class="crumbs"><span class="cur">Factures</span></div>
-    <div class="title-m">Factures</div>
+    <div class="crumbs"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span><span class="cur">Factures</span></div>
+    <div class="title-m"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Factures</div>
     <div class="spacer"></div>
-    <button class="gsbtn" onclick="gsOpen()" aria-label="Recherche globale">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-      <span>Rechercher clients, pages, actions…</span><kbd class="slash">/</kbd><kbd>⌘K</kbd>
-    </button>
+    <div class="gsbtn" onclick="gsTap()" role="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input class="gsq" id="gs-top" type="text" autocomplete="off" placeholder="Rechercher clients, pages, actions…" aria-label="Recherche globale">
+      <kbd class="slash">/</kbd><kbd>⌘K</kbd>
+      <div class="gsdrop" id="gs-drop"></div>
+    </div>
     <a class="btn primary" href="facture.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Nouvelle facture</a>
     <button class="bell" aria-label="Notifications">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
       <span class="dot">2</span>
     </button>
   </div>
@@ -381,11 +423,14 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
 
 
     <!-- KPI -->
+    <!-- 27/07 : les cartouches redeviennent cliquables. kfil() et kringSync()
+     existaient toujours dans le code mais plus rien ne les appelait :
+     le clic avait disparu, la mecanique de filtrage etait restee. -->
     <div class="kpis">
-      <div class="kpi k-orange"><div class="lbl">Facturé ce mois</div><div class="num" id="k-tot">0 €</div></div>
-      <div class="kpi k-green"><div class="lbl">Encaissé</div><div class="num" id="k-encaisse">0 €</div><div class="obar"><i id="k-obar"></i></div></div>
-      <div class="kpi k-amber"><div class="lbl">En attente de paiement</div><div class="num" id="k-attente">0 €</div></div>
-      <div class="kpi k-red" style="background:#FCECEA;border-color:#F3C4C0"><div class="lbl">En retard</div><div class="num" id="k-retard" style="color:var(--red)">0 €</div></div>
+      <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="lbl">Facturé ce mois</div><div class="num" id="k-tot">0 €</div></div>
+      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('payee')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('payee')}"><div class="lbl">Encaissé</div><div class="num" id="k-encaisse">0 €</div><div class="obar"><i id="k-obar"></i></div></div>
+      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('attente')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('attente')}"><div class="lbl">À payer</div><div class="num" id="k-attente">0 €</div></div>
+      <div class="kpi k-red" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('retard')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('retard')}" style="background:#FCECEA;border-color:#F3C4C0"><div class="lbl">En retard</div><div class="num" id="k-retard" style="color:var(--red)">0 €</div></div>
     </div>
 
     <!-- Pipeline -->
@@ -397,8 +442,8 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
       </div>
       <div class="chips" id="chips">
         <button class="chip on" data-f="all">Toutes <span class="n" id="n-all"></span></button>
-        <button class="chip" data-f="brouillon">Brouillon <span class="n" id="n-brouillon"></span></button>
-        <button class="chip" data-f="attente">En attente <span class="n" id="n-attente"></span></button>
+        <button class="chip" data-f="brouillon">Pro forma <span class="n" id="n-brouillon"></span></button>
+        <button class="chip" data-f="attente">À payer <span class="n" id="n-attente"></span></button>
         <button class="chip" data-f="payee">Payée <span class="n" id="n-payee"></span></button>
         <button class="chip" data-f="retard">En retard <span class="n" id="n-retard"></span></button>
       </div>
@@ -412,12 +457,22 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
       <button class="expbtn" onclick="exportCSV()" title="Télécharger la liste affichée au format CSV (Excel)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exporter</button>
     </div>
 
+    <div class="bulkbar" id="bulkbar">
+      <b id="bulk-n">0 sélectionnée</b>
+      <span id="bulk-detail"></span>
+      <button class="bk primary" onclick="bulkRelance()">📧 Relancer les impayées</button>
+      <button class="bk" id="bk-payees" onclick="bulkPayees()">✓ Marquer payées</button>
+      <button class="bk" onclick="bulkEnvoyer()">✈ Envoyer la sélection</button>
+      <button class="bk" onclick="bulkTelecharger()">⬇ Télécharger</button>
+      <button class="bk" onclick="bulkClear()">✕ Annuler</button>
+    </div>
+
     <!-- Table desktop -->
     <div class="tablecard">
       <table class="dt">
         <thead><tr>
           <th style="width:36px"><input type="checkbox" class="fck" id="ckall" onclick="ckAll(this)" title="Tout sélectionner"></th>
-          <th>N° facture</th><th>Client</th><th>Objet</th><th>Montant TTC</th><th>Statut</th><th>Échéance</th><th></th>
+          <th>N° facture</th><th>Client</th><th>Objet</th><th>Montant TTC</th><th>Statut</th><th>Échéance</th><th>Intervention associée</th><th></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -450,8 +505,36 @@ const DEVIS = [
   {ref:"FAC-2026-00862", client:"Résidence Beau Site",  ct:"Syndic Citya",    titre:"Chenilles processionnaires — 4 pins",   montant:890.00,  statut:"payee",     date:"2026-06-15", valid:"2026-07-15"},
 ];
 
-const LBL = {payee:"Payée", retard:"En retard", attente:"En attente", brouillon:"Brouillon", partiel:"Partielle"};
-const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
+/* ===== VOCABULAIRE DES STATUTS — remis a plat le 28/07 (choix patron) =====
+   Le logiciel avait DEUX mots pour un seul etat : « Brouillon » et
+   « Pro forma ». Or une facture non validee EST une pro forma — c'est ce que
+   dit le panneau de validation lui-meme. Les deux mots se melangeaient selon
+   l'ecran, d'ou des « Brouillon » affiches a cote d'un « envoye le 28/07 ».
+
+   Un mot par etat :
+     Pro forma              — pas validee, modifiable, ne vaut pas facture
+     A payer                — validee et envoyee, pas encore soldee
+     Partiellement payee    — un acompte est tombe
+     Payee                  — solde a zero
+   « En retard » N'EST PLUS un statut : c'est « A payer » + echeance depassee,
+   calcule par effStatut(). Un etat qu'on ne choisit jamais n'a rien a faire
+   dans un menu de choix.
+
+   Les CLES internes ne changent pas (brouillon, attente, partiel, payee,
+   retard) : les factures deja enregistrees continuent de s'afficher. Seuls
+   les libelles changent. La cle « proforma » pointe sur le meme libelle que
+   « brouillon » — c'est la fusion, vue de l'ecran. */
+const LBL = {payee:"Payée", retard:"En retard", attente:"À payer", brouillon:"Pro forma", partiel:"Partiellement payée", proforma:"Pro forma"};
+/* ===== 28/07 — PRO FORMA =====
+   Une facture envoyee en pro forma reste un BROUILLON : c'est un document
+   provisoire, non valable pour paiement, et il doit pouvoir etre modifie.
+   Mais la liste l'affichait « Brouillon » comme les autres — impossible de
+   savoir laquelle avait deja ete envoyee au client. Le statut de travail ne
+   change pas ; c'est son LIBELLE qui le dit. */
+const ENVOIS = (() => { try{ return JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {}; }catch(e){ return {}; } })();
+const estPF = ref => { const e = ENVOIS[ref]; return !!(e && e.proforma); };
+const stAff = d => (d.statut === "brouillon" && estPF(d.ref)) ? "proforma" : d.statut;
+const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
 const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014"; const [y,m,d]=String(iso).split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
 const TODAY = new Date("2026-08-25");
@@ -534,7 +617,7 @@ function render(){
   if(sort==="montant-d") list.sort((a,b)=>b.montant-a.montant);
   if(sort==="montant-a") list.sort((a,b)=>a.montant-b.montant);
   if(sort==="client")    list.sort((a,b)=>a.client.localeCompare(b.client,'fr'));
-  if(sort==="recent")    list.sort((a,b)=>b.date.localeCompare(a.date));
+  if(sort==="recent")    list.sort((a,b)=>(b._cree||0)-(a._cree||0) || b.date.localeCompare(a.date));
   if(sort==="echeance")  list.sort((a,b)=>a.valid.localeCompare(b.valid));
 
   window._LISTF = list;
@@ -546,15 +629,20 @@ function render(){
       <td class="cl"><b>${d.client}</b><small>${d.ct}</small></td>
       <td>${d.titre}</td>
       <td class="amt">${eur(d.montant)}</td>
-      <td><span class="st st-${d.statut}">${LBL[d.statut]}</span></td>
+      <td><span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span></td>
       <td class="dte">${fdate(d.valid)}${expChip(d)}</td>
+      <!-- 28/07 : le rendez-vous d'ou vient la facture. Un tiret quand elle a
+           ete etablie au bureau — c'est une reponse, pas un trou. -->
+      <td class="inter">${d.inter
+        ? `<a href="calendrier.html?int=${encodeURIComponent(d.inter)}" onclick="event.stopPropagation()" title="${d.inter}">Voir l'intervention</a>`
+        : '<span class="sansint">—</span>'}</td>
       <td>${actionsHTML(d)}</td>
     </tr>`).join("")
-    : `<tr><td colspan="8" class="empty-row">Aucune facture ne correspond à cette recherche.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><a class="ebtn primary" href="facture.html">＋ Nouvelle facture</a></div><br><small>Modifiez les filtres ou créez une nouvelle facture.</small></td></tr>`;
+    : `<tr><td colspan="9" class="empty-row">Aucune facture ne correspond à cette recherche.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><a class="ebtn primary" href="facture.html">＋ Nouvelle facture</a></div><br><small>Modifiez les filtres ou créez une nouvelle facture.</small></td></tr>`;
 
   document.getElementById('cards').innerHTML = slice.length ? slice.map(d=>`
     <a class="dcard" href="facture.html">
-      <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${d.statut}">${LBL[d.statut]}</span></div>
+      <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span></div>
       <b class="t">${d.titre}</b>
       <div class="cl">${d.client} · ${d.ct}</div>
       <div class="l2"><span class="amt">${eur(d.montant)}</span><span class="dte">éch. ${fdate(d.valid)} ${expChip(d)}</span></div>
@@ -746,7 +834,7 @@ function openFac(ref){
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead2">
       <div class="drow1">
-        <span class="st st-${d.statut}">${LBL[d.statut]}</span>
+        <span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span>
         <button class="dclose" onclick="closeFac()">✕</button>
       </div>
       <h2>${d.client}</h2>
@@ -831,10 +919,22 @@ try{
 }catch(e){}
 /* ===== les factures créées dans l'atelier rejoignent la liste ===== */
 try{
-  JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").reverse().forEach(rec => {
+/* 27/07 — TOUT ENREGISTREMENT CREE PASSE EN TETE.
+   Deux defauts se cumulaient : (1) .reverse() suivi de .unshift() s'annulent,
+   donc avec deux creations d'affilee la plus ANCIENNE remontait ; (2) le tri
+   « Plus recents » compare la DATE du document, et les donnees de demonstration
+   sont datees plus tard que le jour ou l'on cree — un enregistrement neuf
+   coulait donc sous elles. On marque desormais l'instant de creation et il
+   passe avant la date. */
+  /* 27/07 — SENS DU MARQUEUR. L'editeur empile le plus RECENT EN PREMIER
+     (box.unshift). Le marqueur doit donc DECROITRE avec l'index, sinon le tri
+     remonte le plus ancien : avec deux documents crees a la suite, c'est le
+     precedent qui sortait en tete. Meme piege que sur les paiements. */
+  const _boite = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]");
+  _boite.forEach((rec, k) => {
     const i = DEVIS.findIndex(d => d.ref === rec.ref);
     if(i > -1) DEVIS[i] = {...DEVIS[i], ...rec};
-    else DEVIS.unshift(rec);
+    else DEVIS.unshift({...rec, _cree: _boite.length - k});
   });
 }catch(e){}
 const FSTKEY = "tigerflow-factures-statuts";
@@ -923,9 +1023,16 @@ Tiger Hygiène 3D — 01 84 25 36 47`);
 function dupliquer(e, ref){
   e.stopPropagation(); e.preventDefault();
   const d = DEVIS.find(x=>x.ref===ref);
-  const maxN = Math.max(...DEVIS.map(x=>+x.ref.split("-")[2]));
+  /* 27/07 : deux defauts sur la duplication.
+     - le nouveau document n'etait pas marque comme cree : il repassait
+       derriere ceux venus de l'editeur, alors qu'il vient d'etre fait ici ;
+     - le numero se calculait sur TOUTES les references, y compris celles qui
+       ne suivent pas le format a trois segments : une seule suffisait a
+       produire « 00NaN ». On ne garde que les references numerotables. */
+  const nums = DEVIS.map(x=>+String(x.ref).split("-")[2]).filter(n=>Number.isFinite(n));
+  const maxN = nums.length ? Math.max(...nums) : 0;
   const nref = "FAC-2026-00" + (maxN+1);
-  DEVIS.unshift({...d, ref:nref, statut:"brouillon", date:"2026-08-25", valid:"2026-09-24"});
+  DEVIS.unshift({...d, ref:nref, statut:"brouillon", date:"2026-08-25", valid:"2026-09-24", _cree:Date.now()});
   stats(); render();
   toast("⧉ Facture dupliquée (brouillon) → " + nref);
 }
@@ -935,8 +1042,8 @@ function pipeline(){
   const sum = f => DEVIS.filter(d=>d.statut===f).reduce((s,d)=>s+d.montant,0);
   const tot = DEVIS.reduce((s,d)=>s+d.montant,0) || 1;
   const seg = [
-    ["pg","Encaissé",sum("payee")], ["pa","En attente",sum("attente")],
-    ["pp","En retard",sum("retard")], ["px","Brouillon",sum("brouillon")]
+    ["pg","Encaissé",sum("payee")], ["pa","À payer",sum("attente")],
+    ["pp","En retard",sum("retard")], ["px","Pro forma",sum("brouillon")]
   ];
   (document.getElementById('pipe') || {innerHTML:null,style:{}}).innerHTML =
     seg.filter(x=>x[2]>0).map(x=>`<i class="${x[0]}" style="width:${x[2]/tot*100}%" title="${x[1]}"></i>`).join("");
@@ -959,6 +1066,21 @@ render();
 .gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,var(--ink-2))}
 .gsbtn svg{width:15px;height:15px;flex:none}
 .gsbtn kbd{font-family:inherit;font-size:.66rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted,var(--muted))}
+/* ===== recherche directe dans la barre (27/07) =====
+   On ecrit dans la barre du haut, les resultats tombent dessous. La fenetre
+   centrale ne sert plus que sur telephone, ou la barre se reduit a une icone
+   de 40px : il n'y a pas la place d'un champ de saisie. C'est la regle
+   .gsbtn > :not(svg){display:none} du bloc telephone qui masque le champ,
+   la liste et les raccourcis en dessous de 760px. */
+.gsbtn{position:relative;cursor:text;z-index:130}
+.gsbtn:focus-within{border-color:var(--orange,#FF5A1F)}
+.gsbtn .gsq{flex:1;min-width:0;border:0;background:none;padding:0;font-family:inherit;font-size:.8rem;font-weight:600;color:var(--ink,#171A20)}
+.gsbtn .gsq:focus{outline:none;box-shadow:none}
+.gsbtn .gsq::placeholder{color:var(--muted,#8A90A0);font-weight:500}
+.gsdrop{position:absolute;top:calc(100% + 7px);left:0;right:0;background:#fff;border:1px solid var(--line,#E7E9EF);
+  border-radius:14px;box-shadow:0 18px 44px rgba(16,18,22,.16);max-height:52vh;overflow-y:auto;padding:8px;
+  display:none;z-index:130;text-align:left;cursor:default}
+.gsdrop.open{display:block}
 .gs-veil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:120;backdrop-filter:blur(2px)}
 .gs-veil.open{display:block}
 .gs-pal{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 26px));background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);z-index:121;overflow:hidden;display:none}
@@ -989,25 +1111,35 @@ render();
 </div>
 <script>
 (function(){
-  var CL = [
-    {n:"Ironwood Solutions", s:"Paris 11e - 06 12 34 56 78", h:"client.html?c=Ironwood%20Solutions"},
-    {n:"Boulangerie Dupont", s:"Asnieres - 06 45 22 18 90", h:"client.html?c=Boulangerie%20Dupont"},
-    {n:"Pharmacie Centrale", s:"Paris 15e - 01 45 32 10 87", h:"client.html?c=Pharmacie%20Centrale"},
-    {n:"Hotel du Parc", s:"Vincennes - 01 43 28 55 12", h:"client.html?c=H%C3%B4tel%20du%20Parc"},
-    {n:"Restaurant Le Baobab", s:"Paris 18e - 06 52 30 41 78", h:"client.html?c=Restaurant%20Le%20Baobab"},
-    {n:"M. Diallo", s:"Saint-Ouen - 06 61 44 28 03", h:"client.html?c=M.%20Diallo"},
-    {n:"Mme Perrin", s:"Paris 13e - 06 78 12 45 66", h:"client.html?c=Mme%20Perrin"},
-    {n:"Mme Ferreira", s:"Ivry - 06 33 90 71 25", h:"client.html?c=Mme%20Ferreira"},
-    {n:"Syndic Foncia Lilas", s:"Paris 20e - 01 40 31 62 00", h:"client.html?c=Syndic%20Foncia%20Lilas"},
-    {n:"Entrepot Central", s:"Pantin - 01 48 91 07 33", h:"client.html?c=Entrep%C3%B4t%20Central"},
-    {n:"Camping Val de Seine", s:"Draveil - 01 69 03 88 21", h:"client.html?c=Camping%20Val%20de%20Seine"}
-  ];
-  var DOC = [
-    {n:"DEV-2026-01287", s:"Devis - punaises de lit", h:"devis.html"},
-    {n:"FAC-2026-00873", s:"Facture - Ironwood Solutions", h:"facture.html"},
-    {n:"FAC-2026-00858", s:"Facture en retard - 1 250 EUR", h:"facture-liste.html"},
-    {n:"CTR-2026-04729", s:"Contrat annuel - Ironwood", h:"contrat.html"}
-  ];
+  /* 28/07 — lit les vraies donnees, plus une liste de demonstration en dur.
+     Bloc recopie sur 23 pages : garder ce commentaire court, chaque octet y
+     compte 23 fois. Detail dans le commit. PG (navigation) reste en dur. */
+  var CL = [], DOC = [];
+  (function(){
+    var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+    var vu = {};
+    J("tigerflow-inbox-clients").concat(J("tigerflow-clients-cache")).forEach(function(c){
+      if(!c || !c.nom || vu[c.nom]) return;   /* un client est dans les deux stocks */
+      vu[c.nom] = 1;
+      CL.push({n:c.nom, s:[c.ville, c.tel].filter(Boolean).join(" - "),
+               h:"client.html?c=" + encodeURIComponent(c.nom)});
+    });
+    var piece = function(cle, mot, page, param){
+      J(cle).forEach(function(x){
+        if(!x || !x.ref) return;
+        DOC.push({n:x.ref, s:mot + (x.client ? " - " + x.client : ""),
+                  h:page + "?" + param + "=" + encodeURIComponent(x.ref)});
+      });
+    };
+    piece("tigerflow-inbox-devis",    "Devis",    "devis-detail.html", "ref");
+    piece("tigerflow-inbox-contrats", "Contrat",  "contrat.html",      "n");
+    piece("tigerflow-inbox-factures", "Facture",  "facture-detail.html","ref");
+    J("tigerflow-added-interventions").forEach(function(i){
+      if(!i || !i.client) return;
+      DOC.push({n:i.client + " - intervention", s:[i.date, i.ville].filter(Boolean).join(" - "),
+                h:"calendrier.html"});
+    });
+  })();
   var PG = [
     {n:"Tableau de bord", i:"🏠", h:"index.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},{n:"Tournees", i:"🗺️", h:"tournee.html"},
     {n:"Clients", i:"👥", h:"clients.html"},{n:"Nouveau client", i:"➕", h:"client-nouveau.html"},
@@ -1046,6 +1178,10 @@ render();
   }
   window.gsSel = function(i){ SEL = i; draw(); };
   window.gsOpen = function(){
+    /* Sur ordinateur la barre est un vrai champ : / et Cmd+K y placent le
+       curseur au lieu d'ouvrir la fenetre. La fenetre reste pour le telephone. */
+    var ch = document.getElementById("gs-top");
+    if(ch && window.innerWidth > 760){ ch.focus(); ch.select(); return; }
     document.getElementById("gs-veil").classList.add("open");
     document.getElementById("gs-pal").classList.add("open");
     var inp = document.getElementById("gs-q");
@@ -1056,6 +1192,49 @@ render();
     document.getElementById("gs-veil").classList.remove("open");
     document.getElementById("gs-pal").classList.remove("open");
   };
+  /* ===== resultats sous la barre (27/07) : meme moteur que la fenetre ===== */
+  var IRES = [], ISEL = 0;
+  function gsInPaint(){
+    var box = document.getElementById("gs-drop"), ch = document.getElementById("gs-top");
+    if(!box || !ch) return;
+    var q = ch.value.trim();
+    if(!q){ box.classList.remove("open"); box.innerHTML = ""; return; }
+    box.classList.add("open");
+    if(!IRES.length){ box.innerHTML = '<div class="gs-empty">Aucun resultat pour \u00ab ' + q + ' \u00bb</div>'; return; }
+    var html = "", lastG = "";
+    IRES.forEach(function(r, i){
+      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
+      html += '<div class="gs-r ' + (i === ISEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsInSel(' + i + ')">'
+        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
+        + '<span class="go">Entree \u21b5</span></div>';
+    });
+    box.innerHTML = html;
+  }
+  window.gsInPaint = gsInPaint;
+  window.gsInSel = function(i){ ISEL = i; gsInPaint(); };
+  window.gsInClose = function(){ var b = document.getElementById("gs-drop"); if(b){ b.classList.remove("open"); } };
+  /* sur telephone le champ est masque : un appui rouvre la fenetre */
+  window.gsTap = function(){
+    /* clic n'importe ou dans la barre = curseur dans le champ, comme une vraie
+       barre de recherche. Sur telephone le champ est masque : on rouvre la fenetre. */
+    if(window.innerWidth <= 760){ gsOpen(); return; }
+    var ch = document.getElementById("gs-top");
+    if(ch) ch.focus();
+  };
+  (function(){
+    var ch = document.getElementById("gs-top");
+    if(!ch) return;
+    ch.addEventListener("input", function(){ IRES = search(this.value); ISEL = 0; gsInPaint(); });
+    ch.addEventListener("focus", function(){ if(this.value.trim()){ IRES = search(this.value); gsInPaint(); } });
+    ch.addEventListener("keydown", function(e){
+      if(e.key === "Escape"){ gsInClose(); this.blur(); return; }
+      if(!IRES.length) return;
+      if(e.key === "ArrowDown"){ e.preventDefault(); ISEL = Math.min(IRES.length - 1, ISEL + 1); gsInPaint(); }
+      else if(e.key === "ArrowUp"){ e.preventDefault(); ISEL = Math.max(0, ISEL - 1); gsInPaint(); }
+      else if(e.key === "Enter" && IRES[ISEL]){ location.href = IRES[ISEL].h; }
+    });
+    document.addEventListener("click", function(e){ if(!e.target.closest || !e.target.closest(".gsbtn")) gsInClose(); });
+  })();
   document.getElementById("gs-q").addEventListener("input", function(){
     RES = search(this.value); SEL = 0; draw();
   });
@@ -1075,15 +1254,6 @@ render();
   });
 })();
 </script>
-<div class="bulkbar" id="bulkbar">
-  <b id="bulk-n">0 sélectionnée</b>
-  <span id="bulk-detail"></span>
-  <button class="bk primary" onclick="bulkRelance()">📧 Relancer les impayées</button>
-  <button class="bk" id="bk-payees" onclick="bulkPayees()">✓ Marquer payées</button>
-  <button class="bk" onclick="bulkEnvoyer()">✈ Envoyer la sélection</button>
-  <button class="bk" onclick="bulkTelecharger()">⬇ Télécharger</button>
-  <button class="bk" onclick="bulkClear()">✕ Annuler</button>
-</div>
 
 <style>
 .bnv{display:none}
@@ -1185,6 +1355,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .ebtn:hover{border-color:var(--orange);color:var(--orange-deep)}
 .ebtn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
 .ebtn.primary:hover{background:var(--orange-deep)}
+/* Fond de la barre de recherche (charte TigerFlow, 28/07) : un degrade qui
+   part du blanc et se rechauffe vers la droite, pour s'accorder au fond
+   orange de la barre du haut sans devenir orange lui-meme. */
+.gsbtn{background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 25%,#FFF8F4 55%,#FFF5EF 100%);
+  border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.gsbtn:hover{border-color:#DCE3EB}
+.gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>

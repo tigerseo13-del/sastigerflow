@@ -53,9 +53,23 @@ h1,.num{font-family:'Sora',sans-serif}
 
 /* ============ TOPBAR ============ */
 .main{flex:1;margin-left:238px;min-width:0}
-.topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;background:rgba(244,245,248,.9);backdrop-filter:blur(12px)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;
+  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.2) 0, transparent 45%),
+  radial-gradient(circle at 92% -60%, rgba(255,90,31,.14) 0, transparent 45%),
+  linear-gradient(115deg,#FFF8F3,#FFEFE4 55%,#FFF4EC);
+  border-bottom:1px solid #FFE2D2;backdrop-filter:blur(12px)}
+.topbar::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(234,74,16,.04) 1px,transparent 1px),
+  linear-gradient(rgba(234,74,16,.04) 1px,transparent 1px);background-size:22px 22px}
+.topbar>*{position:relative}
+
 .crumbs{font-size:.9rem;color:var(--muted)}
-.crumbs .cur{color:var(--ink);font-weight:600}
+/* icone de page dans la barre du haut (27/07) : inline-grid + vertical-align
+   pour ne pas casser l'ellipse du titre ni son alignement. */
+.pgico{display:inline-grid;place-items:center;vertical-align:middle;width:26px;height:26px;border-radius:8px;background:var(--orange-soft);color:var(--orange-deep);margin-right:9px;flex:none}
+.pgico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
 .title-m{display:none;font-weight:700;font-size:1.02rem}
 .spacer{flex:1}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;font-size:.87rem;font-weight:600;transition:.15s;white-space:nowrap}
@@ -67,11 +81,12 @@ h1,.num{font-family:'Sora',sans-serif}
 .page{padding:24px 30px 90px}
 
 /* ============ KPI ============ */
-.cover{position:relative;border-radius:20px;overflow:hidden;border:1px solid #FFE2D2;padding:20px 24px;margin-bottom:22px;
-  background:radial-gradient(circle at 10% 130%, rgba(255,90,31,.24) 0, transparent 50%),
-  radial-gradient(circle at 90% -40%, rgba(255,90,31,.16) 0, transparent 45%),
-  linear-gradient(115deg,#FFF8F3,#FFEFE4 55%,#FFF4EC)}
-.cover::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(234,74,16,.045) 1px,transparent 1px),linear-gradient(rgba(234,74,16,.045) 1px,transparent 1px);background-size:27px 27px}
+/* 27/07 : une seule zone chaude par page, et elle est en haut. Depuis que
+   la barre du haut porte l'orange, ce bandeau le rend : deux bandes orange
+   qui se touchent, on ne sait plus laquelle est la navigation. */
+.cover{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line,#E7E9EF);padding:20px 24px;margin-bottom:22px;
+  background:#fff}
+.cover::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(23,26,32,.035) 1px,transparent 1px),linear-gradient(rgba(23,26,32,.035) 1px,transparent 1px);background-size:27px 27px}
 .cover h1{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px;position:relative}
 .cover .csub{font-size:.84rem;color:var(--ink-2);margin-top:3px;position:relative}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
@@ -137,7 +152,18 @@ tr:hover td.chv{color:var(--orange-deep)}
 .tblcard tbody tr:last-child td{border-bottom:0}
 .tnm{display:flex;align-items:center;gap:11px;font-weight:700;white-space:nowrap;font-size:.9rem}
 .tav2{width:34px;height:34px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:.66rem;font-weight:800;font-family:'Sora';flex:none}
-.skwrap{display:flex;gap:5px;flex-wrap:wrap;max-width:320px}
+/* 28/07 — les puces du TABLEAU heritaient du style du panneau d'edition
+   (bordure, calage 7.5/12, curseur main), declare plus bas et donc gagnant.
+   Elles etaient deux fois trop grosses et debordaient sur quatre lignes, avec
+   une hauteur de ligne differente pour chaque technicien. Le tableau reprend
+   la main sur SES puces : compactes, sans bordure ni curseur main.
+   28/07 (choix patron) : TOUTES les competences sont affichees. Une premiere
+   version n'en montrait que trois avec un compteur « +2 » — plus regulier,
+   mais il fallait survoler pour savoir ce que le technicien sait faire, et
+   c'est precisement la question que pose cette colonne. */
+.skwrap{display:flex;gap:5px 6px;flex-wrap:wrap;max-width:330px;align-items:center}
+.skwrap .skc{border:0;padding:3.5px 9px;font-size:.7rem;font-weight:600;
+  background:#F1F2F5;color:var(--ink-2);border-radius:9px;cursor:default;white-space:nowrap}
 .skc{font-size:.7rem;font-weight:600;background:#F1F2F5;color:var(--ink-2);border-radius:9px;padding:3.5px 9px;white-space:nowrap}
 .stb{display:inline-flex;font-size:.68rem;font-weight:800;border-radius:9px;padding:4px 11px}
 .stb.on{background:var(--green-bg);color:var(--green-d)}
@@ -276,9 +302,11 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .addrowbtn{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed var(--orange);color:var(--orange-deep);border-radius:11px;padding:9px 14px;font-size:.79rem;font-weight:700;background:#fff;cursor:pointer;transition:.13s}
 .addrowbtn:hover{background:var(--orange-soft)}
 /* saisie libre (matériel, zones) : le champ prend la place du bouton « ＋ Autre » */
-.addbox{display:none;align-items:center;gap:6px;padding:4px 5px 4px 11px;border-radius:11px;border:1.5px solid var(--orange);background:#fff}
-.addbox input{width:158px;border:0;outline:none;background:transparent;font-family:inherit;font-size:.8rem;color:var(--ink);padding:0}
-.addbox button{all:unset;cursor:pointer;padding:6px 11px;border-radius:9px;background:var(--orange);color:#fff;font-size:.73rem;font-weight:800}
+.addbox{display:none;align-items:center;gap:7px;padding:6px 6px 6px 13px;border-radius:12px;border:1.5px solid var(--orange);background:#fff}
+/* 27/07 : 158px, on n'y ecrivait pas « Boulogne-Billancourt » sans que le
+   debut disparaisse. Elargi, et la police remonte a la taille du reste. */
+.addbox input{width:260px;max-width:52vw;border:0;outline:none;background:transparent;font-family:inherit;font-size:.86rem;color:var(--ink);padding:2px 0}
+.addbox button{all:unset;cursor:pointer;padding:8px 14px;border-radius:9px;background:var(--orange);color:#fff;font-size:.78rem;font-weight:800}
 .hnote{font-size:.74rem;color:var(--muted);background:var(--bg);border-radius:11px;padding:10px 13px;line-height:1.55;margin-top:9px}
 .doclist{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
 .docc{display:inline-flex;align-items:center;gap:7px;background:var(--bg);border-radius:10px;padding:7px 11px;font-size:.76rem;font-weight:600}
@@ -317,6 +345,11 @@ input.err,select.err{border-color:var(--red,var(--red))!important;background:var
    Un seul pas pour tout le formulaire : 28 px entre deux blocs, 11 px entre un
    titre de section et son contenu, 18 px entre deux groupes d'une même section. */
 .mbody .msec{font-family:'Inter';font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:28px 0 11px}
+/* 27/07 : les pastilles se touchaient presque. On aere LES PASTILLES, pas le
+   formulaire : le rythme vertical de l'assistant (28 / 11 / 18) est une regle
+   du projet, verifiee par rythme.js, et il vaut pour les trois etapes. */
+.mbody .skchips{gap:10px}
+.mbody .skchip{padding:11px 16px}
 .mbody .wstep > *:first-child{margin-top:0}
 .mbody .addrowbtn{margin-top:11px}
 .mbody .fgrid{gap:14px}
@@ -334,9 +367,14 @@ details.acc[open] summary::after{transform:rotate(180deg)}
 details.acc > *:not(summary){padding:0 14px 13px}
 /* zones tri-état : 1 clic préférence · 2 clics dépannage · 3 clics retirée */
 .zc{display:inline-flex;align-items:baseline;gap:6px;padding:9px 13px;border-radius:11px;border:1.5px solid var(--line);background:#fff;font-size:.82rem;font-weight:700;color:var(--ink-2);cursor:pointer;user-select:none;transition:.13s;font-family:inherit}
+/* 27/07 : la liste des zones commence vide, il faut le dire plutot que de
+   laisser un espace nu a cote du bouton. */
+.zvide{align-self:center;font-size:.78rem;color:var(--muted);font-weight:600}
 .zc small{font-size:.6rem;font-weight:700;opacity:.8}
 .zc:active{transform:scale(.95)}
-.zc.z1{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
+/* 27/07 (choix patron) : la zone de preference passe en vert. Le dépannage
+   garde le bleu — les deux doivent rester distinguables au premier coup d'oeil. */
+.zc.z1{border-color:var(--green);background:var(--green-bg);color:var(--green-d)}
 .zc.z2{border-color:#C9DAFB;background:var(--blue-bg,var(--blue-bg));color:#2749B8}
 .wrecap .k{color:var(--muted)}
 .tc .foot .go{margin-left:12px}
@@ -347,6 +385,12 @@ details.acc > *:not(summary){padding:0 14px 13px}
 .skchip:hover{border-color:#D8DAE1}
 .skchip input{position:absolute;opacity:0;pointer-events:none}
 .skchip:has(input:checked){border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
+/* 27/07 (choix patron) : les JOURS TRAVAILLES cochés passent en vert. Regle
+   ajoutee a cote de .skchip plutot qu'a la place : le materiel du vehicule et
+   « travaille le week-end » gardent l'orange, qui reste la couleur de la
+   selection ailleurs dans le formulaire. */
+#a-jours .skchip:has(input:checked){border-color:var(--green);background:var(--green-bg);color:var(--green-d)}
+#a-jours .skchip:has(input:checked):hover{border-color:var(--green)}
 .skchip:active{transform:scale(.96)}
 /* compétences & commissions */
 .skrow{display:flex;align-items:center;gap:11px;padding:10px 13px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:7px;transition:.13s;cursor:pointer}
@@ -365,7 +409,7 @@ details.acc > *:not(summary){padding:0 14px 13px}
 .macts .btn.primary{box-shadow:0 6px 16px -6px rgba(255,90,31,.5)}
 @media(max-width:760px){.skchip{min-height:42px}}
 .crumbs{font-size:.95rem}
-.crumbs .cur{font-size:1.05rem;font-weight:700;letter-spacing:-.2px}
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
 .crumbs a{font-weight:600}
 .title-m{font-size:1.08rem}
 
@@ -471,16 +515,18 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 <!-- ============ MAIN ============ -->
 <div class="main">
   <div class="topbar">
-    <div class="crumbs"><span class="cur">Techniciens</span></div>
-    <div class="title-m">Techniciens</div>
+    <div class="crumbs"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span><span class="cur">Techniciens</span></div>
+    <div class="title-m"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span>Techniciens</div>
     <div class="spacer"></div>
-    <button class="gsbtn" onclick="gsOpen()" aria-label="Recherche globale">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-      <span>Rechercher clients, pages, actions…</span><kbd class="slash">/</kbd><kbd>⌘K</kbd>
-    </button>
+    <div class="gsbtn" onclick="gsTap()" role="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input class="gsq" id="gs-top" type="text" autocomplete="off" placeholder="Rechercher clients, pages, actions…" aria-label="Recherche globale">
+      <kbd class="slash">/</kbd><kbd>⌘K</kbd>
+      <div class="gsdrop" id="gs-drop"></div>
+    </div>
     <button class="btn primary" onclick="openAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Nouveau technicien</button>
     <button class="bell" aria-label="Notifications">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
       <span class="dot">2</span>
     </button>
   </div>
@@ -517,7 +563,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <button class="expbtn" onclick="exportCSV()" title="Exporter la liste affichée en CSV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exporter</button>
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input id="q" placeholder="Rechercher un client, un téléphone…" oninput="render()">
+        <input id="q" placeholder="Rechercher un technicien, un téléphone…" oninput="render()">
       </div>
     </div>
     <div style="display:none"><div class="chips" id="chips"></div></div>
@@ -631,7 +677,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         </div>
 
         <details class="acc" id="acc-mat">
-          <summary id="sum-mat">Matériel embarqué · aucun</summary>
+          <summary id="sum-mat">Matériel du véhicule · aucun</summary>
           <div class="skchips" id="a-mat" style="padding-top:4px"></div>
         </details>
       </div>
@@ -643,7 +689,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         </div>
         <div class="msec">Zones couvertes</div>
         <div class="skchips" id="a-zones"></div>
-        <div class="hnote"><b>1ᵉʳ clic</b> = zone de préférence (orange) · <b>2ᵉ clic</b> = zone de dépannage (bleu — seulement si personne du secteur n'est dispo) · <b>3ᵉ clic</b> = retirée.<br>La carte interactive du secteur arrivera avec la version connectée.</div>
+        <div class="hnote"><b>1ᵉʳ clic</b> = zone de préférence (vert) · <b>2ᵉ clic</b> = zone de dépannage (bleu — seulement si personne du secteur n'est dispo) · <b>3ᵉ clic</b> = retirée.<br>La carte interactive du secteur arrivera avec la version connectée.</div>
 
         <div class="msec">Documents <small>— contrat, permis, attestations…</small></div>
         <label class="addrowbtn" style="cursor:pointer"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.2-9.19a4 4 0 015.65 5.66l-9.2 9.19a2 2 0 01-2.82-2.83l8.49-8.48"/></svg> Ajouter un document<input type="file" multiple style="display:none" onchange="docAdd(this)"></label>
@@ -669,7 +715,7 @@ const SKILLS = ["Rongeurs","Cafards","Punaises de lit","Guêpes / Frelons","Chen
 const SKKEY = "tigerflow-techs-skills";
 const ALL_SKILLS = [];   /* le rôle a remplacé cette habilitation */
 const ALL_MAT = ["Pulvérisateur", "Vapeur sèche", "Nacelle", "Postes d'appâtage", "Gel appât", "Pics anti-pigeons", "Nébulisateur"];
-/* ===== matériel embarqué : la liste ci-dessus n'est qu'un point de départ =====
+/* ===== matériel du véhicule : la liste ci-dessus n'est qu'un point de départ =====
    MATLIST est la liste vivante du formulaire : les 7 propositions + tout ce que le
    patron tape lui-même. On ne touche pas à ALL_MAT, qui reste le référentiel. */
 let MATLIST = ALL_MAT.slice();
@@ -727,7 +773,7 @@ const ALL_DEPS = ["75","77","78","91","92","93","94","95"];
    TigerFlow ne tourne pas qu'en Île-de-France : ZONELIST est la liste vivante du
    formulaire, ALL_DEPS reste le référentiel des propositions. La valeur réelle est
    portée par data-z, pas par l'id (une ville a des espaces et des accents). */
-let ZONELIST = ALL_DEPS.slice();
+let ZONELIST = [];
 const zid = z => 'a-zn-' + String(z).replace(/[^0-9A-Za-z]+/g, "-");
 function zoneHTML(z, st){
   st = st || 0;
@@ -741,7 +787,8 @@ function zoneRender(prefs, secs){
   const P = new Set(prefs || zPrefs()), S = new Set(secs || zSecs());
   box.innerHTML =
     ZONELIST.map(z => zoneHTML(z, P.has(z) ? 1 : S.has(z) ? 2 : 0)).join("") +
-    '<button type="button" class="addrowbtn" id="zone-autre" onclick="zoneOpen()">＋ Autre</button>' +
+    (ZONELIST.length ? "" : '<span class="zvide">Aucune zone — saisis un département ou une ville, puis Ajouter</span>') +
+    '<button type="button" class="addrowbtn" id="zone-autre" onclick="zoneOpen()">＋ Ajouter une zone</button>' +
     '<span class="addbox" id="zone-box"><input id="f-zone" placeholder="Département ou ville" onkeydown="zoneKey(event)"><button type="button" onclick="zoneAdd()">Ajouter</button></span>';
 }
 function zoneOpen(){
@@ -954,8 +1001,10 @@ try{
 /* + les techniciens créés à la main (localStorage) : ils réapparaissent à chaque visite */
 (function(){
   try{
+    /* 27/07 : les techniciens crees etaient ajoutes A LA FIN. On les remonte en
+       tete, le dernier cree en premier — meme regle que les autres listes. */
     JSON.parse(localStorage.getItem("tigerflow-techs-perso") || "[]").forEach(r => {
-      if(r && r.prenom && !TECHS.some(t => t.prenom === r.prenom && (t.nom || "") === (r.nom || ""))) TECHS.push(r);
+      if(r && r.prenom && !TECHS.some(t => t.prenom === r.prenom && (t.nom || "") === (r.nom || ""))) TECHS.unshift(r);
     });
   }catch(e){}
 })();
@@ -964,7 +1013,7 @@ try{
   TECHS.forEach(t => { const o = _ov[(t.prenom + " " + (t.nom || "")).trim()]; if(o){ t.dispo = o.dispo; t.dispoD = o.dispoD; } });
 }catch(e){}
 const TODAY = new Date("2026-08-25");
-const fmt = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
+const fmt = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
 const fdate = iso => { const [y,m,d]=iso.split("-"); return d+"/"+m+"/"+y; };
 const jours = iso => Math.ceil((new Date(iso) - TODAY) / 86400000);
 function confStatut(iso){
@@ -1366,7 +1415,10 @@ function docAdd(inp){
 }
 function openAdd(){
   const chip = (id, lbl) => `<label class="skchip"><input type="checkbox" id="${id}"> ${lbl}</label>`;
-  ZONELIST = ALL_DEPS.slice();
+  /* 27/07 (choix patron) : plus de departements proposes d'avance. On part d'une
+     liste vide et on saisit ce qu'on couvre — le SaaS ne tourne pas qu'en
+     Ile-de-France, afficher 75/77/78/91/92/93/94/95 supposait le contraire. */
+  ZONELIST = [];
   zoneRender([], []);
   MATLIST = ALL_MAT.slice();
   matRender([]);
@@ -1384,7 +1436,7 @@ function openAdd(){
     const nsk = SKILLS.filter((x, i) => { const el = document.getElementById('ask-' + i); return el && el.checked; }).length;
     document.getElementById('sum-skills').textContent = "— " + (nsk ? nsk + " sélectionnée" + (nsk > 1 ? "s" : "") : "aucune sélectionnée");
     const nm = matCoches().length;
-    document.getElementById('sum-mat').textContent = "Matériel embarqué · " + (nm ? nm + " coché" + (nm > 1 ? "s" : "") : "aucun");
+    document.getElementById('sum-mat').textContent = "Matériel du véhicule · " + (nm ? nm + " coché" + (nm > 1 ? "s" : "") : "aucun");
   };
   document.getElementById('acc-skills').addEventListener('change', updSums);
   document.getElementById('acc-mat').addEventListener('change', updSums);
@@ -1510,7 +1562,10 @@ function addTech(){
       return;
     }
   }
-  TECHS.push(rec);
+  /* 27/07 : un technicien cree partait EN FIN de tableau. Il passe en tete,
+     comme toute creation dans le SaaS. Le stockage, lui, empile a la suite :
+     c'est le chargeur qui les remonte, du plus recent au plus ancien. */
+  TECHS.unshift(rec);
   /* persistance locale : le technicien survit au rechargement de la page */
   try{
     const box = JSON.parse(localStorage.getItem("tigerflow-techs-perso") || "[]");
@@ -1648,6 +1703,21 @@ document.addEventListener("DOMContentLoaded", function(){
 .gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,var(--ink-2))}
 .gsbtn svg{width:15px;height:15px;flex:none}
 .gsbtn kbd{font-family:inherit;font-size:.66rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted,var(--muted))}
+/* ===== recherche directe dans la barre (27/07) =====
+   On ecrit dans la barre du haut, les resultats tombent dessous. La fenetre
+   centrale ne sert plus que sur telephone, ou la barre se reduit a une icone
+   de 40px : il n'y a pas la place d'un champ de saisie. C'est la regle
+   .gsbtn > :not(svg){display:none} du bloc telephone qui masque le champ,
+   la liste et les raccourcis en dessous de 760px. */
+.gsbtn{position:relative;cursor:text;z-index:130}
+.gsbtn:focus-within{border-color:var(--orange,#FF5A1F)}
+.gsbtn .gsq{flex:1;min-width:0;border:0;background:none;padding:0;font-family:inherit;font-size:.8rem;font-weight:600;color:var(--ink,#171A20)}
+.gsbtn .gsq:focus{outline:none;box-shadow:none}
+.gsbtn .gsq::placeholder{color:var(--muted,#8A90A0);font-weight:500}
+.gsdrop{position:absolute;top:calc(100% + 7px);left:0;right:0;background:#fff;border:1px solid var(--line,#E7E9EF);
+  border-radius:14px;box-shadow:0 18px 44px rgba(16,18,22,.16);max-height:52vh;overflow-y:auto;padding:8px;
+  display:none;z-index:130;text-align:left;cursor:default}
+.gsdrop.open{display:block}
 .gs-veil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:120;backdrop-filter:blur(2px)}
 .gs-veil.open{display:block}
 .gs-pal{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 26px));background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);z-index:121;overflow:hidden;display:none}
@@ -1678,25 +1748,35 @@ document.addEventListener("DOMContentLoaded", function(){
 </div>
 <script>
 (function(){
-  var CL = [
-    {n:"Ironwood Solutions", s:"Paris 11e - 06 12 34 56 78", h:"client.html?c=Ironwood%20Solutions"},
-    {n:"Boulangerie Dupont", s:"Asnieres - 06 45 22 18 90", h:"client.html?c=Boulangerie%20Dupont"},
-    {n:"Pharmacie Centrale", s:"Paris 15e - 01 45 32 10 87", h:"client.html?c=Pharmacie%20Centrale"},
-    {n:"Hotel du Parc", s:"Vincennes - 01 43 28 55 12", h:"client.html?c=H%C3%B4tel%20du%20Parc"},
-    {n:"Restaurant Le Baobab", s:"Paris 18e - 06 52 30 41 78", h:"client.html?c=Restaurant%20Le%20Baobab"},
-    {n:"M. Diallo", s:"Saint-Ouen - 06 61 44 28 03", h:"client.html?c=M.%20Diallo"},
-    {n:"Mme Perrin", s:"Paris 13e - 06 78 12 45 66", h:"client.html?c=Mme%20Perrin"},
-    {n:"Mme Ferreira", s:"Ivry - 06 33 90 71 25", h:"client.html?c=Mme%20Ferreira"},
-    {n:"Syndic Foncia Lilas", s:"Paris 20e - 01 40 31 62 00", h:"client.html?c=Syndic%20Foncia%20Lilas"},
-    {n:"Entrepot Central", s:"Pantin - 01 48 91 07 33", h:"client.html?c=Entrep%C3%B4t%20Central"},
-    {n:"Camping Val de Seine", s:"Draveil - 01 69 03 88 21", h:"client.html?c=Camping%20Val%20de%20Seine"}
-  ];
-  var DOC = [
-    {n:"DEV-2026-01287", s:"Devis - punaises de lit", h:"devis.html"},
-    {n:"FAC-2026-00873", s:"Facture - Ironwood Solutions", h:"facture.html"},
-    {n:"FAC-2026-00858", s:"Facture en retard - 1 250 EUR", h:"facture-liste.html"},
-    {n:"CTR-2026-04729", s:"Contrat annuel - Ironwood", h:"contrat.html"}
-  ];
+  /* 28/07 — lit les vraies donnees, plus une liste de demonstration en dur.
+     Bloc recopie sur 23 pages : garder ce commentaire court, chaque octet y
+     compte 23 fois. Detail dans le commit. PG (navigation) reste en dur. */
+  var CL = [], DOC = [];
+  (function(){
+    var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+    var vu = {};
+    J("tigerflow-inbox-clients").concat(J("tigerflow-clients-cache")).forEach(function(c){
+      if(!c || !c.nom || vu[c.nom]) return;   /* un client est dans les deux stocks */
+      vu[c.nom] = 1;
+      CL.push({n:c.nom, s:[c.ville, c.tel].filter(Boolean).join(" - "),
+               h:"client.html?c=" + encodeURIComponent(c.nom)});
+    });
+    var piece = function(cle, mot, page, param){
+      J(cle).forEach(function(x){
+        if(!x || !x.ref) return;
+        DOC.push({n:x.ref, s:mot + (x.client ? " - " + x.client : ""),
+                  h:page + "?" + param + "=" + encodeURIComponent(x.ref)});
+      });
+    };
+    piece("tigerflow-inbox-devis",    "Devis",    "devis-detail.html", "ref");
+    piece("tigerflow-inbox-contrats", "Contrat",  "contrat.html",      "n");
+    piece("tigerflow-inbox-factures", "Facture",  "facture-detail.html","ref");
+    J("tigerflow-added-interventions").forEach(function(i){
+      if(!i || !i.client) return;
+      DOC.push({n:i.client + " - intervention", s:[i.date, i.ville].filter(Boolean).join(" - "),
+                h:"calendrier.html"});
+    });
+  })();
   var PG = [
     {n:"Tableau de bord", i:"🏠", h:"index.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},{n:"Tournees", i:"🗺️", h:"tournee.html"},
     {n:"Clients", i:"👥", h:"clients.html"},{n:"Nouveau client", i:"➕", h:"client-nouveau.html"},
@@ -1735,6 +1815,10 @@ document.addEventListener("DOMContentLoaded", function(){
   }
   window.gsSel = function(i){ SEL = i; draw(); };
   window.gsOpen = function(){
+    /* Sur ordinateur la barre est un vrai champ : / et Cmd+K y placent le
+       curseur au lieu d'ouvrir la fenetre. La fenetre reste pour le telephone. */
+    var ch = document.getElementById("gs-top");
+    if(ch && window.innerWidth > 760){ ch.focus(); ch.select(); return; }
     document.getElementById("gs-veil").classList.add("open");
     document.getElementById("gs-pal").classList.add("open");
     var inp = document.getElementById("gs-q");
@@ -1745,6 +1829,49 @@ document.addEventListener("DOMContentLoaded", function(){
     document.getElementById("gs-veil").classList.remove("open");
     document.getElementById("gs-pal").classList.remove("open");
   };
+  /* ===== resultats sous la barre (27/07) : meme moteur que la fenetre ===== */
+  var IRES = [], ISEL = 0;
+  function gsInPaint(){
+    var box = document.getElementById("gs-drop"), ch = document.getElementById("gs-top");
+    if(!box || !ch) return;
+    var q = ch.value.trim();
+    if(!q){ box.classList.remove("open"); box.innerHTML = ""; return; }
+    box.classList.add("open");
+    if(!IRES.length){ box.innerHTML = '<div class="gs-empty">Aucun resultat pour \u00ab ' + q + ' \u00bb</div>'; return; }
+    var html = "", lastG = "";
+    IRES.forEach(function(r, i){
+      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
+      html += '<div class="gs-r ' + (i === ISEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsInSel(' + i + ')">'
+        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
+        + '<span class="go">Entree \u21b5</span></div>';
+    });
+    box.innerHTML = html;
+  }
+  window.gsInPaint = gsInPaint;
+  window.gsInSel = function(i){ ISEL = i; gsInPaint(); };
+  window.gsInClose = function(){ var b = document.getElementById("gs-drop"); if(b){ b.classList.remove("open"); } };
+  /* sur telephone le champ est masque : un appui rouvre la fenetre */
+  window.gsTap = function(){
+    /* clic n'importe ou dans la barre = curseur dans le champ, comme une vraie
+       barre de recherche. Sur telephone le champ est masque : on rouvre la fenetre. */
+    if(window.innerWidth <= 760){ gsOpen(); return; }
+    var ch = document.getElementById("gs-top");
+    if(ch) ch.focus();
+  };
+  (function(){
+    var ch = document.getElementById("gs-top");
+    if(!ch) return;
+    ch.addEventListener("input", function(){ IRES = search(this.value); ISEL = 0; gsInPaint(); });
+    ch.addEventListener("focus", function(){ if(this.value.trim()){ IRES = search(this.value); gsInPaint(); } });
+    ch.addEventListener("keydown", function(e){
+      if(e.key === "Escape"){ gsInClose(); this.blur(); return; }
+      if(!IRES.length) return;
+      if(e.key === "ArrowDown"){ e.preventDefault(); ISEL = Math.min(IRES.length - 1, ISEL + 1); gsInPaint(); }
+      else if(e.key === "ArrowUp"){ e.preventDefault(); ISEL = Math.max(0, ISEL - 1); gsInPaint(); }
+      else if(e.key === "Enter" && IRES[ISEL]){ location.href = IRES[ISEL].h; }
+    });
+    document.addEventListener("click", function(e){ if(!e.target.closest || !e.target.closest(".gsbtn")) gsInClose(); });
+  })();
   document.getElementById("gs-q").addEventListener("input", function(){
     RES = search(this.value); SEL = 0; draw();
   });
@@ -1900,6 +2027,13 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ebtn:hover{border-color:var(--orange);color:var(--orange-deep)}
 .ebtn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
 .ebtn.primary:hover{background:var(--orange-deep)}
+/* Fond de la barre de recherche (charte TigerFlow, 28/07) : un degrade qui
+   part du blanc et se rechauffe vers la droite, pour s'accorder au fond
+   orange de la barre du haut sans devenir orange lui-meme. */
+.gsbtn{background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 25%,#FFF8F4 55%,#FFF5EF 100%);
+  border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.gsbtn:hover{border-color:#DCE3EB}
+.gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
