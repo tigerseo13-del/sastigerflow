@@ -749,7 +749,7 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
     <div class="duo">
       <div class="vcard">
         <div class="vh">Notes pour le client</div>
-        <div style="margin-top:14px"><textarea class="vfld" rows="3" placeholder="Conditions particulières, accès, consignes…">Facture payable sous 30 jours, par virement (RIB joint) ou en ligne. Produits certifiés Certibiocide — fiches de sécurité fournies. Merci de rappeler la référence en règlement.</textarea></div>
+        <div style="margin-top:14px"><textarea class="vfld" rows="3" placeholder="Conditions particulières, accès, consignes…">Facture payable sous 30 jours, par virement (RIB en bas de la facture) ou en ligne. Produits certifiés Certibiocide — fiches de sécurité fournies. Merci de rappeler la référence en règlement.</textarea></div>
       </div>
       <div class="vcard">
         <div class="vh">Pièces jointes</div>
@@ -1062,7 +1062,7 @@ function sendV2(){
 "Veuillez trouver ci-joint votre facture" + (tot ? " d'un montant de " + tot + " TTC" : "") + ".\n" +
 ((document.getElementById("v-bc") || {value:""}).value.trim() ? "Référence bon de commande : " + document.getElementById("v-bc").value.trim() + "\n" : "") +
 ((document.getElementById("v-contrat") || {value:""}).value.trim() ? "Contrat rattaché : " + document.getElementById("v-contrat").value.trim() + "\n" : "") + "\n" +
-"Elle est payable sous " + ((document.getElementById("v-valid") || {value:"30"}).value) + " jours, par virement (RIB joint) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
+"Elle est payable sous " + ((document.getElementById("v-valid") || {value:"30"}).value) + " jours, par virement (RIB en bas de la facture) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
 "Bien cordialement,\nL'équipe TigerFlow 3D";
   document.getElementById("sendveil").classList.add("open");
   setTimeout(() => { const f = document.getElementById("s-to"); if(f){ f.focus(); f.select(); } }, 120);
@@ -1077,11 +1077,11 @@ function doSend(sign, pay){
     const d = new Date(); const pad = x => String(x).padStart(2, "0");
     const stamp = pad(d.getDate()) + "/" + pad(d.getMonth()+1) + "/" + d.getFullYear() + " à " + pad(d.getHours()) + ":" + pad(d.getMinutes());
     const m = JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {};
-    m[DREF] = {date: stamp, to: to, sign: !!sign, pay: !!pay, proforma: PFMODE};
+    m[DREF] = {date: stamp, to: to, pay: !!pay, proforma: PFMODE};
     localStorage.setItem("tigerflow-factures-envois", JSON.stringify(m));
   }catch(e){}
   if(typeof envInfoShow === "function") envInfoShow();
-  toast(PFMODE ? "📄 PRO FORMA envoyée à " + cli + " — la facture reste en brouillon" : "📤 Facture envoyée à " + cli + (sign ? " — RIB joint" : "") + (pay ? " · paiement en ligne activé" : ""));
+  toast(PFMODE ? "📄 PRO FORMA envoyée à " + cli + " — la facture reste en brouillon" : "📤 Facture envoyée à " + cli + "" + (pay ? " · paiement en ligne activé" : ""));
   PFMODE = false;
   setTimeout(() => { location.href = "facture-liste.html"; }, 1200);   /* retour à la liste */
 }
@@ -1602,7 +1602,6 @@ async function sbSaveDevis(statut, silent){
     <div class="sfld"><label for="s-obj">Objet <b class="req">*</b></label><input id="s-obj"></div>
     <div class="sfld"><label for="s-body">Message</label><textarea id="s-body" rows="8"></textarea></div>
     <div class="spj">📎 Le PDF du devis sera joint automatiquement à cet e-mail.</div>
-    <div class="tgl"><div><b>🏦 Joindre le RIB</b><small>Coordonnées bancaires incluses pour le règlement par virement</small></div><div class="sw on" id="sw-sign" onclick="this.classList.toggle('on')"></div></div>
     <div class="tgl"><div><b>💳 Paiement en ligne</b><small>Carte / Apple Pay en 2 clics</small></div><div class="sw on" id="sw-pay" onclick="this.classList.toggle('on')"></div></div>
     <div class="sbtns">
       <button class="btn2" onclick="sendClose()">Annuler</button>
@@ -1617,7 +1616,7 @@ function sendConfirm(){
   if(!to || !to.includes("@")){ toast("⚠️ Renseigne l'adresse e-mail du client"); document.getElementById("s-to").focus(); return; }
   if(!document.getElementById("s-obj").value.trim()){ toast("⚠️ L'objet est obligatoire"); document.getElementById("s-obj").focus(); return; }
   sendClose();
-  const sign = document.getElementById("sw-sign").classList.contains("on");
+  const sign = false; /* le RIB n'est plus joint a l'e-mail : il figure au pied de la facture */
   const pay = document.getElementById("sw-pay").classList.contains("on");
   doSend(sign, pay);
 }

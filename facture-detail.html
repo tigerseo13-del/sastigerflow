@@ -496,6 +496,12 @@ label[for]{cursor:pointer}
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
+/* Coordonnees de paiement imprimees sur la facture : le client les trouve la
+   ou il les cherche, plus besoin de joindre un RIB a l'e-mail. */
+.ribfoot{border-top:1px solid var(--line);margin:0 20px;padding:13px 0 16px;display:flex;flex-wrap:wrap;gap:6px 26px;align-items:baseline}
+.ribfoot .rf-t{width:100%;font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.ribfoot span{font-size:.78rem;color:var(--ink-2)}
+.ribfoot b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -627,6 +633,7 @@ label[for]{cursor:pointer}
           <div class="rline ttc"><span>Total TTC</span><b id="r-ttc">—</b></div>
           <div class="paidchip" id="paidchip" style="display:none"></div>
         </div></div>
+        <div class="ribfoot" id="ribfoot"></div>
       </div>
       <div class="card" style="padding:14px 20px">
         <input type="file" id="fpj-in" multiple hidden onchange="fpjAdd(this.files); this.value=''">
@@ -727,7 +734,6 @@ label[for]{cursor:pointer}
     <div class="sfld"><label for="s-to">À *</label><input id="s-to" type="email" placeholder="client@exemple.fr"></div>
     <div class="sfld"><label for="s-obj">Objet *</label><input id="s-obj"></div>
     <div class="sfld"><label for="s-body">Message</label><textarea id="s-body" rows="8"></textarea></div>
-    <div class="tgl"><div><b>Joindre le RIB</b><small>Coordonnées bancaires pour le règlement par virement</small></div><div class="sw on" id="sw-rib" onclick="this.classList.toggle('on')"></div></div>
     <div class="tgl"><div><b>Paiement en ligne</b><small>Carte / Apple Pay en 2 clics</small></div><div class="sw on" id="sw-pay" onclick="this.classList.toggle('on')"></div></div>
     <div class="sacts">
       <button class="btn2" onclick="sendClose()">Annuler</button>
@@ -890,6 +896,20 @@ function fpjRender(){
    L'URL fait foi ; sessionStorage n'est que le repli pour les ouvertures
    internes qui ne passent pas de parametre. */
 try{ REF = new URLSearchParams(location.search).get("ref") || sessionStorage.getItem("tigerflow-facture-detail"); }catch(e){}
+/* Le RIB vient des Reglages (Coordonnees bancaires). Valeurs de depart si le
+   patron ne les a pas encore saisies, pour que la facture ne sorte jamais nue. */
+const RIB_DEF = {banque:"BNP Paribas", iban:"FR76 3000 4008 2800 0123 4567 890", bic:"BNPAFRPP"};
+function ribFoot(){
+  const el = document.getElementById("ribfoot");
+  if(!el) return;
+  let b = {};
+  try{ b = JSON.parse(localStorage.getItem("tigerflow-banque")) || {}; }catch(e){}
+  const banque = b.banque || RIB_DEF.banque, iban = b.iban || RIB_DEF.iban, bic = b.bic || RIB_DEF.bic;
+  el.innerHTML = '<span class="rf-t">Coordonnées de paiement — virement bancaire</span>'
+    + '<span>Banque <b>' + banque + '</b></span>'
+    + '<span>IBAN <b>' + iban + '</b></span>'
+    + '<span>BIC <b>' + bic + '</b></span>';
+}
 let REC = null;
 try{
   const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]");
@@ -1142,7 +1162,7 @@ function relancer(){
     "Sauf erreur de notre part, la facture " + REF + " d'un montant de " + eur(REC.montant) + " TTC, échue le " + fdate(REC.valid) +
     (j !== null && j < 0 ? " (soit " + (-j) + " jours de retard)" : "") + ", reste à ce jour impayée" +
     (solde < REC.montant ? " pour un solde de " + eur(Math.max(0, solde)) : "") + ".\n\n" +
-    "Nous vous remercions de bien vouloir procéder à son règlement par virement (RIB joint, référence " + REF + " en libellé) ou en ligne via le lien inclus.\n" +
+    "Nous vous remercions de bien vouloir procéder à son règlement par virement (RIB en bas de la facture, référence " + REF + " en libellé) ou en ligne via le lien inclus.\n" +
     "Si votre règlement s'est croisé avec ce message, merci de ne pas en tenir compte.\n\n" +
     "Bien cordialement,\nL'équipe TigerFlow 3D";
   g('sendveil').classList.add('open');
@@ -1168,6 +1188,7 @@ function details(){
     tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4L12 22 2 12V2h10l8.6 8.6a2 2 0 010 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>'
   };
   const row = (ic, cls, k, v) => '<div class="drow2"><span class="di ' + cls + '">' + ic + '</span><span class="db"><small>' + k + '</small><b>' + v + '</b></span></div>';
+  ribFoot();
   g('detrows').innerHTML =
     '<div class="dhero">' +
       '<div class="dcli"><a href="client.html?c=' + encodeURIComponent(REC.client || "") + '" title="Ouvrir la fiche client">' + (REC.client || "—") + ' →</a></div>' +
@@ -1404,7 +1425,7 @@ function envoyer(){
     "Veuillez trouver ci-joint votre facture " + REF + " d'un montant de " + eur(REC.montant) + " TTC" +
     (solde < REC.montant ? " (reste à payer : " + eur(Math.max(0, solde)) + ")" : "") + ".\n" +
     (REC.bc ? "Référence bon de commande : " + REC.bc + "\n" : "") +
-    "\nElle est payable avant le " + fdate(REC.valid) + ", par virement (RIB joint) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
+    "\nElle est payable avant le " + fdate(REC.valid) + ", par virement (RIB en bas de la facture) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
     "Bien cordialement,\nL'équipe TigerFlow 3D";
   g('sendveil').classList.add('open');
   setTimeout(() => { const f = g('s-to'); if(f){ f.focus(); f.select(); } }, 120);
@@ -1421,7 +1442,7 @@ function sendConfirm(){
       m[REF] = m[REF] || {};
       m[REF].relance = stamp(); m[REF].to = m[REF].to || to;
     } else {
-      m[REF] = {date: stamp(), to: to, pay: g('sw-pay').classList.contains('on'), rib: g('sw-rib').classList.contains('on')};
+      m[REF] = {date: stamp(), to: to, pay: g('sw-pay').classList.contains('on')};
       if(statutGet() === "brouillon") statutSet("attente");
     }
     localStorage.setItem("tigerflow-factures-envois", JSON.stringify(m));
