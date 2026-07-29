@@ -557,8 +557,53 @@ const ic = {
   up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>'
 };
 const tgl = (on, extra) => `<span class="tgl ${on ? "on" : ""}" onclick="this.classList.toggle('on')${extra ? ";" + extra : ""}"></span>`;
+/* ---------- SAUVEGARDE GENERALE DES REGLAGES ----------
+   Avant, le bouton « Enregistrer » se contentait d'afficher un message : tout
+   ce qui etait saisi (nom de la societe, horaires, interrupteurs...) repartait
+   a zero au rechargement. Tout est desormais conserve, panneau par panneau. */
+const RKEY = "tigerflow-reglages";
+function regGet(){ try{ return JSON.parse(localStorage.getItem(RKEY)) || {}; }catch(e){ return {}; } }
+function regSaveAll(){
+  const box = document.getElementById("panel"); if(!box) return;
+  const all = regGet(); const d = all[SPK] = all[SPK] || {};
+  box.querySelectorAll("input[id], select[id], textarea[id]").forEach(e => {
+    if(!/^f-reglage/.test(e.id)) return;
+    d[e.id] = (e.type === "checkbox") ? e.checked : e.value;
+  });
+  /* les lignes de jours (interrupteur + deux heures) */
+  box.querySelectorAll(".dayr").forEach((r, i) => {
+    const t = r.querySelectorAll('input[type="time"]');
+    d["jour" + i] = {off:r.classList.contains("off"), a:(t[0] || {}).value || "", b:(t[1] || {}).value || ""};
+  });
+  /* les interrupteurs simples (Respecter les horaires, etc.) */
+  box.querySelectorAll(".togr").forEach((r, i) => {
+    const t = r.querySelector(".tgl"); if(t) d["tog" + i] = t.classList.contains("on");
+  });
+  try{ localStorage.setItem(RKEY, JSON.stringify(all)); }catch(e){}
+}
+function regFill(){
+  const box = document.getElementById("panel"); if(!box) return;
+  const d = regGet()[SPK] || {};
+  box.querySelectorAll("input[id], select[id], textarea[id]").forEach(e => {
+    if(!/^f-reglage/.test(e.id) || !(e.id in d)) return;
+    if(e.type === "checkbox") e.checked = !!d[e.id]; else e.value = d[e.id];
+  });
+  box.querySelectorAll(".dayr").forEach((r, i) => {
+    const v = d["jour" + i]; if(!v) return;
+    r.classList.toggle("off", !!v.off);
+    const tg = r.querySelector(".tgl"); if(tg) tg.classList.toggle("on", !v.off);
+    const t = r.querySelectorAll('input[type="time"]');
+    if(t[0] && v.a) t[0].value = v.a;
+    if(t[1] && v.b) t[1].value = v.b;
+  });
+  box.querySelectorAll(".togr").forEach((r, i) => {
+    const v = d["tog" + i]; if(v === undefined) return;
+    const t = r.querySelector(".tgl"); if(t) t.classList.toggle("on", !!v);
+  });
+}
 function saveReglages(section){
   clearDirty();
+  regSaveAll();
   bankSave();
   if(typeof toast === "function") toast("✓ " + (section ? section + " — modifications enregistrées" : "Modifications enregistrées"));
 }
@@ -1231,6 +1276,7 @@ function spRender(){
     html += `<div class="savebar"><button class="savebtn" onclick="saveReglages('${(PANEL_LBL[SPK]||"").replace(/'/g,"\\'")}')">Enregistrer</button></div>`;
   }
   $id("panel").innerHTML = html;
+  regFill();
   bankFill();
 }
 document.getElementById("snav").addEventListener("click", e => {
