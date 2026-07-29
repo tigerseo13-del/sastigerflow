@@ -560,7 +560,13 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <option value="inactif">Inactif</option>
       </select>
       <select id="f-comp" onchange="render()"><option value="all">Compétence / Service : toutes</option></select>
-      <select id="f-ville" onchange="render()"><option value="all">Ville : toutes</option></select>
+      <div class="fville">
+        <button type="button" class="fvbtn" id="f-ville-btn" onclick="toggleVille(event)"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><span id="f-ville-lbl">Ville : toutes</span><span class="fvcar">▾</span></button>
+        <div class="fvpop" id="f-ville-pop">
+          <input type="text" id="f-ville-q" placeholder="Saisir une ville…" oninput="filterVilleList()" autocomplete="off">
+          <div class="fvlist" id="f-ville-list"></div>
+        </div>
+      </div>
       <button class="fclear" id="fclear" onclick="resetFilters()" style="display:none">✕ <span id="fclear-n">Réinitialiser</span></button>
       <span class="spacer"></span>
       <button class="expbtn" onclick="exportCSV()" title="Exporter la liste affichée en CSV"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exporter</button>
@@ -1034,13 +1040,41 @@ function confBadge(t){
 const DISPO = {dispo:"Disponible", interv:"En intervention", conge:"En congé"};
 let FILTRE = "all";
 const villeOf = t => { if(t.adr){ const p = t.adr.split(", "); return (p[2] || p[1] || p[0] || "").replace(/^\d{5} ?/, ""); } return (t.zones && t.zones[0]) || "—"; };
+let FVILLE = "all";
+function villesList(){ return [...new Set(TECHS.map(villeOf).filter(x => x && x !== "—"))].sort((a, b) => a.localeCompare(b, "fr")); }
+function fillVilles(){
+  const box = document.getElementById("f-ville-list"); if(!box) return;
+  const qi = document.getElementById("f-ville-q");
+  const q = (qi && qi.value || "").toLowerCase().trim();
+  const villes = villesList().filter(v => !q || v.toLowerCase().includes(q));
+  let html = '<div class="fvitem' + (FVILLE === "all" ? " on" : "") + '" data-v="all" onclick="pickVille(this.dataset.v)">Toutes les villes</div>';
+  html += villes.map(v => '<div class="fvitem' + (FVILLE === v ? " on" : "") + '" data-v="' + v.replace(/"/g, "&quot;") + '" onclick="pickVille(this.dataset.v)">' + v + '</div>').join("");
+  if(!villes.length && q) html += '<div class="fvempty">Aucune ville trouvée</div>';
+  box.innerHTML = html;
+}
+function pickVille(v){
+  FVILLE = v;
+  const lbl = document.getElementById("f-ville-lbl"); if(lbl) lbl.textContent = v === "all" ? "Ville : toutes" : v;
+  const pop = document.getElementById("f-ville-pop"); if(pop) pop.classList.remove("open");
+  render();
+}
+function toggleVille(e){
+  e.stopPropagation();
+  const pop = document.getElementById("f-ville-pop"); if(!pop) return;
+  pop.classList.toggle("open");
+  if(pop.classList.contains("open")){ fillVilles(); const qi = document.getElementById("f-ville-q"); if(qi){ qi.value = ""; qi.focus(); } }
+}
+function filterVilleList(){ fillVilles(); }
+document.addEventListener("click", e => {
+  const pop = document.getElementById("f-ville-pop");
+  if(pop && pop.classList.contains("open") && !e.target.closest(".fville")) pop.classList.remove("open");
+});
 function fillSelects(){
-  const fc = document.getElementById("f-comp"), fv = document.getElementById("f-ville");
-  if(!fc || !fv) return;
-  const vc = fc.value || "all", vv = fv.value || "all";
+  const fc = document.getElementById("f-comp");
+  if(!fc) return;
+  const vc = fc.value || "all";
   fc.innerHTML = '<option value="all">Compétence / Service : toutes</option>' + SKILLS.filter(k => TECHS.some(t => t.com && t.com[k] != null)).map(k => '<option' + (vc === k ? ' selected' : '') + '>' + k + '</option>').join("");
-  const villes = [...new Set(TECHS.map(villeOf).filter(x => x && x !== "—"))].sort((a, b) => a.localeCompare(b, "fr"));
-  fv.innerHTML = '<option value="all">Ville : toutes</option>' + villes.map(v => '<option' + (vv === v ? ' selected' : '') + '>' + v + '</option>').join("");
+  fillVilles();
 }
 let VT = "list";
 function setVT(v){
@@ -1057,7 +1091,7 @@ function dvList(){
   const q = (document.getElementById("q").value || "").toLowerCase();
   const fs = (document.getElementById("f-stat") || {}).value || "all";
   const fc = (document.getElementById("f-comp") || {}).value || "all";
-  const fv = (document.getElementById("f-ville") || {}).value || "all";
+  const fv = FVILLE;
   return TECHS.map((t, i) => ({t, i})).filter(({t}) =>
     (fs === "all" || (fs === "actif" ? t.dispo !== "conge" : fs === "inactif" ? t.dispo === "conge" : t.dispo === fs)) &&
     (fc === "all" || (t.com && t.com[fc] != null)) &&
@@ -1142,7 +1176,7 @@ function render(){
   fillSelects();
   const fs = (document.getElementById("f-stat") || {}).value || "all";
   const fc = (document.getElementById("f-comp") || {}).value || "all";
-  const fv = (document.getElementById("f-ville") || {}).value || "all";
+  const fv = FVILLE;
   const list = TECHS.map((t,i)=>({...t,i})).filter(t =>
     (fs === "all" || (fs === "actif" ? t.dispo !== "conge" : fs === "inactif" ? t.dispo === "conge" : t.dispo === fs)) &&
     (fc === "all" || (t.com && t.com[fc] != null)) &&
@@ -1218,7 +1252,8 @@ function fclearUpd(q, fs, fc, fv){
 }
 function resetFilters(){
   document.getElementById("q").value = "";
-  ["f-stat", "f-comp", "f-ville"].forEach(id => { const el = document.getElementById(id); if(el) el.value = "all"; });
+  ["f-stat", "f-comp"].forEach(id => { const el = document.getElementById(id); if(el) el.value = "all"; });
+  FVILLE = "all"; const _vl = document.getElementById("f-ville-lbl"); if(_vl) _vl.textContent = "Ville : toutes";
   render();
 }
 function exportCSV(){
@@ -2034,6 +2069,19 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
+.fville{position:relative;display:inline-block}
+.fvbtn{display:inline-flex;align-items:center;gap:7px;min-width:150px;border:1.5px solid var(--line);border-radius:11px;padding:9px 13px;background:#fff;font-size:.82rem;font-weight:600;color:var(--ink-2);cursor:pointer;font-family:inherit}
+.fvbtn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;flex:none}
+.fvbtn .fvcar{margin-left:auto;color:var(--muted)}
+.fvpop{position:absolute;top:calc(100% + 6px);left:0;z-index:50;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 36px -18px rgba(23,26,32,.5);display:none;width:230px;padding:10px}
+.fvpop.open{display:block}
+.fvpop > input{width:100%;padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:.82rem;margin-bottom:8px}
+.fvpop > input:focus{outline:none;border-color:var(--orange)}
+.fvlist{max-height:220px;overflow:auto}
+.fvitem{padding:8px 10px;border-radius:8px;font-size:.82rem;color:var(--ink-2);cursor:pointer}
+.fvitem:hover{background:#EAF1FE}
+.fvitem.on{background:#EAF1FE;color:#2148C0;font-weight:700}
+.fvempty{padding:12px;font-size:.78rem;color:var(--muted);text-align:center}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
