@@ -449,12 +449,6 @@ tr.torelance{box-shadow:inset 3px 0 0 #D9A408}
         <button class="chip" data-f="perdu">Perdu <span class="n" id="n-perdu"></span></button>
         <button class="chip" data-f="expire">Expiré <span class="n" id="n-expire"></span></button>
       </div>
-      <select class="sortsel" id="sort" onchange="PAGE=1;render()">
-        <option value="recent">Plus récents</option>
-        <option value="montant-d">Montant ↓</option>
-        <option value="montant-a">Montant ↑</option>
-        <option value="client">Client A→Z</option>
-      </select>
       <button class="expbtn" onclick="exportCSV()" title="Télécharger la liste affichée au format CSV (Excel)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exporter</button>
     </div>
 
@@ -647,7 +641,8 @@ function videFiltres(){
 }
 function render(){
   const q = document.getElementById('q').value.toLowerCase();
-  const sort = document.getElementById('sort').value;
+  /* le menu de tri a ete retire : on garde son comportement par defaut */
+  const sort = (document.getElementById('sort') || {value:"recent"}).value;
   let list = DEVIS.filter(d =>
     (FILTRE==="all" || d.statut===FILTRE) &&
     (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q) || String(d.montant).includes(q.replace(",", ".")))
@@ -696,16 +691,16 @@ document.getElementById('chips').addEventListener('click', e=>{
   document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   FILTRE = b.dataset.f;
-  try{ localStorage.setItem("tigerflow-devis-filtre", JSON.stringify({f:FILTRE, s:document.getElementById('sort').value, q:document.getElementById('q').value})); }catch(err){}
+  try{ localStorage.setItem("tigerflow-devis-filtre", JSON.stringify({f:FILTRE, s:(document.getElementById('sort') || {value:"recent"}).value, q:document.getElementById('q').value})); }catch(err){}
   render();
 });
-document.getElementById('sort').addEventListener('change', ()=>{ try{ const m=JSON.parse(localStorage.getItem("tigerflow-devis-filtre"))||{}; m.s=document.getElementById('sort').value; localStorage.setItem("tigerflow-devis-filtre", JSON.stringify(m)); }catch(e){} });
+(document.getElementById('sort') || {addEventListener(){}}).addEventListener('change', ()=>{ try{ const m=JSON.parse(localStorage.getItem("tigerflow-devis-filtre"))||{}; m.s=(document.getElementById('sort')||{value:"recent"}).value; localStorage.setItem("tigerflow-devis-filtre", JSON.stringify(m)); }catch(e){} });
 document.getElementById('q').addEventListener('input', ()=>{ try{ const m=JSON.parse(localStorage.getItem("tigerflow-devis-filtre"))||{}; m.q=document.getElementById('q').value; localStorage.setItem("tigerflow-devis-filtre", JSON.stringify(m)); }catch(e){} });
 try{
   const m = JSON.parse(localStorage.getItem("tigerflow-devis-filtre"));
   if(m){
     if(m.f){ FILTRE = m.f; document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.dataset.f===m.f)); }
-    if(m.s) document.getElementById('sort').value = m.s;
+    const _s = document.getElementById('sort'); if(m.s && _s) _s.value = m.s;
     if(m.q) document.getElementById('q').value = m.q;
     render();
   }
