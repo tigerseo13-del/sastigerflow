@@ -429,10 +429,10 @@ tr.torelance{box-shadow:inset 3px 0 0 #D9A408}
      existaient toujours dans le code mais plus rien ne les appelait :
      le clic avait disparu, la mecanique de filtrage etait restee. -->
     <div class="kpis">
-      <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></div><div class="lbl">Devis ce mois</div><div class="num" id="k-tot">0</div></div>
-      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('gagne')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('gagne')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/></svg></div><div class="lbl">Montant gagné</div><div class="num" id="k-gagne">0 €</div></div>
-      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('envoye')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('envoye')}"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="lbl">En attente de réponse</div><div class="num" id="k-attente">0 €</div></div>
-      <div class="kpi k-blue"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div><div class="lbl">Taux de signature</div><div class="num" id="k-taux">0 %</div></div>
+      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('envoye')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('envoye')}"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="lbl">En attente de réponse</div><div class="num" id="k-att-n">0</div><div class="ksub" id="k-att-m">—</div></div>
+      <div class="kpi k-red" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('expire-proche')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('expire-proche')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><div class="lbl">Expire bientôt</div><div class="num" id="k-exp-n">0</div><div class="ksub" id="k-exp-m">—</div></div>
+      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('gagne')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('gagne')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/></svg></div><div class="lbl">Devis signés</div><div class="num" id="k-sig-n">0</div><div class="ksub" id="k-sig-m">—</div></div>
+      <div class="kpi k-blue"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div><div class="lbl">Taux de signature</div><div class="num" id="k-taux">0</div><div class="ksub" id="k-taux-s">—</div></div>
     </div>
 
     <!-- Pipeline -->
@@ -590,14 +590,30 @@ function devDel(e, ref, btn){
 
 /* ================= KPI + compteurs ================= */
 function stats(){
-  const g = DEVIS.filter(d=>d.statut==="gagne");
-  const p = DEVIS.filter(d=>d.statut==="perdu"||d.statut==="expire");
-  const a = DEVIS.filter(d=>d.statut==="envoye"||d.statut==="envoye");
-  document.getElementById('k-tot').textContent = DEVIS.length;
-  document.getElementById('k-gagne').textContent = eur(g.reduce((s,d)=>s+d.montant,0));
-  document.getElementById('k-attente').textContent = eur(a.reduce((s,d)=>s+d.montant,0));
-  const taux = Math.round(g.length/(g.length+p.length)*100) || 0;
-  document.getElementById('k-taux').textContent = taux + " %";
+  /* Les quatre indicateurs decrivent la liste TELLE QU'ELLE EST : globale, pas
+     mensuelle. Meme format partout : un nombre de devis, le montant dessous. */
+  const jours = d => {
+    if(!d.valid) return null;
+    const f = new Date(d.valid), t = new Date();
+    f.setHours(0,0,0,0); t.setHours(0,0,0,0);
+    return Math.round((f - t) / 86400000);
+  };
+  const att = DEVIS.filter(d => d.statut === "envoye");
+  const exp = att.filter(d => { const j = jours(d); return j !== null && j <= 7; });
+  const sig = DEVIS.filter(d => d.statut === "gagne");
+  const perdus = DEVIS.filter(d => d.statut === "perdu" || d.statut === "expire");
+  const som = l => eur(l.reduce((t, d) => t + d.montant, 0));
+  const nb = (n, l) => n + " " + (n > 1 ? l + "s" : l);
+  const g = id => document.getElementById(id);
+  g('k-att-n').textContent = nb(att.length, "devis").replace("deviss","devis");
+  g('k-att-m').textContent = som(att);
+  g('k-exp-n').textContent = nb(exp.length, "devis").replace("deviss","devis");
+  g('k-exp-m').textContent = som(exp);
+  g('k-sig-n').textContent = nb(sig.length, "devis").replace("deviss","devis");
+  g('k-sig-m').textContent = som(sig);
+  const traites = sig.length + perdus.length;
+  g('k-taux').textContent = (traites ? Math.round(sig.length / traites * 100) : 0) + " %";
+  g('k-taux-s').textContent = traites ? "sur " + traites + " devis traités" : "aucun devis traité";
   // compteurs des puces
   const cnt = f => f==="all" ? DEVIS.length : DEVIS.filter(d=>d.statut===f).length;
   ["all","envoye","envoye","gagne","perdu","expire"].forEach(f=>{
@@ -606,7 +622,16 @@ function stats(){
 }
 
 /* ===== tuile → filtre : la tuile clique la chip correspondante ===== */
-function kfil(f){ const b = document.querySelector('.chip[data-f="' + f + '"]'); if(b) b.click(); }
+function kfil(f){
+  /* « Expire bientot » n'a pas d'onglet correspondant : on pose le filtre nous-memes. */
+  if(f === "expire-proche"){
+    FILTRE = "expire-proche"; PAGE = 1;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    render();
+    return;
+  }
+  const b = document.querySelector('.chip[data-f="' + f + '"]'); if(b) b.click();
+}
 function kringSync(f){
   const map = {all:"k-orange", gagne:"k-green", envoye:"k-amber"};
   document.querySelectorAll(".kpi").forEach(k => k.classList.remove("on"));
@@ -644,7 +669,12 @@ function render(){
   /* le menu de tri a ete retire : on garde son comportement par defaut */
   const sort = (document.getElementById('sort') || {value:"recent"}).value;
   let list = DEVIS.filter(d =>
-    (FILTRE==="all" || d.statut===FILTRE) &&
+    (FILTRE==="all" ? true
+      : FILTRE==="expire-proche"
+        ? (d.statut==="envoye" && (()=>{ if(!d.valid) return false;
+             const f=new Date(d.valid), t=new Date(); f.setHours(0,0,0,0); t.setHours(0,0,0,0);
+             return Math.round((f-t)/86400000) <= 7; })())
+        : d.statut===FILTRE) &&
     (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q) || String(d.montant).includes(q.replace(",", ".")))
   );
   if(sort==="montant-d") list.sort((a,b)=>b.montant-a.montant);
@@ -1130,6 +1160,11 @@ label[for]{cursor:pointer}
 .kpi.k-blue   .kico svg{stroke:#2E5CE6}
 .kpi.k-red    .kico svg{stroke:#D6453E}
 .kpi.k-slate  .kico svg{stroke:#64748B}
+/* Cartouches : un nombre en grand, le montant en petit dessous. */
+.kpi .ksub{grid-column:2;font-size:.76rem;font-weight:700;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
+.kpi.k-red{background:var(--red-bg,#FDECEB);border-color:#F3C1BD}
+.kpi.k-red .num{color:var(--red,#D6453E)}
+.kpi.k-red .kico svg{stroke:#D6453E}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
