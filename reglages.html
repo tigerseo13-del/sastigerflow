@@ -526,7 +526,9 @@ let PREST = [
 const TPL_LBL = {mdevis:"Modèle de devis", mfacture:"Modèle de facture", mavoir:"Modèle d'avoir", mcontrat:"Modèle de contrat", mrapport:"Modèle de rapport d'intervention"};
 
 /* ---------- petites briques ---------- */
-const av = (u, i) => `<span class="av" style="background:${GRADS[i % GRADS.length]}">${(u.p[0] || "") + (u.n[0] || "")}</span>`;
+const av = (u, i) => u.photo
+  ? `<span class="av" style="background-image:url(${u.photo});background-size:cover;background-position:center"></span>`
+  : `<span class="av" style="background:${GRADS[i % GRADS.length]}">${(u.p[0] || "") + (u.n[0] || "")}</span>`;
 const ic = {
   eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
   eyeoff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/></svg>',
@@ -634,6 +636,39 @@ R.users = () => `
   </div>`;
 
 /* l'ajout d'utilisateur : le panneau latéral, champs Saigon à l'identique */
+let UPHOTO = "";
+function uAvInit(){
+  const el = $id("uavprev"); if(!el) return;
+  const p = (($id("nu-p") ? $id("nu-p").value.trim() : "")[0] || "").toUpperCase();
+  const n = (($id("nu-n") ? $id("nu-n").value.trim() : "")[0] || "").toUpperCase();
+  const del = $id("uavdel");
+  if(UPHOTO){ el.classList.add("haspic"); el.style.backgroundImage = "url(" + UPHOTO + ")"; el.textContent = ""; if(del) del.style.display = ""; }
+  else { el.classList.remove("haspic"); el.style.backgroundImage = ""; el.textContent = (p + n) || "?"; if(del) del.style.display = "none"; }
+}
+function uPhotoAdd(inp){
+  const f = inp.files && inp.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try{
+      const img = new Image();
+      img.onload = () => {
+        try{
+          const c = document.createElement("canvas");
+          const k = Math.max(img.width, img.height) / 128 || 1;
+          c.width = Math.max(1, Math.round(img.width / k));
+          c.height = Math.max(1, Math.round(img.height / k));
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          UPHOTO = c.toDataURL("image/jpeg", .82);
+        }catch(e){ UPHOTO = rd.result; }
+        uAvInit(); if(typeof toast === "function") toast("\ud83d\udcf7 Photo ajout\u00e9e");
+      };
+      img.onerror = () => { UPHOTO = rd.result; uAvInit(); };
+      img.src = rd.result;
+    }catch(e){ UPHOTO = rd.result; uAvInit(); }
+  };
+  rd.readAsDataURL(f); inp.value = "";
+}
+function uPhotoDel(){ UPHOTO = ""; uAvInit(); }
 function uAdd(i){
   const edit = (typeof i === "number");
   const u = edit ? USERS[i] : {p:"", n:"", mail:"", role:"", fonc:"", actif:true};
@@ -642,7 +677,7 @@ function uAdd(i){
     <div class="dcard dhead"><div class="drow1"><h2>${edit ? "Modifier cet utilisateur" : "Ajouter un utilisateur"}</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
     <div class="dcard">
       <span class="rlab">Avatar</span>
-      <button class="logobox" style="width:56px;height:56px;border-radius:50%;cursor:pointer;font-size:1.2rem;color:var(--muted)" onclick="toast('Choisis une photo — sinon les initiales feront le travail')">+</button>
+      <div style="display:flex;align-items:center;gap:10px"><span class="uavprev" id="uavprev">?</span><label class="addrowbtn" style="cursor:pointer;margin:0"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>Choisir une photo<input type="file" accept="image/*" style="display:none" onchange="uPhotoAdd(this)"></label><button type="button" class="uavdel" id="uavdel" onclick="uPhotoDel()" style="display:none">✕ Retirer</button></div>
       <div class="frow2" style="margin-top:12px">
         <div><span class="rlab">Prénom <b style="color:var(--red)">*</b></span><input id="nu-p" placeholder="Saisir ici" value="${esc(u.p)}"></div>
         <div><span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="nu-n" placeholder="Saisir ici" value="${esc(u.n)}"></div>
@@ -673,6 +708,7 @@ function uAdd(i){
       <button class="dbig sec" onclick="closeDrawer()">Annuler</button>
       <button class="dbig" onclick="uSave(${edit ? i : -1})">Enregistrer</button>
     </div>`;
+  UPHOTO = edit ? (u.photo || "") : ""; uAvInit();
   UDOCS = []; uDocRender();
   openDrawer();
 }
@@ -687,29 +723,44 @@ let UDOCS = [];
 function uDocRender(){
   const box = document.getElementById("u-docs");
   if(!box) return;
-  const FIC = '<span class="fic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span>';
   box.innerHTML = UDOCS.length
-    ? '<table class="dt" style="margin-top:12px"><thead><tr><th>Nom du fichier</th><th>Ajouté le</th><th></th></tr></thead><tbody>' +
-      UDOCS.map((d, i) => '<tr><td><div style="display:flex;align-items:center;gap:9px">' + FIC + '<b>' + d.n + '</b></div></td><td>' + d.d +
-        '</td><td style="text-align:right"><button class="dre" onclick="UDOCS.splice(' + i + ',1);uDocRender()">Retirer</button></td></tr>').join("") +
-      '</tbody></table>'
+    ? '<div class="docgrid" style="margin-top:12px">' + UDOCS.map((d, i) => {
+        const img = /^image\//.test(d.t || "") && d.src;
+        const pdf = /pdf/.test(d.t || "") && d.src;
+        const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
+        const vue = img ? '<img src="' + d.src + '" alt="">'
+          : pdf ? '<iframe src="' + d.src + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>'
+          : '<span class="docext">' + ext + '</span>';
+        return '<figure class="doccard">' +
+          '<button class="docx" onclick="UDOCS.splice(' + i + ',1);uDocRender()" title="Retirer">\u2715</button>' +
+          '<div class="docvue">' + vue + '<span class="doctag">' + ext + '</span></div>' +
+          '<figcaption><b title="' + d.n + '">' + d.n + '</b><small>' + d.d + '</small></figcaption>' +
+          '</figure>';
+      }).join("") + '</div>'
     : '';
 }
 function uDocAdd(inp){
-  [...inp.files].forEach(f => UDOCS.unshift({n:f.name, d:new Date().toLocaleDateString("fr-FR")}));
+  const files = [...inp.files];
+  files.forEach(f => {
+    const rd = new FileReader();
+    rd.onload = () => {
+      UDOCS.unshift({n:f.name, d:new Date().toLocaleDateString("fr-FR"), src:rd.result, t:f.type, s:f.size});
+      uDocRender();
+    };
+    rd.readAsDataURL(f);
+  });
   if(inp.value !== undefined) inp.value = "";
-  uDocRender();
-  if(typeof toast === "function") toast("📎 " + (inp.files.length > 1 ? inp.files.length + " documents ajoutés" : "Document ajouté"));
+  if(typeof toast === "function") toast("\ud83d\udcce " + (files.length > 1 ? files.length + " documents ajout\u00e9s" : "Document ajout\u00e9"));
 }
 function uSave(i){
   const p = $id("nu-p").value.trim(), n = $id("nu-n").value.trim(), m = $id("nu-m").value.trim(), r = $id("nu-r").value;
   if(!p || !n || !m || !r){ toast("Prénom, nom, e-mail et rôle sont obligatoires"); return; }
   const fonc = $id("nu-f").value.trim() || "\u2014";
   if(i > -1){
-    Object.assign(USERS[i], {p, n, mail:m, role:r, fonc});
+    Object.assign(USERS[i], {p, n, mail:m, role:r, fonc, photo:UPHOTO});
     closeDrawer(); spRender(); toast("\u00ab " + p + " " + n + " \u00bb modifié");
   } else {
-    USERS.push({p, n, mail:m, role:r, fonc, actif:true, last:"-"});
+    USERS.push({p, n, mail:m, role:r, fonc, actif:true, last:"-", photo:UPHOTO});
     closeDrawer(); spRender(); toast("Utilisateur ajouté — une invitation part à " + m);
   }
 }
@@ -1504,6 +1555,29 @@ label[for]{cursor:pointer}
 .statc span{display:block;font-size:.76rem;font-weight:600;color:var(--muted);margin-top:5px}
 @media(max-width:900px){ .statgrid{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:760px){ .statgrid{grid-template-columns:1fr} }
+.uavprev{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:'Sora','Inter';font-weight:800;font-size:1.35rem;background:linear-gradient(135deg,#5B82F0,#2E5CE6);flex:none}
+.uavprev.haspic{background-size:cover;background-position:center;color:transparent}
+.uavdel{font-size:.74rem;color:var(--red);font-weight:700;background:none;border:0;cursor:pointer}
+/* documents en grand : mêmes vignettes que la fiche technicien */
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:16px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;
+.doccard.ouvrable{cursor:zoom-in}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 12px 26px -16px rgba(23,26,32,.45);transform:translateY(-2px)}
+.docvue{height:146px;background:#fff;display:grid;place-items:center;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.docvue:has(.docext){background:#F5F6F9}
+.docvue img{width:100%;height:100%;object-fit:cover;display:block}
+.docvue iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+.docvue::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;pointer-events:none;
+.docvue:has(.docext)::after{display:none}
+.docext{font-family:'Sora';font-weight:800;font-size:1.02rem;color:var(--muted);letter-spacing:.06em}
+.doctag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;
+.docvue:has(.docext) .doctag{display:none}
+.doccard figcaption{padding:10px 12px 12px;display:block}
+.doccard figcaption b{display:block;font-size:.76rem;font-weight:700;line-height:1.35;color:var(--ink-2);
+.doccard figcaption small{display:block;font-size:.69rem;color:var(--muted);margin-top:4px}
+.docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;
+.doccard:hover .docx,.docx:focus-visible{opacity:1}
+.docx:hover{background:var(--red-bg);color:var(--red)}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
