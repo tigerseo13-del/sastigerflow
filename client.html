@@ -133,7 +133,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .naddrow{display:flex;gap:8px}
 .naddrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:.84rem;font-family:inherit;outline:none}
 .naddrow input:focus{border-color:var(--orange)}
-.naddrow button{background:var(--orange);color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit;white-space:nowrap}
+/* 29/07 : meme geste, meme style — le « + Ajouter » des notes s'aligne sur
+   le lien discret de la carte Contacts (l'orange plein reste aux creations
+   lourdes : Nouveau devis, Planifier). Entree valide aussi. */
+.naddrow button{background:none;color:var(--orange-deep);border:0;border-radius:10px;padding:9px 10px;font-weight:800;font-size:.79rem;cursor:pointer;font-family:inherit;white-space:nowrap}
+.naddrow button:hover{text-decoration:underline}
 .naddrow button:hover{background:var(--orange-deep)}
 .hist li[onclick]{cursor:pointer;transition:.12s}
 .hist li[onclick]:hover b{color:var(--orange-deep)}
@@ -181,6 +185,12 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
    voisine : la carte Contacts, avec un seul contact, occupait toute la hauteur
    des notes internes. Chaque carte prend desormais sa hauteur naturelle. */
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+/* 29/07 : notes vides — la carte le DIT au lieu de montrer un trou blanc */
+.nlist:empty::before{content:"💬 Aucune note pour l'instant — elles seront horodatées et signées automatiquement";
+  display:grid;place-items:center;text-align:center;color:#A6ABBB;font-size:.8rem;font-weight:600;
+  padding:26px 14px;line-height:1.6}
+/* 29/07 : badge d'onglet masque a zero — plus de pastille vide */
+.tab .n:empty{display:none}
 /* 29/07 : le duo Contacts / Notes internes — deux colonnes egales, cartes
    etirees a la meme hauteur (l'exception assumee au align-items:start) */
 .duo2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
@@ -627,6 +637,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>Contacts
           <button class="more" onclick="toggleAddContact()">+ Ajouter</button>
         </div>
+        <div id="clist">
         <div class="contact">
           <div><b>John Thompson</b><small>Gérant · 06 12 34 56 78</small></div>
           <span class="cbtns">
@@ -641,6 +652,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
             <a href="tel:0698765432" title="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
             <a href="mailto:s.meyer@ironwood.com" title="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>
           </span>
+        </div>
         </div>
         <div class="addform" id="addcform">
           <input id="ac-nom" placeholder="Nom du contact">
@@ -1369,6 +1381,19 @@ function toast(msg, undoFn){
     ? "SIRET " + f.siret : "Particulier";
   var _dep = document.getElementById("h-depuis");
   if(_dep) _dep.textContent = "Client depuis " + f.depuis.toLowerCase();
+  /* 29/07 (patron) : les contacts de la demo (John Thompson…) s'affichaient
+     sur TOUS les clients ouverts depuis la liste. On ne montre que ce qu'on
+     SAIT : le contact principal du client (son nom, son telephone) — ou un
+     etat vide honnete. */
+  var _cl = document.getElementById("clist");
+  if(_cl){
+    var _telC = (f.tel || "").trim();
+    _cl.innerHTML = _telC
+      ? '<div class="contact"><div><b>' + q + '</b><small>Contact principal · ' + _telC + '</small></div>'
+        + '<span class="cbtns"><a href="tel:' + _telC + '" title="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>'
+        + '<a class="wa" href="https://wa.me/33' + _telC.replace(/\D/g, "").replace(/^0/, "") + '" title="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 01-12.3 7.4L3 21l2.1-5.6A8.5 8.5 0 1121 11.5z"/></svg></a></span></div>'
+      : '<div style="text-align:center;color:#A6ABBB;font-size:.8rem;font-weight:600;padding:22px 10px;line-height:1.6">👤 Aucun contact pour l\'instant — « + Ajouter » ci-dessus</div>';
+  }
   var tl = document.querySelector('.hero .actions a[href^="tel:"]');
   if(tl) tl.href = "tel:" + f.tel;
   var ml = document.querySelector('.hero .actions a[href^="mailto:"]');
@@ -1405,7 +1430,8 @@ function toast(msg, undoFn){
       if(sm) sm.textContent = z[0];
       if(b) b.innerHTML = z[1] + (z[2] ? " <em>" + z[2] + "</em>" : "");
     });
-    document.querySelectorAll(".tabs .tab .n").forEach(function(n){ n.textContent = "0"; });
+    /* 29/07 : a zero, le badge disparait (le CSS masque les vides) */
+    document.querySelectorAll(".tabs .tab .n").forEach(function(n){ n.textContent = ""; });
     /* les onglets démarrent vides */
     /* 27/07 : un onglet vide disait « crée le premier avec « Nouveau devis » »
        en renvoyant a un bouton situe ailleurs sur la page. Chaque onglet porte
