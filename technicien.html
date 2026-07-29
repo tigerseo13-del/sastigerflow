@@ -555,6 +555,16 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .pcard .pzone:last-child{padding-bottom:2px}
 .pcard .pzone + .pzone{border-top:1px solid var(--line)}
 .pcard .pzlab{font-size:.63rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:left;margin-bottom:11px}
+/* Commission en jauge (piste B choisie par le patron) : la longueur de la barre
+   dit le taux d'un coup d'oeil, sans avoir a lire chaque chiffre. */
+.habj{display:flex;flex-direction:column;gap:14px;margin-bottom:4px}
+.habrow{display:grid;grid-template-columns:1fr 48px;gap:6px 10px;align-items:center}
+.habrow .hn{display:flex;align-items:center;gap:8px;font-size:.83rem;font-weight:700;color:var(--ink);min-width:0}
+.habrow .hn svg{width:14px;height:14px;stroke:var(--green-d);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.habrow .hp{text-align:right;font-size:.83rem;font-weight:800;color:var(--green-d);font-variant-numeric:tabular-nums}
+.habtrack{grid-column:1 / -1;height:9px;border-radius:6px;background:#EDF1F0;overflow:hidden}
+.habtrack i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--green),#2FC9A0)}
+@media(max-width:520px){.habrow{grid-template-columns:1fr 44px}}
 </style>
 </head>
 <body>
@@ -1004,7 +1014,14 @@ function comp(){
   /* ── ce qu'il sait faire et ce qu'il touche dessus (Profil) ── */
   const hab = document.getElementById("i-hab");
   if(hab) hab.innerHTML = entries.length
-    ? entries.map(([n, p]) => '<span class="habc"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>' + n + '<span class="pb" title="Commission du technicien sur ce type d\'intervention">com. ' + p + ' %</span></span>').join("")
+    ? '<div class="habj">' + entries.map(([n, p]) => {
+        const val = Math.max(0, Math.min(100, parseFloat(p) || 0));
+        return '<div class="habrow" title="Commission du technicien sur ce type d\'intervention">'
+          + '<span class="hn"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>' + n + '</span>'
+          + '<span class="hp">' + val + ' %</span>'
+          + '<span class="habtrack"><i style="width:' + val + '%"></i></span>'
+          + '</div>';
+      }).join("") + '</div>' 
       + '<div class="skhint">Nuisibles qu\'il est habilité à traiter seul. Le pourcentage est <b>sa commission</b> sur chaque intervention de ce type.</div>'
     : '<div class="emptybox">Aucune habilitation enregistrée.</div>';
 
