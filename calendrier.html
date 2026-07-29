@@ -488,15 +488,25 @@ h1,.num{font-family:'Sora',sans-serif}
 .wcol-head.today b{color:var(--orange-deep)}
 .wcol-head.today{box-shadow:inset 0 -3px 0 var(--orange)}
 .wbody{padding:9px 8px;display:flex;flex-direction:column;gap:7px}
-.wev{border-radius:11px;padding:7px 9px 7px 12px;position:relative;overflow:hidden;box-shadow:0 1px 5px -1px rgba(23,26,32,.12);border:1px solid rgba(0,0,0,.04)}
-.wev::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--evc)}
-.wev .l1{display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:800;color:var(--evc)}
-.wev .l1 .tlbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wev .tav{margin-left:auto;width:17px;height:17px;border-radius:50%;flex:none}
-.wev .z2{font-size:.72rem;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.35}
-.wev .c2{font-size:.67rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-.wev.done{opacity:.5}
-.wev.done .tlbl{text-decoration:line-through}
+/* 29/07 — la semaine parle la MEME langue que le jour : en-tete au degrade du
+   technicien (lieu + heures completes), nuisible avec son icone, type en
+   pastille aux couleurs fixes, client en pied. L'avatar disparait : la couleur
+   d'en-tete dit deja qui y va. */
+.wev{border-radius:11px;padding:0;position:relative;overflow:hidden;background:#fff;box-shadow:0 1px 5px -1px rgba(23,26,32,.14);border:1px solid #EDEFF2;transition:.13s}
+.wev:hover{transform:translateY(-1px);box-shadow:0 6px 16px -8px rgba(23,26,32,.3)}
+.wev .wh{display:flex;align-items:center;gap:6px;background:var(--evg,var(--evc));color:#fff;padding:4px 10px}
+.wev .wh b{font-family:ui-monospace,'SF Mono',monospace;font-size:.66rem;font-weight:800;letter-spacing:.02em;flex:none}
+.wev .wh i{font-style:normal;font-size:.6rem;font-weight:700;opacity:.92;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wev .wh .hh{margin-left:auto;font-size:.6rem;font-weight:800;font-variant-numeric:tabular-nums;flex:none;opacity:.96}
+.wev .wb{padding:7px 10px 8px}
+.wev .wn{display:flex;align-items:center;gap:6px;font-size:.77rem;font-weight:800;color:var(--ink)}
+.wev .wn span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wev .wb .mchip{display:inline-block;margin-top:5px;font-size:.57rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wev .wc{font-size:.65rem;color:var(--muted);font-weight:600;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wev.done{opacity:.55}
+.wev.done .wn{text-decoration:line-through;text-decoration-thickness:1.5px}
+.wev.cancelled{opacity:.4}
+.wev.cancelled .wn{text-decoration:line-through;text-decoration-thickness:1.5px}
 
 /* ----- Vue MOIS ----- */
 .monthwrap{padding:14px}
@@ -1673,6 +1683,28 @@ function renderDay(){
     const mine = evs.filter(v=>v.tech===t.id);
     const actifs = mine.filter(v=>!v.cancelled);
     const totH = mine.reduce((sum,v)=>sum+v.dur,0);
+    /* 29/07 (patron) — chevauchements COTE A COTE, fini le cache-cache.
+       Rangement par grappes : les cartes qui se chevauchent (directement ou en
+       chaine) forment une grappe ; chacune recoit un couloir, la grappe se
+       partage la largeur de la colonne. Une carte seule garde toute la place.
+       L'anneau rouge et le badge de conflit restent : etre visible n'empeche
+       pas d'etre double-reserve. */
+    const LN = {}, NL = {};
+    {
+      const tri = [...mine].sort((a,b)=>a.start-b.start || b.dur-a.dur);
+      let grappe = [], couloirs = [], finGrappe = -1;
+      const fermer = () => { grappe.forEach(x => NL[x.id] = couloirs.length); grappe = []; couloirs = []; };
+      tri.forEach(x => {
+        if(grappe.length && x.start >= finGrappe - 1e-9) fermer();
+        let li = couloirs.findIndex(fin => x.start >= fin - 1e-9);
+        if(li === -1){ li = couloirs.length; couloirs.push(0); }
+        couloirs[li] = x.start + x.dur;
+        LN[x.id] = li;
+        grappe.push(x);
+        finGrappe = grappe.length === 1 ? x.start + x.dur : Math.max(finGrappe, x.start + x.dur);
+      });
+      fermer();
+    }
     const cards = mine.map(v=>{
       const T = typeDe(v);
       const TC = TECHS[v.tech];
@@ -1694,12 +1726,16 @@ function renderDay(){
          couleur de donnees ; type en pastille teintee ; client en pied avec
          les badges. Le badge existe en double (en-tete/pied) : le CSS montre
          l'un OU l'autre selon la hauteur du creneau. */
-      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
-        style="--evc:${TC.c};--evg:${TC.grad};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
+      const nl = NL[v.id] || 1, li = LN[v.id] || 0;
+      const lanePos = nl > 1 ? `left:calc(6px + ${li} * ((100% - 12px) / ${nl}));width:calc((100% - 12px) / ${nl} - 3px);right:auto;` : "";
+      /* la carte que le trait orange traverse : elle vit MAINTENANT */
+      const live = isToday && !v.done && !v.cancelled && v.start <= NOWH && NOWH < v.start + v.dur;
+      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${nl>1?'nrw':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
+        style="--evc:${TC.c};--evg:${TC.grad};${lanePos}top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
         <div class="evhead" title="${v.cp} ${v.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
           <b>${v.cp}</b><i>${v.ville}</i>
           <span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span>
-          <span class="hbdg">${badge}</span>
+          <span class="hbdg">${badge}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</span>
           <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button>
         </div>
         <div class="evbody">
@@ -1848,10 +1884,13 @@ function renderWeek(){
       <div class="wbody">${evs.map(v=>{
         const T = typeDe(v), t = TECHS[v.tech];
         const TC = TECHS[v.tech];
-        return `<div class="wev ${v.done?'done':''}" data-id="${v.id}" style="--evc:${TC.c};background:${TC.bg};cursor:pointer">
-          <div class="l1"><span class="tlbl">${T.ic} ${T.lbl}</span><span class="tav" style="background:${t.grad}" title="${t.nom}"></span></div>
-          <div class="c2" style="font-weight:800;color:var(--ink)">${v.client}</div>
-          <div class="c2"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.cp} · ${v.ville} · ${hstr(v.start)}</div>
+        return `<div class="wev ${v.done?'done':''} ${v.cancelled?'cancelled':''}" data-id="${v.id}" style="--evc:${TC.c};--evg:${TC.grad};cursor:pointer" title="${t.nom} · ${v.cp} ${v.ville}">
+          <div class="wh"><b>${v.cp}</b><i>${v.ville}</i><span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span></div>
+          <div class="wb">
+            <div class="wn">${T.ic} <span>${T.lbl}</span></div>
+            <span class="mchip m-${v.mode}">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
+            <div class="wc">${v.client}</div>
+          </div>
         </div>`;}).join("")}
       </div>
     </div>`;
@@ -4164,6 +4203,14 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket.md .lfoot{padding-top:4px}
 .ev.ticket .lcli{font-size:.66rem;color:var(--muted);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;padding:0;border:0}
 .ev.ticket .lbdg{margin-left:auto;display:inline-flex;align-items:center;gap:4px;flex:none}
+/* halo de la carte EN COURS : celle que le trait orange traverse. Le conflit
+   garde la priorite — un double-booking se voit avant tout le reste. */
+.ev.ticket.live:not(.conflict){box-shadow:0 0 0 2px var(--orange),0 10px 24px -8px rgba(255,90,31,.42)}
+/* cartes en couloir (chevauchement) : plus etroites, la ville s'efface de
+   l'en-tete — elle reste dans l'infobulle et sur la fiche */
+.ev.ticket.nrw .evhead{gap:5px;padding-left:9px;padding-right:8px}
+.ev.ticket.nrw .evhead i{display:none}
+.ev.ticket.nrw .evbody{padding-left:9px;padding-right:9px}
 /* 1 h : en-tete + nuisible seulement, badge dans l'en-tete */
 .ev.ticket.sm .evbody{padding:4px 10px 5px;justify-content:center}
 .ev.ticket.sm .ltyp,.ev.ticket.sm .lfoot{display:none}
