@@ -1041,8 +1041,6 @@ function perf(){
     '<div class="stt2 b"><b>' + (T.interv || 0) + '</b><small>Interventions ce mois</small></div>' +
     '<div class="stt2 g"><b>' + (T.taux || "—") + '</b><small>Taux de réalisation</small></div>' +
     '<div class="stt2 o"><b>' + (T.ca || "—") + '</b><small>CA généré</small></div>';
-  const cc = Object.entries(T.caCat || {}).sort((a, b) => b[1] - a[1]);
-  const cmx = cc.length ? cc[0][1] : 1;
   /* mêmes couleurs que le graphe « Répartition par nuisible » du tableau de bord */
   const CATCOLORS = {
     "Cafards":"#0E8A68", "Termites & Insectes xylophages":"#2E5CE6", "Termites":"#2E5CE6",
@@ -1052,6 +1050,19 @@ function perf(){
     "Punaises de lit":"#A3C11A"
   };
   const catColor = k => CATCOLORS[k] || "#7A8494";
+  /* les 8 nuisibles de l'accueil sont toujours affichés (0 \u20ac si le technicien n'en fait pas) */
+  const REF8 = ["Cafards","Termites & Insectes xylophages","Guêpes / Frelons","Chenilles processionnaires","Pigeons","Désinsectisation","Dératisation (Rats / Souris)","Punaises de lit"];
+  const ALIAS = {"Dératisation (Rats / Souris)":"Rongeurs","Désinsectisation":"Désinfection"};
+  const srcCA = Object.assign({}, T.caCat || {});
+  let cc = REF8.map(name => {
+    if(srcCA[name] !== undefined){ const v = srcCA[name]; delete srcCA[name]; return [name, v]; }
+    const al = ALIAS[name];
+    if(al && srcCA[al] !== undefined){ const v = srcCA[al]; delete srcCA[al]; return [name, v]; }
+    return [name, 0];
+  });
+  Object.entries(srcCA).forEach(([k, v]) => cc.push([k, v]));  /* activités hors des 8 (ex. Fourmis) conservées */
+  cc.sort((a, b) => b[1] - a[1]);
+  const cmx = (cc.length && cc[0][1]) ? cc[0][1] : 1;
   g("i-cacat").innerHTML = cc.length
     ? '<div class="glab" style="margin:14px 0 8px">CA par activité — ce mois</div>' +
       cc.map(([k, v]) => '<div class="cbar"><span class="cl">' + k + '</span><span class="ct"><i style="width:' + Math.max(6, Math.round(v / cmx * 100)) + '%;background:' + catColor(k) + '"></i></span><span class="cv">' + v.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + ' €</span></div>').join("")
