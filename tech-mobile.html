@@ -428,6 +428,14 @@ label[for]{cursor:pointer}
 @media(pointer:coarse){
   [title="WhatsApp"]:active{ background:#E7F9EF; border-color:#25D366; color:#0F7A3D }
 }
+/* Intervention en cours : epinglee en tete de liste, detachee du reste. */
+.lsec.o{color:var(--orange-deep,#EA4A10)}
+.encwrap{position:relative;border-left:3px solid var(--orange,#FF5A1F);border-radius:0 14px 14px 0;padding-left:9px;margin-bottom:6px;background:linear-gradient(90deg,rgba(255,90,31,.06),rgba(255,90,31,0) 60%)}
+.chrono{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;color:var(--orange-deep,#EA4A10);padding:2px 4px 10px}
+.chrono b{font-weight:800;font-variant-numeric:tabular-nums}
+.cdot{width:7px;height:7px;border-radius:50%;background:var(--orange,#FF5A1F);flex:none;animation:cpulse 1.8s ease-in-out infinite}
+@keyframes cpulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.cdot{animation:none}}
 </style>
 </head>
 <body>
@@ -510,8 +518,7 @@ label[for]{cursor:pointer}
       </div>
     </div>
     <div class="ltabs">
-      <button class="ltab on" id="lt-todo" onclick="ltab('todo')">Planifiées (<span>4</span>)</button>
-      <button class="ltab t-b" id="lt-enc" onclick="ltab('enc')">En cours (<span>1</span>)</button>
+      <button class="ltab on" id="lt-todo" onclick="ltab('todo')">À faire (<span>5</span>)</button>
       <button class="ltab t-g" id="lt-done" onclick="ltab('done')">Terminées (<span>1</span>)</button>
     </div>
     <div id="lbody"></div>
@@ -840,21 +847,31 @@ function mcard(m){
     </div>
   </div>`;
 }
+/* Chrono : uniquement si l'heure de demarrage est connue. Sans elle on
+   n'affiche rien plutot qu'une duree inventee. */
+function chrono(m){
+  if(!m.debut) return "";
+  const min = Math.max(0, Math.round((Date.now() - m.debut) / 60000));
+  const t = min < 60 ? min + " min" : Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0");
+  return `<div class="chrono"><span class="cdot"></span>Sur place depuis <b>${t}</b></div>`;
+}
 function rlist(){
   const all = Object.values(M);
   const td = todos(), ec = all.filter(m => m.st === "encours"), wt = all.filter(m => m.st === "wait"), dn = all.filter(m => m.st === "done");
-  g("lt-todo").innerHTML = `Planifiées (<span>${td.length}</span>)`;
-  g("lt-enc").innerHTML = `En cours (<span>${ec.length}</span>)`;
+  /* Deux onglets seulement : le technicien fait un chantier a la fois, un
+     onglet pour une seule carte ne valait pas le tiers de la barre. Ce qui est
+     en cours est epingle en tete de « A faire ». */
+  g("lt-todo").innerHTML = `À faire (<span>${td.length + ec.length}</span>)`;
   g("lt-done").innerHTML = `Terminées (<span>${dn.length + wt.length}</span>)`;
   let h = "";
-  if(td.length){ h += `<div class="lsec" id="ls-todo">PLANIFIÉES</div>` + td.map(mcard).join(""); }
-  if(ec.length){ h += `<div class="lsec b" id="ls-enc">EN COURS</div>` + ec.map(mcard).join(""); }
+  if(ec.length){ h += `<div class="lsec o" id="ls-enc">EN COURS</div><div class="encwrap">` + ec.map(m => mcard(m) + chrono(m)).join("") + `</div>`; }
+  if(td.length){ h += `<div class="lsec" id="ls-todo">À FAIRE ENSUITE</div>` + td.map(mcard).join(""); }
   if(wt.length || dn.length){ h += `<div class="lsec g" id="ls-done">TERMINÉES &amp; EN ATTENTE</div>` + wt.map(mcard).join("") + dn.map(mcard).join(""); }
   if(!h) h = `<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0">Rien aujourd&rsquo;hui.</p>`;
   g("lbody").innerHTML = h;
 }
 function ltab(k){
-  ["todo", "enc", "done"].forEach(x => g("lt-" + x).classList.toggle("on", x === k));
+  ["todo", "done"].forEach(x => { const b = g("lt-" + x); if(b) b.classList.toggle("on", x === k); });
   const el = g("ls-" + k);
   if(el && el.scrollIntoView) el.scrollIntoView({behavior:"smooth", block:"start"});
   if(el){ el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 800); }
@@ -969,6 +986,7 @@ function noteSave(id){
 function startM(id){
   const m = M[id]; if(m.st !== "todo") return;
   m.st = "encours"; m.prog = 5; m.progt = "démarrée à l’instant";
+  m.debut = Date.now();   /* heure reelle d'arrivee : elle alimente le chrono de la liste */
   toast("Intervention démarrée — bon courage");
   renderAll();
   const app = g("app"); if(app) app.scrollTop = app.scrollHeight;
