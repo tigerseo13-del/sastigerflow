@@ -14,7 +14,7 @@
   --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
   --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
   --line:#EBECF1; --bg:#F4F5F8; --card:#FFFFFF;
-  --green:#17A87E; --green-d:#0A6B51; --green-bg:#DFF3ED;
+  --green:#0E8A68; --green-d:#0A6B51; --green-bg:#DFF3ED;
   --blue:#2E5CE6; --blue-d:#2749B8; --blue-bg:#EBF1FE; --amber:#A16207; --amber-bg:#FBF3D9;
   --red:#D63B33; --red-bg:#FCECEA;
   --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
@@ -496,12 +496,10 @@ label[for]{cursor:pointer}
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
-/* Coordonnees de paiement imprimees sur la facture : le client les trouve la
-   ou il les cherche, plus besoin de joindre un RIB a l'e-mail. */
-.ribfoot{border-top:1px solid var(--line);margin:0 20px;padding:13px 0 16px;display:flex;flex-wrap:wrap;gap:6px 26px;align-items:baseline}
-.ribfoot .rf-t{width:100%;font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-.ribfoot span{font-size:.78rem;color:var(--ink-2)}
-.ribfoot b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+/* Encadre d'explication de la fenetre de validation. */
+.valinfo{background:var(--blue-bg,#EAF1FE);border:1px solid #C9DAFB;border-radius:12px;padding:11px 13px}
+.valinfo b{display:block;font-size:.8rem;font-weight:800;color:var(--blue-d,#2148C0)}
+.valinfo span{display:block;font-size:.78rem;color:var(--ink-2);line-height:1.5;margin-top:3px}
 </style>
 </head>
 <body>
@@ -529,8 +527,8 @@ label[for]{cursor:pointer}
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
   <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
-    <span class="ph">JJ</span>
-    <div><b>Jo Jo</b><span>Administrateur</span></div>
+    <span class="ph">TM</span>
+    <div><b>Thomas Martin</b><span>Administrateur</span></div>
     <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
     <div class="umenu" id="umenu">
       <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
@@ -633,7 +631,6 @@ label[for]{cursor:pointer}
           <div class="rline ttc"><span>Total TTC</span><b id="r-ttc">—</b></div>
           <div class="paidchip" id="paidchip" style="display:none"></div>
         </div></div>
-        <div class="ribfoot" id="ribfoot"></div>
       </div>
       <div class="card" style="padding:14px 20px">
         <input type="file" id="fpj-in" multiple hidden onchange="fpjAdd(this.files); this.value=''">
@@ -734,6 +731,7 @@ label[for]{cursor:pointer}
     <div class="sfld"><label for="s-to">À *</label><input id="s-to" type="email" placeholder="client@exemple.fr"></div>
     <div class="sfld"><label for="s-obj">Objet *</label><input id="s-obj"></div>
     <div class="sfld"><label for="s-body">Message</label><textarea id="s-body" rows="8"></textarea></div>
+    <div class="tgl"><div><b>Joindre le RIB</b><small>Coordonnées bancaires pour le règlement par virement</small></div><div class="sw on" id="sw-rib" onclick="this.classList.toggle('on')"></div></div>
     <div class="tgl"><div><b>Paiement en ligne</b><small>Carte / Apple Pay en 2 clics</small></div><div class="sw on" id="sw-pay" onclick="this.classList.toggle('on')"></div></div>
     <div class="sacts">
       <button class="btn2" onclick="sendClose()">Annuler</button>
@@ -896,20 +894,6 @@ function fpjRender(){
    L'URL fait foi ; sessionStorage n'est que le repli pour les ouvertures
    internes qui ne passent pas de parametre. */
 try{ REF = new URLSearchParams(location.search).get("ref") || sessionStorage.getItem("tigerflow-facture-detail"); }catch(e){}
-/* Le RIB vient des Reglages (Coordonnees bancaires). Valeurs de depart si le
-   patron ne les a pas encore saisies, pour que la facture ne sorte jamais nue. */
-const RIB_DEF = {banque:"BNP Paribas", iban:"FR76 3000 4008 2800 0123 4567 890", bic:"BNPAFRPP"};
-function ribFoot(){
-  const el = document.getElementById("ribfoot");
-  if(!el) return;
-  let b = {};
-  try{ b = JSON.parse(localStorage.getItem("tigerflow-banque")) || {}; }catch(e){}
-  const banque = b.banque || RIB_DEF.banque, iban = b.iban || RIB_DEF.iban, bic = b.bic || RIB_DEF.bic;
-  el.innerHTML = '<span class="rf-t">Coordonnées de paiement — virement bancaire</span>'
-    + '<span>Banque <b>' + banque + '</b></span>'
-    + '<span>IBAN <b>' + iban + '</b></span>'
-    + '<span>BIC <b>' + bic + '</b></span>';
-}
 let REC = null;
 try{
   const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]");
@@ -960,7 +944,7 @@ function statutSet(st){ try{ const m = JSON.parse(localStorage.getItem(STK)) || 
    retard) : les factures deja enregistrees continuent de s'afficher. Seuls
    les libelles changent. La cle « proforma » pointe sur le meme libelle que
    « brouillon » — c'est la fusion, vue de l'ecran. */
-const STL = {brouillon:["#F1EAFD","#5B3BC4","#7C5CE0","Pro forma"], proforma:["#F1EAFD","#5B3BC4","#7C5CE0","Pro forma"],
+const STL = {brouillon:["#EEF0F3","#6C7285","#9CA1AD","Pro forma"], proforma:["#EEF0F3","#6C7285","#9CA1AD","Pro forma"],
              partiel:["var(--amber-bg)","var(--amber)","var(--amber)","Partiellement payée"],
              attente:["var(--blue-bg)","var(--blue-d)","var(--blue)","À payer"],
              payee:["var(--green-bg)","var(--green-d)","var(--green)","Payée"], retard:["var(--red-bg)","var(--red)","var(--red)","En retard"]};
@@ -1102,7 +1086,24 @@ function sendLbl(envoye){
    geste qui compte est de la valider ; le reste est masque. Une fois validee,
    la machinerie apparait. C'est le parcours francais, et c'est ce que le
    panneau de validation de l'atelier annonce deja. */
+/* Valider une facture est IRREVERSIBLE : le document est emis, on ne peut plus
+   le modifier ni le supprimer — il faut passer par un avoir. C'est un des rares
+   cas ou une confirmation se justifie : elle explique la consequence, elle ne
+   demande pas « etes-vous sur ? » pour rien. */
 function validerFacture2(){
+  const b = document.getElementById("valveil");
+  const t = document.getElementById("val-ref");
+  if(t) t.textContent = REF;
+  if(b){ b.classList.add("open"); document.body.style.overflow = "hidden"; }
+  else validerFacture2Go();
+}
+function valClose(){
+  const b = document.getElementById("valveil");
+  if(b) b.classList.remove("open");
+  document.body.style.overflow = "";
+}
+function validerFacture2Go(){
+  valClose();
   statutSet("attente");
   renderAll();
   toast("✅ Facture " + REF + " validée — elle peut maintenant être envoyée et encaissée");
@@ -1162,9 +1163,9 @@ function relancer(){
     "Sauf erreur de notre part, la facture " + REF + " d'un montant de " + eur(REC.montant) + " TTC, échue le " + fdate(REC.valid) +
     (j !== null && j < 0 ? " (soit " + (-j) + " jours de retard)" : "") + ", reste à ce jour impayée" +
     (solde < REC.montant ? " pour un solde de " + eur(Math.max(0, solde)) : "") + ".\n\n" +
-    "Nous vous remercions de bien vouloir procéder à son règlement par virement (RIB en bas de la facture, référence " + REF + " en libellé) ou en ligne via le lien inclus.\n" +
+    "Nous vous remercions de bien vouloir procéder à son règlement par virement (RIB joint, référence " + REF + " en libellé) ou en ligne via le lien inclus.\n" +
     "Si votre règlement s'est croisé avec ce message, merci de ne pas en tenir compte.\n\n" +
-    "Bien cordialement,\nL'équipe " + societe();
+    "Bien cordialement,\nL'équipe TigerFlow 3D";
   g('sendveil').classList.add('open');
   setTimeout(() => { const f = g('s-to'); if(f){ f.focus(); f.select(); } }, 120);
 }
@@ -1188,7 +1189,6 @@ function details(){
     tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4L12 22 2 12V2h10l8.6 8.6a2 2 0 010 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>'
   };
   const row = (ic, cls, k, v) => '<div class="drow2"><span class="di ' + cls + '">' + ic + '</span><span class="db"><small>' + k + '</small><b>' + v + '</b></span></div>';
-  ribFoot();
   g('detrows').innerHTML =
     '<div class="dhero">' +
       '<div class="dcli"><a href="client.html?c=' + encodeURIComponent(REC.client || "") + '" title="Ouvrir la fiche client">' + (REC.client || "—") + ' →</a></div>' +
@@ -1420,13 +1420,13 @@ function envoyer(){
     '<div class="srow"><span>Référence</span><b>' + REF + '</b></div>' +
     '<div class="srow sttc"><span>Total TTC</span><b>' + eur(REC.montant) + '</b></div>';
   g('s-to').value = CLIMAILS[REC.client] || ((REC.client || "client").toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr");
-  g('s-obj').value = "Votre facture " + REF + " — " + societe();
+  g('s-obj').value = "Votre facture " + REF + " — TigerFlow 3D";
   g('s-body').value = "Bonjour " + (REC.client || "") + ",\n\n" +
     "Veuillez trouver ci-joint votre facture " + REF + " d'un montant de " + eur(REC.montant) + " TTC" +
     (solde < REC.montant ? " (reste à payer : " + eur(Math.max(0, solde)) + ")" : "") + ".\n" +
     (REC.bc ? "Référence bon de commande : " + REC.bc + "\n" : "") +
-    "\nElle est payable avant le " + fdate(REC.valid) + ", par virement (RIB en bas de la facture) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
-    "Bien cordialement,\nL'équipe " + societe();
+    "\nElle est payable avant le " + fdate(REC.valid) + ", par virement (RIB joint) ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
+    "Bien cordialement,\nL'équipe TigerFlow 3D";
   g('sendveil').classList.add('open');
   setTimeout(() => { const f = g('s-to'); if(f){ f.focus(); f.select(); } }, 120);
 }
@@ -1442,7 +1442,7 @@ function sendConfirm(){
       m[REF] = m[REF] || {};
       m[REF].relance = stamp(); m[REF].to = m[REF].to || to;
     } else {
-      m[REF] = {date: stamp(), to: to, pay: g('sw-pay').classList.contains('on')};
+      m[REF] = {date: stamp(), to: to, pay: g('sw-pay').classList.contains('on'), rib: g('sw-rib').classList.contains('on')};
       if(statutGet() === "brouillon") statutSet("attente");
     }
     localStorage.setItem("tigerflow-factures-envois", JSON.stringify(m));
@@ -1464,7 +1464,7 @@ function notesRender(){
 function noteAdd(){
   const inp = g('n-in'); const txt = (inp.value||"").trim();
   if(!txt){ toast("Écris d\'abord ta note 😉"); return; }
-  const arr = notesGet(); arr.unshift({t:stamp(), a:"Jo Jo", txt});
+  const arr = notesGet(); arr.unshift({t:stamp(), a:"Thomas Martin", txt});
   try{ localStorage.setItem(NK + REF, JSON.stringify(arr)); }catch(e){}
   inp.value = ""; notesRender(); toast("📝 Note ajoutée");
 }
@@ -1689,87 +1689,21 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
 })();
 
 </script>
-<script>
-/* Compte connecté : le bloc en bas à gauche reflète la photo, le nom et le rôle
-   choisis dans Réglages > Utilisateurs (sauvegardés dans le navigateur). */
-(function(){
-  function appliqueCompte(){
-    var c = null;
-    try{ c = JSON.parse(localStorage.getItem("tigerflow-compte")); }catch(e){}
-    if(!c) return;
-    var box = document.getElementById("side-user");
-    if(!box) return;
-    var ph = box.querySelector(".ph");
-    if(ph){
-      if(c.photo){
-        ph.textContent = "";
-        ph.style.backgroundImage = "url(" + c.photo + ")";
-        ph.style.backgroundSize = "cover";
-        ph.style.backgroundPosition = "center";
-      } else {
-        ph.style.backgroundImage = "";
-        if(c.ini) ph.textContent = c.ini;
-      }
-    }
-    var info = null;
-    for(var i = 0; i < box.children.length; i++){
-      var el = box.children[i];
-      if(el.tagName === "DIV" && !el.classList.contains("umenu")){ info = el; break; }
-    }
-    if(info){
-      var b = info.querySelector("b"), r = info.querySelector("span");
-      if(b && c.nom) b.textContent = c.nom;
-      if(r && c.role) r.textContent = c.role;
-    }
-  }
-  window.appliqueCompte = appliqueCompte;
-  if(document.readyState !== "loading") appliqueCompte();
-  else document.addEventListener("DOMContentLoaded", appliqueCompte);
-})();
-</script>
-<script>
-/* Nom de la societe : celui saisi dans Reglages > Identite. Il alimente l'objet
-   et la signature des e-mails, pour que le client voie TA societe. */
-function societe(){
-  try{
-    var r = JSON.parse(localStorage.getItem("tigerflow-reglages")) || {};
-    var v = (r.info || {})["f-reglage-1"];
-    if(v && String(v).trim()) return String(v).trim();
-  }catch(e){}
-  return "TigerFlow 3D";
-}
-
-/* Fenetre d'envoi : le message s'affiche en entier, sans avoir a faire defiler.
-   Le champ prend la hauteur de son texte (plafonnee pour que la fenetre tienne
-   a l'ecran) et se reajuste des qu'on ecrit. */
-(function(){
-  function fit(){
-    var t = document.getElementById("s-body");
-    if(!t) return;
-    t.style.height = "auto";
-    var max = Math.round(window.innerHeight * 0.46);
-    var h = t.scrollHeight + 2;
-    t.style.height = Math.min(h, max) + "px";
-    t.style.overflowY = (h > max) ? "auto" : "hidden";
-  }
-  window.fitBody = fit;
-  document.addEventListener("input", function(e){
-    if(e.target && e.target.id === "s-body") fit();
-  });
-  window.addEventListener("resize", function(){
-    var v = document.getElementById("sendveil");
-    if(v && v.classList.contains("open")) fit();
-  });
-  function watch(){
-    var v = document.getElementById("sendveil");
-    if(!v || !window.MutationObserver) return;
-    new MutationObserver(function(){
-      if(v.classList.contains("open")) setTimeout(fit, 30);
-    }).observe(v, {attributes:true, attributeFilter:["class"]});
-  }
-  if(document.readyState !== "loading") watch();
-  else document.addEventListener("DOMContentLoaded", watch);
-})();
-</script>
+<div class="sendveil" id="valveil" onclick="if(event.target===this)valClose()">
+  <div class="sendbox" style="width:min(470px,94vw)">
+    <div class="sh" style="margin-bottom:10px">Valider la facture <span id="val-ref"></span> ?</div>
+    <p style="font-size:.88rem;color:var(--ink-2);line-height:1.55;margin-bottom:14px">
+      Une fois validée, la facture est <b>émise</b> : elle part en comptabilité et ne peut plus être modifiée ni supprimée.
+    </p>
+    <div class="valinfo">
+      <b>Besoin de la corriger ensuite ?</b>
+      <span>Il faudra créer un avoir — c'est la règle en comptabilité, un document émis ne se réécrit pas.</span>
+    </div>
+    <div class="sacts" style="margin-top:16px">
+      <button class="btn2" onclick="valClose()">Annuler</button>
+      <button class="btn2 primary" onclick="validerFacture2Go()">Valider la facture</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
