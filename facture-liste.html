@@ -540,7 +540,9 @@ const LBL = {payee:"Payée", retard:"En retard", attente:"À payer", brouillon:"
    change pas ; c'est son LIBELLE qui le dit. */
 const ENVOIS = (() => { try{ return JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {}; }catch(e){ return {}; } })();
 const estPF = ref => { const e = ENVOIS[ref]; return !!(e && e.proforma); };
-const stAff = d => (d.statut === "brouillon" && estPF(d.ref)) ? "proforma" : d.statut;
+/* Une facture non validee EST une pro forma : elle porte le libelle, elle doit
+   donc porter la meme couleur, qu'elle ait ete envoyee ou non. */
+const stAff = d => (d.statut === "brouillon") ? "proforma" : d.statut;
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
 const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014"; const [y,m,d]=String(iso).split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
@@ -1057,7 +1059,7 @@ function pipeline(){
   ];
   (document.getElementById('pipe') || {innerHTML:null,style:{}}).innerHTML =
     seg.filter(x=>x[2]>0).map(x=>`<i class="${x[0]}" style="width:${x[2]/tot*100}%" title="${x[1]}"></i>`).join("");
-  const col = {pg:"#0E8A68",pa:"#E8930C",pe:"#2E5CE6",pp:"#D63B33",px:"#C6CCD8"};
+  const col = {pg:"#0E8A68",pa:"#E8930C",pe:"#2E5CE6",pp:"#D63B33",px:"#7C5CE0"};
   (document.getElementById('pipeleg') || {innerHTML:null,style:{}}).innerHTML =
     seg.map(x=>`<span><i style="background:${col[x[0]]}"></i>${x[1]} · ${eur(x[2])}</span>`).join("");
 }
