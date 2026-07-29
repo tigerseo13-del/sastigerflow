@@ -498,7 +498,7 @@ function render(){
   kring();
   const list = filtered();
   document.getElementById("tbody").innerHTML = list.length ? list.map(c => `
-    <tr onclick="qv('${c.ref}')" class="${c.statut==='renouveler' ? 'torenew' : ''}">
+    <tr onclick="ouvrirContrat('${c.ref}')" class="${c.statut==='renouveler' ? 'torenew' : ''}">
       <td class="ref">${c.ref}</td>
       <td class="cl"><b>${c.client}</b><small>${c.ct}</small></td>
       <td>${c.titre}</td>
@@ -507,8 +507,9 @@ function render(){
       <td><span class="st st-${c.statut}">${LBL[c.statut]}</span></td>
       <td class="dte">${fdate(c.fin)}${expChip(c)}</td>
       <td class="acti" onclick="event.stopPropagation()">
-        <button class="aic" onclick="qv('${c.ref}')" title="Voir le contrat"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button class="aic" onclick="ouvrirContrat('${c.ref}')" title="Voir le contrat"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         <button class="aic" onclick="toast('Modification du contrat — bientôt reliée à l\'atelier')" title="Modifier"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>
+        <button class="aic beta" onclick="qv('${c.ref}')" title="Aperçu rapide — fonction en beta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></button>
         <button class="aic del" onclick="ctrDel(event,'${c.ref}')" title="Supprimer"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg></button>
       </td>
     </tr>`).join("")
@@ -928,6 +929,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .fdatepop label{display:block;font-size:.72rem;font-weight:700;color:var(--ink-2);margin-bottom:9px}
 .fdatepop input{width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:.82rem;color:var(--ink)}
 .fdateclr{font-size:.72rem;color:var(--muted);background:none;border:0;cursor:pointer;padding:3px 0;font-weight:600}
+/* Option en beta : discrete, teintee ambre, toujours placee en dernier. */
+.act.beta, .aic.beta{position:relative;color:#A16207}
+.act.beta:hover, .aic.beta:hover{background:#FEF6E7;border-color:#F3D28B;color:#8A5406}
+.act.beta::after, .aic.beta::after{content:"β";position:absolute;top:1px;right:2px;font-size:.52rem;font-weight:800;line-height:1;color:#A16207}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
@@ -994,6 +999,10 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
 <div class="qveil" id="qveil" onclick="if(event.target===this)qvClose()"></div>
 <aside class="qdrawer" id="qdrawer"><div id="qbody"></div></aside>
 <script>
+function ouvrirContrat(ref){
+  location.href = "contrat.html?n=" + encodeURIComponent(ref);
+}
+/* Aperçu rapide : conservé en option (beta), il n'intercepte plus le clic. */
 function qv(ref){
   const c = CONTRATS.find(x => x.ref === ref);
   if(!c) return;
