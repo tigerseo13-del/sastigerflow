@@ -170,6 +170,7 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .rchip.multi.on::before{content:"✓";font-weight:800}
 .rchip.one.on{background:color-mix(in srgb, var(--cc,#10B981) 11%, #fff);color:var(--cc,#047857);border-color:var(--cc,#10B981)}
 .rchip.autre{background:#fff;border:1.5px dashed #D8DBE2;color:var(--muted,#6C7285);font-weight:700}
+.rchip.more{background:#fff;border:1.5px solid #E6E9EF;color:var(--orange-deep,#EA4A10);font-weight:700}
 .rprod{display:flex;gap:7px;margin-top:7px}
 .rprod input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font:600 .8rem Inter,sans-serif;background:#fff;outline:none}
 .rprod input:focus{border-color:var(--orange)}
@@ -330,7 +331,8 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .rctx .rmeta{font-size:.72rem;font-weight:700;color:var(--muted)}
 /* 29/07 (patron, style C) : titres en vraie phrase, Sora, sans barre orange
    ni ligne de separation — l'air suffit. */
-.rlab{display:flex;align-items:baseline;gap:8px;font-family:'Sora','Inter';font-size:.84rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);margin:0 0 10px;padding-top:14px}
+.rlab{display:flex;align-items:center;gap:8px;font-family:'Sora','Inter';font-size:.84rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);margin:0 0 10px;padding-top:14px}
+.rlab::before{content:"";width:3.5px;height:13px;border-radius:3px;background:var(--orange);flex:none}
 #rapbody > .rlab:first-child, #rapbody .rctx + .rlab, #rapbody .devban + .rlab{border-top:0;padding-top:0;margin:20px 0 10px}
 .rchips + .rlab,.rta + .rlab{margin-top:22px}
 .rchips{gap:8px}
@@ -1191,6 +1193,13 @@ function rrap(){
   const esc = z => String(z).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
   const chips = (arr, set, cb) => arr.map(z =>
     `<button type="button" class="rchip multi ${set.has(z) ? "on" : ""}" onclick="${cb}('${esc(z)}')">${z}</button>`).join("");
+  const chipsLim = (arr, set, cb, key) => {
+    const LIM = 5, open = MMORE.has(key);
+    const vis = open ? arr : arr.filter((z, i) => i < LIM || set.has(z));
+    const hidden = arr.length - vis.length;
+    return vis.map(z => `<button type="button" class="rchip multi ${set.has(z) ? "on" : ""}" onclick="${cb}('${esc(z)}')">${z}</button>`).join("")
+      + (arr.length > LIM ? `<button type="button" class="rchip more" onclick="rapMore('${key}')">${open ? "Réduire" : "+ " + hidden + " autres…"}</button>` : "");
+  };
   const cchips = (arr, cur, cb) => arr.map(([z, c]) =>
     `<button type="button" class="rchip one ${cur === z ? "on" : ""}" style="--cc:${c}" onclick="${cb}('${esc(z)}')"><i style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block"></i>${z}</button>`).join("");
   /* titre de section a choix multiple : compteur vivant + mention (le rendu
@@ -1210,7 +1219,7 @@ function rrap(){
     <div class="rlab">Photos / preuves</div>
     <button type="button" class="rphoto" onclick="toast('L’appareil photo s’ouvre')"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><b>Ajoute tes photos du constat</b><small>elles partiront sur le rapport client</small></button>`;
   else if(RSTEP === 2) h = `${mlab("Méthode de traitement", RAPD.meths)}
-    <div class="rchips">${chips(R_METH, RAPD.meths, "rapMeth")}</div>
+    <div class="rchips">${chipsLim(R_METH, RAPD.meths, "rapMeth", "meths")}</div>
     <div class="rlab">Produits utilisés <span style="font-weight:500;color:var(--muted)">— n° AMM sur l'étiquette</span></div>
     <div id="r-prods">${RAPD.prods.map((p, i) => `
       <div class="rprod">
@@ -1222,9 +1231,9 @@ function rrap(){
     ${rapSuggs(m).length ? `<div class="rsug">${rapSuggs(m).map(n => `<button type="button" class="rchip" style="font-size:.72rem;padding:6px 11px" onclick="rapAddSugg('${esc(n)}')">+ ${n}</button>`).join("")}</div>` : ""}
     <button type="button" class="obtn" style="margin-top:8px" onclick="rapKeep();RAPD.prods.push({n:'',q:'',c:''});rrap()">+ Ajouter un produit</button>
     ${mlab("Matériel utilisé", RAPD.mats)}
-    <div class="rchips">${chips(R_MATS, RAPD.mats, "rapMat")}</div>
+    <div class="rchips">${chipsLim(R_MATS, RAPD.mats, "rapMat", "mats")}</div>
     ${mlab("Zones traitées", RAPD.ztr)}
-    <div class="rchips">${chips(R_TZONES, RAPD.ztr, "rapZtr")}${[...RAPD.ztr].filter(z => !R_TZONES.includes(z)).map(z =>
+    <div class="rchips">${chipsLim(R_TZONES, RAPD.ztr, "rapZtr", "ztr")}${[...RAPD.ztr].filter(z => !R_TZONES.includes(z)).map(z =>
       `<button type="button" class="rchip multi on" onclick="rapZtrDel('${esc(z)}')" title="Retirer">${z}</button>`).join("")}<button type="button" class="rchip autre" onclick="rapZtrOpen()">+ Autre…</button></div>
     ${MZO ? `<input id="mztin" class="rta" style="margin-top:8px" placeholder="Précise la zone (toiture, vide sanitaire…) — valide pour ajouter" onchange="rapZtrAdd(this.value)">` : ""}
     <div class="rlab">Actions réalisées</div>
@@ -1313,6 +1322,8 @@ function rapQuote(v){ rapKeep(); RAPD.quote = v; rrap(); }
 function rapZone(z){ rapKeep(); RAPD.zones.has(z) ? RAPD.zones.delete(z) : RAPD.zones.add(z); rrap(); }
 function rapZtr(z){ rapKeep(); RAPD.ztr.has(z) ? RAPD.ztr.delete(z) : RAPD.ztr.add(z); rrap(); }
 let MZO = false;   /* saisie libre d'une zone traitee */
+let MMORE = new Set();   /* sections depliees de la page 2 */
+function rapMore(key){ rapKeep(); MMORE.has(key) ? MMORE.delete(key) : MMORE.add(key); rrap(); }
 function rapZtrOpen(){ rapKeep(); MZO = true; rrap(); setTimeout(() => { const i = g("mztin"); if(i) i.focus(); }, 0); }
 function rapZtrAdd(v){ MZO = false; v = (v || "").trim(); if(v) RAPD.ztr.add(v); rrap(); }
 function rapZtrDel(z){ rapKeep(); RAPD.ztr.delete(z); rrap(); }

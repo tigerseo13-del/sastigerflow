@@ -317,8 +317,10 @@ h1,.num{font-family:'Sora',sans-serif}
 /* 29/07 (patron, style C) : les titres de section quittent les capitales
    administratives — vraie phrase en Sora, comme les titres de cartes. La barre
    orange disparait, le filet s'allege : l'ecran est calme au repos. */
-/* 29/07 (patron) : plus aucune ligne entre les sections — l'air suffit. */
-.rlab{display:flex;align-items:baseline;gap:8px;font-family:'Sora','Inter';font-size:.86rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);margin:0 0 11px;padding-top:18px}.dcard .rlab:first-child{padding-top:0}
+/* 29/07 (patron) : pas de ligne entre les sections, mais la petite barre
+   orange revient devant chaque titre (redemandee). */
+.rlab{display:flex;align-items:center;gap:8px;font-family:'Sora','Inter';font-size:.86rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);margin:0 0 11px;padding-top:18px}.dcard .rlab:first-child{padding-top:0}
+.rlab::before{content:"";width:3.5px;height:13px;border-radius:3px;background:var(--orange);flex:none}
 .rlab:first-child{margin-top:0}
 .rlab .rlc{color:var(--green-d);font-weight:800;letter-spacing:0;font-size:.74rem}
 .rlab .rmulti{margin-left:auto;font-family:'Inter';font-weight:600;color:#A6ABBB;font-size:.68rem;letter-spacing:0}
@@ -331,6 +333,8 @@ h1,.num{font-family:'Sora',sans-serif}
 .prow2 .pconc{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:7px 10px;font:600 .76rem Inter,sans-serif;background:#fff;box-sizing:border-box}
 .prow2 .pqty{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font:600 .78rem Inter,sans-serif;background:#fff;text-align:center;box-sizing:border-box}
 .rchip.autre{background:#fff;border:1.5px dashed #D8DBE2;color:var(--muted);font-weight:700}
+.rchip.more{background:#fff;border:1.5px solid #E6E9EF;color:var(--orange-deep);font-weight:700}
+.rchip.more:hover{border-color:var(--orange)}
 .rchip.autre:hover{border-color:var(--green);color:var(--green-d);background:#fff}
 .rtzin{width:100%;margin-top:8px;border:1.5px solid var(--green);border-radius:11px;padding:10px 13px;font:600 .8rem Inter,sans-serif;outline:none;background:#FBFFFD}
 .rdaterow{display:flex;gap:8px;align-items:stretch;margin-top:10px}
@@ -555,8 +559,8 @@ h1,.num{font-family:'Sora',sans-serif}
 .wev{border-radius:11px;padding:0;position:relative;overflow:hidden;background:#fff;box-shadow:0 1px 5px -1px rgba(23,26,32,.14);border:1px solid #EDEFF2;transition:.13s}
 .wev:hover{transform:translateY(-1px);box-shadow:0 6px 16px -8px rgba(23,26,32,.3)}
 .wev .wh{display:flex;align-items:center;gap:6px;background:linear-gradient(rgba(16,18,22,.12),rgba(16,18,22,.12)),var(--evg,var(--evc));color:#fff;padding:4px 10px}
-.wev .wh b{font-family:ui-monospace,'SF Mono',monospace;font-size:.74rem;font-weight:800;letter-spacing:.02em;flex:none}
-.wev .wh i{font-style:normal;font-size:.68rem;font-weight:700;opacity:.94;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wev .wh b{font-family:ui-monospace,'SF Mono',monospace;font-size:.8rem;font-weight:800;letter-spacing:.02em;flex:none}
+.wev .wh i{font-style:normal;font-size:.73rem;font-weight:700;opacity:.95;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wev .wh .hh{margin-left:auto;font-size:.6rem;font-weight:800;font-variant-numeric:tabular-nums;flex:none;opacity:.96}
 .wev .wb{padding:7px 10px 8px}
 .wev .wn{display:flex;align-items:center;gap:6px;font-size:.77rem;font-weight:800;color:var(--ink)}
@@ -2694,7 +2698,7 @@ function openReport(id){
     recos:new Set(), quote:false, quoteDesc:"", next:"", notes:"", creneau:"", photos:[]};
   if(REPORTS[id].prods) REPORTS[id].prods.forEach(pr => { if(pr.c === undefined) pr.c = ""; });
   RSTEP = 1;
-  RCAL_OPEN = false; RTZ_OPEN = false; RPR_OPEN = false;
+  RCAL_OPEN = false; RTZ_OPEN = false; RPR_OPEN = false; RMORE = new Set();
   renderReport(id);
 }
 function rStepsBar(){
@@ -2710,6 +2714,15 @@ function renderReport(id){
   RID = id;
   const v = INTERVS.find(x=>x.id===id), r = REPORTS[id], T = typeDe(v);
   const chips = (list, set, fn) => list.map(x=>`<span class="rchip multi ${set.has(x)?'on':''}" onclick="rTogSet(${id},'${fn}','${x.replace(/'/g,"\\'")}',this)">${x}</span>`).join("");
+  /* 29/07 (patron, page 2 « trop de texte ») : affichage progressif — les 5
+     premieres puces + « n autres… ». Ce qui est coche reste TOUJOURS visible. */
+  const chipsLim = (list, set, fn, key) => {
+    const LIM = 5, open = RMORE.has(key);
+    const vis = open ? list : list.filter((x, i) => i < LIM || set.has(x));
+    const hidden = list.length - vis.length;
+    return vis.map(x=>`<span class="rchip multi ${set.has(x)?'on':''}" onclick="rTogSet(${id},'${fn}','${x.replace(/'/g,"\\'")}',this)">${x}</span>`).join("")
+      + (list.length > LIM ? `<span class="rchip more" onclick="rMore(${id},'${key}')">${open ? "Réduire" : "+ " + hidden + " autres…"}</span>` : "");
+  };
   /* titre de section a choix multiple : compteur vivant + mention */
   /* 29/07 (patron) : la mention grise « plusieurs réponses » alourdissait les
      titres — les coches ✓ et le compteur disent deja le multiple. */
@@ -2748,7 +2761,7 @@ function renderReport(id){
   else if(RSTEP === 2){
     body = `
       ${mlab("Méthode de traitement", "meths", r.meths)}
-      <div class="rchips">${chips(R_METH, r.meths, "meths")}</div>
+      <div class="rchips">${chipsLim(R_METH, r.meths, "meths", "meths")}</div>
       ${(function(){
         /* 29/07 (patron) : « des cases a cocher, genre insecticide » — les
            produits se cochent comme tout le reste du rapport. Chaque produit
@@ -2756,8 +2769,14 @@ function renderReport(id){
            facultative. Le menu deroulant illisible disparait. */
         const sel = r.prods.filter(x => x.p !== 0);
         return `<span class="rlab">Produits utilisés <b class="rlc">${sel.length ? "· " + sel.length : ""}</b></span>
-      <div class="rchips">${PRODUITS.map((p,k) => k === 0 ? "" :
-        `<span class="rchip multi ${r.prods.some(x => x.p === k) ? 'on' : ''}" onclick="rProdTog(${id},${k})">${p}</span>`).join("")}${r.prods.filter(x => x.p === -1).map(x =>
+      <div class="rchips">${(function(){
+        const LIM = 5, open = RMORE.has("prods");
+        const idx = PRODUITS.map((p, k) => k).filter(k => k > 0);
+        const vis = open ? idx : idx.filter((k, i) => i < LIM || r.prods.some(x => x.p === k));
+        const hidden = idx.length - vis.length;
+        return vis.map(k => `<span class="rchip multi ${r.prods.some(x => x.p === k) ? 'on' : ''}" onclick="rProdTog(${id},${k})">${PRODUITS[k]}</span>`).join("")
+          + (idx.length > LIM ? `<span class="rchip more" onclick="rMore(${id},'prods')">${open ? "Réduire" : "+ " + hidden + " autres…"}</span>` : "");
+      })()}${r.prods.filter(x => x.p === -1).map(x =>
         `<span class="rchip multi on" onclick="rProdDelCustom(${id},'${(x.nom||"").replace(/'/g,"\\'")}')" title="Retirer">${x.nom}</span>`).join("")}<span class="rchip autre" onclick="rPrOpen(${id})">+ Autre…</span></div>
       ${RPR_OPEN ? `<input id="rprinput" class="rtzin" placeholder="Nom du produit — Entrée pour ajouter"
         onkeydown="if(event.key === 'Enter') rPrAdd(${id}, this.value)" onblur="rPrAdd(${id}, this.value)">` : ""}
@@ -2769,9 +2788,9 @@ function renderReport(id){
         </div>`).join("")}</div>` : ""}`;
       })()}
       ${mlab("Matériel utilisé", "mats", r.mats)}
-      <div class="rchips">${chips(R_MATS, r.mats, "mats")}</div>
+      <div class="rchips">${chipsLim(R_MATS, r.mats, "mats", "mats")}</div>
       ${mlab("Zones traitées", "tzones", r.tzones)}
-      <div class="rchips">${chips(R_TZONES, r.tzones, "tzones")}${[...r.tzones].filter(z => !R_TZONES.includes(z)).map(z =>
+      <div class="rchips">${chipsLim(R_TZONES, r.tzones, "tzones", "tzones")}${[...r.tzones].filter(z => !R_TZONES.includes(z)).map(z =>
         `<span class="rchip multi on" onclick="rTzDel(${id},'${z.replace(/'/g,"\\'")}')" title="Retirer">${z}</span>`).join("")}<span class="rchip autre" onclick="rTzOpen(${id})">+ Autre…</span></div>
       ${RTZ_OPEN ? `<input id="rtzinput" class="rtzin" placeholder="Précise la zone (toiture, vide sanitaire…) — Entrée pour ajouter"
         onkeydown="if(event.key === 'Enter') rTzAdd(${id}, this.value)" onblur="rTzAdd(${id}, this.value)">` : ""}
@@ -3005,6 +3024,11 @@ function rQuote(id, val){
 /* 29/07 : produits en puces cochables. Cocher ajoute {p, q:1, c:""} ;
    decocher retire. « + Autre… » ajoute un produit libre (p:-1, nom). */
 let RPR_OPEN = false;
+let RMORE = new Set();   /* sections depliees de la page 2 */
+function rMore(id, key){
+  RMORE.has(key) ? RMORE.delete(key) : RMORE.add(key);
+  renderReport(id);
+}
 function rProdTog(id, k){
   const arr = REPORTS[id].prods;
   const i = arr.findIndex(x => x.p === k);
@@ -4417,11 +4441,11 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
    serre : leur contenu frole deja la hauteur du creneau, aerer les couperait. */
 /* 29/07 (patron) : voile assombrissant de 12 % sur le degrade — le blanc de
    l'en-tete tient sur tous les techniciens, y compris les tons clairs. */
-.ev.ticket .evhead{display:flex;align-items:center;gap:7px;flex:none;background:linear-gradient(rgba(16,18,22,.12),rgba(16,18,22,.12)),var(--evg,var(--evc));color:#fff;padding:5px 10px 5px 12px;min-height:26px}
+.ev.ticket .evhead{display:flex;align-items:center;gap:7px;flex:none;background:linear-gradient(rgba(16,18,22,.12),rgba(16,18,22,.12)),var(--evg,var(--evc));color:#fff;padding:5.5px 10px 5.5px 12px;min-height:28px}
 .ev.ticket.md .evhead{gap:6px;padding:3.5px 9px 3.5px 11px;min-height:23px}
 /* 29/07 (patron) : le lieu etait trop petit — code postal et ville grossis. */
-.ev.ticket .evhead b{font-family:ui-monospace,'SF Mono',monospace;font-size:.79rem;font-weight:800;letter-spacing:.02em;flex:none}
-.ev.ticket .evhead i{font-style:normal;font-size:.71rem;font-weight:700;opacity:.94;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev.ticket .evhead b{font-family:ui-monospace,'SF Mono',monospace;font-size:.87rem;font-weight:800;letter-spacing:.02em;flex:none}
+.ev.ticket .evhead i{font-style:normal;font-size:.78rem;font-weight:700;opacity:.95;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ev.ticket .evhead .hh{margin-left:auto;font-size:.64rem;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;opacity:.96}
 .ev.ticket .evhead .chk{margin-left:2px;width:16px;height:16px;font-size:.54rem;border-color:rgba(255,255,255,.75);color:#fff;background:rgba(255,255,255,.14)}
 .ev.ticket.done .evhead .chk{background:#fff;border-color:#fff;color:var(--evc)}
