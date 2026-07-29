@@ -1499,7 +1499,7 @@ function renderTray(){
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
     const T = typeDe(p);
     return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}" style="--evc:${T.c}"><span class="grip" title="Glisser sur l'agenda">⠿</span>
-      <div class="c"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${p.rue ? p.rue + " · " : ""}${p.cp} · ${p.ville}</div>
+      <div class="c"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${p.rue ? p.rue + " · " : ""}${p.cp} · ${vshort(p.ville)}</div>
       <div class="c" style="font-weight:800;color:var(--ink)">${p.client}</div>
       <div class="l1"><span>${T.ic}</span><span>${T.lbl}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}<span class="dur">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span></div>
       <div class="z">${p.montant ? '<b>' + evMontant(p.montant).slice(3) + '</b>' + (p.rappel ? ' · ' : '') : ''}${p.rappel ? '<b class="rapl' + (isLate(p) ? ' late' : '') + '">' + (p.suivi ? 'prévu ' : 'rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
@@ -1543,6 +1543,13 @@ const JOURS_C = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const iso = d => d.toISOString().slice(0,10);
 const hstr = h => String(Math.floor(h)).padStart(2,"0") + ":" + (h%1 ? "30" : "00");
+/* 29/07 — « Saint-Germain-en-Laye » ne tenait pas dans l'en-tete de cartouche :
+   la ville se faisait couper par l'heure. Deux economies AFFICHAGE SEULEMENT
+   (le tooltip, la fiche et les donnees gardent la forme complete) :
+   - l'heure en francais compact « 11h–13h » au lieu de « 11:00 – 13:00 » ;
+   - « Saint-/Sainte- » abreges « St-/Ste- » comme sur les panneaux routiers. */
+const hcourt = h => Math.floor(h) + "h" + (h%1 ? "30" : "");
+const vshort = v => (v || "").replace(/Sainte-/g, "Ste-").replace(/Saint-/g, "St-");
 
 /* ===== etat d'une intervention : UNE seule definition (27/07) =====
    Le filtre et le compteur du menu s'en servent tous les deux. Tant qu'il y
@@ -1799,8 +1806,8 @@ function renderDay(){
       return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${nl>1?'nrw':''} ${LANDID===v.id?'land':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
         style="--evc:${TC.c};--evg:${TC.grad};--ai:${Math.min(ci,8)};${lanePos}top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
         <div class="evhead" title="${v.cp} ${v.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
-          <b>${v.cp}</b><i>${v.ville}</i>
-          <span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span>
+          <b>${v.cp}</b><i>${vshort(v.ville)}</i>
+          <span class="hh">${hcourt(v.start)}–${hcourt(v.start+v.dur)}</span>
           <span class="hbdg">${badge}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</span>
           <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button>
         </div>
@@ -1952,7 +1959,7 @@ function renderWeek(){
         const T = typeDe(v), t = TECHS[v.tech];
         const TC = TECHS[v.tech];
         return `<div class="wev ${v.done?'done':''} ${v.cancelled?'cancelled':''}" data-id="${v.id}" style="--evc:${TC.c};--evg:${TC.grad};--ai:${Math.min(ci,8)};cursor:pointer" title="${t.nom} · ${v.cp} ${v.ville}">
-          <div class="wh"><b>${v.cp}</b><i>${v.ville}</i><span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span></div>
+          <div class="wh"><b>${v.cp}</b><i>${vshort(v.ville)}</i><span class="hh">${hcourt(v.start)}–${hcourt(v.start+v.dur)}</span></div>
           <div class="wb">
             <div class="wn">${T.ic} <span>${T.lbl}</span></div>
             <span class="mchip m-${v.mode}">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
