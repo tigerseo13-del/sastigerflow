@@ -4171,5 +4171,43 @@ function logout(){
   }catch(e){}
 })();
 </script>
+<script>
+/* Compte connecté : le bloc en bas à gauche reflète la photo, le nom et le rôle
+   choisis dans Réglages > Utilisateurs (sauvegardés dans le navigateur). */
+(function(){
+  function appliqueCompte(){
+    var c = null;
+    try{ c = JSON.parse(localStorage.getItem("tigerflow-compte")); }catch(e){}
+    if(!c) return;
+    var box = document.getElementById("side-user");
+    if(!box) return;
+    var ph = box.querySelector(".ph");
+    if(ph){
+      if(c.photo){
+        ph.textContent = "";
+        ph.style.backgroundImage = "url(" + c.photo + ")";
+        ph.style.backgroundSize = "cover";
+        ph.style.backgroundPosition = "center";
+      } else {
+        ph.style.backgroundImage = "";
+        if(c.ini) ph.textContent = c.ini;
+      }
+    }
+    var info = null;
+    for(var i = 0; i < box.children.length; i++){
+      var el = box.children[i];
+      if(el.tagName === "DIV" && !el.classList.contains("umenu")){ info = el; break; }
+    }
+    if(info){
+      var b = info.querySelector("b"), r = info.querySelector("span");
+      if(b && c.nom) b.textContent = c.nom;
+      if(r && c.role) r.textContent = c.role;
+    }
+  }
+  window.appliqueCompte = appliqueCompte;
+  if(document.readyState !== "loading") appliqueCompte();
+  else document.addEventListener("DOMContentLoaded", appliqueCompte);
+})();
+</script>
 </body>
 </html>

@@ -500,6 +500,25 @@ let USERS = [
   {p:"TigerFlow", n:"Operator", mail:"operator@tigerflow.io", role:"Opérateur", fonc:"Operator", actif:true, last:"-"}
 ];
 const GRADS = ["linear-gradient(135deg,#FF5A1F,#FF8A5C)","linear-gradient(135deg,#2E5CE6,#6C8CFF)","linear-gradient(135deg,#0E8A68,#31B98F)","linear-gradient(135deg,#A16207,#D9A408)","linear-gradient(135deg,#9C63F2,#6425D0)","linear-gradient(135deg,#EE6A8A,#C2255C)"];
+/* Sauvegarde des utilisateurs : sans ça, la photo et les modifications
+   disparaissaient au rechargement de la page. */
+const UKEY = "tigerflow-users", CPTKEY = "tigerflow-compte";
+try{
+  const sv = JSON.parse(localStorage.getItem(UKEY));
+  if(Array.isArray(sv) && sv.length) USERS = sv;
+}catch(e){}
+function uPersist(){
+  try{ localStorage.setItem(UKEY, JSON.stringify(USERS)); }catch(e){}
+  majCompte();
+}
+/* le compte connecté (celui marqué « me ») alimente le bloc en bas à gauche */
+function majCompte(){
+  const me = USERS.find(u => u.me) || USERS[0];
+  if(!me) return;
+  const c = {ini:((me.p[0] || "") + (me.n[0] || "")).toUpperCase(), nom:(me.p + " " + me.n).trim(), role:me.role || "", photo:me.photo || ""};
+  try{ localStorage.setItem(CPTKEY, JSON.stringify(c)); }catch(e){}
+  if(typeof appliqueCompte === "function") appliqueCompte();
+}
 const RBADGE = {"Administrateur":"b-padm", "Manager":"b-man", "Opérateur":"b-op"};
 const MODULES = ["Tableau de bord","Agenda","Clients","Devis","Factures","Paiements","Contrats","Tâches","Techniciens","Paramètres"];
 const PERMLVL = ["Aucun accès","Lecture seule","Modification","Accès complet"];
@@ -612,12 +631,12 @@ function urows(){
 }
 function uPow(i){
   if(USERS[i].me){ toast("Vous ne pouvez pas désactiver votre propre compte"); return; }
-  USERS[i].actif = !USERS[i].actif; spRender();
+  USERS[i].actif = !USERS[i].actif; uPersist(); spRender();
   toast(USERS[i].p + " " + USERS[i].n + (USERS[i].actif ? " réactivé" : " désactivé — ne peut plus se connecter"));
 }
 function uDel(i){
   if(USERS[i].me){ toast("Vous ne pouvez pas supprimer votre propre compte"); return; }
-  const u = USERS[i]; USERS.splice(i, 1); spRender(); toast(u.p + " " + u.n + " supprimé de l'équipe");
+  const u = USERS[i]; USERS.splice(i, 1); uPersist(); spRender(); toast(u.p + " " + u.n + " supprimé de l'équipe");
 }
 function uFilter(){ UFROLE = $id("uf-role").value; UFST = $id("uf-st").value; UFQ = ($id("uf-q").value || "").toLowerCase().trim(); $id("utbody").innerHTML = urows(); $id("ucount").textContent = document.querySelectorAll("#utbody tr").length; }
 R.users = () => `
@@ -758,10 +777,10 @@ function uSave(i){
   const fonc = $id("nu-f").value.trim() || "\u2014";
   if(i > -1){
     Object.assign(USERS[i], {p, n, mail:m, role:r, fonc, photo:UPHOTO});
-    closeDrawer(); spRender(); toast("\u00ab " + p + " " + n + " \u00bb modifié");
+    uPersist(); closeDrawer(); spRender(); toast("\u00ab " + p + " " + n + " \u00bb modifié");
   } else {
     USERS.push({p, n, mail:m, role:r, fonc, actif:true, last:"-", photo:UPHOTO});
-    closeDrawer(); spRender(); toast("Utilisateur ajouté — une invitation part à " + m);
+    uPersist(); closeDrawer(); spRender(); toast("Utilisateur ajouté — une invitation part à " + m);
   }
 }
 
@@ -1710,5 +1729,43 @@ function relSave(){
     <button class="rok" onclick="relClose();toast('🔁 Séquence enregistrée — appliquée aux devis en attente')">Enregistrer la séquence</button>
   </div>
 </div>
+<script>
+/* Compte connecté : le bloc en bas à gauche reflète la photo, le nom et le rôle
+   choisis dans Réglages > Utilisateurs (sauvegardés dans le navigateur). */
+(function(){
+  function appliqueCompte(){
+    var c = null;
+    try{ c = JSON.parse(localStorage.getItem("tigerflow-compte")); }catch(e){}
+    if(!c) return;
+    var box = document.getElementById("side-user");
+    if(!box) return;
+    var ph = box.querySelector(".ph");
+    if(ph){
+      if(c.photo){
+        ph.textContent = "";
+        ph.style.backgroundImage = "url(" + c.photo + ")";
+        ph.style.backgroundSize = "cover";
+        ph.style.backgroundPosition = "center";
+      } else {
+        ph.style.backgroundImage = "";
+        if(c.ini) ph.textContent = c.ini;
+      }
+    }
+    var info = null;
+    for(var i = 0; i < box.children.length; i++){
+      var el = box.children[i];
+      if(el.tagName === "DIV" && !el.classList.contains("umenu")){ info = el; break; }
+    }
+    if(info){
+      var b = info.querySelector("b"), r = info.querySelector("span");
+      if(b && c.nom) b.textContent = c.nom;
+      if(r && c.role) r.textContent = c.role;
+    }
+  }
+  window.appliqueCompte = appliqueCompte;
+  if(document.readyState !== "loading") appliqueCompte();
+  else document.addEventListener("DOMContentLoaded", appliqueCompte);
+})();
+</script>
 </body>
 </html>
