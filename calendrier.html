@@ -265,8 +265,13 @@ h1,.num{font-family:'Sora',sans-serif}
 .drawer textarea{width:100%;font-family:inherit;font-size:.85rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFCFD;resize:vertical}
 .drawer textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px #FFE4D5}
 .rchips{display:flex;gap:8px;flex-wrap:wrap}
-.rchip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:11px;padding:8px 13px;font-size:.8rem;font-weight:600;color:var(--ink-2);cursor:pointer;background:#fff;transition:.12s;user-select:none}
-.rchip.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
+.rchip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:11px;padding:10px 15px;font-size:.8rem;font-weight:600;color:var(--ink-2);cursor:pointer;background:#fff;transition:.12s;user-select:none}
+/* 29/07 (patron) : COCHER = VERT, plus d'orange sur la selection. Les choix
+   multiples portent une vraie coche ; les choix uniques (niveau, urgence)
+   prennent la couleur de leur propre pastille — une couleur = un sens. */
+.rchip.on{border-color:var(--green);background:var(--green-bg);color:var(--green-d);font-weight:700}
+.rchip.multi.on::before{content:"✓";font-weight:800}
+.rchip.one.on{border-color:var(--cc,var(--green));background:color-mix(in srgb, var(--cc,#17A87E) 10%, #fff);color:var(--cc,var(--green-d))}
 .qcards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .qcard{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:3px;border:1.5px solid var(--line);border-radius:14px;background:#fff;padding:15px 10px;cursor:pointer;transition:.13s;text-align:center}
 .qcard:hover{border-color:#D8DBE2;background:#FAFBFC}
@@ -283,8 +288,8 @@ h1,.num{font-family:'Sora',sans-serif}
 .recoc{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;font-size:.8rem;font-weight:600;color:var(--ink-2);cursor:pointer;background:#fff;transition:.12s;user-select:none}
 .recoc:hover{border-color:#D8DBE2;background:#FAFBFC}
 .recoc .rcb{width:20px;height:20px;border-radius:7px;border:1.5px solid #D8DBE2;background:#fff;display:grid;place-items:center;font-size:.7rem;font-style:normal;font-weight:800;color:transparent;flex:none;transition:.12s}
-.recoc.on{border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep);font-weight:700}
-.recoc.on .rcb{background:var(--orange);border-color:var(--orange);color:#fff}
+.recoc.on{border-color:var(--green);background:var(--green-bg);color:var(--green-d);font-weight:700}
+.recoc.on .rcb{background:var(--green);border-color:var(--green);color:#fff}
 .rdrop2{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px dashed #D8DCE4;border-radius:14px;background:#FAFBFC;padding:24px 16px;cursor:pointer;text-align:center;transition:.15s;margin-bottom:4px}
 /* 27/07 : retour visuel du glisser-deposer + galerie des photos ajoutees */
 .rdrop2.over{border-color:var(--orange);background:var(--orange-soft)}
@@ -304,6 +309,13 @@ h1,.num{font-family:'Sora',sans-serif}
 .dcard textarea{margin-bottom:4px}
 .rlab{display:flex;align-items:center;gap:8px;font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#6B7180;margin:0 0 13px;padding-top:24px;border-top:1px solid #EFF1F5}.rlab::before{content:"";width:3.5px;height:12px;border-radius:3px;background:var(--orange);flex:none}.dcard .rlab:first-child{border-top:0;padding-top:0}
 .rlab:first-child{margin-top:0}
+.rlab .rlc{color:var(--green-d);font-weight:800;text-transform:none;letter-spacing:0}
+.rlab .rmulti{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600;color:#A6ABBB;font-size:.66rem}
+.prowh{display:flex;gap:8px;margin-bottom:5px;font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#9AA0AE}
+.prowh span:first-child{flex:1}.prowh span:nth-child(2){width:86px;flex:none}.prowh span:last-child{width:36px;flex:none}
+.sigbox .sigh{position:absolute;inset:0;display:grid;place-items:center;color:#C2C6D0;font-size:.8rem;font-weight:700;pointer-events:none}
+.dbig.g{background:var(--green);box-shadow:0 4px 12px -5px rgba(23,168,126,.5)}
+.dbig.g:hover{background:var(--green-d)}
 .drawer textarea,.drawer input[type=text],.drawer input[type=number],.drawer input[type=date],.drawer select{width:100%;font-family:inherit;font-size:.85rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFCFD}
 .drawer textarea:focus,.drawer input:focus,.drawer select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px #FFE4D5}
 .drawer textarea{resize:vertical;min-height:64px}
@@ -2615,7 +2627,7 @@ function seedReports(){
 }
 setTimeout(() => { try{ seedReports(); render(); }catch(e){} }, 0);
 let RSTEP = 1;
-const PRODUITS = ["Blocs bromadiolone 25 ppm","Gel anti-cafards","Insecticide punaises (pyrèthre)","K-Othrine 0,5 % liquide","Pièges mécaniques","Poudre fourmis","Gel appât guêpes","Répulsif pigeons"];
+const PRODUITS = ["","Gel anti-cafards","Insecticide punaises (pyrèthre)","K-Othrine 0,5 % liquide","Pièges mécaniques","Poudre fourmis","Gel appât guêpes","Répulsif pigeons","Blocs bromadiolone 25 ppm"];
 /* ===== RÉFÉRENTIEL MÉTIER COMMUN — IDENTIQUE DANS tech-mobile.html ===== */
 const R_NIV    = [["Faible","#0E8A68"],["Modérée","#2E5CE6"],["Forte","#B45309"],["Critique","#D63B33"]];
 const R_URG    = [["Faible","#0E8A68"],["Moyenne","#2E5CE6"],["Haute","#B45309"],["Urgente","#D63B33"]];
@@ -2645,22 +2657,24 @@ let RID = null;
 function renderReport(id){
   RID = id;
   const v = INTERVS.find(x=>x.id===id), r = REPORTS[id], T = typeDe(v);
-  const chips = (list, set, fn) => list.map(x=>`<span class="rchip ${set.has(x)?'on':''}" onclick="rTogSet(${id},'${fn}','${x.replace(/'/g,"\\'")}',this)">${x}</span>`).join("");
+  const chips = (list, set, fn) => list.map(x=>`<span class="rchip multi ${set.has(x)?'on':''}" onclick="rTogSet(${id},'${fn}','${x.replace(/'/g,"\\'")}',this)">${x}</span>`).join("");
+  /* titre de section a choix multiple : compteur vivant + mention */
+  const mlab = (titre, key, set) => `<span class="rlab">${titre} <b class="rlc" id="rlc-${key}">${set.size ? "· " + set.size : ""}</b><small class="rmulti">plusieurs réponses</small></span>`;
   let body = "";
 
   if(RSTEP === 1){
     body = `
       <span class="rlab">Niveau d'infestation</span>
       <div class="rchips">${R_NIV.map(([n,c])=>
-        `<span class="rchip ${r.niv===n?'on':''}" onclick="rOne(${id},'niv','${n}',this)"><i style="width:8px;height:8px;border-radius:50%;background:${c}"></i>${n}</span>`).join("")}</div>
-      <span class="rlab">Zones touchées</span>
+        `<span class="rchip one ${r.niv===n?'on':''}" style="--cc:${c}" onclick="rOne(${id},'niv','${n}',this)"><i style="width:8px;height:8px;border-radius:50%;background:${c}"></i>${n}</span>`).join("")}</div>
+      ${mlab("Zones touchées", "zones", r.zones)}
       <div class="rchips">${chips(R_ZONES, r.zones, "zones")}</div>
-      <span class="rlab">Signes de présence</span>
+      ${mlab("Signes de présence", "signes", r.signes)}
       <div class="rchips">${chips(R_SIGNES, r.signes, "signes")}</div>
       <span class="rlab">Observations</span>
       <textarea oninput="REPORTS[${id}].obs=this.value" placeholder="Points d'entrée repérés, appâts consommés, contexte…">${r.obs}</textarea>
       <span class="rlab">Niveau d'urgence du client</span>
-      <div class="rchips">${R_URG.map(([u,c])=>`<span class="rchip ${r.urg===u?'on':''}" onclick="rOne(${id},'urg','${u}',this)"><i style="width:8px;height:8px;border-radius:50%;background:${c}"></i>${u}</span>`).join("")}</div>
+      <div class="rchips">${R_URG.map(([u,c])=>`<span class="rchip one ${r.urg===u?'on':''}" style="--cc:${c}" onclick="rOne(${id},'urg','${u}',this)"><i style="width:8px;height:8px;border-radius:50%;background:${c}"></i>${u}</span>`).join("")}</div>
       <span class="rlab">Photos / preuves</span>
       <!-- 27/07 : la zone ne faisait qu'afficher « bientot relie ». Elle accepte
            maintenant vraiment les photos, au clic comme au glisser-deposer. -->
@@ -2679,14 +2693,15 @@ function renderReport(id){
   }
   else if(RSTEP === 2){
     body = `
-      <span class="rlab">Méthode de traitement</span>
+      ${mlab("Méthode de traitement", "meths", r.meths)}
       <div class="rchips">${chips(R_METH, r.meths, "meths")}</div>
       <span class="rlab">Produits utilisés</span>
+      <div class="prowh"><span>Produit</span><span>Quantité</span><span></span></div>
       <div id="r-prods">${r.prods.map((pr,j)=>rProdRow(id,pr,j)).join("")}</div>
       <button class="raddp" onclick="rAddProd(${id})">+ Ajouter un produit</button>
-      <span class="rlab">Matériel utilisé</span>
+      ${mlab("Matériel utilisé", "mats", r.mats)}
       <div class="rchips">${chips(R_MATS, r.mats, "mats")}</div>
-      <span class="rlab">Zones traitées</span>
+      ${mlab("Zones traitées", "tzones", r.tzones)}
       <div class="rchips">${chips(R_TZONES, r.tzones, "tzones")}</div>
       <span class="rlab">Actions réalisées</span>
       <textarea oninput="REPORTS[${id}].act=this.value" placeholder="Pose de 6 postes d'appâtage, colmatage provisoire, pulvérisation plinthes…">${r.act}</textarea>
@@ -2719,7 +2734,7 @@ function renderReport(id){
       <textarea oninput="REPORTS[${id}].notes=this.value" placeholder="À revoir sous 15 jours, prévenir le gardien…">${r.notes}</textarea>
       <span class="rlab" style="display:flex;align-items:center">Signature du client
         <button class="dre" style="margin-left:auto" onclick="rSigClear()">Effacer</button></span>
-      <div class="sigbox"><canvas id="rsig" width="820" height="220"></canvas></div>
+      <div class="sigbox"><canvas id="rsig" width="820" height="220"></canvas><div class="sigh" id="rsigh">✍️ Le client signe ici</div></div>
       <small style="font-size:.72rem;color:var(--muted);display:block;margin-top:6px">Le client signe au doigt — vaut prise de connaissance du rapport</small>`;
   }
 
@@ -2730,7 +2745,7 @@ function renderReport(id){
             sur le bouton l'allongeait pour rien. -->
        <button class="dbig rnext" onclick="rNav(${id},1)">Suivant →</button>`
     : `<button class="dbig sec" onclick="rNav(${id},-1)">← Précédent</button>
-       <button class="dbig rnext" onclick="rSave(${id})">✓ Valider le rapport</button>
+       <button class="dbig rnext g" onclick="rSave(${id})">✓ Valider le rapport</button>
        <!-- 27/07 : les deux boutons-icones Apercu PDF et E-mail sont retires.
             Ils faisaient doublon avec « Telecharger le rapport PDF » et
             « Envoyer par e-mail au client », qui apparaissent une fois le
@@ -2803,6 +2818,9 @@ function rTogSet(id, key, val, el){
   const set = REPORTS[id][key];
   set.has(val) ? set.delete(val) : set.add(val);
   el.classList.toggle("on");
+  /* le compteur du titre suit la coche */
+  const rc = document.getElementById("rlc-" + key);
+  if(rc) rc.textContent = set.size ? "· " + set.size : "";
 }
 function rAllRecos(id){
   const r = REPORTS[id];
@@ -2816,11 +2834,12 @@ function rQuote(id, val){
 }
 function rProdRow(id, pr, j){
   return `<div class="prow">
-    <select onchange="REPORTS[${id}].prods[${j}].p=+this.value">
-      ${PRODUITS.map((p,k)=>`<option value="${k}" ${pr.p===k?'selected':''}>${p}</option>`).join("")}
+    <select onchange="REPORTS[${id}].prods[${j}].p=+this.value" aria-label="Produit">
+      <option value="0" ${pr.p===0?'selected':''} disabled hidden>— Choisir un produit —</option>
+      ${PRODUITS.map((p,k)=>k===0?"":`<option value="${k}" ${pr.p===k?'selected':''}>${p}</option>`).join("")}
     </select>
-    <input type="number" inputmode="decimal" min="1" value="${pr.q}" oninput="REPORTS[${id}].prods[${j}].q=+this.value||1" title="Quantité">
-    <button class="px" onclick="rDelProd(${id},${j})">✕</button>
+    <input type="number" inputmode="decimal" min="1" value="${pr.q}" oninput="REPORTS[${id}].prods[${j}].q=+this.value||1" aria-label="Quantité">
+    <button class="px" onclick="rDelProd(${id},${j})" title="Retirer ce produit">✕</button>
   </div>`;
 }
 function rAddProd(id){
@@ -2845,7 +2864,9 @@ function rSigInit(){
     return [(p.clientX - r.left) * c.width / r.width, (p.clientY - r.top) * c.height / r.height];
   };
   const start = e => { e.preventDefault(); rsigDown = true; const [x,y] = pos(e); rsigCtx.beginPath(); rsigCtx.moveTo(x,y); };
-  const move  = e => { if(!rsigDown) return; e.preventDefault(); rsigDirty = true; const [x,y] = pos(e); rsigCtx.lineTo(x,y); rsigCtx.stroke(); };
+  const move  = e => { if(!rsigDown) return; e.preventDefault(); rsigDirty = true;
+    const hh = document.getElementById("rsigh"); if(hh) hh.style.display = "none";
+    const [x,y] = pos(e); rsigCtx.lineTo(x,y); rsigCtx.stroke(); };
   const end   = () => { rsigDown = false; };
   c.addEventListener("mousedown", start); c.addEventListener("mousemove", move); document.addEventListener("mouseup", end);
   c.addEventListener("touchstart", start, {passive:false}); c.addEventListener("touchmove", move, {passive:false}); c.addEventListener("touchend", end);
