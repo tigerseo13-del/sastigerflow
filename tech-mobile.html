@@ -436,6 +436,12 @@ label[for]{cursor:pointer}
 .cdot{width:7px;height:7px;border-radius:50%;background:var(--orange,#FF5A1F);flex:none;animation:cpulse 1.8s ease-in-out infinite}
 @keyframes cpulse{0%,100%{opacity:1}50%{opacity:.35}}
 @media(prefers-reduced-motion:reduce){.cdot{animation:none}}
+/* Temps passe sur place, rappele a l'etape Cloture du rapport. */
+.tempsbox{display:flex;align-items:center;gap:11px;background:var(--orange-soft,#FFF1EA);border:1px solid #FFD3BF;border-radius:13px;padding:11px 13px;margin-bottom:14px}
+.tempsbox .tico2{width:32px;height:32px;border-radius:10px;background:#fff;display:grid;place-items:center;flex:none}
+.tempsbox .tico2 svg{width:16px;height:16px;stroke:var(--orange-deep,#EA4A10);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tempsbox b{display:block;font-size:.85rem;font-weight:800;color:var(--orange-deep,#EA4A10)}
+.tempsbox small{display:block;font-size:.71rem;color:var(--ink-2);margin-top:1px;line-height:1.35}
 </style>
 </head>
 <body>
@@ -1176,7 +1182,11 @@ function rrap(){
     <div class="rchips">${chips(R_TZONES, RAPD.ztr, "rapZtr")}</div>
     <div class="rlab">Actions réalisées</div>
     <textarea class="rta" id="r-met" placeholder="Pose de 6 postes, pulvérisation plinthes, colmatage provisoire…">${RAPD.met || ""}</textarea>`;
-  else if(RSTEP === 3) h = `<div class="rlab">Recommandations au client</div>
+  else if(RSTEP === 3) h = `${m.debut ? `<div class="tempsbox">
+      <span class="tico2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <span class="txt"><b>Sur place depuis ${dureeReelle(m)}</b><small>arrivée à ${hhmm(m.debut)} · le temps se fige à l'envoi du rapport</small></span>
+    </div>` : ""}
+    <div class="rlab">Recommandations au client</div>
     <div class="recolist">${R_RECOS.map(x=>`<button type="button" class="recoc ${RAPD.recos.has(x)?"on":""}" onclick="rapReco('${esc(x)}')"><i class="rcb">✓</i><span>${x}</span></button>`).join("")}</div>
     <div class="rcount">${RAPD.recos.size ? "✓ " + RAPD.recos.size + " conseil" + (RAPD.recos.size > 1 ? "s" : "") + " — ils partiront sur le rapport du client" : "coche ceux que tu as donnés au client"}</div>
 
@@ -1237,8 +1247,29 @@ function rapQuote(v){ rapKeep(); RAPD.quote = v; rrap(); }
 function rapZone(z){ rapKeep(); RAPD.zones.has(z) ? RAPD.zones.delete(z) : RAPD.zones.add(z); rrap(); }
 function rapZtr(z){ rapKeep(); RAPD.ztr.has(z) ? RAPD.ztr.delete(z) : RAPD.ztr.add(z); rrap(); }
 function rapReco(r){ rapKeep(); RAPD.recos.has(r) ? RAPD.recos.delete(r) : RAPD.recos.add(r); rrap(); }
+/* ===== Temps passe sur place =====
+   Le chrono demarre a « Demarrer l'intervention » (m.debut) et s'arrete quand
+   le rapport est valide (m.fin). Entre les deux il tourne. Si l'heure de depart
+   est inconnue (intervention lancee avant cette version), on n'affiche rien
+   plutot qu'une duree inventee. */
+function hhmm(ts){
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+}
+function dureeTxt(ms){
+  const min = Math.max(0, Math.round(ms / 60000));
+  return min < 60 ? min + " min" : Math.floor(min/60) + " h " + String(min % 60).padStart(2,"0");
+}
+function dureeReelle(m){
+  if(!m || !m.debut) return "";
+  return dureeTxt((m.fin || Date.now()) - m.debut);
+}
 function finishRap(){
-  const m = M[RAPID]; if(m){ m.st = "done"; }
+  const m = M[RAPID];
+  if(m){
+    m.st = "done";
+    if(m.debut && !m.fin) m.fin = Date.now();   /* le chrono s'arrete ici */
+  }
   delete RAPDRAFTS[RAPID];
   if(RAPD && RAPD.quote && m){
     DEVIS.push({id:"d" + Date.now(), mid:m.id, client:m.client, m:0, st:"attente",
@@ -1246,7 +1277,8 @@ function finishRap(){
     toast("Brouillon de devis créé pour " + m.client + " — onglet Devis");
   }
   g("ok-h").textContent = "Rapport envoyé";
-  g("ok-t").textContent = "Mission bouclée" + (m && m.paid ? ", paiement encaissé" : "") + " — le bureau voit tout en temps réel.";
+  const _d = dureeReelle(m);
+  g("ok-t").textContent = "Mission bouclée" + (_d ? " en " + _d : "") + (m && m.paid ? ", paiement encaissé" : "") + " — le bureau voit tout en temps réel.";
   RAPID = null; go("ok");
 }
 
