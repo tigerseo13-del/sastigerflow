@@ -1667,7 +1667,7 @@ function renderDay(){
       }
       return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
         style="--evc:${TC.c};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
-        <span class="evstub" title="${v.cp} ${v.ville}"><b>${v.cp}</b></span>
+        <span class="evtab" title="${v.cp} ${v.ville}"><b>${v.cp}</b><i>${v.ville}</i></span>
         <div class="evbody">
           <div class="evtop">
             <span class="ltyp">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
@@ -1675,7 +1675,7 @@ function renderDay(){
           </div>
           <div class="lnui">${T.lbl}</div>
           <div class="lhr">${badge}<span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span>${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</div>
-          <div class="lcli">${v.client}${v.ville ? ' — ' + v.ville : ''}</div>
+          <div class="lcli">${v.client}</div>
         </div>
         <div class="rsz"></div>
       </div>${buf}`;
@@ -4016,6 +4016,26 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket .evstub{width:46px}
 .ev.ticket .evstub b{font-size:.73rem;letter-spacing:.02em}
 .ev.ticket .lcli{font-size:.65rem}
+/* ===== Piste C : la languette de dossier =====
+   Une vraie languette en saillie serait rognee (les cartes masquent ce qui
+   depasse) et decalerait la carte de son creneau horaire. Elle est donc
+   affleurante en haut a gauche : meme lecture, alignement preserve. */
+.ev.ticket{flex-direction:column;align-items:stretch}
+.ev.ticket .evtab{align-self:flex-start;max-width:100%;display:inline-flex;align-items:baseline;gap:6px;
+  background:var(--evc);color:#fff;border-radius:12px 0 11px 0;padding:3px 11px 3px 12px;
+  overflow:hidden;white-space:nowrap;flex:none}
+.ev.ticket .evtab b{font-family:ui-monospace,'SF Mono',monospace;font-size:.68rem;font-weight:800;letter-spacing:.02em;flex:none}
+.ev.ticket .evtab i{font-style:normal;font-size:.58rem;font-weight:700;opacity:.9;letter-spacing:.03em;
+  overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ev.ticket .evbody{padding:7px 11px 7px;flex:1;min-height:0}
+.ev.ticket .evtop{margin-bottom:0}
+.ev.ticket .lnui{margin-top:5px}
+/* creneaux courts : la languette se resume au code postal */
+.ev.ticket.sm .evtab i{display:none}
+.ev.ticket.xs{flex-direction:column}
+.ev.ticket.xs .evtab{padding:1px 9px 1px 10px;border-radius:11px 0 9px 0}
+.ev.ticket.xs .evtab i{display:none}
+.ev.ticket.xs .evbody{flex-direction:row;align-items:center;gap:7px;padding:2px 9px 3px}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
