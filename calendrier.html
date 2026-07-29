@@ -320,12 +320,14 @@ h1,.num{font-family:'Sora',sans-serif}
 .rlab:first-child{margin-top:0}
 .rlab .rlc{color:var(--green-d);font-weight:800;letter-spacing:0;font-size:.74rem}
 .rlab .rmulti{margin-left:auto;font-family:'Inter';font-weight:600;color:#A6ABBB;font-size:.68rem;letter-spacing:0}
-/* detail d'un produit coche : nom + concentration + quantite, tout facultatif */
+/* detail d'un produit coche : nom + concentration + quantite, tout facultatif.
+   En GRID a pistes explicites : aucune regle globale sur input/b ne peut
+   ecraser les largeurs (un conflit flex rendait le nom invisible). */
 .prodet{margin-top:10px;display:flex;flex-direction:column;gap:7px}
-.prow2{display:flex;align-items:center;gap:9px;background:#F7F8FA;border:1px solid #EFF1F5;border-radius:11px;padding:8px 12px}
-.prow2 b{flex:1;min-width:0;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prow2 .pconc{width:180px;flex:none;border:1.5px solid var(--line);border-radius:9px;padding:7px 10px;font:600 .76rem Inter,sans-serif;background:#fff}
-.prow2 input[type=number]{width:64px;flex:none;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font:600 .78rem Inter,sans-serif;background:#fff;text-align:center}
+.prow2{display:grid;grid-template-columns:minmax(0,1fr) 180px 64px;gap:9px;align-items:center;background:#F7F8FA;border:1px solid #EFF1F5;border-radius:11px;padding:8px 12px}
+.prow2 .pname{min-width:0;font-size:.8rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow2 .pconc{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:7px 10px;font:600 .76rem Inter,sans-serif;background:#fff;box-sizing:border-box}
+.prow2 .pqty{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font:600 .78rem Inter,sans-serif;background:#fff;text-align:center;box-sizing:border-box}
 .rchip.autre{background:#fff;box-shadow:inset 0 0 0 1.5px dashed #D8DBE2;box-shadow:none;border:1.5px dashed #D8DBE2;color:var(--muted);font-weight:700}
 .rchip.autre:hover{border-color:var(--green);color:var(--green-d);background:#fff}
 .rtzin{width:100%;margin-top:8px;border:1.5px solid var(--green);border-radius:11px;padding:10px 13px;font:600 .8rem Inter,sans-serif;outline:none;background:#FBFFFD}
@@ -2757,9 +2759,9 @@ function renderReport(id){
         onkeydown="if(event.key === 'Enter') rPrAdd(${id}, this.value)" onblur="rPrAdd(${id}, this.value)">` : ""}
       ${sel.length ? `<div class="prodet">${r.prods.map((pr,j) => pr.p === 0 ? "" : `
         <div class="prow2">
-          <b>${pr.p > 0 ? PRODUITS[pr.p] : (pr.nom || "")}</b>
+          <span class="pname">${pr.p > 0 ? PRODUITS[pr.p] : (pr.nom || "")}</span>
           <input class="pconc" placeholder="Concentration (ex : 0,5 %)" value="${pr.c || ""}" oninput="REPORTS[${id}].prods[${j}].c=this.value">
-          <input type="number" inputmode="decimal" min="1" value="${pr.q}" title="Quantité" oninput="REPORTS[${id}].prods[${j}].q=+this.value||1">
+          <input class="pqty" type="number" inputmode="decimal" min="1" value="${pr.q}" title="Quantité" oninput="REPORTS[${id}].prods[${j}].q=+this.value||1">
         </div>`).join("")}</div>` : ""}`;
       })()}
       ${mlab("Matériel utilisé", "mats", r.mats)}
