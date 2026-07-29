@@ -450,6 +450,10 @@ label[for]{cursor:pointer}
 .paygrid .pill .pico{font-size:1.05rem;line-height:1}
 .paygrid .pill.on{border-color:var(--orange,#FF5A1F)}
 .ehint{display:block;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0;margin-top:2px}
+/* Chronometre sur l'accueil : premier ecran, premiere information. */
+.homechrono{display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:700;color:var(--orange-deep,#EA4A10);
+  background:var(--orange-soft,#FFF1EA);border:1px solid #FFD3BF;border-radius:11px;padding:8px 12px;margin:0 0 10px}
+.homechrono b{font-weight:800;font-variant-numeric:tabular-nums;font-size:.92rem}
 </style>
 </head>
 <body>
@@ -798,11 +802,16 @@ function renderAll(){ rhome(); rlist(); rdevis(); rnotifs(); if(CURID) rdetail()
 
 /* ---------- accueil ---------- */
 function rhome(){
-  const next = (M[2].st === "todo" || M[2].st === "encours") ? M[2] : (todos()[0] || null);
+  /* 29/07 : si une intervention tourne, l'accueil l'annonce EN PREMIER avec son
+     chronometre. Avant, il fallait aller sur l'onglet Interventions pour le voir. */
+  const encours = Object.values(M).find(m => m.st === "encours");
+  const next = encours || ((M[2].st === "todo") ? M[2] : (todos()[0] || null));
   const nc = g("nextcard");
   if(next){
+    const enCours = next.st === "encours";
     nc.innerHTML = `
-      <div class="nlab">PROCHAINE <b>INTERVENTION</b></div>
+      <div class="nlab">${enCours ? 'EN <b>COURS</b>' : 'PROCHAINE <b>INTERVENTION</b>'}</div>
+      ${enCours && next.debut ? `<div class="homechrono" data-debut="${next.debut}"><span class="cdot"></span>Sur place depuis <b class="ctick">${chronoTxt(Date.now() - next.debut)}</b></div>` : ""}
       <div class="nrow" onclick="openM(${next.id})">
         <span class="nh">${next.h}</span>
         <span class="nb"><b>${next.client}</b><span class="nchips">${next.nuis.length > 1 ? next.nuis.slice(1).map(chip).join("") : chip(next.nuis[0])}</span>
@@ -1483,7 +1492,7 @@ renderAll();
    ca casserait les gestes en cours) : on ne touche qu'au texte. */
 setInterval(function(){
   document.querySelectorAll("[data-debut] .ctick, .ctick[data-debut]").forEach(function(){});
-  document.querySelectorAll(".chrono[data-debut], .tempsbox b[data-debut]").forEach(function(el){
+  document.querySelectorAll(".chrono[data-debut], .homechrono[data-debut], .tempsbox b[data-debut]").forEach(function(el){
     const dep = parseInt(el.getAttribute("data-debut"), 10);
     if(!dep) return;
     const cible = el.classList.contains("ctick") ? el : el.querySelector(".ctick");
