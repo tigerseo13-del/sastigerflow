@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aperçu — l'étape 3 complète, calendrier + créneau</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
+  --line:#EBECF1; --bg:#F4F5F8;
+  --green:#17A87E; --green-d:#0A6B51; --green-bg:#DFF3ED;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;padding:30px 14px 70px}
+.wrap{max-width:620px;margin:0 auto}
+h1{font-family:'Sora';font-size:1.3rem;margin-bottom:6px}
+.intro{font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:22px}
+button{font-family:inherit;cursor:pointer;border:0;background:none}
+svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 12px 34px -18px rgba(23,26,32,.35)}
+.phead{padding:16px 20px 0;text-align:center}
+.ptags{display:flex;gap:6px;margin-bottom:8px;justify-content:flex-start}
+.ptag{font-size:.6rem;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:3px 9px;background:var(--green-bg);color:var(--green-d);text-transform:uppercase}
+.ptag.n{background:#F1F2F5;color:var(--ink-2);text-transform:none}
+.ptitle{font-family:'Sora';font-size:1.12rem;font-weight:800}
+.pref{font-size:.68rem;color:#A6ABBB;font-weight:600;margin-top:2px}
+.jauge{padding:14px 26px 12px;border-bottom:1px solid #F2F3F6}
+.jbar{position:relative;height:30px}
+.jrail{position:absolute;left:12px;right:12px;top:13px;height:3px;background:#EEF0F4;border-radius:3px}
+.jfill{position:absolute;left:12px;top:13px;height:3px;background:var(--orange);border-radius:3px;width:calc(100% - 24px)}
+.jn{position:absolute;top:0;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid #DFE2E8;display:grid;place-items:center;font-size:.66rem;font-weight:800;color:#B4B9C4}
+.jn.ok{background:var(--green);border-color:var(--green);color:#fff}
+.jn.cur{border-color:var(--orange);color:var(--orange-deep)}
+.jlabs{display:flex;justify-content:space-between;margin-top:6px;font-size:.64rem;font-weight:800}
+.jlabs .ok{color:var(--green-d)}
+.jlabs .cur{color:var(--orange-deep)}
+.pbody{padding:18px 20px}
+.rlab{display:flex;align-items:baseline;gap:8px;font-family:'Sora','Inter';font-size:.86rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);margin:22px 0 11px;padding-top:20px;border-top:1px solid #F4F5F8}
+.rlab:first-child{margin-top:0;padding-top:0;border-top:0}
+.rlab .m{margin-left:auto;font-family:'Inter';font-weight:600;color:#A6ABBB;font-size:.68rem;letter-spacing:0}
+.rlab .act{margin-left:auto;font-family:'Inter';font-size:.72rem;font-weight:800;color:var(--orange-deep)}
+.rlab .c{font-size:.74rem;color:var(--green-d)}
+
+.recogrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.recoc{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;font-size:.78rem;font-weight:600;color:var(--ink-2);background:#fff}
+.recoc .cb{width:20px;height:20px;border-radius:7px;border:1.5px solid #D8DBE2;background:#fff;display:grid;place-items:center;font-size:.7rem;font-weight:800;color:transparent;flex:none}
+.recoc.on{border-color:var(--green);background:var(--green-bg);color:var(--green-d);font-weight:700}
+.recoc.on .cb{background:var(--green);border-color:var(--green);color:#fff}
+
+.qcards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qcard{display:flex;flex-direction:column;align-items:center;gap:3px;border:1.5px solid var(--line);border-radius:14px;background:#fff;padding:15px 10px;text-align:center}
+.qcard b{font-size:.88rem;font-weight:800}
+.qcard small{font-size:.72rem;font-weight:700;color:var(--muted)}
+.qcard.g{border-color:var(--green);background:#E4F5EE}
+.qcard.g b{color:var(--green-d)}
+
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;padding:10px 15px;font-size:.8rem;font-weight:650;color:var(--ink-2);background:#F1F2F6;cursor:pointer}
+.chip.on{background:var(--green);color:#fff;font-weight:700}
+.chip.on::before{content:"✓";font-weight:800}
+
+/* ===== le calendrier + créneau ===== */
+.calbox{background:#FBFBFD;border:1px solid #EFF1F5;border-radius:14px;padding:14px 16px;margin-top:10px}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calhead b{font-family:'Sora';font-size:.86rem}
+.calhead .nav{display:flex;gap:5px}
+.calhead .nav span{width:26px;height:26px;border-radius:8px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:.72rem;color:var(--ink-2);cursor:pointer}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.calgrid .wd{font-size:.6rem;font-weight:800;color:#A6ABBB;text-transform:uppercase;padding:4px 0}
+.calgrid .d{font-size:.76rem;font-weight:600;color:var(--ink-2);padding:7px 0;border-radius:9px;cursor:pointer}
+.calgrid .d.out{color:#D5D8DF}
+.calgrid .d:hover{background:#EEF0F4}
+.calgrid .d.sel{background:var(--green);color:#fff;font-weight:800}
+.calgrid .d.today{box-shadow:inset 0 0 0 1.5px var(--orange);color:var(--orange-deep);font-weight:800}
+.creneau{margin-top:12px;padding-top:12px;border-top:1px dashed #E4E7ED}
+.creneau .clab{font-size:.7rem;font-weight:800;color:#6B7180;margin-bottom:8px;letter-spacing:.03em}
+.datesel{display:flex;align-items:center;gap:8px;margin-top:12px;background:var(--green-bg);border-radius:11px;padding:10px 13px;font-size:.8rem;font-weight:700;color:var(--green-d)}
+
+.ta{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font:600 .82rem Inter,sans-serif;color:#A6ABBB;background:#fff;min-height:64px}
+.sigbox{border:1.5px dashed #D5D8DF;border-radius:12px;background:#fff;height:120px;display:grid;place-items:center;color:#C2C6D0;font-size:.8rem;font-weight:700}
+.sighint{font-size:.7rem;color:var(--muted);margin-top:6px}
+.pfoot{display:flex;justify-content:space-between;gap:9px;padding:12px 18px;border-top:1px solid #F2F3F6}
+.prev{display:inline-flex;align-items:center;padding:11px 20px;border-radius:999px;font-size:.82rem;font-weight:700;background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.val{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border-radius:999px;font-size:.82rem;font-weight:700;background:var(--green);color:#fff;box-shadow:0 4px 12px -5px rgba(23,168,126,.5)}
+.foot{font-size:.78rem;color:var(--muted);line-height:1.6;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-top:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>L'étape 3 complète — calendrier et créneau horaire</h1>
+  <p class="intro">Le « Prochain passage » devient un vrai outil : les raccourcis d'un appui, un <b>calendrier</b> qui s'ouvre pour choisir précisément, un <b>créneau horaire</b>, et la synthèse en clair. Tout le reste de l'étape en style C.</p>
+
+  <div class="panel">
+    <div class="phead">
+      <div class="ptags"><span class="ptag">Rapport</span><span class="ptag n">🪲 Punaises de lit</span></div>
+      <div class="ptitle">Rapport d'intervention</div>
+      <div class="pref">INT-2026-1006 · Sophie Larson · 11:00 – 13:00</div>
+    </div>
+    <div class="jauge">
+      <div class="jbar"><div class="jrail"></div><div class="jfill"></div><span class="jn ok" style="left:12px">✓</span><span class="jn ok" style="left:50%">✓</span><span class="jn cur" style="left:calc(100% - 12px)">3</span></div>
+      <div class="jlabs"><span class="ok">Observation</span><span class="ok">Traitement</span><span class="cur">Clôture</span></div>
+    </div>
+    <div class="pbody">
+
+      <div class="rlab">Recommandations au client <span class="act">Tout sélectionner</span></div>
+      <div class="recogrid">
+        <div class="recoc on"><span class="cb">✓</span>Boucher les fissures et points d'entrée</div>
+        <div class="recoc"><span class="cb">✓</span>Améliorer la gestion des déchets</div>
+        <div class="recoc on"><span class="cb">✓</span>Réparer la fuite d'eau sous l'évier</div>
+        <div class="recoc"><span class="cb">✓</span>Sortir les poubelles le soir même</div>
+        <div class="recoc"><span class="cb">✓</span>Poser des moustiquaires / grilles</div>
+        <div class="recoc"><span class="cb">✓</span>Prévoir un contrôle mensuel</div>
+      </div>
+
+      <div class="rlab">Devis complémentaire nécessaire ?</div>
+      <div class="qcards">
+        <div class="qcard g"><span style="color:var(--green-d)">✓</span><b>Non</b><small>tout est réglé</small></div>
+        <div class="qcard"><span>📄</span><b>Oui</b><small>travaux à chiffrer</small></div>
+      </div>
+
+      <div class="rlab">Prochain passage conseillé <span class="m">une fiche partira dans « À planifier »</span></div>
+      <div class="chips">
+        <span class="chip">Dans 2 semaines</span>
+        <span class="chip on">Dans 1 mois</span>
+        <span class="chip">Dans 3 mois</span>
+      </div>
+      <div class="calbox">
+        <div class="calhead"><b>Août 2026</b><span class="nav"><span>‹</span><span>›</span></span></div>
+        <div class="calgrid">
+          <span class="wd">L</span><span class="wd">M</span><span class="wd">M</span><span class="wd">J</span><span class="wd">V</span><span class="wd">S</span><span class="wd">D</span>
+          <span class="d out">27</span><span class="d out">28</span><span class="d out">29</span><span class="d out">30</span><span class="d out">31</span><span class="d">1</span><span class="d">2</span>
+          <span class="d">3</span><span class="d">4</span><span class="d">5</span><span class="d">6</span><span class="d">7</span><span class="d">8</span><span class="d">9</span>
+          <span class="d">10</span><span class="d">11</span><span class="d">12</span><span class="d">13</span><span class="d">14</span><span class="d">15</span><span class="d">16</span>
+          <span class="d">17</span><span class="d">18</span><span class="d">19</span><span class="d">20</span><span class="d">21</span><span class="d">22</span><span class="d">23</span>
+          <span class="d">24</span><span class="d">25</span><span class="d">26</span><span class="d">27</span><span class="d">28</span><span class="d sel">29</span><span class="d">30</span>
+          <span class="d">31</span><span class="d out">1</span><span class="d out">2</span><span class="d out">3</span><span class="d out">4</span><span class="d out">5</span><span class="d out">6</span>
+        </div>
+        <div class="creneau">
+          <div class="clab">CRÉNEAU CONSEILLÉ</div>
+          <div class="chips">
+            <span class="chip on" style="padding:8px 13px;font-size:.76rem">Matin · 8h – 12h</span>
+            <span class="chip" style="padding:8px 13px;font-size:.76rem">Après-midi · 14h – 18h</span>
+            <span class="chip" style="padding:8px 13px;font-size:.76rem">Indifférent</span>
+          </div>
+        </div>
+        <div class="datesel">📅 Fiche de suivi le <b>&nbsp;samedi 29 août 2026, matin</b></div>
+      </div>
+
+      <div class="rlab">Notes de suivi</div>
+      <div class="ta">À revoir sous 15 jours, prévenir le gardien…</div>
+
+      <div class="rlab">Signature du client <span class="act">Effacer</span></div>
+      <div class="sigbox">✍️ Le client signe ici</div>
+      <div class="sighint">Le client signe au doigt — vaut prise de connaissance du rapport</div>
+    </div>
+    <div class="pfoot"><span class="prev">← Précédent</span><span class="val">✓ Valider le rapport</span></div>
+  </div>
+
+  <div class="foot"><b>Comment ça marche :</b> un raccourci (2 sem / 1 mois / 3 mois) place la sélection sur le calendrier ; on peut aussi taper directement un jour. Le créneau (matin / après-midi / indifférent) accompagne la fiche de suivi dans le bac « À planifier » — le bureau sait quand le client préfère être revu. La synthèse en vert dit toujours ce qui partira. Dis-moi <b>go</b> et je câble tout ça, bureau + mobile.</div>
+</div>
+</body>
+</html>
