@@ -867,7 +867,7 @@ function chrono(m){
   if(!m.debut) return "";
   const min = Math.max(0, Math.round((Date.now() - m.debut) / 60000));
   const t = min < 60 ? min + " min" : Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0");
-  return `<div class="chrono"><span class="cdot"></span>Sur place depuis <b>${t}</b></div>`;
+  return `<div class="chrono" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis <b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>`;
 }
 function rlist(){
   const all = Object.values(M);
@@ -1203,7 +1203,7 @@ function rrap(){
     <textarea class="rta" id="r-met" placeholder="Pose de 6 postes, pulvérisation plinthes, colmatage provisoire…">${RAPD.met || ""}</textarea>`;
   else if(RSTEP === 3) h = `${m.debut ? `<div class="tempsbox">
       <span class="tico2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-      <span class="txt"><b>Sur place depuis ${dureeReelle(m)}</b><small>arrivée à ${hhmm(m.debut)} · le temps se fige à l'envoi du rapport</small></span>
+      <span class="txt"><b data-debut="${m.debut}">Sur place depuis <span class="ctick">${chronoTxt((m.fin || Date.now()) - m.debut)}</span></b><small>arrivée à ${hhmm(m.debut)} · le temps se fige à l'envoi du rapport</small></span>
     </div>` : ""}
     <div class="rlab">Recommandations au client</div>
     <div class="recolist">${R_RECOS.map(x=>`<button type="button" class="recoc ${RAPD.recos.has(x)?"on":""}" onclick="rapReco('${esc(x)}')"><i class="rcb">✓</i><span>${x}</span></button>`).join("")}</div>
@@ -1278,6 +1278,13 @@ function hhmm(ts){
 function dureeTxt(ms){
   const min = Math.max(0, Math.round(ms / 60000));
   return min < 60 ? min + " min" : Math.floor(min/60) + " h " + String(min % 60).padStart(2,"0");
+}
+/* Chronometre vivant : h:mm:ss, comme un vrai compteur. */
+function chronoTxt(ms){
+  const t = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
+  const mm = String(m).padStart(2, "0"), ss = String(sec).padStart(2, "0");
+  return h ? h + ":" + mm + ":" + ss : mm + ":" + ss;
 }
 function dureeReelle(m){
   if(!m || !m.debut) return "";
@@ -1469,6 +1476,24 @@ function delAcct(){
 }
 
 renderAll();
+
+/* ===== Le battement du chronometre =====
+   Une seule horloge pour toute l'appli : chaque seconde, elle reecrit le texte
+   des compteurs affiches. On ne redessine PAS les listes (ce serait couteux et
+   ca casserait les gestes en cours) : on ne touche qu'au texte. */
+setInterval(function(){
+  document.querySelectorAll("[data-debut] .ctick, .ctick[data-debut]").forEach(function(){});
+  document.querySelectorAll(".chrono[data-debut], .tempsbox b[data-debut]").forEach(function(el){
+    const dep = parseInt(el.getAttribute("data-debut"), 10);
+    if(!dep) return;
+    const cible = el.classList.contains("ctick") ? el : el.querySelector(".ctick");
+    if(!cible) return;
+    const id = el.closest("[data-mid]") ? el.closest("[data-mid]").getAttribute("data-mid") : null;
+    const m = id && M[id] ? M[id] : null;
+    const fin = (m && m.fin) ? m.fin : null;      /* fige quand le rapport est valide */
+    cible.textContent = chronoTxt((fin || Date.now()) - dep);
+  });
+}, 1000);
 </script>
 </body>
 </html>
