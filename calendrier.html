@@ -1989,6 +1989,7 @@ function render(){
 /* ================= TERMINÉE ✓ ================= */
 /* ===== Panneau détail intervention ===== */
 let DID = null, downXY = null;
+let DOPENT = 0;   /* 29/07 : quand la fiche vient d'etre OUVERTE — la cascade ne joue qu'a ce moment */
 const refInt = id => "INT-2026-" + String(1000 + id);
 function statusOf(v){
   if(v.cancelled) return ["cancel","Annulée"];
@@ -2007,6 +2008,7 @@ function openDetail(id){
   DID = id;
   REASS = false;
   DTAB = "res";
+  DOPENT = Date.now();
   renderDetail();
   document.getElementById("drawer").classList.add("open");
   document.getElementById("dveil").classList.add("open");
@@ -2371,22 +2373,35 @@ function renderDetail(){
      jointes et Rapports il faisait doublon avec l'onglet Resume ; sur Client il
      repetait mot pour mot le nom, le telephone et l'adresse affiches juste en
      dessous. Il n'apparait plus que sur Resume, qui est sa place. */
+  /* 29/07 (choix patron, organisation B) : un en-tete a deux blocs qui se
+     repondent — l'heure en chiffres de titre et la date a gauche, le statut et
+     les pastilles empiles au bord droit — un filet, puis deux rangees pleine
+     largeur identiques : l'adresse (l'itineraire au bout) et le client (sa
+     fiche au bout). Des gestes, plus des lignes a lire. */
   const FICHE = `
     <div class="dcard">
       <div class="dh">Détails de l'intervention</div>
-      <!-- 27/07 (option A) : priorite, statut et type quittent les lignes cle/valeur
-           pour une rangee de pastilles en tete. Ce sont trois ETATS : on les reconnait
-           a leur couleur, les lire mot a mot ne servait a rien, et le retard se voit
-           maintenant avant meme le nom du client. La reference descend en pied : on ne
-           la lit jamais, on la copie. -->
-      <div class="detats">
-        <span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span>
-        <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
-        <span class="mchip m-${v.mode}" style="font-size:.68rem;padding:2.5px 9px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + "\u00a0€" : ""}</span>
+      <div class="bhead">
+        <div class="bl">
+          <span class="bh">${hstr(v.start)} – ${hstr(v.start + v.dur)}</span>
+          <small>${dateTxt}</small>
+        </div>
+        <div class="br">
+          <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
+          <span class="bchips">
+            <span class="mchip m-${v.mode}" style="font-size:.66rem;padding:3px 9px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + "\u00a0€" : ""}</span>
+            <span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span>
+          </span>
+        </div>
       </div>
-      <div class="dkv"><span class="k">Client</span><span class="v"><a class="vcli" href="#" onclick="cliPanel('${isIron ? 'client.html?panel=1' : 'client.html?c=' + encodeURIComponent(v.client) + '&panel=1'}');return false">${v.client} →</a></span></div>
-      <div class="dkv"><span class="k">Date planifiée</span><span class="v">${dateTxt} · ${hstr(v.start)} – ${hstr(v.start + v.dur)}</span></div>
-      <div class="dkv"><span class="k">Adresse</span><span class="v"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.rue ? v.rue + ", " : ""}${v.cp} ${v.ville}</span></div>
+      <button type="button" class="rowb" onclick="window.open('https://www.google.com/maps/search/${encodeURIComponent((v.rue ? v.rue + " " : "") + v.cp + " " + v.ville)}','_blank')">
+        <svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span class="tx2">${v.rue ? v.rue + ", " : ""}${v.cp} ${v.ville}</span><span class="go">Itinéraire →</span>
+      </button>
+      <button type="button" class="rowb" onclick="cliPanel('${isIron ? 'client.html?panel=1' : 'client.html?c=' + encodeURIComponent(v.client) + '&panel=1'}')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="tx2">${v.client}</span><span class="go">Sa fiche →</span>
+      </button>
     </div>`;
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead">
@@ -2424,7 +2439,7 @@ function renderDetail(){
         })()}
       </div>
     </div>
-    <div class="dsheet">${DTAB === "res" ? FICHE : ""}${body}</div>`;
+    <div class="dsheet ${Date.now() - DOPENT < 600 ? 'anim' : ''}">${DTAB === "res" ? FICHE : ""}${body}</div>`;
 }
 function standbyInt(id){
   const v = INTERVS.find(x=>x.id===id);
@@ -3411,7 +3426,7 @@ function pendDelNote(pid){
 function openPending(pid){
   const p = PENDING.find(x => x.pid === pid);
   if(!p) return;
-  if(PDID !== pid){ PDTAB = "res"; PNEDIT = null; }   /* nouvelle carte → retour au Résumé */
+  if(PDID !== pid){ PDTAB = "res"; PNEDIT = null; DOPENT = Date.now(); }   /* nouvelle carte → retour au Résumé + cascade */
   PDID = pid;
   /* 28/07 — BUG. Le panneau du bac deduisait le mode de facturation du CLIENT
      (modeDe) en ignorant celui choisi a la creation. Une intervention creee en
@@ -3443,19 +3458,32 @@ function openPending(pid){
         <button class="go" onclick="toast('Encaissement du solde — bientôt relié')">Encaisser</button></div>`
     : `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">🔁 2ᵉ passage / garantie — rien à encaisser</b></span></div>`;
 
-  /* ----- meme grille que la fiche planifiee : la carte Details ne vit que sur Resume ----- */
+  /* ----- meme organisation B que la fiche planifiee. Une carte du bac n'a pas
+     d'heure : le bloc de gauche le dit, en toutes lettres, avec la duree. ----- */
   const FICHE = `
     <div class="dcard">
       <div class="dh">Détails de l'intervention</div>
-      <div class="detats">
-        <span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>
-        <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
-        <span class="mchip m-${m}" style="font-size:.68rem;padding:2.5px 9px">${M.ic} ${M.lbl}${p.montant ? " · " + evMontant(p.montant).slice(3) : ""}</span>
+      <div class="bhead">
+        <div class="bl">
+          <span class="bh" style="font-size:1.12rem">Pas encore planifiée</span>
+          <small>${dur} prévues · glisse la carte sur l'agenda</small>
+        </div>
+        <div class="br">
+          <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
+          <span class="bchips">
+            <span class="mchip m-${m}" style="font-size:.66rem;padding:3px 9px">${M.ic} ${M.lbl}${p.montant ? " · " + evMontant(p.montant).slice(3) : ""}</span>
+            <span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>
+          </span>
+        </div>
       </div>
-      ${kv("Client", `<a class="vcli" href="#" onclick="cliPanel('client.html?c=${encodeURIComponent(p.client)}&panel=1');return false">${p.client} →</a>`)}
-      ${kv("Date planifiée", `<span style="color:var(--muted)">Pas encore planifiée · ${dur} prévues</span>`)}
-      ${kv("Adresse", '<svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + adr)}
-      ${kv("Nuisible", T.ic + " " + T.lbl)}
+      <button type="button" class="rowb" onclick="window.open('https://www.google.com/maps/search/${encodeURIComponent((p.rue ? p.rue + " " : "") + p.cp + " " + p.ville)}','_blank')">
+        <svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span class="tx2">${adr}</span><span class="go">Itinéraire →</span>
+      </button>
+      <button type="button" class="rowb" onclick="cliPanel('client.html?c=${encodeURIComponent(p.client)}&panel=1')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="tx2">${p.client}</span><span class="go">Sa fiche →</span>
+      </button>
       ${p.rappel ? kv(p.suivi ? "Prévu le" : "Rappel", p.rappel.split("-").reverse().join("/")) : ""}
     </div>`;
 
@@ -3575,7 +3603,7 @@ function openPending(pid){
         })()}
       </div>
     </div>
-    <div class="dsheet">${PDTAB === "res" ? FICHE : ""}${body}</div>`;
+    <div class="dsheet ${Date.now() - DOPENT < 600 ? 'anim' : ''}">${PDTAB === "res" ? FICHE : ""}${body}</div>`;
   document.getElementById("drawer").classList.add("open");
   document.getElementById("dveil").classList.add("open");
   document.body.style.overflow = "hidden";
@@ -4271,6 +4299,34 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .finrow .dbig{flex:none}
 .finrow .goic svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .finsub{font-size:.74rem;font-weight:600;color:var(--muted)}
+/* ===== 29/07 (choix patron) — organisation B de la carte Details :
+   en-tete gauche/droite (heure geante + date ⟷ statut + pastilles empiles),
+   filet, puis deux rangees pleine largeur identiques (adresse / client),
+   l'action ecrite au bout. Et la fiche entre en cascade a l'OUVERTURE
+   seulement — un re-rendu (menu, onglet) ne rejoue rien. ===== */
+.bhead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding-bottom:13px;border-bottom:1px solid #F2F3F6;margin-bottom:12px}
+.bhead .bl .bh{font-family:'Sora';font-size:1.5rem;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums;display:block;line-height:1.1}
+.bhead .bl small{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-top:3px}
+.bhead .br{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:none}
+.bhead .br .bchips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.rowb{display:flex;align-items:center;gap:11px;width:100%;background:#F7F8FA;border:1px solid #EFF1F5;border-radius:12px;padding:10px 14px;margin-bottom:7px;text-align:left;font-size:.84rem;font-weight:700;color:var(--ink);cursor:pointer;font-family:inherit;transition:.13s}
+.rowb:last-child{margin-bottom:0}
+.rowb:hover{border-color:var(--orange);background:var(--orange-soft)}
+.rowb:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.rowb svg{width:15px;height:15px;stroke:#8A90A0;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.rowb:hover svg{stroke:var(--orange-deep)}
+.rowb .tx2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rowb .go{margin-left:auto;font-size:.7rem;font-weight:800;color:var(--orange-deep);flex:none;transition:transform .13s}
+.rowb:hover .go{transform:translateX(2px)}
+@media (max-width:480px){.bhead{flex-direction:column;gap:9px}.bhead .br{flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap}}
+@media (prefers-reduced-motion: no-preference){
+  .dsheet.anim > .dcard{animation:dIn .34s cubic-bezier(.2,.75,.25,1) backwards}
+  .dsheet.anim > .dcard:nth-child(2){animation-delay:.07s}
+  .dsheet.anim > .dcard:nth-child(3){animation-delay:.14s}
+  .dsheet.anim > .dcard:nth-child(4){animation-delay:.21s}
+  .dsheet.anim > .dcard:nth-child(5){animation-delay:.28s}
+}
+@keyframes dIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
 .foptlink{display:block;width:100%;margin-top:9px;background:none;border:0;padding:4px 2px;cursor:pointer;
   font-family:inherit;font-size:.75rem;font-weight:600;color:var(--muted);text-align:left;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#C9CDD6}
 .foptlink:hover{color:var(--ink-2)}
