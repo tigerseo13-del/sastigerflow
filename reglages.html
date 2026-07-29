@@ -1117,9 +1117,16 @@ const PANEL_LBL = {
   mdevis:"Modèle de devis", mfacture:"Modèle de facture", mavoir:"Modèle d'avoir",
   mcontrat:"Modèle de contrat", mrapport:"Modèle de rapport d'intervention"
 };
+/* le bouton Enregistrer ne s'affiche que sur les onglets « formulaire » ;
+   les onglets « liste » (Utilisateurs, Jours fériés, Catégories, Prestations, TVA,
+   Bibliothèque, Modèles) enregistrent via leur bouton Ajouter / leur tiroir. */
+const SAVE_PANELS = ["info", "jours", "num"];
 function spRender(){
-  $id("panel").innerHTML = R[SPK]()
-    + `<div class="savebar"><button class="savebtn" onclick="saveReglages('${(PANEL_LBL[SPK]||"").replace(/'/g,"\\'")}')">Enregistrer les modifications</button></div>`;
+  let html = R[SPK]();
+  if(SAVE_PANELS.includes(SPK)){
+    html += `<div class="savebar"><button class="savebtn" onclick="saveReglages('${(PANEL_LBL[SPK]||"").replace(/'/g,"\\'")}')">Enregistrer les modifications</button></div>`;
+  }
+  $id("panel").innerHTML = html;
 }
 document.getElementById("snav").addEventListener("click", e => {
   const b = e.target.closest("button[data-s]"); if(!b) return;
