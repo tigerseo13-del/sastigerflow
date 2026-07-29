@@ -503,6 +503,8 @@ label[for]{cursor:pointer}
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
+.ouich{display:inline-block;background:var(--green-bg);color:var(--green-d);font-size:.72rem;font-weight:800;border-radius:8px;padding:3px 9px}
+.srcch{display:inline-block;background:#EAF1FE;color:#2148C0;font-size:.72rem;font-weight:800;border-radius:8px;padding:3px 9px}
 </style>
 </head>
 <body>
@@ -873,6 +875,36 @@ function versContrat(){
   toast("📄 Contrat récurrent depuis " + REF + " — ouverture…");
   setTimeout(() => { location.href = "contrat-nouveau.html" + q; }, 700);
 }
+/* Source du client : d'ou il vient commercialement (meme liste que la page Clients).
+   Un devis peut porter sa propre source (REC.source) ; sinon on la retrouve
+   d'apres le client. */
+const SRC_CLI = {
+  "Ironwood Solutions":"Google Ads", "Syndic Foncia Lilas":"LinkedIn",
+  "Hôtel du Parc":"Google SEO", "Entrepôt Central":"Google My Business",
+  "Camping Val de Seine":"Facebook Ads", "Pharmacie Centrale":"Google My Business",
+  "Restaurant Chez Marcel":"Instagram", "Boulangerie Dupont":"Google SEO",
+  "Crèche Les Lutins":"Google My Business", "Tabac de la Mairie":"Autre",
+  "Mme Perrin":"Google Ads", "M. Diallo":"Facebook Ads"
+};
+function devSource(){
+  if(REC && REC.source) return REC.source;
+  return (REC && SRC_CLI[REC.client]) || "";
+}
+/* options choisies a l'envoi : les devis sont enregistres sous leur propre cle,
+   on lit aussi celle des factures par securite. */
+function devOpts(){
+  let o = {};
+  ["tigerflow-devis-envois", "tigerflow-factures-envois"].forEach(k => {
+    try{
+      const e = (JSON.parse(localStorage.getItem(k)) || {})[REF];
+      if(e){ if(e.sign !== undefined && o.sign === undefined) o.sign = e.sign;
+             if(e.pay !== undefined && o.pay === undefined) o.pay = e.pay; }
+    }catch(err){}
+  });
+  if(REC){ if(o.sign === undefined && REC.sign !== undefined) o.sign = REC.sign;
+           if(o.pay === undefined && REC.pay !== undefined) o.pay = REC.pay; }
+  return o;
+}
 let REC = null;
 try{
   const box = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]");
@@ -1047,6 +1079,8 @@ function details(){
     /* 28/07 : le technicien qui etait sur place quand le devis a ete etabli.
        Sur un chiffrage fait en intervention, c'est lui qu'on rappelle quand le
        client discute un prix — il faut pouvoir le retrouver sans fouiller. */
+    sign:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>',
+    card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
     tech:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
   };
   const row = (ic, cls, k, v) => '<div class="drow2"><span class="di ' + cls + '">' + ic + '</span><span class="db"><small>' + k + '</small><b>' + v + '</b></span></div>';
@@ -1066,6 +1100,13 @@ function details(){
       : '') +
     (REC.bc ? row(DI.tag, "din", "Bon de commande", REC.bc) : '') +
     (REC.contrat ? row(DI.tag, "din", "Contrat", REC.contrat) : '') +
+    (function(){
+      const src = devSource(), o = devOpts();
+      const ouiNon = v => v ? '<span class="ouich">Oui</span>' : '<span class="noc">Non</span>';
+      return row(DI.tag, "din", "Source du client", src ? '<span class="srcch">' + src + '</span>' : '<span class="noc">Non renseignée</span>')
+        + row(DI.sign, o.sign ? "dig" : "din", "Signature électronique", ouiNon(o.sign))
+        + row(DI.card, o.pay ? "dig" : "din", "Paiement en ligne", ouiNon(o.pay));
+    })() +
     '</div>';
 }
 /* 28/07 — les lignes de la fiche affichaient un emoji la ou l'atelier montre la
