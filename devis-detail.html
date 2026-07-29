@@ -892,9 +892,23 @@ function devSource(){
 }
 /* options choisies a l'envoi : les devis sont enregistres sous leur propre cle,
    on lit aussi celle des factures par securite. */
+/* Les envois de devis appartiennent a la cle des DEVIS. Cette page etant un
+   clone de la fiche facture, elle ecrivait dans la cle des FACTURES : l'info
+   « envoye le… » pouvait disparaitre ou afficher celle d'une facture.
+   On lit desormais la bonne cle, avec l'ancienne en secours. */
+const ENVKEY = "tigerflow-devis-envois", ENVOLD = "tigerflow-factures-envois";
+function envGet(ref){
+  for(const k of [ENVKEY, ENVOLD]){
+    try{
+      const e = (JSON.parse(localStorage.getItem(k)) || {})[ref];
+      if(e) return e;
+    }catch(err){}
+  }
+  return null;
+}
 function devOpts(){
   let o = {};
-  ["tigerflow-devis-envois", "tigerflow-factures-envois"].forEach(k => {
+  [ENVKEY, ENVOLD].forEach(k => {
     try{
       const e = (JSON.parse(localStorage.getItem(k)) || {})[REF];
       if(e){ if(e.sign !== undefined && o.sign === undefined) o.sign = e.sign;
@@ -1060,7 +1074,7 @@ function kpis(){
 let RELMODE = false;
 function details(){
   let env = null;
-  try{ env = (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[REF] || null; }catch(e){}
+  try{ env = envGet(REF); }catch(e){}
   const st = effStatut(), sc = STL[st] || STL.attente;
   const solde2 = REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0);
   const j = joursEch();
@@ -1148,7 +1162,7 @@ function lignes(){
 }
 function histo(){
   let env = null;
-  try{ env = (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[REF] || null; }catch(e){}
+  try{ env = envGet(REF); }catch(e){}
   const items = [];
   const HI = {
     doc: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>',
@@ -1201,7 +1215,7 @@ function sendConfirm(){
   if(!to || !to.includes("@")){ toast("⚠️ Renseigne l'adresse e-mail du client"); g('s-to').focus(); return; }
   if(!g('s-obj').value.trim()){ toast("⚠️ L'objet est obligatoire"); g('s-obj').focus(); return; }
   try{
-    const m = JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {};
+    const m = JSON.parse(localStorage.getItem(ENVKEY)) || {};
     if(RELMODE){
       m[REF] = m[REF] || {};
       m[REF].relance = stamp(); m[REF].to = m[REF].to || to;
@@ -1214,7 +1228,7 @@ function sendConfirm(){
          Encore un reste du clonage de facture-detail.html. */
       if(statutGet() === "brouillon") statutSet("envoye");
     }
-    localStorage.setItem("tigerflow-factures-envois", JSON.stringify(m));
+    localStorage.setItem(ENVKEY, JSON.stringify(m));
   }catch(e){}
   sendClose();
   toast(RELMODE ? "✉ Relance envoyée à " + to + " — tracée dans l'historique" : "📤 Devis " + REF + " envoyé à " + to);
