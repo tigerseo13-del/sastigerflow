@@ -600,14 +600,21 @@ function urows(){
       <td>${u.last}</td>
       <td onclick="event.stopPropagation()"><span class="acti">
         <button class="aic" title="Voir la fiche" onclick="toast('Fiche de ${u.p} ${u.n} — lecture seule')">${ic.eye}</button>
-        ${u.me ? "" : `<button class="aic" title="${u.actif ? "Désactiver" : "Réactiver"}" onclick="uPow(${i})">${ic.pow}</button>`}
+        <button class="aic" title="${u.me ? "Votre propre compte" : (u.actif ? "Désactiver" : "Réactiver")}" onclick="uPow(${i})">${ic.pow}</button>
         <button class="aic" title="Modifier" onclick="toast('Modification de ${u.p} ${u.n} — mêmes champs que l\\'ajout')">${ic.pen}</button>
-        ${u.me ? "" : `<button class="aic del" title="Supprimer" onclick="arm(this,()=>uDel(${i}))">${ic.del}</button>`}
+        <button class="aic del" title="${u.me ? "Votre propre compte" : "Supprimer"}" onclick="${u.me ? "toast('Vous ne pouvez pas supprimer votre propre compte')" : `arm(this,()=>uDel(${i}))`}">${ic.del}</button>
       </span></td>
     </tr>`).join("");
 }
-function uPow(i){ USERS[i].actif = !USERS[i].actif; spRender(); toast(USERS[i].p + " " + USERS[i].n + (USERS[i].actif ? " réactivé" : " désactivé — ne peut plus se connecter")); }
-function uDel(i){ const u = USERS[i]; USERS.splice(i, 1); spRender(); toast(u.p + " " + u.n + " supprimé de l'équipe"); }
+function uPow(i){
+  if(USERS[i].me){ toast("Vous ne pouvez pas désactiver votre propre compte"); return; }
+  USERS[i].actif = !USERS[i].actif; spRender();
+  toast(USERS[i].p + " " + USERS[i].n + (USERS[i].actif ? " réactivé" : " désactivé — ne peut plus se connecter"));
+}
+function uDel(i){
+  if(USERS[i].me){ toast("Vous ne pouvez pas supprimer votre propre compte"); return; }
+  const u = USERS[i]; USERS.splice(i, 1); spRender(); toast(u.p + " " + u.n + " supprimé de l'équipe");
+}
 function uFilter(){ UFROLE = $id("uf-role").value; UFST = $id("uf-st").value; UFQ = ($id("uf-q").value || "").toLowerCase().trim(); $id("utbody").innerHTML = urows(); $id("ucount").textContent = document.querySelectorAll("#utbody tr").length; }
 R.users = () => `
   <div class="card">
