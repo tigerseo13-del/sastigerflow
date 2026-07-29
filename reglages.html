@@ -408,8 +408,8 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <a href="reglages.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
   <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
-    <span class="ph">TM</span>
-    <div><b>Thomas Martin</b><span>Administrateur</span></div>
+    <span class="ph">JJ</span>
+    <div><b>Jo Jo</b><span>Administrateur</span></div>
     <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
     <div class="umenu" id="umenu">
       <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
@@ -603,7 +603,7 @@ function urows(){
       <td onclick="event.stopPropagation()"><span class="acti">
         <button class="aic" title="Voir la fiche" onclick="toast('Fiche de ${u.p} ${u.n} — lecture seule')">${ic.eye}</button>
         <button class="aic" title="${u.me ? "Votre propre compte" : (u.actif ? "Désactiver" : "Réactiver")}" onclick="uPow(${i})">${ic.pow}</button>
-        <button class="aic" title="Modifier" onclick="toast('Modification de ${u.p} ${u.n} — mêmes champs que l\\'ajout')">${ic.pen}</button>
+        <button class="aic" title="Modifier" onclick="uAdd(${i})">${ic.pen}</button>
         <button class="aic del" title="${u.me ? "Votre propre compte" : "Supprimer"}" onclick="${u.me ? "toast('Vous ne pouvez pas supprimer votre propre compte')" : `arm(this,()=>uDel(${i}))`}">${ic.del}</button>
       </span></td>
     </tr>`).join("");
@@ -634,21 +634,24 @@ R.users = () => `
   </div>`;
 
 /* l'ajout d'utilisateur : le panneau latéral, champs Saigon à l'identique */
-function uAdd(){
+function uAdd(i){
+  const edit = (typeof i === "number");
+  const u = edit ? USERS[i] : {p:"", n:"", mail:"", role:"", fonc:"", actif:true};
+  const esc = v => String(v || "").replace(/"/g, "&quot;");
   $id("dbody").innerHTML = `
-    <div class="dcard dhead"><div class="drow1"><h2>Ajouter un utilisateur</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
+    <div class="dcard dhead"><div class="drow1"><h2>${edit ? "Modifier cet utilisateur" : "Ajouter un utilisateur"}</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
     <div class="dcard">
       <span class="rlab">Avatar</span>
       <button class="logobox" style="width:56px;height:56px;border-radius:50%;cursor:pointer;font-size:1.2rem;color:var(--muted)" onclick="toast('Choisis une photo — sinon les initiales feront le travail')">+</button>
       <div class="frow2" style="margin-top:12px">
-        <div><span class="rlab">Prénom <b style="color:var(--red)">*</b></span><input id="nu-p" placeholder="Saisir ici"></div>
-        <div><span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="nu-n" placeholder="Saisir ici"></div>
+        <div><span class="rlab">Prénom <b style="color:var(--red)">*</b></span><input id="nu-p" placeholder="Saisir ici" value="${esc(u.p)}"></div>
+        <div><span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="nu-n" placeholder="Saisir ici" value="${esc(u.n)}"></div>
       </div>
-      <span class="rlab">E-mail <b style="color:var(--red)">*</b></span><input id="nu-m" placeholder="Saisir ici">
-      <span class="rlab">Fonction</span><input id="nu-f" placeholder="Saisir ici">
+      <span class="rlab">E-mail <b style="color:var(--red)">*</b></span><input id="nu-m" placeholder="Saisir ici" value="${esc(u.mail)}">
+      <span class="rlab">Fonction</span><input id="nu-f" placeholder="Saisir ici" value="${u.fonc && u.fonc !== '\u2014' ? esc(u.fonc) : ''}">
       <span class="rlab">Rôle <b style="color:var(--red)">*</b></span>
-      <select id="nu-r"><option value="">Sélectionner</option><option>Administrateur</option><option>Manager</option><option>Opérateur</option></select>
-      <div class="togr" style="margin-top:6px"><span>Actif</span>${tgl(true)}</div>
+      <select id="nu-r"><option value="">Sélectionner</option>${["Administrateur","Manager","Opérateur"].map(r => `<option ${u.role === r ? "selected" : ""}>${r}</option>`).join("")}</select>
+      <div class="togr" style="margin-top:6px"><span>Actif</span>${tgl(u.actif !== false)}</div>
     </div>
     <div class="dcard">
       <div class="dh">Contrôle des permissions par module<button class="dre" onclick="permReset()">Réinitialiser par défaut</button></div>
@@ -668,7 +671,7 @@ function uAdd(){
     </div>
     <div class="dmain">
       <button class="dbig sec" onclick="closeDrawer()">Annuler</button>
-      <button class="dbig" onclick="uSave()">Enregistrer</button>
+      <button class="dbig" onclick="uSave(${edit ? i : -1})">Enregistrer</button>
     </div>`;
   UDOCS = []; uDocRender();
   openDrawer();
@@ -698,12 +701,17 @@ function uDocAdd(inp){
   uDocRender();
   if(typeof toast === "function") toast("📎 " + (inp.files.length > 1 ? inp.files.length + " documents ajoutés" : "Document ajouté"));
 }
-function uSave(){
+function uSave(i){
   const p = $id("nu-p").value.trim(), n = $id("nu-n").value.trim(), m = $id("nu-m").value.trim(), r = $id("nu-r").value;
   if(!p || !n || !m || !r){ toast("Prénom, nom, e-mail et rôle sont obligatoires"); return; }
-  USERS.push({p, n, mail:m, role:r, fonc:$id("nu-f").value.trim() || "—", actif:true, last:"-"});
-  closeDrawer(); spRender();
-  toast("Utilisateur ajouté — une invitation part à " + m);
+  const fonc = $id("nu-f").value.trim() || "\u2014";
+  if(i > -1){
+    Object.assign(USERS[i], {p, n, mail:m, role:r, fonc});
+    closeDrawer(); spRender(); toast("\u00ab " + p + " " + n + " \u00bb modifié");
+  } else {
+    USERS.push({p, n, mail:m, role:r, fonc, actif:true, last:"-"});
+    closeDrawer(); spRender(); toast("Utilisateur ajouté — une invitation part à " + m);
+  }
 }
 
 /* ----- jours et heures de travail ----- */
