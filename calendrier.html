@@ -2082,18 +2082,23 @@ function renderDetail(){
     const _rapport = REPORTS[v.id] ? "Modifier le rapport" : "Faire le rapport";
     const _icoRap = '<svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg>';
     const _icoEnc = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>';
+    /* 29/07 (choix patron, piste A) : fini le pave orange pleine largeur.
+       L'action de cloture est une pastille AU FORMAT STANDARD de la fiche —
+       le meme bouton que « Demarrer l'intervention » — et l'information
+       (« rien a encaisser », « puis faire le rapport ») redevient un simple
+       texte gris a cote. Un seul format de bouton principal dans la fiche. */
     const fopts = _du > 0
       /* il reste de l'argent : une action evidente, le montant ecrit dessus */
-      ? `<button class="foptmain" onclick="encOpen(${v.id})">
-           <span class="fic3">${_icoEnc}</span>
-           <span><b>Encaisser ${_eur(_du)}</b><small>puis faire le rapport</small></span>
-         </button>
+      ? `<div class="finrow">
+           <button class="dbig" onclick="encOpen(${v.id})"><span class="goic">${_icoEnc}</span>Encaisser ${_eur(_du)}</button>
+           <span class="finsub">puis faire le rapport</span>
+         </div>
          <button class="foptlink" onclick="openReport(${v.id})">Le client ne paie pas maintenant — ${_rapport.toLowerCase()} seul</button>`
       /* rien a encaisser (contrat, visite devis, ou deja encaisse) : un seul chemin */
-      : `<button class="foptmain" onclick="openReport(${v.id})">
-           <span class="fic3">${_icoRap}</span>
-           <span><b>${_rapport}</b><small>${v.paid ? "encaissement déjà fait" : "rien à encaisser sur cette intervention"}</small></span>
-         </button>`;
+      : `<div class="finrow">
+           <button class="dbig" onclick="openReport(${v.id})"><span class="goic">${_icoRap}</span>${_rapport}</button>
+           <span class="finsub">${v.paid ? "encaissement déjà fait" : "rien à encaisser sur cette intervention"}</span>
+         </div>`;
     /* 27/07 : quand le rapport est déjà rédigé, on remet le bouton orange en
        tête et il annonce « Modifier le rapport ». Avant, le bloc de clôture
        proposait « Faire le rapport » alors que l'onglet Rapports affichait
@@ -4151,15 +4156,12 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket.xs .evtab i{display:none}
 .ev.ticket.xs .evbody{flex-direction:row;align-items:center;gap:7px;padding:2px 9px 3px}
 /* Cloture : une action evidente, l'exception en retrait. */
-.foptmain{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:14px;
-  padding:13px 15px;cursor:pointer;font-family:inherit;background:var(--orange);color:#fff;transition:.13s;
-  box-shadow:0 8px 20px -10px rgba(234,74,16,.7)}
-.foptmain:hover{filter:brightness(1.05)}
-.foptmain:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.foptmain b{display:block;font-size:.88rem;font-weight:800;letter-spacing:-.2px}
-.foptmain small{display:block;font-size:.72rem;opacity:.9;margin-top:1px}
-.fic3{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.2);display:grid;place-items:center;flex:none}
-.fic3 svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* 29/07 (piste A) : la cloture utilise la pastille standard .dbig ; le pave
+   orange (.foptmain/.fic3) n'existe plus. L'info accompagne le bouton en gris. */
+.finrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.finrow .dbig{flex:none}
+.finrow .goic svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.finsub{font-size:.74rem;font-weight:600;color:var(--muted)}
 .foptlink{display:block;width:100%;margin-top:9px;background:none;border:0;padding:4px 2px;cursor:pointer;
   font-family:inherit;font-size:.75rem;font-weight:600;color:var(--muted);text-align:left;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#C9CDD6}
 .foptlink:hover{color:var(--ink-2)}
