@@ -1665,17 +1665,23 @@ function renderDay(){
         if(v.start <= NOWH && NOWH < v.start + v.dur) badge = `<span class="lbadge">En cours</span>`;
         else if(v.start + v.dur <= NOWH) badge = `<span class="lbadge late" style="cursor:pointer" title="Clic : décaler au prochain trou libre de ce technicien" onclick="event.stopPropagation();shiftLate(${v.id})">Retard ↷</span>`;
       }
+      /* 29/07 — cartouche v5 piste B (choix patron) : en-tete a la couleur du
+         technicien portant lieu + heure + coche ; nuisible en titre dans SA
+         couleur de donnees ; type en pastille teintee ; client en pied avec
+         les badges. Le badge existe en double (en-tete/pied) : le CSS montre
+         l'un OU l'autre selon la hauteur du creneau. */
       return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
-        style="--evc:${TC.c};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
-        <span class="evtab" title="${v.cp} ${v.ville}"><b>${v.cp}</b><i>${v.ville}</i></span>
+        style="--evc:${TC.c};--evg:${TC.grad};--nc:${T.c};--nbg:${T.bg};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
+        <div class="evhead" title="${v.cp} ${v.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
+          <b>${v.cp}</b><i>${v.ville}</i>
+          <span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span>
+          <span class="hbdg">${badge}</span>
+          <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button>
+        </div>
         <div class="evbody">
-          <div class="evtop">
-            <span class="ltyp">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
-            <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button>
-          </div>
-          <div class="lnui">${T.lbl}</div>
-          <div class="lhr">${badge}<span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span>${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</div>
-          <div class="lcli">${v.client}</div>
+          <div class="lnui"><em></em><span>${T.lbl}</span></div>
+          <span class="ltyp">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
+          <div class="lfoot"><span class="lcli">${v.client}</span><span class="lbdg">${badge}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</span></div>
         </div>
         <div class="rsz"></div>
       </div>${buf}`;
@@ -4085,76 +4091,44 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
-/* ===== Cartouche « ticket » (piste B) =====
-   Un talon colore porte le code postal, detache par une perforation. Le
-   nuisible passe en titre, l'heure a sa propre ligne : elle ne peut plus etre
-   tronquee. Le client reste present mais discret, en pied. */
-.ev.ticket{display:flex;flex-direction:row;align-items:stretch;padding:0;background:#fff;overflow:hidden}
+/* ===== 29/07 — Cartouche v5, piste B (choix patron) =====
+   L'en-tete porte la couleur du TECHNICIEN sur toute la largeur (son degrade
+   d'avatar, pour la profondeur) : lieu a gauche, heure a droite, coche de
+   cloture au bout — les infos de pilotage bureau se lisent d'un balayage.
+   Dessous : le nuisible en titre avec son temoin de couleur de DONNEES,
+   le type d'intervention en pastille teintee a cette meme couleur, le client
+   en pied avec les badges d'etat. Creneau d'1 h : la carte se resume a
+   en-tete + nuisible, le badge d'etat remonte dans l'en-tete. Creneau d'une
+   demi-heure : l'en-tete seul, qui porte deja lieu + heure + coche. */
+.ev.ticket{display:flex;flex-direction:column;align-items:stretch;padding:0;background:#fff;overflow:hidden}
 .ev.ticket::before{display:none}
-.ev.ticket .evstub{width:52px;flex:none;background:var(--evc);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 3px;position:relative;overflow:hidden}
-.ev.ticket .evstub::after{content:"";position:absolute;right:0;top:6px;bottom:6px;border-right:2px dashed rgba(255,255,255,.55)}
-.ev.ticket .evstub b{font-family:ui-monospace,'SF Mono',monospace;font-size:.71rem;font-weight:800;line-height:1;letter-spacing:.01em}
-.ev.ticket .evstub i{font-style:normal;font-size:.53rem;font-weight:700;opacity:.92;text-align:center;line-height:1.12;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ev.ticket .evbody{flex:1;min-width:0;padding:7px 10px 6px;display:flex;flex-direction:column;justify-content:flex-start}
-.ev.ticket .evtop{display:flex;align-items:flex-start;gap:6px}
-.ev.ticket .lnui{font-family:'Sora','Inter';font-size:.79rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.2;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:0}
-.ev.ticket .ltyp{display:block;font-size:.67rem;font-weight:600;color:var(--muted);margin-top:2px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev.ticket .lhr{display:flex;align-items:center;gap:5px;margin:4px 0 0;font-size:.68rem;font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
-.ev.ticket .lcli{font-size:.66rem;color:var(--muted);font-weight:600;margin-top:auto;padding-top:5px;border-top:1px solid rgba(23,26,32,.07);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ev.ticket .chk{margin-left:0;flex:none}
-/* creneaux courts : on retire d'abord le client, puis le type */
-.ev.ticket.sm .lcli{display:none}
-.ev.ticket.xs{flex-direction:row;align-items:stretch;gap:0}
-.ev.ticket.xs .lcli,.ev.ticket.xs .ltyp{display:none}
-.ev.ticket.xs .evstub i{display:none}
-.ev.ticket.xs .evbody{flex-direction:row;align-items:center;gap:7px;padding:0 9px}
-.ev.ticket.xs .evtop{flex:1;min-width:0;align-items:center}
-.ev.ticket.xs .lnui{font-size:.73rem}
-.ev.ticket.xs .lhr{margin:0}
-/* Piste 1 : le type d'intervention passe en pastille au-dessus du nuisible.
-   Le talon garde la couleur du TECHNICIEN et court sur toute la hauteur :
-   plus le creneau est long, plus la barre de couleur est haute. */
-.ev.ticket .evstub{width:56px}
-.ev.ticket .evtop{align-items:center;gap:6px;margin-bottom:1px}
-.ev.ticket .ltyp{display:inline-flex;align-items:center;gap:4px;flex:1;min-width:0;
-  font-size:.61rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--evc);
-  background:#fff;
-  background:color-mix(in srgb, var(--evc) 9%, #fff);
-  border:1px solid var(--evc);
-  border-color:color-mix(in srgb, var(--evc) 30%, #fff);
-  border-radius:999px;padding:2px 8px;margin-top:0;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev.ticket .lnui{margin-top:5px;font-size:.83rem}
-.ev.ticket .lhr{margin-top:4px}
-.ev.ticket.xs .ltyp{display:none}
-.ev.ticket.xs .evtop{margin-bottom:0}
-/* Le talon ne porte que le code postal : cinq caracteres, jamais tronques.
-   La ville, souvent longue (Fontenay-sous-Bois...), descend en entier sur la
-   ligne du client. Le talon retreci rend des pixels au nuisible. */
-.ev.ticket .evstub{width:46px}
-.ev.ticket .evstub b{font-size:.73rem;letter-spacing:.02em}
-.ev.ticket .lcli{font-size:.65rem}
-/* ===== Piste C : la languette de dossier =====
-   Une vraie languette en saillie serait rognee (les cartes masquent ce qui
-   depasse) et decalerait la carte de son creneau horaire. Elle est donc
-   affleurante en haut a gauche : meme lecture, alignement preserve. */
-.ev.ticket{flex-direction:column;align-items:stretch}
-.ev.ticket .evtab{align-self:flex-start;max-width:100%;display:inline-flex;align-items:baseline;gap:6px;
-  background:var(--evc);color:#fff;border-radius:12px 0 11px 0;padding:3px 11px 3px 12px;
-  overflow:hidden;white-space:nowrap;flex:none}
-.ev.ticket .evtab b{font-family:ui-monospace,'SF Mono',monospace;font-size:.68rem;font-weight:800;letter-spacing:.02em;flex:none}
-.ev.ticket .evtab i{font-style:normal;font-size:.58rem;font-weight:700;opacity:.9;letter-spacing:.03em;
-  overflow:hidden;text-overflow:ellipsis;min-width:0}
-.ev.ticket .evbody{padding:7px 11px 7px;flex:1;min-height:0}
-.ev.ticket .evtop{margin-bottom:0}
-.ev.ticket .lnui{margin-top:5px}
-/* creneaux courts : la languette se resume au code postal */
-.ev.ticket.sm .evtab i{display:none}
+.ev.ticket .evhead{display:flex;align-items:center;gap:6px;flex:none;background:var(--evg,var(--evc));color:#fff;padding:3.5px 9px 3.5px 11px;min-height:23px}
+.ev.ticket .evhead b{font-family:ui-monospace,'SF Mono',monospace;font-size:.7rem;font-weight:800;letter-spacing:.02em;flex:none}
+.ev.ticket .evhead i{font-style:normal;font-size:.61rem;font-weight:700;opacity:.92;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev.ticket .evhead .hh{margin-left:auto;font-size:.61rem;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;opacity:.96}
+.ev.ticket .evhead .chk{margin-left:2px;width:16px;height:16px;font-size:.54rem;border-color:rgba(255,255,255,.75);color:#fff;background:rgba(255,255,255,.14)}
+.ev.ticket.done .evhead .chk{background:#fff;border-color:#fff;color:var(--evc)}
+/* badge d'etat dans l'en-tete : masque par defaut, revele sur les petits creneaux */
+.ev.ticket .evhead .hbdg{display:none;flex:none}
+.ev.ticket .evhead .hbdg .lbadge{background:#fff}
+.ev.ticket .evbody{flex:1;min-width:0;min-height:0;padding:6px 10px;display:flex;flex-direction:column}
+.ev.ticket .lnui{display:flex;align-items:center;gap:7px;font-family:'Sora','Inter';font-size:.8rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.25;margin:0;white-space:nowrap}
+.ev.ticket .lnui em{font-style:normal;width:8px;height:8px;border-radius:50%;background:var(--nc,var(--evc));flex:none;box-shadow:0 0 0 3px var(--nbg,#F1F2F5)}
+.ev.ticket .lnui span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev.ticket .ltyp{display:inline-flex;align-self:flex-start;align-items:center;margin-top:5px;font-size:.59rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--nc,var(--ink-2));background:var(--nbg,#F1F2F5);border-radius:7px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.ticket .lfoot{display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:4px;border-top:1px solid rgba(23,26,32,.06)}
+.ev.ticket .lcli{font-size:.66rem;color:var(--muted);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;padding:0;border:0}
+.ev.ticket .lbdg{margin-left:auto;display:inline-flex;align-items:center;gap:4px;flex:none}
+/* 1 h : en-tete + nuisible seulement, badge dans l'en-tete */
+.ev.ticket.sm .evbody{padding:4px 10px 5px;justify-content:center}
+.ev.ticket.sm .ltyp,.ev.ticket.sm .lfoot{display:none}
+.ev.ticket.sm .evhead .hbdg{display:inline-flex}
+/* 30 min : l'en-tete est la carte */
 .ev.ticket.xs{flex-direction:column}
-.ev.ticket.xs .evtab{padding:1px 9px 1px 10px;border-radius:11px 0 9px 0}
-.ev.ticket.xs .evtab i{display:none}
-.ev.ticket.xs .evbody{flex-direction:row;align-items:center;gap:7px;padding:2px 9px 3px}
+.ev.ticket.xs .evbody{display:none}
+.ev.ticket.xs .evhead{flex:1;min-height:0}
+.ev.ticket.xs .evhead .hbdg{display:inline-flex}
+
 /* Cloture : une action evidente, l'exception en retrait. */
 /* 29/07 (piste A) : la cloture utilise la pastille standard .dbig ; le pave
    orange (.foptmain/.fic3) n'existe plus. L'info accompagne le bouton en gris. */
