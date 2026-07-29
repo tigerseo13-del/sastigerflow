@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TigerFlow — cartouche agenda v2</title>
+<style>
+  :root{
+    --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
+    --red:#D6453E; --ink:#12151B; --ink-2:#3D434E; --muted:#767C89; --faint:#A5ABB6;
+    --line:#E9EBEF; --hair:#F2F3F6; --bg:#EFF1F4;
+    /* couleurs techniciens */
+    --t1:#2E5CE6; --t2:#0E8A68; --t3:#9C63F2; --t4:#D6453E; --t5:#E1518B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);padding:38px 20px 70px;-webkit-font-smoothing:antialiased}
+  .head{max-width:1240px;margin:0 auto 30px}
+  .head h1{font-size:1.55rem;font-weight:800;letter-spacing:-.5px}
+  .head p{color:var(--ink-2);font-size:.92rem;margin-top:8px;max-width:840px;line-height:1.55}
+  .grid{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:30px}
+  @media(max-width:1040px){.grid{grid-template-columns:1fr;max-width:380px}}
+  .tag{display:flex;align-items:baseline;gap:9px;margin-bottom:6px}
+  .tag b{font-size:1rem;font-weight:800}
+  .tag span{font-size:.76rem;color:var(--muted)}
+  .sub{font-size:.76rem;color:var(--muted);margin-bottom:16px;line-height:1.5}
+  .lane{background:#fff;border-radius:14px;padding:13px;box-shadow:0 1px 2px rgba(18,21,27,.05)}
+  .lanelab{font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  .stack{display:flex;flex-direction:column;gap:11px}
+  .note{font-size:.77rem;color:var(--ink-2);line-height:1.55;margin-top:16px}
+  .note b{color:var(--ink)}
+
+  /* ============ PISTE 1 — TALON PLEINE HAUTEUR ============ */
+  .p1-card{display:flex;align-items:stretch;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(18,21,27,.07),0 10px 22px -16px rgba(18,21,27,.4);min-height:96px}
+  .p1-stub{width:56px;flex:none;background:var(--c);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;padding:8px 4px}
+  .p1-stub::after{content:"";position:absolute;right:0;top:8px;bottom:8px;border-right:2px dashed rgba(255,255,255,.5)}
+  .p1-cp{font-family:ui-monospace,'SF Mono',monospace;font-size:.74rem;font-weight:800;line-height:1}
+  .p1-vil{font-size:.53rem;font-weight:700;opacity:.9;text-align:center;line-height:1.1}
+  .p1-body{flex:1;min-width:0;padding:9px 11px;display:flex;flex-direction:column}
+  .p1-type{display:inline-flex;align-self:flex-start;align-items:center;gap:5px;font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--c);background:color-mix(in srgb, var(--c) 10%, #fff);border:1px solid color-mix(in srgb, var(--c) 25%, #fff);border-radius:999px;padding:2px 8px}
+  .p1-nui{font-family:'Sora','Inter';font-size:.86rem;font-weight:800;letter-spacing:-.3px;margin-top:6px;line-height:1.2}
+  .p1-hr{margin-top:5px;font-size:.7rem;font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:6px}
+  .p1-hr .late{font-size:.6rem;font-weight:800;color:var(--red)}
+  .p1-cli{margin-top:auto;padding-top:7px;font-size:.66rem;color:var(--muted);font-weight:600;border-top:1px solid var(--hair);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ============ PISTE 2 — BANDEAU TITRE ============ */
+  .p2-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(18,21,27,.07),0 10px 22px -16px rgba(18,21,27,.4);min-height:96px;display:flex;flex-direction:column;border-left:4px solid var(--c)}
+  .p2-head{background:color-mix(in srgb, var(--c) 12%, #fff);padding:6px 11px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .p2-type{font-size:.63rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb, var(--c) 82%, #000)}
+  .p2-cp{font-family:ui-monospace,'SF Mono',monospace;font-size:.66rem;font-weight:800;color:color-mix(in srgb, var(--c) 82%, #000);background:#fff;border-radius:5px;padding:1px 6px}
+  .p2-body{padding:9px 11px;display:flex;flex-direction:column;flex:1}
+  .p2-nui{font-family:'Sora','Inter';font-size:.88rem;font-weight:800;letter-spacing:-.3px;line-height:1.2}
+  .p2-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:5px}
+  .p2-vil{font-size:.68rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .p2-hr{font-size:.7rem;font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .p2-cli{margin-top:auto;padding-top:7px;font-size:.66rem;color:var(--muted);font-weight:600;border-top:1px solid var(--hair);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .p2-late{font-size:.6rem;font-weight:800;color:var(--red);margin-left:5px}
+
+  /* ============ PISTE 3 — TEINTE TECHNICIEN ============ */
+  .p3-card{position:relative;border-radius:12px;padding:10px 12px 10px 14px;min-height:96px;display:flex;flex-direction:column;
+    background:color-mix(in srgb, var(--c) 7%, #fff);border:1px solid color-mix(in srgb, var(--c) 20%, #fff);overflow:hidden}
+  .p3-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+  .p3-top{display:flex;align-items:center;gap:7px}
+  .p3-cp{font-family:ui-monospace,'SF Mono',monospace;font-size:.68rem;font-weight:800;color:#fff;background:var(--c);border-radius:5px;padding:2px 7px;line-height:1.25}
+  .p3-vil{font-size:.64rem;font-weight:700;color:var(--muted);letter-spacing:.03em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .p3-nui{font-family:'Sora','Inter';font-size:.9rem;font-weight:800;letter-spacing:-.35px;margin-top:7px;line-height:1.15}
+  .p3-row{display:flex;align-items:center;gap:7px;margin-top:6px;flex-wrap:wrap}
+  .p3-type{font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);background:#fff;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+  .p3-hr{font-size:.71rem;font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-left:auto}
+  .p3-cli{margin-top:auto;padding-top:7px;font-size:.66rem;color:var(--muted);font-weight:600;border-top:1px solid color-mix(in srgb, var(--c) 15%, #fff);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .p3-late{position:absolute;top:10px;right:11px;font-size:.58rem;font-weight:800;color:var(--red)}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>Cartouche agenda — trois finitions</h1>
+    <p>Tes trois demandes sont dans les trois pistes : la <b>couleur du technicien</b> revient franchement, le <b>code postal court sur toute la hauteur</b> de l'intervention (ou reste bien visible), et le <b>type d'intervention</b> est mis en avant. Chaque colonne montre un technicien différent, avec une carte en retard et une en cours.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ============ PISTE 1 ============ -->
+    <div class="col">
+      <div class="tag"><b>Piste 1</b><span>Talon pleine hauteur</span></div>
+      <div class="sub">Le talon du technicien court du haut en bas de l'intervention. Plus le créneau est long, plus la couleur est présente.</div>
+      <div class="lane">
+        <div class="lanelab">Pablo</div>
+        <div class="stack">
+          <div class="p1-card" style="--c:var(--t1)">
+            <div class="p1-stub"><span class="p1-cp">75011</span><span class="p1-vil">Paris</span></div>
+            <div class="p1-body">
+              <span class="p1-type">Ponctuel</span>
+              <div class="p1-nui">Dératisation</div>
+              <div class="p1-hr">11:00 – 13:00 <span class="late">· en retard</span></div>
+              <div class="p1-cli">Raymond Berger</div>
+            </div>
+          </div>
+          <div class="p1-card" style="--c:var(--t1);min-height:130px">
+            <div class="p1-stub"><span class="p1-cp">75012</span><span class="p1-vil">Paris</span></div>
+            <div class="p1-body">
+              <span class="p1-type">2ᵉ passage · garantie</span>
+              <div class="p1-nui">Cafards</div>
+              <div class="p1-hr">14:30 – 16:30</div>
+              <div class="p1-cli">Roger Seguin</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><b>La plus fidèle à ta demande.</b> Le talon fait toute la hauteur : sur un créneau de deux heures, la couleur du technicien devient une vraie barre verticale. Le type d'intervention passe en pastille colorée au-dessus du nuisible.</div>
+    </div>
+
+    <!-- ============ PISTE 2 ============ -->
+    <div class="col">
+      <div class="tag"><b>Piste 2</b><span>Bandeau titre</span></div>
+      <div class="sub">Un bandeau teinté en haut porte le type d'intervention et le code postal. Le nuisible occupe le corps.</div>
+      <div class="lane">
+        <div class="lanelab">Wissam</div>
+        <div class="stack">
+          <div class="p2-card" style="--c:var(--t4)">
+            <div class="p2-head"><span class="p2-type">2ᵉ passage · garantie</span><span class="p2-cp">75014</span></div>
+            <div class="p2-body">
+              <div class="p2-nui">Dératisation</div>
+              <div class="p2-meta"><span class="p2-vil">Paris · Superette Bio+</span><span class="p2-hr">13:00 – 15:00</span></div>
+              <div class="p2-cli">En cours depuis 1 h 12</div>
+            </div>
+          </div>
+          <div class="p2-card" style="--c:var(--t4);min-height:130px">
+            <div class="p2-head"><span class="p2-type">Ponctuel</span><span class="p2-cp">75006</span></div>
+            <div class="p2-body">
+              <div class="p2-nui">Cafards</div>
+              <div class="p2-meta"><span class="p2-vil">Paris · Brasserie Lipp</span><span class="p2-hr">08:00 – 10:00</span></div>
+              <div class="p2-cli">Brasserie Lipp<span class="p2-late">· en retard</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><b>La plus lisible sur le type.</b> Le type d'intervention est la première chose qu'on lit, dans un bandeau à la couleur du technicien. Idéal si tu pilotes surtout par nature de prestation. Le talon disparaît au profit d'un liseré latéral.</div>
+    </div>
+
+    <!-- ============ PISTE 3 ============ -->
+    <div class="col">
+      <div class="tag"><b>Piste 3</b><span>Teinte technicien</span></div>
+      <div class="sub">Toute la carte prend une teinte très diluée du technicien, comme avant, mais mieux rangée.</div>
+      <div class="lane">
+        <div class="lanelab">Enzo</div>
+        <div class="stack">
+          <div class="p3-card" style="--c:var(--t2)">
+            <span class="p3-late">Retard</span>
+            <div class="p3-top"><span class="p3-cp">92110</span><span class="p3-vil">Clichy</span></div>
+            <div class="p3-nui">Dératisation</div>
+            <div class="p3-row"><span class="p3-type">2ᵉ passage</span><span class="p3-hr">14:00 – 16:00</span></div>
+            <div class="p3-cli">Garage Renault</div>
+          </div>
+          <div class="p3-card" style="--c:var(--t2);min-height:130px">
+            <div class="p3-top"><span class="p3-cp">92200</span><span class="p3-vil">Neuilly-sur-Seine</span></div>
+            <div class="p3-nui">Guêpes / Frelons</div>
+            <div class="p3-row"><span class="p3-type">Ponctuel</span><span class="p3-hr">09:00 – 11:00</span></div>
+            <div class="p3-cli">Mme Petit</div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><b>La plus proche de l'ancien agenda.</b> On retrouve les colonnes colorées d'avant, mais la carte est rangée : code postal en pastille pleine, nuisible en titre, type en pastille blanche. Le fond teinté redonne l'identité de chaque technicien.</div>
+    </div>
+
+  </div>
+</body>
+</html>
