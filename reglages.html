@@ -144,7 +144,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .aic.del:hover{color:var(--red);border-color:#F3C4C0}
 .aic svg{width:14px;height:14px}
 
-.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px 18px}
 .fgrid .full{grid-column:1/-1}
 .lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink-2);margin-bottom:6px}
 input,select,textarea{width:100%;font-family:inherit;font-size:.86rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFCFD}
@@ -537,6 +537,7 @@ const ic = {
 };
 const tgl = (on, extra) => `<span class="tgl ${on ? "on" : ""}" onclick="this.classList.toggle('on')${extra ? ";" + extra : ""}"></span>`;
 function saveReglages(section){
+  clearDirty();
   if(typeof toast === "function") toast("✓ " + (section ? section + " — modifications enregistrées" : "Modifications enregistrées"));
 }
 /* (l'ancienne variable « savebar » n'était jamais injectée : le seul bouton
@@ -885,7 +886,7 @@ function pSave(){
 /* ----- taux de TVA ----- */
 R.tva = () => `
   <div class="card">
-    <div class="card-h">Taux de TVA<button class="addbtn" onclick="tvaAdd()">+ Ajouter un taux de TVA</button></div>
+    <div class="card-h">Taux de TVA<button class="addbtn" onclick="tvaAdd()">+ Ajouter</button></div>
     <div class="tscroll"><table class="dt"><thead><tr><th>Nom</th><th>Taux</th><th>Par défaut</th><th>Statut</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${TVAS.map((t, i) => `<tr>
       <td><b>${t.n}</b></td><td style="font-variant-numeric:tabular-nums">% ${t.t}</td>
@@ -1083,21 +1084,23 @@ let DIRTY = false;
 (function(){
   const d = document.createElement("div");
   d.className = "dirtybar"; d.id = "dirtybar";
-  d.innerHTML = '<span>Modifications non enregistrées</span><button class="savebtn" onclick="saveAll()">Enregistrer</button>';
+  d.innerHTML = '<span>Modifications non enregistrées — clique sur « Enregistrer » en bas de la page</span>';
   document.body.appendChild(d);
 })();
 function markDirty(){
+  /* les onglets « liste » appliquent leurs actions immédiatement : pas d'état « non enregistré » */
+  if(typeof SAVE_PANELS !== "undefined" && !SAVE_PANELS.includes(SPK)) return;
   if(DIRTY) return;
   DIRTY = true;
   document.getElementById("dirtybar").classList.add("on");
   const b = document.querySelector("#snav button[data-s].on");
   if(b) b.classList.add("dirty");
 }
-function saveAll(){
+function clearDirty(){
   DIRTY = false;
-  document.getElementById("dirtybar").classList.remove("on");
+  const db = document.getElementById("dirtybar");
+  if(db) db.classList.remove("on");
   document.querySelectorAll("#snav button.dirty").forEach(x => x.classList.remove("dirty"));
-  toast("Modifications enregistrées");
 }
 function arm(btn, fn){
   if(btn.classList.contains("arm")){ btn.classList.remove("arm"); fn(); return; }
