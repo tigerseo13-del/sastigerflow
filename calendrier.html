@@ -1665,13 +1665,18 @@ function renderDay(){
         if(v.start <= NOWH && NOWH < v.start + v.dur) badge = `<span class="lbadge">En cours</span>`;
         else if(v.start + v.dur <= NOWH) badge = `<span class="lbadge late" style="cursor:pointer" title="Clic : décaler au prochain trou libre de ce technicien" onclick="event.stopPropagation();shiftLate(${v.id})">Retard ↷</span>`;
       }
-      return `<div class="ev ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
-        style="--evc:${TC.c};background:${TC.bg};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
-        <div class="lloc"><b>${v.cp}</b> ${v.ville}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}
-          <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button></div>
-        <div class="lnui">${T.ic} ${T.lbl}</div>
-        <div class="ltyp">${MODES[v.mode].lbl}${evMontant(v.montant)}<span class="lhr">${badge}${hstr(v.start)} – ${hstr(v.start+v.dur)}</span></div>
-        <div class="lcli">${v.client}</div>
+      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
+        style="--evc:${TC.c};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
+        <span class="evstub" title="${v.cp} ${v.ville}"><b>${v.cp}</b><i>${v.ville}</i></span>
+        <div class="evbody">
+          <div class="evtop">
+            <div class="lnui">${T.lbl}</div>
+            <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button>
+          </div>
+          <div class="ltyp">${MODES[v.mode].lbl}${evMontant(v.montant)}</div>
+          <div class="lhr">${badge}<span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span>${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</div>
+          <div class="lcli">${v.client}</div>
+        </div>
         <div class="rsz"></div>
       </div>${buf}`;
     }).join("");
@@ -3961,6 +3966,32 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
+/* ===== Cartouche « ticket » (piste B) =====
+   Un talon colore porte le code postal, detache par une perforation. Le
+   nuisible passe en titre, l'heure a sa propre ligne : elle ne peut plus etre
+   tronquee. Le client reste present mais discret, en pied. */
+.ev.ticket{display:flex;align-items:stretch;padding:0;background:#fff;overflow:hidden}
+.ev.ticket::before{display:none}
+.ev.ticket .evstub{width:52px;flex:none;background:var(--evc);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 3px;position:relative;overflow:hidden}
+.ev.ticket .evstub::after{content:"";position:absolute;right:0;top:6px;bottom:6px;border-right:2px dashed rgba(255,255,255,.55)}
+.ev.ticket .evstub b{font-family:ui-monospace,'SF Mono',monospace;font-size:.71rem;font-weight:800;line-height:1;letter-spacing:.01em}
+.ev.ticket .evstub i{font-style:normal;font-size:.53rem;font-weight:700;opacity:.92;text-align:center;line-height:1.12;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev.ticket .evbody{flex:1;min-width:0;padding:7px 10px 6px;display:flex;flex-direction:column;justify-content:flex-start}
+.ev.ticket .evtop{display:flex;align-items:flex-start;gap:6px}
+.ev.ticket .lnui{font-family:'Sora','Inter';font-size:.79rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.2;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:0}
+.ev.ticket .ltyp{display:block;font-size:.67rem;font-weight:600;color:var(--muted);margin-top:2px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.ticket .lhr{display:flex;align-items:center;gap:5px;margin:4px 0 0;font-size:.68rem;font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ev.ticket .lcli{font-size:.66rem;color:var(--muted);font-weight:600;margin-top:auto;padding-top:5px;border-top:1px solid rgba(23,26,32,.07);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev.ticket .chk{margin-left:0;flex:none}
+/* creneaux courts : on retire d'abord le client, puis le type */
+.ev.ticket.sm .lcli{display:none}
+.ev.ticket.xs{flex-direction:row;align-items:stretch;gap:0}
+.ev.ticket.xs .lcli,.ev.ticket.xs .ltyp{display:none}
+.ev.ticket.xs .evstub i{display:none}
+.ev.ticket.xs .evbody{flex-direction:row;align-items:center;gap:7px;padding:0 9px}
+.ev.ticket.xs .evtop{flex:1;min-width:0;align-items:center}
+.ev.ticket.xs .lnui{font-size:.73rem}
+.ev.ticket.xs .lhr{margin:0}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
