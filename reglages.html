@@ -774,17 +774,40 @@ R.feries = () => `
   </div>`;
 
 /* ----- catégories de services ----- */
+function catAdd(i){
+  const edit = (typeof i === "number");
+  const c = edit ? CATS[i] : {n:"", on:true};
+  $id("dbody").innerHTML = `
+    <div class="dcard dhead"><div class="drow1"><h2>${edit ? "Modifier la catégorie" : "Ajouter une catégorie de service"}</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
+    <div class="dcard">
+      <span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="nc-n" placeholder="Ex. : Cafards" value="${(c.n||"").replace(/"/g,"&quot;")}">
+      <div class="togr" style="margin-top:12px"><span>Actif</span><span class="tgl ${c.on ? "on" : ""}" id="nc-on" onclick="this.classList.toggle('on')"></span></div>
+    </div>
+    <div class="dmain"><button class="dbig sec" onclick="closeDrawer()">Annuler</button><button class="dbig" onclick="catSave(${edit ? i : -1})">Enregistrer</button></div>`;
+  openDrawer();
+}
+function catSave(i){
+  const n = $id("nc-n").value.trim();
+  if(!n){ toast("Donne un nom à la catégorie"); return; }
+  const on = $id("nc-on").classList.contains("on");
+  const today = new Date().toLocaleDateString("fr-FR");
+  if(i > -1){ CATS[i].n = n; CATS[i].on = on; CATS[i].d = today; }
+  else { CATS.unshift({n, on, nb:0, d:today}); }
+  closeDrawer(); spRender();
+  toast(i > -1 ? "Catégorie « " + n + " » modifiée" : "Catégorie « " + n + " » ajoutée");
+}
 R.cats = () => `
   <div class="card">
-    <div class="card-h">Gestion des catégories de services<button class="addbtn" onclick="toast('Nouvelle catégorie — nom + prestations associées')" title="Changer le statut">+ Ajouter</button></div>
+    <div class="card-h">Gestion des catégories de services<button class="addbtn" onclick="catAdd()">+ Ajouter</button></div>
     <div class="tscroll"><table class="dt"><thead><tr><th>Nom</th><th>Statut</th><th>Nombre de prestations</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
-    <tbody>${CATS.map((c, i) => `<tr onclick="toast('Modification de « ${c.n} »')">
+    <tbody>${CATS.map((c, i) => `<tr onclick="catAdd(${i})">
       <td><b>${c.n}</b></td>
       <td><span class="bdg ${c.on ? "b-on" : "b-off"}">${c.on ? "Actif" : "Inactif"}</span></td>
       <td>${c.nb}</td><td>${c.d}</td>
       <td onclick="event.stopPropagation()"><span class="acti">
         <button class="aic" title="${c.on ? "Masquer du catalogue" : "Réactiver"}" onclick="CATS[${i}].on=!CATS[${i}].on;spRender()">${ic.eyeoff}</button>
-        <button class="aic" title="Modifier" onclick="toast('Modification de « ${c.n} »')">${ic.pen}</button>
+        <button class="aic" title="Modifier" onclick="catAdd(${i})">${ic.pen}</button>
+        <button class="aic del" title="Supprimer" onclick="arm(this,()=>{CATS.splice(${i},1);spRender();toast('Catégorie supprimée')})">${ic.del}</button>
       </span></td></tr>`).join("")}</tbody></table></div>
     <div class="tfoot"><span>1-${CATS.length} sur ${CATS.length} affichés</span><span>Par page&nbsp;<b>20</b></span></div>
     <span class="xlink" onclick="spGoTo('prest')">Voir les prestations →</span>
