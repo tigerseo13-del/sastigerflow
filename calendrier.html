@@ -566,7 +566,7 @@ h1,.num{font-family:'Sora',sans-serif}
 /* Barre À planifier */
 .traywrap{margin:0 14px 6px;background:#fff;border-radius:14px;box-shadow:var(--shadow);border:1.5px dashed #D6D9E1;padding:8px 12px;transition:.15s}
 .traywrap .trayh{cursor:pointer}
-.traywrap.collapsed .traycards{display:none}
+.traywrap.collapsed .traycards{max-height:0;opacity:0;padding-bottom:0;pointer-events:none;overflow:hidden}
 .traywrap .chev{margin-left:auto;font-size:.8rem;color:var(--muted);transition:.2s}
 .traywrap.collapsed .chev{transform:rotate(-90deg)}
 .traywrap.dropover{border-color:var(--orange);background:var(--orange-soft)}
@@ -574,7 +574,9 @@ h1,.num{font-family:'Sora',sans-serif}
 .trayh b{font-family:'Sora';font-size:.88rem}
 .tcount{font-size:.68rem;font-weight:800;background:var(--red-bg);color:var(--red);padding:3px 9px;border-radius:11px}
 .trayh small{color:var(--muted);font-size:.74rem}
-.traycards{display:flex;gap:9px;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+/* 29/07 : le bac glisse en s'ouvrant au lieu d'apparaitre d'un coup */
+.traycards{display:flex;gap:9px;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch;
+  max-height:200px;opacity:1;transition:max-height .28s cubic-bezier(.2,.75,.25,1),opacity .18s ease,padding-bottom .28s}
 .traycards::-webkit-scrollbar{height:0}
 .pcard{flex:none;width:200px;border-radius:11px;padding:6px 9px 6px 12px;position:relative;overflow:hidden;
   cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
@@ -1705,7 +1707,7 @@ function renderDay(){
       });
       fermer();
     }
-    const cards = mine.map(v=>{
+    const cards = mine.map((v, ci)=>{
       const T = typeDe(v);
       const TC = TECHS[v.tech];
       const top = (Math.max(v.start, DAYSTART) - DAYSTART) * 64;
@@ -1730,8 +1732,8 @@ function renderDay(){
       const lanePos = nl > 1 ? `left:calc(6px + ${li} * ((100% - 12px) / ${nl}));width:calc((100% - 12px) / ${nl} - 3px);right:auto;` : "";
       /* la carte que le trait orange traverse : elle vit MAINTENANT */
       const live = isToday && !v.done && !v.cancelled && v.start <= NOWH && NOWH < v.start + v.dur;
-      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${nl>1?'nrw':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
-        style="--evc:${TC.c};--evg:${TC.grad};${lanePos}top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
+      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${nl>1?'nrw':''} ${LANDID===v.id?'land':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
+        style="--evc:${TC.c};--evg:${TC.grad};--ai:${Math.min(ci,8)};${lanePos}top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
         <div class="evhead" title="${v.cp} ${v.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
           <b>${v.cp}</b><i>${v.ville}</i>
           <span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span>
@@ -1786,6 +1788,7 @@ function shiftLate(id){
     if(libre){
       const avant = v.start;
       v.start = s;
+      LANDID = id;
       if(typeof iflowSave === "function") iflowSave(v);
       render();
       toast("↷ " + v.client + " décalée à " + hstr(s) + " — préviens le client",
@@ -1881,10 +1884,10 @@ function renderWeek(){
         <b>${JOURS_C[day.getDay()]} ${day.getDate()}</b>
         <small>${evs.length ? evs.length+" intervention"+(evs.length>1?"s":"") : "—"}</small>
       </div>
-      <div class="wbody">${evs.map(v=>{
+      <div class="wbody">${evs.map((v, ci)=>{
         const T = typeDe(v), t = TECHS[v.tech];
         const TC = TECHS[v.tech];
-        return `<div class="wev ${v.done?'done':''} ${v.cancelled?'cancelled':''}" data-id="${v.id}" style="--evc:${TC.c};--evg:${TC.grad};cursor:pointer" title="${t.nom} · ${v.cp} ${v.ville}">
+        return `<div class="wev ${v.done?'done':''} ${v.cancelled?'cancelled':''}" data-id="${v.id}" style="--evc:${TC.c};--evg:${TC.grad};--ai:${Math.min(ci,8)};cursor:pointer" title="${t.nom} · ${v.cp} ${v.ville}">
           <div class="wh"><b>${v.cp}</b><i>${v.ville}</i><span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span></div>
           <div class="wb">
             <div class="wn">${T.ic} <span>${T.lbl}</span></div>
@@ -1940,6 +1943,8 @@ function renderMonth(){
 }
 
 let lastKey = "";
+let LANDID = null;   /* 29/07 : la carte qu'on vient de toucher — elle ATTERRIT au prochain rendu */
+let ANIMT = 0;       /* quand la vue a change : l'entree animee survit aux doubles rendus (600 ms) */
 function periodEvs(all){
   if(VIEW === "day"){
     const d = iso(CUR);
@@ -1963,12 +1968,22 @@ function render(){
   const key = VIEW + iso(CUR);
   if(key !== lastKey){
     lastKey = key;
+    ANIMT = Date.now();
     if(VIEW==="day"){
       const h = (iso(CUR) === iso(TODAYD)) ? Math.max(DAYSTART, Math.min(NOWH - 2.5, DAYSTART + HOURS - 6)) : DAYSTART;
       document.getElementById('calscroll').scrollTop = (h - DAYSTART) * 64;
     }
     else document.getElementById('calscroll').scrollTop = 0;
   }
+  /* nouvelle vue ou nouveau jour : les cartes ENTRENT (fondu + montee en
+     cascade). La fenetre de 600 ms fait survivre l'entree au double rendu du
+     chargement (seedReports re-rend a 0 ms). Un simple changement d'etat plus
+     tard re-rend sans animation d'entree. */
+  if(Date.now() - ANIMT < 600){
+    const grid = document.querySelector('#calscroll .daygrid, #calscroll .weekgrid');
+    if(grid) grid.classList.add('anim');
+  }
+  LANDID = null;   /* l'atterrissage ne vaut que pour CE rendu */
 }
 
 /* ================= TERMINÉE ✓ ================= */
@@ -3076,6 +3091,7 @@ function toggleDone(e,id){
   const v = INTERVS.find(x=>x.id===id);
   const avant = { done: v.done, paid: v.paid, started: v.started };
   v.done = !v.done;
+  LANDID = id;
   render();
   toast(v.done ? "✓ Intervention terminée — " + v.client : "Intervention rouverte — " + v.client,
     () => { Object.assign(v, avant); render(); });
@@ -3223,6 +3239,7 @@ scroller.addEventListener('pointerup', e=>{
     if(drag.nd != null && drag.nd !== drag.od){
       const v = INTERVS.find(x=>x.id===drag.id);
       v.dur = drag.nd;
+      LANDID = v.id;
       suppressUntil = Date.now() + 450;
       render();
       if(typeof sbPushInter === "function") sbPushInter(v);
@@ -3266,6 +3283,7 @@ scroller.addEventListener('pointerup', e=>{
     const oldTech = v.tech;
     v.tech = drag.tech;
     v.start = drag.h;
+    LANDID = v.id;
     suppressUntil = Date.now() + 450;
     render();
     if(typeof sbPushInter === "function") sbPushInter(v);
@@ -3348,6 +3366,7 @@ function pendStart(pid){
   if(p.rue) nv.rue = p.rue;
   if(p.montant) nv.montant = p.montant;
   INTERVS.push(nv);
+  LANDID = nv.id;   /* posee et demarree : elle atterrit sur l'agenda */
   PENDING.splice(i, 1);
   closeDetail(); render(); renderTray();
   startInt(nv.id);
@@ -3658,6 +3677,7 @@ function pdragEnd(){
     if(p.montant) nv.montant = p.montant;
     if(p.encm) nv.encm = p.encm;
     INTERVS.push(nv);
+    LANDID = nv.id;   /* la carte du bac ATTERRIT sur l'agenda */
     plannedAdd({client:p.client, cp:p.cp, ville:p.ville, type:p.type, dur:p.dur, date:iso(CUR), h:pdrag.h, col:pdrag.col});
     PENDING.splice(i,1);
     render(); renderTray();
@@ -4220,6 +4240,27 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket.xs .evbody{display:none}
 .ev.ticket.xs .evhead{flex:1;min-height:0}
 .ev.ticket.xs .evhead .hbdg{display:inline-flex}
+/* ===== 29/07 — LE MOUVEMENT (patron : effet waouh) =====
+   Regle stricte : on anime l'ENTREE d'une vue (fondu + montee en cascade) et
+   l'ATTERRISSAGE de la carte qu'on vient de toucher (poser, deplacer, etirer,
+   cocher, decaler). JAMAIS pendant le glisser, jamais sur un simple re-rendu —
+   et tout se coupe si le systeme demande moins de mouvement. */
+@media (prefers-reduced-motion: no-preference){
+  .daygrid.anim .ev{animation:evIn .34s cubic-bezier(.2,.75,.25,1) backwards;animation-delay:calc(var(--ai,0)*24ms)}
+  .weekgrid.anim .wev{animation:evIn .34s cubic-bezier(.2,.75,.25,1) backwards;animation-delay:calc(var(--ai,0)*24ms)}
+  .daygrid.anim .nowline,.daygrid.anim + * .gnow,.daygrid.anim .gnow{animation:fadeIn .5s ease .18s backwards}
+  .ev.land:not(.conflict){animation:evLand .4s cubic-bezier(.2,.75,.25,1)}
+  .ev.ticket.live:not(.conflict){animation:liveBreath 2.8s ease-in-out infinite}
+}
+@keyframes evIn{from{opacity:0;transform:translateY(7px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes evLand{
+  0%{transform:scale(.955);box-shadow:0 0 0 3px var(--evc),0 16px 32px -10px rgba(23,26,32,.38)}
+  60%{transform:scale(1.008)}
+  100%{transform:none;box-shadow:0 2px 8px -2px rgba(23,26,32,.14)}}
+@keyframes liveBreath{
+  0%,100%{box-shadow:0 0 0 2px var(--orange),0 10px 24px -8px rgba(255,90,31,.42)}
+  50%{box-shadow:0 0 0 3.5px var(--orange),0 12px 26px -6px rgba(255,90,31,.58)}}
 
 /* Cloture : une action evidente, l'exception en retrait. */
 /* 29/07 (piste A) : la cloture utilise la pastille standard .dbig ; le pave
