@@ -442,6 +442,14 @@ label[for]{cursor:pointer}
 .tempsbox .tico2 svg{width:16px;height:16px;stroke:var(--orange-deep,#EA4A10);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tempsbox b{display:block;font-size:.85rem;font-weight:800;color:var(--orange-deep,#EA4A10)}
 .tempsbox small{display:block;font-size:.71rem;color:var(--ink-2);margin-top:1px;line-height:1.35}
+/* Encaissement : le moyen de paiement est l'action. */
+.paygrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.paygrid .pill{display:flex;align-items:center;justify-content:flex-start;gap:9px;padding:14px 13px;border-radius:13px;
+  font-size:.86rem;font-weight:700;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;font-family:inherit;text-align:left}
+.paygrid .pill:active{transform:scale(.98)}
+.paygrid .pill .pico{font-size:1.05rem;line-height:1}
+.paygrid .pill.on{border-color:var(--orange,#FF5A1F)}
+.ehint{display:block;font-size:.68rem;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0;margin-top:2px}
 </style>
 </head>
 <body>
@@ -630,17 +638,15 @@ label[for]{cursor:pointer}
     </div>
     <div class="elab">Montant TTC</div>
     <input class="encm" id="enc-m" inputmode="decimal" value="0,00" onfocus="this.select()" oninput="encBtnState()">
-    <div class="elab">Mode de paiement</div>
-    <div class="pills" id="enc-modes">
-      <button class="pill on" data-m="Carte bancaire" onclick="encMode(this)">Carte</button>
-      <button class="pill" data-m="Espèces" onclick="encMode(this)">Espèces</button>
-      <button class="pill" data-m="Virement" onclick="encMode(this)">Virement</button>
-      <button class="pill" data-m="Lien de paiement" onclick="encMode(this)">Lien envoyé</button>
+    <div class="elab">Payé comment ? <small class="ehint">un appui enregistre et ouvre le rapport</small></div>
+    <div class="paygrid" id="enc-modes">
+      <button class="pill on" data-m="Carte bancaire" onclick="encPay(this)"><span class="pico">💳</span>Carte</button>
+      <button class="pill" data-m="Espèces" onclick="encPay(this)"><span class="pico">💶</span>Espèces</button>
+      <button class="pill" data-m="Chèque" onclick="encPay(this)"><span class="pico">🧾</span>Chèque</button>
+      <button class="pill" data-m="Virement" onclick="encPay(this)"><span class="pico">🏦</span>Virement</button>
     </div>
-    <div style="height:16px"></div>
-    <div class="cta">
-      <button class="bo g" id="enc-go" onclick="encDone()"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span id="enc-btn">Encaissé</span></button>
-      <button class="lnk" onclick="encLater()">Encaisser plus tard</button>
+    <div class="cta" style="margin-top:14px">
+      <button class="lnk" onclick="encLater()">Le client ne paie pas maintenant</button>
     </div>
   </section>
 
@@ -1040,7 +1046,7 @@ function encPart(el){
 function encRecalc(){
   const v = ENCTX ? ENCTX.base * PART : 0;
   g("enc-m").value = v.toFixed(2).replace(".", ",");
-  g("enc-btn").textContent = "Encaissé — " + EUR(v);
+  const _b = g("enc-btn"); if(_b) _b.textContent = "Encaissé — " + EUR(v);
   encBtnState();
 }
 function encBtnState(){
@@ -1050,6 +1056,14 @@ function encBtnState(){
 function encMode(el){
   document.querySelectorAll("#enc-modes .pill").forEach(p => p.classList.remove("on"));
   el.classList.add("on");
+}
+/* Un appui sur le moyen de paiement vaut validation : la question « comment
+   a-t-il paye ? » EST la confirmation. Un appui de moins, sur le terrain. */
+function encPay(el){
+  const v = parseFloat((g("enc-m").value || "0").replace(",", ".")) || 0;
+  if(v <= 0){ toast("Indique d'abord un montant"); g("enc-m").focus(); return; }
+  encMode(el);
+  encDone();
 }
 function encBack(){
   if(ENCTX && ENCTX.mid){ go("detail"); } else { go("devis"); }
