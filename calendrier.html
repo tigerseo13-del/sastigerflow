@@ -3279,9 +3279,35 @@ function pendCancel(pid){
   const p = PENDING.find(x => x.pid === pid); if(!p) return;
   PDMENU = false; trayDrop(pid);
 }
+/* 29/07 : la fiche d'une carte du bac avait sa propre mise en page, sans les
+   onglets. Le patron a tranche : MEME fiche que pour une intervention planifiee
+   — Resume, Client, Notes, Pieces jointes, Rapports — la seule difference d'une
+   carte du bac etant qu'aucun technicien (ni date) n'est encore attribue.
+   Les onglets vides le DISENT au lieu de disparaitre. */
+let PDTAB = "res";
+function setPDTab(t){ PDTAB = t; openPending(PDID); }
+/* la note d'une carte du bac : meme geste que sur une intervention planifiee */
+let PNEDIT = null;
+function pendEditNote(pid){
+  PNEDIT = pid; openPending(pid);
+  setTimeout(() => { const a = document.getElementById("pnotearea"); if(a){ a.focus(); a.selectionStart = a.value.length; } }, 0);
+}
+function pendSaveNote(pid){
+  const p = PENDING.find(x => x.pid === pid); if(!p) return;
+  const a = document.getElementById("pnotearea");
+  p.note = (a ? a.value : "").trim();
+  PNEDIT = null; openPending(pid); renderTray();
+  toast(p.note ? "✓ Note enregistrée" : "Note vide — rien à garder");
+}
+function pendDelNote(pid){
+  const p = PENDING.find(x => x.pid === pid); if(!p) return;
+  const sauv = p.note; p.note = ""; PNEDIT = null; openPending(pid); renderTray();
+  toast("🗑 Note supprimée", () => { p.note = sauv; openPending(pid); renderTray(); });
+}
 function openPending(pid){
   const p = PENDING.find(x => x.pid === pid);
   if(!p) return;
+  if(PDID !== pid){ PDTAB = "res"; PNEDIT = null; }   /* nouvelle carte → retour au Résumé */
   PDID = pid;
   /* 28/07 — BUG. Le panneau du bac deduisait le mode de facturation du CLIENT
      (modeDe) en ignorant celui choisi a la creation. Une intervention creee en
@@ -3294,9 +3320,6 @@ function openPending(pid){
   const adr = (p.rue ? p.rue + " · " : "") + p.cp + " · " + p.ville;
   const kv = (k, v) => `<div class="dkv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
   const dur = p.dur % 1 ? Math.floor(p.dur) + "h" + Math.round((p.dur % 1) * 60) : p.dur + "h";
-  /* Meme grille de lecture que le panneau d'une intervention planifiee : priorite,
-     statut, type, technicien, facturation. Ce qui n'existe pas encore le DIT,
-     au lieu d'etre absent — une ligne vide se remarque, une ligne manquante non. */
   const prio = p.urgent ? "Urgente" : "Normale";
   const sl = p.standby ? "À reprogrammer" : p.suivi ? "Suivi" : "À planifier";
   const sc = p.standby ? "prog" : p.suivi ? "todo" : "todo";
@@ -3315,6 +3338,104 @@ function openPending(pid){
     ? `<div class="invbox"><span><span class="lbl">2ᵉ passage / garantie — solde restant dû</span><span class="amt">${evMontant(p.montant).slice(3)}</span></span>
         <button class="go" onclick="toast('Encaissement du solde — bientôt relié')">Encaisser</button></div>`
     : `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">🔁 2ᵉ passage / garantie — rien à encaisser</b></span></div>`;
+
+  /* ----- meme grille que la fiche planifiee : la carte Details ne vit que sur Resume ----- */
+  const FICHE = `
+    <div class="dcard">
+      <div class="dh">Détails de l'intervention</div>
+      <div class="detats">
+        <span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>
+        <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
+        <span class="mchip m-${m}" style="font-size:.68rem;padding:2.5px 9px">${M.ic} ${M.lbl}${p.montant ? " · " + evMontant(p.montant).slice(3) : ""}</span>
+      </div>
+      ${kv("Client", `<a class="vcli" href="#" onclick="cliPanel('client.html?c=${encodeURIComponent(p.client)}&panel=1');return false">${p.client} →</a>`)}
+      ${kv("Date planifiée", `<span style="color:var(--muted)">Pas encore planifiée · ${dur} prévues</span>`)}
+      ${kv("Adresse", '<svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + adr)}
+      ${kv("Nuisible", T.ic + " " + T.lbl)}
+      ${p.rappel ? kv(p.suivi ? "Prévu le" : "Rappel", p.rappel.split("-").reverse().join("/")) : ""}
+    </div>`;
+
+  /* ----- contenu de l'onglet ----- */
+  let body = "";
+  if(PDTAB === "res"){
+    body = `
+    <div class="dcard">
+      <div class="dh">Note pour le technicien ${(p.note && PNEDIT !== pid) ? `<span class="dacts2">
+        <button class="dic" title="Modifier la note" onclick="pendEditNote(${pid})"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+        <button class="dic del" title="Supprimer la note" onclick="pendDelNote(${pid})"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+      </span>` : ""}</div>
+      ${PNEDIT === pid
+        ? `<textarea id="pnotearea" rows="3" placeholder="Code portail, étage, consignes d'accès…"
+             style="width:100%;border:1.5px solid var(--orange);border-radius:11px;padding:11px 13px;font:600 .84rem Inter,sans-serif;background:#FFFDF6;outline:none;resize:vertical;box-sizing:border-box">${p.note || ""}</textarea>
+           <div style="display:flex;gap:8px;margin-top:9px">
+             <button class="dbig" style="flex:none;padding:9px 16px" onclick="pendSaveNote(${pid})">✓ Enregistrer la note</button>
+             <button class="dbig sec" style="flex:none;padding:9px 14px" onclick="PNEDIT=null;openPending(${pid})">Annuler</button>
+           </div>`
+        : p.note
+        ? `<p style="font-size:.84rem;color:var(--ink-2);line-height:1.65;background:#FBF3D9;border:1px solid #F0E2B8;border-radius:11px;padding:11px 13px;margin:0;cursor:pointer" title="Cliquer pour modifier" onclick="pendEditNote(${pid})">${p.note}</p>`
+        : `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FAFBFC;border:1px dashed #E1E4EA;border-radius:11px;padding:11px 13px">
+            <span style="font-size:.8rem;color:var(--muted);font-weight:600">Aucune note pour cette intervention</span>
+            <button class="dre" onclick="pendEditNote(${pid})">+ Ajouter une note</button>
+          </div>`}
+    </div>
+    <div class="dcard">
+      <div class="dh">Technicien <button class="dre" onclick="togPReass()">${PREASS ? "Annuler" : p.tech != null ? "Changer" : "Choisir"}</button></div>
+      ${PREASS
+        ? TECHS.map((tt, j) => `<div class="rpick ${j === p.tech ? 'cur' : ''}" onclick="pendTech(${pid},${j})">
+            <span class="av" style="background:${tt.grad}">${tt.ini}</span>
+            <b>${tt.nom}</b>
+            ${j === p.tech ? '<span class="tag">Pressenti</span>' : ''}
+          </div>`).join("")
+        : p.tech != null
+        ? `<div class="dtech">
+            <span class="av" style="background:${TECHS[p.tech].grad}">${TECHS[p.tech].ini}</span>
+            <span><b>${TECHS[p.tech].nom}</b><small>pressenti — pas encore posé sur son planning</small></span>
+          </div>`
+        : `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FAFBFC;border:1px dashed #E1E4EA;border-radius:11px;padding:11px 13px">
+            <span style="font-size:.8rem;color:var(--muted);font-weight:600">Pas encore affecté</span>
+            <span style="font-size:.75rem;color:var(--muted)">choisis-le ici, ou glisse la carte sur sa colonne</span>
+          </div>`}
+    </div>
+    <div class="dcard">
+      <div class="dh">Facturation</div>
+      ${inv}
+    </div>
+    <div class="dcard">
+      <button class="dbig sec" onclick="trayDrop(${pid})">Retirer du bac</button>
+    </div>`;
+  }
+  else if(PDTAB === "cli"){
+    body = `<div class="dcard">
+      <div class="dh">Client</div>
+      ${kv("Nom", p.client)}
+      ${kv("Téléphone", `<a href="tel:+33${tel.slice(1)}" style="color:var(--orange-deep)">${telFmt(tel)}</a>`)}
+      ${kv("Email", `<a href="mailto:contact@exemple.fr" style="color:var(--orange-deep)">contact@exemple.fr</a>`)}
+      ${kv("Adresse", adr)}
+      ${kv("Type", M.ic + " " + M.lbl)}
+      <a class="dbig sec" style="margin-top:13px;text-decoration:none" href="clients.html">👤 Voir la fiche client</a>
+    </div>`;
+  }
+  else if(PDTAB === "not"){
+    body = `<div class="dcard">
+      <div class="dh">Notes internes</div>
+      <textarea rows="6" placeholder="Code portail, étage, consignes d'accès, historique verbal…"
+        oninput="PENDING.find(x=>x.pid===${pid}).note=this.value">${p.note || ""}</textarea>
+      <small style="font-size:.72rem;color:var(--muted);display:block;margin-top:7px">💾 Enregistrée automatiquement — visible uniquement par l'équipe</small>
+    </div>`;
+  }
+  else if(PDTAB === "pj"){
+    body = `<div class="dcard">
+      <div class="dh">Pièces jointes <span class="dre" style="cursor:default">aucune</span> <button class="dre" onclick="toast('📎 Téléversement — bientôt relié')">↑ Téléverser</button></div>
+      <div class="dempty">📎 Rien pour le moment<br><small>Les photos, la signature et le rapport arriveront au fil de l'intervention.</small></div>
+    </div>`;
+  }
+  else if(PDTAB === "rap"){
+    body = `<div class="dcard">
+      <div class="dh">Rapport d'intervention</div>
+      <div class="dempty">📋 Aucun rapport pour le moment<br><small>Le technicien le remplit en fin d'intervention, une fois la carte posée sur l'agenda.</small></div>
+    </div>`;
+  }
+
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead">
       <div class="drow1" style="justify-content:flex-end">
@@ -3342,54 +3463,15 @@ function openPending(pid){
         </div>` : ""}
       </div>
       <div class="pdhint">Pas encore planifiée — « Démarrer » la pose au prochain créneau libre, ou glisse-la sur l'agenda pour choisir l'heure.</div>
-    </div>
-    <div class="dcard">
-      <div class="dh">Détails de l'intervention</div>
-      <!-- meme grille que le panneau d'une intervention planifiee (option A) :
-           priorite, statut et type en rangee d'etats plutot qu'en lignes. -->
-      <div class="detats">
-        <span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>
-        <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
-        <span class="mchip m-${m}" style="font-size:.68rem;padding:2.5px 9px">${M.ic} ${M.lbl}</span>
+      <div class="dtabs">
+        ${(function(){
+          const BADGE = { not: p.note ? '<i class="tbdot"></i>' : "" };
+          return [["res","Résumé"],["cli","Client"],["not","Notes"],["pj","Pièces jointes"],["rap","Rapports"]].map(([k,l])=>
+            `<button class="dtab ${PDTAB===k?'on':''}" onclick="setPDTab('${k}')">${l}${BADGE[k]||""}</button>`).join("");
+        })()}
       </div>
-      ${kv("Client", p.client)}
-      ${kv("Date planifiée", '<span style="color:var(--muted)">Pas encore planifiée</span>')}
-      ${kv("Adresse", '<svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + adr)}
-      ${kv("Nuisible", T.ic + " " + T.lbl)}
-      ${kv("Durée estimée", dur)}
-      ${p.rappel ? kv(p.suivi ? "Prévu le" : "Rappel", p.rappel.split("-").reverse().join("/")) : ""}
     </div>
-    <div class="dcard">
-      <div class="dh">Client</div>
-      ${kv("Nom", p.client)}
-      ${kv("Téléphone", `<a href="tel:+33${tel.slice(1)}" style="color:var(--orange-deep)">${telFmt(tel)}</a>`)}
-      ${kv("Adresse", adr)}
-    </div>
-    <div class="dcard">
-      <div class="dh">Technicien <button class="dre" onclick="togPReass()">${PREASS ? "Annuler" : p.tech != null ? "Changer" : "Choisir"}</button></div>
-      ${PREASS
-        ? TECHS.map((tt, j) => `<div class="rpick ${j === p.tech ? 'cur' : ''}" onclick="pendTech(${pid},${j})">
-            <span class="av" style="background:${tt.grad}">${tt.ini}</span>
-            <b>${tt.nom}</b>
-            ${j === p.tech ? '<span class="tag">Pressenti</span>' : ''}
-          </div>`).join("")
-        : p.tech != null
-        ? `<div class="dtech">
-            <span class="av" style="background:${TECHS[p.tech].grad}">${TECHS[p.tech].ini}</span>
-            <span><b>${TECHS[p.tech].nom}</b><small>pressenti — pas encore posé sur son planning</small></span>
-          </div>`
-        : `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FAFBFC;border:1px dashed #E1E4EA;border-radius:11px;padding:11px 13px">
-            <span style="font-size:.8rem;color:var(--muted);font-weight:600">Pas encore affecté</span>
-            <span style="font-size:.75rem;color:var(--muted)">choisis-le ici, ou glisse la carte sur sa colonne</span>
-          </div>`}
-    </div>
-    <div class="dcard">
-      <div class="dh">Facturation</div>
-      ${inv}
-    </div>
-    <div class="dcard">
-      <button class="dbig sec" onclick="trayDrop(${pid})">Retirer du bac</button>
-    </div>`;
+    <div class="dsheet">${PDTAB === "res" ? FICHE : ""}${body}</div>`;
   document.getElementById("drawer").classList.add("open");
   document.getElementById("dveil").classList.add("open");
   document.body.style.overflow = "hidden";
