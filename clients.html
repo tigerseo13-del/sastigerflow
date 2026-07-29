@@ -417,10 +417,37 @@ tbody td .cl b, tbody td.cl b{font-weight:800}
       </div>
       <div class="chips">
         <button class="fchip" onclick="exportCSV()" title="Télécharger la liste au format CSV (Excel)">⬇ Exporter</button>
-        <button class="fchip on" data-f="all" onclick="setFilter(this)">Tous <span class="c">12</span></button>
-        <button class="fchip" data-f="due" onclick="setFilter(this)">À encaisser <span class="c">3</span></button>
-        <button class="fchip" data-f="actif" onclick="setFilter(this)">Actifs <span class="c">10</span></button>
-        <button class="fchip" data-f="inactif" onclick="setFilter(this)">Inactifs <span class="c">1</span></button>
+        <div class="fdate">
+          <button class="fchip" type="button" onclick="toggleDate(event)">📅 <span id="f-datelbl">Date de création</span> ▾</button>
+          <div class="fdatepop" id="f-datepop">
+            <label>Du<input type="date" id="f-du" onchange="applyF()"></label>
+            <label>Au<input type="date" id="f-au" onchange="applyF()"></label>
+            <button type="button" class="fdateclr" onclick="clearDate()">Effacer les dates</button>
+          </div>
+        </div>
+        <select class="fsel" id="f-type" onchange="applyF()">
+          <option value="">Tous les types</option>
+          <option>Particulier</option>
+          <option>Société</option>
+          <option>Société de gestion immobilière</option>
+        </select>
+        <select class="fsel" id="f-stat" onchange="applyF()">
+          <option value="">Tous les statuts</option>
+          <option>Actif</option>
+          <option>Inactif</option>
+        </select>
+        <select class="fsel" id="f-source" onchange="applyF()">
+          <option value="">Toutes les sources</option>
+          <option>Google Ads</option>
+          <option>Google SEO</option>
+          <option>Google My Business</option>
+          <option>Facebook Ads</option>
+          <option>Instagram</option>
+          <option>LinkedIn</option>
+          <option>TikTok</option>
+          <option>YouTube</option>
+          <option>Autre</option>
+        </select>
       </div>
     </div>
 
@@ -573,18 +600,18 @@ function toastLive(msg){
   t._h = setTimeout(()=>t.classList.remove("show"), 2600);
 }
 const CLIENTS = [
-  {nom:"Ironwood Solutions",   ville:"Paris 11e",    cp:"75011", type:"Pro",         nb:1, ca:3840,  due:1250, st:"retard",  tel:"0612345678", mail:"john.thompson@ironwood.com"},
-  {nom:"Syndic Foncia Lilas",  ville:"Paris 20e",    cp:"75020", type:"Syndic",      nb:3, ca:11260, due:0,    st:"actif",   tel:"0145879632", mail:"gestion@foncia-lilas.fr"},
-  {nom:"Hôtel du Parc",        ville:"Paris 17e",    cp:"75017", type:"Pro",         nb:2, ca:8450,  due:640,  st:"attente", tel:"0143285512", mail:"reception@hotelduparc.fr"},
-  {nom:"Entrepôt Central",     ville:"Gennevilliers",cp:"92230", type:"Pro",         nb:1, ca:5620,  due:0,    st:"actif",   tel:"0147336890", mail:"contact@entrepot-central.fr"},
-  {nom:"Camping Val de Seine", ville:"Villeneuve",   cp:"78670", type:"Pro",         nb:1, ca:4100,  due:0,    st:"inactif", tel:"0139588274", mail:"info@camping-valdeseine.fr"},
-  {nom:"Pharmacie Centrale",   ville:"Paris 15e",    cp:"75015", type:"Pro",         nb:1, ca:2980,  due:0,    st:"actif",   tel:"0145321087", mail:"pharmacie.centrale@orange.fr"},
-  {nom:"Restaurant Chez Marcel",ville:"Paris 19e",   cp:"75019", type:"Pro",         nb:1, ca:2310,  due:0,    st:"actif",   tel:"0142051733", mail:"chezmarcel75@gmail.com"},
-  {nom:"Boulangerie Dupont",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1940,  due:0,    st:"actif",   tel:"0645221890", mail:"contact@boulangerie-dupont.fr"},
-  {nom:"Crèche Les Lutins",    ville:"Montreuil",    cp:"93100", type:"Pro",         nb:1, ca:1720,  due:0,    st:"actif",   tel:"0148574421", mail:"direction@creche-leslutins.fr"},
-  {nom:"Tabac de la Mairie",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1280,  due:320,  st:"attente", tel:"0147901255", mail:"tabacdelamairie@sfr.fr"},
-  {nom:"Mme Perrin",           ville:"Paris 13e",    cp:"75013", type:"Particulier", nb:0, ca:578,   due:0,    st:"actif",   tel:"0652304178", mail:"perrin.marie@gmail.com"},
-  {nom:"M. Diallo",            ville:"Saint-Ouen",   cp:"93400", type:"Particulier", nb:0, ca:390,   due:0,    st:"actif",   tel:"0661482935", mail:"m.diallo93@gmail.com"},
+  {nom:"Ironwood Solutions",   ville:"Paris 11e",    cp:"75011", type:"Pro",         nb:1, ca:3840,  due:1250, st:"retard",  tel:"0612345678", mail:"john.thompson@ironwood.com", source:"Google Ads", cree:"2024-03-12"},
+  {nom:"Syndic Foncia Lilas",  ville:"Paris 20e",    cp:"75020", type:"Syndic",      nb:3, ca:11260, due:0,    st:"actif",   tel:"0145879632", mail:"gestion@foncia-lilas.fr", source:"LinkedIn", cree:"2023-11-05"},
+  {nom:"Hôtel du Parc",        ville:"Paris 17e",    cp:"75017", type:"Pro",         nb:2, ca:8450,  due:640,  st:"attente", tel:"0143285512", mail:"reception@hotelduparc.fr", source:"Google SEO", cree:"2024-06-20"},
+  {nom:"Entrepôt Central",     ville:"Gennevilliers",cp:"92230", type:"Pro",         nb:1, ca:5620,  due:0,    st:"actif",   tel:"0147336890", mail:"contact@entrepot-central.fr", source:"Google My Business", cree:"2025-01-15"},
+  {nom:"Camping Val de Seine", ville:"Villeneuve",   cp:"78670", type:"Pro",         nb:1, ca:4100,  due:0,    st:"inactif", tel:"0139588274", mail:"info@camping-valdeseine.fr", source:"Facebook Ads", cree:"2024-09-03"},
+  {nom:"Pharmacie Centrale",   ville:"Paris 15e",    cp:"75015", type:"Pro",         nb:1, ca:2980,  due:0,    st:"actif",   tel:"0145321087", mail:"pharmacie.centrale@orange.fr", source:"Google My Business", cree:"2025-02-28"},
+  {nom:"Restaurant Chez Marcel",ville:"Paris 19e",   cp:"75019", type:"Pro",         nb:1, ca:2310,  due:0,    st:"actif",   tel:"0142051733", mail:"chezmarcel75@gmail.com", source:"Instagram", cree:"2025-04-11"},
+  {nom:"Boulangerie Dupont",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1940,  due:0,    st:"actif",   tel:"0645221890", mail:"contact@boulangerie-dupont.fr", source:"Google SEO", cree:"2025-05-19"},
+  {nom:"Crèche Les Lutins",    ville:"Montreuil",    cp:"93100", type:"Pro",         nb:1, ca:1720,  due:0,    st:"actif",   tel:"0148574421", mail:"direction@creche-leslutins.fr", source:"Google My Business", cree:"2024-12-01"},
+  {nom:"Tabac de la Mairie",   ville:"Asnières",     cp:"92600", type:"Pro",         nb:1, ca:1280,  due:320,  st:"attente", tel:"0147901255", mail:"tabacdelamairie@sfr.fr", source:"Autre", cree:"2025-03-22"},
+  {nom:"Mme Perrin",           ville:"Paris 13e",    cp:"75013", type:"Particulier", nb:0, ca:578,   due:0,    st:"actif",   tel:"0652304178", mail:"perrin.marie@gmail.com", source:"Google Ads", cree:"2026-01-08"},
+  {nom:"M. Diallo",            ville:"Saint-Ouen",   cp:"93400", type:"Particulier", nb:0, ca:390,   due:0,    st:"actif",   tel:"0661482935", mail:"m.diallo93@gmail.com", source:"Facebook Ads", cree:"2026-01-20"},
 ];
 const STL = {actif:["st-actif","Actif"], retard:["st-retard","En retard"], attente:["st-attente","En attente"], inactif:["st-inactif","Inactif"]};
 /* 27/07 : la liste etait TOUJOURS triee par CA decroissant. Un client qu'on
@@ -617,13 +644,33 @@ function sortCA(){
 }
 function videFiltres(){
   document.getElementById("q").value = "";
-  const t = document.querySelector('.fchip[data-f="all"]');
-  if(t) setFilter(t); else render();
+  ["f-type","f-stat","f-source","f-du","f-au"].forEach(id => { const e = document.getElementById(id); if(e) e.value = ""; });
+  applyF();
 }
+let F = {type:"", stat:"", source:"", du:"", au:""};
+function applyF(){
+  const g = id => document.getElementById(id);
+  F.type = g("f-type").value; F.stat = g("f-stat").value; F.source = g("f-source").value;
+  F.du = g("f-du").value; F.au = g("f-au").value;
+  const dl = g("f-datelbl");
+  if(dl) dl.textContent = (F.du || F.au) ? ((F.du || "…") + " → " + (F.au || "…")) : "Date de création";
+  render();
+}
+function toggleDate(e){ e.stopPropagation(); document.getElementById("f-datepop").classList.toggle("open"); }
+function clearDate(){ document.getElementById("f-du").value = ""; document.getElementById("f-au").value = ""; applyF(); }
+document.addEventListener("click", e => {
+  const p = document.getElementById("f-datepop");
+  if(p && p.classList.contains("open") && !e.target.closest(".fdate")) p.classList.remove("open");
+});
 function render(){
   const q = document.getElementById("q").value.toLowerCase().trim();
+  const TYPMAP = {"Particulier":"Particulier","Société":"Pro","Société de gestion immobilière":"Syndic"};
   let list = CLIENTS.filter(c =>
-    (FILTER==="all" || (FILTER==="due" ? c.due>0 : FILTER==="inactif" ? c.st==="inactif" : c.st!=="inactif")) &&
+    (!F.type   || c.type === TYPMAP[F.type]) &&
+    (!F.stat   || (F.stat === "Inactif" ? c.st === "inactif" : c.st !== "inactif")) &&
+    (!F.source || c.source === F.source) &&
+    (!F.du     || (c.cree || "") >= F.du) &&
+    (!F.au     || (c.cree || "") <= F.au) &&
     (!q || c.nom.toLowerCase().includes(q) || c.ville.toLowerCase().includes(q) || c.cp.includes(q)
          || (c.tel || "").replace(/\D/g,"").includes(q.replace(/\D/g,"") || "§") || (c.mail || "").toLowerCase().includes(q))
   );
@@ -1089,6 +1136,14 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 /* ===== l'icône e-mail est présente sur chaque ligne ; grisée si le client n'a pas d'e-mail (29/07) ===== */
 .ab.mail.nomail{color:#C4C8D2;cursor:pointer}
 .ab.mail.nomail:hover{color:var(--orange-deep);background:var(--orange-soft)}
+.fsel{font-size:.79rem;font-weight:600;padding:9px 12px;border-radius:11px;background:#fff;border:1px solid var(--line);color:var(--ink-2);cursor:pointer;font-family:inherit}
+.fsel:focus{outline:none;border-color:var(--orange)}
+.fdate{position:relative;display:inline-block}
+.fdatepop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;box-shadow:0 16px 36px -18px rgba(23,26,32,.5);display:none;min-width:200px}
+.fdatepop.open{display:block}
+.fdatepop label{display:block;font-size:.72rem;font-weight:700;color:var(--ink-2);margin-bottom:9px}
+.fdatepop input{width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:.82rem;color:var(--ink)}
+.fdateclr{font-size:.72rem;color:var(--muted);background:none;border:0;cursor:pointer;padding:3px 0;font-weight:600}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
