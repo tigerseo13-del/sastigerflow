@@ -333,6 +333,7 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .rchips{gap:8px}
 .rlab .rfac{text-transform:none;letter-spacing:0;font-weight:600;color:#A6ABBB;margin-left:2px}
 .rlab .rlc{color:var(--green-d,#0A6B51);font-weight:800;text-transform:none;letter-spacing:0;margin-left:2px}
+.rdatesel{display:flex;align-items:center;gap:6px;margin-top:9px;background:var(--green-bg,#DFF3ED);border-radius:11px;padding:10px 13px;font-size:.78rem;font-weight:700;color:var(--green-d,#0A6B51)}
 .rlab .rmulti{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600;color:#A6ABBB;font-size:.64rem}
 .rdate{min-height:0;padding:13px 14px;font-weight:700;color:#2A2F3A}
 #rapbody{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px 14px;box-shadow:0 2px 10px -5px rgba(23,26,32,.08)}
@@ -1245,8 +1246,19 @@ function rrap(){
     <div class="devban" style="margin:9px 0 0">ℹ️ Un brouillon de devis naîtra dans l'onglet Devis à la clôture.</div>` : ""}
 
     <div class="rlab">Prochain passage <span class="rfac">facultatif</span></div>
-    <div class="rhint">une fiche de suivi partira dans le bac « À planifier » à cette date</div>
+    <!-- 29/07 (patron) : raccourcis d'un appui + creneau conseille. Au telephone,
+         le selecteur de date natif reste le meilleur calendrier qui soit. -->
+    <div class="rchips" style="margin-bottom:8px">
+      ${[["Dans 2 semaines",14],["Dans 1 mois",30],["Dans 3 mois",90]].map(([l,n]) =>
+        `<button type="button" class="rchip multi ${RAPD.next === rapPlusJours(n) ? 'on' : ''}" onclick="rapQuick(${n})">${l}</button>`).join("")}
+    </div>
     <input type="date" class="rta rdate" id="r-next" value="${RAPD.next || ""}" onchange="rapKeep()">
+    <div class="rlab" style="border-top:0;padding-top:8px;margin-bottom:8px">Créneau conseillé <span class="rfac">accompagne la fiche de suivi</span></div>
+    <div class="rchips">
+      ${["Matin · 8h – 12h","Après-midi · 14h – 18h","Indifférent"].map(c =>
+        `<button type="button" class="rchip multi ${RAPD.creneau === c ? 'on' : ''}" onclick="rapCreneau('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("")}
+    </div>
+    ${RAPD.next ? `<div class="rdatesel">📅 Fiche de suivi le <b>&nbsp;${rapJoli(RAPD.next)}${RAPD.creneau && RAPD.creneau !== "Indifférent" ? ", " + RAPD.creneau.split(" ·")[0].toLowerCase() : ""}</b></div>` : ""}
     <div class="rlab">Signature du client
       <button type="button" class="rclr" onclick="sigInit('rsig','rsigh');g('rsigh').style.display=''">Effacer</button></div>
     <div class="sigbox"><canvas id="rsig" width="356" height="190"></canvas><div class="sigh" id="rsigh">Le client signe ici</div></div>
@@ -1278,6 +1290,12 @@ function rapLater(){
   toast("Brouillon enregistré — reprends la fiche quand tu veux");
   go("detail");
 }
+const rapPlusJours = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+function rapQuick(n){ rapKeep(); const v = rapPlusJours(n); RAPD.next = (RAPD.next === v) ? "" : v; rrap(); }
+function rapCreneau(c){ rapKeep(); RAPD.creneau = (RAPD.creneau === c) ? "" : c; rrap(); }
+const RJOURS = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+const RMOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+function rapJoli(isoD){ const d = new Date(isoD + "T12:00:00"); return RJOURS[d.getDay()] + " " + d.getDate() + " " + RMOIS[d.getMonth()] + " " + d.getFullYear(); }
 function rapNiv(v){ rapKeep(); RAPD.niv = v; rrap(); }
 function rapUrg(v){ rapKeep(); RAPD.urg = v; rrap(); }
 /* 27/07 : plusieurs methodes possibles sur une meme intervention (gel + pulverisation,

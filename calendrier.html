@@ -320,8 +320,27 @@ h1,.num{font-family:'Sora',sans-serif}
 .prowh{display:flex;gap:8px;margin-bottom:5px;font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#9AA0AE}
 .prowh span:first-child{flex:1}.prowh span:nth-child(2){width:86px;flex:none}.prowh span:last-child{width:36px;flex:none}
 .sigbox .sigh{position:absolute;inset:0;display:grid;place-items:center;color:#C2C6D0;font-size:.8rem;font-weight:700;pointer-events:none}
-.dbig.g{background:var(--green);box-shadow:0 4px 12px -5px rgba(23,168,126,.5)}
-.dbig.g:hover{background:var(--green-d)}
+/* prochain passage : calendrier + creneau (verts = variables du SaaS) */
+.rcalbox{background:#FBFBFD;border:1px solid #EFF1F5;border-radius:14px;padding:14px 16px;margin-top:10px}
+.rcalhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.rcalhead b{font-family:'Sora';font-size:.86rem}
+.rcalnav{display:flex;gap:5px}
+.rcalnav button{width:26px;height:26px;border-radius:8px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:.72rem;color:var(--ink-2);cursor:pointer;font-family:inherit}
+.rcalnav button:hover{border-color:var(--green);color:var(--green-d)}
+.rcalgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.rcalgrid .wd{font-size:.6rem;font-weight:800;color:#A6ABBB;text-transform:uppercase;padding:4px 0}
+.rcald{font-size:.76rem;font-weight:600;color:var(--ink-2);padding:7px 0;border-radius:9px;cursor:pointer;user-select:none}
+.rcald:hover{background:#EEF0F4}
+.rcald.out{color:#D5D8DF}
+.rcald.sel{background:var(--green);color:#fff;font-weight:800}
+.rcald.sel:hover{background:var(--green-d)}
+.rcald.auj:not(.sel){box-shadow:inset 0 0 0 1.5px var(--orange);color:var(--orange-deep);font-weight:800}
+.rcren{margin-top:11px;padding-top:11px;border-top:1px dashed #E4E7ED}
+.rcrenlab{font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6B7180;margin-bottom:8px}
+.rchip.crn{padding:8px 13px;font-size:.76rem}
+.rdatesel{display:flex;align-items:center;gap:6px;margin-top:11px;background:var(--green-bg);border-radius:11px;padding:10px 13px;font-size:.8rem;font-weight:700;color:var(--green-d)}
+.rdatesel.off{background:#F4F5F8;color:#A6ABBB;font-weight:600}
+
 .drawer textarea,.drawer input[type=text],.drawer input[type=number],.drawer input[type=date],.drawer select{width:100%;font-family:inherit;font-size:.85rem;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#FCFCFD}
 .drawer textarea:focus,.drawer input:focus,.drawer select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px #FFE4D5}
 .drawer textarea{resize:vertical;min-height:64px}
@@ -2647,8 +2666,9 @@ const R_RECOS  = ["Boucher les fissures et points d'entrée","Améliorer la gest
 function openReport(id){
   if(!REPORTS[id]) REPORTS[id] = {niv:"", zones:new Set(), signes:new Set(), obs:"", urg:"Moyenne",
     meths:new Set(), prods:[{p:0,q:1}], mats:new Set(), tzones:new Set(), act:"", temps:"",
-    recos:new Set(), quote:false, quoteDesc:"", next:"", notes:"", photos:[]};
+    recos:new Set(), quote:false, quoteDesc:"", next:"", notes:"", creneau:"", photos:[]};
   RSTEP = 1;
+  RCALOFF = 0;
   renderReport(id);
 }
 function rStepsBar(){
@@ -2733,9 +2753,15 @@ function renderReport(id){
         <textarea oninput="REPORTS[${id}].quoteDesc=this.value" placeholder="Travaux à chiffrer : rebouchage maçonnerie, dépigeonnage toiture…">${r.quoteDesc}</textarea>
         <div style="margin-top:8px;background:#EBF1FE;border:1px solid #D9E4FC;color:#2148C0;border-radius:10px;padding:9px 12px;font-size:.76rem;font-weight:600">ℹ️ Un brouillon de devis sera créé automatiquement et lié à ce client.</div>
       </div>
-      <span class="rlab">Prochain passage conseillé</span>
-      <div class="rhint">une fiche de suivi partira dans le bac « À planifier » à cette date</div>
-      <input type="date" value="${r.next}" onchange="REPORTS[${id}].next=this.value">
+      <span class="rlab">Prochain passage conseillé <small class="rmulti">une fiche partira dans « À planifier »</small></span>
+      <!-- 29/07 (patron) : personne ne pense en jj/mm/aaaa. Raccourcis d'un
+           appui, calendrier integre, creneau horaire, et la synthese en clair.
+           Le creneau accompagne la fiche de suivi dans le bac. -->
+      <div class="rchips">
+        ${[["Dans 2 semaines",14],["Dans 1 mois",30],["Dans 3 mois",90]].map(([l,n]) =>
+          `<span class="rchip multi ${r.next === rPlusJours(n) ? 'on' : ''}" onclick="rQuick(${id},${n})">${l}</span>`).join("")}
+      </div>
+      ${rCalHTML(id, r)}
       <span class="rlab">Notes de suivi</span>
       <textarea oninput="REPORTS[${id}].notes=this.value" placeholder="À revoir sous 15 jours, prévenir le gardien…">${r.notes}</textarea>
       <span class="rlab" style="display:flex;align-items:center">Signature du client
@@ -2751,7 +2777,7 @@ function renderReport(id){
             sur le bouton l'allongeait pour rien. -->
        <button class="dbig rnext" onclick="rNav(${id},1)">Suivant →</button>`
     : `<button class="dbig sec" onclick="rNav(${id},-1)">← Précédent</button>
-       <button class="dbig rnext g" onclick="rSave(${id})">✓ Valider le rapport</button>
+       <button class="dbig rnext" onclick="rSave(${id})">✓ Valider le rapport</button>
        <!-- 27/07 : les deux boutons-icones Apercu PDF et E-mail sont retires.
             Ils faisaient doublon avec « Telecharger le rapport PDF » et
             « Envoyer par e-mail au client », qui apparaissent une fois le
@@ -2772,6 +2798,55 @@ function renderReport(id){
     <div class="dmain rapnavpc" style="margin-bottom:6px">${nav}</div>`;
   if(RSTEP === 3) rSigInit();
   document.getElementById("drawer").scrollTop = 0;
+}
+/* ===== 29/07 — prochain passage : raccourcis, calendrier, creneau ===== */
+let RCALOFF = 0;   /* mois affiche, en ecart par rapport au mois de la date choisie (ou d'aujourd'hui) */
+const rPlusJours = n => { const d = new Date(TODAYD); d.setDate(d.getDate() + n); return iso(d); };
+function rQuick(id, n){
+  const r = REPORTS[id];
+  const v = rPlusJours(n);
+  r.next = (r.next === v) ? "" : v;   /* re-appui = annule */
+  RCALOFF = 0;
+  renderReport(id);
+}
+function rCalNav(id, d){ RCALOFF += d; renderReport(id); }
+function rCalPick(id, isoDay){
+  const r = REPORTS[id];
+  r.next = (r.next === isoDay) ? "" : isoDay;
+  RCALOFF = 0;
+  renderReport(id);
+}
+function rCreneau(id, c){
+  const r = REPORTS[id];
+  r.creneau = (r.creneau === c) ? "" : c;
+  renderReport(id);
+}
+function rCalHTML(id, r){
+  const base = r.next ? new Date(r.next + "T12:00:00") : new Date(TODAYD);
+  const m0 = new Date(base.getFullYear(), base.getMonth() + RCALOFF, 1);
+  const off = (m0.getDay() + 6) % 7;
+  const start = new Date(m0); start.setDate(1 - off);
+  let cells = "";
+  for(let i = 0; i < 42; i++){
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const di = iso(d);
+    const inM = d.getMonth() === m0.getMonth();
+    cells += `<span class="rcald ${inM ? '' : 'out'} ${di === r.next ? 'sel' : ''} ${di === iso(TODAYD) ? 'auj' : ''}"
+      onclick="rCalPick(${id},'${di}')">${d.getDate()}</span>`;
+  }
+  const CRENS = ["Matin · 8h – 12h", "Après-midi · 14h – 18h", "Indifférent"];
+  const dSel = r.next ? new Date(r.next + "T12:00:00") : null;
+  return `<div class="rcalbox">
+    <div class="rcalhead"><b>${MOIS[m0.getMonth()][0].toUpperCase() + MOIS[m0.getMonth()].slice(1)} ${m0.getFullYear()}</b>
+      <span class="rcalnav"><button type="button" onclick="rCalNav(${id},-1)" title="Mois précédent">‹</button><button type="button" onclick="rCalNav(${id},1)" title="Mois suivant">›</button></span></div>
+    <div class="rcalgrid"><span class="wd">L</span><span class="wd">M</span><span class="wd">M</span><span class="wd">J</span><span class="wd">V</span><span class="wd">S</span><span class="wd">D</span>${cells}</div>
+    <div class="rcren">
+      <div class="rcrenlab">Créneau conseillé</div>
+      <div class="rchips">${CRENS.map(c => `<span class="rchip multi crn ${r.creneau === c ? 'on' : ''}" onclick="rCreneau(${id},'${c.replace(/'/g,"\\'")}')">${c}</span>`).join("")}</div>
+    </div>
+    ${r.next ? `<div class="rdatesel">📅 Fiche de suivi le <b>&nbsp;${JOURS[dSel.getDay()]} ${dSel.getDate()} ${MOIS[dSel.getMonth()]} ${dSel.getFullYear()}${r.creneau && r.creneau !== "Indifférent" ? ", " + r.creneau.split(" ·")[0].toLowerCase() : ""}</b></div>`
+             : `<div class="rdatesel off">Choisis un raccourci ou un jour — ou laisse vide, c'est facultatif</div>`}
+  </div>`;
 }
 function rNav(id, d){
   RSTEP = Math.min(3, Math.max(1, RSTEP + d));
@@ -2921,7 +2996,8 @@ function rSave(id){
   if(r.next && !r._suiviFait){
     r._suiviFait = true;
     PENDING.push({pid:PID++, type:v.type, typeLibre:v.typeLibre || "", client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
-      suivi:true, since:iso(TODAYD), rappel:r.next});
+      suivi:true, since:iso(TODAYD), rappel:r.next,
+      note:(r.creneau && r.creneau !== "Indifférent") ? "Créneau conseillé : " + r.creneau : ""});
     renderTray();
     extra += " · 🔁 suivi ajouté au bac";
   }
