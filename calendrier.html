@@ -318,7 +318,20 @@ h1,.num{font-family:'Sora',sans-serif}
 .rlab .rlc{color:var(--green-d);font-weight:800;letter-spacing:0;font-size:.74rem}
 .rlab .rmulti{margin-left:auto;font-family:'Inter';font-weight:600;color:#A6ABBB;font-size:.68rem;letter-spacing:0}
 .prowh{display:flex;gap:8px;margin-bottom:5px;font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#9AA0AE}
-.prowh span:first-child{flex:1}.prowh span:nth-child(2){width:86px;flex:none}.prowh span:last-child{width:36px;flex:none}
+.prowh span:first-child{flex:1}.prowh .wc2{width:118px;flex:none}.prowh .wq2{width:86px;flex:none}.prowh .wx2{width:36px;flex:none}
+.prow .pconc{width:118px;flex:none}
+.rchip.autre{background:#fff;box-shadow:inset 0 0 0 1.5px dashed #D8DBE2;box-shadow:none;border:1.5px dashed #D8DBE2;color:var(--muted);font-weight:700}
+.rchip.autre:hover{border-color:var(--green);color:var(--green-d);background:#fff}
+.rtzin{width:100%;margin-top:8px;border:1.5px solid var(--green);border-radius:11px;padding:10px 13px;font:600 .8rem Inter,sans-serif;outline:none;background:#FBFFFD}
+.rdaterow{display:flex;gap:8px;align-items:stretch;margin-top:10px}
+.rdate2{flex:1;border:1.5px solid var(--line);border-radius:11px;padding:9px 13px;font:600 .82rem Inter,sans-serif;color:var(--ink);background:#fff}
+.rcalbtn{width:44px;border-radius:11px;background:#F1F2F6;font-size:.95rem;cursor:pointer;border:0}
+.rcalbtn:hover{background:#E9EBF0}
+.rcalbtn.on{background:var(--green-bg)}
+.rcalbox.pop{margin-top:8px}
+.rcalsels{display:flex;gap:6px}
+.rcalsels select{font:700 .76rem Inter,sans-serif;border:1px solid var(--line);border-radius:8px;padding:4px 7px;background:#fff;color:var(--ink);cursor:pointer}
+.rcaltoday{display:block;width:100%;margin-top:9px;padding:8px 0 2px;border:0;border-top:1px solid #EFF1F5;color:var(--orange-deep);font-weight:800;font-size:.76rem;background:none;cursor:pointer;font-family:inherit;text-align:center}
 .sigbox .sigh{position:absolute;inset:0;display:grid;place-items:center;color:#C2C6D0;font-size:.8rem;font-weight:700;pointer-events:none}
 /* prochain passage : calendrier + creneau (verts = variables du SaaS) */
 .rcalbox{background:#FBFBFD;border:1px solid #EFF1F5;border-radius:14px;padding:14px 16px;margin-top:10px}
@@ -2381,7 +2394,7 @@ function renderDetail(){
         <div class="dcard">
           <div class="dh">Étape 2 — Traitement</div>
           ${kv("Méthode", [...r.meths].join(", "))}
-          ${kv("Produits utilisés", r.prods.filter(p=>p.p).map(p=>(PRODUITS[p.p]||"") + " ×" + p.q).filter(Boolean).join(", "))}
+          ${kv("Produits utilisés", r.prods.filter(p=>p.p).map(p=>(PRODUITS[p.p]||"") + (p.c ? " · " + p.c : "") + " ×" + p.q).filter(Boolean).join(", "))}
           ${kv("Matériel", st(r.mats))}
           ${kv("Zones traitées", st(r.tzones))}
           ${kv("Actions réalisées", r.act)}
@@ -2667,8 +2680,9 @@ function openReport(id){
   if(!REPORTS[id]) REPORTS[id] = {niv:"", zones:new Set(), signes:new Set(), obs:"", urg:"Moyenne",
     meths:new Set(), prods:[{p:0,q:1}], mats:new Set(), tzones:new Set(), act:"", temps:"",
     recos:new Set(), quote:false, quoteDesc:"", next:"", notes:"", creneau:"", photos:[]};
+  if(REPORTS[id].prods) REPORTS[id].prods.forEach(pr => { if(pr.c === undefined) pr.c = ""; });
   RSTEP = 1;
-  RCALOFF = 0;
+  RCAL_OPEN = false; RTZ_OPEN = false;
   renderReport(id);
 }
 function rStepsBar(){
@@ -2722,13 +2736,16 @@ function renderReport(id){
       ${mlab("Méthode de traitement", "meths", r.meths)}
       <div class="rchips">${chips(R_METH, r.meths, "meths")}</div>
       <span class="rlab">Produits utilisés</span>
-      <div class="prowh"><span>Produit</span><span>Quantité</span><span></span></div>
+      <div class="prowh"><span>Produit</span><span class="wc2">Concentration</span><span class="wq2">Quantité</span><span class="wx2"></span></div>
       <div id="r-prods">${r.prods.map((pr,j)=>rProdRow(id,pr,j)).join("")}</div>
       <button class="raddp" onclick="rAddProd(${id})">+ Ajouter un produit</button>
       ${mlab("Matériel utilisé", "mats", r.mats)}
       <div class="rchips">${chips(R_MATS, r.mats, "mats")}</div>
       ${mlab("Zones traitées", "tzones", r.tzones)}
-      <div class="rchips">${chips(R_TZONES, r.tzones, "tzones")}</div>
+      <div class="rchips">${chips(R_TZONES, r.tzones, "tzones")}${[...r.tzones].filter(z => !R_TZONES.includes(z)).map(z =>
+        `<span class="rchip multi on" onclick="rTzDel(${id},'${z.replace(/'/g,"\\'")}')" title="Retirer">${z}</span>`).join("")}<span class="rchip autre" onclick="rTzOpen(${id})">+ Autre…</span></div>
+      ${RTZ_OPEN ? `<input id="rtzinput" class="rtzin" placeholder="Précise la zone (toiture, vide sanitaire…) — Entrée pour ajouter"
+        onkeydown="if(event.key === 'Enter') rTzAdd(${id}, this.value)" onblur="rTzAdd(${id}, this.value)">` : ""}
       <span class="rlab">Actions réalisées</span>
       <textarea oninput="REPORTS[${id}].act=this.value" placeholder="Pose de 6 postes d'appâtage, colmatage provisoire, pulvérisation plinthes…">${r.act}</textarea>
 `;
@@ -2799,21 +2816,37 @@ function renderReport(id){
   if(RSTEP === 3) rSigInit();
   document.getElementById("drawer").scrollTop = 0;
 }
-/* ===== 29/07 — prochain passage : raccourcis, calendrier, creneau ===== */
-let RCALOFF = 0;   /* mois affiche, en ecart par rapport au mois de la date choisie (ou d'aujourd'hui) */
+/* ===== 29/07 — prochain passage : champ de date SAISISSABLE + calendrier
+   deroulant (mois/annee au choix, Aujourd'hui), raccourcis, creneau.
+   La phrase d'etat vide est supprimee (demande patron). ===== */
+let RCAL_OPEN = false, RCALY = 0, RCALM = 0, RTZ_OPEN = false;
 const rPlusJours = n => { const d = new Date(TODAYD); d.setDate(d.getDate() + n); return iso(d); };
 function rQuick(id, n){
   const r = REPORTS[id];
   const v = rPlusJours(n);
   r.next = (r.next === v) ? "" : v;   /* re-appui = annule */
-  RCALOFF = 0;
+  RCAL_OPEN = false;
   renderReport(id);
 }
-function rCalNav(id, d){ RCALOFF += d; renderReport(id); }
+function rSetNext(id, v){ REPORTS[id].next = v || ""; renderReport(id); }
+function rCalToggle(id){
+  RCAL_OPEN = !RCAL_OPEN;
+  if(RCAL_OPEN){
+    const base = REPORTS[id].next ? new Date(REPORTS[id].next + "T12:00:00") : new Date(TODAYD);
+    RCALY = base.getFullYear(); RCALM = base.getMonth();
+  }
+  renderReport(id);
+}
+function rCalNav(id, d){
+  RCALM += d;
+  if(RCALM < 0){ RCALM = 11; RCALY--; }
+  if(RCALM > 11){ RCALM = 0; RCALY++; }
+  renderReport(id);
+}
+function rCalSet(id, y, m){ RCALY = y; RCALM = m; renderReport(id); }
 function rCalPick(id, isoDay){
-  const r = REPORTS[id];
-  r.next = (r.next === isoDay) ? "" : isoDay;
-  RCALOFF = 0;
+  REPORTS[id].next = isoDay;
+  RCAL_OPEN = false;   /* choisir ferme le calendrier, comme un vrai selecteur */
   renderReport(id);
 }
 function rCreneau(id, c){
@@ -2821,32 +2854,59 @@ function rCreneau(id, c){
   r.creneau = (r.creneau === c) ? "" : c;
   renderReport(id);
 }
+function rTzOpen(id){
+  RTZ_OPEN = true; renderReport(id);
+  setTimeout(() => { const i = document.getElementById("rtzinput"); if(i) i.focus(); }, 0);
+}
+function rTzAdd(id, v){
+  if(!RTZ_OPEN) return;   /* Entree puis blur : ne pas ajouter deux fois */
+  RTZ_OPEN = false;
+  v = (v || "").trim();
+  if(v) REPORTS[id].tzones.add(v);
+  renderReport(id);
+}
+function rTzDel(id, z){ REPORTS[id].tzones.delete(z); renderReport(id); }
 function rCalHTML(id, r){
-  const base = r.next ? new Date(r.next + "T12:00:00") : new Date(TODAYD);
-  const m0 = new Date(base.getFullYear(), base.getMonth() + RCALOFF, 1);
-  const off = (m0.getDay() + 6) % 7;
-  const start = new Date(m0); start.setDate(1 - off);
-  let cells = "";
-  for(let i = 0; i < 42; i++){
-    const d = new Date(start); d.setDate(start.getDate() + i);
-    const di = iso(d);
-    const inM = d.getMonth() === m0.getMonth();
-    cells += `<span class="rcald ${inM ? '' : 'out'} ${di === r.next ? 'sel' : ''} ${di === iso(TODAYD) ? 'auj' : ''}"
-      onclick="rCalPick(${id},'${di}')">${d.getDate()}</span>`;
+  let cal = "";
+  if(RCAL_OPEN){
+    const m0 = new Date(RCALY, RCALM, 1);
+    const off = (m0.getDay() + 6) % 7;
+    const start = new Date(m0); start.setDate(1 - off);
+    let cells = "";
+    for(let i = 0; i < 42; i++){
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      const di = iso(d);
+      const inM = d.getMonth() === m0.getMonth();
+      cells += `<span class="rcald ${inM ? '' : 'out'} ${di === r.next ? 'sel' : ''} ${di === iso(TODAYD) ? 'auj' : ''}"
+        onclick="rCalPick(${id},'${di}')">${d.getDate()}</span>`;
+    }
+    const y0 = TODAYD.getFullYear();
+    const years = []; for(let y = y0 - 1; y <= y0 + 2; y++) years.push(y);
+    cal = `<div class="rcalbox pop">
+      <div class="rcalhead">
+        <span class="rcalnav"><button type="button" onclick="rCalNav(${id},-1)" title="Mois précédent">‹</button></span>
+        <span class="rcalsels">
+          <select onchange="rCalSet(${id}, RCALY, +this.value)" aria-label="Mois">${MOIS.map((m,k)=>`<option value="${k}" ${k===RCALM?'selected':''}>${m[0].toUpperCase()+m.slice(1)}</option>`).join("")}</select>
+          <select onchange="rCalSet(${id}, +this.value, RCALM)" aria-label="Année">${years.map(y=>`<option ${y===RCALY?'selected':''}>${y}</option>`).join("")}</select>
+        </span>
+        <span class="rcalnav"><button type="button" onclick="rCalNav(${id},1)" title="Mois suivant">›</button></span>
+      </div>
+      <div class="rcalgrid"><span class="wd">L</span><span class="wd">M</span><span class="wd">M</span><span class="wd">J</span><span class="wd">V</span><span class="wd">S</span><span class="wd">D</span>${cells}</div>
+      <button type="button" class="rcaltoday" onclick="rCalPick(${id},'${iso(TODAYD)}')">Aujourd'hui</button>
+    </div>`;
   }
   const CRENS = ["Matin · 8h – 12h", "Après-midi · 14h – 18h", "Indifférent"];
   const dSel = r.next ? new Date(r.next + "T12:00:00") : null;
-  return `<div class="rcalbox">
-    <div class="rcalhead"><b>${MOIS[m0.getMonth()][0].toUpperCase() + MOIS[m0.getMonth()].slice(1)} ${m0.getFullYear()}</b>
-      <span class="rcalnav"><button type="button" onclick="rCalNav(${id},-1)" title="Mois précédent">‹</button><button type="button" onclick="rCalNav(${id},1)" title="Mois suivant">›</button></span></div>
-    <div class="rcalgrid"><span class="wd">L</span><span class="wd">M</span><span class="wd">M</span><span class="wd">J</span><span class="wd">V</span><span class="wd">S</span><span class="wd">D</span>${cells}</div>
-    <div class="rcren">
+  return `<div class="rdaterow">
+      <input type="date" class="rdate2" value="${r.next}" onchange="rSetNext(${id}, this.value)" aria-label="Date du prochain passage">
+      <button type="button" class="rcalbtn ${RCAL_OPEN ? 'on' : ''}" onclick="rCalToggle(${id})" title="${RCAL_OPEN ? 'Fermer' : 'Ouvrir'} le calendrier">📅</button>
+    </div>
+    ${cal}
+    <div class="rcalbox">
       <div class="rcrenlab">Créneau conseillé</div>
       <div class="rchips">${CRENS.map(c => `<span class="rchip multi crn ${r.creneau === c ? 'on' : ''}" onclick="rCreneau(${id},'${c.replace(/'/g,"\\'")}')">${c}</span>`).join("")}</div>
-    </div>
-    ${r.next ? `<div class="rdatesel">📅 Fiche de suivi le <b>&nbsp;${JOURS[dSel.getDay()]} ${dSel.getDate()} ${MOIS[dSel.getMonth()]} ${dSel.getFullYear()}${r.creneau && r.creneau !== "Indifférent" ? ", " + r.creneau.split(" ·")[0].toLowerCase() : ""}</b></div>`
-             : `<div class="rdatesel off">Choisis un raccourci ou un jour — ou laisse vide, c'est facultatif</div>`}
-  </div>`;
+      ${r.next ? `<div class="rdatesel">📅 Fiche de suivi le <b>&nbsp;${JOURS[dSel.getDay()]} ${dSel.getDate()} ${MOIS[dSel.getMonth()]} ${dSel.getFullYear()}${r.creneau && r.creneau !== "Indifférent" ? ", " + r.creneau.split(" ·")[0].toLowerCase() : ""}</b></div>` : ""}
+    </div>`;
 }
 function rNav(id, d){
   RSTEP = Math.min(3, Math.max(1, RSTEP + d));
@@ -2914,17 +2974,20 @@ function rQuote(id, val){
   renderReport(id);
 }
 function rProdRow(id, pr, j){
+  /* 29/07 (patron) : la ligne produit gagne la CONCENTRATION, comme sur son
+     modele — Nom / Concentration / Quantite. Tout reste facultatif. */
   return `<div class="prow">
     <select onchange="REPORTS[${id}].prods[${j}].p=+this.value" aria-label="Produit">
-      <option value="0" ${pr.p===0?'selected':''} disabled hidden>— Choisir un produit —</option>
+      <option value="0" ${pr.p===0?'selected':''} disabled hidden>— Sélectionner —</option>
       ${PRODUITS.map((p,k)=>k===0?"":`<option value="${k}" ${pr.p===k?'selected':''}>${p}</option>`).join("")}
     </select>
+    <input class="pconc" placeholder="ex : 0,5 %" value="${pr.c || ""}" oninput="REPORTS[${id}].prods[${j}].c=this.value" aria-label="Concentration">
     <input type="number" inputmode="decimal" min="1" value="${pr.q}" oninput="REPORTS[${id}].prods[${j}].q=+this.value||1" aria-label="Quantité">
     <button class="px" onclick="rDelProd(${id},${j})" title="Retirer ce produit">✕</button>
   </div>`;
 }
 function rAddProd(id){
-  REPORTS[id].prods.push({p:0, q:1});
+  REPORTS[id].prods.push({p:0, q:1, c:""});
   document.getElementById("r-prods").innerHTML = REPORTS[id].prods.map((pr,j)=>rProdRow(id,pr,j)).join("");
 }
 function rDelProd(id, j){

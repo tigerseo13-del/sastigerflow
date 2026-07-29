@@ -168,6 +168,7 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .rchip.multi.on::before{content:"✓";font-weight:800}
 .rchip.one.on{background:var(--cc,#17A87E);color:#fff}
 .rchip.one.on i{background:#fff!important}
+.rchip.autre{background:#fff;border:1.5px dashed #D8DBE2;color:var(--muted,#6C7285);font-weight:700}
 .rprod{display:flex;gap:7px;margin-top:7px}
 .rprod input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font:600 .8rem Inter,sans-serif;background:#fff;outline:none}
 .rprod input:focus{border-color:var(--orange)}
@@ -1212,15 +1213,18 @@ function rrap(){
     <div id="r-prods">${RAPD.prods.map((p, i) => `
       <div class="rprod">
         <input placeholder="Produit (ex : CimexOut)" value="${p.n}" onchange="RAPD.prods[${i}].n=this.value">
-        <input placeholder="Qté" value="${p.q}" style="max-width:84px" onchange="RAPD.prods[${i}].q=this.value">
+        <input placeholder="Conc. (0,5 %)" value="${p.c || ""}" style="max-width:104px" onchange="RAPD.prods[${i}].c=this.value">
+        <input placeholder="Qté" value="${p.q}" style="max-width:70px" onchange="RAPD.prods[${i}].q=this.value">
         <button type="button" onclick="rapKeep();RAPD.prods.splice(${i},1);rrap()">✕</button>
       </div>`).join("")}</div>
     ${rapSuggs(m).length ? `<div class="rsug">${rapSuggs(m).map(n => `<button type="button" class="rchip" style="font-size:.72rem;padding:6px 11px" onclick="rapAddSugg('${esc(n)}')">+ ${n}</button>`).join("")}</div>` : ""}
-    <button type="button" class="obtn" style="margin-top:8px" onclick="rapKeep();RAPD.prods.push({n:'',q:''});rrap()">+ Ajouter un produit</button>
+    <button type="button" class="obtn" style="margin-top:8px" onclick="rapKeep();RAPD.prods.push({n:'',q:'',c:''});rrap()">+ Ajouter un produit</button>
     ${mlab("Matériel utilisé", RAPD.mats)}
     <div class="rchips">${chips(R_MATS, RAPD.mats, "rapMat")}</div>
     ${mlab("Zones traitées", RAPD.ztr)}
-    <div class="rchips">${chips(R_TZONES, RAPD.ztr, "rapZtr")}</div>
+    <div class="rchips">${chips(R_TZONES, RAPD.ztr, "rapZtr")}${[...RAPD.ztr].filter(z => !R_TZONES.includes(z)).map(z =>
+      `<button type="button" class="rchip multi on" onclick="rapZtrDel('${esc(z)}')" title="Retirer">${z}</button>`).join("")}<button type="button" class="rchip autre" onclick="rapZtrOpen()">+ Autre…</button></div>
+    ${MZO ? `<input id="mztin" class="rta" style="margin-top:8px" placeholder="Précise la zone (toiture, vide sanitaire…) — valide pour ajouter" onchange="rapZtrAdd(this.value)">` : ""}
     <div class="rlab">Actions réalisées</div>
     <textarea class="rta" id="r-met" placeholder="Pose de 6 postes, pulvérisation plinthes, colmatage provisoire…">${RAPD.met || ""}</textarea>`;
   else if(RSTEP === 3) h = `${m.debut ? `<div class="tempsbox">
@@ -1306,6 +1310,10 @@ function rapMat(s){ rapKeep(); RAPD.mats.has(s) ? RAPD.mats.delete(s) : RAPD.mat
 function rapQuote(v){ rapKeep(); RAPD.quote = v; rrap(); }
 function rapZone(z){ rapKeep(); RAPD.zones.has(z) ? RAPD.zones.delete(z) : RAPD.zones.add(z); rrap(); }
 function rapZtr(z){ rapKeep(); RAPD.ztr.has(z) ? RAPD.ztr.delete(z) : RAPD.ztr.add(z); rrap(); }
+let MZO = false;   /* saisie libre d'une zone traitee */
+function rapZtrOpen(){ rapKeep(); MZO = true; rrap(); setTimeout(() => { const i = g("mztin"); if(i) i.focus(); }, 0); }
+function rapZtrAdd(v){ MZO = false; v = (v || "").trim(); if(v) RAPD.ztr.add(v); rrap(); }
+function rapZtrDel(z){ rapKeep(); RAPD.ztr.delete(z); rrap(); }
 function rapReco(r){ rapKeep(); RAPD.recos.has(r) ? RAPD.recos.delete(r) : RAPD.recos.add(r); rrap(); }
 /* ===== Temps passe sur place =====
    Le chrono demarre a « Demarrer l'intervention » (m.debut) et s'arrete quand
