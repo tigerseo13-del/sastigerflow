@@ -440,8 +440,11 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
   <div class="page">
 
     <section class="hero">
-      <h1>Réglages</h1>
-      <p>Configurez votre société, votre catalogue et les préférences de la plateforme</p>
+      <div class="herotext">
+        <h1>Réglages</h1>
+        <p>Configurez votre société, votre catalogue et les préférences de la plateforme</p>
+      </div>
+      <button class="savebtn herosave" onclick="saveReglages()">Enregistrer les modifications</button>
     </section>
 
     <div class="lay">
@@ -515,12 +518,12 @@ let CATS = [
 ];
 let FERIES = [ {n:"Jour de l'an", d:"1 janvier", on:true, maj:"16/07/2026"} ];
 let PREST = [
-  {n:"Traitement punaises de lit — 2 passages", cat:"Punaises de lit", p:"480,00 €", tva:"20 %"},
-  {n:"Dératisation locaux professionnels", cat:"Dératisation (Rats / Souris)", p:"160,00 €", tva:"20 %"},
-  {n:"Désinsectisation blattes — cuisine", cat:"Cafards", p:"120,00 €", tva:"20 %"},
-  {n:"Pose de postes sécurisés (x4)", cat:"Dératisation (Rats / Souris)", p:"90,00 €", tva:"20 %"},
-  {n:"Destruction nid de guêpes / frelons", cat:"Guêpes / Frelons", p:"165,00 €", tva:"20 %"},
-  {n:"Dépigeonnage — pose de pics", cat:"Pigeons", p:"420,00 €", tva:"20 %"}
+  {n:"Traitement punaises de lit — 2 passages", cat:"Punaises de lit", p:"480,00 €", tva:"20 %", maj:"17/07/2026"},
+  {n:"Dératisation locaux professionnels", cat:"Dératisation (Rats / Souris)", p:"160,00 €", tva:"20 %", maj:"17/07/2026"},
+  {n:"Désinsectisation blattes — cuisine", cat:"Cafards", p:"120,00 €", tva:"20 %", maj:"14/07/2026"},
+  {n:"Pose de postes sécurisés (x4)", cat:"Dératisation (Rats / Souris)", p:"90,00 €", tva:"20 %", maj:"14/07/2026"},
+  {n:"Destruction nid de guêpes / frelons", cat:"Guêpes / Frelons", p:"165,00 €", tva:"20 %", maj:"14/07/2026"},
+  {n:"Dépigeonnage — pose de pics", cat:"Pigeons", p:"420,00 €", tva:"20 %", maj:"14/07/2026"}
 ];
 const TPL_LBL = {mdevis:"Modèle de devis", mfacture:"Modèle de facture", mavoir:"Modèle d'avoir", mcontrat:"Modèle de contrat", mrapport:"Modèle de rapport d'intervention"};
 
@@ -535,7 +538,11 @@ const ic = {
   up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>'
 };
 const tgl = (on, extra) => `<span class="tgl ${on ? "on" : ""}" onclick="this.classList.toggle('on')${extra ? ";" + extra : ""}"></span>`;
-const savebar = `<div class="savebar"><button class="savebtn" onclick="toast('Modifications enregistrées')">Enregistrer les modifications</button></div>`;
+function saveReglages(){
+  if(typeof toast === "function") toast("✓ Modifications enregistrées");
+}
+/* (l'ancienne variable « savebar » n'était jamais injectée : le seul bouton
+   d'enregistrement global est celui du hero, en haut à droite) */
 
 /* ---------- panneaux ---------- */
 const R = {};
@@ -642,14 +649,20 @@ function uAdd(){
         `<span class="pdot ${PERMDEF[i] === l ? "on" : ""}" data-m="${i}" onclick="permSet(this)"></span>`).join("")}</div>`).join("")}
     </div>
     <div class="dcard">
-      <div class="dh">Documents<button class="dre" onclick="toast('Contrat de travail, permis, Certibiocide… tout se range ici')">Téléverser</button></div>
-      <div class="tscroll"><table class="dt"><thead><tr><th>Nom du fichier</th><th>Type</th><th>Date de téléversement</th><th>Actions</th></tr></thead>
-      <tbody><tr><td colspan="4" style="text-align:center;color:var(--muted);font-size:.8rem;padding:18px">Aucun document pour l'instant.</td></tr></tbody></table></div>
+      <div class="dh">Documents<label class="pjadd" style="margin-left:auto"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>Téléverser<input type="file" multiple style="display:none" onchange="uDocAdd(this)"></label></div>
+      <label class="pjzone" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="event.preventDefault();this.classList.remove('over');uDocAdd({files:event.dataTransfer.files})">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+        <b>Glisser un document ici, ou cliquer pour parcourir</b>
+        <small>Contrat de travail, permis, Certibiocide, attestations…</small>
+        <input type="file" multiple style="display:none" onchange="uDocAdd(this)">
+      </label>
+      <div id="u-docs"></div>
     </div>
     <div class="dmain">
       <button class="dbig sec" onclick="closeDrawer()">Annuler</button>
       <button class="dbig" onclick="uSave()">Enregistrer</button>
     </div>`;
+  UDOCS = []; uDocRender();
   openDrawer();
 }
 function permSet(el){ el.closest(".permrow").querySelectorAll(".pdot").forEach(d => d.classList.remove("on")); el.classList.add("on"); }
@@ -658,6 +671,24 @@ function permReset(){
     row.querySelectorAll(".pdot").forEach((d, l) => d.classList.toggle("on", PERMDEF[i] === l));
   });
   toast("Permissions remises aux valeurs par défaut");
+}
+let UDOCS = [];
+function uDocRender(){
+  const box = document.getElementById("u-docs");
+  if(!box) return;
+  const FIC = '<span class="fic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span>';
+  box.innerHTML = UDOCS.length
+    ? '<table class="dt" style="margin-top:12px"><thead><tr><th>Nom du fichier</th><th>Ajouté le</th><th></th></tr></thead><tbody>' +
+      UDOCS.map((d, i) => '<tr><td><div style="display:flex;align-items:center;gap:9px">' + FIC + '<b>' + d.n + '</b></div></td><td>' + d.d +
+        '</td><td style="text-align:right"><button class="dre" onclick="UDOCS.splice(' + i + ',1);uDocRender()">Retirer</button></td></tr>').join("") +
+      '</tbody></table>'
+    : '';
+}
+function uDocAdd(inp){
+  [...inp.files].forEach(f => UDOCS.unshift({n:f.name, d:new Date().toLocaleDateString("fr-FR")}));
+  if(inp.value !== undefined) inp.value = "";
+  uDocRender();
+  if(typeof toast === "function") toast("📎 " + (inp.files.length > 1 ? inp.files.length + " documents ajoutés" : "Document ajouté"));
 }
 function uSave(){
   const p = $id("nu-p").value.trim(), n = $id("nu-n").value.trim(), m = $id("nu-m").value.trim(), r = $id("nu-r").value;
@@ -695,7 +726,7 @@ R.jours = () => `
 /* ----- jours fériés ----- */
 function frows(){
   return FERIES.map((f, i) => `<tr>
-    <td><b>${f.n}</b></td><td>${f.d}</td>
+    <td><b>${f.n}</b>${f.rec ? ' <span class="bdg" style="background:var(--green-bg);color:var(--green-d);margin-left:4px">Annuel</span>' : ""}</td><td>${f.d}</td>
     <td><span class="bdg ${f.on ? "b-on" : "b-off"}">${f.on ? "Actif" : "Inactif"}</span></td>
     <td>${f.maj}</td>
     <td><span class="acti">
@@ -709,16 +740,25 @@ function fAdd(){
     <div class="dcard dhead"><div class="drow1"><h2>Ajouter un jour férié</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
     <div class="dcard">
       <span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="nf-n" placeholder="Ex. : Fête nationale">
-      <span class="rlab">Date <b style="color:var(--red)">*</b></span><input id="nf-d" placeholder="Ex. : 14 juillet">
+      <span class="rlab">Date <b style="color:var(--red)">*</b></span><input id="nf-d" type="date">
+      <div class="togr feriegr" style="margin-top:14px"><span>Récurrent (annuel)</span><span class="tgl" id="nf-rec" onclick="this.classList.toggle('on')"></span></div>
+      <div class="togr feriegr"><span>Actif</span><span class="tgl on" id="nf-on" onclick="this.classList.toggle('on')"></span></div>
     </div>
     <div class="dmain"><button class="dbig sec" onclick="closeDrawer()">Annuler</button><button class="dbig" onclick="fSave()">Enregistrer</button></div>`;
   openDrawer();
 }
 function fSave(){
-  const n = $id("nf-n").value.trim(), d = $id("nf-d").value.trim();
-  if(!n || !d){ toast("Nom et date obligatoires"); return; }
-  FERIES.push({n, d, on:true, maj:"aujourd'hui"});
-  closeDrawer(); spRender(); toast("« " + n + " » ajouté — le calendrier bloquera ce jour");
+  const n = $id("nf-n").value.trim(), dRaw = $id("nf-d").value.trim();
+  if(!n || !dRaw){ toast("Nom et date obligatoires"); return; }
+  const rec = $id("nf-rec").classList.contains("on");
+  const on = $id("nf-on").classList.contains("on");
+  const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+  let d = dRaw;
+  const m = dRaw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m){ d = (+m[3]) + " " + MOIS[(+m[2]) - 1] + (rec ? "" : " " + m[1]); }
+  FERIES.push({n, d, on, rec, maj:"aujourd'hui"});
+  closeDrawer(); spRender();
+  toast("« " + n + " » ajouté" + (rec ? " — chaque année" : "") + (on ? " — le calendrier bloquera ce jour" : " (inactif)"));
 }
 R.feries = () => `
   <div class="card">
@@ -753,22 +793,31 @@ let TVAS = [
 PREST.forEach(p => { p.u = p.u || "forfait"; });
 R.prest = () => {
   const cats = [...new Set(PREST.map(p => p.cat))];
+  const nAct = PREST.filter(p => !p.off).length;
+  const nOff = PREST.filter(p => p.off).length;
   return `
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
-    <div style="background:var(--orange-soft);border:1px solid #FFD9C4;border-radius:18px;padding:18px 20px"><div style="font-family:'Sora';font-size:1.65rem;font-weight:800;letter-spacing:-.5px;color:var(--orange-deep)">${CATS.length}</div><div style="font-size:.78rem;font-weight:600;color:var(--ink-2);margin-top:3px">Catégories</div></div>
-    <div style="background:#E8F9EE;border:1px solid #BFE5D8;border-radius:18px;padding:18px 20px"><div style="font-family:'Sora';font-size:1.65rem;font-weight:800;letter-spacing:-.5px;color:#0A6B51">33</div><div style="font-size:.78rem;font-weight:600;color:var(--ink-2);margin-top:3px">Prestations actives</div></div>
+  <div class="statgrid">
+    <div class="statc"><b>${PREST.length}</b><span>Articles</span></div>
+    <div class="statc"><b style="color:var(--orange-deep)">${CATS.length}</b><span>Catégories</span></div>
+    <div class="statc"><b style="color:var(--green-d)">${nAct}</b><span>Prestations actives</span></div>
+    <div class="statc"><b style="color:var(--muted)">${nOff}</b><span>Prestations inactives</span></div>
   </div>
   <div class="card">
     <div class="card-h">Prestations<button class="addbtn" onclick="pAdd()">+ Ajouter</button></div>
     <div class="tscroll"><table class="dt">
-    <thead><tr><th>Nom</th><th>Prix unitaire</th><th>Unité</th><th>TVA</th><th>Statut</th><th style="text-align:right">Actions</th></tr></thead>
-    <tbody>${cats.map(c => `<tr><td colspan="6" style="background:#FBFBFC;font-weight:800;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)">${c}</td></tr>` +
+    <thead><tr><th>Nom</th><th>Catégorie de service</th><th>Prix unitaire</th><th>Unité</th><th>Statut</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>${cats.map(c => `<tr><td colspan="7" style="background:#FBFBFC;font-weight:800;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)">${c}</td></tr>` +
       PREST.filter(p => p.cat === c).map(p => { const gi = PREST.indexOf(p); return `<tr>
-        <td><b>${p.n}</b></td><td style="font-variant-numeric:tabular-nums">${p.p}</td><td>${p.u}</td><td>${p.tva}</td>
+        <td><b>${p.n}</b></td>
+        <td>${p.cat}</td>
+        <td style="font-variant-numeric:tabular-nums">${p.p}</td>
+        <td>${p.u}</td>
         <td><span class="bdg ${p.off ? "b-off" : "b-on"}">${p.off ? "Inactif" : "Actif"}</span></td>
-        <td><span class="acti">
-          <button class="aic" title="${p.off ? "Réactiver" : "Masquer du catalogue"}" onclick="PREST[${gi}].off=!PREST[${gi}].off;spRender()">${ic.eyeoff}</button>
+        <td>${p.maj || "—"}</td>
+        <td onclick="event.stopPropagation()"><span class="acti">
+          <button class="aic" title="${p.off ? "Réactiver" : "Masquer du catalogue"}" onclick="PREST[${gi}].off=!PREST[${gi}].off;spRender();toast(PREST[${gi}].off?'« ${p.n} » masquée du catalogue':'« ${p.n} » réactivée')">${ic.eyeoff}</button>
           <button class="aic" title="Modifier" onclick="toast('Modification de « ${p.n} » — mêmes champs que la création')">${ic.pen}</button>
+          <button class="aic del" title="Supprimer" onclick="arm(this,()=>{PREST.splice(${gi},1);spRender();toast('« ${p.n} » supprimée')})">${ic.del}</button>
         </span></td></tr>`; }).join("")).join("")}</tbody></table></div>
     <div class="tfoot"><span>1-${PREST.length} sur ${PREST.length} affichées</span><span>Par page&nbsp;<b>20</b></span></div>
     <span class="xlink" onclick="spGoTo('cats')">Gérer les catégories de services →</span><span class="xlink" onclick="spGoTo('tva')">Gérer les taux de TVA →</span>
@@ -813,13 +862,27 @@ R.tva = () => `
       <td>${t.def ? '<span class="bdg" style="background:var(--orange-soft);color:var(--orange-deep)">Par défaut</span>' : "—"}</td>
       <td><span class="bdg ${t.on ? "b-on" : "b-off"}">${t.on ? "Actif" : "Inactif"}</span></td>
       <td>${t.maj}</td>
-      <td><span class="acti">
+      <td onclick="event.stopPropagation()"><span class="acti">
         <button class="aic" title="${t.on ? "Désactiver" : "Activer"}" onclick="TVAS[${i}].on=!TVAS[${i}].on;spRender()">${ic.eyeoff}</button>
         <button class="aic" title="Modifier" onclick="toast('Modification du taux « ${t.n} »')">${ic.pen}</button>
+        <button class="aic del" title="Supprimer" onclick="tvaDel(${i})">${ic.del}</button>
       </span></td></tr>`).join("")}</tbody></table></div>
     <div class="tfoot"><span>1-${TVAS.length} sur ${TVAS.length} affichés</span><span>Par page&nbsp;<b>20</b></span></div>
     <span class="xlink" onclick="spGoTo('prest')">Les taux s'appliquent aux prestations →</span>
   </div>`;
+function tvaDel(i){
+  if(TVAS[i] && TVAS[i].def){ toast("Ce taux est celui par défaut — désigne d'abord un autre taux par défaut"); return; }
+  const btn = event.currentTarget;
+  if(!btn.classList.contains("arm")){
+    btn.classList.add("arm");
+    toast("Re-clique sur la corbeille pour confirmer la suppression");
+    setTimeout(() => btn.classList.remove("arm"), 2800);
+    return;
+  }
+  const n = TVAS[i].n;
+  TVAS.splice(i, 1); spRender();
+  toast("Taux « " + n + " » supprimé");
+}
 function tvaAdd(){
   $id("dbody").innerHTML = `
     <div class="dcard dhead"><div class="drow1"><h2>Ajouter un taux de TVA</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
@@ -864,13 +927,13 @@ R.num = () => `
     <div class="hint">Préfixe uniquement — une séquence à 5 chiffres est ajoutée automatiquement. Utilisez YYYY / YY / MM pour la date. par ex. « INV-YYYY- » → INV-2026-00001.</div>
     <div style="margin-top:13px"><label class="lab" for="f-reglage-20">Conditions de paiement par défaut (jours) <b style="color:var(--red)">*</b></label><input id="f-reglage-20" type="number" value="30"></div>
     <div style="margin-top:13px"><span class="lab">Intervalles de relance</span>
-      <div class="rchips" id="relchips" style="margin-bottom:8px">${[7, 14, 21, 30].map(j => `<span class="rchip" style="padding:6px 11px">${j} <b style="cursor:pointer" onclick="this.parentElement.remove()">×</b></span>`).join("")}</div>
-      <input placeholder="p. ex. 7, 14, 21, 30" onkeydown="if(event.key==='Enter'){event.preventDefault();relAdd(this)}">
+      <div class="rchips" id="relchips" style="margin-bottom:8px">${[30, 45, 60].map(j => `<span class="rchip" style="padding:6px 11px">${j} <b style="cursor:pointer" onclick="this.parentElement.remove()">×</b></span>`).join("")}</div>
+      <input placeholder="p. ex. 30, 45, 60" onkeydown="if(event.key==='Enter'){event.preventDefault();relAdd(this)}">
       <div class="hint">Facultatif. Laissez vide pour désactiver les relances automatiques. Saisissez le nombre de jours de retard avant chaque relance.</div></div>
   </div>
   <div class="card">
     <div class="card-h">Blocage des interventions en cas de retard de paiement</div>
-    <div class="togr"><span>Bloquer la planification d'une nouvelle intervention si le client a une facture en retard</span>${tgl(false)}</div>
+    <div class="togr blocgr"><span>Bloquer la planification d'une nouvelle intervention si le client a une facture en retard</span>${tgl(false)}</div>
     <div class="hint">Le bureau garde la main : un client bloqué peut être débloqué au cas par cas.</div>
   </div>`;
 
@@ -1356,6 +1419,39 @@ label[for]{cursor:pointer}
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
+
+/* ===== toggles verts ciblés (refait 29/07 sur base du 28) : jours de travail + blocage ===== */
+.dayr .tgl.on{background:var(--green)}
+.blocgr .tgl.on{background:var(--green)}
+
+/* ===== bouton Enregistrer en tête du hero (refait 29/07) ===== */
+.hero{display:flex;align-items:center;gap:16px}
+.herotext{flex:1;min-width:0;position:relative;z-index:1}
+.herosave{flex:none;position:relative;z-index:1;min-height:44px;cursor:pointer;border:none}
+.herosave:hover{background:var(--orange-deep)}
+@media(max-width:640px){ .hero{flex-direction:column;align-items:stretch} .herosave{width:100%} }
+
+/* ===== zone de dépôt documents « en grand » (refait 29/07) ===== */
+.pjzone{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;cursor:pointer;
+  border:1.5px dashed var(--line);border-radius:14px;padding:26px 18px;margin-top:6px;background:#FCFCFD;transition:.14s}
+.pjzone:hover,.pjzone.over{border-color:var(--orange);background:var(--orange-soft)}
+.pjzone svg{width:26px;height:26px;stroke:var(--orange-deep);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pjzone b{font-size:.86rem;color:var(--ink-2)}
+.pjzone small{font-size:.74rem;color:var(--muted)}
+.pjadd{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed var(--orange);color:var(--orange-deep);border-radius:11px;padding:9px 14px;font-size:.79rem;font-weight:700;background:#fff;cursor:pointer}
+.fic{display:inline-flex;flex:none}
+.fic svg{width:18px;height:18px;stroke:var(--orange-deep);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ===== jour férié : toggles Récurrent/Actif au vert (refait 29/07) ===== */
+.feriegr .tgl.on{background:var(--green)}
+
+/* ===== cartouches compteurs prestations (refait 29/07) ===== */
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.statc{background:#fff;border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:16px 18px}
+.statc b{display:block;font-family:'Sora';font-size:1.6rem;font-weight:800;letter-spacing:-.5px;line-height:1}
+.statc span{display:block;font-size:.76rem;font-weight:600;color:var(--muted);margin-top:5px}
+@media(max-width:900px){ .statgrid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:760px){ .statgrid{grid-template-columns:1fr} }
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
