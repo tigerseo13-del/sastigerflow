@@ -1667,7 +1667,7 @@ function renderDay(){
       }
       return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
         style="--evc:${TC.c};top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
-        <span class="evstub" title="${v.cp} ${v.ville}"><b>${v.cp}</b><i>${v.ville}</i></span>
+        <span class="evstub" title="${v.cp} ${v.ville}"><b>${v.cp}</b></span>
         <div class="evbody">
           <div class="evtop">
             <span class="ltyp">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
@@ -1675,7 +1675,7 @@ function renderDay(){
           </div>
           <div class="lnui">${T.lbl}</div>
           <div class="lhr">${badge}<span class="hh">${hstr(v.start)} – ${hstr(v.start+v.dur)}</span>${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</div>
-          <div class="lcli">${v.client}</div>
+          <div class="lcli">${v.client}${v.ville ? ' — ' + v.ville : ''}</div>
         </div>
         <div class="rsz"></div>
       </div>${buf}`;
@@ -4010,6 +4010,12 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket .lhr{margin-top:4px}
 .ev.ticket.xs .ltyp{display:none}
 .ev.ticket.xs .evtop{margin-bottom:0}
+/* Le talon ne porte que le code postal : cinq caracteres, jamais tronques.
+   La ville, souvent longue (Fontenay-sous-Bois...), descend en entier sur la
+   ligne du client. Le talon retreci rend des pixels au nuisible. */
+.ev.ticket .evstub{width:46px}
+.ev.ticket .evstub b{font-size:.73rem;letter-spacing:.02em}
+.ev.ticket .lcli{font-size:.65rem}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
