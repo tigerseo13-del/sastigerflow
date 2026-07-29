@@ -2029,5 +2029,38 @@ setTimeout(dpjRender, 0);
   else document.addEventListener("DOMContentLoaded", appliqueCompte);
 })();
 </script>
+<script>
+/* Fenetre d'envoi : le message s'affiche en entier, sans avoir a faire defiler.
+   Le champ prend la hauteur de son texte (plafonnee pour que la fenetre tienne
+   a l'ecran) et se reajuste des qu'on ecrit. */
+(function(){
+  function fit(){
+    var t = document.getElementById("s-body");
+    if(!t) return;
+    t.style.height = "auto";
+    var max = Math.round(window.innerHeight * 0.46);
+    var h = t.scrollHeight + 2;
+    t.style.height = Math.min(h, max) + "px";
+    t.style.overflowY = (h > max) ? "auto" : "hidden";
+  }
+  window.fitBody = fit;
+  document.addEventListener("input", function(e){
+    if(e.target && e.target.id === "s-body") fit();
+  });
+  window.addEventListener("resize", function(){
+    var v = document.getElementById("sendveil");
+    if(v && v.classList.contains("open")) fit();
+  });
+  function watch(){
+    var v = document.getElementById("sendveil");
+    if(!v || !window.MutationObserver) return;
+    new MutationObserver(function(){
+      if(v.classList.contains("open")) setTimeout(fit, 30);
+    }).observe(v, {attributes:true, attributeFilter:["class"]});
+  }
+  if(document.readyState !== "loading") watch();
+  else document.addEventListener("DOMContentLoaded", watch);
+})();
+</script>
 </body>
 </html>
