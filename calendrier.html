@@ -382,6 +382,8 @@ h1,.num{font-family:'Sora',sans-serif}
 .gutter .gh{height:52px;position:sticky;top:0;background:#fff;z-index:2;border-bottom:1px solid var(--line)}
 .gutter .gt{height:var(--hourh);font-size:.66rem;font-weight:600;color:#B9BEC9;text-align:right;padding-right:8px;transform:translateY(-6px)}
 .tcol{width:268px;flex:none;border-right:1px solid #F2F3F6}
+.tcol:last-child{border-right:0}
+.daygrid{padding-right:12px}
 .daygrid.wide .tcol{flex:1;width:auto;min-width:268px;max-width:none}
 .tcol:last-child{border-right:0}
 .tcol-head{height:52px;position:sticky;top:0;z-index:4;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;padding:0 12px;position:sticky;top:0;z-index:5;background:#fff;box-shadow:0 1px 0 var(--line)}
@@ -400,8 +402,16 @@ h1,.num{font-family:'Sora',sans-serif}
 .tca.wa:hover{background:#F0FAF4}
 .tcol-head b{font-size:.83rem;display:block;line-height:1.2}
 .tcol-head small{font-size:.68rem;color:var(--muted)}
-.tcol-body{position:relative;height:calc(var(--hourh) * var(--hcount, 17));background-color:var(--tint,transparent);
-  background:repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hourh) - 1px), #F2F3F6 calc(var(--hourh) - 1px), #F2F3F6 var(--hourh));}
+/* 29/07 — BUG de fond : le raccourci `background:` ecrasait la
+   `background-color` posee juste avant, donc la teinte par technicien
+   (--tint, injectee par le JS depuis toujours) n'a JAMAIS ete visible.
+   background-image + background-color cohabitent, eux. Au passage : ligne
+   d'heure un ton plus present, et demi-heure en filet quasi invisible. */
+.tcol-body{position:relative;height:calc(var(--hourh) * var(--hcount, 17));
+  background-color:var(--tint,transparent);
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hourh)/2 - 1px), rgba(23,26,32,.03) calc(var(--hourh)/2 - 1px), rgba(23,26,32,.03) calc(var(--hourh)/2)),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--hourh) - 1px), #E7E9EF calc(var(--hourh) - 1px), #E7E9EF var(--hourh));}
 .tcol-body.dropover{background-color:var(--orange-soft)}
 /* ===== cartouche refondue le 28/07 (choix patron) =====
    Ce qu'on cherche du regard depuis le bureau : ou (code postal ET ville), quel
@@ -435,7 +445,12 @@ h1,.num{font-family:'Sora',sans-serif}
 .ev .lhr{margin-left:auto;font-size:.65rem;color:var(--ink-2);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .nowline{position:absolute;left:0;right:0;height:2px;background:var(--orange);z-index:3;pointer-events:none}
 .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--orange)}
-.nowlbl{position:absolute;right:8px;top:-10px;background:var(--orange);color:#fff;font-size:.6rem;font-weight:800;padding:2.5px 8px;border-radius:9px;font-variant-numeric:tabular-nums}
+/* 29/07 : la pastille de l'heure courante est UNIQUE, dans la gouttiere des
+   heures (collante a gauche : elle reste visible en defilant). Avant, elle
+   etait repetee dans chacune des colonnes. */
+.gnow{position:absolute;right:5px;transform:translateY(-50%);background:var(--orange);color:#fff;
+  font-size:.6rem;font-weight:800;padding:2.5px 7px;border-radius:9px;font-variant-numeric:tabular-nums;
+  z-index:3;box-shadow:0 2px 7px -2px rgba(255,90,31,.65);pointer-events:none}
 .dragtip{position:fixed;z-index:96;background:var(--ink);color:#fff;font-size:.74rem;font-weight:700;padding:6px 11px;border-radius:9px;pointer-events:none;opacity:0;transition:opacity .1s;white-space:nowrap;font-variant-numeric:tabular-nums}
 .dragtip.on{opacity:1}
 .helppop{display:none;position:absolute;right:0;top:42px;z-index:70;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 40px rgba(16,18,22,.16);padding:13px 15px;width:264px}
@@ -1613,8 +1628,15 @@ function renderDay(){
   const techs = TECHS.filter(t=>VIS.has(t.id));
   const evs = filtered().filter(v=>v.date===d);
 
+  /* 29/07 : la pastille de l'heure courante vit UNE fois, dans la gouttiere
+     des heures — avant elle etait recopiee dans chaque colonne (7 fois).
+     Le trait, lui, traverse toujours chaque colonne. Le 52 est la hauteur
+     de l'en-tete de colonne (.tcol-head / .gh). */
+  const showNow = iso(CUR) === iso(TODAYD) && NOWH >= DAYSTART && NOWH <= DAYSTART + HOURS;
+  const nowLbl = String(Math.floor(NOWH)).padStart(2,"0") + ":" + String(Math.floor((NOWH % 1) * 60)).padStart(2,"0");
   let gut = `<div class="gutter"><div class="gh"></div>`;
   for(let h=DAYSTART; h<DAYSTART+HOURS; h++) gut += `<div class="gt">${String(h).padStart(2,"0")}:00</div>`;
+  gut += showNow ? `<span class="gnow" style="top:${52 + (NOWH - DAYSTART) * 64}px">${nowLbl}</span>` : "";
   gut += `</div>`;
 
   // Détection des chevauchements par technicien
@@ -1680,14 +1702,14 @@ function renderDay(){
         </div>
         <div class="evbody">
           <div class="lnui"><em></em><span>${T.lbl}</span></div>
-          <span class="ltyp">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
+          <span class="ltyp m-${v.mode}">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
           <div class="lfoot"><span class="lcli">${v.client}</span><span class="lbdg">${badge}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</span></div>
         </div>
         <div class="rsz"></div>
       </div>${buf}`;
     }).join("");
-    const nlbl = String(Math.floor(NOWH)).padStart(2,"0") + ":" + String(Math.floor((NOWH % 1) * 60)).padStart(2,"0");
-    const now = (iso(CUR)===iso(TODAYD) && NOWH >= DAYSTART && NOWH <= DAYSTART + HOURS) ? `<div class="nowline" style="top:${(NOWH-DAYSTART)*64}px"><span class="nowlbl">${nlbl}</span></div>` : "";
+    /* le trait « maintenant » sans pastille : elle est dans la gouttiere */
+    const now = showNow ? `<div class="nowline" style="top:${(NOWH-DAYSTART)*64}px"></div>` : "";
     return `<div class="tcol">
       <div class="tcol-head ${mine.length ? '' : 'freehead'}" style="box-shadow:0 1px 0 var(--line), inset 0 -3px 0 ${t.c}">
         <div style="min-width:0;flex:1">
@@ -1712,7 +1734,7 @@ function renderDay(){
     ? `<div class="outbar">🌙 ${outs.length} intervention${outs.length>1?'s':''} hors plage 6 h – 22 h —
         <a onclick="openDetail(${outs[0].id})">voir la première</a></div>`
     : "";
-  document.getElementById('calscroll').innerHTML = outbar + `<div class="daygrid ${techs.length <= 3 ? 'wide' : ''}">${gut}${cols}</div>`;
+  document.getElementById('calscroll').innerHTML = outbar + `<div class="daygrid ${techs.length <= 4 ? 'wide' : ''}">${gut}${cols}</div>`;
 }
 
 /* ===== Retard → prochain trou libre du même technicien ===== */
@@ -4115,7 +4137,17 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket .lnui{display:flex;align-items:center;gap:7px;font-family:'Sora','Inter';font-size:.8rem;font-weight:800;letter-spacing:-.2px;color:var(--ink);line-height:1.25;margin:0;white-space:nowrap}
 .ev.ticket .lnui em{font-style:normal;width:8px;height:8px;border-radius:50%;background:var(--nc,var(--evc));flex:none;box-shadow:0 0 0 3px var(--nbg,#F1F2F5)}
 .ev.ticket .lnui span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ev.ticket .ltyp{display:inline-flex;align-self:flex-start;align-items:center;margin-top:5px;font-size:.59rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--nc,var(--ink-2));background:var(--nbg,#F1F2F5);border-radius:7px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.ticket .ltyp{display:inline-flex;align-self:flex-start;align-items:center;margin-top:5px;font-size:.59rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);background:#F1F2F5;border-radius:7px;padding:2px 8px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ===== 29/07 (patron) — UNE COULEUR = UN TYPE D'INTERVENTION, stable sur tout
+   le logiciel (palette issue de l'apercu v4) : Visite devis BLEU, Ponctuel
+   AMBRE, Sous contrat VERT, 2e passage / garantie VIOLET. Avant, la pastille
+   de l'agenda prenait la couleur du NUISIBLE : « Visite devis » changeait de
+   couleur d'une carte a l'autre. La regle s'applique aussi aux puces des
+   fiches (.mchip m-...), qui n'avaient jamais recu leurs couleurs. ===== */
+.ev.ticket .ltyp.m-devis,.mchip.m-devis{background:#EAF1FE;color:#2148C0;box-shadow:inset 0 0 0 1px #C9DAFB}
+.ev.ticket .ltyp.m-encais,.mchip.m-encais{background:#FEF3E2;color:#9A4A07;box-shadow:inset 0 0 0 1px #F3D28B}
+.ev.ticket .ltyp.m-ctr,.mchip.m-ctr{background:#E7F6EF;color:#0A6B51;box-shadow:inset 0 0 0 1px #BFE5D8}
+.ev.ticket .ltyp.m-suite,.mchip.m-suite,.ev.ticket .ltyp.m-gar,.mchip.m-gar{background:#F1EAFD;color:#6D3BC4;box-shadow:inset 0 0 0 1px #DCC9F8}
 .ev.ticket .lfoot{display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:4px;border-top:1px solid rgba(23,26,32,.06)}
 .ev.ticket .lcli{font-size:.66rem;color:var(--muted);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;padding:0;border:0}
 .ev.ticket .lbdg{margin-left:auto;display:inline-flex;align-items:center;gap:4px;flex:none}
