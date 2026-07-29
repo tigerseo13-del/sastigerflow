@@ -1974,6 +1974,44 @@ document.addEventListener("click", e => {
   if(DMENU && !e.target.closest(".dmenu") && !e.target.closest(".dmain")){ DMENU = false; renderDetail(); }
 });
 function setDTab(t){ DTAB = t; renderDetail(); }
+/* ===== 29/07 — BUG « piece jointe fantome ». Demarrer une intervention faisait
+   apparaitre une photo-constat inventee (image d'archive du nuisible) et un
+   badge « 1 » sur l'onglet, alors qu'aucune photo n'existe encore. C'etait un
+   reste du 28/07 : les fichiers de demonstration debordaient sur les VRAIES
+   interventions, car « demarree » ou « terminee » suffisait a les declencher.
+   Une seule source de verite desormais : cette fonction. Les vrais fichiers du
+   rapport d'abord ; les fichiers de demonstration UNIQUEMENT pour le jeu
+   d'exemple (rapports marques _demo par seedReports). Une vraie intervention
+   sans photo dit « Rien pour le moment » — elle n'invente rien. ===== */
+function pjFiles(v){
+  const R = (typeof REPORTS !== "undefined" && REPORTS[v.id]) || null;
+  const sigDemo = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 90"><rect width="200" height="90" fill="white"/><path d="M18 62 C30 28 44 24 46 44 C48 60 38 68 52 56 C66 44 62 30 76 40 C88 48 84 62 100 50 C112 41 108 32 122 42 C134 51 132 62 150 48 C160 40 168 44 182 38" fill="none" stroke="#1a2440" stroke-width="2.6" stroke-linecap="round"/></svg>');
+  const mesPhotos = (R && Array.isArray(R.photos)) ? R.photos : [];
+  /* vrais fichiers : les photos du rapport, et la vraie signature si elle existe */
+  if(mesPhotos.length || (R && R.sig && !R._demo)){
+    const F = mesPhotos.map(p => ({n:p.n || "photo.jpg", s:pjTaille(p.src), img:p.src}));
+    if(R && R.sig) F.push({n:"signature-client.png",
+      s:(typeof R.sig === "string" && R.sig.indexOf("data:image") === 0) ? (pjTaille(R.sig) || "6 Ko") : "6 Ko",
+      img:(typeof R.sig === "string" && R.sig.indexOf("data:image") === 0) ? R.sig : sigDemo, contain:1});
+    return F;
+  }
+  /* jeu d'exemple uniquement */
+  if(R && R._demo && v.done){
+    const W = "https://commons.wikimedia.org/wiki/Special:FilePath/";
+    const PJPHOTO = {rongeur:"WildRat.jpg", derat:"WildRat.jpg", punaise:"Bed%20bug%2C%20Cimex%20lectularius.jpg",
+      cafard:"Blattella%20germanica%20p1160206.jpg", guepe:"European%20wasp%20white%20bg.jpg", pigeon:"Rock%20dove%20-%20natures%20pics.jpg"};
+    const photo = W + (PJPHOTO[v.type] || PJPHOTO.punaise) + "?width=420";
+    const num = refInt(v.id).replace("INT-","");
+    const mo = (1.1 + (v.id * 37 % 17) / 10).toFixed(1).replace(".", ",");
+    return [
+      {n:"photo-constat-" + num + ".jpg", s:mo + " Mo", img:photo},
+      {n:"signature-client.png", s:"6 Ko", img:sigDemo, contain:1},
+      {n:"rapport-" + num + ".pdf", s:"34 Ko", pdf:1, t:"Rapport d'intervention"},
+      {n:"bon-intervention-signe.pdf", s:"29 Ko", pdf:1, t:"Bon d'intervention"},
+    ];
+  }
+  return [];
+}
 function renderDetail(){
   const v = INTERVS.find(x=>x.id===DID);
   if(!v) return closeDetail();
@@ -2164,44 +2202,7 @@ function renderDetail(){
     </div>`;
   }
   else if(DTAB === "pj"){
-    const W = "https://commons.wikimedia.org/wiki/Special:FilePath/";
-    const PJPHOTO = {rongeur:"WildRat.jpg", derat:"WildRat.jpg", punaise:"Bed%20bug%2C%20Cimex%20lectularius.jpg",
-      cafard:"Blattella%20germanica%20p1160206.jpg", guepe:"European%20wasp%20white%20bg.jpg", pigeon:"Rock%20dove%20-%20natures%20pics.jpg"};
-    const photo = W + (PJPHOTO[v.type] || PJPHOTO.punaise) + "?width=420";
-    const sig = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 90"><rect width="200" height="90" fill="white"/><path d="M18 62 C30 28 44 24 46 44 C48 60 38 68 52 56 C66 44 62 30 76 40 C88 48 84 62 100 50 C112 41 108 32 122 42 C134 51 132 62 150 48 C160 40 168 44 182 38" fill="none" stroke="#1a2440" stroke-width="2.6" stroke-linecap="round"/></svg>');
-    const num = refInt(v.id).replace("INT-","");
-    const rapOk = typeof REPORTS !== "undefined" && REPORTS[v.id];
-    const mo = (1.1 + (v.id * 37 % 17) / 10).toFixed(1).replace(".", ",");
-    /* 28/07 — BUG. Les pieces jointes etaient FABRIQUEES a partir de l'etat de
-       l'intervention : une photo de stock choisie sur le type de nuisible, une
-       signature dessinee en SVG, deux PDF qui n'existent pas. On remplissait un
-       rapport avec ses propres photos, et l'onglet montrait l'image d'archive
-       d'un rat generique. Les vraies photos etaient pourtant deja enregistrees
-       dans REPORTS[id].photos, sous la forme {n:nom, src:donnees}.
-
-       On lit donc le rapport. Les fichiers de demonstration ne subsistent que
-       pour les interventions du jeu d'exemple, celles dont le rapport n'a pas
-       de photos — sinon l'agenda de demonstration se viderait d'un coup. */
-    let FILES = [];
-    const R = (typeof REPORTS !== "undefined" && REPORTS[v.id]) || null;
-    const mesPhotos = (R && Array.isArray(R.photos)) ? R.photos : [];
-    if(mesPhotos.length){
-      FILES = mesPhotos.map(p => ({n:p.n || "photo.jpg", s:pjTaille(p.src), img:p.src}));
-      if(R.sig) FILES.push({n:"signature-client.png", s:"6 Ko", img:sig, contain:1});
-    }
-    else if(v.done && rapOk) FILES = [
-      {n:"photo-constat-" + num + ".jpg", s:mo + " Mo", img:photo},
-      {n:"signature-client.png", s:"6 Ko", img:sig, contain:1},
-      {n:"rapport-" + num + ".pdf", s:"34 Ko", pdf:1, t:"Rapport d'intervention"},
-      {n:"bon-intervention-signe.pdf", s:"29 Ko", pdf:1, t:"Bon d'intervention"},
-    ];
-    else if(v.done) FILES = [
-      {n:"photo-constat-" + num + ".jpg", s:mo + " Mo", img:photo},
-      {n:"bon-intervention-signe.pdf", s:"29 Ko", pdf:1, t:"Bon d'intervention"},
-    ];
-    else if(v.started) FILES = [
-      {n:"photo-constat-" + num + ".jpg", s:mo + " Mo", img:photo},
-    ];
+    const FILES = pjFiles(v);
     body = `<div class="dcard">
       <div class="dh">Pièces jointes <span class="dre" style="cursor:default">${FILES.length ? FILES.length + " fichier" + (FILES.length>1?"s":"") : "aucune"}</span> <button class="dre" onclick="toast('📎 Téléversement — bientôt relié')">↑ Téléverser</button></div>
       ${FILES.length ? "" : `<div class="dempty">📎 Rien pour le moment<br><small>Les photos, la signature et le rapport arriveront au fil de l'intervention.</small></div>`}
@@ -2317,7 +2318,10 @@ function renderDetail(){
       </div>
       <div class="dtabs">
         ${(function(){
-          const nPJ = v.done ? ((typeof REPORTS !== "undefined" && REPORTS[v.id]) ? 4 : 2) : (v.started ? 1 : 0);
+          /* 29/07 : le badge comptait « 1 » des le demarrage, sans qu'aucun
+             fichier n'existe. Il compte desormais les MEMES fichiers que
+             l'onglet — une seule regle des deux cotes. */
+          const nPJ = pjFiles(v).length;
           const rapOK = typeof REPORTS !== "undefined" && REPORTS[v.id];
           const BADGE = {
             not: v.note ? '<i class="tbdot"></i>' : "",
@@ -2497,7 +2501,11 @@ function seedReports(){
       tzones:new Set([R_TZONES[v.id % R_TZONES.length]]),
       act:o[3], temps:["1 h 30","2 h","2 h 30"][v.id % 3],
       recos:new Set([R_RECOS[v.id % R_RECOS.length], R_RECOS[(v.id + 3) % R_RECOS.length]]),
-      quote:false, quoteDesc:"", next:"", notes:"", sig:"ok", _suiviFait:true, _quoteFait:true
+      quote:false, quoteDesc:"", next:"", notes:"", sig:"ok", _suiviFait:true, _quoteFait:true,
+      /* 29/07 : marque du jeu d'exemple — seuls ces rapports-la ont droit aux
+         pieces jointes de demonstration. Une vraie intervention n'affiche que
+         ses vrais fichiers. */
+      _demo:true
     };
   });
 }
@@ -2613,7 +2621,10 @@ function renderReport(id){
 
   const nav = RSTEP < 3
     ? `${RSTEP>1?`<button class="dbig sec" onclick="rNav(${id},-1)">← Précédent</button>`:""}
-       <button class="dbig rnext" onclick="rNav(${id},1)">Suivant — ${RSTEP===1?"Traitement":"Clôture"} →</button>`
+       <!-- 29/07 (choix patron) : « Suivant » tout court. Le nom de l'etape
+            d'arrivee est deja ecrit sur la jauge juste au-dessus — le repeter
+            sur le bouton l'allongeait pour rien. -->
+       <button class="dbig rnext" onclick="rNav(${id},1)">Suivant →</button>`
     : `<button class="dbig sec" onclick="rNav(${id},-1)">← Précédent</button>
        <button class="dbig rnext" onclick="rSave(${id})">✓ Valider le rapport</button>
        <!-- 27/07 : les deux boutons-icones Apercu PDF et E-mail sont retires.
