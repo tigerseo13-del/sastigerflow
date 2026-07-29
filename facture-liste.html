@@ -427,10 +427,10 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
      existaient toujours dans le code mais plus rien ne les appelait :
      le clic avait disparu, la mecanique de filtrage etait restee. -->
     <div class="kpis">
-      <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><div class="lbl">Total TTC</div><div class="num" id="k-tot">0 €</div></div>
-      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('payee')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('payee')}"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div><div class="lbl">Encaissé</div><div class="num" id="k-encaisse">0 €</div></div>
-      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('attente')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('attente')}"><div class="kico"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><div class="lbl">À payer</div><div class="num" id="k-attente">0 €</div></div>
-      <div class="kpi k-red" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('retard')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('retard')}" style="background:#FCECEA;border-color:#F3C4C0"><div class="kico"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><div class="lbl">En retard</div><div class="num" id="k-retard" style="color:var(--red)">0 €</div></div>
+      <div class="kpi k-orange" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><div class="lbl">Total TTC</div><div class="num" id="k-tot">0 €</div><div class="ksub" id="k-tot-n">—</div></div>
+      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('payee')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('payee')}"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div><div class="lbl">Encaissé</div><div class="num" id="k-encaisse">0 €</div><div class="ksub" id="k-enc-n">—</div></div>
+      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('attente')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('attente')}"><div class="kico"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><div class="lbl">À payer</div><div class="num" id="k-attente">0 €</div><div class="ksub" id="k-att-n">—</div></div>
+      <div class="kpi k-red" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('retard')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('retard')}" style="background:#FCECEA;border-color:#F3C4C0"><div class="kico"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><div class="lbl">En retard</div><div class="num" id="k-retard" style="color:var(--red)">0 €</div><div class="ksub" id="k-ret-n">—</div></div>
     </div>
 
     <!-- Pipeline -->
@@ -582,6 +582,12 @@ function stats(){
   document.getElementById('k-encaisse').textContent = eur(enc);
   document.getElementById('k-attente').textContent = eur(a.reduce((s,d)=>s+d.montant,0));
   document.getElementById('k-retard').textContent = eur(r.reduce((s,d)=>s+d.montant,0));
+  /* le nombre de factures sous chaque montant : on sait combien d'argent ET combien de documents */
+  const nbf = n => n + " facture" + (n > 1 ? "s" : "");
+  document.getElementById('k-tot-n').textContent = nbf(DEVIS.length);
+  document.getElementById('k-enc-n').textContent = nbf(p.length);
+  document.getElementById('k-att-n').textContent = nbf(a.length);
+  document.getElementById('k-ret-n').textContent = nbf(r.length);
   const cnt = f => f==="all" ? DEVIS.length : DEVIS.filter(d=>d.statut===f).length;
   ["all","brouillon","attente","payee","retard"].forEach(f=>{
     document.getElementById('n-'+f).textContent = "(" + cnt(f) + ")";
@@ -1389,6 +1395,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .kpi.k-blue   .kico svg{stroke:#2E5CE6}
 .kpi.k-red    .kico svg{stroke:#D6453E}
 .kpi.k-slate  .kico svg{stroke:#64748B}
+.kpi .ksub{grid-column:2;font-size:.76rem;font-weight:700;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
