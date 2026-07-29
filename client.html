@@ -85,10 +85,11 @@ textarea:focus{outline:2px solid #FFD9C4;border-color:var(--orange)}
 /* 27/07 : une seule zone chaude par page, et elle est en haut. Depuis que
    la barre du haut porte l'orange, ce bandeau le rend : deux bandes orange
    qui se touchent, on ne sait plus laquelle est la navigation. */
+/* 29/07 (patron) : le damier disparait ici aussi — meme voile chaleureux que
+   le bandeau d'accueil : un blanc qui se rechauffe vers la droite. */
 .hero{position:relative;border-radius:20px;padding:26px 28px 26px 32px;margin-bottom:16px;overflow:hidden;color:var(--ink);
-  background:#fff;
+  background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 30%,#FFF8F4 65%,#FFF3EC 100%);
   border:1px solid var(--line,#E7E9EF);box-shadow:var(--shadow)}
-.hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(23,26,32,.035) 1px,transparent 1px),linear-gradient(rgba(23,26,32,.035) 1px,transparent 1px);background-size:27px 27px}
 .hero .row{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;position:relative;z-index:1}
 .hero h1{font-size:1.55rem;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
 .badge{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;background:var(--green-bg);color:var(--green-d);border:1px solid #BFE5D8;padding:4px 12px;border-radius:13px;letter-spacing:.04em;text-transform:uppercase}
@@ -180,6 +181,12 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
    voisine : la carte Contacts, avec un seul contact, occupait toute la hauteur
    des notes internes. Chaque carte prend desormais sa hauteur naturelle. */
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+/* 29/07 : le duo Contacts / Notes internes — deux colonnes egales, cartes
+   etirees a la meme hauteur (l'exception assumee au align-items:start) */
+.duo2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+.duo2 .card.eq{display:flex;flex-direction:column;margin:0}
+.duo2 .card.eq .nlist{flex:1}
+@media(max-width:900px){.duo2{grid-template-columns:1fr}}
 .grid .wide{grid-column:span 2}
 .grid .full{grid-column:1/-1}
 .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px 22px;border:1px solid #F0F1F4}
@@ -612,7 +619,11 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <!-- ===== ONGLET INFORMATIONS ===== -->
     <div class="grid show" data-tab="infos">
 
-      <div class="card wide">
+      <!-- 29/07 (patron) : Contacts et Notes internes deviennent deux cartes
+           JUMELLES — meme largeur, meme hauteur — au lieu d'un grand bloc et
+           d'un petit. Le duo occupe toute la ligne. -->
+      <div class="duo2 full">
+      <div class="card eq">
         <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>Contacts
           <button class="more" onclick="toggleAddContact()">+ Ajouter</button>
         </div>
@@ -639,13 +650,14 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         </div>
       </div>
 
-      <div class="card">
+      <div class="card eq">
         <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
         <div class="nlist" id="nlist"></div>
         <div class="naddrow">
           <input id="n-in" placeholder="Écrire une note… (horodatée et signée automatiquement)" onkeydown="if(event.key==='Enter')noteAdd()">
           <button onclick="noteAdd()">＋ Ajouter</button>
         </div>
+      </div>
       </div>
 
       <!-- 28/07 — resume d'activite du client. Il n'existait nulle part : la
@@ -1350,7 +1362,11 @@ function toast(msg, undoFn){
   var _ref = document.getElementById("h-ref");
   if(_ref) _ref.textContent = f.ref;
   var _sir = document.getElementById("h-siret");
-  if(_sir) _sir.textContent = "SIRET " + f.siret;
+  /* 29/07 : le SIRET n'existe que pour les entreprises. Un SIRET n'est reel
+     que s'il contient des chiffres — « — », « (particulier) » ou
+     « a completer » n'en sont pas : on affiche « Particulier ». */
+  if(_sir) _sir.textContent = (f.siret && /\d{3}/.test(String(f.siret)) && !/particulier/i.test(String(f.siret)))
+    ? "SIRET " + f.siret : "Particulier";
   var _dep = document.getElementById("h-depuis");
   if(_dep) _dep.textContent = "Client depuis " + f.depuis.toLowerCase();
   var tl = document.querySelector('.hero .actions a[href^="tel:"]');
@@ -1397,12 +1413,11 @@ function toast(msg, undoFn){
        choisi. Rapports n'en a pas : un rapport se redige depuis une
        intervention, il ne se cree pas a la main. */
     var qcli = encodeURIComponent(new URLSearchParams(location.search).get("c") || "");
-    var vide = function(msg, lbl, url, act){
-      var bouton = lbl
-        ? (act ? '<button class="vbtn" onclick="' + act + '">+ ' + lbl + '</button>'
-               : '<a class="vbtn" href="' + url + (url.indexOf("?") > -1 ? "&" : "?") + 'c=' + qcli + '">+ ' + lbl + '</a>')
-        : "";
-      return '<div class="card wide vempty" style="grid-column:1/-1">' + msg + bouton + '</div>';
+    /* 29/07 (patron) : plus de bouton EN BAS des onglets vides — il doublait
+       celui de droite (l'en-tete de carte et le bandeau du haut en ont deja
+       un). Un seul endroit pour creer, tous les onglets pareil. */
+    var vide = function(msg){
+      return '<div class="card wide vempty" style="grid-column:1/-1">' + msg + '</div>';
     };
     var PANES = {
       devis:   ["\ud83e\uddfe Aucun devis pour ce client",        "Nouveau devis",     "devis.html"],
@@ -1624,7 +1639,8 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
     const ref = document.getElementById("h-ref");
     if(ref) ref.textContent = "Client de la base";
     const sir = document.getElementById("h-siret");
-    if(sir) sir.textContent = c.siret ? "SIRET " + c.siret : (c.type === "particulier" ? "Particulier" : "Professionnel");
+    /* 29/07 : meme regle ici — un SIRET sans chiffres n'est pas un SIRET */
+    if(sir) sir.textContent = (c.siret && /\d{3}/.test(String(c.siret))) ? "SIRET " + c.siret : (c.type === "particulier" ? "Particulier" : "Professionnel");
     const dep = document.getElementById("h-depuis");
     if(dep && c.created_at) dep.textContent = "Client depuis " + new Date(c.created_at).toLocaleDateString("fr-FR", {month:"long", year:"numeric"});
     const tl = document.querySelector('.hero .actions a[href^="tel:"]');
