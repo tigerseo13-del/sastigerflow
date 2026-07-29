@@ -361,7 +361,23 @@ tr.torenew{box-shadow:inset 3px 0 0 #D9A408}
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
         <input id="q" placeholder="Rechercher un client, un n° de contrat…" oninput="render()">
       </div>
-      <div class="chips" id="chips"></div>
+      <div class="fdate">
+        <button class="fchip" type="button" onclick="toggleDate(event)">📅 <span id="f-datelbl">Période</span> ▾</button>
+        <div class="fdatepop" id="f-datepop">
+          <label>Du<input type="date" id="f-du" onchange="applyF()"></label>
+          <label>Au<input type="date" id="f-au" onchange="applyF()"></label>
+          <button type="button" class="fdateclr" onclick="clearDate()">Effacer les dates</button>
+        </div>
+      </div>
+      <select class="fsel" id="f-stat" onchange="applyF()">
+        <option value="">Tous les statuts</option>
+        <option value="brouillon">Brouillon</option>
+        <option value="actif">Actif</option>
+        <option value="renouveler">À renouveler</option>
+        <option value="suspendu">Suspendu</option>
+        <option value="resilie">Résilié</option>
+        <option value="expire">Expiré</option>
+      </select>
       <select class="sortsel" id="sort" onchange="render()" title="Trier la liste">
         <option value="recent">Plus récents</option>
         <option value="montant-d">Montant ↓</option>
@@ -391,16 +407,16 @@ tr.torenew{box-shadow:inset 3px 0 0 #D9A408}
 <script>
 /* ================= DONNÉES ================= */
 const CONTRATS = [
-  {ref:"CTR-2026-04729", client:"Ironwood Solutions",   ct:"John Thompson",  titre:"Pest control annuel — bureaux",        montant:750.50,  freq:"Mensuelle",     statut:"actif",      fin:"2026-12-12"},
-  {ref:"CTR-2026-04712", client:"Pharmacie Centrale",   ct:"Roger Seguin",   titre:"Contrat 3D — officine + réserve",      montant:3859.48, freq:"Trimestrielle", statut:"actif",      fin:"2027-01-15"},
-  {ref:"CTR-2026-04698", client:"Syndic Foncia Lilas",  ct:"Syndic Foncia",  titre:"Dératisation — 3 immeubles",           montant:2340.00, freq:"Trimestrielle", statut:"actif",      fin:"2026-09-30"},
-  {ref:"CTR-2026-04683", client:"Hôtel du Parc",        ct:"Sophie Larson",  titre:"Veille punaises — 42 chambres",        montant:4560.00, freq:"Mensuelle",     statut:"renouveler", fin:"2026-09-05"},
-  {ref:"CTR-2026-04671", client:"Boulangerie Dupont",   ct:"Raymond Berger", titre:"Dératisation annuelle — fournil",      montant:1490.00, freq:"Mensuelle",     statut:"actif",      fin:"2027-02-22"},
-  {ref:"CTR-2026-04650", client:"Entrepôt Central",     ct:"Josette Blot",   titre:"Dépigeonnage + entretien filets",      montant:3150.00, freq:"Semestrielle",  statut:"actif",      fin:"2027-03-02"},
-  {ref:"CTR-2026-04644", client:"Restaurant Le Baobab", ct:"Awa Diallo",     titre:"Contrat cafards — cuisine HACCP",      montant:1980.00, freq:"Mensuelle",     statut:"renouveler", fin:"2026-08-31"},
-  {ref:"CTR-2026-04621", client:"Crèche Les Poussins",  ct:"Nadia Benali",   titre:"Veille sanitaire — locaux enfants",    montant:1140.00, freq:"Trimestrielle", statut:"suspendu",   fin:"2026-11-20"},
-  {ref:"CTR-2025-04512", client:"Café de la Gare",      ct:"Karim M.",       titre:"Dératisation cave + terrasse",         montant:820.00,  freq:"Trimestrielle", statut:"resilie",    fin:"2026-06-30"},
-  {ref:"CTR-2025-04498", client:"Camping Val de Seine", ct:"Direction",      titre:"Guêpes & rongeurs — saison",           montant:1650.00, freq:"Saisonnière",   statut:"expire",     fin:"2026-05-31"},
+  {ref:"CTR-2026-04729", cree:"2026-01-05", client:"Ironwood Solutions",   ct:"John Thompson",  titre:"Pest control annuel — bureaux",        montant:750.50,  freq:"Mensuelle",     statut:"actif",      fin:"2026-12-12"},
+  {ref:"CTR-2026-04712", cree:"2026-01-12", client:"Pharmacie Centrale",   ct:"Roger Seguin",   titre:"Contrat 3D — officine + réserve",      montant:3859.48, freq:"Trimestrielle", statut:"actif",      fin:"2027-01-15"},
+  {ref:"CTR-2026-04698", cree:"2025-12-20", client:"Syndic Foncia Lilas",  ct:"Syndic Foncia",  titre:"Dératisation — 3 immeubles",           montant:2340.00, freq:"Trimestrielle", statut:"actif",      fin:"2026-09-30"},
+  {ref:"CTR-2026-04683", cree:"2025-11-15", client:"Hôtel du Parc",        ct:"Sophie Larson",  titre:"Veille punaises — 42 chambres",        montant:4560.00, freq:"Mensuelle",     statut:"renouveler", fin:"2026-09-05"},
+  {ref:"CTR-2026-04671", cree:"2025-10-08", client:"Boulangerie Dupont",   ct:"Raymond Berger", titre:"Dératisation annuelle — fournil",      montant:1490.00, freq:"Mensuelle",     statut:"actif",      fin:"2027-02-22"},
+  {ref:"CTR-2026-04650", cree:"2025-09-22", client:"Entrepôt Central",     ct:"Josette Blot",   titre:"Dépigeonnage + entretien filets",      montant:3150.00, freq:"Semestrielle",  statut:"actif",      fin:"2027-03-02"},
+  {ref:"CTR-2026-04644", cree:"2025-08-30", client:"Restaurant Le Baobab", ct:"Awa Diallo",     titre:"Contrat cafards — cuisine HACCP",      montant:1980.00, freq:"Mensuelle",     statut:"renouveler", fin:"2026-08-31"},
+  {ref:"CTR-2026-04621", cree:"2025-07-14", client:"Crèche Les Poussins",  ct:"Nadia Benali",   titre:"Veille sanitaire — locaux enfants",    montant:1140.00, freq:"Trimestrielle", statut:"suspendu",   fin:"2026-11-20"},
+  {ref:"CTR-2025-04512", cree:"2025-03-10", client:"Café de la Gare",      ct:"Karim M.",       titre:"Dératisation cave + terrasse",         montant:820.00,  freq:"Trimestrielle", statut:"resilie",    fin:"2026-06-30"},
+  {ref:"CTR-2025-04498", cree:"2025-02-18", client:"Camping Val de Seine", ct:"Direction",      titre:"Guêpes & rongeurs — saison",           montant:1650.00, freq:"Saisonnière",   statut:"expire",     fin:"2026-05-31"},
 ];
 const LBL = {actif:"Actif", renouveler:"À renouveler", suspendu:"Suspendu", resilie:"Résilié", expire:"Expiré", brouillon:"Brouillon"};
 /* ===== les contrats supprimés ne reviennent pas ===== */
@@ -425,16 +441,27 @@ const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014";
 let FSTAT = "tous";
 
 /* ================= FILTRES ================= */
-function chips(){
-  const order = ["tous","brouillon","actif","renouveler","suspendu","resilie","expire"];
-  const cnt = k => k === "tous" ? CONTRATS.length : CONTRATS.filter(c => c.statut === k).length;
-  document.getElementById("chips").innerHTML = order.map(k =>
-    `<button class="chip ${FSTAT === k ? "on" : ""}" onclick="FSTAT='${k}';render()">${k === "tous" ? "Tous" : LBL[k]} <span class="n">(${cnt(k)})</span></button>`).join("");
+let F = {stat:"", du:"", au:""};
+function applyF(){
+  const g = id => document.getElementById(id);
+  F.stat = g("f-stat").value; F.du = g("f-du").value; F.au = g("f-au").value;
+  const dl = g("f-datelbl");
+  if(dl) dl.textContent = (F.du || F.au) ? ((F.du || "…") + " → " + (F.au || "…")) : "Période";
+  render();
 }
+function toggleDate(e){ e.stopPropagation(); document.getElementById("f-datepop").classList.toggle("open"); }
+function clearDate(){ document.getElementById("f-du").value = ""; document.getElementById("f-au").value = ""; applyF(); }
+document.addEventListener("click", e => {
+  const p = document.getElementById("f-datepop");
+  if(p && p.classList.contains("open") && !e.target.closest(".fdate")) p.classList.remove("open");
+});
+function chips(){ /* filtres remplacés par les déroulants Période + Statut */ }
 function filtered(){
   const q = (document.getElementById("q").value || "").toLowerCase().trim();
   const list = CONTRATS.filter(c =>
-    (FSTAT === "tous" || c.statut === FSTAT) &&
+    (!F.stat || c.statut === F.stat) &&
+    (!F.du || (c.cree || "") >= F.du) &&
+    (!F.au || (c.cree || "") <= F.au) &&
     (!q || (c.client + " " + c.ref + " " + c.titre + " " + c.ct).toLowerCase().includes(q)));
   /* tri (26/07) : même menu que Devis et Factures, pour que les 7 listes se ressemblent */
   const t = (document.getElementById("sort") || {value:"recent"}).value;
@@ -459,13 +486,12 @@ function expChip(c){
 function kring(){
   const map = {renouveler:"k-blue", actif:"k-green", expire:"k-orange"};
   document.querySelectorAll(".kpi").forEach(k => k.classList.remove("on"));
-  if(map[FSTAT]){ const el = document.querySelector(".kpi." + map[FSTAT]); if(el) el.classList.add("on"); }
+  if(F && map[F.stat]){ const el = document.querySelector(".kpi." + map[F.stat]); if(el) el.classList.add("on"); }
 }
 function videFiltres(){
   const q = document.getElementById("q"); if(q) q.value = "";
-  FSTAT = "tous";
-  document.querySelectorAll(".fchip").forEach(c=>c.classList.toggle("on", c.dataset.f === "tous"));
-  render();
+  ["f-stat","f-du","f-au"].forEach(id => { const e = document.getElementById(id); if(e) e.value = ""; });
+  applyF();
 }
 function render(){
   chips();
@@ -894,6 +920,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .gsbtn:hover{border-color:#DCE3EB}
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
+.fsel{font-size:.79rem;font-weight:600;padding:9px 12px;border-radius:11px;background:#fff;border:1px solid var(--line);color:var(--ink-2);cursor:pointer;font-family:inherit}
+.fsel:focus{outline:none;border-color:var(--orange)}
+.fdate{position:relative;display:inline-block}
+.fdatepop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;box-shadow:0 16px 36px -18px rgba(23,26,32,.5);display:none;min-width:200px}
+.fdatepop.open{display:block}
+.fdatepop label{display:block;font-size:.72rem;font-weight:700;color:var(--ink-2);margin-bottom:9px}
+.fdatepop input{width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:.82rem;color:var(--ink)}
+.fdateclr{font-size:.72rem;color:var(--muted);background:none;border:0;cursor:pointer;padding:3px 0;font-weight:600}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
