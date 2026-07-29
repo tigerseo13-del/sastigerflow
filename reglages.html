@@ -443,7 +443,6 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="herotext">
         <h1>Réglages</h1>
       </div>
-      <button class="savebtn herosave" onclick="saveReglages()">Enregistrer les modifications</button>
     </section>
 
     <div class="lay">
@@ -537,8 +536,8 @@ const ic = {
   up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>'
 };
 const tgl = (on, extra) => `<span class="tgl ${on ? "on" : ""}" onclick="this.classList.toggle('on')${extra ? ";" + extra : ""}"></span>`;
-function saveReglages(){
-  if(typeof toast === "function") toast("✓ Modifications enregistrées");
+function saveReglages(section){
+  if(typeof toast === "function") toast("✓ " + (section ? section + " — modifications enregistrées" : "Modifications enregistrées"));
 }
 /* (l'ancienne variable « savebar » n'était jamais injectée : le seul bouton
    d'enregistrement global est celui du hero, en haut à droite) */
@@ -1086,7 +1085,17 @@ function spGoTo(k){ const b = document.querySelector('#snav button[data-s="' + k
 
 /* ---------- navigation des panneaux ---------- */
 let SPK = "info";
-function spRender(){ $id("panel").innerHTML = R[SPK](); }
+const PANEL_LBL = {
+  info:"Identité et mentions légales", users:"Utilisateurs", jours:"Horaires de travail",
+  feries:"Jours fériés", cats:"Catégories de services", prest:"Prestations", tva:"Taux de TVA",
+  num:"Numérotation", docs:"Bibliothèque de documents",
+  mdevis:"Modèle de devis", mfacture:"Modèle de facture", mavoir:"Modèle d'avoir",
+  mcontrat:"Modèle de contrat", mrapport:"Modèle de rapport d'intervention"
+};
+function spRender(){
+  $id("panel").innerHTML = R[SPK]()
+    + `<div class="savebar"><button class="savebtn" onclick="saveReglages('${(PANEL_LBL[SPK]||"").replace(/'/g,"\\'")}')">Enregistrer les modifications</button></div>`;
+}
 document.getElementById("snav").addEventListener("click", e => {
   const b = e.target.closest("button[data-s]"); if(!b) return;
   const prev = document.querySelector("#snav button[data-s].on");
@@ -1428,12 +1437,9 @@ label[for]{cursor:pointer}
 
 /* ===== toggles verts ciblés (refait 29/07 sur base du 28) : jours de travail + blocage ===== */
 
-/* ===== bouton Enregistrer en tête du hero (refait 29/07) ===== */
-.hero{display:flex;align-items:center;gap:16px}
-.herotext{flex:1;min-width:0;position:relative;z-index:1}
-.herosave{flex:none;position:relative;z-index:1;min-height:44px;cursor:pointer;border:none}
-.herosave:hover{background:var(--orange-deep)}
-@media(max-width:640px){ .hero{flex-direction:column;align-items:stretch} .herosave{width:100%} }
+/* ===== hero Réglages (bouton Enregistrer déplacé en bas de chaque panneau, 29/07) ===== */
+.herotext{position:relative;z-index:1}
+/* le bouton Enregistrer vit maintenant dans .savebar (déjà définie plus haut), en bas de chaque panneau */
 
 /* ===== zone de dépôt documents « en grand » (refait 29/07) ===== */
 .pjzone{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;cursor:pointer;
