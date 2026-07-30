@@ -1100,7 +1100,11 @@ try{
   const _cat2k = c => /rat|souris|dérat/i.test(c) ? "rong" : /punaise/i.test(c) ? "pun"
     : /cafard|blatte|guêpe|frelon|fourmi|insecte|désinsect/i.test(c) ? "ins"
     : /pigeon|volatile|goéland/i.test(c) ? "vol" : /désinfec/i.test(c) ? "des" : "div";
-  _mp.filter(x => x && x.own && !x.off).forEach(x => {
+  /* 30/07 patron : « j'avais cree 2 articles ils sont ou » — les articles crees
+     AVANT l'arrivee du drapeau own n'etaient pas exportes. Desormais TOUTE
+     prestation active de Reglages rejoint la bibliotheque (dedoublonnee par nom). */
+  const _deja = new Set(CATALOGUE.map(c => String(c.designation).trim().toLowerCase()));
+  _mp.filter(x => x && !x.off && x.n && !_deja.has(String(x.n).trim().toLowerCase())).forEach(x => {
     CATALOGUE.push({designation:x.n, desc:x.d || "Prestation du catalogue maison.",
       pu:parseFloat(String(x.p).replace(/[^0-9,\.]/g, "").replace(",", ".")) || 0,
       tva:parseFloat(x.tva) || 20, emo:"🛠️"});
