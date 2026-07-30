@@ -524,16 +524,31 @@ label[for]{cursor:pointer}
 
 /* ===== 30/07 (patron, piste H validee) : les LIGNES en colonne principale,
    rail fin a droite — details empiles sans icones, puis notes. ===== */
-[data-tab="det"].show{display:grid;grid-template-columns:2.35fr 1fr;gap:16px;align-items:start}
-[data-tab="det"] > .grid2{display:flex;flex-direction:column;gap:16px;order:2;margin:0;min-width:0}
-[data-tab="det"] > .card{order:1;margin:0;min-width:0}
-[data-tab="det"] > *:nth-child(n+3){grid-column:1 / -1;order:3}
-@media(max-width:1080px){[data-tab="det"].show{grid-template-columns:1fr}[data-tab="det"] > .grid2{order:2}[data-tab="det"] > *:nth-child(n+3){grid-column:auto}}
+/* 30/07 (patron, apres essai en vrai) : le rail a droite « fait bizarre » —
+   retour a l'organisation classique (Details + Notes en haut, Lignes en
+   dessous), en GARDANT les rangees propres sans icones ni gros nom orange. */
 .hkv{padding:7.5px 0;border-bottom:1px solid #F3F4F7}
 .hkv:last-child{border-bottom:0}
 .hkv small{display:block;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:2px}
 .hkv b{font-size:.84rem;min-width:0;overflow-wrap:anywhere}
 #detrows{margin-top:2px}
+
+/* 30/07 (patron : « on mettrait pas dans le titre ? je suis perdu ») — TRANCHE :
+   l'identite du document vit dans le BANDEAU (objet + dates + envoi en une
+   ligne grise), la carte Details n'existe plus, les notes passent sous les
+   lignes. Une seule place pour chaque info. */
+.hmeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);font-weight:600;padding:10px 2px 0}
+.hmeta b{color:var(--ink);font-weight:700}
+.hmeta .hsep{color:#D5D8DF}
+.hmeta .hbadge2{font-size:.68rem;font-weight:800;background:#F1F2F6;color:var(--muted);border-radius:8px;padding:3px 9px;letter-spacing:.03em}
+.hmeta .hech{color:#2148C0;font-weight:700;font-size:.76rem}
+[data-tab="det"] .grid2{grid-template-columns:1fr}
+[data-tab="det"] .grid2 > .card:first-child{display:none}
+/* les LIGNES d'abord, les notes ensuite, les pieces jointes en dernier */
+[data-tab="det"].show{display:flex;flex-direction:column;gap:16px}
+[data-tab="det"] > .grid2{order:2;margin:0}
+[data-tab="det"] > .card{order:1;margin:0}
+[data-tab="det"] > *:nth-child(n+3){order:3}
 </style>
 </head>
 <body>
@@ -616,6 +631,7 @@ label[for]{cursor:pointer}
         </div>
       </span>
     </div>
+    <div class="hmeta" id="hmeta"></div>
 
     <!-- compteurs -->
     <div class="kpis">
@@ -1224,6 +1240,11 @@ function details(){
   };
   /* piste H : rangees empilees SANS icones — etiquette puis valeur */
   const row = (ic, cls, k, v) => '<div class="hkv"><small>' + k + '</small><b>' + v + '</b></div>';
+  const hm = document.getElementById('hmeta');
+  if(hm) hm.innerHTML = '<b>' + (REC.titre || "—") + '</b>'
+    + '<span class="hsep">·</span>émise le ' + fdate(REC.date)
+    + '<span class="hsep">·</span>échéance <b>' + fdate(REC.valid) + '</b> <span class="hech">' + (echTxt.split("· ")[1] || "") + '</span>'
+    + '<span class="hsep">·</span>' + (env ? '<span class="hbadge2" style="background:var(--green-bg);color:var(--green-d)">ENVOYÉ' + ('facture' === 'facture' ? 'E' : '') + ' LE ' + env.date + '</span>' : '<span class="hbadge2">PAS ENCORE ENVOYÉ' + ('facture' === 'facture' ? 'E' : '') + '</span>');
   g('detrows').innerHTML =
     '<div class="dlines">' +
     row("", "", "Client", '<a href="client.html?c=' + encodeURIComponent(REC.client || "") + '" style="color:var(--orange-deep)">' + (REC.client || "—") + ' →</a>') +
