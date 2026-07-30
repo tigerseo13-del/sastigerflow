@@ -2567,6 +2567,7 @@ function sbTog(id){
 function sbCren(id, c){ SBCREN = SBCREN === c ? "" : c; standbyInt(id, true); }
 function standbyInt(id, keep){
   const v = INTERVS.find(x=>x.id===id);
+  if(!v){ renderDetail(); return; }
   if(!keep){
     const demain = new Date(TODAYD); demain.setDate(demain.getDate() + 1);
     SBDATE = iso(demain); SBCREN = ""; SBCAL_OPEN = false;
@@ -2601,7 +2602,7 @@ function standbyInt(id, keep){
 }
 function confirmStandby(id){
   const i = INTERVS.findIndex(x=>x.id===id);
-  if(i < 0) return;
+  if(i < 0){ toast("⚠️ Cette carte vient d'être modifiée ailleurs — rouvre-la"); renderDetail(); return; }
   const v = INTERVS[i];
   const rappel = document.getElementById("sb-date").value || iso(TODAYD);
   const cren = SBCREN && SBCREN !== "Indifférent" ? SBCREN.split(" ·")[0].toLowerCase() : "";
@@ -4673,7 +4674,12 @@ let SBCAL = false;
 (async function(){
   if(!await sbSession()) return;
   SBCAL = true;
-  function clearSb(){ for(let i = INTERVS.length - 1; i >= 0; i--) if(INTERVS[i].sb) INTERVS.splice(i, 1); }
+  /* 30/07 — BUG de fond (patron : « ça bug, ça marche pas »). A chaque synchro,
+     les cartes de la base etaient DETRUITES puis recreees avec de NOUVEAUX
+     identifiants : tout panneau ouvert (fiche, rapport, A reprogrammer)
+     pointait alors vers un id mort et plus aucun clic ne repondait. La synchro
+     met desormais a jour EN PLACE : meme carte, meme id, pour toujours —
+     et l'etat local (demarree, terminee) n'est plus efface au passage. */
   async function load(first){
     try{
       const ae = document.activeElement;
@@ -4681,14 +4687,23 @@ let SBCAL = false;
       if(!first && typeof NEDIT !== "undefined" && NEDIT !== null) return;
       const {data, error} = await SB.from("interventions").select("*");
       if(error || !data) return;
-      clearSb();
+      const seen = new Set();
       data.forEach(x => {
         const ti = TECHS.findIndex(t => t.nom === x.tech);
         if(ti < 0 || !x.date) return;
-        const v = IV(x.date, +x.start_h || 9, +x.dur || 2, ti, x.type || "rongeur", x.client || "—", x.cp || "", x.ville || "");
-        v.mode = x.mode || "devis"; v.note = x.note || ""; if(x.rue) v.rue = x.rue; v.sb = x.id;
-        INTERVS.push(v);
+        seen.add(x.id);
+        const ex = INTERVS.find(k => k.sb === x.id);
+        if(ex){
+          ex.date = x.date; ex.start = +x.start_h || 9; ex.dur = +x.dur || 2; ex.tech = ti;
+          ex.type = x.type || "rongeur"; ex.client = x.client || "—"; ex.cp = x.cp || ""; ex.ville = x.ville || "";
+          ex.mode = x.mode || "devis"; ex.note = x.note || ""; if(x.rue) ex.rue = x.rue;
+        } else {
+          const v = IV(x.date, +x.start_h || 9, +x.dur || 2, ti, x.type || "rongeur", x.client || "—", x.cp || "", x.ville || "");
+          v.mode = x.mode || "devis"; v.note = x.note || ""; if(x.rue) v.rue = x.rue; v.sb = x.id;
+          INTERVS.push(v);
+        }
       });
+      for(let i = INTERVS.length - 1; i >= 0; i--) if(INTERVS[i].sb && !seen.has(INTERVS[i].sb)) INTERVS.splice(i, 1);
       render();
       if(first && data.length) toast(data.length + " intervention" + (data.length > 1 ? "s" : "") + " chargée" + (data.length > 1 ? "s" : "") + " de la base");
     }catch(e){}
