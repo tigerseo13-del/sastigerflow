@@ -573,6 +573,30 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .habtrack{grid-column:1 / -1;height:9px;border-radius:6px;background:#EDF1F0;overflow:hidden}
 .habtrack i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--green),#2FC9A0)}
 @media(max-width:520px){.habrow{grid-template-columns:1fr 44px}}
+
+/* ---- certifications enrichies ---- */
+.certrows{display:flex;flex-direction:column;gap:9px}
+.certrow{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:13px;padding:11px 13px}
+.certrow.warn{border-color:#F3D28B;background:#FFFDF7}
+.certrow.expired{border-color:#F2C4C0;background:#FFFAFA}
+.certdot{width:9px;height:9px;border-radius:999px;flex:none;background:#C9CDD6}
+.certrow.ok .certdot{background:var(--green)}
+.certrow.warn .certdot{background:#D9A408}
+.certrow.expired .certdot{background:#D63B33}
+.certb{flex:1;min-width:0}
+.certb b{display:block;font-size:.85rem}
+.certb small{font-size:.71rem;color:var(--muted)}
+.certst{font-size:.66rem;font-weight:800;padding:4px 10px;border-radius:9px;white-space:nowrap}
+.certst.g2{background:var(--green-bg);color:var(--green-d)}
+.certst.a2{background:#FEF3E2;color:#9A4A07}
+.certst.r2{background:#FDEDEC;color:#C0342B}
+.certst.n2{background:#F1F2F6;color:var(--muted)}
+.certdel{flex:none;border:0;background:none;color:#C9CDD6;cursor:pointer;font-size:.8rem;padding:2px 4px}
+.certdel:hover{color:#D63B33}
+.certform{border:1.5px dashed #D6D9E0;border-radius:13px;padding:12px}
+.certform input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font:600 .82rem Inter,sans-serif;color:var(--ink);background:#fff}
+.certform2{display:flex;gap:8px;margin-top:8px}
+.certform2 input{min-width:0}
 </style>
 </head>
 <body>
@@ -698,7 +722,10 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
       <div class="card">
         <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Secteur</div>
         <div id="i-zone"></div>
-        <div class="mapph" style="height:230px">
+        <!-- 30/07 (patron) : VRAIE carte OpenStreetMap avec le rayon dessine.
+             Si la carte ne charge pas (reseau), l'ancien dessin revient seul. -->
+        <div id="osmmap" style="height:230px;border-radius:14px;overflow:hidden;position:relative;z-index:0;display:none"></div>
+        <div class="mapph" id="mapph" style="height:230px">
           <svg class="pinsvg" viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <svg class="pinsvg mini" style="left:24%;top:24%" viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <svg class="pinsvg mini" style="right:21%;top:40%" viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -1071,20 +1098,78 @@ function comp(){
   /* ── les certifications saisies à la création / modification (26/07) ──
      i-certs n'était jamais rempli : la carte restait vide quoi qu'on saisisse.
      T.certs est un tableau de chaînes « intitulé · numéro ». */
-  const certs = document.getElementById("i-certs");
-  if(certs){
-    const liste = (T.certs || []).filter(c => c && String(c).trim() && String(c).trim() !== "—");
-    certs.innerHTML = liste.length
-      ? liste.map(c => {
-          const parts = String(c).split(" · ");
-          const nom = parts[0].trim();
-          const num = parts.slice(1).join(" · ").trim();
-          return '<span class="certc"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>'
-               + nom + (num ? '<span class="cnum">n\u00b0 ' + num + '</span>' : '') + '</span>';
-        }).join("")
-        + '<div class="skhint">Certifications et num\u00e9ros d\u00e9clar\u00e9s pour ce technicien.</div>'
-      : '<div class="emptybox">Aucune certification enregistr\u00e9e.</div>';
-  }
+  renderCerts();
+}
+/* ===== 30/07 (patron, maquette WhatsApp) : CERTIFICATIONS ENRICHIES =====
+   Nom + numero + niveau + DATE DE VALIDITE — legalement, un Certibiocide
+   perime = interdiction de traiter. Vert = valide, AMBRE = expire dans moins
+   de 3 mois, ROUGE = expiree. Ajout par petit formulaire, memorise dans
+   l'overlay de fiche (tigerflow-techs-edit). */
+let CERTADD = false;
+function certList(){
+  const own = (T.certs2 || []);
+  const anciens = (T.certs || []).filter(c => c && String(c).trim() && String(c).trim() !== "\u2014")
+    .map(c => { const pp = String(c).split(" \u00b7 "); return {n:pp[0].trim(), num:pp.slice(1).join(" \u00b7 ").trim(), niv:"", fin:"", _old:true}; })
+    .filter(a => !own.some(o => o.n === a.n));
+  return anciens.concat(own);
+}
+function certEtat(fin){
+  if(!fin) return ["", "", ""];
+  const d = new Date(fin + "T12:00:00"), now = new Date();
+  const j = (d - now) / 86400000;
+  const txt = fin.split("-").reverse().join("/");
+  if(j < 0)  return ["expired", "\u2715 Expir\u00e9e le " + txt, "r2"];
+  if(j < 92) return ["warn", "\u26a0 Expire le " + txt, "a2"];
+  return ["ok", "Valide jusqu'au " + txt, "g2"];
+}
+function renderCerts(){
+  const z = document.getElementById("i-certs");
+  if(!z) return;
+  const l = certList();
+  const nOwn = (T.certs2 || []).length;
+  z.innerHTML = '<div class="certrows">'
+    + (l.length ? l.map((c, i) => {
+        const et = certEtat(c.fin), st = et[0], lab = et[1], cls = et[2];
+        const ownIdx = i - (l.length - nOwn);
+        return '<div class="certrow ' + (st || "neutral") + '">'
+          + '<span class="certdot"></span>'
+          + '<div class="certb"><b>' + c.n + '</b><small>' + [c.num ? "n\u00b0 " + c.num : "", c.niv ? "Niveau " + c.niv : ""].filter(Boolean).join(" \u00b7 ") + '</small></div>'
+          + (lab ? '<span class="certst ' + cls + '">' + lab + '</span>' : '<span class="certst n2">Sans \u00e9ch\u00e9ance</span>')
+          + (ownIdx >= 0 ? '<button class="certdel" title="Retirer" onclick="certDel(' + ownIdx + ')">\u2715</button>' : "")
+          + '</div>';
+      }).join("") : '<div class="emptybox">Aucune certification enregistr\u00e9e.</div>')
+    + (CERTADD ? '<div class="certform">'
+        + '<input id="cf-n" placeholder="Certification (Ex : Certibiocide)">'
+        + '<div class="certform2"><input id="cf-num" placeholder="N\u00b0"><input id="cf-niv" placeholder="Niveau" style="max-width:80px"><input id="cf-fin" type="date" title="Valide jusqu\u2019au"></div>'
+        + '<div style="display:flex;gap:8px;margin-top:9px">'
+        + '<button class="btn2" style="flex:1;justify-content:center" onclick="CERTADD=false;renderCerts()">Annuler</button>'
+        + '<button class="btn2 prim" style="flex:1;justify-content:center" onclick="certAdd()">Enregistrer</button></div></div>'
+      : '<button class="morelink" onclick="CERTADD=true;renderCerts();var f=document.getElementById(&quot;cf-n&quot;);if(f)f.focus()">+ Ajouter une certification</button>')
+    + '</div>';
+}
+function certSaveOverlay(){
+  try{
+    const em = JSON.parse(localStorage.getItem("tigerflow-techs-edit")) || {};
+    em[NAME] = Object.assign({}, em[NAME] || {}, {certs2:T.certs2 || []});
+    localStorage.setItem("tigerflow-techs-edit", JSON.stringify(em));
+  }catch(e){}
+}
+function certAdd(){
+  const n = document.getElementById("cf-n").value.trim();
+  if(!n){ toast("Le nom de la certification est obligatoire"); return; }
+  T.certs2 = T.certs2 || [];
+  T.certs2.push({n, num:document.getElementById("cf-num").value.trim(),
+    niv:document.getElementById("cf-niv").value.trim(), fin:document.getElementById("cf-fin").value});
+  certSaveOverlay();
+  CERTADD = false; renderCerts();
+  toast("\ud83d\udee1\ufe0f \u00ab " + n + " \u00bb ajout\u00e9e \u00e0 la fiche");
+}
+function certDel(i){
+  if(!T.certs2 || !T.certs2[i]) return;
+  const n = T.certs2[i].n;
+  T.certs2.splice(i, 1);
+  certSaveOverlay(); renderCerts();
+  toast("\u00ab " + n + " \u00bb retir\u00e9e");
 }
 
 /* ================= DISPONIBILITÉ ================= */
@@ -1582,6 +1667,30 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   if(document.readyState !== "loading") appliqueCompte();
   else document.addEventListener("DOMContentLoaded", appliqueCompte);
 })();
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* la carte reelle : centre Paris, rayon du technicien, marqueur */
+setTimeout(function(){
+  try{
+    if(typeof L === "undefined") return;
+    const z = document.getElementById("osmmap");
+    if(!z) return;
+    z.style.display = "";
+    const km = parseFloat(T && T.rayon ? T.rayon : 20) || 20;
+    const m = L.map("osmmap", {zoomControl:false, scrollWheelZoom:false}).setView([48.8666, 2.4], km > 25 ? 9 : 10);
+    const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom:19, attribution:"\u00a9 OpenStreetMap"});
+    let okTiles = false;
+    tiles.on("tileload", function(){
+      if(!okTiles){ okTiles = true; var ph = document.getElementById("mapph"); if(ph) ph.style.display = "none"; }
+    });
+    tiles.on("tileerror", function(){ if(!okTiles){ z.style.display = "none"; } });
+    tiles.addTo(m);
+    L.circle([48.8666, 2.4], {radius:km * 1000, color:"#FF5A1F", weight:2, fillColor:"#FF5A1F", fillOpacity:.13}).addTo(m);
+    L.circleMarker([48.8666, 2.4], {radius:6, color:"#fff", weight:2.5, fillColor:"#EA4A10", fillOpacity:1}).addTo(m);
+  }catch(e){}
+}, 400);
 </script>
 </body>
 </html>
