@@ -81,7 +81,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
    qui se touchent, on ne sait plus laquelle est la navigation. */
 .fhead{position:relative;display:flex;align-items:center;gap:13px;margin:4px 0 14px;flex-wrap:wrap;border-radius:18px;border:1px solid var(--line,#E7E9EF);padding:16px 20px;
   background:#fff}
-.fhead::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(23,26,32,.035) 1px,transparent 1px),linear-gradient(rgba(23,26,32,.035) 1px,transparent 1px);background-size:27px 27px}
+.fhead::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:17px;background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 30%,#FFF8F4 65%,#FFF3EC 100%)}
 .fhead>*{position:relative}
 .fhead .ref{font-family:'Sora';font-weight:800;font-size:1.4rem;letter-spacing:-.4px}
 .badge{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:.72rem;padding:6px 12px;border-radius:999px}
@@ -477,6 +477,7 @@ label[for]{cursor:pointer}
 .bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
 
 .fhead .hcli{font-family:'Sora';font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink)}
+a.hcli:hover{color:var(--orange-deep)}
 .kpi.nolink{pointer-events:none}
 
 /* 27/07 : retour visuel du glisser-deposer + vignettes, comme la fiche technicien */
@@ -535,16 +536,19 @@ label[for]{cursor:pointer}
 [data-tab="det"] .grid2 > .card:first-child{display:none}
 /* les LIGNES d'abord, les notes ensuite, les pieces jointes en dernier */
 [data-tab="det"].show{display:grid;grid-template-columns:minmax(0,1fr) 328px;gap:16px;align-items:start}
-[data-tab="det"] > #lcard{grid-column:1;grid-row:1 / span 2;margin:0}
+[data-tab="det"] > #lcard{grid-column:1;grid-row:1 / span 3;margin:0}
 [data-tab="det"] > #viecard{grid-column:2;grid-row:1;margin:0}
 [data-tab="det"] > .grid2{grid-column:2;grid-row:2;margin:0}
-[data-tab="det"] > #pjcard{grid-column:1 / -1;margin:0}
+[data-tab="det"] > #pjcard{grid-column:2;grid-row:3;margin:0;padding:14px 18px!important}
+#pjcard .pjhint{display:none}
+#pjcard .pjrow{margin-top:0}
+#pjcard .pjadd{font-size:.78rem}
 @media(max-width:1100px){
   [data-tab="det"].show{grid-template-columns:1fr}
   [data-tab="det"] > #lcard{grid-column:1;grid-row:auto;order:1}
   [data-tab="det"] > #viecard{grid-column:1;grid-row:auto;order:2}
   [data-tab="det"] > .grid2{grid-column:1;grid-row:auto;order:3}
-  [data-tab="det"] > #pjcard{grid-column:1;order:4}
+  [data-tab="det"] > #pjcard{grid-column:1;grid-row:auto;order:4}
 }
 /* ── 30/07 — LA VIE DU DEVIS : même fil que sur la facture. Créé → envoyé →
    réponse du client → facturation, l'action suivante en orange dans l'étape
@@ -575,6 +579,15 @@ label[for]{cursor:pointer}
 .vact:hover{filter:brightness(1.05);transform:translateY(-1px)}
 .vall{display:inline-block;margin-top:2px;font-size:.75rem;font-weight:700;color:var(--muted)}
 .vall:hover{color:var(--orange-deep)}
+/* version degraissee : ligne unique par jalon, etape courante cliquable */
+.vlife li{padding:0 0 13px 27px}
+.vlife li::before{top:16px}
+.vlife .vd{font-weight:600;color:var(--muted);font-size:.73rem;margin-left:2px}
+.vlife li>b[onclick]{cursor:pointer}
+.vlife li>b[onclick]:hover{text-decoration:underline}
+.vlife li.now>b{color:var(--orange-deep)}
+.vlife li.now.late>b{color:var(--red)}
+.vlife .vgo{font-weight:900}
 </style>
 </head>
 <body>
@@ -636,7 +649,7 @@ label[for]{cursor:pointer}
 
     <!-- en-tête : réf + statut + actions -->
     <div class="fhead">
-      <span class="hcli" id="h-client">—</span>
+      <a class="hcli" id="h-client" href="#" title="Ouvrir la fiche client">—</a>
       <span class="ref" id="h-ref">FAC-…</span>
       <!-- 28/07 : le statut se change ICI comme dans l'atelier. La fiche etait
            le seul ecran ou on voyait le statut sans pouvoir le corriger. -->
@@ -1149,6 +1162,11 @@ function kpis(){
 }
 let RELMODE = false;
 function details(){
+  /* 30/07 — BUG (patron : « devis brouillon j'ai pas le nom ») : personne ne
+     remplissait le client du bandeau sur cette page. Il vient du dossier, et
+     il CLIQUE vers la fiche. */
+  const hc = g('h-client');
+  if(hc){ hc.textContent = REC.client || "—"; hc.href = "client.html?c=" + encodeURIComponent(REC.client || ""); }
   let env = null;
   try{ env = envGet(REF); }catch(e){}
   const st = effStatut(), sc = STL[st] || STL.attente;
@@ -1276,33 +1294,32 @@ function vieDraw(){
   const fini = (st === "gagne" || st === "perdu");
   const j = joursEch();
   const S = [];
-  S.push({t:"Devis créé", s:"le " + fdate(REC.date) + " · " + eur(REC.montant) + " TTC", k:"done"});
-  if(sent){
-    S.push({t:"Envoyé au client", s:env.date + (env.to ? " · " + env.to : "") + (env.relance ? " · relancé " + env.relance : ""), k:"done"});
-  } else if(fini){
-    S.push({t:"Envoi au client", s:"pas d’envoi tracé", k:"todo"});
-  } else {
-    S.push({t:"Envoi au client", s:"le client ne l’a pas encore reçu", k:"now", act:"Envoyer au client", fn:"envoyer()"});
-  }
+  /* 30/07 (patron) : une ligne par jalon, zero doublon avec le bandeau —
+     l'etape courante est cliquable et fait le geste. */
+  S.push({t:"Créé", d:fdate(REC.date), k:"done"});
+  if(sent) S.push({t:"Envoyé", d:(env.date || "").split(" ")[0], s:(env.to || "") + (env.relance ? " · relancé" : ""), k:"done"});
+  else if(fini) S.push({t:"Envoi", s:"pas d’envoi tracé", k:"todo"});
+  else S.push({t:"À envoyer", k:"now", fn:"envoyer()", h:"Envoyer le devis au client"});
   if(st === "gagne"){
-    S.push({t:"Accepté", s:"le client a dit oui — devis gagné", k:"done"});
-    S.push({t:"Facturation", s:"la suite naturelle : les lignes passent telles quelles sur la facture", k:"now", act:"Transformer en facture", fn:"versFacture()"});
+    S.push({t:"Accepté", k:"done"});
+    S.push({t:"À facturer", k:"now", fn:"versFacture()", h:"Transformer le devis en facture — les lignes passent telles quelles"});
   } else if(st === "perdu"){
-    S.push({t:"Refusé", s:"devis perdu — on peut retenter avec une offre ajustée", k:"ko", act:"Renvoyer une offre", fn:"envoyer()"});
+    S.push({t:"Refusé", s:"renvoyer une offre ?", k:"ko", fn:"envoyer()", h:"Renvoyer une offre ajustée"});
   } else if(sent && st === "expire"){
-    S.push({t:"Sans réponse", s:"validité dépassée" + (j !== null && j < 0 ? " de " + (-j) + " j" : "") + " — le devis a expiré", k:"now", late:true, act:"Renvoyer une offre", fn:"envoyer()"});
-    S.push({t:"Facturation", s:"après acceptation", k:"todo"});
+    S.push({t:"Expiré" + (j !== null && j < 0 ? " · " + (-j) + " j" : ""), s:"renvoyer une offre", k:"now", late:true, fn:"envoyer()", h:"Renvoyer une offre au client"});
+    S.push({t:"Facturation", k:"todo"});
   } else if(sent){
-    S.push({t:"Réponse du client", s:(j !== null && j > 0 ? "valide encore " + j + " j — jusqu’au " + fdate(REC.valid) : "en attente de retour"), k:"now", act:"Relancer le client", fn:"envoyer()"});
-    S.push({t:"Facturation", s:"après acceptation", k:"todo"});
+    S.push({t:"Réponse du client", s:(j !== null && j > 0 ? "valide encore " + j + " j · relancer" : "relancer"), k:"now", fn:"envoyer()", h:"Relancer le client"});
+    S.push({t:"Facturation", k:"todo"});
   } else {
-    S.push({t:"Réponse du client", s:"", k:"todo"});
-    S.push({t:"Facturation", s:"après acceptation", k:"todo"});
+    S.push({t:"Réponse du client", k:"todo"});
+    S.push({t:"Facturation", k:"todo"});
   }
   box.innerHTML = S.map(x =>
-    '<li class="' + x.k + (x.late ? ' late' : '') + '"><span class="vdot"></span><b>' + x.t + '</b>' +
+    '<li class="' + x.k + (x.late ? ' late' : '') + '"><span class="vdot"></span>' +
+    '<b' + (x.fn ? ' onclick="' + x.fn + '" title="' + (x.h || "") + '"' : '') + '>' + x.t +
+    (x.d ? ' <span class="vd">' + x.d + '</span>' : '') + (x.fn ? ' <span class="vgo">→</span>' : '') + '</b>' +
     (x.s ? '<small>' + x.s + '</small>' : '') +
-    (x.act ? '<button class="vact" onclick="' + x.fn + '">' + x.act + ' →</button>' : '') +
     '</li>').join('');
 }
 function vieHisto(e){

@@ -557,7 +557,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     </div>
     <!-- ===== 6. TECHNICIEN ===== -->
     <div class="card">
-      <div class="card-h"><span class="num">6</span>Technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— plusieurs choix possibles</span></div>
+      <div class="card-h"><span class="num">6</span>Technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— plusieurs choix possibles · facultatif : sans choix, elle part dans « À affecter »</span></div>
       <div class="techs" id="techs"></div>
         <button class="morelink" onclick="reveal('g-addtech', this)">+ Ajouter un technicien</button>
       <div id="g-addtech" style="display:none;margin-top:11px">
@@ -992,15 +992,24 @@ function saveInter(){
     bad.scrollIntoView({behavior:"smooth", block:"center"});
     return;
   }
-  if(!TECHS.size){
-    toast("👷 Choisis au moins un technicien");
+  /* 30/07 (patron) : SANS technicien choisi, l'intervention part quand même —
+     direction le bac « À affecter » de l'agenda, d'où on la glisse sur un
+     technicien. La date souhaitée voyage dans la note pour ne pas se perdre.
+     En modification d'une intervention déjà posée sur l'agenda, le technicien
+     reste obligatoire : sa colonne l'attend. */
+  const SANSTECH = !TECHS.size && !EDITSB && EDITRID == null && !EDITUID;
+  if(!TECHS.size && !SANSTECH){
+    toast("👷 Choisis le technicien de cette intervention");
     document.getElementById("techs").scrollIntoView({behavior:"smooth", block:"center"});
     return;
   }
   const dt = new Date(fd.value + "T12:00:00");
-  toast("✓ Intervention planifiée " + dt.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"}) + " · " + effSlot() + " — " + [...TECHS].map(t=>t.split(" ")[0]).join(" + "));
+  const dtxt = dt.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"2-digit"});
+  toast(SANSTECH
+    ? "✓ Intervention enregistrée — au bac À affecter de l'agenda, glisse-la sur un technicien"
+    : "✓ Intervention planifiée " + dtxt + " · " + effSlot() + " — " + [...TECHS].map(t=>t.split(" ")[0]).join(" + "));
   /* Export vers l'agenda */
-  if(typeof sbNewInter === "function") sbNewInter();
+  try{ if(typeof sbNewInter === "function") sbNewInter(); }catch(e){}
   try{
     const P2K = {"Rongeurs":"rongeur","Punaises de lit":"punaise","Cafards":"cafard","Guêpes / Frelons":"guepe",
       "Chenilles processionnaires":"chenille","Pigeons":"pigeon","Désinfection":"desinf","Fourmis":"fourmi"};
@@ -1019,14 +1028,14 @@ function saveInter(){
       /* un nuisible saisi a la main n'entre dans aucune case connue : on le
          range en « autre » et on emporte son libelle, au lieu de le faire
          passer pour une deratisation. */
-      pid: EDITBAC ? EDITPID : undefined,
-      bac: EDITBAC || undefined,
+      pid: EDITBAC ? EDITPID : (SANSTECH ? Date.now() : undefined),
+      bac: (EDITBAC || SANSTECH) || undefined,
       type: P2K[[...PESTS][0]] || "autre",
       typeLibre: P2K[[...PESTS][0]] ? "" : ([...PESTS][0] || ""),
       mode: PAY2M[PAY] || "devis",
       tech: [...TECHS][0] || "",
       montant: (document.getElementById("f-montant") || {value:""}).value.trim(),
-      note: [noteEl ? noteEl.value.trim() : "", pjNote(), recNote()].filter(Boolean).join("\n")
+      note: [(SANSTECH ? "📅 Souhaité : " + dtxt + " · " + effSlot() : ""), noteEl ? noteEl.value.trim() : "", pjNote(), recNote()].filter(Boolean).join("\n")
     });
     if(EDITSB){
       const x2 = inbox.pop();   /* la base est la source : ni ajout local ni mise à jour locale */
@@ -1046,7 +1055,7 @@ function saveInter(){
     localStorage.setItem("tigerflow-inbox-interventions", JSON.stringify(inbox));
   }catch(e){}
   try{ localStorage.removeItem(IKEY); }catch(e){}
-  setTimeout(()=>{ if(INPANEL && window.parent !== window){ window.parent.postMessage("tigerflow-intervention-saved", "*"); } else { location.href = "calendrier.html"; } }, 1300);
+  setTimeout(()=>{ if(INPANEL && window.parent !== window){ window.parent.postMessage("tigerflow-intervention-saved", "*"); } else { location.href = (typeof RETFICHE !== "undefined" && RETFICHE) ? "client.html?c=" + encodeURIComponent(RETFICHE) : "calendrier.html"; } }, 1300);
 }
 function cancelGuard(){
   const started = document.getElementById("f-client").value || PESTS.size || TECHS.size ||
@@ -1782,5 +1791,23 @@ function logout(){
   else document.addEventListener("DOMContentLoaded", appliqueCompte);
 })();
 </script>
+<script>
+/* ===== 30/07 (patron) : une action lancee depuis la fiche client Y RAMENE.
+   ?retour=fiche + ?c= : pastille « ← Fiche … » dans le fil d'Ariane, et les
+   actions terminales (envoi, enregistrement) redirigent vers la fiche. */
+let RETFICHE = "";
+try{ const _rp = new URLSearchParams(location.search); if(_rp.get("retour") === "fiche" && _rp.get("c")) RETFICHE = _rp.get("c"); }catch(e){}
+if(RETFICHE){
+  const _c = document.querySelector(".crumbs");
+  if(_c){
+    const _a = document.createElement("a");
+    _a.className = "retf";
+    _a.href = "client.html?c=" + encodeURIComponent(RETFICHE);
+    _a.textContent = "\u2190 Fiche " + RETFICHE;
+    _c.appendChild(_a);
+  }
+}
+</script>
+<style>.retf{display:inline-flex;align-items:center;margin-left:12px;background:#fff;border:1px solid var(--line,#EBECF1);border-radius:999px;padding:5px 13px;font-size:.75rem;font-weight:700;color:var(--ink-2,#3D434E);text-decoration:none;vertical-align:middle}.retf:hover{border-color:var(--orange,#FF5A1F);color:var(--orange-deep,#EA4A10)}</style>
 </body>
 </html>

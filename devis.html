@@ -1056,7 +1056,7 @@ function doSend(sign, pay){
   }catch(e){}
   if(typeof envInfoShow === "function") envInfoShow();
   toast("📤 Devis envoyé à " + cli + (sign ? " — lien de signature inclus" : "") + (pay ? " · paiement en ligne activé" : ""));
-  setTimeout(() => { location.href = "devis-liste.html"; }, 1200);   /* retour à la liste */
+  setTimeout(() => { location.href = (typeof RETFICHE !== "undefined" && RETFICHE) ? "client.html?c=" + encodeURIComponent(RETFICHE) : "devis-liste.html"; }, 1200);   /* retour a la liste - ou a la fiche client */
 }
 
 /* ================= BIBLIOTHÈQUE (la boutique) ================= */
@@ -1741,7 +1741,7 @@ function saveDevis(){
      redirection ici — c'est la cohabitation de deux qui avait tout casse. */
   toast("💾 Devis " + DREF + " enregistré — ouverture de la fiche…");
   const _r = DREF;
-  setTimeout(() => { location.href = "devis-detail.html?ref=" + encodeURIComponent(_r); }, 700);
+  setTimeout(() => { location.href = (typeof RETFICHE !== "undefined" && RETFICHE) ? "client.html?c=" + encodeURIComponent(RETFICHE) : "devis-detail.html?ref=" + encodeURIComponent(_r); }, 700);
 }
 function envInfoShow(){
   try{
@@ -2008,5 +2008,23 @@ function societe(){
   else document.addEventListener("DOMContentLoaded", watch);
 })();
 </script>
+<script>
+/* ===== 30/07 (patron) : une action lancee depuis la fiche client Y RAMENE.
+   ?retour=fiche + ?c= : pastille « ← Fiche … » dans le fil d'Ariane, et les
+   actions terminales (envoi, enregistrement) redirigent vers la fiche. */
+let RETFICHE = "";
+try{ const _rp = new URLSearchParams(location.search); if(_rp.get("retour") === "fiche" && _rp.get("c")) RETFICHE = _rp.get("c"); }catch(e){}
+if(RETFICHE){
+  const _c = document.querySelector(".crumbs");
+  if(_c){
+    const _a = document.createElement("a");
+    _a.className = "retf";
+    _a.href = "client.html?c=" + encodeURIComponent(RETFICHE);
+    _a.textContent = "\u2190 Fiche " + RETFICHE;
+    _c.appendChild(_a);
+  }
+}
+</script>
+<style>.retf{display:inline-flex;align-items:center;margin-left:12px;background:#fff;border:1px solid var(--line,#EBECF1);border-radius:999px;padding:5px 13px;font-size:.75rem;font-weight:700;color:var(--ink-2,#3D434E);text-decoration:none;vertical-align:middle}.retf:hover{border-color:var(--orange,#FF5A1F);color:var(--orange-deep,#EA4A10)}</style>
 </body>
 </html>

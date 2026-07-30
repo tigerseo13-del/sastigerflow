@@ -1083,7 +1083,7 @@ function doSend(sign, pay){
   if(typeof envInfoShow === "function") envInfoShow();
   toast(PFMODE ? "📄 PRO FORMA envoyée à " + cli + " — la facture reste en brouillon" : "📤 Facture envoyée à " + cli + (sign ? " — RIB joint" : "") + (pay ? " · paiement en ligne activé" : ""));
   PFMODE = false;
-  setTimeout(() => { location.href = "facture-liste.html"; }, 1200);   /* retour à la liste */
+  setTimeout(() => { location.href = (typeof RETFICHE !== "undefined" && RETFICHE) ? "client.html?c=" + encodeURIComponent(RETFICHE) : "facture-liste.html"; }, 1200);   /* retour a la liste - ou a la fiche client */
 }
 
 /* ================= BIBLIOTHÈQUE (la boutique) ================= */
@@ -1763,7 +1763,7 @@ function saveDevis(){
      montre en mieux, et obligeait a un clic de plus pour y arriver. */
   toast("💾 Facture enregistrée en pro forma");
   setTimeout(function(){
-    location.href = "facture-detail.html?ref=" + encodeURIComponent(DREF);
+    location.href = (typeof RETFICHE !== "undefined" && RETFICHE) ? "client.html?c=" + encodeURIComponent(RETFICHE) : "facture-detail.html?ref=" + encodeURIComponent(DREF);
   }, 350);
 }
 /* ===== le résumé après enregistrement : PDF · valider · supprimer · dupliquer ===== */
@@ -2019,5 +2019,23 @@ function dpjRender(){
 }
 setTimeout(dpjRender, 0);
 </script>
+<script>
+/* ===== 30/07 (patron) : une action lancee depuis la fiche client Y RAMENE.
+   ?retour=fiche + ?c= : pastille « ← Fiche … » dans le fil d'Ariane, et les
+   actions terminales (envoi, enregistrement) redirigent vers la fiche. */
+let RETFICHE = "";
+try{ const _rp = new URLSearchParams(location.search); if(_rp.get("retour") === "fiche" && _rp.get("c")) RETFICHE = _rp.get("c"); }catch(e){}
+if(RETFICHE){
+  const _c = document.querySelector(".crumbs");
+  if(_c){
+    const _a = document.createElement("a");
+    _a.className = "retf";
+    _a.href = "client.html?c=" + encodeURIComponent(RETFICHE);
+    _a.textContent = "\u2190 Fiche " + RETFICHE;
+    _c.appendChild(_a);
+  }
+}
+</script>
+<style>.retf{display:inline-flex;align-items:center;margin-left:12px;background:#fff;border:1px solid var(--line,#EBECF1);border-radius:999px;padding:5px 13px;font-size:.75rem;font-weight:700;color:var(--ink-2,#3D434E);text-decoration:none;vertical-align:middle}.retf:hover{border-color:var(--orange,#FF5A1F);color:var(--orange-deep,#EA4A10)}</style>
 </body>
 </html>

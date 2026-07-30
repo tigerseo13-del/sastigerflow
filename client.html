@@ -1668,11 +1668,18 @@ function toast(msg, undoFn){
         return 1;
       };
       var stD = {envoye:["Envoy\u00e9","st-envoye"], gagne:["Gagn\u00e9","st-gagne"], perdu:["Perdu","st-perdu"], brouillon:["Brouillon","st-envoye"]};
+      /* 30/07 (patron : « j'ai mis la facture en payée, la fiche ne le voit
+         pas ») — le statut VIVANT est dans les registres partagés, pas dans la
+         boîte d'origine : on lit les registres d'abord. */
+      var JO = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return (v && !Array.isArray(v) && typeof v === "object") ? v : {}; }catch(e){ return {}; } };
+      var STD = JO("tigerflow-devis-statuts");
+      var STF = JO("tigerflow-factures-statuts");
+      var PMAP = JO("tigerflow-factures-paiements");
 
       var dv = J("tigerflow-inbox-devis").filter(mien);
       if(dv.length){
         pose("devis", dv.map(function(d){
-          var st = stD[d.statut] || ["Envoy\u00e9","st-envoye"];
+          var st = stD[STD[d.ref] || d.statut] || ["Envoy\u00e9","st-envoye"];
           return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 devis</th><th>Objet</th><th class="amt">Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>');
         var nd = document.getElementById("n-devis"); if(nd) nd.textContent = dv.length;
@@ -1680,11 +1687,28 @@ function toast(msg, undoFn){
 
       var fc = J("tigerflow-inbox-factures").filter(mien);
       if(fc.length){
+        var auj2 = new Date().toISOString().slice(0, 10);
         pose("fact", fc.map(function(f){
-          var paye = (f.statut === "payee");
-          return '<tr><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (f.titre || "\u2014") + '</td><td class="amt">' + eurF(f.montant) + '</td><td>' + fd(f.valid || f.date) + '</td><td><span class="st ' + (paye ? "st-payee" : "st-envoye") + '">' + (paye ? "Pay\u00e9e" : "\u00c0 payer") + '</span></td><td><a class="rlink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
+          var se = STF[f.ref] || f.statut || "attente";
+          var paye = (se === "payee");
+          var late = !paye && se !== "brouillon" && se !== "proforma" && f.valid && f.valid < auj2;
+          var lbl = paye ? ["Pay\u00e9e","st-payee"]
+                  : (se === "partiel") ? ["Acompte re\u00e7u","st-envoye"]
+                  : (se === "brouillon" || se === "proforma") ? ["Pro forma","st-envoye"]
+                  : late ? ["En retard","st-perdu"] : ["\u00c0 payer","st-envoye"];
+          return '<tr><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (f.titre || "\u2014") + '</td><td class="amt">' + eurF(f.montant) + '</td><td>' + fd(f.valid || f.date) + '</td><td><span class="st ' + lbl[1] + '">' + lbl[0] + '</span></td><td><a class="rlink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 facture</th><th>Objet</th><th class="amt">Montant TTC</th><th>\u00c9ch\u00e9ance</th><th>Statut</th><th></th></tr></thead>');
         var nf = document.getElementById("n-fact"); if(nf) nf.textContent = fc.length;
+      }
+      /* les paiements encaissés sur les factures du client remplissent l'onglet Paiements */
+      var prows = [];
+      fc.forEach(function(f){
+        (Array.isArray(PMAP[f.ref]) ? PMAP[f.ref] : []).forEach(function(p2){
+          prows.push('<tr><td>' + fd(p2.d) + '</td><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (p2.mode || "\u2014") + '</td><td>' + (p2.note || "\u2014") + '</td><td class="amt"><b>' + eurF(p2.m) + '</b></td><td><span class="st st-payee">Encaiss\u00e9</span></td></tr>');
+        });
+      });
+      if(prows.length){
+        pose("paie", prows.join(""), '<thead><tr><th>Date</th><th>N\u00b0 facture</th><th>Mode</th><th>Note</th><th class="amt">Montant</th><th>Statut</th></tr></thead>');
       }
 
       var ct = J("tigerflow-inbox-contrats").filter(mien);
@@ -1922,7 +1946,7 @@ function neufHref(a, page, sesskey){
   var q = "";
   try{ q = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
   if(!q) q = cliNom();
-  if(q) a.href = page + "?c=" + encodeURIComponent(q);
+  if(q) a.href = page + "?c=" + encodeURIComponent(q) + "&retour=fiche";
 }
 function interPanel(){
   document.getElementById("ipframe").src = "intervention-nouvelle.html?panel=1&c=" + encodeURIComponent(cliNom());

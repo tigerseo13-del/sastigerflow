@@ -426,7 +426,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="hids">
         <span class="copyref" onclick="copyRef()" title="Cliquer pour copier">CTR-2026-04729</span>
         <span class="sep">·</span><span>Dératisation annuelle</span>
-        <span class="sep">·</span><a href="client.html" style="color:var(--orange-deep);font-weight:700">Ironwood Solutions →</a>
+        <span class="sep">·</span><a href="client.html?c=Ironwood%20Solutions" style="color:var(--orange-deep);font-weight:700">Fiche client →</a>
       </div>
       <div class="quick">
         <div class="q" onclick="showTab('hist',document.querySelectorAll('.tab')[1])" title="Voir l'historique du contrat">
@@ -1032,7 +1032,7 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
       const spans = ids.querySelectorAll("span:not(.sep):not(.copyref)");
       if(spans[0]) spans[0].textContent = c.titre || "Contrat";
       const lk = ids.querySelector("a");
-      if(lk){ lk.textContent = (c.client || "") + " →"; lk.href = "client.html?c=" + encodeURIComponent(c.client || ""); }
+      if(lk){ lk.textContent = "Fiche client →"; lk.href = "client.html?c=" + encodeURIComponent(c.client || ""); }   /* 30/07 (patron) : le nom doublait le titre */
     }
 
     const bs = document.querySelectorAll(".hero .quick .q b");
@@ -1144,8 +1144,12 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
 /* 30/07 (patron) : depuis le contrat, le client est DEJA choisi dans le
    formulaire, et les interventions creees s'affichent dans l'onglet. */
 function ctCliNom(){
+  /* 30/07 : le lien affiche desormais « Fiche client », pas le nom — on lit
+     le ?c= de son adresse, et a defaut le titre de la page. */
   const a = document.querySelector(".hids a");
-  return a ? a.textContent.replace("→", "").trim() : "";
+  if(a){ try{ const c = new URL(a.getAttribute("href"), location.href).searchParams.get("c"); if(c) return c; }catch(e){} }
+  const h = document.querySelector(".hero h1");
+  return h && h.childNodes.length ? (h.childNodes[0].textContent || "").trim() : "";
 }
 function interPanel(){
   document.getElementById("ipframe").src = "intervention-nouvelle.html?panel=1&c=" + encodeURIComponent(ctCliNom());
@@ -1153,24 +1157,37 @@ function interPanel(){
   document.body.style.overflow = "hidden";
 }
 function ctIntervDraw(){
-  const ul = document.querySelector('[data-tab="interv"] ul.tl');
-  if(!ul) return;
-  ul.querySelectorAll("li[data-live]").forEach(e => e.remove());
   let box = [];
   try{ box = JSON.parse(localStorage.getItem("tigerflow-inbox-interventions") || "[]"); }catch(e){}
   const cli = ctCliNom();
   const mine = box.filter(x => x && x.client === cli);
   const LBL = {rongeur:"Dératisation", cafard:"Cafards", punaise:"Punaises de lit", guepe:"Guêpes / Frelons", chenille:"Chenilles", pigeon:"Pigeons", desinf:"Désinfection", fourmi:"Fourmis"};
-  const h = mine.map(x => {
+  const liH = x => {
     const d = (x.date || "").split("-").reverse().join("/");
     const hdeb = x.start ? (x.start + "h").replace(".5", "h30") : "";
-    return `<li class="next" data-live="1"><span class="dot2"></span><b>${x.typeLibre || LBL[x.type] || "Intervention"} <span class="st nx">${x.tech ? "Planifiée" : "À planifier"}</span></b><small>${[d, hdeb, x.tech, (x.cp || "") + " " + (x.ville || "")].filter(Boolean).join(" · ")}</small></li>`;
-  }).join("");
-  ul.insertAdjacentHTML("afterbegin", h);
-  const tn = document.querySelectorAll(".tab .tn")[1];
-  if(tn) tn.textContent = ul.querySelectorAll("li").length;
-  const ch = document.querySelector('[data-tab="interv"] .card-h');
-  if(ch && ch.childNodes[1]) ch.childNodes[1].nodeValue = "Les " + ul.querySelectorAll("li").length + " interventions du contrat";
+    return `<li class="next" data-live="1"><span class="dot2"></span><b>${x.typeLibre || LBL[x.type] || "Intervention"} <span class="st nx">${x.tech ? "Planifiée" : "À affecter"}</span></b><small>${[d, hdeb, x.tech, (x.cp || "") + " " + (x.ville || "")].filter(Boolean).join(" · ")}</small></li>`;
+  };
+  /* 30/07 (patron) : la carte « Interventions récentes » (Informations) se
+     remplit AUSSI — 3 dernières —, l'état vide ne s'affiche que s'il n'y a
+     vraiment rien, et le compteur ne compte plus la ligne d'état vide. */
+  document.querySelectorAll("ul.tl").forEach(ul => {
+    ul.querySelectorAll("li[data-live]").forEach(e => e.remove());
+    const complet = !!ul.closest('[data-tab="interv"]');
+    const items = complet ? mine : mine.slice(-3).reverse();
+    ul.insertAdjacentHTML("afterbegin", items.map(liH).join(""));
+    [...ul.children].forEach(li => {
+      if(!li.hasAttribute("data-live") && /Aucune intervention/.test(li.textContent))
+        li.style.display = mine.length ? "none" : "";
+    });
+  });
+  const ulI = document.querySelector('[data-tab="interv"] ul.tl');
+  if(ulI){
+    const n = [...ulI.querySelectorAll("li")].filter(li => li.style.display !== "none" && !/Aucune intervention/.test(li.textContent)).length;
+    const tn = document.querySelectorAll(".tab .tn")[1];
+    if(tn) tn.textContent = n;
+    const ch = document.querySelector('[data-tab="interv"] .card-h');
+    if(ch && ch.childNodes[1]) ch.childNodes[1].nodeValue = n ? "Les " + n + " interventions du contrat" : "Interventions du contrat";
+  }
 }
 document.addEventListener("DOMContentLoaded", ctIntervDraw);
 window.addEventListener("message", e => { if(e.data === "tigerflow-intervention-saved") setTimeout(ctIntervDraw, 300); });
@@ -1293,5 +1310,10 @@ function logout(){
   else document.addEventListener("DOMContentLoaded", appliqueCompte);
 })();
 </script>
+<style>
+/* 30/07 (patron : « trop rapproché ») : respiration des interventions du contrat */
+ul.tl li[data-live]{padding:9px 0 11px}
+ul.tl li[data-live]+li[data-live]{border-top:1px dashed #EEF0F4}
+</style>
 </body>
 </html>
