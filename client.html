@@ -281,6 +281,10 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .dt th{text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line)}
 .dt td{padding:12px 10px;border-bottom:1px solid #F2F3F6}
 .dt td.amt{text-align:right}
+/* 30/07 (patron) : l'en-tete « Montant TTC » restait a gauche pendant que ses
+   montants s'alignaient a droite — la colonne semblait cassee. L'en-tete d'une
+   colonne de chiffres s'aligne a droite, comme ses chiffres. */
+.dt th.amt{text-align:right}
 .dt tbody tr{transition:background .12s}
 .dt tbody tr:hover{background:#FAFBFC}
 .dt tr:last-child td{border:0}
@@ -297,6 +301,16 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .qact.ko{color:var(--red)} .qact.ko:hover{background:var(--red-bg);border-color:var(--red)}
 .rlink{color:var(--orange-deep);font-weight:700;font-size:.79rem;white-space:nowrap}
 
+/* 30/07 — fiche d'ajout d'equipement */
+.eqlab{font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#6B7180;margin:13px 0 7px}
+.eqlab:first-child{margin-top:0}
+.eqchips{display:flex;gap:8px;flex-wrap:wrap}
+.eqc{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #E6E9EF;border-radius:10px;padding:9px 14px;font-size:.79rem;font-weight:650;color:var(--ink-2);background:#fff;cursor:pointer;transition:.12s;user-select:none}
+.eqc:hover{border-color:#CBD0DA}
+.eqc.on{border-color:var(--green);background:color-mix(in srgb,#10B981 11%,#fff);color:var(--green-d)}
+.eqin{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:10px 13px;font:600 .84rem Inter,sans-serif;color:var(--ink);background:#fff}
+textarea.eqin{resize:vertical;font-weight:500}
+#eqveil .ipdrawer{background:var(--bg,#F4F5F8)}
 /* Équipements */
 .equip{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:15px;padding:14px;transition:.14s}
 .equip:hover{border-color:#FFD9C4;background:var(--orange-soft)}
@@ -634,14 +648,19 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <!-- ===== ONGLETS ===== -->
     <div class="tabsrow">
       <div class="tabs">
+        <!-- 30/07 (patron) : « Historique des interventions » etait trop long —
+             « Interventions » suffit, le badge dit le nombre. Et l'ordre suit
+             la vie du client : son quotidien (Interventions), la chaine de
+             l'argent (Devis, Contrats, Factures, Paiements), puis le terrain
+             et les papiers (Rapports, Équipements, Documents). -->
         <button class="tab active" onclick="showTab('infos',this)">Informations</button>
+        <button class="tab" onclick="showTab('histint',this)">Interventions <span class="n">12</span></button>
         <button class="tab" onclick="showTab('devis',this)">Devis <span class="n" id="n-devis"></span></button>
         <button class="tab" onclick="showTab('ctr',this)">Contrats <span class="n">1</span></button>
-        <button class="tab" onclick="showTab('histint',this)">Historique des interventions <span class="n">12</span></button>
-        <button class="tab" onclick="showTab('rap',this)">Rapports</button>
-        <button class="tab" onclick="showTab('equip',this)">Équipements</button>
         <button class="tab" onclick="showTab('fact',this)">Factures <span class="n" id="n-fact"></span></button>
         <button class="tab" onclick="showTab('paie',this)">Paiements</button>
+        <button class="tab" onclick="showTab('rap',this)">Rapports</button>
+        <button class="tab" onclick="showTab('equip',this)">Équipements</button>
         <button class="tab" onclick="showTab('docs',this)">Documents</button>
       </div>
     </div>
@@ -707,11 +726,11 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <!-- ===== ONGLET DEVIS ===== -->
     <div class="grid" data-tab="devis">
       <div class="card full">
-        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span>Devis du client<a class="more" href="devis-liste.html">Tous les devis →</a><a class="addbtn" href="devis.html">+ Créer un devis</a></div>
+        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span>Devis du client<a class="more" href="devis-liste.html">Tous les devis →</a><a class="addbtn" href="devis.html" onclick="try{sessionStorage.removeItem('tigerflow-devis-ref')}catch(e){};this.href='devis.html?c='+encodeURIComponent(cliNom())">+ Créer un devis</a></div>
         <div class="tscroll"><table class="dt">
-          <thead><tr><th>N° devis</th><th>Objet</th><th>Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th>N° devis</th><th>Objet</th><th class="amt">Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>
           <tbody>
-            <tr data-ref="DEV-2026-01287"><td class="ref"><a class="reflink" href="devis.html" onclick="try{sessionStorage.setItem('tigerflow-devis-ref','DEV-2026-01287')}catch(e){}">DEV-2026-01287</a></td><td>Punaises de lit — appartement T3</td><td class="amt">578,05 €</td><td>25/08/2026</td><td><span class="st st-envoye">Envoyé</span></td><td style="white-space:nowrap"><button class="qact ok" title="Marquer gagné" onclick="devSt(event,'DEV-2026-01287','gagne')">✓</button><button class="qact ko" title="Marquer perdu" onclick="devSt(event,'DEV-2026-01287','perdu')">✗</button><a class="rlink" href="devis.html" onclick="try{sessionStorage.setItem('tigerflow-devis-ref','DEV-2026-01287')}catch(e){}">Ouvrir →</a></td></tr>
+            <tr data-ref="DEV-2026-01287"><td class="ref"><a class="reflink" href="devis.html" onclick="devOuvre(event,'DEV-2026-01287','Punaises de lit — appartement T3',578.05,'envoye')">DEV-2026-01287</a></td><td>Punaises de lit — appartement T3</td><td class="amt">578,05 €</td><td>25/08/2026</td><td><span class="st st-envoye">Envoyé</span></td><td style="white-space:nowrap"><button class="qact ok" title="Marquer gagné" onclick="devSt(event,'DEV-2026-01287','gagne')">✓</button><button class="qact ko" title="Marquer perdu" onclick="devSt(event,'DEV-2026-01287','perdu')">✗</button><a class="rlink" href="devis.html" onclick="devOuvre(event,'DEV-2026-01287','Punaises de lit — appartement T3',578.05,'envoye')">Ouvrir →</a></td></tr>
             <tr data-ref="DEV-2026-01198"><td class="ref"><a class="reflink" href="contrat.html">DEV-2026-01198</a></td><td>Extension contrat — punaises (avenant)</td><td class="amt">0,00 €</td><td>03/03/2026</td><td><span class="st st-gagne">Gagné</span></td><td><a class="rlink" href="contrat.html">Contrat →</a></td></tr>
             <tr data-ref="DEV-2025-01102"><td class="ref"><a class="reflink" href="contrat.html">DEV-2025-01102</a></td><td>Dératisation annuelle — 12 passages</td><td class="amt">750,50 €</td><td>05/12/2025</td><td><span class="st st-gagne">Gagné</span></td><td><a class="rlink" href="contrat.html">Contrat →</a></td></tr>
           </tbody>
@@ -724,7 +743,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="card full">
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Factures du client<a class="more" href="facture-liste.html">Toutes les factures →</a><a class="addbtn" href="facture.html">+ Créer une facture</a></div>
         <div class="tscroll"><table class="dt">
-          <thead><tr><th>N° facture</th><th>Objet</th><th>Montant TTC</th><th>Échéance</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th>N° facture</th><th>Objet</th><th class="amt">Montant TTC</th><th>Échéance</th><th>Statut</th><th></th></tr></thead>
           <tbody>
             <tr><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00858</a></td><td>Traitement ponctuel — réserve</td><td class="amt">1 250,00 €</td><td>03/08/2026</td><td><span class="st st-retard">En retard</span></td><td><button class="rlink" onclick="mailRelance()">✉ Relancer</button></td></tr>
             <tr><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00812</a></td><td>Contrat — mensualité juillet</td><td class="amt">62,54 €</td><td>31/07/2026</td><td><span class="st st-payee">Payée</span></td><td></td></tr>
@@ -764,7 +783,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
     <div class="grid" data-tab="equip">
       <div class="card full">
-        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span>Équipements installés<button class="addbtn" style="margin-left:auto" onclick="toast('🧰 Ajouter un équipement — bientôt relié')">+ Ajouter un équipement</button></div>
+        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span>Équipements installés<button class="addbtn" style="margin-left:auto" onclick="eqOpen()">+ Ajouter un équipement</button></div>
         <a class="equip" href="plan-appatage.html">
           <span class="eic">🗺️</span>
           <div>
@@ -774,6 +793,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           </div>
           <span class="go">Ouvrir le plan →</span>
         </a>
+        <div id="eqlist" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
       </div>
       <!-- 29/07 (patron) : la carte Registre est retiree. -->
     </div>
@@ -783,7 +803,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="card full">
         <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>Paiements reçus</div>
         <div class="tscroll"><table class="dt">
-          <thead><tr><th>Date</th><th>Référence</th><th>Mode</th><th>Montant</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th>Date</th><th>Référence</th><th>Mode</th><th class="amt">Montant</th><th>Statut</th><th></th></tr></thead>
           <tbody>
             <tr><td>28/07/2026</td><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00812</a></td><td>Prélèvement</td><td class="amt">62,54 €</td><td><span class="st st-payee">Encaissé</span></td><td><a class="rlink" href="facture-detail.html">Voir →</a></td></tr>
             <tr><td>28/06/2026</td><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00761</a></td><td>Prélèvement</td><td class="amt">62,54 €</td><td><span class="st st-payee">Encaissé</span></td><td><a class="rlink" href="facture-detail.html">Voir →</a></td></tr>
@@ -797,7 +817,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="card full">
         <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>Contrats du client<a class="more" href="contrat.html">Ouvrir le contrat →</a><button class="addbtn" onclick="toast('📄 Nouveau contrat — bientôt relié')">+ Nouveau contrat</button></div>
         <div class="tscroll"><table class="dt">
-          <thead><tr><th>N° contrat</th><th>Objet</th><th>Montant</th><th>Période</th><th>Statut</th><th></th></tr></thead>
+          <thead><tr><th>N° contrat</th><th>Objet</th><th class="amt">Montant</th><th>Période</th><th>Statut</th><th></th></tr></thead>
           <tbody>
             <tr><td class="ref"><a class="reflink" href="contrat.html">CTR-2026-04729</a></td><td>Dératisation annuelle — 12 passages</td><td class="amt">750,50 € / an</td><td>12/12/2025 → 12/12/2026</td><td><span class="st st-payee">Actif · 7/12</span></td><td><a class="rlink" href="contrat.html">Ouvrir →</a></td></tr>
           </tbody>
@@ -1748,10 +1768,31 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
   </div>
 </div>
 <script>
+/* 30/07 (patron) : depuis la fiche, tout se cree AVEC le client deja choisi. */
+function cliNom(){
+  const h = document.querySelector(".hero h1");
+  return h ? (h.childNodes[0].textContent || "").trim() : "";
+}
 function interPanel(){
-  document.getElementById("ipframe").src = "intervention-nouvelle.html?panel=1";
+  document.getElementById("ipframe").src = "intervention-nouvelle.html?panel=1&c=" + encodeURIComponent(cliNom());
   document.getElementById("ipveil").classList.add("open");
   document.body.style.overflow = "hidden";
+}
+/* 30/07 — BUG (patron) : cliquer un numero de devis ouvrait l'atelier sur le
+   DERNIER devis manipule (la reference de session trainait). On seme d'abord
+   le brouillon EXACT de la ligne (client, objet, montant), puis on ouvre
+   l'atelier en mode reprise (?draft=REF) : c'est LE bon devis qui s'affiche. */
+function devOuvre(ev, ref, titre, ttc, statut){
+  if(ev) ev.preventDefault();
+  try{
+    const pu = Math.round(ttc / 1.10 * 100) / 100;
+    const box = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").filter(x => x && x.ref !== ref);
+    box.unshift({ref, pro:false, client:cliNom(), ct:"", tech:"", inter:"", titre, montant:ttc, statut,
+      date:new Date().toISOString().slice(0,10), lignes:[{designation:titre, desc:"", qte:1, pu, tva:10, emo:"🧾", img:""}]});
+    localStorage.setItem("tigerflow-inbox-devis", JSON.stringify(box.slice(0, 30)));
+    sessionStorage.setItem("tigerflow-devis-ref", ref);
+  }catch(e){}
+  location.href = "devis.html?draft=" + encodeURIComponent(ref);
 }
 function interPanelClose(){
   document.getElementById("ipveil").classList.remove("open");
@@ -1767,6 +1808,89 @@ window.addEventListener("message", e => {
 document.addEventListener("keydown", e => {
   if(e.key === "Escape" && document.getElementById("ipveil").classList.contains("open")) interPanelClose();
 });
+</script>
+<!-- ===== 30/07 (patron) : AJOUTER UN EQUIPEMENT — vraie fiche, plus de
+     « bientot relie ». L'equipement s'ajoute a la liste et SURVIT a
+     l'actualisation (memorise par client dans le navigateur). ===== -->
+<div class="ipveil" id="eqveil" onclick="if(event.target===this)eqClose()">
+  <div class="ipdrawer" style="max-width:520px">
+    <div class="iphead"><b>🧰 Ajouter un équipement</b><button class="ipx" aria-label="Fermer" onclick="eqClose()">✕</button></div>
+    <div style="padding:20px 22px;overflow:auto;background:var(--bg,#F4F5F8)">
+      <div class="card" style="padding:18px 20px">
+        <div class="eqlab">Type d'équipement</div>
+        <div class="eqchips" id="eqtype">
+          <span class="eqc" onclick="eqType(this)">🪤 Poste d'appâtage</span>
+          <span class="eqc" onclick="eqType(this)">🪰 Détecteur insectes</span>
+          <span class="eqc" onclick="eqType(this)">⚙️ Piège mécanique</span>
+          <span class="eqc" onclick="eqType(this)">💡 Lampe UV</span>
+          <span class="eqc" onclick="eqType(this)">🧰 Autre</span>
+        </div>
+        <div class="eqlab">Repère / n° de série</div>
+        <input class="eqin" id="eq-ref" placeholder="Ex : PA-15">
+        <div class="eqlab">Emplacement</div>
+        <input class="eqin" id="eq-lieu" placeholder="Ex : local poubelles, sous-sol B">
+        <div class="eqlab">Date de pose</div>
+        <input class="eqin" type="date" id="eq-date" style="max-width:200px">
+        <div class="eqlab">Note</div>
+        <textarea class="eqin" id="eq-note" rows="2" placeholder="Ex : à contrôler chaque passage"></textarea>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn" style="flex:1;justify-content:center" onclick="eqClose()">Annuler</button>
+          <button class="btn primary" style="flex:1;justify-content:center" onclick="eqSave()">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let EQTYPE = "";
+const eqKey = () => "tigerflow-equips-" + cliNom();
+function eqOpen(){
+  EQTYPE = "";
+  document.querySelectorAll("#eqtype .eqc").forEach(c => c.classList.remove("on"));
+  ["eq-ref","eq-lieu","eq-note"].forEach(i => document.getElementById(i).value = "");
+  document.getElementById("eq-date").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("eqveil").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function eqClose(){
+  document.getElementById("eqveil").classList.remove("open");
+  document.body.style.overflow = "";
+}
+function eqType(el){
+  EQTYPE = el.textContent.trim();
+  document.querySelectorAll("#eqtype .eqc").forEach(c => c.classList.toggle("on", c === el));
+}
+function eqSave(){
+  if(!EQTYPE){ toast("Choisis un type d'équipement"); return; }
+  const e = {t:EQTYPE, ref:document.getElementById("eq-ref").value.trim(),
+    lieu:document.getElementById("eq-lieu").value.trim(),
+    date:document.getElementById("eq-date").value,
+    note:document.getElementById("eq-note").value.trim()};
+  const l = eqLoad(); l.unshift(e);
+  try{ localStorage.setItem(eqKey(), JSON.stringify(l)); }catch(err){}
+  eqDraw(); eqClose();
+  toast("🧰 " + EQTYPE.replace(/^[^ ]+ /, "") + (e.ref ? " " + e.ref : "") + " ajouté à la fiche");
+}
+function eqLoad(){ try{ return JSON.parse(localStorage.getItem(eqKey())) || []; }catch(e){ return []; } }
+function eqDel(i){
+  const l = eqLoad(); l.splice(i, 1);
+  try{ localStorage.setItem(eqKey(), JSON.stringify(l)); }catch(err){}
+  eqDraw(); toast("Équipement retiré");
+}
+function eqDraw(){
+  const z = document.getElementById("eqlist");
+  if(!z) return;
+  z.innerHTML = eqLoad().map((e, i) => `
+    <div class="equip" style="cursor:default">
+      <span class="eic">${(e.t.match(/^[^ ]+/) || ["🧰"])[0]}</span>
+      <div>
+        <b>${e.t.replace(/^[^ ]+ /, "")}${e.ref ? " — " + e.ref : ""}</b>
+        <small>${[e.lieu, e.date ? "posé le " + e.date.split("-").reverse().join("/") : "", e.note].filter(Boolean).join(" · ")}</small>
+      </div>
+      <button class="qact ko" style="margin-left:auto" title="Retirer" onclick="eqDel(${i})">✗</button>
+    </div>`).join("");
+}
+document.addEventListener("DOMContentLoaded", eqDraw);
 </script>
 <div class="ncpveil" id="ncpveil" onclick="if(event.target===this)ncpClose()">
   <div class="ncpdrawer">
