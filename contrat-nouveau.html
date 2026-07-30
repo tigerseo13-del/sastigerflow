@@ -1018,6 +1018,8 @@ function saveContrat(statut){
   const cren = [...document.querySelectorAll("#v-creneaux input:checked")].map(c => c.value === "perso" ? (g("v-pdeb").value + " – " + g("v-pfin").value) : c.value);
   g("v-creneaux").classList.toggle("err", !cren.length); if(!cren.length) missing = true;
   if(missing){
+    /* les sections repliees qui contiennent une erreur s'ouvrent toutes seules */
+    document.querySelectorAll(".card.fold:not(.open)").forEach(c => { if(c.querySelector(".err")) c.classList.add("open"); });
     toast("Remplis les champs marqués * — ils sont en rouge");
     const e1 = document.querySelector(".err");
     if(e1 && e1.scrollIntoView) try{ e1.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
@@ -1493,6 +1495,26 @@ try{
     }
   }
 }catch(e){}
+</script>
+<script>
+/* mu-contratnew valide : TOUTES les sections se replient — le formulaire n'est plus un seul pave.
+   Informations, Periode et Planification restent ouvertes (l'essentiel), le reste est replie. */
+(function(){
+  const OUVERTES = ["Informations", "P\u00e9riode", "Planification"];
+  document.querySelectorAll(".card > .card-h").forEach(h => {
+    if(h.classList.contains("fold-h")) return;   /* Materiel & Recapitulatif : deja repliables */
+    const c = h.parentElement;
+    const titre = h.textContent.trim();
+    c.classList.add("fold");
+    if(OUVERTES.some(x => titre.startsWith(x))) c.classList.add("open");
+    h.classList.add("fold-h");
+    h.insertAdjacentHTML("beforeend", '<svg class="fchev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>');
+    h.addEventListener("click", ev => {
+      if(ev.target.closest("button, a, input, select, textarea, label")) return;
+      c.classList.toggle("open");
+    });
+  });
+})();
 </script>
 </body>
 </html>

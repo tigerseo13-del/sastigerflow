@@ -408,6 +408,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
 
 html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran ») : la place de l'ascenseur est reservee, plus de saut de 15px entre pages courtes et longues */
+
+.hiname{color:var(--orange-deep,#E84D0E)}
+table.novs th:last-child,table.novs td:last-child{display:none}   /* vs mois dernier : cachee tant que sans historique */
 </style>
 </head>
 <body>
@@ -653,6 +656,12 @@ const g = id => document.getElementById(id);
     '<td><span class="vsm">1ᵉʳ mois — pas d&#39;historique</span></td>' +
     '</tr>'
   ).join("");
+  /* mu-dash valide : la colonne « vs mois dernier » se masque tant qu'elle n'a rien a dire */
+  (function(){
+    var rws = g("ttecs").querySelectorAll("tr");
+    var vide = rws.length && [].every.call(rws, function(r){ return r.lastElementChild && r.lastElementChild.querySelector(".vsm"); });
+    if(vide){ var tb = g("ttecs"); while(tb && tb.tagName !== "TABLE") tb = tb.parentElement; if(tb) tb.classList.add("novs"); }
+  })();
 })();
 
 /* ===== contrats à renouveler (échéances les plus proches) ===== */
@@ -943,7 +952,7 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
       var h = new Date().getHours();
       var salut = (h >= 18 || h < 4) ? "Bonsoir" : "Bonjour";
       var prenom = (c && c.nom) ? String(c.nom).trim().split(/\s+/)[0] : "";
-      hello.textContent = salut + (prenom ? " " + prenom : "");
+      hello.innerHTML = salut + (prenom ? ' <span class="hiname">' + prenom.replace(/[<>&]/g, "") + "</span>" : "");   /* mu-dash valide : le prenom porte la couleur maison */
     }
     if(!c) return;
     var box = document.getElementById("side-user");

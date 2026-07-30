@@ -1228,12 +1228,25 @@ function render(){
       <td class="chv">›</td>
     </tr>`;
   }).join("");
+  /* 30/07 audit mobile : cartes telephone — la table ecrasee ne montrait que 2 colonnes */
+  const mcards = list.map(t => {
+    const name = (t.prenom + " " + (t.nom || "")).trim();
+    const telRaw = (t.tel || "").replace(/ /g, "");
+    const ville = (function(){ if(t.adr){ const p = t.adr.split(", "); return p[2] || p[1] || p[0]; } return (t.zones && t.zones[0]) || "—"; })();
+    const off = t.dispo === "conge";
+    return `<div class="tmcard" onclick="openFiche(${t.i})">
+      <span class="tav2" style="${t.photo ? `background-image:url(${t.photo});background-size:cover;background-position:center` : `background:${t.grad || 'linear-gradient(135deg,#5B82F0,#2148C0)'}`}">${t.photo ? "" : (t.prenom[0] || "") + ((t.nom || "")[0] || "")}</span>
+      <span class="tmi"><b>${name}${t.top ? ' <span class="star">★ Top</span>' : ''}</b><small>${ville} · ${t.interv || 0} interv. · ${t.ca || "0 €"}</small></span>
+      <span class="tmb ${off ? "off" : "on"}">${off ? "Inactif" : "Actif"}</span>
+      <a class="tmtel" href="tel:${telRaw}" onclick="event.stopPropagation()" title="Appeler ${name}">${SV.tel}</a>
+    </div>`;
+  }).join("");
   document.getElementById('grid').innerHTML = list.length ? `
     <div class="tblcard"><div class="tblscroll"><table>
       <thead><tr><th class="sortable" onclick="sortBy('nom')">Technicien${arr('nom')}</th><th>Téléphone</th><th>Ville</th><th>Compétences</th><th>Statut</th><th class="sortable" onclick="sortBy('interv')">Interventions terminées${arr('interv')}</th><th class="sortable" onclick="sortBy('ca')">Chiffre d'affaires généré${arr('ca')}</th><th class="sortable" onclick="sortBy('taux')">Taux de ponctualité${arr('taux')}</th><th>Actions</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>
       <div class="tfootbar"><span>1–${list.length} sur ${TECHS.length} affichés</span><span class="pgn"><span class="pgbtn dis">← Précédent</span><span class="pgc">1</span><span class="pgbtn dis">Suivant →</span></span><span class="pp">Par page <b>20</b></span></div>
-    </div>` : `<div class="tblcard" style="text-align:center;color:var(--muted);padding:40px">Aucun technicien ne correspond à ces filtres.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><button type="button" class="ebtn primary" onclick="openAdd()">＋ Nouveau technicien</button></div><br><button class="fclear" style="display:inline-flex;margin-top:12px" onclick="resetFilters()">✕ Réinitialiser les filtres</button></div>`;
+    </div><div class="cards">${mcards}</div>` : `<div class="tblcard" style="text-align:center;color:var(--muted);padding:40px">Aucun technicien ne correspond à ces filtres.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><button type="button" class="ebtn primary" onclick="openAdd()">＋ Nouveau technicien</button></div><br><button class="fclear" style="display:inline-flex;margin-top:12px" onclick="resetFilters()">✕ Réinitialiser les filtres</button></div>`;
   fclearUpd(q, fs, fc, fv);
   const _m = {actif:"kt-actif", interv:"kt-interv", dispo:"kt-dispo", inactif:"kt-inactif"};
   ["kt-actif","kt-interv","kt-dispo","kt-inactif"].forEach(id => { const el = document.getElementById(id); if(el) el.classList.toggle("on", _m[fs] === id); });
@@ -2111,6 +2124,20 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   .kpi b,.kpi .num{font-size:1.02rem!important}
   .fab{display:none!important}   /* le + central de la barre du bas cree deja */
 }
+
+/* 30/07 audit mobile : la liste passe en cartes sous 760px */
+.cards{display:none}
+.tmcard{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #F0F1F4;border-radius:15px;box-shadow:0 6px 20px -14px rgba(23,26,32,.18);padding:12px 13px;margin-bottom:10px;cursor:pointer}
+.tmcard .tav2{width:42px;height:42px;border-radius:12px;color:#fff;font-weight:800;display:grid;place-items:center;flex:none;font-size:.9rem}
+.tmcard .tmi{flex:1;min-width:0}
+.tmcard .tmi b{display:block;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tmcard .tmi small{color:var(--muted);font-size:.75rem}
+.tmcard .tmb{font-size:.68rem;font-weight:800;border-radius:8px;padding:4px 9px;flex:none}
+.tmcard .tmb.on{background:#EAF8F1;color:#0F8A4F}
+.tmcard .tmb.off{background:#F1F2F5;color:#8A8F9C}
+.tmcard .tmtel{width:38px;height:38px;border-radius:11px;background:#F4F5F8;display:grid;place-items:center;flex:none}
+.tmcard .tmtel svg{width:16px;height:16px;stroke:#3A3F4A;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:760px){.tblcard{display:none!important}.cards{display:block}}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>

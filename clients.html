@@ -167,7 +167,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
 }
 @media(max-width:760px){
   table.dt{display:none}
-  .cards{display:block}
+  .cards{display:block!important}   /* 30/07 audit mobile : la regle de base .cards{display:none} est declaree PLUS BAS dans la feuille — sans !important elle gagnait et la liste etait invisible */
   html{font-size:15.5px}
   .sidebar{display:none}
   .main{margin-left:0}
@@ -710,13 +710,35 @@ function render(){
   if(SORTCA) list.sort((a,b)=> DESC ? b.ca-a.ca : a.ca-b.ca);
   void 0; /* compteur hero retiré */
   document.getElementById("empty").style.display = list.length ? "none" : "block";
+  /* mu-clients valide : les colonnes CA / a-encaisser AJOUTENT le reel (registres) au socle demo —
+     un client cree aujourd'hui n'affiche plus 0 € une fois sa premiere facture payee. */
+  (function(){
+    const JX = k => { try{ const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
+    const JOX = k => { try{ const v = JSON.parse(localStorage.getItem(k)); return (v && !Array.isArray(v) && typeof v === "object") ? v : {}; }catch(e){ return {}; } };
+    const pm = JOX("tigerflow-factures-paiements"), stx = JOX("tigerflow-factures-statuts"), avx = JOX("tigerflow-factures-avoirs");
+    const CAX = {}, DUEX = {};
+    JX("tigerflow-inbox-factures").forEach(f => {
+      if(!f || !f.client) return;
+      const paye = (Array.isArray(pm[f.ref]) ? pm[f.ref] : []).reduce((t, p) => t + (+p.m || 0), 0);
+      const avr  = (Array.isArray(avx[f.ref]) ? avx[f.ref] : []).reduce((t, p) => t + (+p.m || 0), 0);
+      CAX[f.client] = (CAX[f.client] || 0) + paye;
+      const st2 = stx[f.ref] || f.statut || "attente";
+      if(st2 !== "payee" && st2 !== "annulee" && st2 !== "brouillon"){
+        DUEX[f.client] = (DUEX[f.client] || 0) + Math.max(0, (+f.montant || 0) - paye - avr);
+      }
+    });
+    JX("tigerflow-paiements-perso").forEach(p => {
+      if(p && p.client && p.st === "enc" && !p.fac) CAX[p.client] = (CAX[p.client] || 0) + (+p.m || 0);
+    });
+    list.forEach(c => { c.caV = (+c.ca || 0) + (CAX[c.nom] || 0); c.dueV = (+c.due || 0) + (DUEX[c.nom] || 0); });
+  })();
   document.getElementById("cards").innerHTML = list.map(c => {
     const [cls, lbl] = STL[c.st];
     return `<a class="mcard" href="client.html?c=${encodeURIComponent(c.nom)}">
       <div class="m1"><span class="mref">${c.type}</span><span class="st ${cls}">${lbl}</span></div>
       <b class="mt">${c.nom}</b>
       <div class="msub">${c.cp} · ${c.ville}${c.nb ? " · " + c.nb + " contrat" + (c.nb > 1 ? "s" : "") : ""}</div>
-      <div class="m2"><span class="mamt">${euro(c.ca)}</span><span class="mmeta">${c.due ? "à encaisser : " + euro(c.due) : "rien à encaisser"}</span></div>
+      <div class="m2"><span class="mamt">${euro(c.caV)}</span><span class="mmeta">${c.dueV ? "à encaisser : " + euro(c.dueV) : "rien à encaisser"}</span></div>
     </a>`;
   }).join("");
   const TYPK = {Pro:["pro",""], Syndic:["syn",""], Particulier:["part",""]};
@@ -728,8 +750,8 @@ function render(){
       <td><span class="cl"><span><b>${c.nom}</b><small>${c.cp} · ${c.ville}</small></span></span></td>
       <td><span class="typ ${tk}">${c.type}</span></td>
       <td class="num">${c.nb || "—"}</td>
-      <td class="amt num">${euro(c.ca)}</td>
-      <td class="num ${c.due ? "due" : "due zero"}">${c.due ? euro(c.due) : "—"}</td>
+      <td class="amt num">${euro(c.caV)}</td>
+      <td class="num ${c.dueV ? "due" : "due zero"}">${c.dueV ? euro(c.dueV) : "—"}</td>
       <td><span class="st ${cls}">${lbl}</span></td>
       <td class="acts" onclick="event.stopPropagation()">
         <span class="rowact">
@@ -748,7 +770,7 @@ function exportCSV(){
   const list = window._LIST || CLIENTS;
   const esc = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
   const rows = [["Nom","Type","Code postal","Ville","Téléphone","E-mail","Contrats","CA total (€)","À encaisser (€)","Statut"]]
-    .concat(list.map(c => [c.nom, c.type, c.cp, c.ville, c.tel || "", c.mail || "", c.nb || 0, c.ca || 0, c.due || 0, (STL[c.st] || ["", c.st])[1]]));
+    .concat(list.map(c => [c.nom, c.type, c.cp, c.ville, c.tel || "", c.mail || "", c.nb || 0, (c.caV != null ? c.caV : c.ca) || 0, (c.dueV != null ? c.dueV : c.due) || 0, (STL[c.st] || ["", c.st])[1]]));
   const csv = "\ufeff" + rows.map(r => r.map(esc).join(";")).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));

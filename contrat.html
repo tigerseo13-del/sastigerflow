@@ -1315,6 +1315,27 @@ function logout(){
 /* 30/07 (patron : « trop rapproché ») : respiration des interventions du contrat */
 ul.tl li[data-live]{padding:9px 0 11px}
 ul.tl li[data-live]+li[data-live]{border-top:1px dashed #EEF0F4}
+
+/* 30/07 audit mobile : la fiche gardait ses colonnes — les regles passent par body.mnar
+   (pose en JS depuis la largeur ECRAN) : sur cette page, les media queries etaient
+   evaluees contre un viewport deja elargi par le contenu — cercle vicieux. */
+body.mnar .grid,body.mnar .grid.show{grid-template-columns:1fr!important}
+body.mnar .grid > *{grid-column:auto!important;grid-row:auto!important}   /* les enfants portaient des placements explicites → colonnes implicites malgre le template 1fr */
+body.mnar .card{min-width:0;max-width:100%}
+body.mnar .card *{min-width:0}
+body.mnar .card-h,body.mnar .chips,body.mnar .hm,body.mnar .hero .next{flex-wrap:wrap}
+body.mnar .hm{row-gap:10px}
+body.mnar .tabsrow,body.mnar .tabs{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+body.mnar .bnv{left:0!important;right:0!important;width:auto!important;max-width:100vw!important}
+body.mnar .bnv a{flex:1 1 0!important;min-width:0!important}
+body.mnar{overflow-x:hidden}
 </style>
+<script>
+/* largeur ECRAN (pas le viewport, qu'un contenu trop large peut fausser) */
+(function(){
+  function mfx(){ var w = Math.min(window.innerWidth || 9999, (screen && screen.width) || 9999); document.body.classList.toggle("mnar", w <= 760); }
+  window.addEventListener("resize", mfx); window.addEventListener("orientationchange", mfx); mfx();
+})();
+</script>
 </body>
 </html>

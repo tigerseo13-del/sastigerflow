@@ -9,6 +9,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* 30/07 audit mobile : cartes de liste — classe DEDIEE .fmc (l'ancienne .dcard entrait en collision avec les cartes du pipeline, definies plus bas avec le meme nom) */
+.fmc{display:block;background:#fff;border:1px solid #F0F1F4;border-radius:16px;box-shadow:0 6px 20px -14px rgba(23,26,32,.18);padding:14px 15px;margin-bottom:11px;text-decoration:none;color:inherit}
+.fmc .l1{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.fmc .ref{font-family:'Sora';font-weight:700;font-size:.8rem;color:var(--muted)}
+.fmc .l1 .st{margin-left:auto}
+.fmc b.t{font-size:.94rem;display:block}
+.fmc .cl{font-size:.8rem;color:var(--muted);margin-top:3px}
+.fmc .l2{display:flex;align-items:baseline;margin-top:11px;padding-top:11px;border-top:1px dashed var(--line,#EDEFF3)}
+.fmc .amt{font-family:'Sora';font-weight:800;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.fmc .dte{margin-left:auto;font-size:.74rem;color:var(--muted);text-align:right}
+
+/* 30/07 audit mobile : le montant etait rogne a gauche — la carte avait perdu son padding */
+@media(max-width:760px){
+  .cards .dcard{padding:14px 15px!important;overflow:hidden}
+  .cards .dcard .l2{margin:11px 0 0!important;padding:11px 0 0!important;width:auto!important}
+}
+
+
 :root{
   --orange:#FF5A1F;
   --orange-deep:#EA4A10;
@@ -681,14 +699,13 @@ function render(){
     : `<tr><td colspan="9" class="empty-row">Aucune facture ne correspond à cette recherche.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><a class="ebtn primary" href="facture.html">＋ Nouvelle facture</a></div><br><small>Modifiez les filtres ou créez une nouvelle facture.</small></td></tr>`;
 
   document.getElementById('cards').innerHTML = slice.length ? slice.map(d=>`
-    <a class="dcard" href="facture.html">
+    <a class="fmc" href="facture-detail.html?ref=${encodeURIComponent(d.ref)}">
       <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span></div>
       <b class="t">${d.titre}</b>
       <div class="cl">${d.client} · ${d.ct}</div>
       <div class="l2"><span class="amt">${eur(d.montant)}</span><span class="dte">éch. ${fdate(d.valid)} ${expChip(d)}</span></div>
-      <div class="l2" style="border:0;padding-top:9px;margin-top:4px">${actionsHTML(d)}</div>
     </a>`).join("")
-    : `<div class="dcard" style="text-align:center;color:var(--muted)">Aucun devis ne correspond.</div>`;
+    : `<div class="fmc" style="text-align:center;color:var(--muted)">Aucun devis ne correspond.</div>`;
 }
 
 /* ===== tuile → filtre : la tuile clique la chip correspondante ===== */

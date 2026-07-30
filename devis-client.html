@@ -181,6 +181,14 @@ button:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 }
 
 html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran ») : la place de l'ascenseur est reservee, plus de saut de 15px entre pages courtes et longues */
+
+/* 30/07 audit mobile : version telephone — blocs empiles, feuille pleine largeur (ecran seulement, le PDF reste A4) */
+@media screen and (max-width:640px){
+  body.mreflow .sheet{width:100%!important;min-width:0;padding:22px 16px}
+  body.mreflow .sheet .head{display:block}
+  body.mreflow .sheet .head .hcol{max-width:none;width:auto;margin-bottom:16px}
+  body.mreflow .sheet table{width:100%}
+}
 </style>
 </head>
 <body>
@@ -559,6 +567,10 @@ function pdf(){
   function ajuste(){
     sheet.style.transform = "";
     stage.style.height = "";
+    /* 30/07 audit mobile : sous 640px on ne retrecit plus la feuille (texte illisible),
+       on la laisse se replier — l'impression et le PDF gardent le format A4 intact. */
+    document.body.classList.toggle("mreflow", window.innerWidth <= 640);
+    if(window.innerWidth <= 640) return;
     if(window.innerWidth > 860) return;
     var k = (window.innerWidth - 16) / A4;
     if(k >= 1) return;
