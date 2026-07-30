@@ -697,6 +697,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <input id="ac-nom" placeholder="Nom du contact">
           <input id="ac-role" placeholder="Fonction (ex. comptable)">
           <input type="tel" autocomplete="tel" id="ac-tel" placeholder="Téléphone" inputmode="tel">
+          <input type="email" autocomplete="email" id="ac-mail" placeholder="Email" inputmode="email">
           <button class="save" onclick="saveContact()">✓ Enregistrer le contact</button>
         </div>
       </div>
@@ -1147,16 +1148,17 @@ function saveContact(){
   const nom = document.getElementById('ac-nom').value.trim();
   const role = document.getElementById('ac-role').value.trim() || "Contact";
   const tel = document.getElementById('ac-tel').value.trim() || "—";
+  const mail = (document.getElementById('ac-mail') ? document.getElementById('ac-mail').value.trim() : "");
   if(!nom){ toast("Indique au moins le nom du contact"); return; }
   const ini = nom.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   const div = document.createElement('div');
   div.className = 'contact';
-  div.innerHTML = `<span class="cph" style="background:#0E8A68">${ini}</span>
-    <div><b>${nom}</b><small>${role} · ${tel}</small></div>
-    <span class="cbtns"><a href="tel:${tel.replace(/\s/g,'')}" title="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a></span>`;
+  div.innerHTML = `<span class="cph" style="background:var(--green-d)">${ini}</span>
+    <div><b>${nom}</b><small>${role} · ${tel}${mail ? " · " + mail : ""}</small></div>
+    <span class="cbtns"><a href="tel:${tel.replace(/\s/g,'')}" title="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>${mail ? `<a href="mailto:${mail}" title="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>` : ""}</span>`;
   document.getElementById('addcform').before(div);
   document.getElementById('addcform').classList.remove('open');
-  ['ac-nom','ac-role','ac-tel'].forEach(id=>document.getElementById(id).value="");
+  ['ac-nom','ac-role','ac-tel','ac-mail'].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
   toast("✓ Contact " + nom + " ajouté");
 }
 function mailRelance(){
