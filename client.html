@@ -282,6 +282,23 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .ctactions #ct-del:hover{opacity:1;text-decoration:underline}
 .cbtns .ctpen{color:#A6ABBB}
 .cbtns .ctpen:hover{color:var(--orange-deep)}
+/* ── 30/07 (patron, visuel validé) : rangées d'interventions de la fiche ── */
+.ivwrap{display:flex;flex-direction:column;gap:9px;padding:4px 0 2px}
+.ivrow{display:flex;align-items:center;gap:14px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:.13s}
+.ivrow:hover{transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(23,26,32,.07)}
+.ivrow.off{opacity:.72}
+.ivd{width:47px;height:47px;border-radius:12px;background:#F6F7F9;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.ivd b{font-family:'Sora';font-weight:800;font-size:1.02rem;line-height:1;color:var(--ink)}
+.ivd span{font-size:.55rem;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin-top:3px}
+.ivd.today{background:var(--orange-soft,#FFF1EA);border-color:#FFD9C4}
+.ivd.today b,.ivd.today span{color:var(--orange-deep,#EA4A10)}
+.ivmain{flex:1;min-width:0}
+.ivmain b{font-family:'Sora';font-weight:800;font-size:.88rem;display:block;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ivmain small{font-size:.74rem;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:7px;margin-top:3px}
+.ivtd{width:7px;height:7px;border-radius:50%;flex:none}
+.ivh{font-family:'Sora';font-weight:800;font-size:.78rem;background:#F1F2F6;border-radius:9px;padding:6px 11px;color:var(--ink-2);flex:none}
+.st.staff{background:#FBF3D9;color:#A16207}
+.st.stoff{background:#EEF0F3;color:#6C7285}
 .ctdel{border:0;background:none;color:#C9CDD6;cursor:pointer;font-size:.8rem;padding:2px 4px}
 .ctdel:hover{color:#D63B33}
 
@@ -1721,11 +1738,36 @@ function toast(msg, undoFn){
 
       var iv = J("tigerflow-inbox-interventions").filter(mien).concat(J("tigerflow-added-interventions").filter(mien));
       if(iv.length){
-        var LBL = {rongeur:"D\u00e9ratisation", cafard:"Cafards", punaise:"Punaises de lit", guepe:"Gu\u00eapes / Frelons", chenille:"Chenilles", pigeon:"Pigeons", desinf:"D\u00e9sinfection", fourmi:"Fourmis"};
-        pose("histint", iv.map(function(x){
+        /* 30/07 (patron : « la flèche et la date, pas ergonomique ») — visuel
+           validé : pastille date (orange si AUJOURD'HUI), nuisible en titre,
+           technicien avec son point de couleur, heure en pastille, statut.
+           Une intervention sans technicien est marquée « À affecter ». */
+        var LBL = {rongeur:"D\u00e9ratisation \u2014 Rats / Souris", cafard:"Cafards", punaise:"Punaises de lit", guepe:"Gu\u00eapes / Frelons", chenille:"Chenilles processionnaires", pigeon:"D\u00e9pigeonnage", desinf:"D\u00e9sinfection", fourmi:"Fourmis"};
+        var TCOL = {Pablo:"#2E5CE6", Otman:"#0E8A7A", Fredo:"#7B3BEA", Babacar:"#C87B08", Wissam:"#D02F2F", Enzo:"#128A46", "\u00c9ric":"#DB2777", Mahamadou:"#0891B2", "R\u00e9mi":"#EA4A10", Jawad:"#65A30D"};
+        var MOISC = ["JANV","F\u00c9VR","MARS","AVR","MAI","JUIN","JUIL","AO\u00dbT","SEPT","OCT","NOV","D\u00c9C"];
+        var auj3 = new Date(); auj3.setHours(0, 0, 0, 0);
+        var rows = iv.map(function(x){
+          var dt = x.date ? new Date(x.date + "T12:00:00") : null;
+          var today = dt && dt.toDateString() === new Date().toDateString();
+          var passee = dt && dt < auj3 && !today;
           var cren = x.start ? (String(x.start).replace(".5", "h30").replace(/^(\d+)$/, "$1h")) : "\u2014";
-          return '<tr data-st="avenir"><td class="ref"><a class="reflink" href="calendrier.html">\u2192</a></td><td>' + fd(x.date) + '</td><td>' + cren + '</td><td>' + (x.typeLibre || LBL[x.type] || "Intervention") + '</td><td>' + (x.tech || "\u2014") + '</td><td><span class="st st-envoye">\u00c0 venir</span></td><td><a class="rlink" href="calendrier.html">Voir \u2192</a></td></tr>';
-        }).join(""), '<thead><tr><th></th><th>Date</th><th>Cr\u00e9neau</th><th>Cat\u00e9gorie</th><th>Assign\u00e9</th><th>Statut</th><th></th></tr></thead>');
+          var tech = x.tech || "";
+          var chip = passee ? '<span class="st stoff">Pass\u00e9e</span>'
+                   : tech ? '<span class="st st-envoye">\u00c0 venir</span>'
+                   : '<span class="st staff">\u00c0 affecter</span>';
+          return '<div class="ivrow' + (passee ? ' off' : '') + '">'
+            + '<div class="ivd' + (today ? ' today' : '') + '"><b>' + (dt ? dt.getDate() : "\u2014") + '</b><span>' + (today ? "AUJ." : (dt ? MOISC[dt.getMonth()] : "")) + '</span></div>'
+            + '<div class="ivmain"><b>' + (x.typeLibre || LBL[x.type] || "Intervention") + '</b>'
+            + '<small><i class="ivtd" style="background:' + (TCOL[tech] || "#9CA1AD") + '"></i>' + (tech || "\u00c0 affecter")
+            + ((x.cp || x.ville) ? ' \u00b7 ' + [x.cp, x.ville].filter(Boolean).join(" ") : '') + '</small></div>'
+            + '<span class="ivh">' + cren + '</span>' + chip
+            + '<a class="rlink" href="calendrier.html">Voir \u2192</a>'
+            + '</div>';
+        }).join("");
+        var pane3 = document.querySelector('[data-tab="histint"]');
+        var carte3 = pane3 && pane3.querySelector(".card");
+        var vin3 = carte3 && carte3.querySelector(".vinner");
+        if(vin3) vin3.outerHTML = '<div class="ivwrap">' + rows + '</div>';
       }
     })();
     /* 27/07 : l'onglet Documents n'est PLUS vide par ce chemin — il porte son
