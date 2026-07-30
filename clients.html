@@ -494,11 +494,19 @@ function clientInbox(){
 function inboxMerge(){
   try{
     const box = clientInbox();
-    if(!box.length) return;
+    /* 30/07 : sans session, la liste retombait sur la démo et « perdait » les
+       clients déjà versés en base. La copie laissée par le dernier chargement
+       (tigerflow-clients-cache) est fusionnée aussi — dédoublonnée par nom. */
+    let cache = [];
+    try{ cache = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e){}
+    
     /* 27/07 : reverse + unshift s'annulaient — avec deux clients crees a la
        suite, le plus ANCIEN remontait en premier. On parcourt dans l'ordre
        d'ajout et on empile en tete : le dernier cree finit devant. */
-    box.forEach(r => {
+    const tous = box.concat(cache);
+    if(!tous.length) return;
+    tous.forEach(r => {
+      if(!r || !r.nom) return;
       if(CLIENTS.some(c => c.nom === r.nom)) return;  /* pas de doublon */
       CLIENTS.unshift({
         nom: r.nom, ville: r.ville || "—", cp: r.cp || "",
@@ -511,16 +519,23 @@ function inboxMerge(){
   }catch(e){}
 }
 /* connecté : la boîte de réception est versée dans la base */
+/* 30/07 — BUG (patron : « j'ai perdu des clients »). Le versement en base
+   SUPPRIMAIT la copie locale : le jour où la base ne répond plus (session
+   expirée, réseau, droits), ces clients disparaissaient de la liste. La copie
+   locale est désormais GARDÉE et marquée « versée » (sb:1) — on ne verse
+   jamais deux fois, mais on ne perd plus jamais un client créé ici. */
 async function inboxFlush(){
   const box = clientInbox();
   if(!box.length) return;
-  const kept = [];
+  let sent = 0;
   for(const r of box){
-    const {error} = await SB.from("clients").insert(r);
-    if(error) kept.push(r);
+    if(r.sb) continue;                       /* déjà en base : la copie reste */
+    const clean = {}; for(const k in r){ if(k !== "sb") clean[k] = r[k]; }
+    const {error} = await SB.from("clients").insert(clean);
+    if(!error){ r.sb = 1; sent++; }
   }
-  localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(kept));
-  if(box.length - kept.length > 0) toastLive("☁️ " + (box.length - kept.length) + " client(s) en attente versé(s) dans la base");
+  localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(box));
+  if(sent > 0) toastLive("☁️ " + sent + " client(s) versé(s) dans la base — copie locale conservée");
 }
 async function sbLoad(silent){
   try{
@@ -544,6 +559,7 @@ async function sbLoad(silent){
       type: c.type === "particulier" ? "Particulier" : c.type === "syndic" ? "Syndic" : "Pro",
       nb: 0, ca: 0, due: 0, st: "actif", tel: c.tel || "", mail: c.mail || c.email || "",
     }));
+    inboxMerge();                     /* les clients locaux non versés restent visibles */
     if(typeof render === "function") render();
     if(!data || !data.length){
       sbBanner("✅ Connecté à la base — aucun client pour l'instant : <a href='client-nouveau.html' style='color:var(--orange-deep);font-weight:800'>crée le premier</a> !");

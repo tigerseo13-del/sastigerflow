@@ -42,7 +42,6 @@ a,button,input,select,textarea,label{touch-action:manipulation}
    copie de calendrier.html, memes valeurs partout. */
 .navbot{margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}
 
-.navbot{margin-top:6px}
 .nav a{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:10px;font-size:.9rem;font-weight:500;color:#AEB4C0;transition:.13s}
 .nav a:hover{background:#1B1E24;color:#fff}
 .nav a.active{background:var(--orange);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(255,90,31,.35)}
@@ -546,10 +545,45 @@ label[for]{cursor:pointer}
 [data-tab="det"] .grid2{grid-template-columns:1fr}
 [data-tab="det"] .grid2 > .card:first-child{display:none}
 /* les LIGNES d'abord, les notes ensuite, les pieces jointes en dernier */
-[data-tab="det"].show{display:flex;flex-direction:column;gap:16px}
-[data-tab="det"] > .grid2{order:2;margin:0}
-[data-tab="det"] > .card{order:1;margin:0}
-[data-tab="det"] > *:nth-child(n+3){order:3}
+[data-tab="det"].show{display:grid;grid-template-columns:minmax(0,1fr) 328px;gap:16px;align-items:start}
+[data-tab="det"] > #lcard{grid-column:1;grid-row:1 / span 2;margin:0}
+[data-tab="det"] > #viecard{grid-column:2;grid-row:1;margin:0}
+[data-tab="det"] > .grid2{grid-column:2;grid-row:2;margin:0}
+[data-tab="det"] > #pjcard{grid-column:1 / -1;margin:0}
+@media(max-width:1100px){
+  [data-tab="det"].show{grid-template-columns:1fr}
+  [data-tab="det"] > #lcard{grid-column:1;grid-row:auto;order:1}
+  [data-tab="det"] > #viecard{grid-column:1;grid-row:auto;order:2}
+  [data-tab="det"] > .grid2{grid-column:1;grid-row:auto;order:3}
+  [data-tab="det"] > #pjcard{grid-column:1;order:4}
+}
+/* ── 30/07 — LA VIE DE LA FACTURE : le fil des jalons, à côté des lignes.
+   Costructor, Interfast, Stann : tous trois posent la chronologie contre le
+   contenu. Quatre jalons fixes (créée → validée → envoyée → payée), et
+   l'ACTION suivante en orange plantée dans l'étape courante. ── */
+.vlife{list-style:none;margin:6px 0 2px;padding:0}
+.vlife li{position:relative;padding:0 0 17px 27px}
+.vlife li::before{content:"";position:absolute;left:7px;top:18px;bottom:1px;width:2px;border-radius:2px;background:var(--line)}
+.vlife li.done::before{background:color-mix(in srgb, var(--green) 32%, #fff)}
+.vlife li:last-child::before{display:none}
+.vlife li:last-child{padding-bottom:4px}
+.vdot{position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid var(--line)}
+.vlife li.done .vdot{background:var(--green);border-color:var(--green)}
+.vlife li.done .vdot::after{content:"";width:4px;height:8px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(40deg);margin-top:-2px}
+.vlife li.now .vdot{border-color:var(--orange)}
+.vlife li.now .vdot::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--orange);animation:vpulse 1.5s ease-in-out infinite}
+.vlife li.now.late .vdot{border-color:var(--red)}
+.vlife li.now.late .vdot::after{background:var(--red)}
+.vlife li.todo{opacity:.5}
+@keyframes vpulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.55);opacity:.45}}
+.vlife li>b{display:block;font-size:.83rem;font-weight:800;color:var(--ink);line-height:1.3;font-family:'Sora'}
+.vlife li.now.late>b{color:var(--red)}
+.vlife small{display:block;font-size:.73rem;color:var(--muted);font-weight:600;margin-top:2px;line-height:1.5}
+.vlife li.late small{color:var(--red)}
+.vact{display:inline-flex;align-items:center;gap:6px;margin-top:9px;background:var(--orange);color:#fff;border:0;border-radius:9px;padding:8px 13px;font-size:.78rem;font-weight:800;font-family:'Sora';cursor:pointer;box-shadow:0 3px 8px rgba(255,90,31,.3);transition:.13s}
+.vact:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.vall{display:inline-block;margin-top:2px;font-size:.75rem;font-weight:700;color:var(--muted)}
+.vall:hover{color:var(--orange-deep)}
 </style>
 </head>
 <body>
@@ -670,7 +704,7 @@ label[for]{cursor:pointer}
           </div>
         </div>
       </div>
-      <div class="card" style="padding:0;overflow:hidden">
+      <div class="card" id="lcard" style="padding:0;overflow:hidden">
         <div class="card-h" style="padding:16px 20px 4px"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>Lignes</div>
         <table class="ltbl">
           <thead><tr><th colspan="2">Prestation</th><th class="r">Qté</th><th class="r">PU HT</th><th class="r">TVA</th><th class="r">Total HT</th></tr></thead>
@@ -683,7 +717,12 @@ label[for]{cursor:pointer}
           <div class="paidchip" id="paidchip" style="display:none"></div>
         </div></div>
       </div>
-      <div class="card" style="padding:14px 20px">
+      <div class="card" id="viecard">
+        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Vie de la facture</div>
+        <ol class="vlife" id="vielist"></ol>
+        <a class="vall" href="#" onclick="vieHisto(event)">Tout l’historique →</a>
+      </div>
+      <div class="card" id="pjcard" style="padding:14px 20px">
         <input type="file" id="fpj-in" multiple hidden onchange="fpjAdd(this.files); this.value=''">
         <div class="pjrow" style="margin-top:0" onclick="document.getElementById('fpj-in').click()"
              ondragover="event.preventDefault();this.classList.add('over')"
@@ -1347,7 +1386,65 @@ function histo(){
   items.reverse();   /* le dernier événement d'abord */
   g('histlist').innerHTML = items.map(i => '<li><span class="hic" style="background:' + i.bg + '">' + i.ic + '</span><div><b>' + i.b + '</b><small>' + i.s + '</small></div></li>').join('');
 }
-function renderAll(){ badge(); kpis(); details(); lignes(); paylist(); avoirsRender(); histo(); fpjRender(); ppjRender(); }
+/* ===== 30/07 — LA VIE DE LA FACTURE =================================
+   Le fil se lit de haut en bas : ce qui est fait porte une coche verte, ce
+   qui reste est grise, et l'etape COURANTE porte le prochain geste en
+   orange — le meme que le bouton d'en-tete, mais pose la ou l'oeil cherche
+   « ou en est-on ». Un seul jalon courant a la fois. */
+function vieDraw(){
+  const box = g('vielist'); if(!box) return;
+  const st = statutGet();
+  const pf = (st === "brouillon" || st === "proforma");
+  let env = null;
+  try{ env = (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[REF] || null; }catch(e){}
+  const envFac = (env && env.date && !env.proforma) ? env : null;
+  const P = pays();
+  const paid = P.reduce((a2,p) => a2 + p.m, 0);
+  const solde = Math.max(0, REC.montant - paid - avoirs().reduce((a2,x) => a2 + x.m, 0));
+  const j = joursEch();
+  const S = [];
+  S.push({t:"Facture créée", s:"le " + fdate(REC.date) + " · " + eur(REC.montant) + " TTC", k:"done"});
+  if(pf){
+    S.push({t:"À valider", s:(env && env.proforma ? "pro forma envoyée le " + env.date + " — " : "") +
+      "encore modifiable ; une fois validée, elle s’envoie et s’encaisse", k:"now", act:"Valider la facture", fn:"validerFacture2()"});
+    S.push({t:"Envoi au client", s:"", k:"todo"});
+    S.push({t:"Paiement", s:eur(REC.montant) + " à encaisser", k:"todo"});
+  } else {
+    S.push({t:"Validée", s:"la facture est émise — toute correction passe par un avoir", k:"done"});
+    if(envFac){
+      S.push({t:"Envoyée au client", s:envFac.date + (envFac.to ? " · " + envFac.to : "") +
+        (envFac.pay ? " · paiement en ligne" : "") + (envFac.relance ? " · relancé " + envFac.relance : ""), k:"done"});
+    } else {
+      S.push({t:"Envoi au client", s:(solde <= 0 ? "payée sans envoi — pense à transmettre la facture" : "le client ne l’a pas encore reçue"),
+        k:"now", act:"Envoyer au client", fn:"envoyer()"});
+    }
+    if(solde <= 0){
+      const last = P.length ? P[P.length - 1] : null;
+      S.push({t:"Payée", s:"soldée" + (last && last.d ? " le " + fdate(last.d) : "") + (P.length > 1 ? " · " + P.length + " paiements" : ""), k:"done"});
+    } else {
+      const late = (j !== null && j < 0);
+      const sub = (paid > 0 ? eur(paid) + " reçu · " : "") + "reste " + eur(solde) +
+        (late ? " · échéance dépassée de " + (-j) + " j" : (j !== null ? " · échéance dans " + j + " j" : ""));
+      if(envFac){
+        if(late) S.push({t:"En retard", s:sub, k:"now", late:true, act:"Relancer le paiement", fn:"relancer()"});
+        else S.push({t:"Paiement", s:sub, k:"now", act:"Encaisser", fn:"goEncaisser()"});
+      } else {
+        S.push({t:"Paiement", s:sub, k:"todo", late:late});
+      }
+    }
+  }
+  box.innerHTML = S.map(x =>
+    '<li class="' + x.k + (x.late ? ' late' : '') + '"><span class="vdot"></span><b>' + x.t + '</b>' +
+    (x.s ? '<small>' + x.s + '</small>' : '') +
+    (x.act ? '<button class="vact" onclick="' + x.fn + '">' + x.act + ' →</button>' : '') +
+    '</li>').join('');
+}
+function vieHisto(e){
+  e.preventDefault();
+  const tb = [...document.querySelectorAll('.tab')].find(t => t.textContent.trim().startsWith('Historique'));
+  if(tb) showTab('hist', tb);
+}
+function renderAll(){ badge(); kpis(); details(); lignes(); vieDraw(); paylist(); avoirsRender(); histo(); fpjRender(); ppjRender(); }
 
 /* ===== actions ===== */
 function avSolde(){ return Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0)); }
