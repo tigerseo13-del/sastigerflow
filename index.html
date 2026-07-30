@@ -182,14 +182,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-s
 .task{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:var(--r-md);padding:11px 14px;margin-bottom:9px;transition:.13s}
 .task:hover{border-color:#D8DAE1;background:#FAFBFC}
 .task:last-of-type{margin-bottom:0}
-.task .tic{width:36px;height:36px;border-radius:var(--r-md);background:var(--orange-soft);display:grid;place-items:center;flex:none}
-.task .tic svg{width:16px;height:16px;stroke:var(--orange-deep);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.task .tic{width:36px;height:36px;border-radius:var(--r-md);background:#F1F2F6;display:grid;place-items:center;flex:none}   /* 30/07 : le carre orange repete a chaque rangee criait — neutre */
+.task .tic svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .task b{font-size:0.86rem;display:block}
 .task small{color:var(--muted);font-size:0.74rem}
 .task .pr{margin-left:auto;font-size:0.68rem;font-weight:800;border-radius:var(--r-sm);padding:4px 11px;flex:none}
 .pr.moy{background:var(--amber-bg);color:var(--amber)}
 .pr.hau{background:var(--red-bg);color:var(--red)}
 .pr.bas{background:var(--blue-bg);color:var(--blue)}
+.pr.loin{background:#EEF0F3;color:#6C7285}   /* echeance lointaine : pas une alerte */
 
 /* ===== table techniciens ===== */
 table{width:100%;border-collapse:collapse;font-size:0.86rem}
@@ -663,7 +664,7 @@ const g = id => document.getElementById(id);
   const fdz = iso => { const p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; };
   g("crenew").innerHTML = C.map(c => {
     const j = Math.round((new Date(c[2]) - REF) / 864e5);
-    const cls = j <= 45 ? "hau" : "moy";
+    const cls = j <= 15 ? "hau" : j <= 45 ? "moy" : "loin";   /* 30/07 : rouge = urgent seulement */
     return '<a class="task" href="contrats-liste.html">' +
       '<span class="tic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6"/></svg></span>' +
       '<div><b>' + c[0] + '</b><small>' + c[1] + ' · ' + c[3] + ' / an · échéance ' + fdz(c[2]) + '</small></div>' +
