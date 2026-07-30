@@ -448,6 +448,8 @@ label[for]{cursor:pointer}
 .docx{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--muted);font-size:.72rem;cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.22);opacity:0;transition:.14s}
 .doccard:hover .docx,.docx:focus-visible{opacity:1}
 .docx:hover{background:var(--red-bg);color:var(--red)}
+
+html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran ») : la place de l'ascenseur est reservee, plus de saut de 15px entre pages courtes et longues */
 </style>
 </head>
 <body>
@@ -1051,7 +1053,7 @@ function saveContrat(statut){
   toast(statut === "brouillon"
     ? "Brouillon " + ref + " enregistré — visible dans la liste des contrats"
     : "Contrat " + ref + " enregistré et envoyé à " + rec.client);
-  setTimeout(() => { location.href = "contrats-liste.html"; }, 1200);
+  setTimeout(() => { location.href = (typeof RETFICHE !== "undefined" && RETFICHE) ? "client.html?c=" + encodeURIComponent(RETFICHE) : "contrats-liste.html"; }, 1200);
 }
 
 /* ================= ERGONOMIE ================= */
@@ -1392,7 +1394,7 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
      son selecteur de client ignorait les clients enregistres en base. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+let SB = null; try{ SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa"); }catch(e){}   /* 30/07 : la page vit sans le CDN */
 
 /* ===== 28/07 — LES CLIENTS DE LA BASE MANQUAIENT ICI AUSSI =====
    Meme trou que sur les devis et les factures : le selecteur se remplissait
@@ -1473,6 +1475,24 @@ cliBase();
   if(document.readyState !== "loading") appliqueCompte();
   else document.addEventListener("DOMContentLoaded", appliqueCompte);
 })();
+</script>
+<script>
+/* 30/07 (parcours patron) : venu de la fiche client, le contrat arrive avec le
+   client PRESELECTIONNE et y RAMENE une fois enregistre. */
+let RETFICHE = "";
+try{
+  const _rp = new URLSearchParams(location.search);
+  if(_rp.get("retour") === "fiche" && _rp.get("c")) RETFICHE = _rp.get("c");
+  const _qc = _rp.get("c");
+  if(_qc){
+    const cs = document.getElementById("v-client");
+    if(cs){
+      if(![...cs.options].some(o => o.value === _qc)){ const o = document.createElement("option"); o.value = o.textContent = _qc; cs.appendChild(o); }
+      cs.value = _qc;
+      cs.dispatchEvent(new Event("change"));
+    }
+  }
+}catch(e){}
 </script>
 </body>
 </html>

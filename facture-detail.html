@@ -1491,6 +1491,9 @@ function avEmit(){
   const arr = avoirs();
   arr.push({num:g('av-num').value, m, motif:g('av-motif').value, desc:(g('av-desc').value || "").trim(), t:stamp()});
   avoirsSave(arr);
+  /* 30/07 (parcours patron) : si l'avoir SOLDE la facture, elle ne reste pas
+     « Acompte recu » — le solde est a zero, elle est reglee. */
+  if(avSolde() <= 0.005 && ["attente", "partiel", "retard"].includes(statutGet())) statutSet("payee");
   avClose();
   toast("Avoir " + g('av-num').value + " émis — " + eur(m) + " déduits du solde");
   renderAll();

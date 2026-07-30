@@ -842,7 +842,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
     <div class="grid" data-tab="ctr">
       <div class="card full">
-        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>Contrats du client<a class="more" href="contrat.html">Ouvrir le contrat →</a><button class="addbtn" onclick="toast('📄 Nouveau contrat — bientôt relié')">+ Nouveau contrat</button></div>
+        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>Contrats du client<a class="more" href="contrat.html">Ouvrir le contrat →</a><a class="addbtn" href="contrat-nouveau.html" onclick="neufHref(this,'contrat-nouveau.html','')">+ Nouveau contrat</a></div>
         <div class="tscroll"><table class="dt">
           <thead><tr><th>N° contrat</th><th>Objet</th><th class="amt">Montant</th><th>Période</th><th>Statut</th><th></th></tr></thead>
           <tbody>
@@ -1607,7 +1607,29 @@ function toast(msg, undoFn){
       else srcb.style.display = "none";
     }
     /* compteurs à zéro : un nouveau client n'a encore rien fait */
-    var zed = [["CA total","0 \u20ac",""],["Interventions","0","aucune pour l'instant"],["Contrat","\u2014","aucun contrat actif"],["Prochaine visite","\u2014","rien de planifi\u00e9"]];
+    /* 30/07 (parcours patron) : les tuiles d'un client NEUF lisaient des zeros
+       figes pendant que les onglets se remplissaient — elles lisent desormais
+       les MEMES registres que les onglets. */
+    var JZ = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
+    var JOZ = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return (v && !Array.isArray(v) && typeof v === "object") ? v : {}; }catch(e){ return {}; } };
+    var mienZ = function(x){ return x && x.client === q; };
+    var facZ = JZ("tigerflow-inbox-factures").filter(mienZ);
+    var pmapZ = JOZ("tigerflow-factures-paiements");
+    var caZ = 0, nbpZ = 0;
+    facZ.forEach(function(f2){ (Array.isArray(pmapZ[f2.ref]) ? pmapZ[f2.ref] : []).forEach(function(p2){ caZ += (+p2.m || 0); nbpZ++; }); });
+    JZ("tigerflow-paiements-perso").filter(mienZ).forEach(function(p2){ if(p2.st === "enc" && !p2.fac){ caZ += (+p2.m || 0); nbpZ++; } });
+    var ivZ = JZ("tigerflow-inbox-interventions").filter(mienZ).concat(JZ("tigerflow-added-interventions").filter(mienZ));
+    var ctrZ = JZ("tigerflow-inbox-contrats").filter(mienZ);
+    var aujZ = new Date().toISOString().slice(0, 10);
+    var futZ = ivZ.map(function(x){ return x.date; }).filter(function(d2){ return d2 && d2 >= aujZ; }).sort()[0];
+    var fdZ = function(x){ var p2 = String(x || "").split("-"); return p2.length === 3 ? p2[2] + "/" + p2[1] + "/" + p2[0] : "\u2014"; };
+    var eurZ = function(n){ return (+n || 0).toLocaleString("fr-FR", {minimumFractionDigits:0}) + " \u20ac"; };
+    var zed = [
+      ["CA total", eurZ(caZ), nbpZ ? nbpZ + " paiement" + (nbpZ > 1 ? "s" : "") : ""],
+      ["Interventions", String(ivZ.length), ivZ.length ? "" : "aucune pour l'instant"],
+      ["Contrat", ctrZ.length ? String(ctrZ.length) + " actif" + (ctrZ.length > 1 ? "s" : "") : "\u2014", ctrZ.length ? (ctrZ[0].titre || "") : "aucun contrat actif"],
+      ["Prochaine visite", futZ ? fdZ(futZ) : "\u2014", futZ ? "" : "rien de planifi\u00e9"]
+    ];
     /* 28/07 — cette boucle ecrit PAR POSITION : zed[0] dans la premiere
        cartouche, zed[1] dans la deuxieme, etc. Ajouter une cartouche en tete
        decalait tout d'un cran — le CA total atterrissait dans « A encaisser ».
@@ -1732,6 +1754,13 @@ function toast(msg, undoFn){
         (Array.isArray(PMAP[f.ref]) ? PMAP[f.ref] : []).forEach(function(p2){
           prows.push('<tr><td>' + fd(p2.d) + '</td><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (p2.mode || "\u2014") + '</td><td>' + (p2.note || "\u2014") + '</td><td class="amt"><b>' + eurF(p2.m) + '</b></td><td><span class="st st-payee">Encaiss\u00e9</span></td></tr>');
         });
+      });
+      /* 30/07 (parcours patron) : les paiements saisis A LA MAIN (page Paiements)
+         apparaissent aussi — sans facture liee ou en attente, ils n'etaient
+         visibles nulle part sur la fiche. */
+      J("tigerflow-paiements-perso").filter(mien).forEach(function(p2){
+        if(p2.fac && p2.st === "enc") return;   /* deja compte via le registre des factures */
+        prows.push('<tr><td>' + fd(p2.d) + '</td><td class="ref">' + (p2.fac || "\u2014") + '</td><td>' + (p2.mode || "\u2014") + '</td><td>' + (p2.note || "\u2014") + '</td><td class="amt"><b>' + eurF(p2.m) + '</b></td><td><span class="st ' + (p2.st === "enc" ? "st-payee" : "st-envoye") + '">' + (p2.st === "enc" ? "Encaiss\u00e9" : "En attente") + '</span></td></tr>');
       });
       if(prows.length){
         pose("paie", prows.join(""), '<thead><tr><th>Date</th><th>N\u00b0 facture</th><th>Mode</th><th>Note</th><th class="amt">Montant</th><th>Statut</th></tr></thead>');
@@ -1939,7 +1968,7 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 
-const SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa");
+let SB = null; try{ SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa"); }catch(e){}   /* 30/07 : la page vit sans le CDN */
 async function sbSession(){ try{ const {data} = await SB.auth.getSession(); return data.session || null; }catch(e){ return null; } }
 
 (async function(){
