@@ -277,6 +277,8 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
    au format standard, calee a droite, comme les autres boutons d'action. */
 .addform .save{background:var(--orange);color:#fff;font-weight:700;font-size:.8rem;padding:9px 16px;border-radius:10px;align-self:flex-end;width:auto}
 .addform .save:hover{background:var(--orange-deep)}
+.ctdel{border:0;background:none;color:#C9CDD6;cursor:pointer;font-size:.8rem;padding:2px 4px}
+.ctdel:hover{color:#D63B33}
 
 /* Tables devis/factures */
 .dt{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -1146,22 +1148,47 @@ notesRender();
 function toggleAddContact(){
   document.getElementById('addcform').classList.toggle('open');
 }
+/* 30/07 (patron) : bouton WhatsApp sur les contacts ajoutes + PERSISTANCE —
+   un contact saisi survit desormais a l'actualisation (memorise par client). */
+function ctKey(){ return "tigerflow-contacts-" + cliNom(); }
+function ctLoad(){ try{ return JSON.parse(localStorage.getItem(ctKey())) || []; }catch(e){ return []; } }
+function ctRowHTML(c, i){
+  const telC = (c.tel || "").replace(/\s/g, "");
+  const ini = c.nom.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  const btn = (href, title, svg, extra) => `<a href="${href}" title="${title}" ${extra||""}>${svg}</a>`;
+  const svgTel = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg>';
+  const svgWa = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M21 11.5a8.4 8.4 0 01-12.3 7.4L3 21l2.2-5.6A8.4 8.4 0 1121 11.5z"/></svg>';
+  const svgMail = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>';
+  return `<div class="contact" data-ci="${i}">
+    <span class="cph" style="background:var(--green-d)">${ini}</span>
+    <div><b>${c.nom}</b><small>${[c.role || "Contact", c.tel || "", c.mail || ""].filter(Boolean).join(" · ")}</small></div>
+    <span class="cbtns">${telC && telC !== "—" ? btn("tel:" + telC, "Appeler", svgTel) + btn("https://wa.me/33" + telC.replace(/^0/, ""), "WhatsApp", svgWa, 'target="_blank" rel="noopener" style="color:#1FAF5E"') : ""}${c.mail ? btn("mailto:" + c.mail, "Email", svgMail) : ""}<button class="ctdel" title="Retirer ce contact" onclick="ctDel(${i})">✕</button></span>
+  </div>`;
+}
+function ctDraw(){
+  document.querySelectorAll('.contact[data-ci]').forEach(e => e.remove());
+  const f = document.getElementById('addcform');
+  if(f) f.insertAdjacentHTML('beforebegin', ctLoad().map((c, i) => ctRowHTML(c, i)).join(""));
+}
+function ctDel(i){
+  const l = ctLoad(); const n = (l[i] || {}).nom || "";
+  l.splice(i, 1);
+  try{ localStorage.setItem(ctKey(), JSON.stringify(l)); }catch(e){}
+  ctDraw(); toast("Contact " + n + " retiré");
+}
+document.addEventListener("DOMContentLoaded", ctDraw);
 function saveContact(){
   const nom = document.getElementById('ac-nom').value.trim();
   const role = document.getElementById('ac-role').value.trim() || "Contact";
-  const tel = document.getElementById('ac-tel').value.trim() || "—";
+  const tel = document.getElementById('ac-tel').value.trim();
   const mail = (document.getElementById('ac-mail') ? document.getElementById('ac-mail').value.trim() : "");
   if(!nom){ toast("Indique au moins le nom du contact"); return; }
-  const ini = nom.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-  const div = document.createElement('div');
-  div.className = 'contact';
-  div.innerHTML = `<span class="cph" style="background:var(--green-d)">${ini}</span>
-    <div><b>${nom}</b><small>${role} · ${tel}${mail ? " · " + mail : ""}</small></div>
-    <span class="cbtns"><a href="tel:${tel.replace(/\s/g,'')}" title="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>${mail ? `<a href="mailto:${mail}" title="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>` : ""}</span>`;
-  document.getElementById('addcform').before(div);
+  const l = ctLoad(); l.push({nom, role, tel, mail});
+  try{ localStorage.setItem(ctKey(), JSON.stringify(l)); }catch(e){}
+  ctDraw();
   document.getElementById('addcform').classList.remove('open');
   ['ac-nom','ac-role','ac-tel','ac-mail'].forEach(id=>{const e=document.getElementById(id);if(e)e.value="";});
-  toast("✓ Contact " + nom + " ajouté");
+  toast("✓ Contact " + nom + " ajouté — appel, WhatsApp et email à portée");
 }
 function mailRelance(){
   const obj = encodeURIComponent("Relance — facture échue FAC-2026-00858 (1 250,00 €)");
@@ -1570,6 +1597,65 @@ function toast(msg, undoFn){
         }
       });
     });
+    /* ===== 30/07 (patron : « chaque action doit apparaitre dans la fiche —
+       tout est relie ») : les onglets d'un client URL se remplissent depuis
+       les boites partagees (devis, factures, contrats, interventions crees
+       dans le logiciel). L'etat vide ne s'affiche que s'il n'y a VRAIMENT
+       rien. ===== */
+    (function tabsLive(){
+      var nom = "";
+      try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
+      if(!nom) return;
+      var J = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
+      var mien = function(x){ return x && x.client === nom; };
+      var fd = function(x){ var p2 = String(x || "").split("-"); return p2.length === 3 ? p2[2] + "/" + p2[1] + "/" + p2[0] : (x || "\u2014"); };
+      var eurF = function(m){ m = +m || 0; return m.toLocaleString("fr-FR", {minimumFractionDigits:2}) + "\u00a0\u20ac"; };
+      var pose = function(k, rowsHtml, head){
+        if(!rowsHtml) return 0;
+        var pane = document.querySelector('[data-tab="' + k + '"]');
+        var carte = pane && pane.querySelector(".card");
+        var vin = carte && carte.querySelector(".vinner");
+        if(!vin) return 0;
+        vin.outerHTML = '<div class="tscroll"><table class="dt">' + head + '<tbody>' + rowsHtml + '</tbody></table></div>';
+        return 1;
+      };
+      var stD = {envoye:["Envoy\u00e9","st-envoye"], gagne:["Gagn\u00e9","st-gagne"], perdu:["Perdu","st-perdu"], brouillon:["Brouillon","st-envoye"]};
+
+      var dv = J("tigerflow-inbox-devis").filter(mien);
+      if(dv.length){
+        pose("devis", dv.map(function(d){
+          var st = stD[d.statut] || ["Envoy\u00e9","st-envoye"];
+          return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
+        }).join(""), '<thead><tr><th>N\u00b0 devis</th><th>Objet</th><th class="amt">Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>');
+        var nd = document.getElementById("n-devis"); if(nd) nd.textContent = dv.length;
+      }
+
+      var fc = J("tigerflow-inbox-factures").filter(mien);
+      if(fc.length){
+        pose("fact", fc.map(function(f){
+          var paye = (f.statut === "payee");
+          return '<tr><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (f.titre || "\u2014") + '</td><td class="amt">' + eurF(f.montant) + '</td><td>' + fd(f.valid || f.date) + '</td><td><span class="st ' + (paye ? "st-payee" : "st-envoye") + '">' + (paye ? "Pay\u00e9e" : "\u00c0 payer") + '</span></td><td><a class="rlink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
+        }).join(""), '<thead><tr><th>N\u00b0 facture</th><th>Objet</th><th class="amt">Montant TTC</th><th>\u00c9ch\u00e9ance</th><th>Statut</th><th></th></tr></thead>');
+        var nf = document.getElementById("n-fact"); if(nf) nf.textContent = fc.length;
+      }
+
+      var ct = J("tigerflow-inbox-contrats").filter(mien);
+      if(ct.length){
+        pose("ctr", ct.map(function(c){
+          var ref = c.ref || c.numero || "\u2014";
+          return '<tr><td class="ref"><a class="reflink" href="contrat.html?n=' + encodeURIComponent(ref) + '">' + ref + '</a></td><td>' + (c.titre || "\u2014") + '</td><td class="amt">' + eurF(c.montant_ttc || c.montant) + (c.montant_ttc || c.montant ? "\u00a0/ an" : "") + '</td><td>' + fd(c.deb) + (c.fin ? " \u2192 " + fd(c.fin) : "") + '</td><td><span class="st st-payee">Actif</span></td><td><a class="rlink" href="contrat.html?n=' + encodeURIComponent(ref) + '">Ouvrir \u2192</a></td></tr>';
+        }).join(""), '<thead><tr><th>N\u00b0 contrat</th><th>Objet</th><th class="amt">Montant</th><th>P\u00e9riode</th><th>Statut</th><th></th></tr></thead>');
+      }
+
+      var iv = J("tigerflow-inbox-interventions").filter(mien).concat(J("tigerflow-added-interventions").filter(mien));
+      if(iv.length){
+        var LBL = {rongeur:"D\u00e9ratisation", cafard:"Cafards", punaise:"Punaises de lit", guepe:"Gu\u00eapes / Frelons", chenille:"Chenilles", pigeon:"Pigeons", desinf:"D\u00e9sinfection", fourmi:"Fourmis"};
+        pose("histint", iv.map(function(x){
+          var cren = x.start ? (String(x.start).replace(".5", "h30").replace(/^(\d+)$/, "$1h")) : "\u2014";
+          return '<tr data-st="avenir"><td class="ref"><a class="reflink" href="calendrier.html">\u2192</a></td><td>' + fd(x.date) + '</td><td>' + cren + '</td><td>' + (x.typeLibre || LBL[x.type] || "Intervention") + '</td><td>' + (x.tech || "\u2014") + '</td><td><span class="st st-envoye">\u00c0 venir</span></td><td><a class="rlink" href="calendrier.html">Voir \u2192</a></td></tr>';
+        }).join(""), '<thead><tr><th></th><th>Date</th><th>Cr\u00e9neau</th><th>Cat\u00e9gorie</th><th>Assign\u00e9</th><th>Statut</th><th></th></tr></thead>');
+      }
+    })();
     /* 27/07 : l'onglet Documents n'est PLUS vide par ce chemin — il porte son
        bouton d'ajout et sa grille de vignettes, qui savent deja dire qu'ils sont
        vides. L'ecraser ici retirait le seul moyen d'ajouter un document. */

@@ -1141,11 +1141,39 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
   </div>
 </div>
 <script>
+/* 30/07 (patron) : depuis le contrat, le client est DEJA choisi dans le
+   formulaire, et les interventions creees s'affichent dans l'onglet. */
+function ctCliNom(){
+  const a = document.querySelector(".hids a");
+  return a ? a.textContent.replace("→", "").trim() : "";
+}
 function interPanel(){
-  document.getElementById("ipframe").src = "intervention-nouvelle.html?panel=1";
+  document.getElementById("ipframe").src = "intervention-nouvelle.html?panel=1&c=" + encodeURIComponent(ctCliNom());
   document.getElementById("ipveil").classList.add("open");
   document.body.style.overflow = "hidden";
 }
+function ctIntervDraw(){
+  const ul = document.querySelector('[data-tab="interv"] ul.tl');
+  if(!ul) return;
+  ul.querySelectorAll("li[data-live]").forEach(e => e.remove());
+  let box = [];
+  try{ box = JSON.parse(localStorage.getItem("tigerflow-inbox-interventions") || "[]"); }catch(e){}
+  const cli = ctCliNom();
+  const mine = box.filter(x => x && x.client === cli);
+  const LBL = {rongeur:"Dératisation", cafard:"Cafards", punaise:"Punaises de lit", guepe:"Guêpes / Frelons", chenille:"Chenilles", pigeon:"Pigeons", desinf:"Désinfection", fourmi:"Fourmis"};
+  const h = mine.map(x => {
+    const d = (x.date || "").split("-").reverse().join("/");
+    const hdeb = x.start ? (x.start + "h").replace(".5", "h30") : "";
+    return `<li class="next" data-live="1"><span class="dot2"></span><b>${x.typeLibre || LBL[x.type] || "Intervention"} <span class="st nx">${x.tech ? "Planifiée" : "À planifier"}</span></b><small>${[d, hdeb, x.tech, (x.cp || "") + " " + (x.ville || "")].filter(Boolean).join(" · ")}</small></li>`;
+  }).join("");
+  ul.insertAdjacentHTML("afterbegin", h);
+  const tn = document.querySelectorAll(".tab .tn")[1];
+  if(tn) tn.textContent = ul.querySelectorAll("li").length;
+  const ch = document.querySelector('[data-tab="interv"] .card-h');
+  if(ch && ch.childNodes[1]) ch.childNodes[1].nodeValue = "Les " + ul.querySelectorAll("li").length + " interventions du contrat";
+}
+document.addEventListener("DOMContentLoaded", ctIntervDraw);
+window.addEventListener("message", e => { if(e.data === "tigerflow-intervention-saved") setTimeout(ctIntervDraw, 300); });
 function interPanelClose(){
   document.getElementById("ipveil").classList.remove("open");
   document.getElementById("ipframe").src = "about:blank";
