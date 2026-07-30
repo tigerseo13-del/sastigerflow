@@ -1524,7 +1524,7 @@ function renderTray(){
       ${md === "devis" ? '<span class="mgstar" title="Visite devis"></span>' : ''}
       <div class="pgl">
         <svg class="mgpin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        <b>${p.cp}</b><i>${vshort(p.ville)}</i>
+        ${(w => `<b>${w.cp || vshort(w.ville)}</b>${w.cp && w.ville ? `<i>${vshort(w.ville)}</i>` : ""}`)(locOf(p))}
         <span class="mgh">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span>
       </div>
       <div class="pgr">
@@ -1578,6 +1578,19 @@ const hstr = h => String(Math.floor(h)).padStart(2,"0") + ":" + (h%1 ? "30" : "0
    - « Saint-/Sainte- » abreges « St-/Ste- » comme sur les panneaux routiers. */
 const hcourt = h => Math.floor(h) + "h" + (h%1 ? "30" : "");
 const vshort = v => (v || "").replace(/Sainte-/g, "Ste-").replace(/Saint-/g, "St-");
+/* 30/07 (patron : « il affiche pas le code postal partout ») — dans la base,
+   certaines fiches rangent la ville dans le champ cp et « France » dans le
+   champ ville. On demele a l'AFFICHAGE : le vrai code postal (5 chiffres) est
+   cherche dans les deux champs ; « France » ne s'affiche jamais ; s'il n'y a
+   pas de code, la ville prend la grande place au lieu d'un trou. */
+function locOf(v){
+  const a = String(v.cp || "").trim(), b = String(v.ville || "").trim();
+  const m = a.match(/\b\d{5}\b/) || b.match(/\b\d{5}\b/);
+  const cp = m ? m[0] : "";
+  let ville = [a, b].find(x => x && (!m || x.indexOf(m[0]) < 0) && !/^france$/i.test(x)) || "";
+  ville = ville.replace(/\b\d{5}\b/g, "").replace(/,?\s*france$/i, "").trim();
+  return { cp, ville };
+}
 
 /* ===== etat d'une intervention : UNE seule definition (27/07) =====
    Le filtre et le compteur du menu s'en servent tous les deux. Tant qu'il y
@@ -1832,13 +1845,15 @@ function renderDay(){
       /* la carte que le trait orange traverse : elle vit MAINTENANT */
       const live = isToday && !v.done && !v.cancelled && v.start <= NOWH && NOWH < v.start + v.dur;
       const enRetard = isToday && !v.done && !v.cancelled && v.start + v.dur <= NOWH;
+      const hTxt = hcourt(v.start) + "–" + hcourt(v.start + v.dur);
+      const L = locOf(v);
       return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${enRetard?'late':''} ${nl>1?'nrw':''} ${LANDID===v.id?'land':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
         style="--evc:${TC.c};--evg:${TC.grad};--ai:${Math.min(ci,8)};${lanePos}top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
         ${v.mode === "devis" ? '<span class="mgstar" title="Visite devis"></span>' : ''}
-        <div class="mgl" title="${v.cp} ${v.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
+        <div class="mgl" title="${L.cp} ${L.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
           <svg class="mgpin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <b>${v.cp}</b><i>${vshort(v.ville)}</i>
-          <span class="mgh">${hcourt(v.start)}–${hcourt(v.start+v.dur)}</span>
+          <b>${L.cp || vshort(L.ville)}</b>${L.cp && L.ville ? `<i>${vshort(L.ville)}</i>` : ""}
+          <span class="mgh${hTxt.length > 8 ? ' lg' : ''}">${hTxt}</span>
         </div>
         <div class="mgr">
           <div class="mgr1"><span class="mgic">${T.ic}</span>
@@ -1991,7 +2006,7 @@ function renderWeek(){
         const T = typeDe(v), t = TECHS[v.tech];
         const TC = TECHS[v.tech];
         return `<div class="wev ${v.done?'done':''} ${v.cancelled?'cancelled':''}" data-id="${v.id}" style="--evc:${TC.c};--evg:${TC.grad};--ai:${Math.min(ci,8)};cursor:pointer" title="${t.nom} · ${v.cp} ${v.ville}">
-          <div class="wh"><b>${v.cp}</b><i>${vshort(v.ville)}</i><span class="hh">${hcourt(v.start)}–${hcourt(v.start+v.dur)}</span></div>
+          <div class="wh">${(w => `<b>${w.cp || vshort(w.ville)}</b>${w.cp && w.ville ? `<i>${vshort(w.ville)}</i>` : ""}`)(locOf(v))}<span class="hh${(hcourt(v.start)+hcourt(v.start+v.dur)).length > 7 ? ' lg' : ''}">${hcourt(v.start)}–${hcourt(v.start+v.dur)}</span></div>
           <div class="wb">
             <div class="wn">${T.ic} <span>${T.lbl}</span></div>
             <span class="mchip m-${v.mode}">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
@@ -4653,7 +4668,13 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   background:linear-gradient(rgba(16,18,22,.12),rgba(16,18,22,.12)),var(--evg,var(--evc))}
 .mgpin{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;opacity:.9;margin-bottom:2px}
 .mgl b{font-family:'Sora',Inter,sans-serif;font-size:1.02rem;font-weight:800;letter-spacing:.01em;font-variant-numeric:tabular-nums;line-height:1.1}
-.mgl i{font-style:normal;font-size:.63rem;font-weight:700;opacity:.95;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+/* 30/07 (patron : St-Germain-en-Laye coupe) — une ville longue se plie sur
+   2 lignes (coupures aux traits d'union) au lieu d'etre tronquee ; une heure
+   longue (11h30–13h30) retrecit pour tenir dans le bloc. */
+.mgl i{font-style:normal;font-size:.63rem;font-weight:700;opacity:.95;line-height:1.18;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;white-space:normal;max-width:100%}
+.ev.ticket.md .mgl i{-webkit-line-clamp:2}
+.ev.ticket.sm .mgl i{-webkit-line-clamp:1}
+.mgh.lg{font-size:.58rem;padding:3px 6px;letter-spacing:-.01em}
 .mgh{margin-top:auto;background:rgba(16,18,22,.28);border-radius:8px;padding:3px 8px;font-size:.69rem;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
 .mgr{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding:7.5px 9px 7px 10px;background:#fff}
 .mgr1{display:flex;align-items:flex-start;gap:7px;min-width:0}
@@ -4701,6 +4722,7 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket.xs .mgr2,.ev.ticket.xs .mgr3{display:none}
 .ev.ticket.xs .mgt small{display:none}
 .ev.ticket.nrw .mgl{width:64px}
+.ev.ticket.nrw .mgh{font-size:.54rem;padding:2px 5px;letter-spacing:-.02em}
 .ev.ticket.nrw .mgl i{display:none}
 .ev.ticket.nrw .mgr3{display:none}
 /* ---- le bac « À planifier », meme grammaire ---- */
@@ -4719,7 +4741,8 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .wev{display:flex;flex-direction:row}
 .wev .wh{flex-direction:column;align-items:flex-start;gap:1px;width:58px;flex:none;padding:7px 7px 6px 8px}
 .wev .wh b{font-family:'Sora',Inter,sans-serif;font-size:.8rem;line-height:1.1}
-.wev .wh i{font-size:.55rem;max-width:100%}
+.wev .wh i{font-size:.55rem;max-width:100%;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.2}
+.wev .wh .hh.lg{font-size:.5rem;padding:2px 4px;letter-spacing:-.01em}
 .wev .wh .hh{margin-left:0;margin-top:auto;background:rgba(16,18,22,.28);border-radius:6px;padding:2.5px 6px;font-size:.58rem}
 .wev .wb{flex:1;min-width:0;padding:6px 8px 7px;display:flex;flex-direction:column}
 .wev .wn{font-family:'Sora',Inter,sans-serif;font-size:.66rem;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
