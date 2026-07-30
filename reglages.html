@@ -86,7 +86,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 
 /* ===== disposition : sous-menu + panneau ===== */
 .lay{display:grid;grid-template-columns:252px minmax(0,1fr);gap:20px;align-items:start}
-.snav{background:#fff;border:1px solid #F0F1F4;border-radius:18px;box-shadow:var(--shadow);padding:14px 12px 16px;position:sticky;top:74px}
+.snav{display:none}   /* 30/07 (D, patron) : la colonne cede la place aux pilules — le nav caché reste le moteur de spGoTo */
+.lay{display:block}
+.sptabs{display:flex;gap:6px;background:#fff;border:1px solid #F0F1F4;border-radius:16px;padding:7px;margin-bottom:12px;box-shadow:var(--shadow);flex-wrap:wrap}
+.spt{border:0;background:none;font-weight:700;font-size:.85rem;padding:9px 18px;border-radius:11px;color:#565D6B;cursor:pointer;font-family:inherit;transition:.12s}
+.spt:hover{background:#F6F7FA;color:var(--ink)}
+.spt.on{background:var(--orange);color:#fff;font-weight:800;box-shadow:0 4px 10px rgba(255,90,31,.3)}
+.spsub{display:flex;gap:7px;margin:0 4px 16px;flex-wrap:wrap}
+.sps{border:1px solid var(--line,#EBECF1);background:#fff;font-weight:700;font-size:.78rem;padding:7px 14px;border-radius:999px;color:#565D6B;cursor:pointer;font-family:inherit;transition:.12s}
+.sps:hover{border-color:#CFD3DC;color:var(--ink)}
+.sps.on{border-color:#10B981;background:#ECFDF5;color:#047857;font-weight:800}
+@media(max-width:760px){.spt{font-size:.78rem;padding:8px 13px}.sps{font-size:.73rem;padding:6px 11px}}
 .snav .sl{font-size:.62rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#A6ABBB;padding:16px 11px 7px;display:flex;align-items:center;gap:7px}
 .snav .sl::before{content:"";width:3px;height:11px;border-radius:2px;background:var(--orange)}
 .snav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 11px;border-radius:11px;font-size:.83rem;font-weight:700;color:var(--ink-2,var(--ink-2));background:none;border:0;font-family:inherit;cursor:pointer;transition:.12s;line-height:1.35}
@@ -448,6 +458,14 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </div>
     </section>
 
+    <div class="sptabs" id="sptabs">
+      <button class="spt" data-f="societe" onclick="spFam('societe')">Société</button>
+      <button class="spt" data-f="calendrier" onclick="spFam('calendrier')">Calendrier</button>
+      <button class="spt" data-f="prestations" onclick="spFam('prestations')">Prestations</button>
+      <button class="spt" data-f="documents" onclick="spFam('documents')">Documents</button>
+      <button class="spt" data-f="modeles" onclick="spFam('modeles')">Modèles de documents</button>
+    </div>
+    <div class="spsub" id="spsub"></div>
     <div class="lay">
       <nav class="snav" id="snav">
         <div class="sl">Société</div>
@@ -1355,6 +1373,26 @@ function spRender(){
   regFill();
   bankFill();
 }
+/* 30/07 (D, patron) : deux rangees de pilules — familles puis rubriques.
+   Le nav vertical est cache mais reste le moteur : les pilules cliquent ses
+   boutons via spGoTo, et spBarsMaj() recale les etats a chaque navigation. */
+const SPFAM = {
+  societe: ["info", "users"],
+  calendrier: ["jours", "feries"],
+  prestations: ["cats", "prest", "tva"],
+  documents: ["num", "docs"],
+  modeles: ["mdevis", "mfacture", "mavoir", "mcontrat", "mrapport"]
+};
+function spFam(f){ spGoTo(SPFAM[f][0]); }
+function spBarsMaj(){
+  const fam = Object.keys(SPFAM).find(f => SPFAM[f].includes(SPK)) || "societe";
+  document.querySelectorAll("#sptabs .spt").forEach(b => b.classList.toggle("on", b.dataset.f === fam));
+  const sub = document.getElementById("spsub");
+  if(sub) sub.innerHTML = SPFAM[fam].map(k => {
+    const lbl = (PANEL_LBL[k] || k).replace(/^Modèle (de |d')/, "").replace(/^./, c => c.toUpperCase());
+    return '<button class="sps' + (k === SPK ? " on" : "") + '" onclick="spGoTo(\'' + k + '\')">' + lbl + '</button>';
+  }).join("");
+}
 document.getElementById("snav").addEventListener("click", e => {
   const b = e.target.closest("button[data-s]"); if(!b) return;
   const prev = document.querySelector("#snav button[data-s].on");
@@ -1364,8 +1402,10 @@ document.getElementById("snav").addEventListener("click", e => {
   SPK = b.dataset.s;
   try{ localStorage.setItem("tigerflow-reglages-tab", SPK); }catch(err){}
   spRender();
+  spBarsMaj();
   window.scrollTo({top:0, behavior:"smooth"});
 });
+spBarsMaj();
 const PNL = document.getElementById("panel");
 PNL.addEventListener("input", markDirty);
 PNL.addEventListener("change", markDirty);
