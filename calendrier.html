@@ -2527,9 +2527,51 @@ function renderDetail(){
     </div>
     <div class="dsheet ${Date.now() - DOPENT < 600 ? 'anim' : ''}">${DTAB === "res" ? FICHE : ""}${body}</div>`;
 }
-function standbyInt(id){
+/* 30/07 (patron) : la date du rappel gagne NOTRE calendrier (piste A) et un
+   creneau d'appel se propose en dessous — meme langage que l'etape 3 du
+   rapport. Le creneau part avec la tache de rappel. */
+let SBDATE = "", SBCREN = "", SBCAL_OPEN = false, SBCALY = 0, SBCALM = 0;
+function sbCalHTML(id){
+  if(!SBCAL_OPEN) return "";
+  const m0 = new Date(SBCALY, SBCALM, 1);
+  const off = (m0.getDay() + 6) % 7;
+  const start = new Date(m0); start.setDate(1 - off);
+  let cells = "";
+  for(let i = 0; i < 42; i++){
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const di = iso(d);
+    cells += `<span class="rcald ${d.getMonth() === m0.getMonth() ? '' : 'out'} ${di === SBDATE ? 'sel' : ''} ${di === iso(TODAYD) ? 'auj' : ''}"
+      onclick="sbPick(${id},'${di}')">${d.getDate()}</span>`;
+  }
+  const dch = SBDATE ? new Date(SBDATE + "T12:00:00") : null;
+  return `<div class="rcalbox pop">
+    <div class="rcalhead">
+      <button type="button" class="rcnav" onclick="sbNav(${id},-1)" title="Mois précédent">‹</button>
+      <b>${MOIS[SBCALM][0].toUpperCase()+MOIS[SBCALM].slice(1)} ${SBCALY}</b>
+      <button type="button" class="rcnav" onclick="sbNav(${id},1)" title="Mois suivant">›</button>
+    </div>
+    <div class="rcalgrid"><span class="wd">L</span><span class="wd">M</span><span class="wd">M</span><span class="wd">J</span><span class="wd">V</span><span class="wd">S</span><span class="wd">D</span>${cells}</div>
+    <div class="rcalft">
+      <button type="button" class="rcaltoday" onclick="sbPick(${id},'${iso(TODAYD)}')">Aujourd'hui</button>
+      ${dch ? `<small>${JOURS[dch.getDay()]} ${dch.getDate()} ${MOIS[dch.getMonth()]} ${dch.getFullYear()}</small>` : ""}
+    </div>
+  </div>`;
+}
+function sbNav(id, d){ SBCALM += d; if(SBCALM < 0){ SBCALM = 11; SBCALY--; } if(SBCALM > 11){ SBCALM = 0; SBCALY++; } standbyInt(id, true); }
+function sbPick(id, di){ SBDATE = di; SBCAL_OPEN = false; standbyInt(id, true); }
+function sbTog(id){
+  SBCAL_OPEN = !SBCAL_OPEN;
+  if(SBCAL_OPEN){ const d = SBDATE ? new Date(SBDATE + "T12:00:00") : TODAYD; SBCALY = d.getFullYear(); SBCALM = d.getMonth(); }
+  standbyInt(id, true);
+}
+function sbCren(id, c){ SBCREN = SBCREN === c ? "" : c; standbyInt(id, true); }
+function standbyInt(id, keep){
   const v = INTERVS.find(x=>x.id===id);
-  const demain = new Date(TODAYD); demain.setDate(demain.getDate() + 1);
+  if(!keep){
+    const demain = new Date(TODAYD); demain.setDate(demain.getDate() + 1);
+    SBDATE = iso(demain); SBCREN = ""; SBCAL_OPEN = false;
+  }
+  const CRENS = ["Matin · 8h – 12h", "Après-midi · 14h – 18h", "Indifférent"];
   document.getElementById("dbody").innerHTML = `
     <button class="rback" onclick="renderDetail()">← Retour à l'intervention</button>
     <div class="dcard dhead">
@@ -2543,7 +2585,13 @@ function standbyInt(id){
         L'intervention va quitter l'agenda (le créneau de <b>${TECHS[v.tech].nom}</b> sera libéré)
         et rejoindre le bac <b>À planifier</b>. Une <b>tâche de rappel</b> sera créée automatiquement.</p>
       <span class="rlab">Rappeler le client le</span>
-      <input type="date" id="sb-date" value="${iso(demain)}" min="${iso(TODAYD)}">
+      <div class="rdaterow">
+        <input type="date" class="rdate2" id="sb-date" value="${SBDATE}" min="${iso(TODAYD)}" onchange="SBDATE=this.value">
+        <button type="button" class="rcalbtn ${SBCAL_OPEN ? 'on' : ''}" onclick="sbTog(${id})" title="${SBCAL_OPEN ? 'Fermer' : 'Ouvrir'} le calendrier">📅</button>
+      </div>
+      ${sbCalHTML(id)}
+      <span class="rlab" style="margin-top:14px">À quelle heure l'appeler ?</span>
+      <div class="rchips">${CRENS.map(c => `<span class="rchip multi crn ${SBCREN === c ? 'on' : ''}" onclick="sbCren(${id},'${c.replace(/'/g,"\\'")}')">${c}</span>`).join("")}</div>
     </div>
     <div class="dmain">
       <button class="dbig sec" onclick="renderDetail()">Annuler</button>
@@ -2556,6 +2604,7 @@ function confirmStandby(id){
   if(i < 0) return;
   const v = INTERVS[i];
   const rappel = document.getElementById("sb-date").value || iso(TODAYD);
+  const cren = SBCREN && SBCREN !== "Indifférent" ? SBCREN.split(" ·")[0].toLowerCase() : "";
   plannedRemove(v.client, v.cp);
   PENDING.unshift({pid:PID++, type:v.type, typeLibre:v.typeLibre || "", client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
     standby:true, since:iso(TODAYD), rappel});
@@ -2563,14 +2612,14 @@ function confirmStandby(id){
   try{
     const inbox = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]");
     inbox.unshift({iid:Date.now(), titre:"📞 Rappeler " + v.client + " — reprogrammer l'intervention",
-      desc:"Client injoignable le " + iso(TODAYD).split("-").reverse().join("/") + ". " + typeDe(v).lbl + " à reprogrammer — " + v.cp + " " + v.ville + ".",
+      desc:"Client injoignable le " + iso(TODAYD).split("-").reverse().join("/") + ". " + typeDe(v).lbl + " à reprogrammer — " + v.cp + " " + v.ville + "." + (cren ? " Appeler de préférence le " + cren + "." : ""),
       due:rappel, lien:refInt(id)});
     localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(inbox));
   }catch(e){}
   INTERVS.splice(i, 1);
   closeDetail(); render(); renderTray();
   document.getElementById('tray').classList.remove('collapsed');
-  toast("📥 " + v.client + " → À planifier · tâche de rappel créée pour le " + rappel.split("-").reverse().join("/"));
+  toast("📥 " + v.client + " → À planifier · rappel le " + rappel.split("-").reverse().join("/") + (cren ? ", " + cren : ""));
 }
 function cancelInt(id){
   const v = INTERVS.find(x=>x.id===id);
