@@ -2038,13 +2038,21 @@ function renderMonth(){
     const day = new Date(gridStart); day.setDate(gridStart.getDate()+i);
     const dIso = iso(day);
     const inM = day.getMonth()===CUR.getMonth();
-    const evs = filtered().filter(v=>v.date===dIso);
-    const dotTechs = [...new Set(evs.map(v=>v.tech))].slice(0,5);
+    const evs = filtered().filter(v=>v.date===dIso).sort((x,y)=>x.start-y.start);
+    /* 30/07 (patron : « la vue Mois detonne ») — les pastilles muettes laissent
+       place a de vraies mini-lignes : point couleur du technicien, heure,
+       nuisible. Terminees grisees, retard lisere rouge. + N autres au-dela de 3. */
+    const tISO = iso(TODAYD);
+    const chips = evs.slice(0, 3).map(v => {
+      const T = typeDe(v);
+      const late = !v.done && !v.cancelled && dIso < tISO;
+      return `<div class="mev ${v.done?'done':''} ${late?'late':''}"><i class="mtd" style="background:${TECHS[v.tech].c}"></i><b>${hcourt(v.start)}</b><span>${T.lbl}</span></div>`;
+    }).join("");
+    const more = evs.length > 3 ? `<div class="mmore">+ ${evs.length-3} autre${evs.length-3>1?'s':''}</div>` : "";
     cells += `<div class="mcell ${inM?'':'out'} ${dIso===iso(TODAYD)?'today':''} ${evs.length?'hasev':''}"
       ${inM?`onclick="jumpDay('${dIso}')"`:""}>
       <span class="dnum">${day.getDate()}</span>
-      <div class="mdots">${dotTechs.map(t=>`<span class="mdot" style="background:${TECHS[t].c}"></span>`).join("")}</div>
-      ${evs.length?`<div class="mcount">${evs.length} interv.</div>`:""}
+      ${chips}${more}
     </div>`;
   }
   document.getElementById('calscroll').innerHTML =
@@ -4774,6 +4782,21 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .rtzin{background:#FAFBFC}
 
 .wvide{padding:22px 8px;text-align:center;color:#B3B8C4;font-size:.72rem;font-weight:600}
+
+/* ── 30/07 : vue MOIS au langage du logiciel ── */
+.mcell{min-height:104px}
+.mev{display:flex;align-items:center;gap:5px;background:#fff;border:1px solid #EEF0F4;border-radius:7px;padding:2.5px 6px;margin-top:4px;font-size:.66rem;font-weight:700;color:var(--ink-2);overflow:hidden;white-space:nowrap}
+.mev b{font-variant-numeric:tabular-nums;font-weight:800;flex:none}
+.mev span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mev .mtd{width:7px;height:7px;border-radius:50%;flex:none}
+.mev.done{opacity:.55}
+.mev.late{border-left:3px solid var(--red)}
+.mmore{font-size:.64rem;font-weight:800;color:var(--muted);margin-top:3px;padding-left:2px}
+/* ── point couleur VIVE du technicien sur les cartouches (reperage de loin) ── */
+.mgl{position:relative}
+.mgl::after{content:"";position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--evc);box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.wev .wh{position:relative}
+.wev .wh::after{content:"";position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--evc);box-shadow:0 0 0 2px rgba(255,255,255,.85)}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
