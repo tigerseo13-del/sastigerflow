@@ -521,6 +521,19 @@ label[for]{cursor:pointer}
   #valveil .sh{font-size:1.08rem}
   #valveil .sacts .btn2{flex:1;justify-content:center}
 }
+
+/* ===== 30/07 (patron, piste H validee) : les LIGNES en colonne principale,
+   rail fin a droite — details empiles sans icones, puis notes. ===== */
+[data-tab="det"].show{display:grid;grid-template-columns:2.35fr 1fr;gap:16px;align-items:start}
+[data-tab="det"] > .grid2{display:flex;flex-direction:column;gap:16px;order:2;margin:0;min-width:0}
+[data-tab="det"] > .card{order:1;margin:0;min-width:0}
+[data-tab="det"] > *:nth-child(n+3){grid-column:1 / -1;order:3}
+@media(max-width:1080px){[data-tab="det"].show{grid-template-columns:1fr}[data-tab="det"] > .grid2{order:2}[data-tab="det"] > *:nth-child(n+3){grid-column:auto}}
+.hkv{padding:7.5px 0;border-bottom:1px solid #F3F4F7}
+.hkv:last-child{border-bottom:0}
+.hkv small{display:block;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:2px}
+.hkv b{font-size:.84rem;min-width:0;overflow-wrap:anywhere}
+#detrows{margin-top:2px}
 </style>
 </head>
 <body>
@@ -1209,13 +1222,12 @@ function details(){
     send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>',
     tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4L12 22 2 12V2h10l8.6 8.6a2 2 0 010 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>'
   };
-  const row = (ic, cls, k, v) => '<div class="drow2"><span class="di ' + cls + '">' + ic + '</span><span class="db"><small>' + k + '</small><b>' + v + '</b></span></div>';
+  /* piste H : rangees empilees SANS icones — etiquette puis valeur */
+  const row = (ic, cls, k, v) => '<div class="hkv"><small>' + k + '</small><b>' + v + '</b></div>';
   g('detrows').innerHTML =
-    '<div class="dhero">' +
-      '<div class="dcli"><a href="client.html?c=' + encodeURIComponent(REC.client || "") + '" title="Ouvrir la fiche client">' + (REC.client || "—") + ' →</a></div>' +
-      '<div class="dobj">' + (REC.titre || "—") + '</div>' +
-    '</div>' +
     '<div class="dlines">' +
+    row("", "", "Client", '<a href="client.html?c=' + encodeURIComponent(REC.client || "") + '" style="color:var(--orange-deep)">' + (REC.client || "—") + ' →</a>') +
+    row("", "", "Objet", REC.titre || "—") +
     row(DI.doc, "dib", "N° facture", REF + ' <span class="k2">· émise le ' + fdate(REC.date) + '</span>') +
     row(DI.cal, "dia", "Échéance", fdate(REC.valid) + ' <span class="' + echCls2 + '">' + echTxt.split("· ")[1] + '</span>') +
     (env
