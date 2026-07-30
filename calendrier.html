@@ -1516,12 +1516,22 @@ function renderTray(){
   const list = [...PENDING].sort((a, b) => score(a) - score(b));
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
     const T = typeDe(p);
-    return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}" style="--evc:${T.c}"><span class="grip" title="Glisser sur l'agenda">⠿</span>
-      <div class="c"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${p.rue ? p.rue + " · " : ""}${p.cp} · ${vshort(p.ville)}</div>
-      <div class="c" style="font-weight:800;color:var(--ink)">${p.client}</div>
-      <div class="l1"><span>${T.ic}</span><span>${T.lbl}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}<span class="dur">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span></div>
-      <div class="z">${p.montant ? '<b>' + evMontant(p.montant).slice(3) + '</b>' + (p.rappel ? ' · ' : '') : ''}${p.rappel ? '<b class="rapl' + (isLate(p) ? ' late' : '') + '">' + (p.suivi ? 'prévu ' : 'rappel ') + p.rappel.split("-").reverse().join("/") + '</b>' : ''}</div>
-      <div class="ptop"><span class="mchip m-${p.mode || modeDe(p.client)}">${MODES[p.mode || modeDe(p.client)].ic} ${MODES[p.mode || modeDe(p.client)].lbl}</span></div>
+    /* 30/07 (patron) : le bac parle la MEME grammaire que les cartouches de
+       l'agenda — bloc ardoise a gauche (pas encore de technicien : pas encore
+       de couleur), nuisible en titre, type en pastille, client en pied. */
+    const md = p.mode || modeDe(p.client);
+    return `<div class="pcard ${isLate(p) ? 'lt' : ''}" data-pid="${p.pid}"><span class="grip" title="Glisser sur l'agenda">⠿</span>
+      ${md === "devis" ? '<span class="mgstar" title="Visite devis"></span>' : ''}
+      <div class="pgl">
+        <svg class="mgpin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <b>${p.cp}</b><i>${vshort(p.ville)}</i>
+        <span class="mgh">${p.dur%1?Math.floor(p.dur)+"h30":p.dur+"h"}</span>
+      </div>
+      <div class="pgr">
+        <div class="mgr1"><span class="mgic">${T.ic}</span><span class="mgt"><b>${T.lbl}</b></span></div>
+        <div class="mgr2"><span class="ltyp m-${md}">${MODES[md].lbl}${p.montant ? evMontant(p.montant) : ""}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}</div>
+        <div class="mgr3"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${p.client}${p.rappel ? `<b class="rapl${isLate(p) ? ' late' : ''}" style="margin-left:auto">${p.suivi ? 'prévu ' : 'rappel '}${p.rappel.split("-").reverse().join("/")}</b>` : ''}</div>
+      </div>
     </div>`;
   }).join("") : `<div class="trayempty" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:7px 6px;text-align:left"><svg viewBox="0 0 48 40" style="width:40px;height:34px;flex:none"><g fill="none" stroke="#C9CCD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14 L11 9 C14 7.5 16.5 7.4 18.5 8.5"/><path d="M34 14 L37 9 C34 7.5 31.5 7.4 29.5 8.5"/><path d="M24 36 C18.5 36 14 33 12.5 28 C11.4 24 11.6 20 13 16.5 C14 14 16 12 18.5 10.8 C20.3 10 22.1 9.6 24 9.6 C25.9 9.6 27.7 10 29.5 10.8 C32 12 34 14 35 16.5 C36.4 20 36.6 24 35.5 28 C34 33 29.5 36 24 36 Z"/><path d="M17 22 Q19 23.5 21 22"/><path d="M27 22 Q29 23.5 31 22"/><path d="M21.8 27 H26.2 L24 29.4 Z"/><path d="M24 29.4 V31.6"/><path d="M24 31.6 C22.3 31.8 20.8 31.2 19.8 30"/><path d="M24 31.6 C25.7 31.8 27.2 31.2 28.2 30"/></g><text x="38" y="12" font-size="8" fill="#C9CCD4">z</text><text x="42" y="7" font-size="6" fill="#D8DAE1">z</text></svg><b style="font-size:.84rem">Le bac fait la sieste</b><small style="margin:0;color:var(--muted)">— rien à planifier, tout est affecté</small></div>`;
   document.getElementById("tray").style.display = "";
@@ -1821,18 +1831,23 @@ function renderDay(){
       const lanePos = nl > 1 ? `left:calc(6px + ${li} * ((100% - 12px) / ${nl}));width:calc((100% - 12px) / ${nl} - 3px);right:auto;` : "";
       /* la carte que le trait orange traverse : elle vit MAINTENANT */
       const live = isToday && !v.done && !v.cancelled && v.start <= NOWH && NOWH < v.start + v.dur;
-      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${nl>1?'nrw':''} ${LANDID===v.id?'land':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
+      const enRetard = isToday && !v.done && !v.cancelled && v.start + v.dur <= NOWH;
+      return `<div class="ev ticket ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${enRetard?'late':''} ${nl>1?'nrw':''} ${LANDID===v.id?'land':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
         style="--evc:${TC.c};--evg:${TC.grad};--ai:${Math.min(ci,8)};${lanePos}top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
-        <div class="evhead" title="${v.cp} ${v.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
+        ${v.mode === "devis" ? '<span class="mgstar" title="Visite devis"></span>' : ''}
+        <div class="mgl" title="${v.cp} ${v.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
+          <svg class="mgpin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <b>${v.cp}</b><i>${vshort(v.ville)}</i>
-          <span class="hh">${hcourt(v.start)}–${hcourt(v.start+v.dur)}</span>
-          <span class="hbdg">${badge}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</span>
-          <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button>
+          <span class="mgh">${hcourt(v.start)}–${hcourt(v.start+v.dur)}</span>
         </div>
-        <div class="evbody">
-          <div class="lnui"><span class="nic">${T.ic}</span><span>${T.lbl}</span></div>
-          <span class="ltyp m-${v.mode}">${MODES[v.mode].lbl}${evMontant(v.montant)}</span>
-          <div class="lfoot"><span class="lcli">${v.client}</span><span class="lbdg">${badge}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</span></div>
+        <div class="mgr">
+          <div class="mgr1"><span class="mgic">${T.ic}</span>
+            <span class="mgt"><b>${T.lbl}</b></span>
+            <button class="chk" onclick="toggleDone(event,${v.id})" title="Marquer terminée">✓</button>
+          </div>
+          <div class="mgr2"><span class="ltyp m-${v.mode}">${evMontant(v.montant) ? MODES[v.mode].lbl.split(" / ")[0] : MODES[v.mode].lbl}${evMontant(v.montant)}</span>${badge}${conf.has(v.id)?' <span title="Chevauchement">⚠️</span>':''}</div>
+          ${v.note ? `<div class="mgnote">${v.note}</div>` : ""}
+          <div class="mgr3"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${v.client}</div>
         </div>
         <div class="rsz"></div>
       </div>${buf}`;
@@ -4631,6 +4646,91 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .foptlink{display:block;width:100%;margin-top:9px;background:none;border:0;padding:4px 2px;cursor:pointer;
   font-family:inherit;font-size:.75rem;font-weight:600;color:var(--muted);text-align:left;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#C9CDD6}
 .foptlink:hover{color:var(--ink-2)}
+
+/* ===== CARTOUCHE MAGAZINE (30/07, maquette WhatsApp du patron, nos regles — valide sur visuels) ===== */
+.ev.ticket{display:flex;flex-direction:row;padding:0;overflow:hidden}
+.ev.ticket .evhead,.ev.ticket .evbody{display:none!important}
+.mgl{width:84px;flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:9px 9px 8px 11px;color:#fff;
+  background:linear-gradient(rgba(16,18,22,.12),rgba(16,18,22,.12)),var(--evg,var(--evc))}
+.mgpin{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;opacity:.9;margin-bottom:2px}
+.mgl b{font-family:'Sora',Inter,sans-serif;font-size:1.02rem;font-weight:800;letter-spacing:.01em;font-variant-numeric:tabular-nums;line-height:1.1}
+.mgl i{font-style:normal;font-size:.63rem;font-weight:700;opacity:.95;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.mgh{margin-top:auto;background:rgba(16,18,22,.28);border-radius:7px;padding:2.5px 7px;font-size:.6rem;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mgr{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding:7.5px 9px 7px 10px;background:#fff}
+.mgr1{display:flex;align-items:flex-start;gap:7px;min-width:0}
+.mgic{font-size:1.15rem;line-height:1;flex:none;margin-top:1px}
+.mgt{min-width:0;flex:1}
+.mgt b{display:block;font-family:'Sora',Inter,sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mgt small{display:block;font-size:.63rem;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.mgr1 .chk{flex:none;width:16px;height:16px;font-size:.54rem;border:1.5px solid #D5D8DF;border-radius:6px;background:#fff;color:#B9BEC9;cursor:pointer}
+.ev.ticket.done .mgr1 .chk{background:var(--green);border-color:var(--green);color:#fff}
+.mgr2{display:flex;align-items:center;gap:5px 4px;flex-wrap:wrap;min-width:0;overflow:hidden}
+.ev.ticket.md .mgr2{flex-wrap:nowrap}
+.mgr2 .ltyp{margin:0;font-size:.56rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:3px 7px;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mgr3{display:flex;align-items:center;gap:5px;font-size:.66rem;font-weight:700;color:var(--ink-2);margin-top:auto;padding-top:4px;border-top:1px solid #F1F2F6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mgr3 svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;flex:none;opacity:.7}
+.mgstar{position:absolute;top:0;left:0;z-index:3;width:0;height:0;border-top:26px solid #F5B301;border-right:26px solid transparent}
+.mgstar::after{content:"★";position:absolute;top:-24px;left:2px;font-size:.6rem;color:#fff}
+.ev.ticket.done .mgt b,.ev.ticket.cancelled .mgt b{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.75}
+/* la note du bureau habite le vide des grandes cartes */
+.mgnote{font-size:.63rem;font-style:italic;color:var(--muted);line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ev.ticket.md .mgnote,.ev.ticket.sm .mgnote,.ev.ticket.xs .mgnote{display:none}
+/* retard : le bord droit rouge de la maquette, sur toute la hauteur */
+.ev.ticket.late::after{content:"";position:absolute;top:0;right:0;bottom:0;width:3px;background:#D63B33;border-radius:0 12px 12px 0;pointer-events:none}
+/* 30/07 (patron, ameliorations validees) : le travail FAIT s'efface — bloc
+   couleur grise et carte en retrait, ce qui reste a faire saute aux yeux. */
+.ev.ticket.done .mgl,.ev.ticket.cancelled .mgl{filter:grayscale(1)}
+.ev.ticket.done,.ev.ticket.cancelled{opacity:.8}
+/* survol vivant : la carte se souleve, jamais pendant un glisser */
+.ev.ticket{transition:transform .13s ease,box-shadow .15s ease}
+.ev.ticket:hover{transform:translateY(-1.5px);box-shadow:0 8px 22px -6px rgba(23,26,32,.22)}
+.daygrid.drag .ev.ticket:hover,.ev.ticket.dragging:hover{transform:none}
+/* creneaux plus courts : la cartouche se replie sans casser */
+.ev.ticket.md .mgl{width:76px;padding:7px 8px 6px 9px}
+.ev.ticket.md .mgl b{font-size:.92rem}
+.ev.ticket.md .mgr{gap:3px;padding:6px 8px 5px 9px}
+.ev.ticket.md .mgr3{display:none}
+.ev.ticket.sm .mgl{width:70px;padding:6px 7px 5px 8px}
+.ev.ticket.sm .mgl b{font-size:.85rem}
+.ev.ticket.sm .mgpin{display:none}
+.ev.ticket.sm .mgr2,.ev.ticket.sm .mgr3{display:none}
+.ev.ticket.sm .mgt small{display:none}
+.ev.ticket.xs .mgl{width:auto;flex-direction:row;align-items:center;gap:6px;padding:0 8px}
+.ev.ticket.xs .mgl i,.ev.ticket.xs .mgpin{display:none}
+.ev.ticket.xs .mgl b{font-size:.8rem}
+.ev.ticket.xs .mgh{margin:0}
+.ev.ticket.xs .mgr{flex-direction:row;align-items:center;gap:6px;padding:0 8px}
+.ev.ticket.xs .mgr2,.ev.ticket.xs .mgr3{display:none}
+.ev.ticket.xs .mgt small{display:none}
+.ev.ticket.nrw .mgl{width:64px}
+.ev.ticket.nrw .mgl i{display:none}
+.ev.ticket.nrw .mgr3{display:none}
+/* ---- le bac « À planifier », meme grammaire ---- */
+.pcard{display:flex;flex-direction:row;padding:0;overflow:hidden;position:relative}
+.pcard .c,.pcard .l1,.pcard .z,.pcard .ptop{display:none!important}
+.pgl{width:76px;flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 8px 7px 10px;color:#fff;
+  background:linear-gradient(135deg,#5A6070,#343945)}
+.pgl b{font-family:'Sora',Inter,sans-serif;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.pgl i{font-style:normal;font-size:.6rem;font-weight:700;opacity:.95;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pgl .mgh{margin-top:auto}
+.pgr{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding:7px 9px 6px 10px;background:#fff}
+.pgr .mgr3 .rapl{font-size:.6rem;font-weight:800;color:var(--muted)}
+.pgr .mgr3 .rapl.late{color:#C0342B}
+.pcard.lt{box-shadow:inset -3px 0 0 #D63B33}
+/* ---- la vue SEMAINE assortie : mini-cartouche magazine ---- */
+.wev{display:flex;flex-direction:row}
+.wev .wh{flex-direction:column;align-items:flex-start;gap:1px;width:58px;flex:none;padding:7px 7px 6px 8px}
+.wev .wh b{font-family:'Sora',Inter,sans-serif;font-size:.8rem;line-height:1.1}
+.wev .wh i{font-size:.55rem;max-width:100%}
+.wev .wh .hh{margin-left:0;margin-top:auto;background:rgba(16,18,22,.28);border-radius:6px;padding:2px 5px;font-size:.53rem}
+.wev .wb{flex:1;min-width:0;padding:6px 8px 7px;display:flex;flex-direction:column}
+.wev .wn{font-family:'Sora',Inter,sans-serif;font-size:.66rem;font-weight:800;letter-spacing:.02em;text-transform:uppercase}
+.wev .wc{margin-top:auto;padding-top:4px}
+.wev.done .wh,.wev.cancelled .wh{filter:grayscale(1)}
+
+
+
+
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
