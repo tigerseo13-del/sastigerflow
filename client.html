@@ -907,8 +907,17 @@ function tblFilter(tbId, q, countId){
     tr.style.display = (okQ && okS) ? "" : "none";
     if(okQ && okS) vis++;
   });
+  /* 30/07 audit : les rangées vivantes de l'onglet Interventions se filtrent aussi */
+  var extra = 0, extraTot = 0;
+  if(tbId === "hist-tb"){
+    document.querySelectorAll('[data-tab="histint"] .ivrow').forEach(function(r){
+      var ok = !q || r.textContent.toLowerCase().indexOf(q) > -1;
+      r.style.display = ok ? "" : "none";
+      extraTot++; if(ok) extra++;
+    });
+  }
   var c = document.getElementById(countId);
-  if(c) c.textContent = (vis ? "1-" + vis : "0") + " sur " + rows.length + " affichés";
+  if(c) c.textContent = ((vis + extra) ? "1-" + (vis + extra) : "0") + " sur " + (rows.length + extraTot) + " affichés";
 }
 function histStat(v){
   document.querySelectorAll("#hist-tb tr").forEach(function(tr){

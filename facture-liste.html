@@ -128,7 +128,7 @@ h1,.num{font-family:'Sora',sans-serif}
 .chip{font-size:.79rem;font-weight:700;padding:9px 15px;border-radius:20px;border:1.5px solid var(--line);color:var(--muted);background:#fff;transition:.13s}
 .chip .n{font-size:.68rem;opacity:.75;margin-left:3px}
 .chip.on{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
-.sortsel{margin-left:auto}
+.sortsel{margin-left:0}   /* 30/07 audit : le tri rejoint les filtres, une seule barre de contrôles */
 
 /* ============ TABLE (desktop) ============ */
 .tablecard{background:var(--card);border-radius:18px;box-shadow:var(--shadow);border:1px solid #F0F1F4;overflow:hidden}
@@ -340,7 +340,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 /* ===== raffinements de la liste ===== */
 td.amt{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
 thead th:nth-child(4){text-align:right}
-tbody td:nth-child(3){max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+tbody td:nth-child(3){max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}   /* 30/07 audit : l'objet respire */
+tbody td:nth-child(2){min-width:150px}
+tbody td:nth-child(7),tbody td:nth-child(8){white-space:nowrap;width:1%}
 tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
 .sumline{display:flex;justify-content:flex-end;gap:6px;padding:11px 16px 2px;font-size:.78rem;color:var(--muted)}
 .sumline b{color:var(--ink);font-variant-numeric:tabular-nums}
@@ -560,16 +562,41 @@ function expChip(d){
   return "";
 }
 function actionsHTML(d){
-  if(d.statut==="attente" || d.statut==="retard"){
-    return `<span class="acts">
-      <button class="act ok" title="Marquer payée" onclick="setSt(event,'${d.ref}','payee')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M20 6L9 17l-5-5"/></svg></button>
-      <button class="act" title="Voir la facture" onclick="ouvrirFactureE(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="act" title="Envoyer par e-mail" onclick="envoyerFac(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg></button><button class="act" title="Télécharger" onclick="telechargerFac(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></button>
-    ${betaApercu() ? `<button class="act beta" title="Aperçu rapide — fonction en beta" onclick="voirFac(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></button>` : ""}</span>`;
-  }
-  if(d.statut==="brouillon")
-    return `<span class="acts"><button class="act" title="Voir la facture" onclick="ouvrirFactureE(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><a class="facturer" href="facture.html" onclick="event.stopPropagation()">Finaliser →</a>${betaApercu() ? `<button class="act beta" title="Aperçu rapide — fonction en beta" onclick="voirFac(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></button>` : ""}</span>`;
-  return `<span class="acts"><button class="act" title="Voir la facture" onclick="ouvrirFactureE(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="act" title="Envoyer par e-mail" onclick="envoyerFac(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg></button><button class="act" title="Télécharger" onclick="telechargerFac(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></button><button class="act re" title="Dupliquer cette facture" onclick="dupliquer(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>${betaApercu() ? `<button class="act beta" title="Aperçu rapide — fonction en beta" onclick="voirFac(event,'${d.ref}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></button>` : ""}</span>`;
+  /* 30/07 (audit patron) : 2 actions directes max + menu ⋯ AVEC libellés —
+     cibles plus grandes, moins de bruit ; cliquer la rangée ouvre déjà la fiche. */
+  const I = {
+    ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M20 6L9 17l-5-5"/></svg>',
+    eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>',
+    dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>',
+    dup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
+    beta:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>'
+  };
+  const mi2 = (fn, ic, lbl) => `<button onclick="event.stopPropagation();${fn}">${ic}<span>${lbl}</span></button>`;
+  const menu = items => { const its = items.filter(Boolean); return its.length ? `<span class="rmw"><button class="act" title="Plus d’actions" onclick="rowMenu(event)"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button><span class="rmdd">${its.join("")}</span></span>` : ""; };
+  const voir = mi2(`ouvrirFactureE(event,'${d.ref}')`, I.eye, "Voir la facture");
+  const dup = mi2(`dupliquer(event,'${d.ref}')`, I.dup, "Dupliquer");
+  const dl = mi2(`telechargerFac(event,'${d.ref}')`, I.dl, "Télécharger");
+  const ap = betaApercu() ? mi2(`voirFac(event,'${d.ref}')`, I.beta, "Aperçu rapide (bêta)") : "";
+  if(d.statut === "attente" || d.statut === "retard")
+    return `<span class="acts"><button class="act ok" title="Marquer payée" onclick="setSt(event,'${d.ref}','payee')">${I.ok}</button><button class="act" title="Envoyer par e-mail" onclick="envoyerFac(event,'${d.ref}')">${I.send}</button>${menu([voir, dl, dup, ap])}</span>`;
+  if(d.statut === "brouillon" || d.statut === "proforma")
+    return `<span class="acts"><button class="act" title="Voir la facture" onclick="ouvrirFactureE(event,'${d.ref}')">${I.eye}</button><a class="facturer" href="facture.html" onclick="event.stopPropagation()">Finaliser →</a>${menu([ap])}</span>`;
+  return `<span class="acts"><button class="act" title="Envoyer par e-mail" onclick="envoyerFac(event,'${d.ref}')">${I.send}</button><button class="act" title="Télécharger" onclick="telechargerFac(event,'${d.ref}')">${I.dl}</button>${menu([voir, dup, ap])}</span>`;
 }
+function rowMenu(e){
+  e.stopPropagation();
+  const w = e.currentTarget.parentElement, dd = w.querySelector(".rmdd");
+  const open = w.classList.contains("open");
+  document.querySelectorAll(".rmw.open").forEach(x => x.classList.remove("open"));
+  if(open) return;
+  w.classList.add("open");
+  const r = e.currentTarget.getBoundingClientRect();
+  dd.style.top = (r.bottom + 6) + "px";
+  dd.style.left = Math.max(10, r.right - 200) + "px";
+}
+document.addEventListener("click", () => document.querySelectorAll(".rmw.open").forEach(x => x.classList.remove("open")));
+window.addEventListener("scroll", () => document.querySelectorAll(".rmw.open").forEach(x => x.classList.remove("open")), true);
 
 /* ================= KPI + compteurs ================= */
 function stats(){
@@ -1396,6 +1423,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .kpi.k-red    .kico svg{stroke:#D6453E}
 .kpi.k-slate  .kico svg{stroke:#64748B}
 .kpi .ksub{grid-column:2;font-size:.76rem;font-weight:700;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
+
+/* 30/07 audit : menu \2026 des rangees */
+.rmw{position:relative;display:inline-flex}
+.rmw .rmdd{display:none;position:fixed;background:#fff;border:1px solid var(--line,#EBECF1);border-radius:13px;box-shadow:0 14px 34px -12px rgba(23,26,32,.25);padding:6px;z-index:80;min-width:200px;text-align:left}
+.rmw.open .rmdd{display:block}
+.rmdd button{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:0;background:none;border-radius:9px;font-family:inherit;font-size:.8rem;font-weight:600;color:var(--ink-2,#3D434E);cursor:pointer;white-space:nowrap}
+.rmdd button:hover{background:#F6F7FA;color:var(--ink,#171A20)}
+.rmdd button svg{flex:none;stroke:currentColor}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
