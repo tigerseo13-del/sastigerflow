@@ -1091,6 +1091,26 @@ const CAT_IMG = ["WildRat.jpg","European%20wasp%20white%20bg.jpg","Blattella%20g
 /* URLs directes des vignettes : zéro redirection serveur (repli sur Special:FilePath puis émoji) */
 const CAT_T160 = ["https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/160px-WildRat.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/160px-European_wasp_white_bg.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/160px-Blattella_germanica_p1160206.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/160px-Bed_bug,_Cimex_lectularius.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/160px-Fogging.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/160px-Rock_dove_-_natures_pics.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/160px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg"];
 const CAT_T96  = ["https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/96px-WildRat.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/96px-European_wasp_white_bg.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/96px-Blattella_germanica_p1160206.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/96px-Fogging.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/96px-Rock_dove_-_natures_pics.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/96px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg"];
+
+/* 30/07 (patron) : les prestations creees dans Reglages (« own ») rejoignent
+   la bibliotheque — meme cle navigateur, avec leur photo, leur prix et leur
+   unite. Masquee dans Reglages = absente ici. */
+try{
+  const _mp = JSON.parse(localStorage.getItem("tigerflow-prestations")) || [];
+  const _cat2k = c => /rat|souris|dérat/i.test(c) ? "rong" : /punaise/i.test(c) ? "pun"
+    : /cafard|blatte|guêpe|frelon|fourmi|insecte|désinsect/i.test(c) ? "ins"
+    : /pigeon|volatile|goéland/i.test(c) ? "vol" : /désinfec/i.test(c) ? "des" : "div";
+  _mp.filter(x => x && x.own && !x.off).forEach(x => {
+    CATALOGUE.push({designation:x.n, desc:x.d || "Prestation du catalogue maison.",
+      pu:parseFloat(String(x.p).replace(/[^0-9,\.]/g, "").replace(",", ".")) || 0,
+      tva:parseFloat(x.tva) || 20, emo:"🛠️"});
+    CAT_OF.push(_cat2k(x.cat || ""));
+    CAT_UNIT.push(x.u ? "/ " + String(x.u).replace(/^[\/\s]+/, "") : "/ forfait");
+    CAT_IMG.push(x.img ? "own" : "");
+    CAT_T160.push(x.img || "");
+    CAT_T96.push(x.img || "");
+  });
+}catch(e){}
 let BIBCAT = "all", BIBSEL = {};
 const FAVKEY = "tigerflow-catalogue-favoris", RECKEY = "tigerflow-catalogue-recents";
 function favs(){ try{ return new Set(JSON.parse(localStorage.getItem(FAVKEY) || "[]")); }catch(e){ return new Set(); } }

@@ -562,6 +562,20 @@ let PREST = [
   {n:"Destruction nid de guêpes / frelons", cat:"Guêpes / Frelons", p:"165,00 €", tva:"20 %", maj:"14/07/2026"},
   {n:"Dépigeonnage — pose de pics", cat:"Pigeons", p:"420,00 €", tva:"20 %", maj:"14/07/2026"}
 ];
+/* 30/07 — BUG (patron) : « j'enregistre, j'actualise, ça marche pas ». Les
+   prestations ne vivaient qu'en memoire. Le catalogue COMPLET est desormais
+   relu depuis le navigateur a l'ouverture et reecrit a chaque geste (ajout,
+   modification, masquage, suppression). Les pages devis et factures lisent la
+   meme cle et proposent les prestations creees ici (marquees own:true). */
+const PRESTKEY = "tigerflow-prestations";
+try{
+  const _sv = JSON.parse(localStorage.getItem(PRESTKEY));
+  if(Array.isArray(_sv)) PREST = _sv;
+}catch(e){}
+function pPersist(){
+  try{ localStorage.setItem(PRESTKEY, JSON.stringify(PREST)); }catch(e){ toast("⚠️ Impossible d'enregistrer — photo trop lourde ?"); }
+}
+
 const TPL_LBL = {mdevis:"Modèle de devis", mfacture:"Modèle de facture", mavoir:"Modèle d'avoir", mcontrat:"Modèle de contrat", mrapport:"Modèle de rapport d'intervention"};
 
 /* ---------- petites briques ---------- */
@@ -983,16 +997,16 @@ R.prest = () => {
     <thead><tr><th>Nom</th><th>Catégorie de service</th><th>Prix unitaire</th><th>Unité</th><th>Statut</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${cats.map(c => `<tr><td colspan="7" style="background:#FBFBFC;font-weight:800;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2)">${c}</td></tr>` +
       PREST.filter(p => p.cat === c).map(p => { const gi = PREST.indexOf(p); return `<tr>
-        <td><b>${p.n}</b></td>
+        <td><span style="display:inline-flex;align-items:center;gap:9px">${p.img ? `<img src="${p.img}" alt="" style="width:30px;height:30px;border-radius:8px;object-fit:cover;flex:none">` : ""}<b>${p.n}</b></span></td>
         <td>${p.cat}</td>
         <td style="font-variant-numeric:tabular-nums">${p.p}</td>
-        <td>${p.u}</td>
+        <td>${p.u || "—"}</td>
         <td><span class="bdg ${p.off ? "b-off" : "b-on"}">${p.off ? "Inactif" : "Actif"}</span></td>
         <td>${p.maj || "—"}</td>
         <td onclick="event.stopPropagation()"><span class="acti">
-          <button class="aic" title="${p.off ? "Réactiver" : "Masquer du catalogue"}" onclick="PREST[${gi}].off=!PREST[${gi}].off;spRender();toast(PREST[${gi}].off?'« ${p.n} » masquée du catalogue':'« ${p.n} » réactivée')">${ic.eyeoff}</button>
-          <button class="aic" title="Modifier" onclick="toast('Modification de « ${p.n} » — mêmes champs que la création')">${ic.pen}</button>
-          <button class="aic del" title="Supprimer" onclick="arm(this,()=>{PREST.splice(${gi},1);spRender();toast('« ${p.n} » supprimée')})">${ic.del}</button>
+          <button class="aic" title="${p.off ? "Réactiver" : "Masquer du catalogue"}" onclick="PREST[${gi}].off=!PREST[${gi}].off;pPersist();spRender();toast(PREST[${gi}].off?'« ${p.n} » masquée du catalogue':'« ${p.n} » réactivée')">${ic.eyeoff}</button>
+          <button class="aic" title="Modifier" onclick="pAdd(${gi})">${ic.pen}</button>
+          <button class="aic del" title="Supprimer" onclick="arm(this,()=>{PREST.splice(${gi},1);pPersist();spRender();toast('« ${p.n} » supprimée')})">${ic.del}</button>
         </span></td></tr>`; }).join("")).join("")}</tbody></table></div>
     <div class="tfoot"><span>1-${PREST.length} sur ${PREST.length} affichées</span></div>
     <span class="xlink" onclick="spGoTo('cats')">Gérer les catégories de services →</span><span class="xlink" onclick="spGoTo('tva')">Gérer les taux de TVA →</span>
@@ -1019,12 +1033,18 @@ function pAdd(){
     <div class="dmain"><button class="dbig sec" onclick="closeDrawer()">Annuler</button><button class="dbig" onclick="pSave()">Enregistrer</button></div>`;
   openDrawer();
 }
-function pSave(){
+function pSave(gi = -1){
   const n = $id("np-n").value.trim(), c = $id("np-c").value, p = $id("np-p").value.trim(), u = $id("np-u").value.trim();
   if(!n || !c || !p || !u){ toast("Nom, catégorie, prix unitaire et unité sont obligatoires"); return; }
   const t = $id("np-t").value;
-  PREST.push({n, cat:c, p:(p.replace("€", "").trim() || "0") + " €", u, tva:t ? t.split("— ")[1] : "20 %", off:!$id("np-act").classList.contains("on")});
-  closeDrawer(); spRender(); toast("« " + n + " » ajoutée — visible dans l'atelier devis");
+  const obj = {n, d:$id("np-d").value.trim(), cat:c, p:(p.replace("€", "").replace(/\u00a0/g, " ").trim() || "0") + " €", u,
+    tva:t ? t.split("— ")[1] : "20 %", off:!$id("np-act").classList.contains("on"),
+    img:NP_IMG || null, own:true, maj:new Date().toLocaleDateString("fr-FR")};
+  if(gi >= 0) PREST[gi] = {...PREST[gi], ...obj, own:PREST[gi].own || false};
+  else PREST.push(obj);
+  pPersist();
+  closeDrawer(); spRender();
+  toast(gi >= 0 ? "« " + n + " » modifiée" : "« " + n + " » ajoutée — visible dans la bibliothèque des devis et factures");
 }
 
 /* ----- taux de TVA ----- */
