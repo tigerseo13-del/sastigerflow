@@ -757,7 +757,11 @@ const M = {
    le chrono soit visible des l'ouverture de l'appli. Sur une vraie intervention,
    l'heure est prise au moment ou le technicien appuie sur « Demarrer ». */
 Object.values(M).forEach(m => { if(m.st === "encours" && !m.debut) m.debut = Date.now() - 70 * 60000; });
-let DEVIS = [ {id:"d1", mid:3, client:"Restaurant Le Bistrot", m:120, st:"attente", sub:"Intervention du 24/05 à 13:30"} ];
+let DEVIS = [
+  {id:"d1", mid:3, client:"Restaurant Le Bistrot", m:120, st:"attente", sub:"Fait le 24/05 · signé sur place"},
+  {id:"d2", mid:6, client:"Clinique vétérinaire des Flandres", m:140, st:"paye", sub:"Fait le 21/05 · encaissé CB"},
+  {id:"d3", mid:null, client:"Dupont Immobilier", m:260, st:"refuse", sub:"Fait le 18/05 · refusé le 22/05"}
+];
 let NOTIFS = [
   {t:"Le devis de Restaurant Le Bistrot (120 €) attend toujours la réponse du client.", time:"il y a 2 h", un:true},
   {t:"Nouvelle intervention demain 09:00 — Charcuterie Bellamy, souris.", time:"il y a 3 h", un:true},
@@ -1506,32 +1510,52 @@ function sigInit(cid, hid){
 function sigClear(){ sigInit("sigc", "sigh"); }
 
 /* ---------- devis (onglet) ---------- */
+/* 30/07 (patron : « je comprends pas le truc du client a dit oui — il faut la
+   liste des devis que le technicien a faits ») : l'onglet est desormais MA
+   LISTE DE DEVIS, chaque ligne avec son statut en teinte — en attente (ambre),
+   encaisse (emeraude), refuse (rouge). Sur un devis en attente, deux gestes
+   clairs : le client accepte → j'encaisse, ou il refuse. */
 function rdevis(){
-  const att = DEVIS.filter(d => d.st === "attente"), pay = DEVIS.filter(d => d.st === "paye");
-  let h = "";
-  h += `<div class="seclab">En attente de réponse<small>${att.length}</small></div>`;
-  h += att.length ? att.map(d => `
+  const ordre = {attente:0, paye:1, refuse:2};
+  const list = [...DEVIS].sort((a, b) => (ordre[a.st] ?? 9) - (ordre[b.st] ?? 9));
+  const att = DEVIS.filter(d => d.st === "attente");
+  const STL = {
+    attente:['EN ATTENTE', '#FEF3E2', '#9A4A07', '#F3D28B'],
+    paye:   ['ENCAISSÉ',   '#ECFDF5', '#047857', '#BFE5D8'],
+    refuse: ['REFUSÉ',     '#FDEDEC', '#C0342B', '#F2C4C0']
+  };
+  let h = `<div class="seclab">Mes devis<small>${DEVIS.length}</small></div>`;
+  h += att.length ? `<p style="font-size:.72rem;color:var(--muted);margin:-4px 2px 10px;line-height:1.5">${att.length > 1 ? "Des devis attendent" : "Un devis attend"} la réponse du client — dès qu'il accepte, tu encaisses.</p>` : "";
+  h += list.length ? list.map(d => {
+    const st = STL[d.st] || STL.attente;
+    return `
     <div class="cd" style="padding:13px 15px">
       <div style="display:flex;align-items:center;gap:10px">
-        <span style="flex:1"><b style="font-size:.88rem">${d.client}</b><br><small style="color:var(--muted);font-size:.72rem">${d.sub}</small></span>
-        <span style="font-family:'Sora';font-weight:800;color:var(--green-d)">${EUR(d.m)}</span>
+        <span style="flex:1;min-width:0"><b style="font-size:.86rem">${d.client}</b><br><small style="color:var(--muted);font-size:.72rem">${d.sub}</small></span>
+        <span style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <b style="font-family:'Sora';font-size:.9rem">${EUR(d.m)}</b>
+          <span style="font-size:.6rem;font-weight:800;letter-spacing:.03em;padding:2.5px 8px;border-radius:8px;background:${st[1]};color:${st[2]};box-shadow:inset 0 0 0 1px ${st[3]}">${st[0]}</span>
+        </span>
       </div>
+      ${d.st === "attente" ? `
       <div style="display:flex;gap:8px;margin-top:11px">
-        <button class="bo g" style="padding:11px;font-size:.8rem" onclick="devisOui('${d.id}')">Le client a dit OUI — encaisser</button>
-      </div>
-    </div>`).join("")
-    : `<div class="cd" style="text-align:center;color:var(--muted);font-size:.82rem">Aucun devis en attente — tout est signé.</div>`;
-  if(pay.length){
-    h += `<div class="seclab">Acceptés &amp; encaissés</div>`;
-    h += pay.map(d => `<div class="cd" style="padding:12px 15px;display:flex;align-items:center;gap:10px">
-      <span class="stb g">ENCAISSÉ</span>
-      <span style="flex:1"><b style="font-size:.85rem">${d.client}</b></span>
-      <b style="font-family:'Sora'">${EUR(d.m)}</b></div>`).join("");
-  }
+        <button class="bo g" style="flex:1;width:auto;padding:11px;font-size:.8rem" onclick="devisOui('${d.id}')">✓ Accepté — encaisser</button>
+        <button style="flex:none;border:1.5px solid #F2C4C0;background:#fff;color:#C0342B;border-radius:12px;padding:11px 14px;font:700 .8rem Inter;cursor:pointer" onclick="devisNon('${d.id}')">✗ Refusé</button>
+      </div>` : ""}
+    </div>`;
+  }).join("")
+    : `<div class="cd" style="text-align:center;color:var(--muted);font-size:.82rem">Aucun devis pour l'instant — ils naissent depuis une visite devis.</div>`;
   h += `<div class="cd" style="margin-top:16px;background:var(--orange-soft);border-color:#FFD9C4">
     <b style="font-size:.82rem;color:var(--orange-deep)">Encaissé aujourd&rsquo;hui : ${EUR(ENC)}</b>
     <p style="font-size:.74rem;color:var(--ink-2);margin-top:4px;line-height:1.5">Chaque encaissement remonte au bureau en temps réel — rien à ressaisir le soir.</p></div>`;
   g("dvbody").innerHTML = h;
+}
+function devisNon(did){
+  const d = DEVIS.find(x => x.id === did); if(!d) return;
+  d.st = "refuse";
+  d.sub = d.sub.split(" · ")[0] + " · refusé aujourd'hui";
+  rdevis();
+  toast("Devis refusé — le bureau est prévenu, la fiche client garde la trace");
 }
 
 /* ---------- notifications ---------- */

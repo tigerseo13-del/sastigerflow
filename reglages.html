@@ -1012,26 +1012,58 @@ R.prest = () => {
     <span class="xlink" onclick="spGoTo('cats')">Gérer les catégories de services →</span><span class="xlink" onclick="spGoTo('tva')">Gérer les taux de TVA →</span>
   </div>`;
 };
-function pAdd(){
+let NP_IMG = null;
+function pAdd(gi = -1){
+  /* 30/07 — gi >= 0 : MODIFICATION d'une prestation existante. Meme fiche,
+     champs pre-remplis. Et la photo se choisit VRAIMENT (le + n'affichait
+     qu'un message). */
+  const e = gi >= 0 ? PREST[gi] : null;
+  NP_IMG = e && e.img ? e.img : null;
+  const esc = v => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
   $id("dbody").innerHTML = `
-    <div class="dcard dhead"><div class="drow1"><h2>Créer une nouvelle prestation</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
+    <div class="dcard dhead"><div class="drow1"><h2>${e ? "Modifier la prestation" : "Créer une nouvelle prestation"}</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
     <div class="dcard">
       <span class="rlab">Image</span>
-      <button class="logobox" style="width:52px;height:52px;cursor:pointer;font-size:1.15rem;color:var(--muted)" onclick="toast('Une photo aide le client à visualiser la prestation')">+</button>
-      <span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="np-n" placeholder="Saisir ici">
-      <span class="rlab">Description</span><textarea id="np-d" rows="3" placeholder="Saisir ici"></textarea>
+      <label class="logobox" id="np-imgbox" style="width:52px;height:52px;cursor:pointer;font-size:1.15rem;color:var(--muted);background-size:cover;background-position:center;${NP_IMG ? "background-image:url(" + NP_IMG + ");" : ""}display:grid;place-items:center" title="Choisir une photo">
+        <span id="np-plus" style="${NP_IMG ? "display:none" : ""}">+</span>
+        <input type="file" accept="image/*" hidden onchange="pImg(this)">
+      </label>
+      <span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="np-n" placeholder="Saisir ici" value="${e ? esc(e.n) : ""}">
+      <span class="rlab">Description</span><textarea id="np-d" rows="3" placeholder="Saisir ici">${e ? esc(e.d) : ""}</textarea>
       <span class="rlab">Catégorie de service <b style="color:var(--red)">*</b></span>
-      <select id="np-c"><option value="">Sélectionner</option>${CATS.map(c => `<option>${c.n}</option>`).join("")}</select>
+      <select id="np-c"><option value="">Sélectionner</option>${CATS.map(c => `<option ${e && e.cat === c.n ? "selected" : ""}>${c.n}</option>`).join("")}</select>
       <div class="frow2">
-        <div><span class="rlab">Prix unitaire <b style="color:var(--red)">*</b></span><input id="np-p" inputmode="decimal" placeholder="€ 0.00"></div>
-        <div><span class="rlab">Unité <b style="color:var(--red)">*</b></span><input id="np-u" placeholder="Saisir ici"></div>
+        <div><span class="rlab">Prix unitaire <b style="color:var(--red)">*</b></span><input id="np-p" inputmode="decimal" placeholder="€ 0.00" value="${e ? esc(e.p).replace(/[€\u00a0]/g, "").trim() : ""}"></div>
+        <div><span class="rlab">Unité <b style="color:var(--red)">*</b></span><input id="np-u" placeholder="Saisir ici" value="${e ? esc(e.u) : ""}"></div>
       </div>
       <span class="rlab">Taux de TVA</span>
-      <select id="np-t"><option value="">Sélectionner</option>${TVAS.map(t => `<option>${t.n} — ${t.t} %</option>`).join("")}</select>
-      <div class="togr" style="margin-top:6px"><span>Actif</span><span class="tgl on" id="np-act" onclick="this.classList.toggle('on')"></span></div>
+      <select id="np-t"><option value="">Sélectionner</option>${TVAS.map(t => `<option ${e && e.tva === t.t + " %" ? "selected" : ""}>${t.n} — ${t.t} %</option>`).join("")}</select>
+      <div class="togr" style="margin-top:6px"><span>Actif</span><span class="tgl ${e && e.off ? "" : "on"}" id="np-act" onclick="this.classList.toggle('on')"></span></div>
     </div>
-    <div class="dmain"><button class="dbig sec" onclick="closeDrawer()">Annuler</button><button class="dbig" onclick="pSave()">Enregistrer</button></div>`;
+    <div class="dmain"><button class="dbig sec" onclick="closeDrawer()">Annuler</button><button class="dbig" onclick="pSave(${gi})">Enregistrer</button></div>`;
   openDrawer();
+}
+/* La photo est reduite a 96 px de cote avant d'etre gardee : le navigateur ne
+   stocke que quelques Ko, pas la photo d'origine. */
+function pImg(inp){
+  const f = inp.files && inp.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    const im = new Image();
+    im.onload = () => {
+      const c = document.createElement("canvas"), S = 96;
+      c.width = S; c.height = S;
+      const x = c.getContext("2d"), r = Math.max(S / im.width, S / im.height);
+      x.drawImage(im, (S - im.width * r) / 2, (S - im.height * r) / 2, im.width * r, im.height * r);
+      NP_IMG = c.toDataURL("image/jpeg", .82);
+      const b = $id("np-imgbox");
+      b.style.backgroundImage = "url(" + NP_IMG + ")";
+      $id("np-plus").style.display = "none";
+    };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f);
 }
 function pSave(gi = -1){
   const n = $id("np-n").value.trim(), c = $id("np-c").value, p = $id("np-p").value.trim(), u = $id("np-u").value.trim();
