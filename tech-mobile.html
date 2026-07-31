@@ -295,6 +295,16 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .fbig.ghost .ftx b{font-size:.84rem}
 .fbig.ghost .ftx small{color:var(--muted);opacity:1;font-size:.66rem}
 .fbig.ghost .fchv{color:#C9CEDA}
+/* ---- chrono du rapport (31/07) ---- */
+.rchr{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:2px 0 12px}
+.rchr .chd{font-variant-numeric:tabular-nums;font-size:.86rem;font-weight:800;color:var(--ink);background:#F1F2F5;border-radius:10px;padding:7px 12px;display:inline-flex;align-items:center;gap:7px}
+.rchr .chd::before{content:"";width:7px;height:7px;border-radius:50%;background:#D63B33;animation:chblink 1.3s ease-in-out infinite}
+@keyframes chblink{50%{opacity:.22}}
+.rchr .chs{border:1.5px solid #F3C1BC;background:#FDF0EF;color:#B3261E;border-radius:10px;padding:7px 13px;font-size:.74rem;font-weight:800;font-family:'Inter';cursor:pointer}
+.rchr .chok{background:var(--green-bg);color:var(--green-d);border-radius:10px;padding:7px 13px;font-size:.78rem;font-weight:800;display:inline-flex;align-items:center;gap:6px}
+.rchr .chr{border:1.5px solid var(--line);background:#fff;color:var(--ink-2);border-radius:10px;padding:6px 12px;font-size:.72rem;font-weight:800;font-family:'Inter';cursor:pointer}
+.rchr small{font-size:.68rem;font-weight:600;color:var(--muted)}
+#rapbody .rchr + .rlab{border-top:0;padding-top:0;margin-top:12px}
 .waitb{background:var(--amber-bg);border:1px dashed #E2C56E;color:var(--amber);border-radius:13px;padding:12px 14px;font-size:.79rem;font-weight:700;margin-bottom:10px;line-height:1.45}
 .doneb{display:flex;align-items:center;gap:9px;background:var(--green-bg);color:var(--green-d);border-radius:13px;padding:13px 14px;font-size:.85rem;font-weight:800;margin-bottom:4px}
 .doneb svg{width:17px;height:17px}
@@ -1103,10 +1113,33 @@ function noteSave(id){
 }
 
 /* ---------- le parcours : démarrer → terminer → encaisser → rapport ---------- */
+/* ————— 31/07 (patron) : CHRONOMÈTRE d'intervention ————— */
+/* Démarre au « Démarrer l'intervention », s'affiche dans le rapport avec un
+   bouton Stop, et le temps réel est gardé (registre tigerflow-chronos). */
+const CHKEY = "tigerflow-chronos";
+const chAll = () => { try{ return JSON.parse(localStorage.getItem(CHKEY) || "{}"); }catch(e){ return {}; } };
+const chSave = a => { try{ localStorage.setItem(CHKEY, JSON.stringify(a)); }catch(e){} };
+const chKey = id => "m" + id;
+function chStart(id, t0){ const a = chAll(); if(!a[chKey(id)]){ a[chKey(id)] = {t0: t0 || Date.now(), stop: null}; chSave(a); } }
+function chGet(id){ return chAll()[chKey(id)]; }
+function chElapsed(id){ const c = chGet(id); return c ? Math.max(0, Math.floor(((c.stop || Date.now()) - c.t0) / 1000)) : 0; }
+function chStopped(id){ const c = chGet(id); return !!(c && c.stop); }
+function chStop(id){ const a = chAll(), c = a[chKey(id)]; if(!c || c.stop) return; c.stop = Date.now(); chSave(a); if(typeof RAPD !== "undefined" && RAPD) RAPD.tps = chElapsed(id); if(M[id]) M[id].tps = chElapsed(id); }
+function chResume(id){ const a = chAll(), c = a[chKey(id)]; if(!c || !c.stop) return; c.t0 += Date.now() - c.stop; c.stop = null; chSave(a); }
+const chFmt = s => { const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h + ":" + String(m).padStart(2,"0") : String(m).padStart(2,"0")) + ":" + String(x).padStart(2,"0"); };
+const chHuman = s => { const h = Math.floor(s/3600), m = Math.round(s%3600/60); return h ? h + " h " + String(m).padStart(2,"0") : m + " min"; };
+setInterval(() => { document.querySelectorAll("[data-chrono]").forEach(e => { const cid = +e.getAttribute("data-chrono"); if(!chStopped(cid)) e.textContent = chFmt(chElapsed(cid)); }); }, 1000);
+function chHTML(id){
+  return chStopped(id)
+    ? `<span class="chok">✓ ${chHuman(chElapsed(id))} sur place</span><button class="chr" onclick="rapKeep();chResume(${id});rrap()">▶ Reprendre</button>`
+    : `<b class="chd" data-chrono="${id}">${chFmt(chElapsed(id))}</b><button class="chs" onclick="rapKeep();chStop(${id});rrap()">■ Stop</button>`;
+}
+
 function startM(id){
   const m = M[id]; if(m.st !== "todo") return;
   m.st = "encours"; m.prog = 5; m.progt = "démarrée à l’instant";
   m.debut = Date.now();   /* heure reelle d'arrivee : elle alimente le chrono de la liste */
+  chStart(id, m.debut);
   toast("Intervention démarrée — bon courage");
   renderAll();
   const app = g("app"); if(app) app.scrollTop = app.scrollHeight;
@@ -1369,7 +1402,8 @@ function rrap(){
     ? `<button class="bo" style="flex:1" onclick="rapNext()">Suivant ›</button>`
     : `<button class="bo g" style="flex:1" onclick="finishRap()"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Signer &amp; clôturer</button>`)
     + `</div><button class="lnk" onclick="rapLater()">Enregistrer et continuer plus tard</button></div>`;
-  g("rapbody").innerHTML = h;
+  /* 31/07 : le chrono vit en tete du rapport, sur les 3 etapes */
+  g("rapbody").innerHTML = `<div class="rchr">${(chStart(RAPID), chHTML(RAPID))}<small>temps réel sur place</small></div>` + h;
   try{ window.scrollTo({top:0, behavior:"instant"}); }catch(e){ window.scrollTo(0,0); }
   if(RSTEP === 3) sigInit("rsig", "rsigh");
 }

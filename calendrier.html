@@ -2550,6 +2550,7 @@ function renderDetail(){
     body = r
       ? `<div class="dcard" style="background:linear-gradient(180deg,#F2FBF6,#EDF9F2);border-color:#D9EFE2">
           <div class="dh" style="margin-bottom:6px"><span class="dst done" style="font-size:.62rem">✓ Rapport validé</span> <span style="font-size:.8rem;font-weight:600;color:#0F6E56">signé par le client — prêt à partir</span></div>
+          ${chGet(v.id) ? `<div style="font-size:.78rem;font-weight:700;color:#0F6E56;margin-top:5px">⏱ Temps réel sur place : ${chHuman(chElapsed(v.id))}</div>` : ""}
           <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px">
             <button class="dbig" onclick="rPdf(${v.id})"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Télécharger le rapport PDF</button>
             <button class="dbig sec" onclick="rMail(${v.id})"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M22 6l-10 7L2 6"/></svg> Envoyer par e-mail au client</button>
@@ -2836,9 +2837,33 @@ function encSkip(id){
   toast("Encaissement remis à plus tard — le rapport s'ouvre");
   openReport(id);
 }
+/* ————— 31/07 (patron) : CHRONOMÈTRE d'intervention ————— */
+/* Démarre au « Démarrer l'intervention », s'affiche dans le rapport avec un
+   bouton Stop, et le temps réel part sur le récapitulatif + le PDF.
+   Registre partagé bureau/mobile : tigerflow-chronos (clés préfixées). */
+const CHKEY = "tigerflow-chronos";
+const chAll = () => { try{ return JSON.parse(localStorage.getItem(CHKEY) || "{}"); }catch(e){ return {}; } };
+const chSave = a => { try{ localStorage.setItem(CHKEY, JSON.stringify(a)); }catch(e){} };
+const chKey = id => "i" + id;
+function chStart(id, t0){ const a = chAll(); if(!a[chKey(id)]){ a[chKey(id)] = {t0: t0 || Date.now(), stop: null}; chSave(a); } }
+function chGet(id){ return chAll()[chKey(id)]; }
+function chElapsed(id){ const c = chGet(id); return c ? Math.max(0, Math.floor(((c.stop || Date.now()) - c.t0) / 1000)) : 0; }
+function chStopped(id){ const c = chGet(id); return !!(c && c.stop); }
+function chStop(id){ const a = chAll(), c = a[chKey(id)]; if(!c || c.stop) return; c.stop = Date.now(); chSave(a); if(typeof REPORTS !== "undefined" && REPORTS[id]) REPORTS[id].tps = chElapsed(id); }
+function chResume(id){ const a = chAll(), c = a[chKey(id)]; if(!c || !c.stop) return; c.t0 += Date.now() - c.stop; c.stop = null; chSave(a); }
+const chFmt = s => { const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h + ":" + String(m).padStart(2,"0") : String(m).padStart(2,"0")) + ":" + String(x).padStart(2,"0"); };
+const chHuman = s => { const h = Math.floor(s/3600), m = Math.round(s%3600/60); return h ? h + " h " + String(m).padStart(2,"0") : m + " min"; };
+setInterval(() => { document.querySelectorAll("[data-chrono]").forEach(e => { const cid = +e.getAttribute("data-chrono"); if(!chStopped(cid)) e.textContent = chFmt(chElapsed(cid)); }); }, 1000);
+function chHTML(id){
+  return chStopped(id)
+    ? `<span class="chok">✓ ${chHuman(chElapsed(id))} sur place</span><button class="chr" onclick="chResume(${id});renderReport(${id})">▶ Reprendre</button>`
+    : `<b class="chd" data-chrono="${id}">${chFmt(chElapsed(id))}</b><button class="chs" onclick="chStop(${id});renderReport(${id})">■ Stop</button>`;
+}
+
 function startInt(id){
   const v = INTERVS.find(x=>x.id===id);
   v.started = true;
+  chStart(id);
   iflowSave(v);
   render(); renderDetail();
   toast("▶ Intervention démarrée — " + v.client);
@@ -3063,6 +3088,7 @@ function renderReport(id){
           <button class="dclose" onclick="closeDetail()">✕</button></div>
         <h2>Rapport d'intervention</h2>
         <div class="dref" style="cursor:copy" title="Cliquer pour copier la référence" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(id)}').then(()=>toast('📋 Référence ${refInt(id)} copiée'))">${refInt(id)} · ${v.client} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}</div>
+        <div class="rchr">${(chStart(id), chHTML(id))}<small>temps réel sur place — il partira sur le rapport</small></div>
       </div>
       <div class="rsec rsec-j">${rStepsBar()}</div>
       <div class="rsec">${body}</div>
@@ -3363,7 +3389,7 @@ function rPdf(id){
         <div class="t">Rapport d'intervention</div>
         <div><b>${refInt(id)}</b> · ${T.ic} ${T.lbl}</div>
         <div>Client : <b>${v.client}</b> · <svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.cp} ${v.ville}</div>
-        <div>Le <b>${v.date.split("-").reverse().join("/")}</b> · ${hstr(v.start)} – ${hstr(v.start + v.dur)} · ${TECHS[v.tech].nom}</div>
+        <div>Le <b>${v.date.split("-").reverse().join("/")}</b> · ${hstr(v.start)} – ${hstr(v.start + v.dur)} · ${TECHS[v.tech].nom}${chGet(id) ? ` · <b>${chHuman(chElapsed(id))} sur place</b>` : ""}</div>
       </div>
     </div>
     <div class="rp-sec"><b>1 · Observation</b>
@@ -4858,6 +4884,16 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   background:#EEF1F6}
 .pgl .mgpin{stroke:#8A93AC}
 .pgl .mgh{color:#22262E;box-shadow:inset 0 0 0 1px #DDE1E8}
+/* ---- chrono du rapport (31/07) ---- */
+.rchr{display:flex;align-items:center;gap:9px;margin-top:10px;flex-wrap:wrap}
+.rchr .chd{font-variant-numeric:tabular-nums;font-size:.84rem;font-weight:800;color:var(--ink);background:#F1F2F5;border-radius:9px;padding:6px 11px;display:inline-flex;align-items:center;gap:7px}
+.rchr .chd::before{content:"";width:7px;height:7px;border-radius:50%;background:#D63B33;animation:chblink 1.3s ease-in-out infinite}
+@keyframes chblink{50%{opacity:.22}}
+.rchr .chs{border:1.5px solid #F3C1BC;background:#FDF0EF;color:#B3261E;border-radius:9px;padding:6px 12px;font-size:.72rem;font-weight:800;font-family:inherit;cursor:pointer}
+.rchr .chs:hover{background:#FBE3E1}
+.rchr .chok{background:var(--green-bg);color:var(--green-d);border-radius:9px;padding:6px 12px;font-size:.76rem;font-weight:800;display:inline-flex;align-items:center;gap:6px}
+.rchr .chr{border:1.5px solid var(--line);background:#fff;color:var(--ink-2);border-radius:9px;padding:5px 11px;font-size:.7rem;font-weight:800;font-family:inherit;cursor:pointer}
+.rchr small{font-size:.68rem;font-weight:600;color:var(--muted)}
 .pgl b{font-family:'Sora',Inter,sans-serif;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
 .pgl i{font-style:normal;font-size:.6rem;font-weight:700;opacity:.95;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .pgl .mgh{margin-top:auto}
