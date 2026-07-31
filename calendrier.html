@@ -1611,7 +1611,7 @@ function renderTray(){
       </div>
       <div class="pgr">
         <div class="mgr1"><span class="mgic">${T.ic}</span><span class="mgt"><b>${T.lbl}</b></span></div>
-        <div class="mgr2"><span class="ltyp m-${md}">${pendChipTxt(p, md)}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}</div>
+        <div class="mgr2"><span class="ltyp m-${md}">${pendChipTxt(p, md)}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">📞 À rappeler</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}</div>
         <div class="mgr3"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${p.client}${p.rappel ? `<b class="rapl${isLate(p) ? ' late' : ''}" style="margin-left:auto">${p.suivi ? 'prévu ' : 'rappel '}${p.rappel.split("-").reverse().join("/")}</b>` : ''}</div>
       </div>
     </div>`;
@@ -1649,6 +1649,7 @@ function fileOpen(){
   document.getElementById("fapveil").classList.add("on");
 }
 function fileClose(){
+  FNEDIT = null;
   document.getElementById("fap").classList.remove("open");
   document.getElementById("fapveil").classList.remove("on");
 }
@@ -1699,13 +1700,47 @@ function fileRender(){
       <span class="frszg" title="Toujours injoignable — repousser le rappel de 1, 2 ou 7 jours">
         <button onclick="fileSnooze(${p.pid},1)">+1 j</button><button onclick="fileSnooze(${p.pid},2)">+2 j</button><button onclick="fileSnooze(${p.pid},7)">+7 j</button>
       </span>
-    </div>`;
+      <button class="frnote ${p.note ? "has" : ""}" onclick="fileNoteEdit(${p.pid})" title="${p.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
+    </div>
+    ${FNEDIT === p.pid ? `<div class="frned">
+      <textarea id="fned-${p.pid}" rows="2" placeholder="Ex. : m'a demandé de le rappeler demain à 17 h…">${p.note || ""}</textarea>
+      <div class="frnbtns"><small>📝 La note s'ajoute aussi aux notes internes de la fiche client</small>
+        <button class="ok" onclick="fileNoteSave(${p.pid})">✓ Enregistrer</button>
+        <button class="no" onclick="FNEDIT=null;fileRender()">Annuler</button></div>
+    </div>` : ""}`;
   }).join("");
 }
 function fileCaler(pid){
   fileClose();
   openPending(pid);
   document.getElementById('tray').classList.remove('collapsed');
+}
+/* 31/07 (patron) : une NOTE par ligne de la file — « le client répond pas,
+   j'écris ; il m'a dit de rappeler demain 17 h, je note » — et la note part
+   AUSSI dans les notes internes de la fiche client (même registre que
+   client.html : tigerflow-notes-<client>). */
+let FNEDIT = null;
+function fileNoteEdit(pid){
+  FNEDIT = (FNEDIT === pid) ? null : pid;
+  fileRender();
+  if(FNEDIT != null) setTimeout(() => { const a = document.getElementById("fned-" + pid); if(a){ a.focus(); a.selectionStart = a.value.length; } }, 0);
+}
+function fileNoteSave(pid){
+  const p = PENDING.find(x => x.pid === pid); if(!p) return;
+  const a = document.getElementById("fned-" + pid);
+  const txt = (a ? a.value : "").trim();
+  p.note = txt;
+  if(txt){
+    try{
+      const k = "tigerflow-notes-" + encodeURIComponent(p.client);
+      const arr = JSON.parse(localStorage.getItem(k) || "[]");
+      const d = new Date(), pad = x => String(x).padStart(2, "0");
+      arr.unshift({t: pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()), a: "Jo Jo", txt: "📞 Rappel — " + txt});
+      localStorage.setItem(k, JSON.stringify(arr));
+    }catch(e){}
+  }
+  FNEDIT = null; fileRender(); renderTray();
+  toast(txt ? "📝 Note enregistrée — elle est aussi sur la fiche client" : "Note vide — rien à garder");
 }
 function fileSnooze(pid, nj){
   const p = PENDING.find(x => x.pid === pid);
@@ -2840,7 +2875,7 @@ function standbyInt(id, keep){
     <div class="dcard dhead">
       <div class="drow1"><span class="dst late">📵 Injoignable</span>
         <button class="dclose" onclick="closeDetail()">✕</button></div>
-      <h2>À reprogrammer</h2>
+      <h2>À rappeler</h2>
       <div class="dref">${refInt(id)} · ${v.client}</div>
     </div>
     <div class="dcard">
@@ -3976,7 +4011,7 @@ function pendStart(pid){
 function pendStandby(pid){
   const p = PENDING.find(x => x.pid === pid); if(!p) return;
   p.standby = true; PDMENU = false; openPending(pid); renderTray();
-  toast("↺ " + p.client + " marquée à reprogrammer");
+  toast("📞 " + p.client + " ajoutée à la file d'appels");
 }
 function pendCancel(pid){
   const p = PENDING.find(x => x.pid === pid); if(!p) return;
@@ -4024,7 +4059,7 @@ function openPending(pid){
   const kv = (k, v) => `<div class="dkv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
   const dur = p.dur % 1 ? Math.floor(p.dur) + "h" + Math.round((p.dur % 1) * 60) : p.dur + "h";
   const prio = p.urgent ? "Urgente" : "Normale";
-  const sl = p.standby ? "À reprogrammer" : p.suivi ? "Suivi" : "À planifier";
+  const sl = p.standby ? "📞 À rappeler" : p.suivi ? "Suivi" : "À planifier";
   const sc = p.standby ? "prog" : p.suivi ? "todo" : "todo";
   const inv = m === "devis"
     ? `<div class="invbox"><span><span class="lbl">Chiffrage sur place</span><b style="font-size:.9rem">Devis à établir</b></span>
@@ -4049,10 +4084,12 @@ function openPending(pid){
       <div class="dh">Détails de l'intervention</div>
       <!-- 31/07 (patron) : MÊME rangée de pastilles que la fiche planifiée
            (bhead2/brow2) — état → type avec montant → priorité, mêmes tailles. -->
+      <!-- 31/07 (patron) : titre COURT pour que la rangée de pastilles tienne sur
+           LA MÊME LIGNE que sur la fiche d'une cartouche de l'agenda. -->
       <div class="bhead bhead2">
         <div class="bl">
-          <span class="bh" style="font-size:1.12rem">Pas encore planifiée</span>
-          <small>${dur} prévues · glisse la carte sur l'agenda</small>
+          <span class="bh">Pas planifiée</span>
+          <small>${dur} prévues</small>
         </div>
         <div class="brow2">
           <span class="dst ${sc}">${sl}</span>
@@ -5056,12 +5093,24 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .frl2 i{font-style:normal;color:#B0876A}
 .frtel{flex:none;width:34px;height:34px;border-radius:50%;background:var(--green-bg);border:1.5px solid var(--green-line, #BFE6D8);display:grid;place-items:center;text-decoration:none}
 .frtel svg{width:15px;height:15px;stroke:var(--green-d);fill:none;stroke-width:2;stroke-linecap:round}
-.frcal{flex:none;border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:9px 13px;white-space:nowrap}
-.frcal:hover{background:var(--orange-deep)}
+/* 31/07 (patron) : « 20 dans la liste = beaucoup trop d'orange » — le bouton
+   est BLANC liseré orange au repos, il ne s'allume qu'au survol de SA ligne. */
+.frcal{flex:none;cursor:pointer;background:#fff;border:1.5px solid var(--orange-line);color:var(--orange-deep);font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 13px;white-space:nowrap;transition:.12s}
+.fr:hover .frcal{background:var(--orange);border-color:var(--orange);color:#fff}
 .frszg{flex:none;display:inline-flex;border:1.5px solid #E2E5EB;border-radius:10px;overflow:hidden}
 .frszg button{border:0;cursor:pointer;background:#fff;color:var(--ink-2);font-size:.64rem;font-weight:800;font-family:inherit;padding:9px 8px;border-left:1px solid #EEF0F4;white-space:nowrap}
 .frszg button:first-child{border-left:0}
 .frszg button:hover{background:#F5F6F9;color:var(--ink)}
+.frnote{flex:none;width:32px;height:32px;border-radius:10px;background:#fff;border:1.5px solid #E2E5EB;color:var(--muted);font-size:.8rem;cursor:pointer;font-family:inherit}
+.frnote:hover{border-color:#CBD0DA;color:var(--ink)}
+.frnote.has{background:#FBF3D9;border-color:#F0E2B8;color:#8A6407}
+.frned{background:#FFFDF6;border:1.5px solid var(--orange-line);border-radius:12px;padding:10px 11px;margin:-3px 0 9px}
+.frned textarea{width:100%;border:1px solid #EFE3CE;border-radius:9px;padding:9px 11px;font:600 .78rem Inter,sans-serif;background:#fff;outline:none;resize:vertical;box-sizing:border-box}
+.frned textarea:focus{border-color:var(--orange)}
+.frnbtns{display:flex;align-items:center;gap:9px;margin-top:8px}
+.frnbtns small{font-size:.64rem;font-weight:600;color:#B0876A;margin-right:auto}
+.frnbtns .ok{border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.7rem;font-weight:800;font-family:inherit;border-radius:9px;padding:7px 13px}
+.frnbtns .no{cursor:pointer;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.68rem;font-weight:800;font-family:inherit;border-radius:9px;padding:6px 11px}
 .fap-vide{text-align:center;color:var(--muted);font-size:.84rem;font-weight:600;padding:40px 10px;line-height:1.7}
 @media(max-width:900px){ .fap{width:100%} .fapbtn{padding:5px 10px;font-size:.68rem} .frq{width:76px} }
 .pgl b{font-family:'Sora',Inter,sans-serif;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
