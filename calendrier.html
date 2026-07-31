@@ -660,6 +660,17 @@ h1,.num{font-family:'Sora',sans-serif}
 .trayh b{font-family:'Sora';font-size:.88rem}
 .tcount{font-size:.68rem;font-weight:800;background:var(--red-bg);color:var(--red);padding:3px 9px;border-radius:11px}
 .trayh small{color:var(--muted);font-size:.74rem}
+/* 31/07 (patron) : « le bouton pour ouvrir, c'est trop discret, on peut oublier
+   des interventions » — le petit chevron devient un VRAI bouton orange pâle
+   « Ouvrir / Replier ». Les deux libellés vivent dans le bouton, le CSS montre
+   le bon selon l'état du bac : impossible de se désynchroniser, même quand un
+   autre écran ouvre le bac tout seul (standby, reprogrammation…). */
+.traybtn{margin-left:auto;display:inline-flex;align-items:center;background:var(--orange-soft);border:1.5px solid var(--orange-line);color:var(--orange-deep);border-radius:999px;padding:6px 14px;font-size:.74rem;font-weight:800;font-family:inherit;cursor:pointer;transition:.13s;flex:none;white-space:nowrap}
+.traybtn:hover{background:#FFE4D5}
+.traybtn i{font-style:normal;margin-left:5px;font-size:.7rem}
+.traybtn .tbr{display:none}
+.traywrap:not(.collapsed) .traybtn .tbo{display:none}
+.traywrap:not(.collapsed) .traybtn .tbr{display:inline}
 /* 29/07 : le bac glisse en s'ouvrant au lieu d'apparaitre d'un coup */
 .traycards{display:flex;gap:9px;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch;
   max-height:200px;opacity:1;transition:max-height .28s cubic-bezier(.2,.75,.25,1),opacity .18s ease,padding-bottom .28s}
@@ -1186,7 +1197,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
      defiler pour voir la fin d'apres-midi. Un clic sur la barre l'ouvre, et le
      resume dit ce qu'il contient sans qu'on ait besoin de l'ouvrir. -->
 <div class="traywrap collapsed" id="tray">
-    <div class="trayh" onclick="document.getElementById('tray').classList.toggle('collapsed')"><b style="display:inline-flex;align-items:center;gap:7px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.7 4H7.3a2 2 0 00-1.8 1.1z"/></svg>À planifier</b><span class="tcount" id="traycount">0</span><small id="traysub">— glisse une carte sur l’agenda</small><span class="chev">▾</span></div>
+    <div class="trayh" onclick="document.getElementById('tray').classList.toggle('collapsed')"><b style="display:inline-flex;align-items:center;gap:7px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.7 4H7.3a2 2 0 00-1.8 1.1z"/></svg>À planifier</b><span class="tcount" id="traycount">0</span><small id="traysub">— glisse une carte sur l’agenda</small><button class="traybtn" onclick="event.stopPropagation();document.getElementById('tray').classList.toggle('collapsed')"><span class="tbo">Ouvrir <i>▾</i></span><span class="tbr">Replier <i>▴</i></span></button></div>
     <div class="traycards" id="traycards"></div>
   </div>
 
@@ -4607,6 +4618,7 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   .traywrap{margin:0 8px 7px;padding:6px 10px}
   .traywrap .trayh{font-size:.8rem}
   .traywrap.collapsed .trayh{margin:0}
+  .traybtn{padding:5px 11px;font-size:.7rem}
 
   /* 3. tout le reste de la hauteur va au planning.
      La page réservait DEUX FOIS la place de la barre du bas : 86 px sur .main
@@ -4839,8 +4851,13 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 /* ---- le bac « À planifier », meme grammaire ---- */
 .pcard{display:flex;flex-direction:row;padding:0;overflow:hidden;position:relative}
 .pcard .c,.pcard .l1,.pcard .z,.pcard .ptop{display:none!important}
-.pgl{width:76px;flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 8px 7px 10px;color:#fff;
-  background:linear-gradient(135deg,#5A6070,#343945)}
+/* 31/07 (patron) : « trop foncé, c'est pas épuré » — le bloc ardoise passe en
+   CLAIR : pas encore de technicien = gris ardoise pâle, même famille pastel
+   que le reste. Texte encre ardoise, épingle et heure assorties. */
+.pgl{width:76px;flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 8px 7px 10px;color:#3D4A63;
+  background:#EEF1F6}
+.pgl .mgpin{stroke:#8A93AC}
+.pgl .mgh{color:#22262E;box-shadow:inset 0 0 0 1px #DDE1E8}
 .pgl b{font-family:'Sora',Inter,sans-serif;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
 .pgl i{font-style:normal;font-size:.6rem;font-weight:700;opacity:.95;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .pgl .mgh{margin-top:auto}
