@@ -432,7 +432,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         </div>
         <div class="fgroup">
           <label>Email</label>
-          <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input autocomplete="off" placeholder="Ex : contact@entreprise.fr" inputmode="email"></div>
+          <!-- 31/07 (bug patron) : ce champ n'avait PAS d'id — saveClient lisait
+               « f-email », trouvait vide, et l'email n'était JAMAIS enregistré. -->
+          <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input id="f-email" autocomplete="off" placeholder="Ex : contact@entreprise.fr" inputmode="email"></div>
         </div>
       </div>
 
@@ -445,7 +447,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           </div>
           <div class="fgroup">
             <label>Email 2</label>
-            <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input autocomplete="off" placeholder="Ex : compta@entreprise.fr" inputmode="email"></div>
+            <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input id="f-email2" autocomplete="off" placeholder="Ex : compta@entreprise.fr" inputmode="email"></div>
           </div>
         </div>
       </div>
@@ -814,6 +816,9 @@ async function cliCharge(){
   put("f-tel1", c.tel); put("f-adr", c.adresse);
   put("f-cp", c.cp); put("f-ville", c.ville); put("f-siret", c.siret);
   put("f-source", c.source);
+  /* 31/07 (bug patron) : l'email n'était jamais rechargé — le champ semblait
+     vide en modification, et ré-enregistrer l'aurait effacé. */
+  put("f-email", c.email);
 
   /* Le champ du nom devient lecture seule, avec la raison écrite à l'écran —
      un champ grisé sans explication passe pour une panne. */

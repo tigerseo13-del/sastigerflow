@@ -1577,15 +1577,28 @@ function toast(msg, undoFn){
      On ne touche qu'au tout-majuscules (\u00ab McDonald \u00bb saisi propre le reste). */
   function beauTxt(s){
     s = String(s || "");
-    if(!s || s !== s.toUpperCase() || !/[A-Z\u00c0-\u00dd]/.test(s)) return s;
+    if(!s) return s;
     var VOIE = /^(rue|avenue|av|bd|boulevard|impasse|all[\u00e9e]e|place|pl|chemin|route|rte|quai|cours|square|sente|villa|cite|cit\u00e9)$/;
     var LIA = /^(de|du|des|la|le|les|en|et|sur|sous|aux|au)$/;
     var SIGLE = /^(sci|sarl|sas|sasu|eurl|snc|sa|hlm|zac|za|zi)$/;
-    return s.toLowerCase().split(/\s+/).map(function(w, i){
+    var cap = function(pz, pos){
+      if(SIGLE.test(pz)) return pz.toUpperCase();
+      if(pos > 0 && (VOIE.test(pz) || LIA.test(pz))) return pz;
+      return pz.charAt(0).toUpperCase() + pz.slice(1);
+    };
+    if(s === s.toUpperCase() && /[A-Z\u00c0-\u00dd]/.test(s)){
+      /* tout-MAJUSCULES : on repart de z\u00e9ro (comportement d'origine) */
+      return s.toLowerCase().split(/\s+/).map(function(w, i){
+        return w.split("-").map(function(pz, j){ return cap(pz, i + j); }).join("-");
+      }).join(" ");
+    }
+    /* 31/07 : le tout-minuscules se redresse AU MOT (\u00ab thi huong giang BUI \u00bb
+       \u2192 \u00ab Thi Huong Giang BUI \u00bb) \u2014 un mot qui porte d\u00e9j\u00e0 une majuscule
+       (BUI, McDonald) est une intention de saisie : on n'y touche pas. */
+    return s.split(/\s+/).map(function(w, i){
       return w.split("-").map(function(pz, j){
-        if(SIGLE.test(pz)) return pz.toUpperCase();
-        if(i + j > 0 && (VOIE.test(pz) || LIA.test(pz))) return pz;
-        return pz.charAt(0).toUpperCase() + pz.slice(1);
+        if(pz !== pz.toLowerCase() || !/[a-z\u00e0-\u00ff]/.test(pz)) return pz;
+        return cap(pz, i + j);
       }).join("-");
     }).join(" ");
   }
@@ -1634,8 +1647,11 @@ function toast(msg, undoFn){
     var _sub = ["Contact principal", _telC, _emC].filter(Boolean).join(" · ");
     if(!_telC && !_emC) _sub = "Contact principal · téléphone et e-mail à compléter";
     /* si la fiche nomme un interlocuteur (champ contact), c'est LUI le contact
-       principal ; sinon le client lui-même (un particulier EST son contact) */
-    var _qn = beauTxt((r && r.contact) || q);
+       principal ; sinon le client lui-même (un particulier EST son contact).
+       31/07 : PAS pour un particulier — son champ contact stocke juste le
+       PRÉNOM (recomposition du formulaire), le contact principal reste le
+       nom complet. */
+    var _qn = beauTxt((r && r.contact && r.type !== "particulier") ? r.contact : q);
     _cl.innerHTML = true
       ? '<div class="contact"><div><b>' + _qn + '</b><small>' + _sub + '</small></div>'
         + '<span class="cbtns">'
