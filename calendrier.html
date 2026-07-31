@@ -1197,8 +1197,25 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
      defiler pour voir la fin d'apres-midi. Un clic sur la barre l'ouvre, et le
      resume dit ce qu'il contient sans qu'on ait besoin de l'ouvrir. -->
 <div class="traywrap collapsed" id="tray">
-    <div class="trayh" onclick="document.getElementById('tray').classList.toggle('collapsed')"><b style="display:inline-flex;align-items:center;gap:7px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.7 4H7.3a2 2 0 00-1.8 1.1z"/></svg>À planifier</b><span class="tcount" id="traycount">0</span><small id="traysub">— glisse une carte sur l’agenda</small><button class="traybtn" onclick="event.stopPropagation();document.getElementById('tray').classList.toggle('collapsed')"><span class="tbo">Ouvrir <i>▾</i></span><span class="tbr">Replier <i>▴</i></span></button></div>
+    <div class="trayh" onclick="document.getElementById('tray').classList.toggle('collapsed')"><b style="display:inline-flex;align-items:center;gap:7px"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange-deep)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.7 4H7.3a2 2 0 00-1.8 1.1z"/></svg>À planifier</b><span class="tcount" id="traycount">0</span><small id="traysub">— glisse une carte sur l’agenda</small><button class="fapbtn" id="fapbtn" onclick="event.stopPropagation();fileOpen()" title="Les clients à rappeler pour caler un RDV">📞 File d'appels <b id="fapn">0</b></button><button class="traybtn" onclick="event.stopPropagation();document.getElementById('tray').classList.toggle('collapsed')"><span class="tbo">Ouvrir <i>▾</i></span><span class="tbr">Replier <i>▴</i></span></button></div>
     <div class="traycards" id="traycards"></div>
+  </div>
+
+  <!-- 31/07 (patron, validé) : la FILE D'APPELS — les stand-by se traitent en
+       liste, de haut en bas, au téléphone. Retards en tête, un clic par
+       résultat : 📞 appelle, « Caler le RDV » ouvre la planification,
+       « +2 j » repousse le rappel et compte la tentative. -->
+  <div class="fapveil" id="fapveil" onclick="fileClose()"></div>
+  <div class="fap" id="fap">
+    <div class="fap-h">
+      <span class="fap-t">📞 File d'appels</span>
+      <span class="fap-chip late" id="fap-late" style="display:none"></span>
+      <span class="fap-chip today" id="fap-today" style="display:none"></span>
+      <span class="fap-n" id="fap-total"></span>
+      <button class="fap-x" onclick="fileClose()" title="Fermer">✕</button>
+    </div>
+    <div class="fap-sub">Retards en tête · un appel = un clic · « Caler le RDV » ouvre la planification, « +2 j » repousse le rappel</div>
+    <div class="fap-body" id="fapbody"></div>
   </div>
 
   <div class="calzone">
@@ -1430,7 +1447,8 @@ const PENDING = [
   {pid:PID++, type:"punaise", client:"Mme Perrin",          cp:"75013", ville:"Paris",      dur:2},
   {pid:PID++, type:"rongeur", client:"Tabac de la Mairie",  cp:"92600", ville:"Asnières",   dur:2},
   {pid:PID++, type:"desinf",  client:"Food-truck Marcel",   cp:"75019", ville:"Paris",      dur:1},
-  {pid:PID++, type:"punaise", client:"Mme Ferreira",        cp:"94200", ville:"Ivry",       dur:2, standby:true, since:"2026-08-14", rappel:"2026-08-20"},
+  {pid:PID++, type:"punaise", client:"Mme Ferreira",        cp:"94200", ville:"Ivry",       dur:2, standby:true, since:"2026-08-14", rappel:"2026-08-20", cren:"après-midi", tent:3, note:"Préfère être rappelée après 12h"},
+  {pid:PID++, type:"rongeur", client:"Hôtel du Parc",       cp:"75017", ville:"Paris",      dur:1.5, standby:true, since:"2026-08-23", rappel:"2026-08-25", cren:"matin", tent:2, note:"Réception fermée entre 14h et 16h"},
 ];
 
 /* ===== persistance des placements du bac : survivre au changement d'onglet ===== */
@@ -1592,6 +1610,104 @@ function renderTray(){
     </div>`;
   }).join("") : `<div class="trayempty" style="display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:7px 6px;text-align:left"><svg viewBox="0 0 48 40" style="width:40px;height:34px;flex:none"><g fill="none" stroke="#C9CCD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14 L11 9 C14 7.5 16.5 7.4 18.5 8.5"/><path d="M34 14 L37 9 C34 7.5 31.5 7.4 29.5 8.5"/><path d="M24 36 C18.5 36 14 33 12.5 28 C11.4 24 11.6 20 13 16.5 C14 14 16 12 18.5 10.8 C20.3 10 22.1 9.6 24 9.6 C25.9 9.6 27.7 10 29.5 10.8 C32 12 34 14 35 16.5 C36.4 20 36.6 24 35.5 28 C34 33 29.5 36 24 36 Z"/><path d="M17 22 Q19 23.5 21 22"/><path d="M27 22 Q29 23.5 31 22"/><path d="M21.8 27 H26.2 L24 29.4 Z"/><path d="M24 29.4 V31.6"/><path d="M24 31.6 C22.3 31.8 20.8 31.2 19.8 30"/><path d="M24 31.6 C25.7 31.8 27.2 31.2 28.2 30"/></g><text x="38" y="12" font-size="8" fill="#C9CCD4">z</text><text x="42" y="7" font-size="6" fill="#D8DAE1">z</text></svg><b style="font-size:.84rem">Le bac fait la sieste</b><small style="margin:0;color:var(--muted)">— rien à planifier, tout est affecté</small></div>`;
   document.getElementById("tray").style.display = "";
+  fapSync();
+}
+
+/* ===== FILE D'APPELS (31/07, patron) =====
+   Les stand-by et suivis à rappeler, en LISTE verticale triée : retards
+   d'abord (rouge), puis aujourd'hui (ambre), puis à venir. Pensée pour
+   15 rappels/jour : on descend la file, un clic par résultat. */
+function fileItems(){
+  return PENDING.filter(p => p.standby || p.suivi || p.rappel);
+}
+function fileTri(list){
+  const t = iso(TODAYD);
+  const g = p => !p.rappel ? 3 : p.rappel < t ? 0 : p.rappel === t ? 1 : 2;
+  return [...list].sort((a, b) => g(a) - g(b) || String(a.rappel || "9999").localeCompare(String(b.rappel || "9999")));
+}
+function fapSync(){
+  const b = document.getElementById("fapbtn"), n = document.getElementById("fapn");
+  if(!b || !n) return;
+  const list = fileItems();
+  const t = iso(TODAYD);
+  const late = list.filter(p => p.rappel && p.rappel < t).length;
+  n.textContent = list.length;
+  b.classList.toggle("late", late > 0);
+  b.style.display = list.length ? "" : "none";
+  if(document.getElementById("fap").classList.contains("open")) fileRender();
+}
+function fileOpen(){
+  fileRender();
+  document.getElementById("fap").classList.add("open");
+  document.getElementById("fapveil").classList.add("on");
+}
+function fileClose(){
+  document.getElementById("fap").classList.remove("open");
+  document.getElementById("fapveil").classList.remove("on");
+}
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && document.getElementById("fap").classList.contains("open")) fileClose();
+});
+function fileQ(p){
+  const t = iso(TODAYD);
+  if(!p.rappel) return ["à caler", ""];
+  const dj = d => d.split("-").reverse().slice(0, 2).join("/");
+  if(p.rappel < t){
+    const j = Math.round((new Date(t + "T12:00:00") - new Date(p.rappel + "T12:00:00")) / 86400000);
+    return ["en retard<br>" + (j === 1 ? "depuis hier" : "· " + j + " jours"), "lt"];
+  }
+  if(p.rappel === t) return ["aujourd'hui" + (p.cren ? "<br>" + p.cren : ""), "tod"];
+  const dm = new Date(t + "T12:00:00"); dm.setDate(dm.getDate() + 1);
+  if(p.rappel === iso(dm)) return ["demain" + (p.cren ? "<br>" + p.cren : ""), ""];
+  return [dj(p.rappel) + (p.cren ? "<br>" + p.cren : ""), ""];
+}
+function fileRender(){
+  const body = document.getElementById("fapbody");
+  if(!body) return;
+  const list = fileTri(fileItems());
+  const t = iso(TODAYD);
+  const late = list.filter(p => p.rappel && p.rappel < t).length;
+  const auj = list.filter(p => p.rappel === t).length;
+  const el = (id, txt, show) => { const e = document.getElementById(id); if(e){ e.textContent = txt; e.style.display = show ? "" : "none"; } };
+  el("fap-late", late + " en retard", late > 0);
+  el("fap-today", auj + " aujourd'hui", auj > 0);
+  el("fap-total", list.length + " à traiter", true);
+  if(!list.length){
+    body.innerHTML = `<div class="fap-vide">📞 Personne à rappeler — la file est vide.<br><small>« Client injoignable » sur une intervention l'enverra ici avec sa date de rappel.</small></div>`;
+    return;
+  }
+  body.innerHTML = list.map(p => {
+    const T = typeDe(p), m = p.mode || modeDe(p.client);
+    const tel = telOf(p), telC = String(tel || "").replace(/\s/g, "");
+    const [q, cls] = fileQ(p);
+    const motif = T.lbl + " — " + (MODES[m] ? MODES[m].lbl.split(" / ")[0].replace(/[\s ]*[··][\s ]*€\s*$/, "") : "") + " · " + p.cp + " " + p.ville;
+    return `<div class="fr ${cls}" data-fpid="${p.pid}">
+      <span class="frq">${q}</span>
+      <div class="frmid">
+        <div class="frl1">${p.client} <small>${telFmt(tel)}</small>${(p.tent || 1) > 1 ? `<span class="ftent">${p.tent}ᵉ tentative</span>` : ""}</div>
+        <div class="frl2">${motif}${p.note ? ` · <i>${p.note}</i>` : ""}</div>
+      </div>
+      <a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${p.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
+      <button class="frcal" onclick="fileCaler(${p.pid})">📅 Caler le RDV</button>
+      <button class="frsz" onclick="fileSnooze(${p.pid})" title="Toujours injoignable — repousser le rappel de 2 jours">+2 j</button>
+    </div>`;
+  }).join("");
+}
+function fileCaler(pid){
+  fileClose();
+  openPending(pid);
+  document.getElementById('tray').classList.remove('collapsed');
+}
+function fileSnooze(pid){
+  const p = PENDING.find(x => x.pid === pid);
+  if(!p) return;
+  const t = iso(TODAYD);
+  const base = (!p.rappel || p.rappel < t) ? t : p.rappel;
+  const d = new Date(base + "T12:00:00"); d.setDate(d.getDate() + 2);
+  p.rappel = iso(d);
+  p.tent = (p.tent || 1) + 1;
+  fileRender(); renderTray();
+  toast("📞 " + p.client + " — rappel repoussé au " + p.rappel.split("-").reverse().slice(0, 2).join("/") + " · " + p.tent + "ᵉ tentative");
 }
 
 /* ================= ÉTAT ================= */
@@ -2744,7 +2860,7 @@ function confirmStandby(id){
   const cren = SBCREN && SBCREN !== "Indifférent" ? SBCREN.split(" ·")[0].toLowerCase() : "";
   plannedRemove(v.client, v.cp);
   PENDING.unshift({pid:PID++, type:v.type, typeLibre:v.typeLibre || "", client:v.client, cp:v.cp, ville:v.ville, dur:v.dur,
-    standby:true, since:iso(TODAYD), rappel});
+    standby:true, since:iso(TODAYD), rappel, cren, tent:1});
   /* tâche de rappel envoyée au module Tâches */
   try{
     const inbox = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]");
@@ -4894,6 +5010,45 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .rchr .chok{background:var(--green-bg);color:var(--green-d);border-radius:9px;padding:6px 12px;font-size:.76rem;font-weight:800;display:inline-flex;align-items:center;gap:6px}
 .rchr .chr{border:1.5px solid var(--line);background:#fff;color:var(--ink-2);border-radius:9px;padding:5px 11px;font-size:.7rem;font-weight:800;font-family:inherit;cursor:pointer}
 .rchr small{font-size:.68rem;font-weight:600;color:var(--muted)}
+/* ---- file d'appels (31/07) ---- */
+.fapbtn{margin-left:auto;display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--line);color:var(--ink-2);border-radius:999px;padding:6px 14px;font-size:.74rem;font-weight:800;font-family:inherit;cursor:pointer;transition:.13s;flex:none;white-space:nowrap}
+.fapbtn:hover{border-color:#CBD0DA;color:var(--ink)}
+.fapbtn b{background:#F1F2F5;color:var(--ink-2);border-radius:999px;padding:1px 8px;font-size:.68rem}
+.fapbtn.late{background:#FDF0EF;border-color:#F3C1BC;color:#B3261E}
+.fapbtn.late b{background:#D63B33;color:#fff}
+.fapbtn + .traybtn{margin-left:10px}
+.fapveil{position:fixed;inset:0;background:rgba(16,18,22,.34);z-index:88;opacity:0;pointer-events:none;transition:.2s}
+.fapveil.on{opacity:1;pointer-events:auto}
+.fap{position:fixed;top:0;right:0;bottom:0;width:660px;max-width:100%;background:var(--bg);z-index:92;transform:translateX(105%);transition:transform .26s cubic-bezier(.2,.8,.2,1);box-shadow:-18px 0 50px rgba(16,18,22,.2);display:flex;flex-direction:column;padding:16px 16px 12px}
+.fap.open{transform:none}
+.fap-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.fap-t{font-family:'Sora',Inter,sans-serif;font-size:1.02rem;font-weight:800}
+.fap-chip{font-size:.68rem;font-weight:800;border-radius:999px;padding:4px 11px}
+.fap-chip.late{background:#FDF0EF;color:#B3261E}
+.fap-chip.today{background:#FFFBEB;color:#A16207}
+.fap-n{margin-left:auto;font-size:.72rem;font-weight:700;color:var(--muted)}
+.fap-x{width:34px;height:34px;border-radius:11px;background:#fff;border:1px solid var(--line);font-size:.85rem;color:var(--ink-2);cursor:pointer;flex:none}
+.fap-sub{font-size:.7rem;font-weight:600;color:var(--muted);margin:5px 0 12px}
+.fap-body{flex:1;overflow-y:auto;padding-bottom:8px}
+.fr{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #EEF0F4;border-radius:13px;padding:10px 12px;margin-bottom:8px}
+.fr.lt{border-color:#F3C1BC;box-shadow:inset 3px 0 0 #D63B33}
+.frq{flex:none;width:92px;text-align:center;font-size:.66rem;font-weight:800;padding:6px 4px;border-radius:9px;background:#F4F5F8;color:#6C7285;line-height:1.35}
+.fr.lt .frq{background:#FDF0EF;color:#B3261E}
+.fr.tod .frq{background:#FFFBEB;color:#A16207}
+.frmid{flex:1;min-width:0}
+.frl1{font-size:.8rem;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.frl1 small{font-size:.68rem;font-weight:700;color:var(--muted)}
+.frl1 .ftent{font-size:.58rem;font-weight:800;background:#F1F2F5;color:#6C7285;border-radius:7px;padding:2px 7px}
+.frl2{font-size:.68rem;font-weight:600;color:#8A90A0;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frl2 i{font-style:normal;color:#B0876A}
+.frtel{flex:none;width:34px;height:34px;border-radius:50%;background:var(--green-bg);border:1.5px solid var(--green-line, #BFE6D8);display:grid;place-items:center;text-decoration:none}
+.frtel svg{width:15px;height:15px;stroke:var(--green-d);fill:none;stroke-width:2;stroke-linecap:round}
+.frcal{flex:none;border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:9px 13px;white-space:nowrap}
+.frcal:hover{background:var(--orange-deep)}
+.frsz{flex:none;cursor:pointer;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.7rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 11px;white-space:nowrap}
+.frsz:hover{border-color:#CBD0DA}
+.fap-vide{text-align:center;color:var(--muted);font-size:.84rem;font-weight:600;padding:40px 10px;line-height:1.7}
+@media(max-width:900px){ .fap{width:100%} .fapbtn{padding:5px 10px;font-size:.68rem} .frq{width:76px} }
 .pgl b{font-family:'Sora',Inter,sans-serif;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
 .pgl i{font-style:normal;font-size:.6rem;font-weight:700;opacity:.95;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .pgl .mgh{margin-top:auto}
