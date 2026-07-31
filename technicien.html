@@ -1716,5 +1716,37 @@ document.addEventListener("click", function(e){
   }
 });
 </script>
+<script>
+/* 31/07 (valide) : la COULEUR du technicien se choisit ICI et suit partout
+   (agenda : colonne, cartouches, points, badges — cle = prenom). */
+(function(){
+  const COLS = ["#2E5CE6", "#0E8A7A", "#7B3BEA", "#C87B08", "#E5484D", "#0F8A4F", "#D6409F", "#0EA5E9", "#F76808", "#6E56CF"];
+  const key = () => { try{ return ((TECHS[TID].prenom || TECHS[TID].nom || "") + "").trim(); }catch(e){ return ""; } };
+  const lit = () => { try{ return JSON.parse(localStorage.getItem("tigerflow-tech-couleurs")) || {}; }catch(e){ return {}; } };
+  function pose(){
+    if(document.getElementById("tcolor-row")) return;
+    const anc = [...document.querySelectorAll("button")].find(e => /Poser un congé/.test(e.textContent))
+      || [...document.querySelectorAll("div,span")].find(e => e.children.length === 0 && /CONTACT RAPIDE/i.test(e.textContent));
+    if(!anc) return;
+    const cur = lit()[key()];
+    const d = document.createElement("div");
+    d.id = "tcolor-row";
+    d.innerHTML = '<div style="font:800 .68rem Inter;letter-spacing:.09em;color:#A6ABBB;margin:13px 0 8px;text-transform:uppercase">Couleur dans l\u2019agenda</div>' +
+      '<div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center">' + COLS.map(c =>
+        '<button data-c="' + c + '" title="' + c + '" style="width:27px;height:27px;border-radius:50%;border:2.5px solid ' + (cur === c ? "#171A20" : "#fff") + ';box-shadow:0 0 0 1px #E2E5EB;background:' + c + ';cursor:pointer;padding:0"></button>').join("") + "</div>";
+    anc.parentElement.insertBefore(d, anc);
+    d.addEventListener("click", ev => {
+      const b3 = ev.target.closest("button[data-c]");
+      if(!b3) return;
+      const m = lit(); m[key()] = b3.dataset.c;
+      try{ localStorage.setItem("tigerflow-tech-couleurs", JSON.stringify(m)); }catch(e){}
+      d.querySelectorAll("button[data-c]").forEach(x => x.style.borderColor = x === b3 ? "#171A20" : "#fff");
+      if(typeof toast === "function") toast("🎨 Couleur de " + key() + " enregistrée — regarde l\u2019agenda");
+    });
+  }
+  window.addEventListener("load", pose);
+  setTimeout(pose, 500); setTimeout(pose, 1400);
+})();
+</script>
 </body>
 </html>

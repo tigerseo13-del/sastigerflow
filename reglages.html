@@ -414,9 +414,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
 /* cartes Prestations (31/07, valide) */
 .pfam{margin:4px 0 26px}   /* 31/07 patron : « espace chaque famille » — grande respiration entre groupes */
-.pfam-h{display:flex;align-items:center;gap:10px;margin:0 0 11px;background:#23262E;border:0;border-radius:11px;padding:11px 15px}   /* « mets les titres en noir » : bande ENCRE, texte blanc — impossible de confondre famille et prestation */
-.pfam-h span{font-family:'Sora';font-weight:800;font-size:.88rem;letter-spacing:.06em;text-transform:uppercase;color:#fff}
-.pfam-h i{font-style:normal;background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:8px;padding:1px 9px;font-size:.72rem;font-weight:800}
+.pfam-h{display:flex;align-items:center;gap:10px;margin:0 0 11px;border:0;border-radius:11px;padding:11px 15px}   /* 31/07 visuel B valide : chaque famille prend sa couleur PASTEL (langage des cartouches agenda) */
+.pfam-h span{font-family:'Sora';font-weight:800;font-size:.88rem;letter-spacing:.06em;text-transform:uppercase}
+.pfam-h i{font-style:normal;background:rgba(255,255,255,.72);border:0;border-radius:8px;padding:1px 9px;font-size:.72rem;font-weight:800}
 .pfam-h em{flex:1}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pcard{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #EEF0F4;border-radius:14px;padding:12px 14px;box-shadow:0 4px 14px -10px rgba(23,26,32,.14);cursor:pointer;transition:.12s}
@@ -1049,6 +1049,13 @@ R.prest = () => {
     return /rat|souris|dérat/.test(c) ? "🐀" : /punaise/.test(c) ? "🪲"
     : /cafard|blatte|insecte|désinsect|fourmi|chenille/.test(c) ? "🪳" : /guêpe|frelon/.test(c) ? "🐝"
     : /pigeon|volatile|goéland/.test(c) ? "🕊️" : /désinfec/.test(c) ? "🧴" : "🛠️"; };
+  const FTINT = c => { c = String(c || "").toLowerCase();
+    return /rat|souris|dérat/.test(c) ? ["#EEF1F6", "#3D4A63"]
+    : /punaise/.test(c) ? ["#EAF8F1", "#0E7A46"]
+    : /cafard|blatte|insecte|désinsect|fourmi|chenille/.test(c) ? ["#FCECEA", "#A3352E"]
+    : /guêpe|frelon/.test(c) ? ["#FFF6E3", "#8A6407"]
+    : /pigeon|volatile|goéland/.test(c) ? ["#F1EDFA", "#5B4A9E"]
+    : /désinfec/.test(c) ? ["#E9F6FD", "#20618C"] : ["#F1F3F7", "#3D434E"]; };
   window.PF = window.PF || {cat: "all", st: "all", q: ""};
   const F2 = PREST.filter(x => (PF.cat === "all" || x.cat === PF.cat)
     && (PF.st === "all" || (PF.st === "on" ? !x.off : x.off))
@@ -1086,7 +1093,7 @@ R.prest = () => {
     </div>
     ${F2.length ? cats.map(c => `
     <div class="pfam">
-      <div class="pfam-h"><span>${EMOJ(c)} ${c}</span><i>${F2.filter(x => x.cat === c).length}</i><em></em></div>
+      <div class="pfam-h" style="background:${FTINT(c)[0]}"><span style="color:${FTINT(c)[1]}">${EMOJ(c)} ${c}</span><i style="color:${FTINT(c)[1]}">${F2.filter(x => x.cat === c).length}</i><em></em></div>
       <div class="pgrid">${F2.filter(x => x.cat === c).map(carte).join("")}</div>
     </div>`).join("") : `<div style="text-align:center;color:var(--muted);padding:34px">Aucune prestation ne correspond à ces filtres.</div>`}
     <div class="tfoot"><span>${F2.length ? "1-" + F2.length : "0"} sur ${PREST.length} affichée${F2.length > 1 ? "s" : ""}</span></div>

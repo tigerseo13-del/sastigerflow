@@ -1056,6 +1056,15 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
 .tdall{display:flex;width:100%;align-items:center;gap:9px;padding:10px 12px;border:0;background:#F6F7FA;font:800 .84rem Inter,sans-serif;color:var(--ink);cursor:pointer;border-radius:10px}
 .tdall:hover{background:#EEF0F4}
+
+/* 31/07 : colonnes deplacables + rangee de pastilles du panneau (visuel 1 valide) */
+.tcol-head{cursor:grab}
+.tcol-head.dgo{box-shadow:inset 4px 0 0 var(--orange), 0 1px 0 var(--line)!important;background:#FFF9F5!important}
+.brow2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:11px 0 3px}
+.brow2 .dst{font-size:.78rem!important;padding:7px 13px!important;border-radius:10px!important;letter-spacing:.02em}
+.brow2 .mchip{font-size:.78rem!important;padding:7px 13px!important;border-radius:10px!important}
+.brow2 .pbdg2{display:inline-flex;align-items:center;gap:7px;font:800 .78rem Inter,sans-serif;padding:7px 13px;border-radius:10px;background:#FFF6E3;color:#8A6407}
+.brow2 .pbdg2 i{width:8px;height:8px;border-radius:50%}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 </head>
@@ -1589,6 +1598,28 @@ PENDING.forEach(p => {
   if(p.since) p.since = shiftIso(p.since);
   if(p.rappel) p.rappel = shiftIso(p.rappel);
 });
+/* 31/07 (valide) : ORDRE des colonnes personnalisable par glisser d'en-tete.
+   TECHS reste indexe par id (TECHS[v.tech] partout) — l'ordre vit a part. */
+let TORD = null;
+try{ TORD = JSON.parse(localStorage.getItem("tigerflow-techs-ordre")); }catch(e){}
+if(!Array.isArray(TORD) || TORD.length !== TECHS.length || TORD.some(i => !TECHS[i])) TORD = TECHS.map(t => t.id);
+const techsOrdonnes = () => TORD.map(i => TECHS[i]).filter(Boolean);
+let TDRAG = null;
+function ordDrop(idCible){
+  if(TDRAG === null || TDRAG === idCible) return;
+  const a2 = TORD.indexOf(TDRAG), b2 = TORD.indexOf(idCible);
+  TORD.splice(a2, 1);
+  TORD.splice(TORD.indexOf(idCible) + (a2 < b2 ? 1 : 0), 0, TDRAG);
+  TDRAG = null;
+  try{ localStorage.setItem("tigerflow-techs-ordre", JSON.stringify(TORD)); }catch(e){}
+  render(); renderChips();
+  toast("↔ Ordre des colonnes enregistré");
+}
+/* 31/07 (valide) : couleur choisie sur la fiche technicien — elle suit partout. */
+try{
+  const _cc = JSON.parse(localStorage.getItem("tigerflow-tech-couleurs")) || {};
+  TECHS.forEach(t => { const c2 = _cc[(t.nom || "").trim()]; if(c2){ t.c = c2; t.grad = c2; t.bg = c2 + "1A"; } });
+}catch(e){}
 let VIS = new Set(TECHS.map(t=>t.id));
 let FSTAT = "all";
 
@@ -1648,7 +1679,7 @@ function filtered(){
 /* ================= PUCES TECHNICIENS ================= */
 function renderChips(){
   const pv = periodEvs(true).evs;
-  document.getElementById('tdlist').innerHTML = TECHS.map(t=>{
+  document.getElementById('tdlist').innerHTML = techsOrdonnes().map(t=>{
     const tv = pv.filter(v => v.tech === t.id);
     const h = tv.reduce((a, v) => a + v.dur, 0);
     return `
@@ -1785,7 +1816,7 @@ function renderDay(){
   document.getElementById('datetitle').textContent =
     JOURS[CUR.getDay()] + " " + CUR.getDate() + " " + MOIS[CUR.getMonth()] + " " + CUR.getFullYear();
 
-  const techs = TECHS.filter(t=>VIS.has(t.id));
+  const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
   const evs = filtered().filter(v=>v.date===d);
 
   /* 29/07 : la pastille de l'heure courante vit UNE fois, dans la gouttiere
@@ -1903,7 +1934,7 @@ function renderDay(){
     /* le trait « maintenant » sans pastille : elle est dans la gouttiere */
     const now = showNow ? `<div class="nowline" style="top:${(NOWH-DAYSTART)*64}px"></div>` : "";
     return `<div class="tcol">
-      <div class="tcol-head ${mine.length ? '' : 'freehead'}" style="box-shadow:0 1px 0 var(--line), inset 0 -3px 0 ${t.c}">
+      <div class="tcol-head ${mine.length ? '' : 'freehead'}" style="box-shadow:0 1px 0 var(--line), inset 0 -3px 0 ${t.c}" draggable="true" title="Glisser pour déplacer la colonne de ${t.nom}" ondragstart="TDRAG=${t.id}" ondragover="event.preventDefault();this.classList.add('dgo')" ondragleave="this.classList.remove('dgo')" ondrop="event.preventDefault();this.classList.remove('dgo');ordDrop(${t.id})">
         <div style="min-width:0;flex:1">
           <span class="tnrow">
             <i class="tdot2" style="background:${t.c}"></i>
@@ -2552,13 +2583,11 @@ function renderDetail(){
           <span class="bh">${hstr(v.start)} – ${hstr(v.start + v.dur)}</span>
           <small>${dateTxt}</small>
         </div>
-        <div class="br">
-          <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
-          <span class="bchips">
-            <span class="mchip m-${v.mode}" style="font-size:.66rem;padding:3px 9px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + "\u00a0€" : ""}</span>
-            <span class="pbdg"><i style="background:${PRIOS_I[v.prio]}"></i>${v.prio}</span>
-          </span>
-        </div>
+      </div>
+      <div class="brow2">
+        <span class="dst ${sc}">${sl}</span>
+        <span class="mchip m-${v.mode}">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + "\u00a0€" : ""}</span>
+        <span class="pbdg2"><i style="background:${PRIOS_I[v.prio]}"></i>Priorité ${v.prio}</span>
       </div>
       <button type="button" class="rowb" onclick="window.open('https://www.google.com/maps/search/${encodeURIComponent((v.rue ? v.rue + " " : "") + v.cp + " " + v.ville)}','_blank')">
         <svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>
