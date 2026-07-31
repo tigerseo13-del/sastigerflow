@@ -771,6 +771,9 @@ body.dragging .busyzone{opacity:1}
 .ev:hover .rsz::after{opacity:.8}
 .lbadge{font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:9px;background:var(--blue-bg);color:var(--blue-d);letter-spacing:.02em;text-transform:uppercase}
 .lbadge.late{background:var(--red-bg);color:var(--red)}
+/* devis en attente / à relancer (31/07) */
+.lbadge.dvwait{background:#FFFBEB;color:#A16207;border:1px solid #F6DE8B}
+.lbadge.dvlate{background:#FDF0EF;color:#B3261E;border:1px solid #F3C1BC;white-space:nowrap}
 
 /* Conflits + charge */
 .ev.conflict{box-shadow:0 0 0 2px var(--red), 0 8px 20px -6px rgba(226,58,58,.35)}
@@ -1220,6 +1223,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <span class="fap-v2">(call queue — to be developed in V2 · note for Saigon Technologie)</span>
       <span class="fap-chip late" id="fap-late" style="display:none"></span>
       <span class="fap-chip today" id="fap-today" style="display:none"></span>
+      <span class="fap-chip dort" id="fap-dort" style="display:none"></span>
       <span class="fap-n" id="fap-total"></span>
       <button class="fap-x" onclick="fileClose()" title="Fermer">✕</button>
     </div>
@@ -1645,11 +1649,12 @@ function fapSync(){
   const b = document.getElementById("fapbtn"), n = document.getElementById("fapn");
   if(!b || !n) return;
   const list = fileItems();
+  const dvs = (typeof dvActifs === "function") ? dvActifs() : [];
   const t = iso(TODAYD);
-  const late = list.filter(p => p.rappel && p.rappel < t).length;
-  n.textContent = list.length;
+  const late = list.filter(p => p.rappel && p.rappel < t).length + dvs.filter(dvLate).length;
+  n.textContent = list.length + dvs.length;
   b.classList.toggle("late", late > 0);
-  b.style.display = list.length ? "" : "none";
+  b.style.display = (list.length + dvs.length) ? "" : "none";
   if(document.getElementById("fap").classList.contains("open")) fileRender();
 }
 function fileOpen(){
@@ -1684,18 +1689,39 @@ function fileRender(){
   const body = document.getElementById("fapbody");
   if(!body) return;
   const list = fileTri(fileItems());
+  const dvs = dvActifs();
   const t = iso(TODAYD);
-  const late = list.filter(p => p.rappel && p.rappel < t).length;
-  const auj = list.filter(p => p.rappel === t).length;
+  const late = list.filter(p => p.rappel && p.rappel < t).length + dvs.filter(dvLate).length;
+  const auj = list.filter(p => p.rappel === t).length + dvs.filter(x => x.relance === t).length;
+  const dort = dvs.reduce((a, x) => a + (+x.montant || 0), 0);
   const el = (id, txt, show) => { const e = document.getElementById(id); if(e){ e.textContent = txt; e.style.display = show ? "" : "none"; } };
   el("fap-late", late + " en retard", late > 0);
   el("fap-today", auj + " aujourd'hui", auj > 0);
-  el("fap-total", list.length + " à traiter", true);
-  if(!list.length){
+  el("fap-dort", "💤 " + dvs.length + " devis · " + dvEur(dort) + " dorment", dvs.length > 0);
+  el("fap-total", (list.length + dvs.length) + " à traiter", true);
+  if(!list.length && !dvs.length){
     body.innerHTML = `<div class="fap-vide">📞 Personne à rappeler — la file est vide.<br><small>« Client injoignable » sur une intervention l'enverra ici avec sa date de rappel.</small></div>`;
     return;
   }
-  body.innerHTML = list.map(p => {
+  const rowDevis = x => {
+    const lt = dvLate(x);
+    const jN = Math.max(0, Math.round((new Date(t + "T12:00:00") - new Date(x.envoye + "T12:00:00")) / 86400000));
+    const telC = String(x.tel || "").replace(/\s/g, "");
+    return `<div class="fr dv ${lt ? "lt" : ""}" data-dvref="${x.ref}">
+      <span class="frq">${lt ? "à relancer" : "devis"}<br>J+${jN}</span>
+      <div class="frmid">
+        <div class="frl1">${x.client} ${x.tel ? `<small>${telFmt(x.tel)}</small>` : ""}<span class="dvamt">${dvEur(x.montant)} en attente</span>${(x.tent || 1) > 1 ? `<span class="ftent">${x.tent}ᵉ relance</span>` : ""}</div>
+        <div class="frl2">Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")}${x.note ? ` · <i>« ${x.note} »</i>` : ""}</div>
+      </div>
+      ${telC ? `<a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${x.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>` : ""}
+      <button class="dvoui" onclick="dvOui('${x.ref}')" title="Le client accepte le devis">✓ A dit OUI</button>
+      <span class="frszg" title="Il réfléchit encore — repousser la relance">
+        <button onclick="dvSnooze('${x.ref}',2)">+2 j</button><button onclick="dvSnooze('${x.ref}',7)">+7 j</button>
+      </span>
+      <button class="dvko" onclick="dvPerdu('${x.ref}')" title="Devis perdu — on arrête de courir">✗</button>
+    </div>`;
+  };
+  const rowPending = p => {
     const T = typeDe(p), m = p.mode || modeDe(p.client);
     const tel = telOf(p), telC = String(tel || "").replace(/\s/g, "");
     const [q, cls] = fileQ(p);
@@ -1720,7 +1746,14 @@ function fileRender(){
         <button class="no" onclick="FNEDIT=null;fileRender()">Annuler</button></div>
     </div>` : ""}
     ${CDPID === p.pid ? `<div class="fcaled" id="fcaled">${calPickHTML(p)}</div>` : ""}`;
-  }).join("");
+  };
+  /* fusion : les plus urgents d'abord, devis et rappels confondus */
+  const g = d => !d ? 3 : d < t ? 0 : d === t ? 1 : 2;
+  const rows = [
+    ...list.map(p => ({k: "p", o: p, d: p.rappel || "9999"})),
+    ...dvs.map(x => ({k: "d", o: x, d: x.relance || "9999"}))
+  ].sort((a, b) => g(a.d) - g(b.d) || String(a.d).localeCompare(String(b.d)));
+  body.innerHTML = rows.map(r => r.k === "p" ? rowPending(r.o) : rowDevis(r.o)).join("");
 }
 function fileCaler(pid){
   /* 31/07 (patron) : « la pop-up en bas du panneau, pas tout écran » — le
@@ -1867,6 +1900,8 @@ const shiftIso = d => {
 const NOWH = (() => { const n = new Date(); return n.getHours() + n.getMinutes()/60; })();
 /* Les données de démo suivent la vraie date du jour */
 INTERVS.forEach(v => { if(!v.fromTray) v.date = shiftIso(v.date); });
+
+
 PENDING.forEach(p => {
   if(p.since) p.since = shiftIso(p.since);
   if(p.rappel) p.rappel = shiftIso(p.rappel);
@@ -1900,6 +1935,68 @@ const JOURS = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"
 const JOURS_C = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const iso = d => d.toISOString().slice(0,10);
+
+/* ===== DEVIS EN ATTENTE — l'argent qui dort (31/07, patron, validé) =====
+   Une visite devis terminée a TROIS issues : signé, perdu… ou « je réfléchis ».
+   Ce troisième cas vit ici : registre tigerflow-devis-attente, badge sur la
+   cartouche (📋 en attente → 🔔 à relancer passé la date), et une ligne dans
+   la File d'appels avec le montant qui dort et un clic par issue. */
+const DVKEY = "tigerflow-devis-attente";
+let DEVAT = null;
+try{ const _a = JSON.parse(localStorage.getItem(DVKEY)); if(Array.isArray(_a)) DEVAT = _a; }catch(e){}
+function dvSave(){ try{ localStorage.setItem(DVKEY, JSON.stringify(DEVAT)); }catch(e){} }
+if(!DEVAT){
+  /* démo : les visites devis d'HIER dont le client « réfléchit » */
+  DEVAT = [];
+  const _hier = (() => { const x = new Date(TODAYD); x.setDate(x.getDate() - 1); return iso(x); })();
+  const _cand = INTERVS.filter(v => v.date === _hier && v.mode === "devis").slice(0, 2);
+  const _mnt = [578.05, 640], _rel = [-2, 2], _tnt = [2, 1];
+  const _txt = ["doit en parler à son associé", "compare avec un autre devis"];
+  _cand.forEach((v, i) => {
+    const d = new Date(TODAYD); d.setDate(d.getDate() + _rel[i]);
+    DEVAT.push({ref: "DEV-2026-0" + (1287 + i * 14), client: v.client, tel: telOf(v), montant: _mnt[i],
+      envoye: _hier, relance: iso(d), tent: _tnt[i], note: _txt[i], etat: "attente"});
+  });
+  dvSave();
+}
+const dvActifs = () => DEVAT.filter(x => x && x.etat === "attente");
+const dvDe = c => dvActifs().find(x => x.client === c);
+const dvLate = x => !!(x.relance && x.relance <= iso(TODAYD));
+const dvEur = n => (Number.isInteger(+n) ? String(+n) : (+n).toFixed(2).replace(".", ",")) + " €";
+function dvModuleSt(ref, st){
+  /* le module Devis parle le même statut : devis-liste lit ce registre */
+  try{ const k = "tigerflow-devis-statuts"; const m = JSON.parse(localStorage.getItem(k)) || {}; m[ref] = st; localStorage.setItem(k, JSON.stringify(m)); }catch(e){}
+}
+function dvOui(ref){
+  const x = DEVAT.find(z => z.ref === ref); if(!x) return;
+  x.etat = "gagne"; dvSave(); dvModuleSt(ref, "gagne");
+  try{
+    const inbox = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]");
+    inbox.unshift({iid: Date.now(), titre: "📅 Planifier l'intervention — " + x.client,
+      desc: "Devis " + ref + " accepté (" + dvEur(x.montant) + "). Caler la date des travaux avec le client.", due: iso(TODAYD), lien: ref});
+    localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(inbox));
+  }catch(e){}
+  render(); fileRender(); renderTray();
+  toast("🎉 " + x.client + " a dit OUI — devis gagné · tâche « planifier » créée",
+    () => { x.etat = "attente"; dvSave(); dvModuleSt(ref, "envoye"); render(); fileRender(); renderTray(); });
+}
+function dvPerdu(ref){
+  const x = DEVAT.find(z => z.ref === ref); if(!x) return;
+  x.etat = "perdu"; dvSave(); dvModuleSt(ref, "perdu");
+  render(); fileRender(); renderTray();
+  toast("✗ Devis " + ref + " marqué perdu — on arrête de courir",
+    () => { x.etat = "attente"; dvSave(); dvModuleSt(ref, "envoye"); render(); fileRender(); renderTray(); });
+}
+function dvSnooze(ref, nj){
+  const x = DEVAT.find(z => z.ref === ref); if(!x) return;
+  const t = iso(TODAYD);
+  const base = (!x.relance || x.relance < t) ? t : x.relance;
+  const d = new Date(base + "T12:00:00"); d.setDate(d.getDate() + nj);
+  x.relance = iso(d); x.tent = (x.tent || 1) + 1; dvSave();
+  render(); fileRender(); renderTray();
+  toast("💤 " + x.client + " réfléchit encore — relance le " + x.relance.split("-").reverse().slice(0, 2).join("/"));
+}
+
 const hstr = h => String(Math.floor(h)).padStart(2,"0") + ":" + (h%1 ? "30" : "00");
 /* 29/07 — « Saint-Germain-en-Laye » ne tenait pas dans l'en-tete de cartouche :
    la ville se faisait couper par l'heure. Deux economies AFFICHAGE SEULEMENT
@@ -2169,7 +2266,16 @@ function renderDay(){
       if(v.cancelled){
         badge = `<span class="lbadge cancd">Annulée</span>`;
       } else if(v.done){
-        badge = `<span class="lbadge okd">${(typeof REPORTS !== "undefined" && REPORTS[v.id]) ? "✓ Finalisée" : v.paid ? "✓ Encaissée" : "✓ Terminée"}</span>`;
+        /* 31/07 : une visite devis terminée dont le client réfléchit le DIT —
+           📋 en attente, puis 🔔 à relancer (avec le montant) passé la date. */
+        const _dv = (v.mode === "devis" && typeof dvDe === "function") ? dvDe(v.client) : null;
+        if(_dv){
+          badge = dvLate(_dv)
+            ? `<span class="lbadge dvlate">🔔 À relancer · ${dvEur(_dv.montant)}</span>`
+            : `<span class="lbadge dvwait">📋 Devis en attente</span>`;
+        } else {
+          badge = `<span class="lbadge okd">${(typeof REPORTS !== "undefined" && REPORTS[v.id]) ? "✓ Finalisée" : v.paid ? "✓ Encaissée" : "✓ Terminée"}</span>`;
+        }
       } else if(isToday){
         if(v.start <= NOWH && NOWH < v.start + v.dur) badge = `<span class="lbadge">En cours</span>`;
         else if(v.start + v.dur <= NOWH) badge = `<span class="lbadge late" style="cursor:pointer" title="Clic : décaler au prochain trou libre de ce technicien" onclick="event.stopPropagation();shiftLate(${v.id})">Retard ↷</span>`;
@@ -3055,6 +3161,15 @@ function iflowSave(v){
   }catch(e){}
   INTERVS.forEach(v => { v.started = false; v.done = false; v.paid = null; v.cancelled = false; v.devisFlag = false; });
 })();
+/* démo devis en attente : les visites d'HIER concernées sont terminées —
+   posé APRÈS iflowApply, qui remet tout le monde « à démarrer ». */
+try{
+  DEVAT.forEach(x => {
+    if(!x || x.etat !== "attente") return;
+    const v = INTERVS.find(z => z.mode === "devis" && z.client === x.client && z.date === x.envoye);
+    if(v) v.done = true;
+  });
+}catch(e){}
 function encOpen(id){ ENCH = id; const v = INTERVS.find(x => x.id === id); if(v){ v.started = true; } renderDetail(); }
 function encBack(){ ENCH = null; renderDetail(); }
 function encMode(el){
@@ -5170,6 +5285,7 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fap-chip{font-size:.68rem;font-weight:800;border-radius:999px;padding:4px 11px}
 .fap-chip.late{background:#FDF0EF;color:#B3261E}
 .fap-chip.today{background:#FFFBEB;color:#A16207}
+.fap-chip.dort{background:#F1EAFD;color:#6D3BC4}
 .fap-n{margin-left:auto;font-size:.72rem;font-weight:700;color:var(--muted)}
 .fap-x{width:34px;height:34px;border-radius:11px;background:#fff;border:1px solid var(--line);font-size:.85rem;color:var(--ink-2);cursor:pointer;flex:none}
 .fap-sub{font-size:.7rem;font-weight:600;color:var(--muted);margin:5px 0 12px}
@@ -5206,6 +5322,15 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .frnbtns .ok{border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.7rem;font-weight:800;font-family:inherit;border-radius:9px;padding:7px 13px}
 .frnbtns .no{cursor:pointer;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.68rem;font-weight:800;font-family:inherit;border-radius:9px;padding:6px 11px}
 .fap-vide{text-align:center;color:var(--muted);font-size:.84rem;font-weight:600;padding:40px 10px;line-height:1.7}
+/* rangées DEVIS qui dorment (31/07) */
+.fr.dv{border-color:#DCC9F8}
+.fr.dv.lt{border-color:#DCC9F8;box-shadow:inset 3px 0 0 #7C3AED}
+.fr.dv .frq{background:#F1EAFD;color:#6D3BC4}
+.dvamt{font-size:.7rem;font-weight:800;color:#A16207;background:#FFFBEB;border-radius:7px;padding:2px 8px;white-space:nowrap}
+.dvoui{flex:none;cursor:pointer;background:#ECFDF5;border:1.5px solid #BFE6D8;color:#047857;font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 12px;white-space:nowrap}
+.dvoui:hover{background:#D7F0E5}
+.dvko{flex:none;width:32px;height:32px;border-radius:10px;background:#fff;border:1.5px solid #E2E5EB;color:#B3261E;font-size:.74rem;font-weight:800;cursor:pointer;font-family:inherit}
+.dvko:hover{border-color:#F3C1BC;background:#FDF0EF}
 /* le planificateur INLINE sous la ligne (31/07 : « en bas du panneau, pas tout écran ») */
 .fcaled{background:#fff;border:1.5px solid var(--orange-line);border-radius:14px;padding:12px 14px 13px;margin:-3px 0 10px;box-shadow:0 12px 28px -16px rgba(240,78,10,.4)}
 /* ---- briques du planificateur (31/07) ---- */
