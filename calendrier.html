@@ -1305,7 +1305,7 @@ function evMontant(m){
   const n = parseFloat(String(m).replace(/[€\s\u00a0\u202f]/g, "").replace(",", "."));
   if(!n) return "";
   const t = Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
-  return " · " + t + "\u00a0\u20AC";
+  return "\u00a0" + t + "\u00a0\u20AC";   /* 31/07 patron : ESPACE, plus de point — « Ponctuel 82 € » */
 }
 /* 30/07 patron : « je vois pas l'argent a recuperer » — la cartouche affiche le
    montant en GRAS pour les interventions a encaisser. Sans montant saisi, les
@@ -1355,7 +1355,7 @@ const TYPES = {
    fin2.js compte les espaces secables sur TOUT le fichier, commentaires inclus. */
 const MODES = {
   devis :{lbl:"Visite devis",          ic:"🧾", desc:"devis sur place"},
-  encais:{lbl:"Ponctuel · €",          ic:"💶", desc:"€ à encaisser"},
+  encais:{lbl:"Ponctuel",          ic:"💶", desc:"€ à encaisser"},
   ctr   :{lbl:"Sous contrat",          ic:"📄", desc:"déjà payé"},
   suite :{lbl:"2ᵉ passage / garantie", ic:"🔁", desc:"solde éventuel"},
   gar   :{lbl:"2ᵉ passage / garantie", ic:"🔁", desc:"solde éventuel"},
@@ -4067,13 +4067,13 @@ function openPending(pid){
     : m === "ctr"
     ? `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">📄 Incluse au contrat</b></span></div>`
     : m === "encais"
-    ? `<div class="invbox"><span><span class="lbl">À encaisser sur place</span><b style="font-size:.9rem">${p.montant ? evMontant(p.montant).slice(3) : "montant à définir"}</b></span></div>`
+    ? `<div class="invbox"><span><span class="lbl">À encaisser sur place</span><b style="font-size:.9rem">${p.montant ? evMontant(p.montant).slice(1) : "montant à définir"}</b></span></div>`
     : p.montant
     /* 28/07 : le solde saisi a la creation n'apparaissait JAMAIS ici. Cette
        branche annoncait « rien a encaisser » quel que soit le montant tape
        dans « Solde restant a encaisser ». Le technicien partait sans savoir
        qu'il avait de l'argent a prendre. */
-    ? `<div class="invbox"><span><span class="lbl">2ᵉ passage / garantie — solde restant dû</span><span class="amt">${evMontant(p.montant).slice(3)}</span></span>
+    ? `<div class="invbox"><span><span class="lbl">2ᵉ passage / garantie — solde restant dû</span><span class="amt">${evMontant(p.montant).slice(1)}</span></span>
         <button class="go" onclick="toast('Encaissement du solde — bientôt relié')">Encaisser</button></div>`
     : `<div class="invbox g"><span><span class="lbl">Facturation</span><b style="font-size:.9rem">🔁 2ᵉ passage / garantie — rien à encaisser</b></span></div>`;
 
