@@ -1214,7 +1214,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <span class="fap-n" id="fap-total"></span>
       <button class="fap-x" onclick="fileClose()" title="Fermer">✕</button>
     </div>
-    <div class="fap-sub">Retards en tête · un appel = un clic · « Caler le RDV » ouvre la planification, « +2 j » repousse le rappel</div>
+    <div class="fap-sub">Retards en tête · un appel = un clic · « Caler le RDV » ouvre la planification, « +1 / +2 / +7 j » repousse le rappel</div>
     <div class="fap-body" id="fapbody"></div>
   </div>
 
@@ -1316,6 +1316,13 @@ function evChipTxt(v){
   const t = evMontant(m);
   if(!t) return MODES[v.mode].lbl;
   return MODES[v.mode].lbl.split(" / ")[0].replace(/[\s\u00a0]*[\u00b7·][\s\u00a0]*\u20ac\s*$/, "") + '<b class="evamt">' + t + "</b>";
+}
+/* 31/07 (patron) : même pastille pour les cartes du BAC — libellé nettoyé du
+   « · € » creux, montant en <b class=evamt> (ambre sur la grille). */
+function pendChipTxt(p, m){
+  const t = evMontant(p.montant);
+  if(!t) return MODES[m].lbl;
+  return MODES[m].lbl.split(" / ")[0].replace(/[\s ]*[··][\s ]*€\s*$/, "") + '<b class="evamt">' + t + "</b>";
 }
 const typeDe = x => {
   const b = (x && TYPES[x.type]) || TYPES.autre;
@@ -1604,7 +1611,7 @@ function renderTray(){
       </div>
       <div class="pgr">
         <div class="mgr1"><span class="mgic">${T.ic}</span><span class="mgt"><b>${T.lbl}</b></span></div>
-        <div class="mgr2"><span class="ltyp m-${md}">${MODES[md].lbl}${p.montant ? evMontant(p.montant) : ""}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}</div>
+        <div class="mgr2"><span class="ltyp m-${md}">${pendChipTxt(p, md)}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">À reprogrammer</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}</div>
         <div class="mgr3"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${p.client}${p.rappel ? `<b class="rapl${isLate(p) ? ' late' : ''}" style="margin-left:auto">${p.suivi ? 'prévu ' : 'rappel '}${p.rappel.split("-").reverse().join("/")}</b>` : ''}</div>
       </div>
     </div>`;
@@ -1689,7 +1696,9 @@ function fileRender(){
       </div>
       <a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${p.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
       <button class="frcal" onclick="fileCaler(${p.pid})">📅 Caler le RDV</button>
-      <button class="frsz" onclick="fileSnooze(${p.pid})" title="Toujours injoignable — repousser le rappel de 2 jours">+2 j</button>
+      <span class="frszg" title="Toujours injoignable — repousser le rappel de 1, 2 ou 7 jours">
+        <button onclick="fileSnooze(${p.pid},1)">+1 j</button><button onclick="fileSnooze(${p.pid},2)">+2 j</button><button onclick="fileSnooze(${p.pid},7)">+7 j</button>
+      </span>
     </div>`;
   }).join("");
 }
@@ -1698,16 +1707,17 @@ function fileCaler(pid){
   openPending(pid);
   document.getElementById('tray').classList.remove('collapsed');
 }
-function fileSnooze(pid){
+function fileSnooze(pid, nj){
   const p = PENDING.find(x => x.pid === pid);
   if(!p) return;
+  nj = nj || 2;   /* 31/07 (patron) : +1 j, +2 j ou +7 j au choix */
   const t = iso(TODAYD);
   const base = (!p.rappel || p.rappel < t) ? t : p.rappel;
-  const d = new Date(base + "T12:00:00"); d.setDate(d.getDate() + 2);
+  const d = new Date(base + "T12:00:00"); d.setDate(d.getDate() + nj);
   p.rappel = iso(d);
   p.tent = (p.tent || 1) + 1;
   fileRender(); renderTray();
-  toast("📞 " + p.client + " — rappel repoussé au " + p.rappel.split("-").reverse().slice(0, 2).join("/") + " · " + p.tent + "ᵉ tentative");
+  toast("📞 " + p.client + " — rappel repoussé au " + p.rappel.split("-").reverse().slice(0, 2).join("/") + " (+" + nj + " j) · " + p.tent + "ᵉ tentative");
 }
 
 /* ================= ÉTAT ================= */
@@ -4037,17 +4047,17 @@ function openPending(pid){
   const FICHE = `
     <div class="dcard">
       <div class="dh">Détails de l'intervention</div>
-      <div class="bhead">
+      <!-- 31/07 (patron) : MÊME rangée de pastilles que la fiche planifiée
+           (bhead2/brow2) — état → type avec montant → priorité, mêmes tailles. -->
+      <div class="bhead bhead2">
         <div class="bl">
           <span class="bh" style="font-size:1.12rem">Pas encore planifiée</span>
           <small>${dur} prévues · glisse la carte sur l'agenda</small>
         </div>
-        <div class="br">
-          <span class="dst ${sc}" style="font-size:.62rem">${sl}</span>
-          <span class="bchips">
-            <span class="mchip m-${m}" style="font-size:.66rem;padding:3px 9px">${M.ic} ${M.lbl}${p.montant ? " · " + evMontant(p.montant).slice(3) : ""}</span>
-            <span class="pbdg"><i style="background:${PRIOS_I[prio]}"></i>${prio}</span>
-          </span>
+        <div class="brow2">
+          <span class="dst ${sc}">${sl}</span>
+          <span class="mchip m-${m}">${pendChipTxt(p, m)}</span>
+          <span class="pbdg2"><i style="background:${PRIOS_I[prio]}"></i>Priorité ${prio}</span>
         </div>
       </div>
       <button type="button" class="rowb" onclick="window.open('https://www.google.com/maps/search/${encodeURIComponent((p.rue ? p.rue + " " : "") + p.cp + " " + p.ville)}','_blank')">
@@ -5000,6 +5010,9 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   background:#EEF1F6}
 .pgl .mgpin{stroke:#8A93AC}
 .pgl .mgh{color:#22262E;box-shadow:inset 0 0 0 1px #DDE1E8}
+/* pastilles du bac = même langue que la grille (choix A) : pilule grise, € ambre */
+.pcard .ltyp{margin:0;font-size:.54rem;font-weight:800;letter-spacing:.015em;text-transform:uppercase;padding:3px 6.5px;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#F3F4F7;color:#4A505C;box-shadow:inset 0 0 0 1px #E5E8EE;display:inline-block;max-width:100%;min-width:0}
+.pcard .ltyp .evamt{color:#B45309;font-weight:800;letter-spacing:0}
 /* ---- chrono du rapport (31/07) ---- */
 .rchr{display:flex;align-items:center;gap:9px;margin-top:10px;flex-wrap:wrap}
 .rchr .chd{font-variant-numeric:tabular-nums;font-size:.84rem;font-weight:800;color:var(--ink);background:#F1F2F5;border-radius:9px;padding:6px 11px;display:inline-flex;align-items:center;gap:7px}
@@ -5045,8 +5058,10 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .frtel svg{width:15px;height:15px;stroke:var(--green-d);fill:none;stroke-width:2;stroke-linecap:round}
 .frcal{flex:none;border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:9px 13px;white-space:nowrap}
 .frcal:hover{background:var(--orange-deep)}
-.frsz{flex:none;cursor:pointer;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.7rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 11px;white-space:nowrap}
-.frsz:hover{border-color:#CBD0DA}
+.frszg{flex:none;display:inline-flex;border:1.5px solid #E2E5EB;border-radius:10px;overflow:hidden}
+.frszg button{border:0;cursor:pointer;background:#fff;color:var(--ink-2);font-size:.64rem;font-weight:800;font-family:inherit;padding:9px 8px;border-left:1px solid #EEF0F4;white-space:nowrap}
+.frszg button:first-child{border-left:0}
+.frszg button:hover{background:#F5F6F9;color:var(--ink)}
 .fap-vide{text-align:center;color:var(--muted);font-size:.84rem;font-weight:600;padding:40px 10px;line-height:1.7}
 @media(max-width:900px){ .fap{width:100%} .fapbtn{padding:5px 10px;font-size:.68rem} .frq{width:76px} }
 .pgl b{font-family:'Sora',Inter,sans-serif;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
