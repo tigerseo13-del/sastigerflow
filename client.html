@@ -1633,8 +1633,11 @@ function toast(msg, undoFn){
        au lieu de laisser une carte vide qui a l'air cassée. */
     var _sub = ["Contact principal", _telC, _emC].filter(Boolean).join(" · ");
     if(!_telC && !_emC) _sub = "Contact principal · téléphone et e-mail à compléter";
+    /* si la fiche nomme un interlocuteur (champ contact), c'est LUI le contact
+       principal ; sinon le client lui-même (un particulier EST son contact) */
+    var _qn = beauTxt((r && r.contact) || q);
     _cl.innerHTML = true
-      ? '<div class="contact"><div><b>' + qb + '</b><small>' + _sub + '</small></div>'
+      ? '<div class="contact"><div><b>' + _qn + '</b><small>' + _sub + '</small></div>'
         + '<span class="cbtns">'
         + (_telC ? '<a href="tel:' + _telC + '" title="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>' : '')
         + (_emC ? '<a href="mailto:' + _emC + '" title="E-mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>' : '')
@@ -1881,14 +1884,13 @@ function toast(msg, undoFn){
     /* l'onglet Informations garde Contacts + Notes, mais aux couleurs de CE client */
     var inf = document.querySelector('[data-tab="infos"]');
     if(inf){
-      inf.querySelectorAll(".contact").forEach(function(c){ c.remove(); });
-      var ch = inf.querySelector(".card.wide .card-h");
-      if(ch){
-        var cdiv = document.createElement("div");
-        cdiv.className = "contact";
-        cdiv.innerHTML = "<div><b>" + ((r && r.contact) || q) + "</b><small>" + ((r && r.tel) || "t\u00e9l\u00e9phone \u00e0 compl\u00e9ter") + ((r && r.email) ? " \u00b7 " + r.email : "") + "</small></div>";
-        ch.parentNode.insertBefore(cdiv, ch.nextSibling);
-      }
+      /* 31/07 \u2014 PI\u00c8GE D\u00c9BUSQU\u00c9 : ce bloc retirait TOUS les .contact du pane
+         (y compris le contact principal rendu juste au-dessus) puis r\u00e9ins\u00e9rait
+         apr\u00e8s \u00ab .card.wide .card-h \u00bb\u2026 un s\u00e9lecteur MORT depuis que la carte
+         Contacts est pass\u00e9e en .card.eq (duo jumelles du 29/07). R\u00e9sultat : il
+         effa\u00e7ait tout et ne remettait rien \u2014 LA carte vide que le patron a vue.
+         Le rendu du contact principal vit d\u00e9sormais en un seul endroit (#clist,
+         plus haut) ; ici on ne garde que l'historique \u00ab Fiche cr\u00e9\u00e9e \u00bb. */
       var hist = inf.querySelector(".card.full ul.hist");
       if(hist) hist.innerHTML = '<li><span class="hic" style="background:var(--green-bg)">\u2728</span><div><b>Fiche cr\u00e9\u00e9e</b><small>' + q + " vient d'arriver dans TigerFlow \u2014 son historique s'\u00e9crira ici</small></div></li>";
     }
