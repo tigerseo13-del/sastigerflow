@@ -2401,7 +2401,9 @@ function renderDetail(){
        même écran qui se contredisaient. */
     mainBtns = (REPORTS[v.id] ? `<button class="dbig" style="flex-basis:100%" onclick="openReport(${v.id})"><span class="goic"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span>Modifier le rapport</button>` : "")
       + `<div class="fin2" style="flex-basis:100%">
-      <div class="finh" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l'intervention <span class="mchip m-${v.mode}" style="font-size:.62rem;padding:2px 8px">${MODES[v.mode].lbl}${v.montant ? " · " + v.montant + " €" : ""}</span></div>
+      <!-- 31/07 : la pastille affichait « Ponctuel · € » sans montant (le libellé
+           du mode contient déjà « · € »). evChipTxt nettoie et met le vrai chiffre. -->
+      <div class="finh" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l'intervention <span class="mchip m-${v.mode}" style="font-size:.62rem;padding:2px 8px">${evChipTxt(v)}</span></div>
       ${fopts}
     </div>`;
     menuItems = mi(`cancelStart(${v.id})`, "stop", "Annuler le démarrage");
@@ -4754,9 +4756,12 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
   .dsheet.anim > .dcard:nth-child(5){animation-delay:.28s}
 }
 @keyframes dIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
-.foptlink{display:block;width:100%;margin-top:9px;background:none;border:0;padding:4px 2px;cursor:pointer;
-  font-family:inherit;font-size:.75rem;font-weight:600;color:var(--muted);text-align:left;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#C9CDD6}
-.foptlink:hover{color:var(--ink-2)}
+/* 31/07 (patron, aligné sur le mobile) : le lien souligné « le client ne paie
+   pas maintenant » devient un vrai bouton secondaire propre — le chemin
+   principal garde son format standard (piste A du 29/07). */
+.foptlink{display:block;width:100%;margin-top:9px;background:#fff;border:1.5px solid #E5E8EE;border-radius:12px;padding:9px 13px;cursor:pointer;
+  font-family:inherit;font-size:.76rem;font-weight:700;color:var(--ink-2);text-align:left}
+.foptlink:hover{border-color:#CBD0DA;color:var(--ink)}
 
 /* ===== CARTOUCHE MAGAZINE (30/07, maquette WhatsApp du patron, nos regles — valide sur visuels) ===== */
 .ev.ticket{display:flex;flex-direction:row;padding:0;overflow:hidden;border:1.5px solid #E2E5EB;box-shadow:0 3px 10px -5px rgba(23,26,32,.13)}   /* V2 : bordure renforcee, les interventions se detachent du blanc */

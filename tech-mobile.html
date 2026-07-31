@@ -276,6 +276,25 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .finsub{font-size:.74rem;font-weight:600;color:var(--muted)}
 .foptlink{display:block;width:100%;margin-top:9px;background:none;border:0;padding:4px 2px;cursor:pointer;
   font-family:'Inter';font-size:.75rem;font-weight:600;color:var(--muted);text-align:left;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#C9CDD6}
+/* 31/07 (patron, visuel 2) : « organise mieux, c'est le bordel » — chaque
+   chemin de clôture devient un VRAI bouton pleine largeur : l'orange encaisse
+   (l'argent d'abord), le blanc fait le rapport seul, chacun porte sa petite
+   explication SOUS son titre. Fini le texte flottant et le lien souligné. */
+.fbig{width:100%;border:0;cursor:pointer;text-align:left;background:linear-gradient(135deg,#FF6A2B,#F04E0A);color:#fff;border-radius:14px;padding:12px 15px;box-shadow:0 10px 22px -10px rgba(240,78,10,.55);display:flex;align-items:center;gap:11px;font-family:'Inter',sans-serif;transition:transform .12s}
+.fbig:active{transform:scale(.98)}
+.fbig + .fbig{margin-top:8px}
+.fbig .fic{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.16);display:grid;place-items:center;flex:none}
+.fbig .fic svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fbig .ftx{flex:1;min-width:0}
+.fbig .ftx b{display:block;font-weight:800;font-size:.9rem;line-height:1.25}
+.fbig .ftx small{display:block;font-weight:600;font-size:.67rem;opacity:.85;margin-top:1px}
+.fbig .fchv{font-weight:800;font-size:1rem;opacity:.8;flex:none}
+.fbig.ghost{background:#fff;border:1.5px solid #E2E5EB;color:var(--ink);box-shadow:none;padding:11px 15px}
+.fbig.ghost .fic{background:#FFF1E9}
+.fbig.ghost .fic svg{stroke:#F04E0A;width:15px;height:15px}
+.fbig.ghost .ftx b{font-size:.84rem}
+.fbig.ghost .ftx small{color:var(--muted);opacity:1;font-size:.66rem}
+.fbig.ghost .fchv{color:#C9CEDA}
 .waitb{background:var(--amber-bg);border:1px dashed #E2C56E;color:var(--amber);border-radius:13px;padding:12px 14px;font-size:.79rem;font-weight:700;margin-bottom:10px;line-height:1.45}
 .doneb{display:flex;align-items:center;gap:9px;background:var(--green-bg);color:var(--green-d);border-radius:13px;padding:13px 14px;font-size:.85rem;font-weight:800;margin-bottom:4px}
 .doneb svg{width:17px;height:17px}
@@ -993,29 +1012,41 @@ function rdetail(){
          <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`
       : m.itype === "ctr"
       ? `<div class="ctah" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l&rsquo;intervention ${itchip(m)}</div>
-         <div class="finrow">
-           <button class="bo fin" onclick="finCtr(${m.id})"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg>Faire le rapport</button>
-           <span class="finsub">déjà payée par le contrat — rien à encaisser</span>
-         </div>
+         <button class="fbig" onclick="finCtr(${m.id})">
+           <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
+           <span class="ftx"><b>Faire le rapport</b><small>déjà payée par le contrat — rien à encaisser</small></span>
+           <span class="fchv">›</span>
+         </button>
          <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`
       : m.itype === "suite"
       ? `<div class="ctah" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l&rsquo;intervention ${itchip(m)}</div>
-         ${m.solde ? `<div class="finrow">
-           <button class="bo fin" onclick="finSolde(${m.id})"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Encaisser ${EUR(m.solde)}</button>
-           <span class="finsub">puis faire le rapport</span>
-         </div>
-         <button class="foptlink" onclick="openRapport(${m.id})">Le client ne paie pas maintenant — faire le rapport seul</button>`
-                   : `<div class="finrow">
-           <button class="bo fin" onclick="finCtr(${m.id})"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg>Faire le rapport</button>
-           <span class="finsub">2ᵉ passage inclus — rien à encaisser</span>
-         </div>`}
+         ${m.solde ? `<button class="fbig" onclick="finSolde(${m.id})">
+           <span class="fic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
+           <span class="ftx"><b>Encaisser ${EUR(m.solde)}</b><small>puis faire le rapport</small></span>
+           <span class="fchv">›</span>
+         </button>
+         <button class="fbig ghost" onclick="openRapport(${m.id})">
+           <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
+           <span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client ne paie pas maintenant</small></span>
+           <span class="fchv">›</span>
+         </button>`
+                   : `<button class="fbig" onclick="finCtr(${m.id})">
+           <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
+           <span class="ftx"><b>Faire le rapport</b><small>2ᵉ passage inclus — rien à encaisser</small></span>
+           <span class="fchv">›</span>
+         </button>`}
          <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`
       : `<div class="ctah" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l&rsquo;intervention ${itchip(m)}</div>
-         <div class="finrow">
-           <button class="bo fin" onclick="finTrait(${m.id})"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Encaisser ${m.prix ? EUR(m.prix) : "le client"}</button>
-           <span class="finsub">puis faire le rapport</span>
-         </div>
-         <button class="foptlink" onclick="openRapport(${m.id})">Le client ne paie pas maintenant — faire le rapport seul</button>
+         <button class="fbig" onclick="finTrait(${m.id})">
+           <span class="fic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
+           <span class="ftx"><b>Encaisser ${m.prix ? EUR(m.prix) : "le client"}</b><small>puis faire le rapport</small></span>
+           <span class="fchv">›</span>
+         </button>
+         <button class="fbig ghost" onclick="openRapport(${m.id})">
+           <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
+           <span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client ne paie pas maintenant</small></span>
+           <span class="fchv">›</span>
+         </button>
          <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`;
   } else if(m.st === "wait"){
     cta = `<div class="waitb">Devis ${m.devisM ? "de " + EUR(m.devisM) + " " : ""}envoyé — la fiche attend la réponse du client, même dans 3 jours.</div>
