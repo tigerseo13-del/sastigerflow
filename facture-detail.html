@@ -598,6 +598,11 @@ a.hcli:hover{color:var(--orange-deep)}
 .vlife li.now>b{color:var(--orange-deep)}
 .vlife li.now.late>b{color:var(--red)}
 .vlife .vgo{font-weight:900}
+
+/* mu2 : la jauge d'encaissement integree a la tuile Solde du */
+.kpi .paywrap{display:block;margin-top:9px;padding-top:0}
+.kpi .paybar{width:100%;height:7px}
+.kpi #paybartxt{display:block;margin-top:5px;font-size:.72rem;font-weight:600;color:#6C7285}
 </style>
 </head>
 <body>
@@ -1102,7 +1107,10 @@ function kpis(){
   /* jauge de paiement */
   const pct = REC.montant > 0 ? Math.min(100, Math.round(paye / REC.montant * 100)) : 0;
   g('paybarfill').style.width = pct + "%";
-  g('paybartxt').textContent = pct + " % · " + eur(paye) + " / " + eur(REC.montant);
+  g('paybartxt').textContent = pct + " % encaissé · " + eur(paye) + " sur " + eur(REC.montant);
+  /* mu2 (valide 30/07) : la jauge vit DANS la tuile Solde du — elle flottait orpheline sous les tuiles */
+  const pw = g('paywrap');
+  if(pw && pw.parentElement !== tile) tile.appendChild(pw);
   /* le champ paiement propose le solde restant */
   const pm = g('p-montant');
   if(pm && document.activeElement !== pm) pm.value = solde > 0 ? String(Math.round(solde * 100) / 100) : "";
@@ -1170,9 +1178,16 @@ function kpis(){
     a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Télécharger le reçu';
     a.setAttribute("onclick", "recuPrint()");
   } else {
-    a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Envoyer au client';
-    a.setAttribute("onclick", "envoyer()");
+    /* mu2 (valide 30/07) : la facture est deja PARTIE et pas soldee — l'action
+       n°1 devient ENCAISSER. Le renvoi vit dans le menu ⋯ (« Renvoyer la facture »). */
+    a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Encaisser la facture';
+    a.setAttribute("onclick", "goEncaisser()");
   }
+  /* le petit bouton Encaisser disparait quand le primaire fait deja ce travail — ou quand tout est solde */
+  const enc2 = g('a-encaisser');
+  if(enc2) enc2.style.display = ((envoye && st !== "retard" && solde > 0) || solde <= 0) ? "none" : "";
+  /* facture envoyee ET soldee : une facture finie est calme — plus de bouton criard */
+  a.classList.toggle("primary", !(envoye && solde <= 0));
   sendLbl(envoye);
 }
 /* « Envoyer » la premiere fois, « Renvoyer » ensuite : le mot doit dire si le
@@ -1869,5 +1884,15 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
     </div>
   </div>
 </div>
+<script>
+/* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
+   champ date/heure ouvre le calendrier natif (avant, seule la minuscule icone marchait). */
+document.addEventListener("click", function(e){
+  var el = e.target;
+  if(el && el.matches && el.matches('input[type="date"],input[type="time"],input[type="month"]')){
+    try{ if(el.showPicker) el.showPicker(); }catch(err){}
+  }
+});
+</script>
 </body>
 </html>

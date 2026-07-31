@@ -1141,7 +1141,7 @@ function catRender(){
     if((c.k === "fav" || c.k === "rec") && !n) return "";
     return `<button class="bcat ${BIBCAT === c.k ? "on" : ""}" onclick="BIBCAT='${c.k}';catRender()">${c.emo} ${c.lbl} <i>${n}</i></button>`;
   }).join("");
-  g("catlist").innerHTML = CATALOGUE.map((c, i) => {
+  const ITEM = (c, i) => {
     if(BIBCAT === "fav" && !f.has(i)) return "";
     if(BIBCAT === "rec" && !recents().includes(i)) return "";
     if(BIBCAT !== "all" && BIBCAT !== "fav" && BIBCAT !== "rec" && CAT_OF[i] !== BIBCAT) return "";
@@ -1159,7 +1159,18 @@ function catRender(){
         <button onclick="bibMinus(${i})">−</button><b onclick="bibType(${i})" title="Saisir la quantité">${n}</b><button onclick="bibPlus(${i})">＋</button>
       </div>
     </div>`;
-  }).join("") || `<div class="bibempty">Aucune prestation ne correspond 🔍</div>`;
+  };
+  /* V3 : en vue « Tout » sans recherche, la liste se groupe par familles */
+  let LISTE;
+  if(BIBCAT === "all" && !q){
+    LISTE = CAT_CATS.filter(c2 => c2.k !== "all" && c2.k !== "fav" && c2.k !== "rec").map(c2 => {
+      const morceaux = CATALOGUE.map((x, i2) => CAT_OF[i2] === c2.k ? ITEM(x, i2) : "").join("");
+      return morceaux ? `<div class="bband">${c2.emo} ${c2.lbl}</div>` + morceaux : "";
+    }).join("");
+  } else {
+    LISTE = CATALOGUE.map(ITEM).join("");
+  }
+  g("catlist").innerHTML = LISTE || `<div class="bibempty">Aucune prestation ne correspond 🔍</div>`;
   const ids = Object.keys(BIBSEL).filter(i => BIBSEL[i] > 0);
   const nb = ids.reduce((a, i) => a + BIBSEL[i], 0);
   const ht = ids.reduce((a, i) => a + BIBSEL[i] * CATALOGUE[i].pu, 0);
@@ -1508,7 +1519,7 @@ async function cliBase(){
       source = data || [];
     }catch(e){
       try{ source = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e2){ source = []; }
-      if(!source.length && typeof toast === "function") toast("⚠️ Liste des clients incomplète — ouvre la page Clients une fois");
+      /* 30/07 patron : ce toast noir au chargement passait pour un bug — la liste se complete en silence (cache + demo) */
     }
     if(!source.length){
       try{ source = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e){}
@@ -2046,6 +2057,30 @@ if(RETFICHE){
 .catveil .bqty.ghost{display:none}   /* le stepper fantome mangeait la place du titre — il apparait des la 1re selection */
 .catveil .bfav{position:absolute!important;top:9px;right:11px}
 @media(max-width:760px){.catveil .catmodal.bib{width:100vw!important}}
+
+/* ===== BIBLIO V3 (valide « go go go ») : puces horizontales + bandeaux familles + selection EMERAUDE + panier vivant ===== */
+.catveil .bibbody{flex-direction:column}
+.catveil .bibrail{width:100%!important;flex-direction:row!important;overflow-x:auto;overflow-y:hidden;border-right:0!important;border-bottom:1px solid var(--line,#EBECF1);padding:10px 14px!important;gap:7px!important;scrollbar-width:none;background:#fff!important}
+.catveil .bibrail::-webkit-scrollbar{display:none}
+.catveil .bcat{flex:none;border:0!important;background:#F1F2F5!important;color:#565D6B!important;font:700 .78rem Inter,sans-serif!important;padding:8px 14px!important;border-radius:999px!important;cursor:pointer;display:inline-flex;align-items:center;gap:6px;width:auto!important;text-align:center}
+.catveil .bcat:hover{background:#E9EBF0!important}
+.catveil .bcat.on{background:#171A20!important;color:#fff!important;box-shadow:none!important}
+.catveil .bcat i{font-style:normal;background:#E4E6EC;color:#6C7285;border-radius:7px;padding:1px 6px;font-size:.68rem;margin-left:2px}
+.catveil .bcat.on i{background:rgba(255,255,255,.18);color:#fff}
+.bband{font:800 .72rem 'Sora',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#3D434E;background:#F7F8FB;border-radius:10px;padding:8px 12px;margin:2px 0 4px}
+.catveil .bcard.sel{border:1.8px solid #10B981!important;background:#F6FEFA!important}
+.catveil .bnb{background:#10B981!important;box-shadow:0 2px 6px rgba(16,185,129,.4)!important}
+.catveil #bibsum b:last-of-type{color:#0F8A4F}
 </style>
+<script>
+/* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
+   champ date/heure ouvre le calendrier natif (avant, seule la minuscule icone marchait). */
+document.addEventListener("click", function(e){
+  var el = e.target;
+  if(el && el.matches && el.matches('input[type="date"],input[type="time"],input[type="month"]')){
+    try{ if(el.showPicker) el.showPicker(); }catch(err){}
+  }
+});
+</script>
 </body>
 </html>

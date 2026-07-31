@@ -2354,9 +2354,8 @@ function renderDetail(){
      entre ici. Elle n'est plus visible a l'ecran — le geste qu'on en fait est
      de la copier, pas de la lire. Le numero est rappele a droite de l'entree
      pour qu'on puisse le comparer sans cliquer. */
-  menuItems += `<div class="sep"></div>` + mi(
-    `navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('Référence ${refInt(v.id)} copiée'))`,
-    "copy", `Copier la référence<span class="miref">${refInt(v.id)}</span>`);
+  /* 30/07 patron : « le truc de reference c'est relou » — l'entree quitte le menu,
+     la reference affichee en tete de panneau se copie d'un clic. */
   menuItems += `<div class="sep"></div>` + mi(`delInt(${v.id})`, "trash", "Supprimer l'intervention", true);
 
   /* ----- contenu de l'onglet ----- */
@@ -2658,7 +2657,7 @@ function standbyInt(id, keep){
       <button class="dbig sec" onclick="renderDetail()">Annuler</button>
       <button class="dbig" onclick="confirmStandby(${id})">✓ Confirmer</button>
     </div>`;
-  document.getElementById("drawer").scrollTop = 0;
+  if(!keep) document.getElementById("drawer").scrollTop = 0;   /* 30/07 : choisir un creneau ne remonte plus la fenetre — ca passait pour un bug */
 }
 function confirmStandby(id){
   const i = INTERVS.findIndex(x=>x.id===id);
@@ -2987,7 +2986,7 @@ function renderReport(id){
         <div class="drow1"><span class="dst done">Rapport</span><span class="dmodeb">${T.ic} ${T.lbl}</span>
           <button class="dclose" onclick="closeDetail()">✕</button></div>
         <h2>Rapport d'intervention</h2>
-        <div class="dref">${refInt(id)} · ${v.client} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}</div>
+        <div class="dref" style="cursor:copy" title="Cliquer pour copier la référence" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(id)}').then(()=>toast('📋 Référence ${refInt(id)} copiée'))">${refInt(id)} · ${v.client} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}</div>
       </div>
       <div class="rsec rsec-j">${rStepsBar()}</div>
       <div class="rsec">${body}</div>
@@ -5078,6 +5077,16 @@ function logout(){
   if(document.readyState !== "loading") appliqueCompte();
   else document.addEventListener("DOMContentLoaded", appliqueCompte);
 })();
+</script>
+<script>
+/* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
+   champ date/heure ouvre le calendrier natif (avant, seule la minuscule icone marchait). */
+document.addEventListener("click", function(e){
+  var el = e.target;
+  if(el && el.matches && el.matches('input[type="date"],input[type="time"],input[type="month"]')){
+    try{ if(el.showPicker) el.showPicker(); }catch(err){}
+  }
+});
 </script>
 </body>
 </html>

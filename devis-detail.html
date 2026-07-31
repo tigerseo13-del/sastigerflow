@@ -589,6 +589,13 @@ a.hcli:hover{color:var(--orange-deep)}
 .vlife li.now>b{color:var(--orange-deep)}
 .vlife li.now.late>b{color:var(--red)}
 .vlife .vgo{font-weight:900}
+
+/* mu2 : tuile « Prochaine étape » — un guide, pas un doublon */
+.kpi.k-next{background:#FFF6F0;border:1px solid #FFD9C0;cursor:pointer;transition:.13s}
+.kpi.k-next:hover{transform:translateY(-1px);box-shadow:0 8px 20px -12px rgba(232,77,14,.4)}
+.kpi.k-next .num{color:var(--orange-deep,#E84D0E);display:flex;align-items:center;gap:8px}
+.kpi.k-next .knfl{font-size:1.05rem;transition:transform .13s}
+.kpi.k-next:hover .knfl{transform:translateX(3px)}
 </style>
 </head>
 <body>
@@ -1156,10 +1163,23 @@ function kpis(){
   g('k-valid-sub').textContent = j > 0 ? "jusqu'au " + fdate(REC.valid) : "validité dépassée";
   g('k-valid-sub').style.color = j > 7 ? "var(--muted)" : j > 0 ? "var(--orange-deep)" : "var(--red)";
   const st = effStatut();
-  const e = ETATS[st] || ETATS.brouillon;
-  g('k-etat').textContent = e[0];
-  g('k-etat-sub').textContent = e[2];
-  g('k-etat-tile').className = "kpi " + e[1];
+  /* mu2 (valide 30/07) : la pastille d'etat vit deja a cote du titre — la tuile
+     ne la repete plus, elle dit LA PROCHAINE ETAPE et elle est cliquable. */
+  const PE = {
+    brouillon:["Envoyer au client", "envoyer()", "le devis part par e-mail, son statut suivra tout seul"],
+    envoye:["Relancer le client", "envoyer()", "en attente de réponse du client"],
+    gagne:["Créer la facture", "versFacture()", "les lignes passent telles quelles"],
+    perdu:["Renvoyer une offre", "envoyer()", "refusé — retenter avec une offre ajustée"],
+    expire:["Renvoyer une offre", "envoyer()", "la validité est dépassée"]
+  };
+  const pe = PE[st] || PE.brouillon;
+  const tuile = g('k-etat-tile');
+  tuile.className = "kpi k-next";
+  tuile.setAttribute("onclick", pe[1]);
+  tuile.title = pe[2];
+  const lbl = tuile.querySelector('.lbl'); if(lbl) lbl.textContent = "Prochaine étape";
+  g('k-etat').innerHTML = pe[0] + ' <span class="knfl">→</span>';
+  g('k-etat-sub').textContent = pe[2];
 }
 let RELMODE = false;
 function details(){
@@ -1696,6 +1716,16 @@ function societe(){
   if(document.readyState !== "loading") watch();
   else document.addEventListener("DOMContentLoaded", watch);
 })();
+</script>
+<script>
+/* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
+   champ date/heure ouvre le calendrier natif (avant, seule la minuscule icone marchait). */
+document.addEventListener("click", function(e){
+  var el = e.target;
+  if(el && el.matches && el.matches('input[type="date"],input[type="time"],input[type="month"]')){
+    try{ if(el.showPicker) el.showPicker(); }catch(err){}
+  }
+});
 </script>
 </body>
 </html>

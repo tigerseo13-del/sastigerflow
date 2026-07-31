@@ -1618,7 +1618,7 @@ async function cliBase(){
       source = data || [];
     }catch(e){
       try{ source = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e2){ source = []; }
-      if(!source.length && typeof toast === "function") toast("⚠️ Liste des clients incomplète — ouvre la page Clients une fois");
+      /* 30/07 patron : ce toast noir au chargement passait pour un bug — la liste se complete en silence (cache + demo) */
     }
     if(!source.length){
       try{ source = JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []; }catch(e){}
@@ -1815,5 +1815,15 @@ if(RETFICHE){
 .cliRow #f-client{flex:1 1 320px}
 .cliRow .hint{margin:0;white-space:nowrap}
 </style>
+<script>
+/* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
+   champ date/heure ouvre le calendrier natif (avant, seule la minuscule icone marchait). */
+document.addEventListener("click", function(e){
+  var el = e.target;
+  if(el && el.matches && el.matches('input[type="date"],input[type="time"],input[type="month"]')){
+    try{ if(el.showPicker) el.showPicker(); }catch(err){}
+  }
+});
+</script>
 </body>
 </html>
