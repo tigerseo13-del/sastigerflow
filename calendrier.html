@@ -2207,7 +2207,13 @@ function resetTitle(id){
 }
 function togDMenu(e){ if(e) e.stopPropagation(); DMENU = !DMENU; renderDetail(); }
 document.addEventListener("click", e => {
-  if(DMENU && !e.target.closest(".dmenu") && !e.target.closest(".dmain")){ DMENU = false; renderDetail(); }
+  if(DMENU && !e.target.closest(".dmenu") && !e.target.closest(".dmain")){
+    DMENU = false;
+    /* 31/07 patron (« impossible de cliquer date/heures ») : si le menu n'est plus
+       a l'ecran — un sous-ecran comme « A reprogrammer » a pris la place — on ne
+       re-rend RIEN : le renderDetail() ici EFFACAIT le formulaire au 1er clic. */
+    if(document.querySelector(".dmenu")) renderDetail();
+  }
 });
 function setDTab(t){ DTAB = t; renderDetail(); }
 /* ===== 29/07 — BUG « piece jointe fantome ». Demarrer une intervention faisait
