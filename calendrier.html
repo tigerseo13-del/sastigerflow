@@ -1469,6 +1469,8 @@ const PENDING = [
   {pid:PID++, type:"desinf",  client:"Food-truck Marcel",   cp:"75019", ville:"Paris",      dur:1},
   {pid:PID++, type:"punaise", client:"Mme Ferreira",        cp:"94200", ville:"Ivry",       dur:2, standby:true, since:"2026-08-14", rappel:"2026-08-20", cren:"après-midi", tent:3, note:"Préfère être rappelée après 12h"},
   {pid:PID++, type:"rongeur", client:"Hôtel du Parc",       cp:"75017", ville:"Paris",      dur:1.5, standby:true, since:"2026-08-23", rappel:"2026-08-25", cren:"matin", tent:2, note:"Réception fermée entre 14h et 16h"},
+  /* 31/07 (patron) : le rappel type du Syndic Foncia — gardien injoignable */
+  {pid:PID++, type:"rongeur", client:"Syndic Foncia",       cp:"93100", ville:"Montreuil",  dur:1, standby:true, since:"2026-08-24", rappel:"2026-08-25", cren:"matin", tent:2, note:"Gardien injoignable — passer par la loge entre 8h et 11h"},
 ];
 
 /* ===== persistance des placements du bac : survivre au changement d'onglet ===== */
@@ -1899,6 +1901,19 @@ const shiftIso = d => {
 };
 const NOWH = (() => { const n = new Date(); return n.getHours() + n.getMinutes()/60; })();
 /* Les données de démo suivent la vraie date du jour */
+/* ===== démo SYNDIC FONCIA (31/07, patron) — le client type vu sous TOUS les
+   angles : sous contrat ce matin (déjà en démo), 2ᵉ passage cet après-midi,
+   visite devis demain, devis qui dort depuis hier, et un rappel dans la file. */
+{
+  const _f = "Syndic Foncia", _rue = "3 allée des Tilleuls";
+  const _a = IV("2026-08-25", 14, 2, 3, "punaise", _f, "93100", "Montreuil");   /* aujourd'hui 14-16 · Babacar */
+  _a.mode = "suite"; _a.rue = _rue; _a.note = "Cage d'escalier B — badge auprès du gardien";
+  const _b = IV("2026-08-26", 9, 1.5, 1, "cafard", _f, "93100", "Montreuil");   /* demain 9-10h30 · visite devis */
+  _b.mode = "devis"; _b.rue = _rue;
+  const _c = IV("2026-08-24", 10, 2, 1, "pigeon", _f, "93100", "Montreuil");    /* hier · devis dépigeonnage → il dort */
+  _c.mode = "devis"; _c.rue = _rue;
+  INTERVS.push(_a, _b, _c);
+}
 INTERVS.forEach(v => { if(!v.fromTray) v.date = shiftIso(v.date); });
 
 
@@ -1957,6 +1972,14 @@ if(!DEVAT){
     DEVAT.push({ref: "DEV-2026-0" + (1287 + i * 14), client: v.client, tel: telOf(v), montant: _mnt[i],
       envoye: _hier, relance: iso(d), tent: _tnt[i], note: _txt[i], etat: "attente"});
   });
+  dvSave();
+}
+/* le devis dépigeonnage du Syndic Foncia dort aussi — fusionné même si le
+   registre existe déjà chez l'utilisateur (idempotent par référence). */
+if(!DEVAT.some(x => x && x.ref === "DEV-2026-01340")){
+  const _h2 = (() => { const x = new Date(TODAYD); x.setDate(x.getDate() - 1); return iso(x); })();
+  DEVAT.push({ref: "DEV-2026-01340", client: "Syndic Foncia", tel: "01 45 87 96 32", montant: 1240,
+    envoye: _h2, relance: _h2, tent: 1, note: "attend le vote du conseil syndical", etat: "attente"});
   dvSave();
 }
 const dvActifs = () => DEVAT.filter(x => x && x.etat === "attente");
