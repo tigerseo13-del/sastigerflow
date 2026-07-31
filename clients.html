@@ -459,11 +459,12 @@ tbody td .cl b, tbody td.cl b{font-weight:800}
     <div class="card">
       <div class="tscroll"><table class="dt clients-t">
         <colgroup>
-          <col class="c-client"><col class="c-type"><col class="c-contrats"><col class="c-ca"><col class="c-enc"><col class="c-statut"><col class="c-act">
+          <col class="c-client"><col class="c-type"><col class="c-source"><col class="c-contrats"><col class="c-ca"><col class="c-enc"><col class="c-statut"><col class="c-act">
         </colgroup>
         <thead><tr>
           <th>Client</th>
           <th>Type</th>
+          <th>Source</th>
           <th class="num">Contrats</th>
           <th class="sort num" onclick="sortCA()">CA total <span class="arr" id="arr" title="Ordre d'ajout — les derniers créés en tête">↕</span></th>
           <th class="num">À encaisser</th>
@@ -519,6 +520,7 @@ function inboxMerge(){
         nom: r.nom, ville: r.ville || "—", cp: r.cp || "",
         type: r.type === "particulier" ? "Particulier" : r.type === "syndic" ? "Syndic" : "Pro",
         nb: 0, ca: 0, due: 0, st: "actif", tel: r.tel || "", mail: r.mail || r.email || "",
+        source: r.source || "",
       });
     });
     if(typeof render === "function") render();
@@ -565,6 +567,7 @@ async function sbLoad(silent){
       cp: c.cp || "",
       type: c.type === "particulier" ? "Particulier" : c.type === "syndic" ? "Syndic" : "Pro",
       nb: 0, ca: 0, due: 0, st: "actif", tel: c.tel || "", mail: c.mail || c.email || "",
+      source: c.source || "",
     }));
     inboxMerge();                     /* les clients locaux non versés restent visibles */
     if(typeof render === "function") render();
@@ -753,6 +756,7 @@ function render(){
     return `<tr onclick="location.href='client.html?c='+encodeURIComponent('${c.nom.replace(/'/g,"\\'")}')" title="Ouvrir la fiche client">
       <td><span class="cl"><span><b>${c.nom}</b><small>${c.cp} · ${c.ville}</small></span></span></td>
       <td><span class="typ ${tk}">${c.type}</span></td>
+      <td class="srcd" title="Source du client">${c.source || "—"}</td>
       <td class="num">${c.nb || "—"}</td>
       <td class="amt num">${euro(c.caV)}</td>
       <td class="num ${c.dueV ? "due" : "due zero"}">${c.dueV ? euro(c.dueV) : "—"}</td>
@@ -773,8 +777,8 @@ function render(){
 function exportCSV(){
   const list = window._LIST || CLIENTS;
   const esc = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-  const rows = [["Nom","Type","Code postal","Ville","Téléphone","E-mail","Contrats","CA total (€)","À encaisser (€)","Statut"]]
-    .concat(list.map(c => [c.nom, c.type, c.cp, c.ville, c.tel || "", c.mail || "", c.nb || 0, (c.caV != null ? c.caV : c.ca) || 0, (c.dueV != null ? c.dueV : c.due) || 0, (STL[c.st] || ["", c.st])[1]]));
+  const rows = [["Nom","Type","Source","Code postal","Ville","Téléphone","E-mail","Contrats","CA total (€)","À encaisser (€)","Statut"]]
+    .concat(list.map(c => [c.nom, c.type, c.source || "", c.cp, c.ville, c.tel || "", c.mail || "", c.nb || 0, (c.caV != null ? c.caV : c.ca) || 0, (c.dueV != null ? c.dueV : c.due) || 0, (STL[c.st] || ["", c.st])[1]]));
   const csv = "\ufeff" + rows.map(r => r.map(esc).join(";")).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
@@ -1183,13 +1187,15 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 
 /* ===== liste clients : colonnes réparties et alignées (refait 29/07) ===== */
 .clients-t{table-layout:fixed}
-.clients-t .c-client{width:26%}
-.clients-t .c-type{width:11%}
-.clients-t .c-contrats{width:10%}
-.clients-t .c-ca{width:15%}
-.clients-t .c-enc{width:15%}
-.clients-t .c-statut{width:12%}
-.clients-t .c-act{width:11%}
+.clients-t .c-client{width:23%}
+.clients-t .c-type{width:10%}
+.clients-t .c-source{width:12%}   /* 31/07 (patron) : colonne Source */
+.clients-t .c-contrats{width:8%}
+.clients-t .c-ca{width:14%}
+.clients-t .c-enc{width:13%}
+.clients-t .c-statut{width:10%}
+.clients-t .c-act{width:10%}
+.clients-t .srcd{font-size:.76rem;font-weight:600;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .clients-t th.num, .clients-t td.num{text-align:right}
 .clients-t th, .clients-t td{padding-left:18px;padding-right:18px}
 .clients-t td.amt, .clients-t td.num{font-variant-numeric:tabular-nums;white-space:nowrap}

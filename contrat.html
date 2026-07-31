@@ -430,6 +430,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="hids">
         <span class="copyref" onclick="copyRef()" title="Cliquer pour copier">CTR-2026-04729</span>
         <span class="sep">·</span><span>Dératisation annuelle</span>
+        <!-- 31/07 (patron) : « toujours le contact principal avec toutes les infos »
+             — le téléphone et l'email du client, en clair et cliquables. -->
+        <span class="sep">·</span><span id="h-contact"><a href="tel:0612345678" style="color:inherit;font-weight:600">06 12 34 56 78</a> · <a href="mailto:john.thompson@ironwood.com" style="color:var(--orange-deep);font-weight:600">john.thompson@ironwood.com</a></span>
         <span class="sep">·</span><a href="client.html?c=Ironwood%20Solutions" style="color:var(--orange-deep);font-weight:700">Fiche client →</a>
       </div>
       <div class="quick">
@@ -1012,6 +1015,18 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
     }catch(e){ return null; }
   }
 
+  /* 31/07 (patron) : le contact principal du client — téléphone ET email —
+     s'affiche sur la fiche contrat. On lit les DEUX registres, comme partout. */
+  function contactDe(nomClient){
+    try{
+      const rows = (JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]"))
+        .concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache") || "[]"));
+      const cl = rows.find(x => x && x.nom === nomClient);
+      if(!cl) return null;
+      return {tel: (cl.tel || "").trim(), email: (cl.email || "").trim()};
+    }catch(e){ return null; }
+  }
+
   function remplir(c){
     document.title = "TigerFlow — " + c.numero;
     const cur = q1(".crumbs .cur");
@@ -1036,8 +1051,18 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
       if(ref) ref.textContent = c.numero;
       const spans = ids.querySelectorAll("span:not(.sep):not(.copyref)");
       if(spans[0]) spans[0].textContent = c.titre || "Contrat";
-      const lk = ids.querySelector("a");
+      const lk = ids.querySelector('a[href^="client.html"]') || ids.querySelector("a:last-of-type");
       if(lk){ lk.textContent = "Fiche client →"; lk.href = "client.html?c=" + encodeURIComponent(c.client || ""); }   /* 30/07 (patron) : le nom doublait le titre */
+      /* le contact principal du VRAI client — ou rien, jamais celui d'un autre */
+      const hc = document.getElementById("h-contact");
+      if(hc){
+        const ct = contactDe(c.client);
+        const bits = [];
+        if(ct && ct.tel) bits.push('<a href="tel:' + ct.tel.replace(/\s/g, "") + '" style="color:inherit;font-weight:600">' + ct.tel + '</a>');
+        if(ct && ct.email) bits.push('<a href="mailto:' + ct.email + '" style="color:var(--orange-deep);font-weight:600">' + ct.email + '</a>');
+        if(bits.length) hc.innerHTML = bits.join(" · ");
+        else { hc.style.display = "none"; if(hc.previousElementSibling && hc.previousElementSibling.classList.contains("sep")) hc.previousElementSibling.style.display = "none"; }
+      }
     }
 
     const bs = document.querySelectorAll(".hero .quick .q b");
