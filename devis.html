@@ -1140,10 +1140,12 @@ function catOpen(){
 }
 function catRender(){
   const f = favs(), q = (g("bibq").value || "").toLowerCase();
-  g("bibrail").innerHTML = CAT_CATS.map(c => {
-    const n = c.k === "all" ? CATALOGUE.length : c.k === "fav" ? f.size : c.k === "rec" ? recents().length : CAT_OF.filter(x => x === c.k).length;
-    if((c.k === "fav" || c.k === "rec") && !n) return "";
-    return `<button class="bcat ${BIBCAT === c.k ? "on" : ""}" onclick="BIBCAT='${c.k}';catRender()">${c.emo} ${c.lbl} <i>${n}</i></button>`;
+  /* 31/07 patron : plus de Tout/Recents/Favoris — les familles seules. Re-cliquer
+     la famille active revient a la vue complete (groupee par bandeaux). */
+  g("bibrail").innerHTML = CAT_CATS.filter(c => c.k !== "all" && c.k !== "fav" && c.k !== "rec").map(c => {
+    const n = CAT_OF.filter(x => x === c.k).length;
+    if(!n) return "";
+    return `<button class="bcat ${BIBCAT === c.k ? "on" : ""}" onclick="BIBCAT = BIBCAT === '${c.k}' ? 'all' : '${c.k}';catRender()">${c.emo} ${c.lbl} <i>${n}</i></button>`;
   }).join("");
   const ITEM = (c, i) => {
     if(BIBCAT === "fav" && !f.has(i)) return "";
@@ -2083,6 +2085,18 @@ if(RETFICHE){
 .catveil .bprice{font-weight:800}
 .catveil .bprice span{color:#8A8F9C!important;font-weight:600}
 .bband{font-family:Inter,system-ui,sans-serif!important}
+
+/* 31/07 patron : cartes du tiroir ECRASEES chez lui (titres coupes) — toute limite de hauteur est levee */
+.catveil .bibgrid{grid-auto-rows:auto!important;align-items:start!important}
+.catveil .bcard{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}
+.catveil .bmeta{overflow:visible!important}
+.catveil .bimg{flex:none!important}
+
+/* 31/07 patron : familles ENCRE (titres en noir, lisibles) + flux en bloc = zero chevauchement */
+.catveil .bibgrid{display:block!important}
+.catveil .bcard{margin:0 0 9px!important}
+.bband{background:#23262E!important;color:#fff!important;border:0!important;margin:16px 0 9px!important;padding:9px 13px!important}
+.catveil #catlist .bband:first-child{margin-top:2px!important}
 </style>
 <script>
 /* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
