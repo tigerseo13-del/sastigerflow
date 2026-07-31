@@ -417,8 +417,15 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .crumbs a{font-weight:600}
 .title-m{font-size:1.08rem}
 .hadr{margin-top:11px;font-size:.92rem;font-weight:600;color:var(--ink)}
-.hids{margin-top:6px;font-size:.76rem;color:var(--muted);display:flex;gap:9px;flex-wrap:wrap;align-items:center;font-weight:500}
-.hids .sep{color:#D5D8DF}
+/* 31/07 (patron, visuel 1) : la ligne d'identité devient des PASTILLES —
+   fini le « Nouveau client » souligné façon lien cassé. */
+.hids{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.hids .sep{display:none}
+.hchip{display:inline-flex;align-items:center;gap:6px;background:#F1F2F5;color:#3D434E;border-radius:999px;padding:4px 12px;font-size:.68rem;font-weight:700;border-bottom:0!important;text-decoration:none}
+.hchip.new{background:var(--green-bg);color:var(--green-d);font-weight:800}
+.hchip.src{background:#FFF6E3;color:#8A6407}
+.hchip.copyref{cursor:copy}
+.hadr .iti{color:var(--orange-deep);font-weight:700}
 
 /* ===== recherche : champ visible + touche / ===== */
 @media(min-width:980px){
@@ -632,14 +639,13 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           </span>
         </div>
       </div>
-      <div class="hadr" id="h-adr"><a href="https://www.google.com/maps/search/?api=1&query=12+rue+de+la+R%C3%A9publique+75011+Paris" target="_blank" rel="noopener" title="Ouvrir l'itinéraire dans Google Maps">12 rue de la République, 75011 Paris · Itinéraire</a></div>
+      <div class="hadr" id="h-adr"><a href="https://www.google.com/maps/search/?api=1&query=12+rue+de+la+R%C3%A9publique+75011+Paris" target="_blank" rel="noopener" title="Ouvrir l'itinéraire dans Google Maps">12 rue de la République, 75011 Paris <b class="iti">· Itinéraire →</b></a></div>
       <div class="hids">
-        <span class="copyref" onclick="copyRef()" title="Cliquer pour copier" id="h-ref">CLI-2026-00013</span>
-        <span class="sep">·</span><span id="h-siret">SIRET 812 345 678 00019</span>
-        <span class="sep">·</span><span id="h-depuis">Client depuis décembre 2025</span>
-        <!-- 31/07 (patron) : « le résumé manque la source » — elle quitte son
-             badge anonyme pour une mention EN CLAIR dans la ligne d'identité. -->
-        <span class="sep" id="h-src-sep">·</span><span id="h-source">Source : Google Ads</span>
+        <span class="hchip copyref" onclick="copyRef()" title="Cliquer pour copier" id="h-ref">CLI-2026-00013</span>
+        <span class="sep">·</span><span class="hchip" id="h-siret">SIRET 812 345 678 00019</span>
+        <span class="sep">·</span><span class="hchip" id="h-depuis">Client depuis décembre 2025</span>
+        <!-- 31/07 (patron) : « le résumé manque la source » — en clair, en pastille. -->
+        <span class="sep" id="h-src-sep">·</span><span class="hchip src" id="h-source">Source · Google Ads</span>
       </div>
       <div class="quick">
         <!-- 28/07 — « A encaisser » n'apparait QUE si le client doit quelque
@@ -1566,15 +1572,44 @@ function toast(msg, undoFn){
       bar.querySelector("small").textContent = "Facture " + (f.dueFac || "\u2014") + (f.dueJ ? " \u00b7 \u00e9chue depuis " + f.dueJ + " jours" : "");
     }
   }
-  document.title = "TigerFlow \u2014 " + q;
+  /* 31/07 (patron) : un nom ou une adresse TAP\u00c9S EN MAJUSCULES s'affichent en
+     propre \u2014 la donn\u00e9e saisie reste intacte, seule la pr\u00e9sentation respire.
+     On ne touche qu'au tout-majuscules (\u00ab McDonald \u00bb saisi propre le reste). */
+  function beauTxt(s){
+    s = String(s || "");
+    if(!s || s !== s.toUpperCase() || !/[A-Z\u00c0-\u00dd]/.test(s)) return s;
+    var VOIE = /^(rue|avenue|av|bd|boulevard|impasse|all[\u00e9e]e|place|pl|chemin|route|rte|quai|cours|square|sente|villa|cite|cit\u00e9)$/;
+    var LIA = /^(de|du|des|la|le|les|en|et|sur|sous|aux|au)$/;
+    var SIGLE = /^(sci|sarl|sas|sasu|eurl|snc|sa|hlm|zac|za|zi)$/;
+    return s.toLowerCase().split(/\s+/).map(function(w, i){
+      return w.split("-").map(function(pz, j){
+        if(SIGLE.test(pz)) return pz.toUpperCase();
+        if(i + j > 0 && (VOIE.test(pz) || LIA.test(pz))) return pz;
+        return pz.charAt(0).toUpperCase() + pz.slice(1);
+      }).join("-");
+    }).join(" ");
+  }
+  var qb = beauTxt(q);
+  f.adr = f.adr ? f.adr.split(", ").map(beauTxt).join(", ") : f.adr;
+  document.title = "TigerFlow \u2014 " + qb;
   var cur = document.querySelector(".crumbs .cur");
-  if(cur) cur.textContent = q;
+  if(cur) cur.textContent = qb;
   var h1 = document.querySelector(".hero h1");
-  if(h1 && h1.childNodes.length) h1.childNodes[0].nodeValue = q + " ";
+  if(h1 && h1.childNodes.length) h1.childNodes[0].nodeValue = qb + " ";
   var _adr = document.getElementById("h-adr");
   if(_adr) _adr.innerHTML = f.adr;
   var _ref = document.getElementById("h-ref");
-  if(_ref) _ref.textContent = f.ref;
+  if(_ref){
+    if(f.ref === "Nouveau client"){
+      /* 31/07 : pastille émeraude, plus de pseudo-lien à copier */
+      _ref.innerHTML = "✨ Nouveau client";
+      _ref.classList.add("new");
+      _ref.classList.remove("copyref");
+      _ref.onclick = null; _ref.style.cursor = "default"; _ref.title = "";
+    } else {
+      _ref.textContent = f.ref;
+    }
+  }
   var _sir = document.getElementById("h-siret");
   /* 29/07 : le SIRET n'existe que pour les entreprises. Un SIRET n'est reel
      que s'il contient des chiffres — « — », « (particulier) » ou
@@ -1594,7 +1629,7 @@ function toast(msg, undoFn){
     var _telC = (f.tel || "").trim(), _emC = (f.email || "").trim();
     var _sub = ["Contact principal", _telC, _emC].filter(Boolean).join(" · ");
     _cl.innerHTML = (_telC || _emC)
-      ? '<div class="contact"><div><b>' + q + '</b><small>' + _sub + '</small></div>'
+      ? '<div class="contact"><div><b>' + qb + '</b><small>' + _sub + '</small></div>'
         + '<span class="cbtns">'
         + (_telC ? '<a href="tel:' + _telC + '" title="Appeler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>' : '')
         + (_emC ? '<a href="mailto:' + _emC + '" title="E-mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></a>' : '')
@@ -1614,7 +1649,7 @@ function toast(msg, undoFn){
   if(NEUF){
     var _a2 = document.getElementById("h-adr");
     if(_a2) _a2.innerHTML = f.adr
-      ? '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(f.adr) + '" target="_blank" rel="noopener">' + f.adr + ' \u00b7 Itin\u00e9raire</a>'
+      ? '<a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(f.adr) + '" target="_blank" rel="noopener">' + f.adr + ' <b class="iti">\u00b7 Itin\u00e9raire \u2192</b></a>'
       : "Adresse \u00e0 compl\u00e9ter";
     /* 28/07 — ce badge est celui de la SOURCE du client : d'ou il vient. Il
        affichait « Cree a la main », qui parle de la saisie et non du client,
@@ -1624,7 +1659,7 @@ function toast(msg, undoFn){
        Sans source renseignée on masque la mention ET son séparateur. */
     var hsrc = document.getElementById("h-source");
     if(hsrc){
-      if(f.source){ hsrc.textContent = "Source : " + f.source; }
+      if(f.source){ hsrc.textContent = "Source · " + f.source; }
       else {
         hsrc.style.display = "none";
         var hsp = document.getElementById("h-src-sep");

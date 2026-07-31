@@ -1205,6 +1205,11 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
        liste, de haut en bas, au téléphone. Retards en tête, un clic par
        résultat : 📞 appelle, « Caler le RDV » ouvre la planification,
        « +2 j » repousse le rappel et compte la tentative. -->
+  <!-- 31/07 (patron, validé) : le dialogue « Caler le RDV » — date, heure,
+       technicien avec ses vraies dispos, 3 clics pendant l'appel. -->
+  <div class="calv" id="calv" onclick="calClose()"></div>
+  <div class="caldlg" id="caldlg"></div>
+
   <div class="fapveil" id="fapveil" onclick="fileClose()"></div>
   <div class="fap" id="fap">
     <div class="fap-h">
@@ -1654,7 +1659,9 @@ function fileClose(){
   document.getElementById("fapveil").classList.remove("on");
 }
 document.addEventListener("keydown", e => {
-  if(e.key === "Escape" && document.getElementById("fap").classList.contains("open")) fileClose();
+  if(e.key !== "Escape") return;
+  if(document.getElementById("caldlg").classList.contains("on")){ calClose(); return; }
+  if(document.getElementById("fap").classList.contains("open")) fileClose();
 });
 function fileQ(p){
   const t = iso(TODAYD);
@@ -1711,9 +1718,103 @@ function fileRender(){
   }).join("");
 }
 function fileCaler(pid){
+  /* 31/07 (patron, validé) : « Caler le RDV » ouvre DIRECTEMENT le dialogue de
+     planification — plus de détour par la fiche ni de glisser obligatoire. */
+  calOpen(pid);
+}
+
+/* ===== CALER LE RDV — le dialogue (31/07) ===== */
+let CDPID = null, CDATE = "", CHEUR = null, CTECH = null;
+function calOpen(pid){
+  const p = PENDING.find(x => x.pid === pid);
+  if(!p) return;
+  CDPID = pid; CDATE = ""; CHEUR = null; CTECH = null;
   fileClose();
-  openPending(pid);
-  document.getElementById('tray').classList.remove('collapsed');
+  calRender();
+  document.getElementById("caldlg").classList.add("on");
+  document.getElementById("calv").classList.add("on");
+}
+function calClose(){
+  CDPID = null;
+  document.getElementById("caldlg").classList.remove("on");
+  document.getElementById("calv").classList.remove("on");
+}
+function calSet(k, v){
+  if(k === "d") CDATE = v;
+  if(k === "h") CHEUR = v;
+  if(k === "t") CTECH = v;
+  calRender();
+}
+/* la VRAIE dispo du technicien ce jour-là, lue dans l'agenda */
+function calDispo(t, d, h, dur){
+  const list = INTERVS.filter(x => !x.cancelled && x.tech === t.id && x.date === d);
+  const gene = (h != null) ? list.filter(x => h < x.start + x.dur && x.start < h + dur) : [];
+  return {n: list.length, conflit: gene.length > 0, genant: gene[0] || null};
+}
+function calRender(){
+  const p = PENDING.find(x => x.pid === CDPID);
+  const el = document.getElementById("caldlg");
+  if(!p || !el) return;
+  const T = typeDe(p);
+  const JJ = ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."], MM = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+  const jol = d => { const x = new Date(d + "T12:00:00"); return JJ[x.getDay()] + " " + x.getDate() + " " + MM[x.getMonth()]; };
+  const opts = [];
+  for(let k = 1; k <= 3; k++){ const x = new Date(TODAYD); x.setDate(x.getDate() + k); const i2 = iso(x); opts.push([i2, k === 1 ? "Demain" : jol(i2)]); }
+  const durTxt = p.dur % 1 ? Math.floor(p.dur) + "h" + Math.round((p.dur % 1) * 60) : p.dur + "h";
+  const heures = [8, 9, 10, 11, 14, 15, 16, 17];
+  const custom = CDATE && !opts.some(o => o[0] === CDATE);
+  const customH = CHEUR != null && !heures.includes(CHEUR);
+  const pretA = CDATE && CHEUR != null && CTECH != null;
+  el.innerHTML = `
+    <div class="cdh"><b>📅 Caler le RDV</b><small>${p.client} · ${T.lbl} · ${durTxt}</small><button class="cdx" onclick="calClose()">✕</button></div>
+    <div class="cdlab">Quand ?</div>
+    <div class="cdrow">
+      ${opts.map(([d2, l]) => `<button type="button" class="cdc ${CDATE === d2 ? "on" : ""}" onclick="calSet('d','${d2}')">${l}</button>`).join("")}
+      <input class="cdin" type="date" title="Autre date" value="${custom ? CDATE : ""}" min="${iso(TODAYD)}" onchange="if(this.value) calSet('d', this.value)" style="${custom ? "box-shadow:inset 0 0 0 1.5px var(--orange);color:var(--orange-deep)" : ""}">
+    </div>
+    <div class="cdrow" style="margin-top:8px">
+      ${heures.map(h => `<button type="button" class="cdc ${CHEUR === h ? "on" : ""}" onclick="calSet('h',${h})">${hstr(h)}</button>`).join("")}
+      <input class="cdin" type="time" title="Autre heure" step="1800" value="${customH ? String(Math.floor(CHEUR)).padStart(2, "0") + ":" + (CHEUR % 1 ? "30" : "00") : ""}" onchange="if(this.value){ const q = this.value.split(':'); calSet('h', +q[0] + (+q[1] >= 30 ? .5 : 0)); }" style="${customH ? "box-shadow:inset 0 0 0 1.5px var(--orange);color:var(--orange-deep)" : ""}">
+    </div>
+    <div class="cdlab">Quel technicien ? ${CDATE ? `<span style="letter-spacing:0;text-transform:none;font-weight:700">— dispos du ${jol(CDATE)}${CHEUR != null ? " à " + hstr(CHEUR) : ""}</span>` : ""}</div>
+    <div class="cdrow">
+      ${techsOrdonnes().map(t => {
+        if(!CDATE) return `<button type="button" class="cdc ${CTECH === t.id ? "on" : ""}" onclick="calSet('t',${t.id})"><i style="background:${t.c}"></i>${t.nom}</button>`;
+        const d2 = calDispo(t, CDATE, CHEUR, p.dur);
+        const lb = d2.conflit ? `<small class="ko">pris à ${hstr(d2.genant.start)}</small>` : d2.n ? `<small class="warn">${d2.n} interv.</small>` : `<small class="ok">libre</small>`;
+        if(d2.conflit && CTECH === t.id) CTECH = null;
+        return `<button type="button" class="cdc ${CTECH === t.id ? "on" : ""} ${d2.conflit ? "off" : ""}" ${d2.conflit ? "" : `onclick="calSet('t',${t.id})"`}><i style="background:${t.c}"></i>${t.nom} ${lb}</button>`;
+      }).join("")}
+    </div>
+    <div class="cdnote">La carte quitte le bac et la file d'appels — l'agenda saute sur le créneau posé. Le glisser-déposer marche toujours pour les habitués.</div>
+    <div class="cdgo">
+      <button class="go" ${pretA ? "" : "disabled"} onclick="calGo()">${pretA ? `✓ Planifier — ${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)} · ${TECHS[CTECH].nom}` : "Choisis la date, l'heure et le technicien"}</button>
+      <button class="no" onclick="calClose()">Annuler</button>
+    </div>`;
+}
+function calGo(){
+  const i = PENDING.findIndex(x => x.pid === CDPID);
+  if(i < 0 || !CDATE || CHEUR == null || CTECH == null) return;
+  const p = PENDING[i];
+  /* MÊME construction que le dépôt d'une carte glissée sur l'agenda (pdragEnd) */
+  const nv = IV(CDATE, CHEUR, p.dur, CTECH, p.type, p.client, p.cp, p.ville);
+  if(p.rue) nv.rue = p.rue;
+  if(p.mode) nv.mode = p.mode;
+  if(p.montant) nv.montant = p.montant;
+  if(p.encm) nv.encm = p.encm;
+  if(p.typeLibre) nv.typeLibre = p.typeLibre;
+  if(p.note) nv.note = p.note;
+  nv.prio = p.urgent ? "Urgente" : "Normale";
+  nv.fromTray = true;
+  INTERVS.push(nv);
+  LANDID = nv.id;
+  plannedAdd({client:p.client, cp:p.cp, ville:p.ville, type:p.type, dur:p.dur, date:CDATE, h:CHEUR, col:CTECH});
+  PENDING.splice(i, 1);
+  calClose(); closeDetail();
+  CUR = new Date(CDATE + "T12:00:00");
+  render(); renderTray();
+  toast("📅 " + p.client + " — " + CDATE.split("-").reverse().slice(0, 2).join("/") + " à " + hstr(CHEUR) + " avec " + TECHS[CTECH].nom,
+    () => { const k = INTERVS.indexOf(nv); if(k > -1) INTERVS.splice(k, 1); PENDING.splice(i, 0, p); render(); renderTray(); toast("↩ RDV annulé — carte remise dans le bac"); });
 }
 /* 31/07 (patron) : une NOTE par ligne de la file — « le client répond pas,
    j'écris ; il m'a dit de rappeler demain 17 h, je note » — et la note part
@@ -4201,7 +4302,11 @@ function openPending(pid){
         <a class="dbtn" target="_blank" href="https://www.google.com/maps/search/${encodeURIComponent((p.rue ? p.rue + " " : "") + p.cp + " " + p.ville)}"><span class="dbico op"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Itinéraire</a>
       </div>
       <div class="dmain">
-        <button class="dbig" onclick="pendStart(${pid})"><span class="goic"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/></svg></span>Démarrer l'intervention</button>
+        <!-- 31/07 (patron, validé) : « Caler le RDV » devient le chemin PRINCIPAL
+             d'une carte du bac — le dialogue date/heure/technicien. « Démarrer »
+             (= poser maintenant) passe en second. -->
+        <button class="dbig" onclick="calOpen(${pid})"><span class="goic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Caler le RDV</button>
+        <button class="dbig sec" style="flex:none" onclick="pendStart(${pid})">▶ Démarrer</button>
         <button class="dbig sec" style="flex:none" onclick="togPDMenu(event)">Actions ▾</button>
         ${PDMENU ? `<div class="dmenu">
           <!-- 28/07 : « Modifier » manquait ici. Une carte du bac se corrige
@@ -4215,7 +4320,7 @@ function openPending(pid){
           <button class="danger" onclick="pendCancel(${pid})"><span class="mic r"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></span>Le client annule — retirer du bac</button>
         </div>` : ""}
       </div>
-      <div class="pdhint">Pas encore planifiée — « Démarrer » la pose au prochain créneau libre, ou glisse-la sur l'agenda pour choisir l'heure.</div>
+      <div class="pdhint">« Caler le RDV » choisit la date, l'heure et le technicien · « Démarrer » la pose maintenant au prochain créneau libre · la glisser sur l'agenda marche toujours.</div>
       <div class="dtabs">
         ${(function(){
           const BADGE = { not: p.note ? '<i class="tbdot"></i>' : "" };
@@ -5112,6 +5217,36 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .frnbtns .ok{border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.7rem;font-weight:800;font-family:inherit;border-radius:9px;padding:7px 13px}
 .frnbtns .no{cursor:pointer;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.68rem;font-weight:800;font-family:inherit;border-radius:9px;padding:6px 11px}
 .fap-vide{text-align:center;color:var(--muted);font-size:.84rem;font-weight:600;padding:40px 10px;line-height:1.7}
+/* ---- dialogue « Caler le RDV » (31/07) ---- */
+.calv{position:fixed;inset:0;background:rgba(16,18,22,.42);z-index:96;opacity:0;pointer-events:none;transition:.18s}
+.calv.on{opacity:1;pointer-events:auto}
+.caldlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-46%) scale(.97);opacity:0;pointer-events:none;width:620px;max-width:calc(100vw - 24px);max-height:calc(100vh - 30px);overflow-y:auto;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(16,18,22,.35);padding:19px 21px 17px;z-index:97;transition:.18s}
+.caldlg.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.cdh{display:flex;align-items:center;gap:10px;min-width:0}
+.cdh b{font-family:'Sora',Inter,sans-serif;font-size:1rem;flex:none}
+.cdh small{font-size:.76rem;font-weight:700;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cdx{margin-left:auto;width:32px;height:32px;border-radius:10px;background:#F5F6F9;border:0;color:#565D6B;cursor:pointer;font-size:.85rem;flex:none;font-family:inherit}
+.cdlab{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:14px 0 7px}
+.cdrow{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.cdc{display:inline-flex;align-items:center;gap:6px;border-radius:10px;padding:8px 13px;font-size:.76rem;font-weight:800;cursor:pointer;background:#F1F2F5;color:var(--ink-2);border:0;font-family:inherit;transition:.1s}
+.cdc:hover{background:#E9EBF0}
+.cdc.on{background:var(--orange-soft);color:var(--orange-deep);box-shadow:inset 0 0 0 1.5px var(--orange)}
+.cdc.on:hover{background:var(--orange-soft)}
+.cdc.off{opacity:.45;cursor:not-allowed}
+.cdc i{width:9px;height:9px;border-radius:50%;flex:none;font-style:normal}
+.cdc small{font-size:.64rem;font-weight:700}
+.cdc small.ok{color:#0F7B4B}
+.cdc small.warn{color:#A16207}
+.cdc small.ko{color:#B3261E}
+.cdin{border:1.5px solid var(--line);border-radius:10px;padding:7px 10px;font:700 .76rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;font-family:inherit}
+.cdin:focus{border-color:var(--orange)}
+.cdnote{margin-top:16px;background:#F8F9FB;border-radius:12px;padding:9px 13px;font-size:.72rem;font-weight:600;color:var(--ink-2)}
+.cdgo{display:flex;gap:9px;margin-top:12px}
+.cdgo .go{flex:1;border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.82rem;font-weight:800;font-family:inherit;border-radius:12px;padding:13px;box-shadow:0 10px 22px -10px rgba(240,78,10,.55);transition:.12s}
+.cdgo .go:hover{background:var(--orange-deep)}
+.cdgo .go:disabled{background:#E9EBF0;color:#A6ABBB;box-shadow:none;cursor:not-allowed}
+.cdgo .no{flex:none;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.76rem;font-weight:800;font-family:inherit;border-radius:12px;padding:12px 16px;cursor:pointer}
+@media(max-width:640px){ .caldlg{width:calc(100vw - 16px);padding:15px 14px} }
 @media(max-width:900px){ .fap{width:100%} .fapbtn{padding:5px 10px;font-size:.68rem} .frq{width:76px} }
 .pgl b{font-family:'Sora',Inter,sans-serif;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
 .pgl i{font-style:normal;font-size:.6rem;font-weight:700;opacity:.95;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
