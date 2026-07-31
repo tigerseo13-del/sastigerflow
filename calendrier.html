@@ -1836,7 +1836,16 @@ function calGo(){
   PENDING.splice(i, 1);
   CDPID = null;
   CUR = new Date(CDATE + "T12:00:00");
+  /* 31/07 (patron : « ça place pas le RDV ») — trois garanties de VISIBILITÉ :
+     la vue repasse en Jour, la colonne du technicien choisi se réaffiche même
+     si le filtre Équipe était en « Seul », et l'agenda défile jusqu'à la carte. */
+  VIEW = "day";
+  try{ if(typeof VIS !== "undefined" && VIS && VIS.add) VIS.add(CTECH); }catch(e){}
   render(); renderTray(); fileRender();   /* la file RESTE ouverte : appel suivant */
+  setTimeout(() => {
+    const e = document.querySelector('.ev.ticket[data-id="' + nv.id + '"]');
+    if(e) e.scrollIntoView({block: "center", behavior: "smooth"});
+  }, 150);
   toast("📅 " + p.client + " — " + CDATE.split("-").reverse().slice(0, 2).join("/") + " à " + hstr(CHEUR) + " avec " + TECHS[CTECH].nom,
     () => { const k = INTERVS.indexOf(nv); if(k > -1) INTERVS.splice(k, 1); PENDING.splice(i, 0, p); render(); renderTray(); fileRender(); toast("↩ RDV annulé — carte remise dans le bac"); });
 }
@@ -1982,6 +1991,16 @@ if(!DEVAT.some(x => x && x.ref === "DEV-2026-01340")){
     envoye: _h2, relance: _h2, tent: 1, note: "attend le vote du conseil syndical", etat: "attente"});
   dvSave();
 }
+/* réconciliation au chargement : si le module Devis a tranché (gagné/perdu
+   depuis la fiche devis), l'attente se ferme toute seule ici aussi. */
+try{
+  const _stq = JSON.parse(localStorage.getItem("tigerflow-devis-statuts")) || {};
+  let _chg = false;
+  DEVAT.forEach(x => {
+    if(x && x.etat === "attente" && (_stq[x.ref] === "gagne" || _stq[x.ref] === "perdu")){ x.etat = _stq[x.ref]; _chg = true; }
+  });
+  if(_chg) dvSave();
+}catch(e){}
 const dvActifs = () => DEVAT.filter(x => x && x.etat === "attente");
 const dvDe = c => dvActifs().find(x => x.client === c);
 const dvLate = x => !!(x.relance && x.relance <= iso(TODAYD));
@@ -3756,6 +3775,27 @@ function rSave(id){
         due:iso(due), lien:refInt(id)});
       localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(inbox));
       extra += " · 🧾 tâche devis créée";
+    }catch(e){}
+  }
+  /* 31/07 (patron) : « je fais un devis et je fais le rapport → la cartouche
+     passe en devis en attente ? » — OUI, désormais. Si un devis de ce client
+     existe (créé dans l'atelier Devis) et n'est ni gagné ni perdu, il entre
+     tout seul en attente : badge sur la cartouche + ligne dans la File
+     d'appels, relance proposée à J+3. */
+  if(v.mode === "devis" && !r._attenteFait && typeof DEVAT !== "undefined"){
+    try{
+      const rows = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]");
+      const st = JSON.parse(localStorage.getItem("tigerflow-devis-statuts") || "{}");
+      const dRow = rows.filter(x => x && x.client === v.client && x.ref && st[x.ref] !== "gagne" && st[x.ref] !== "perdu").pop();
+      if(dRow && !DEVAT.some(x => x && x.ref === dRow.ref)){
+        r._attenteFait = true;
+        const rel = new Date(TODAYD); rel.setDate(rel.getDate() + 3);
+        const mnt = parseFloat(String(dRow.montant != null ? dRow.montant : (dRow.total != null ? dRow.total : "")).replace(/[€\s ]/g, "").replace(",", ".")) || 0;
+        DEVAT.push({ref: dRow.ref, client: v.client, tel: telOf(v), montant: mnt, envoye: iso(TODAYD),
+          relance: iso(rel), tent: 1, note: "", etat: "attente"});
+        dvSave(); fapSync(); render();
+        extra += " · 📋 devis " + (mnt ? dvEur(mnt) + " " : "") + "en attente — relance J+3 dans la File d'appels";
+      }
     }catch(e){}
   }
   toast("✓ Intervention terminée — rapport enregistré" + extra);
