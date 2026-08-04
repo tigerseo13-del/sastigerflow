@@ -1105,6 +1105,19 @@ function rdetail(){
     ban += `<div class="ban o" onclick="toast('Le devis se fait sur place, avec la bibliothèque de prestations')">
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
       <span class="bb"><b>DEVIS À ÉTABLIR</b><small>Un devis sera établi avant toute intervention.</small></span><span class="chev">›</span></div>`;
+  /* 04/08 (patron : « une note posée sur PC doit s'afficher ici ») — la note
+     saisie AU BUREAU voyage par le registre partagé tigerflow-notes-bureau
+     (par référence d'intervention, et par client en secours). Elle s'affiche
+     en bannière dédiée, non modifiable d'ici — la note du technicien reste
+     à part, en dessous. */
+  try{
+    const NB = JSON.parse(localStorage.getItem("tigerflow-notes-bureau") || "{}");
+    const nb = NB[m.ref] || NB["c:" + String(m.client || "").trim().toLowerCase()];
+    if(nb && nb.t)
+      ban += `<div class="ban a">
+      <svg class="fillsvg" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
+      <span class="bb"><b>NOTE IMPORTANTE DU BUREAU</b><small>${String(nb.t).replace(/</g, "&lt;")}</small></span></div>`;
+  }catch(e){}
   if(NOTEED === m.id)
     ban += `<div class="ban a" style="flex-direction:column;align-items:stretch;cursor:default">
       <b style="font-size:.7rem;font-weight:800;letter-spacing:.05em">NOTE POUR CETTE INTERVENTION</b>
@@ -1116,7 +1129,7 @@ function rdetail(){
   else if(m.note)
     ban += `<div class="ban a" onclick="noteEdit(${m.id})">
       <svg class="fillsvg" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
-      <span class="bb"><b>NOTE IMPORTANTE DU BUREAU</b><small>${m.note}</small></span><span class="chev">›</span></div>`;
+      <span class="bb"><b>NOTE DU TERRAIN</b><small>${m.note}</small></span><span class="chev">›</span></div>`;
   else
     ban += `<div class="ban" style="background:#fff;border:1.5px dashed #D6D9E0;color:var(--muted)" onclick="noteEdit(${m.id})">
       <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>

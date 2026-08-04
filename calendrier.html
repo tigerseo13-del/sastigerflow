@@ -4008,22 +4008,37 @@ function editNote(id){
   NEDIT = id; renderDetail();
   setTimeout(() => { const t = document.getElementById("notearea"); if(t){ t.focus(); t.selectionStart = t.value.length; } }, 40);
 }
+/* 04/08 (patron : « une note posée sur PC doit s'afficher sur le mobile ») —
+   la note bureau part AUSSI dans le registre partagé tigerflow-notes-bureau,
+   par référence d'intervention et par client (secours) : l'appli technicien
+   la lit sur la fiche de la même intervention, même appareil. */
+function bnoteShare(v){
+  try{
+    const K = "tigerflow-notes-bureau";
+    const m = JSON.parse(localStorage.getItem(K) || "{}");
+    const val = (v.note || "").trim();
+    [refInt(v.id), "c:" + String(v.client || "").trim().toLowerCase()].forEach(k => {
+      if(val) m[k] = {t: val, at: iso(TODAYD)}; else delete m[k];
+    });
+    localStorage.setItem(K, JSON.stringify(m));
+  }catch(e){}
+}
 function saveNote(id){
   const v = INTERVS.find(x => x.id === id);
   const t = document.getElementById("notearea");
   if(!v || !t) return;
   v.note = t.value.trim();
   NEDIT = null;
-  iflowSave(v); renderDetail(); render();
-  toast(v.note ? "Note enregistrée" : "Note vidée");
+  iflowSave(v); bnoteShare(v); renderDetail(); render();
+  toast(v.note ? "Note enregistrée — visible aussi sur l'appli du technicien" : "Note vidée");
 }
 function delNote(id){
   const v = INTERVS.find(x => x.id === id);
   if(!v || !v.note) return;
   const old = v.note;
   v.note = "";
-  iflowSave(v); renderDetail(); render();
-  toast("Note supprimée", () => { v.note = old; iflowSave(v); renderDetail(); render(); });
+  iflowSave(v); bnoteShare(v); renderDetail(); render();
+  toast("Note supprimée", () => { v.note = old; iflowSave(v); bnoteShare(v); renderDetail(); render(); });
 }
 function togReass(){
   REASS = !REASS;
