@@ -526,6 +526,10 @@ label[for]{cursor:pointer}
 .lsec.o{color:var(--orange-deep,#EA4A10)}
 .encwrap{position:relative;border-left:3px solid var(--orange,#FF5A1F);border-radius:0 14px 14px 0;padding-left:9px;margin-bottom:6px;background:linear-gradient(90deg,rgba(255,90,31,.06),rgba(255,90,31,0) 60%)}
 .chrono{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;color:var(--orange-deep,#EA4A10);padding:2px 4px 10px}
+/* 04/08 (1A) : pastille chrono de la fiche ouverte */
+.chrono.fdet{display:inline-flex;background:#FFF3EC;border:1px solid #FFD9C4;border-radius:10px;padding:6px 11px;margin:9px 0 2px;font-size:.76rem;font-weight:800}
+/* 04/08 (4A) : le chrono entre DANS la carte de la liste, sous la progression */
+.chrono.inmc{padding:7px 2px 0;font-size:.7rem}
 .chrono b{font-weight:800;font-variant-numeric:tabular-nums}
 .cdot{width:7px;height:7px;border-radius:50%;background:var(--orange,#FF5A1F);flex:none;animation:cpulse 1.8s ease-in-out infinite}
 @keyframes cpulse{0%,100%{opacity:1}50%{opacity:.35}}
@@ -662,7 +666,7 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
     <div class="lhead"><h2 style="padding-left:2px">Réglages</h2></div>
     <div class="cd" style="display:flex;align-items:center;gap:13px">
       <div class="pav">TM</div>
-      <div style="flex:1"><b style="font-family:'Sora';font-size:1rem">Jo Jo</b><br><small style="color:var(--muted);font-size:.75rem">En service depuis 08:00</small></div>
+      <div style="flex:1"><b style="font-family:'Sora';font-size:1rem">Thomas Martin</b><br><small style="color:var(--muted);font-size:.75rem">En service depuis 08:00</small></div>
       <span class="stb g">ACTIF</span>
     </div>
     <div class="seclab">Compte</div>
@@ -683,7 +687,7 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
       <div class="rrow danger" id="delacct" onclick="delAcct()"><span class="ri r"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6"/></svg></span><span class="rb"><b id="delacct-lbl">Supprimer mon compte</b><small>la demande part au bureau — l&rsquo;administrateur valide</small></span><span class="chev">›</span></div>
     </div>
     <div class="cd" style="padding:4px 15px">
-      <div class="rrow" onclick="toast('À demain Thomas — bonne fin de journée')"><span class="ri r"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></span><span class="rb"><b style="color:var(--red)">Se déconnecter</b><small>Jo Jo — TEC</small></span></div>
+      <div class="rrow" onclick="toast('À demain Thomas — bonne fin de journée')"><span class="ri r"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></span><span class="rb"><b style="color:var(--red)">Se déconnecter</b><small>Thomas Martin — TEC</small></span></div>
     </div>
     <p style="text-align:center;color:#B9BEC9;font-size:.68rem;margin:6px 0 10px">TigerFlow TEC · version 1.0 (maquette)</p>
   </section>
@@ -757,7 +761,13 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
       <button class="pill" data-m="Virement" onclick="encPay(this)"><span class="pico">🏦</span>Virement</button>
     </div>
     <div class="cta" style="margin-top:14px">
-      <button class="lnk" onclick="encLater()">Le client ne paie pas maintenant</button>
+      <!-- 04/08 (2A) : la 2ᵉ issue était un texte gris nu qu'on ne voyait pas
+           comme un bouton — même bouton 2 lignes que le bureau (visuel C). -->
+      <button class="fbig ghost" onclick="encLater()">
+        <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
+        <span class="ftx"><b>Faire le rapport sans encaisser</b><small id="enclater-sub">le client paiera plus tard — le montant reste dû</small></span>
+        <span class="fchv">›</span>
+      </button>
     </div>
   </section>
 
@@ -889,6 +899,9 @@ function go(k){
      l'Accueil et la liste — ailleurs il recouvrait le bouton principal de la
      fiche et les cartes. */
   document.body.classList.toggle("nofab", k !== "home" && k !== "list");
+  /* 04/08 (audit) : un toast de l'écran précédent ne traîne plus par-dessus le suivant */
+  const _t = document.getElementById("toast");
+  if(_t){ _t.classList.remove("show"); clearTimeout(_t._h); }
   g("app").scrollTop = 0;
   renderAll();
 }
@@ -979,6 +992,7 @@ function mcard(m){
     </div>`;
   const prog = enc ? `
     <div class="prog"><span class="pb"><i style="width:${m.prog || 50}%"></i></span><small>${m.progt || ""}</small></div>
+    ${m.debut ? `<div class="chrono inmc" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis&nbsp;<b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>` : ""}
     <button class="cont" onclick="event.stopPropagation();openM(${m.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer</button>` : "";
   return `<div class="mc ${cls}" onclick="openM(${m.id})">
     <div class="mct"><b>${m.h}</b><small>${m.dur}</small></div>
@@ -1009,7 +1023,8 @@ function rlist(){
   g("lt-done").innerHTML = `Terminées (<span>${dn.length + wt.length}</span>)`;
   let h = "";
   if(LTAB === "todo"){
-    if(ec.length){ h += `<div class="lsec o" id="ls-enc">EN COURS</div><div class="encwrap">` + ec.map(m => mcard(m) + chrono(m)).join("") + `</div>`; }
+    /* 04/08 (4A) : le chrono vit DANS la carte (mcard) — plus de ligne orpheline dessous */
+  if(ec.length){ h += `<div class="lsec o" id="ls-enc">EN COURS</div><div class="encwrap">` + ec.map(mcard).join("") + `</div>`; }
     if(td.length){ h += `<div class="lsec" id="ls-todo">À FAIRE ENSUITE</div>` + td.map(mcard).join(""); }
     if(!h) h = `<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0">Plus rien à faire — journée bouclée 👌</p>`;
   } else {
@@ -1082,7 +1097,7 @@ function rdetail(){
          </button>
          <button class="fbig ghost" onclick="openRapport(${m.id})">
            <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
-           <span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client ne paie pas maintenant</small></span>
+           <span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client paiera plus tard — ${m.solde ? "les " + EUR(m.solde) + " restent dus" : "le montant reste dû"}</small></span>
            <span class="fchv">›</span>
          </button>`
                    : `<button class="fbig" onclick="finCtr(${m.id})">
@@ -1099,7 +1114,7 @@ function rdetail(){
          </button>
          <button class="fbig ghost" onclick="openRapport(${m.id})">
            <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
-           <span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client ne paie pas maintenant</small></span>
+           <span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client paiera plus tard — ${m.prix ? "les " + EUR(m.prix) + " restent dus" : "le montant reste dû"}</small></span>
            <span class="fchv">›</span>
          </button>
          <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`;
@@ -1121,7 +1136,12 @@ function rdetail(){
     ${badge}
     <div class="dtitle">${m.client}</div>
     <div class="dadr"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>${m.adr}, ${m.ville}</div>
-    <div class="itrow">${itchip(m)}<small>${(ITYPES[m.itype] || ITYPES.devis).desc}</small></div>
+    <!-- 04/08 (1A) : le chrono vit AUSSI dans la fiche ouverte — avant, le tech
+         devait ressortir pour voir depuis quand il est sur place. -->
+    ${m.st === "encours" && m.debut ? `<div class="chrono fdet" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis&nbsp;<b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>` : ""}
+    <!-- 04/08 (3A) : le texte gris ne double plus le montant déjà écrit dans la
+         pastille — il ne reste que pour les types SANS montant (contrat, devis). -->
+    <div class="itrow">${itchip(m)}${((m.itype === "suite" && m.solde) || (m.itype === "encais" && m.prix)) ? "" : `<small>${(ITYPES[m.itype] || ITYPES.devis).desc}</small>`}</div>
     <div class="dchips">${m.nuis.map(chip).join("")}</div>
     <div class="i3">
       <div><small><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg>Date / Heure</small><b>24 mai 2026<br>${m.h}</b></div>
@@ -1235,6 +1255,9 @@ function renc(){
   PART = 1;
   document.querySelectorAll("#enc-part .pill").forEach((p, i) => p.classList.toggle("on", i === 0));
   encRecalc();
+  /* 04/08 (2A) : le bouton « sans encaisser » rappelle le montant qui restera dû */
+  const _sub = g("enclater-sub");
+  if(_sub){ const _v = (g("enc-m").value || "").trim(); _sub.textContent = _v && _v !== "0,00" ? "le client paiera plus tard — les " + _v + " € restent dus" : "le client paiera plus tard — le montant reste dû"; }
 }
 function encPart(el){
   document.querySelectorAll("#enc-part .pill").forEach(p => p.classList.remove("on"));
