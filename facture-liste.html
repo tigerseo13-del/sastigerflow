@@ -604,6 +604,10 @@ function expChip(d){
   const j = joursRestants(d);
   if(d.statut==="retard") return `<span class="exp urgent">En retard de ${-j} j</span>`;
   if(d.statut==="attente"){
+    /* 04/08 (bug patron) : une facture « À payer » dont la date est passée
+       affichait « Échéance dans -2 j ». Elle est en retard, on le dit. */
+    if(j < 0)  return `<span class="exp urgent">En retard de ${-j} j</span>`;
+    if(j === 0) return `<span class="exp urgent">Échéance aujourd'hui</span>`;
     if(j<=3) return `<span class="exp urgent">Échéance dans ${j} j</span>`;
     if(j<=8) return `<span class="exp warn">Échéance dans ${j} j</span>`;
   }
