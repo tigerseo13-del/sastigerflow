@@ -96,6 +96,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .kpi{border-radius:18px;padding:16px 18px;border:1px solid transparent}
 .kpi.k-orange{background:var(--orange-soft);border-color:#FFD9C4}
 .kpi.k-green{background:var(--green-bg);border-color:#BFE5D8}
+/* ── 04/08 (patron GO GO GO) — GRAMMAIRE DES CARTOUCHES, la même partout :
+   BLANC = le stock (totaux, compteurs neutres) · VERT = le gagné ·
+   AMBRE = ça attend quelqu'un · BLEU = ça roule · ROUGE = ça brûle, en dernier. */
+.kpi.k-cash{background:#fff;border-color:var(--line,#E7E9EF)}
+.kpi.k-cash .num{color:var(--ink,#171A20)}
+.kpi.k-cash .kico{background:#F1F2F6;color:#3D434E}
+.kpi.k-cash .kico svg{stroke:#3D434E}
+.kpi.k-red{background:#FCECEA;border-color:#F5C6C1}
+.kpi.k-red .num{color:#C63B33}
+.kpi.k-red .kico{background:#FADDD9;color:#C63B33}
+.kpi .ksub{font-size:.72rem;font-weight:600;color:var(--muted,#8A90A0);margin-top:3px}
+
 .kpi.k-amber{background:var(--amber-bg);border-color:#EEDFAE}
 .kpi.k-blue{background:var(--blue-bg);border-color:#C9DAFB}
 .kpi .lbl{font-size:.78rem;font-weight:600;color:var(--ink-2)}
@@ -358,10 +370,10 @@ tr.torenew{box-shadow:inset 3px 0 0 #D9A408}
 
 
     <div class="kpis">
-      <div class="kpi k-blue"><div class="kico"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 01-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0115.5-6.2L21 8"/><path d="M3 21v-5h5M21 3v5h-5"/></svg></div><div class="lbl">À renouveler dans 30 jours</div><div class="num" id="k-ren">0</div></div>
-      <div class="kpi k-green"><div class="kico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg></div><div class="lbl">Contrats actifs</div><div class="num" id="k-n">0</div></div>
-      <div class="kpi k-amber"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div><div class="lbl">En attente de signature</div><div class="num" id="k-sig">0</div></div>
-      <div class="kpi k-orange"><div class="kico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M10 15l4 4M14 15l-4 4"/></svg></div><div class="lbl">Expirés</div><div class="num" id="k-exp">0</div></div>
+      <div class="kpi k-green"><div class="kico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg></div><div class="lbl">Contrats actifs</div><div class="num" id="k-n">0</div><div class="ksub" id="k-n-s">—</div></div>
+      <div class="kpi k-amber"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div><div class="lbl">En attente de signature</div><div class="num" id="k-sig">0</div><div class="ksub" id="k-sig-s">—</div></div>
+      <div class="kpi k-amber"><div class="kico"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 01-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0115.5-6.2L21 8"/><path d="M3 21v-5h5M21 3v5h-5"/></svg></div><div class="lbl">À renouveler sous 30 jours</div><div class="num" id="k-ren">0</div><div class="ksub" id="k-ren-s">—</div></div>
+      <div class="kpi k-red"><div class="kico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M10 15l4 4M14 15l-4 4"/></svg></div><div class="lbl">Expirés</div><div class="num" id="k-exp">0</div><div class="ksub" id="k-exp-s">—</div></div>
     </div>
 
 <div class="toolrow">
@@ -627,6 +639,7 @@ function stats(){
   const g = id => document.getElementById(id);
   const actifs = CONTRATS.filter(c => c.statut === "actif" || c.statut === "renouveler");
   g("k-n").textContent = actifs.length;
+  var _ks = g("k-n-s"); if(_ks) _ks.textContent = actifs.length ? actifs.reduce(function(a,c){return a+(+c.montant||0)},0).toLocaleString("fr-FR") + " € / an" : "—";
   /* à renouveler dans 30 jours */
   const ren = CONTRATS.filter(c => {
     if(c.statut === "resilie" || c.statut === "expire") return false;
@@ -634,12 +647,15 @@ function stats(){
     return j <= 30 && j > 0;
   });
   g("k-ren").textContent = ren.length;
+  var _kr = g("k-ren-s"); if(_kr) _kr.textContent = ren.length ? ren.reduce(function(a,c){return a+(+c.montant||0)},0).toLocaleString("fr-FR") + " € / an à sécuriser" : "—";
   /* en attente de signature : signature exigée à la création */
   const sig = CONTRATS.filter(c => c.signature && c.statut !== "resilie" && c.statut !== "expire");
   g("k-sig").textContent = sig.length;
+  var _kg = g("k-sig-s"); if(_kg) _kg.textContent = sig.length ? sig.reduce(function(a,c){return a+(+c.montant||0)},0).toLocaleString("fr-FR") + " € / an en jeu" : "—";
   /* expirés */
   const exp = CONTRATS.filter(c => c.statut === "expire");
   g("k-exp").textContent = exp.length;
+  var _ke = g("k-exp-s"); if(_ke) _ke.textContent = exp.length ? "à relancer ou clore" : "—";
   const ST = [["actif","#0E8A68"],["renouveler","#D9A408"],["suspendu","#2E5CE6"],["resilie","#D63B33"],["expire","#C6CCD8"]];
   const tot = CONTRATS.reduce((a, c) => a + c.montant, 0) || 1;
   if(!g("pipe") || !g("pipeleg")) return;   /* pas de barre de répartition sur cette page */

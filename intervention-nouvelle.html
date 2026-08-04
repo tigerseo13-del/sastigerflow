@@ -407,12 +407,17 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </div>
     </section>
 
-    <!-- ===== 1. CLIENT ===== -->
+    <!-- ===== 04/08 (patron : « design 1 sans récap ») — LE GUICHET :
+         6 cartes deviennent 4, le formulaire se lit comme on dicte :
+         1 qui & où · 2 quoi · 3 quand · 4 qui y va. Mêmes ids, même moteur. -->
+
+    <!-- ===== 1. QUI & OÙ ===== -->
     <div class="card">
-      <div class="card-h"><span class="num">1</span>Client</div>
-      <div class="fgroup">
-        <label for="f-client">Client <span class="req">*</span></label>
-        <div class="cliRow"><select id="f-client" onchange="pickClient()">
+      <div class="card-h"><span class="num">1</span>Qui &amp; où</div>
+      <div class="frow3">
+        <div class="fgroup">
+          <label for="f-client">Client <span class="req">*</span></label>
+          <select id="f-client" onchange="pickClient()">
           <option value="">— Choisir un client —</option>
           <option value="iron">Ironwood Solutions — Paris 11e</option>
           <option value="pharma">Pharmacie Centrale — Paris 15e</option>
@@ -421,23 +426,17 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <option value="syndic">Syndic Foncia Lilas — Paris 20e</option>
           <option value="perrin">Mme Perrin — Paris 13e</option>
         </select>
-        <div class="hint">Client introuvable ? <a href="client-nouveau.html" style="color:var(--orange-deep);font-weight:700" onclick="if(typeof INPANEL !== 'undefined' && INPANEL && window.parent !== window){ window.parent.postMessage('tigerflow-open-newclient', '*'); return false; }">+ Créer un nouveau client</a></div></div>
-      </div>
-      <div class="frow">
-        <div class="fgroup">
+          <div class="hint">Client introuvable ? <a href="client-nouveau.html" style="color:var(--orange-deep);font-weight:700" onclick="if(typeof INPANEL !== 'undefined' && INPANEL && window.parent !== window){ window.parent.postMessage('tigerflow-open-newclient', '*'); return false; }">+ Créer un nouveau client</a></div>
+        </div>
+<div class="fgroup">
           <label for="f-ctr">Contrat lié</label>
           <select id="f-ctr"><option value="">Aucun (intervention ponctuelle)</option><option>CTR-2026-04729 — Dératisation annuelle</option></select>
         </div>
-        <div class="fgroup">
+<div class="fgroup">
           <label for="f-interve-1">Devis lié</label>
           <select id="f-interve-1"><option value="">Aucun</option><option>DEV-2026-0847</option><option>DEV-2026-0851</option></select>
         </div>
       </div>
-    </div>
-
-    <!-- ===== 2. LIEU ===== -->
-    <div class="card">
-      <div class="card-h"><span class="num">2</span>Lieu de l'intervention</div>
       <div class="frowadr">
         <div class="fgroup">
           <label for="f-adr">Adresse <span class="req">*</span></label>
@@ -461,9 +460,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </div>
     </div>
 
-    <!-- ===== 3. PRESTATION ===== -->
+    <!-- ===== 2. QUOI ===== -->
     <div class="card">
-      <div class="card-h"><span class="num">3</span>Prestation</div>
+      <div class="card-h"><span class="num">2</span>Quoi <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— nuisibles &amp; type d'intervention</span></div>
 
       <div class="fgroup">
         <label>Nuisibles à traiter <span class="req">*</span> <span style="font-weight:500;color:var(--muted)">— plusieurs choix possibles</span></label>
@@ -490,6 +489,41 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         </div>
       </div>
 
+      <div class="fgroup" style="margin-bottom:2px">
+        <label>Type d'intervention</label>
+      <div class="pays" id="pays">
+        <div class="pcard on" data-v="Devis sur place" onclick="pickPay(this)">
+          <span class="pic pb"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span>
+          <span><b>Visite devis</b><small>devis sur place</small></span>
+          <span class="rdot"></span>
+        </div>
+        <div class="pcard" data-v="Encaissement sur place" onclick="pickPay(this)">
+          <span class="pic pg"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
+          <span><b>Traitement ponctuel</b><small>€ à encaisser</small></span>
+          <span class="rdot"></span>
+        </div>
+        <div class="pcard" data-v="Inclus au contrat" onclick="pickPay(this)">
+          <span class="pic pt"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
+          <span><b>Sous contrat</b><small>déjà payé</small></span>
+          <span class="rdot"></span>
+        </div>
+        <div class="pcard" data-v="Suite de traitement" onclick="pickPay(this)">
+          <span class="pic px"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/></svg></span>
+          <span><b>2ᵉ passage / garantie</b><small>solde éventuel</small></span>
+          <span class="rdot"></span>
+        </div>
+      </div>
+      <div class="payzone" id="payzone"></div>
+      </div>
+      <div class="fgroup" id="g-montant" style="display:none">
+        <label id="l-montant" for="f-montant">Montant à encaisser</label>
+        <input id="f-montant" placeholder="Ex : 180,00 €" inputmode="decimal" style="max-width:220px">
+      </div>
+    </div>
+
+    <!-- ===== 3. QUAND ===== -->
+    <div class="card">
+      <div class="card-h"><span class="num">3</span>Quand</div>
       <div class="frow">
         <div class="fgroup">
           <label for="f-date">Date <span class="req">*</span></label>
@@ -526,48 +560,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </div>
     </div>
 
-    <!-- ===== 4. TYPE D'INTERVENTION ===== -->
+    <!-- ===== 4. TECHNICIEN + NOTE ===== -->
     <div class="card">
-      <div class="card-h"><span class="num">4</span>Type d'intervention</div>
-      <div class="pays" id="pays">
-        <div class="pcard on" data-v="Devis sur place" onclick="pickPay(this)">
-          <span class="pic pb"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span>
-          <span><b>Visite devis</b><small>devis sur place</small></span>
-          <span class="rdot"></span>
-        </div>
-        <div class="pcard" data-v="Encaissement sur place" onclick="pickPay(this)">
-          <span class="pic pg"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
-          <span><b>Traitement ponctuel</b><small>€ à encaisser</small></span>
-          <span class="rdot"></span>
-        </div>
-        <div class="pcard" data-v="Inclus au contrat" onclick="pickPay(this)">
-          <span class="pic pt"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
-          <span><b>Sous contrat</b><small>déjà payé</small></span>
-          <span class="rdot"></span>
-        </div>
-        <div class="pcard" data-v="Suite de traitement" onclick="pickPay(this)">
-          <span class="pic px"><svg viewBox="0 0 24 24" style="width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/></svg></span>
-          <span><b>2ᵉ passage / garantie</b><small>solde éventuel</small></span>
-          <span class="rdot"></span>
-        </div>
-      </div>
-      <div class="payzone" id="payzone"></div>
-      <div class="fgroup" id="g-montant" style="display:none">
-        <label id="l-montant" for="f-montant">Montant à encaisser</label>
-        <input id="f-montant" placeholder="Ex : 180,00 €" inputmode="decimal" style="max-width:220px">
-      </div>
-    </div>
-
-    <!-- ===== 5. NOTE POUR LE TECHNICIEN ===== -->
-    <div class="card">
-      <div class="card-h"><span class="num">5</span>Note pour le technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— ce qu'il doit savoir avant d'y aller</span></div>
-      <div class="fgroup">
-        <textarea id="f-note" placeholder="Ex : bébé dans l'appartement — produits adaptés · client disponible après 18 h · portail bleu, sonner chez la gardienne"></textarea>
-      </div>
-    </div>
-    <!-- ===== 6. TECHNICIEN ===== -->
-    <div class="card">
-      <div class="card-h"><span class="num">6</span>Technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— plusieurs choix possibles · facultatif : sans choix, elle part dans « À affecter »</span></div>
+      <div class="card-h"><span class="num">4</span>Technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— plusieurs choix possibles · facultatif : sans choix, elle part dans « À affecter »</span></div>
       <div class="techs" id="techs"></div>
         <button class="morelink" onclick="reveal('g-addtech', this)">+ Ajouter un technicien</button>
       <div id="g-addtech" style="display:none;margin-top:11px">
@@ -575,6 +570,10 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <input id="f-newtech" placeholder="Nom du technicien (Ex : Paul Girard)" style="max-width:340px" onkeydown="if(event.key==='Enter')addTech()">
           <button class="btn" onclick="addTech()" style="flex:none">Ajouter</button>
         </div>
+      </div>
+      <div class="fgroup" style="margin:13px 0 2px">
+        <label for="f-note">Note pour le technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— ce qu'il doit savoir avant d'y aller</span></label>
+        <textarea id="f-note" placeholder="Ex : bébé dans l'appartement — produits adaptés · client disponible après 18 h · portail bleu, sonner chez la gardienne"></textarea>
       </div>
     </div>
 
@@ -866,13 +865,12 @@ function updateReco(){
 
 /* ===== Progression des étapes ===== */
 function updateSteps(){
+  /* 04/08 — 4 cartes guichet : qui & où / quoi / quand / technicien. */
   const done = [
-    !!document.getElementById("f-client").value,
-    !!(document.getElementById("f-adr").value.trim() && document.getElementById("f-cp").value.trim() && document.getElementById("f-ville").value.trim()),
-    !!(PESTS.size && document.getElementById("f-date").value && effSlot()),
-    true,
-    TECHS.size > 0,
-    false
+    !!(document.getElementById("f-client").value && document.getElementById("f-adr").value.trim() && document.getElementById("f-cp").value.trim() && document.getElementById("f-ville").value.trim()),
+    PESTS.size > 0,
+    !!(document.getElementById("f-date").value && effSlot()),
+    TECHS.size > 0
   ];
   document.querySelectorAll(".card-h .num").forEach((n, i)=>{
     if(!n.dataset.n) n.dataset.n = n.textContent;
@@ -1825,9 +1823,20 @@ if(RETFICHE){
 <style>.retf{display:inline-flex;align-items:center;margin-left:12px;background:#fff;border:1px solid var(--line,#EBECF1);border-radius:999px;padding:5px 13px;font-size:.75rem;font-weight:700;color:var(--ink-2,#3D434E);text-decoration:none;vertical-align:middle}.retf:hover{border-color:var(--orange,#FF5A1F);color:var(--orange-deep,#EA4A10)}
 /* 30/07 audit : le sélecteur client n'a pas besoin de 1100px */
 #f-client{max-width:480px}
-.cliRow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.cliRow #f-client{flex:1 1 320px}
-.cliRow .hint{margin:0;white-space:nowrap}
+/* 04/08 guichet : client · contrat · devis sur un rang, adresse dessous */
+.frow3{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:10px}
+.frow3 .hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:900px){.frow3{grid-template-columns:1fr 1fr}.frow3 .fgroup:first-child{grid-column:1/-1}}
+@media(max-width:560px){.frow3{grid-template-columns:1fr}}
+/* les 4 types d'intervention tiennent sur UN rang quand la place est là */
+@media(min-width:1000px){
+  .pays{grid-template-columns:repeat(4,1fr);gap:9px}
+  .pcard{padding:11px 12px;gap:9px}
+  .pcard .pic{width:30px;height:30px;border-radius:9px}
+  .pcard small{white-space:nowrap}
+  /* l'équipe sur 2 colonnes : la carte technicien tient à l'écran */
+  .techs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+}
 </style>
 <script>
 /* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
