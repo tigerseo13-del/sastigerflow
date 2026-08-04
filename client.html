@@ -315,6 +315,16 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .dt th{text-align:left;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line)}
 .dt td{padding:12px 10px;border-bottom:1px solid #F2F3F6}
 .dt td.amt{text-align:right}
+/* 04/08 (patron : « le truc de date calendrier, ça fait beau ») — la date
+   planifiée devient une pastille façon calendrier : jour en gros, mois
+   dessous. Orange pâle quand c'est à venir, gris perle une fois passé. */
+.dcell{display:inline-flex;align-items:center;gap:10px}
+.dcal{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;background:#F4F5F8;border:1px solid #ECEEF3;flex:none}
+.dcal b{font-family:'Sora';font-weight:800;font-size:1rem;line-height:1;color:var(--ink)}
+.dcal small{font-size:.55rem;font-weight:800;letter-spacing:.07em;color:var(--muted);margin-top:2px;text-transform:uppercase}
+.dcal.av{background:#FFF6F0;border-color:#FFD9C0}
+.dcal.av b{color:var(--orange-deep)}
+.dcell .dyr{font-size:.78rem;font-weight:600;color:var(--muted);line-height:1.35}
 /* 30/07 (patron) : l'en-tete « Montant TTC » restait a gauche pendant que ses
    montants s'alignaient a droite — la colonne semblait cassee. L'en-tete d'une
    colonne de chiffres s'aligne a droite, comme ses chiffres. */
@@ -895,6 +905,25 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <div class="tfoot"><span id="hist-count">1-5 sur 5 affichés</span>
           <span class="pgn"><span class="pgd">← Précédent</span><span class="pgc">1</span><span class="pgd">Suivant →</span></span>
           <span>Par page <select><option>20</option><option>50</option></select></span></div>
+        <script>
+        /* 04/08 — les dates du tableau deviennent des pastilles calendrier.
+           On transforme la CELLULE, pas les donnees : toute rangee ajoutee
+           plus tard (reconciliation, planification) recevra le meme visuel
+           en repassant par dcalify(). */
+        function dcalify(){
+          var MOIS = ["JANV","FÉVR","MARS","AVR","MAI","JUIN","JUIL","AOÛT","SEPT","OCT","NOV","DÉC"];
+          document.querySelectorAll("#hist-tb tr").forEach(function(tr){
+            var td = tr.children[1];
+            if(!td || td.querySelector(".dcal")) return;
+            var m = (td.textContent || "").match(/(?:([A-Za-zÀ-ÿ]{3})\.?\s+)?(\d{2})\/(\d{2})\/(\d{4})/);
+            if(!m) return;
+            var av = (tr.getAttribute("data-st") || "") === "avenir";
+            td.innerHTML = '<span class="dcell"><span class="dcal' + (av ? ' av' : '') + '"><b>' + m[2] + '</b><small>'
+              + (MOIS[parseInt(m[3], 10) - 1] || m[3]) + '</small></span><span class="dyr">' + (m[1] ? m[1] + '.<br>' : '') + m[4] + '</span></span>';
+          });
+        }
+        dcalify();
+        </script>
       </div>
 
       

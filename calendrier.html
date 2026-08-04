@@ -306,6 +306,24 @@ h1,.num{font-family:'Sora',sans-serif}
 .qcard.on.g b{color:var(--green-d)}.qcard.on.g small{color:var(--green-d);opacity:.85}
 .qcard.on.b{border-color:var(--blue);background:color-mix(in srgb,#2E5CE6 9%,#fff);color:var(--blue-d)}
 .qcard.on.b b{color:var(--blue-d)}.qcard.on.b small{color:var(--blue-d);opacity:.85}
+/* 04/08 (patron, reco « 2 ») — le devis complementaire en DEUX GRANDES
+   TUILES : la question qui rapporte ne ressemble plus a une ligne de
+   formulaire. « Oui » s'allume en orange et dit ce qui va se passer. */
+.dvqg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dvq{all:unset;box-sizing:border-box;border:1.5px solid #E6E9EF;border-radius:14px;background:#fff;padding:13px 15px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;transition:.13s;font-family:inherit}
+.dvq:hover{border-color:#D5D8DF}
+.dvq .ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none;background:#F1F2F6;color:var(--ink-2)}
+.dvq .ic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.dvq b{display:block;font-family:'Sora';font-weight:800;font-size:.86rem;color:var(--ink);line-height:1.3}
+.dvq small{display:block;font-size:.73rem;color:var(--muted);font-weight:600;margin-top:3px;line-height:1.45}
+.dvq.on-n{border-color:var(--green);background:color-mix(in srgb,#10B981 7%,#fff)}
+.dvq.on-n .ic{background:var(--green);color:#fff}
+.dvq.on-n b{color:var(--green-d)}
+.dvq.on-o{border-color:var(--orange);background:#FFF8F4;box-shadow:0 8px 22px -14px rgba(255,90,31,.5)}
+.dvq.on-o .ic{background:var(--orange);color:#fff}
+.dvq.on-o b{color:var(--orange-deep)}
+.dvq.on-o small{color:#B0552F}
+
 .rhint{font-size:.74rem;font-weight:600;color:var(--muted);margin:-4px 0 9px;line-height:1.45}
 .recogrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media(max-width:640px){.recogrid{grid-template-columns:1fr}}
@@ -3568,14 +3586,14 @@ function renderReport(id){
         <button class="dre" style="margin-left:auto" onclick="rAllRecos(${id})">${r.recos.size===R_RECOS.length?"Tout désélectionner":"Tout sélectionner"}</button></span>
       <div class="recogrid">${R_RECOS.map(x=>`<div class="recoc ${r.recos.has(x)?'on':''}" onclick="rTogSet(${id},'recos','${x.replace(/'/g,"\\'")}',this)"><i class="rcb">✓</i>${x}</div>`).join("")}</div>
       <span class="rlab">Devis complémentaire nécessaire ?</span>
-      <div class="qcards">
-        <button type="button" class="qcard ${!r.quote ? "on g" : ""}" onclick="rQuote(${id},false)">
-          <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-          <b>Non</b><small>· tout est réglé</small>
+      <div class="dvqg">
+        <button type="button" class="dvq ${!r.quote ? "on-n" : ""}" onclick="rQuote(${id},false)">
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <span><b>Non — tout est réglé</b><small>L'intervention couvre tout ce qui a été vu sur place.</small></span>
         </button>
-        <button type="button" class="qcard ${r.quote ? "on b" : ""}" onclick="rQuote(${id},true)">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-          <b>Oui</b><small>· travaux à chiffrer</small>
+        <button type="button" class="dvq ${r.quote ? "on-o" : ""}" onclick="rQuote(${id},true)">
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span>
+          <span><b>Oui — travaux à chiffrer</b><small>Un brouillon de devis naîtra à la validation du rapport.</small></span>
         </button>
       </div>
       <div id="r-qdesc" style="display:${r.quote?'block':'none'};margin-top:9px">
