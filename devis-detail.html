@@ -120,7 +120,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .fmenu .danger:hover{background:var(--red-bg)}
 
 /* ===== compteurs ===== */
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:22px}
 .kpi{border-radius:18px;padding:16px 18px;border:1px solid transparent}
 .kpi.k-orange{background:var(--orange-soft);border-color:#FFD9C4}
 .kpi.k-green{background:var(--green-bg);border-color:#BFE5D8}
@@ -755,8 +755,7 @@ a.hcli:hover{color:var(--orange-deep)}
 
     <!-- compteurs -->
     <div class="kpis">
-      <div class="kpi k-orange"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div></div>
-      <div class="kpi k-blue"><div class="lbl">Validité</div><div class="num" id="k-valid">—</div><span class="sub" id="k-valid-sub"></span></div>
+      <div class="kpi k-orange"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div><span class="sub" id="k-total-sub"></span></div>
       <div class="kpi k-green" id="k-etat-tile"><div class="lbl">État</div><div class="num" id="k-etat">—</div><span class="sub" id="k-etat-sub"></span></div>
     </div>
 
@@ -1219,27 +1218,41 @@ const ETATS = {brouillon:["Brouillon","k-blue","à finir"], envoye:["Envoyé","k
                gagne:["Gagné","k-green","accepté par le client"], perdu:["Perdu","k-red","refusé"],
                expire:["Expiré","k-red","validité dépassée"]};
 function kpis(){
+  /* 04/08 (patron, reco « 2 » du comparateur) : DEUX tuiles au lieu de trois.
+     Le montant se détaille (HT · TVA · prestations) et la tuile Validité
+     disparaît — son compte à rebours vit DANS la tuile d'état, qui fusionne
+     Validité et Prochaine étape. La date exacte est déjà dans le bandeau :
+     ici on donne l'urgence et le geste, cliquables. */
   g('k-total').textContent = eur(REC.montant);
+  const ksub = g('k-total-sub');
+  if(ksub){
+    try{
+      const L = REC.lignes || [];
+      const ht = L.reduce((a, l) => a + (+l.qte || 1) * (+l.pu || 0), 0)
+        + (REC.frais || []).reduce((a, f) => a + (+f.m || 0), 0) - (+REC.remise || 0);
+      const n = L.length;
+      ksub.textContent = (ht > 0 && REC.montant > ht ? "HT " + eur(Math.round(ht * 100) / 100) + " · TVA " + eur(Math.round((REC.montant - ht) * 100) / 100) + " · " : "")
+        + (n ? n + " prestation" + (n > 1 ? "s" : "") : "");
+    }catch(e){ ksub.textContent = ""; }
+  }
   const j = joursEch();
-  g('k-valid').textContent = j > 0 ? j + (j > 1 ? " jours" : " jour") : "—";
-  g('k-valid-sub').textContent = j > 0 ? "jusqu'au " + fdate(REC.valid) : "validité dépassée";
-  g('k-valid-sub').style.color = j > 7 ? "var(--muted)" : j > 0 ? "var(--orange-deep)" : "var(--red)";
   const st = effStatut();
-  /* mu2 (valide 30/07) : la pastille d'etat vit deja a cote du titre — la tuile
-     ne la repete plus, elle dit LA PROCHAINE ETAPE et elle est cliquable. */
   const PE = {
-    brouillon:["Envoyer au client", "envoyer()", "le devis part par e-mail, son statut suivra tout seul"],
-    envoye:["Relancer le client", "envoyer()", "en attente de réponse du client"],
-    gagne:["Créer la facture", "versFacture()", "les lignes passent telles quelles"],
-    perdu:["Renvoyer une offre", "envoyer()", "refusé — retenter avec une offre ajustée"],
-    expire:["Renvoyer une offre", "envoyer()", "la validité est dépassée"]
+    brouillon:["À envoyer", "envoyer()", "le devis part par e-mail, son statut suivra tout seul"],
+    envoye:[(j !== null && j > 0 ? j + " jour" + (j > 1 ? "s" : "") + " — relancer" : "Relancer le client"), "envoyer()",
+      (j !== null && j > 0 ? "le devis expire le " + fdate(REC.valid) : "en attente de réponse du client")],
+    gagne:[eur(REC.montant), "versFacture()", "créer la facture — les lignes passent telles quelles"],
+    perdu:["Refusé — retenter ?", "envoyer()", "renvoyer une offre ajustée"],
+    expire:[(j !== null && j < 0 ? "Expiré · " + (-j) + " j — renvoyer" : "Renvoyer une offre"), "envoyer()", "la validité est dépassée"]
   };
   const pe = PE[st] || PE.brouillon;
   const tuile = g('k-etat-tile');
-  tuile.className = "kpi k-next" + (st === "gagne" ? " gain" : (st === "perdu" || st === "expire") ? " alerte" : st === "envoye" ? " att" : "");   /* envoye = AMBRE (l'attente), pas bleu — le bleu appartient a la tuile Validite */   /* humeur : emeraude gagne, rouge pale perdu/expire, orange sinon */   /* patron : devis GAGNE → l'etape suivante en EMERAUDE (couleur de la reussite) */
+  tuile.className = "kpi k-next" + (st === "gagne" ? " gain" : (st === "perdu" || st === "expire") ? " alerte" : st === "envoye" ? " att" : "");
   tuile.setAttribute("onclick", pe[1]);
   tuile.title = pe[2];
-  const lbl = tuile.querySelector('.lbl'); if(lbl) lbl.textContent = "Prochaine étape";
+  const lbl = tuile.querySelector('.lbl');
+  if(lbl) lbl.textContent = st === "gagne" ? "Gagné — à facturer" : st === "envoye" ? "En attente du client"
+    : st === "expire" ? "Expiré" : st === "perdu" ? "Refusé" : "Prochaine étape";
   g('k-etat').innerHTML = pe[0] + ' <span class="knfl">→</span>';
   g('k-etat-sub').textContent = pe[2];
 }

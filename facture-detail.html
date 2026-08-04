@@ -740,7 +740,7 @@ a.hcli:hover{color:var(--orange-deep)}
 
     <!-- compteurs -->
     <div class="kpis">
-      <div class="kpi k-orange"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div></div>
+      <div class="kpi k-orange"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div><span class="sub" id="k-total-sub"></span></div>
       <div class="kpi k-green" id="k-paye-tile" onclick="goEncaisser()" style="cursor:pointer" title="Voir les paiements"><div class="lbl">Montant payé</div><div class="num" id="k-paye">—</div></div>
       <div class="kpi k-blue" id="k-solde-tile" style="cursor:pointer" title="Encaisser — ouvre les paiements"><div class="lbl">Solde dû</div><div class="num" id="k-solde">—</div><span class="sub" id="k-solde-sub"></span></div>
     </div>
@@ -1147,6 +1147,18 @@ function kpis(){
   const av = avoirs().reduce((a,x) => a + x.m, 0);
   const solde = Math.max(0, REC.montant - paye - av);
   g('k-total').textContent = eur(REC.montant);
+  /* 04/08 — meme sous-detail que sur le devis : HT · TVA · prestations */
+  const ksub = g('k-total-sub');
+  if(ksub){
+    try{
+      const L = REC.lignes || [];
+      const ht = L.reduce((a, l) => a + (+l.qte || 1) * (+l.pu || 0), 0)
+        + (REC.frais || []).reduce((a, f) => a + (+f.m || 0), 0) - (+REC.remise || 0);
+      const n = L.length;
+      ksub.textContent = (ht > 0 && REC.montant > ht ? "HT " + eur(Math.round(ht * 100) / 100) + " · TVA " + eur(Math.round((REC.montant - ht) * 100) / 100) + " · " : "")
+        + (n ? n + " prestation" + (n > 1 ? "s" : "") : "");
+    }catch(e){ ksub.textContent = ""; }
+  }
   g('k-paye').textContent = eur(paye);
   g('k-solde').textContent = eur(solde);
   g('n-pai').textContent = pays().length;
