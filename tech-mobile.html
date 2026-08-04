@@ -514,14 +514,27 @@ svg.fillsvg{fill:currentColor;stroke:none}
 @media(max-width:460px){body{padding:12px 4px 40px}.phone{border-radius:0;padding:0}.screenwrap{border-radius:0;height:92vh}}
 /* 31/07 : épinglée sur l'écran d'accueil iPhone (mode appli, sans Safari),
    la démo tombe son cadre téléphone : VRAI plein écran, et l'app respecte
-   l'encoche en haut et la barre home en bas (safe areas). */
+   l'encoche en haut et la barre home en bas (safe areas).
+   04/08 (patron, capture iPhone) : la détection par media query ne suffisait
+   pas sur son téléphone — le JS pose AUSSI html.pwa (navigator.standalone),
+   le titre de démo disparaît, le menu du bas gagne la safe-area, et le
+   bouton d'action se COLLE en bas au lieu de flotter à 38 px. */
 @media(display-mode:standalone),(display-mode:fullscreen){
   body{padding:0;background:#F4F5F8;display:block}
-  .sbar{display:none}   /* 04/08 : la vraie barre iOS est au-dessus — pas deux heures */
+  .capt{display:none}
+  .sbar{display:none}   /* la vraie barre iOS est au-dessus — pas deux heures */
   .phone{width:100%;max-width:none;border-radius:0;padding:0;box-shadow:none;background:#F4F5F8}
   .screenwrap{border-radius:0;height:100dvh;padding-top:env(safe-area-inset-top)}
   .tabbar{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  .cta{bottom:0;padding-bottom:10px}
 }
+html.pwa body{padding:0;background:#F4F5F8;display:block}
+html.pwa .capt{display:none}
+html.pwa .sbar{display:none}
+html.pwa .phone{width:100%;max-width:none;border-radius:0;padding:0;box-shadow:none;background:#F4F5F8}
+html.pwa .screenwrap{border-radius:0;height:100dvh;padding-top:env(safe-area-inset-top)}
+html.pwa .tabbar{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+html.pwa .cta{bottom:0;padding-bottom:10px}
 .icq.on{background:#FFF1E9;border-color:var(--orange);color:#D63B05}
 
 /* ===== UX : retour tactile + focus clavier (25/07) ===== */
@@ -587,10 +600,18 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 </style>
 </head>
 <body>
+<script>
+/* mode appli (épinglée iPhone/Android) : détection ceinture + bretelles —
+   navigator.standalone (iOS) OU display-mode (le reste). */
+try{
+  if(navigator.standalone === true || (window.matchMedia && (matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches)))
+    document.documentElement.classList.add("pwa");
+}catch(e){}
+</script>
 
 <div class="capt">
   <h1>TigerFlow <span style="color:var(--orange)">TEC</span> — l'appli du technicien</h1>
-  
+
 </div>
 
 <div class="phone"><div class="screenwrap">
