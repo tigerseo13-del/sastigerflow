@@ -55,6 +55,7 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .tb.on{color:var(--orange)}
 .fabslot{flex:1;display:flex;justify-content:center}
 .fab{width:64px;height:64px;border-radius:50%;background:var(--orange);border:5px solid #F7F8FA;cursor:pointer;color:#fff;display:grid;place-items:center;margin-top:-34px;box-shadow:0 10px 22px -6px rgba(255,90,31,.55)}
+.nofab .fab{display:none}
 .fab svg{width:26px;height:26px;stroke-width:2.6}
 .hbar{width:120px;height:5px;border-radius:99px;background:#D6D9E0;position:absolute;bottom:5px;left:50%;transform:translateX(-50%)}
 
@@ -884,6 +885,10 @@ function go(k){
   g("s-" + k).classList.add("on");
   document.querySelectorAll(".tb").forEach(b => b.classList.remove("on"));
   const nb = g(NAVMAP[k] || "nb-home"); if(nb) nb.classList.add("on");
+  /* 04/08 (audit) : le « + » (nouvelle intervention) n'a de sens que sur
+     l'Accueil et la liste — ailleurs il recouvrait le bouton principal de la
+     fiche et les cartes. */
+  document.body.classList.toggle("nofab", k !== "home" && k !== "list");
   g("app").scrollTop = 0;
   renderAll();
 }
@@ -932,7 +937,11 @@ function rhome(){
         <div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><b>${next.dur}</b>Durée estimée</span></div>
         <div><svg viewBox="0 0 24 24"><path d="M3 16v-3.5L5.5 7h13L21 12.5V16M5 16h14M7 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm10 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg><span><b>${next.trajet || "12 min"}</b>Trajet estimé</span></div>
       </div>
-      <button class="bo" onclick="openM(${next.id});startM(${next.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Démarrer l&rsquo;intervention</button>`;
+      <!-- 04/08 (audit) : une intervention DÉJÀ démarrée disait encore
+           « Démarrer » sur l'accueil — trompeur avec le chrono juste au-dessus. -->
+      ${enCours
+        ? `<button class="bo" onclick="openM(${next.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer l&rsquo;intervention</button>`
+        : `<button class="bo" onclick="openM(${next.id});startM(${next.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Démarrer l&rsquo;intervention</button>`}`;
   } else {
     nc.innerHTML = `<div class="nlab">JOURNÉE <b>BOUCLÉE</b></div><p style="font-size:.85rem;color:var(--muted)">Plus rien à faire — beau travail Thomas.</p>`;
   }
