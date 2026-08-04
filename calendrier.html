@@ -156,6 +156,8 @@ h1,.num{font-family:'Sora',sans-serif}
 .dhead .dmain::before{display:none}
 .dbig{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:10px 24px 10px 12px;border-radius:999px;font-size:.8rem;font-weight:700;border:0;background:var(--orange);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px -5px rgba(255,90,31,.45);transition:transform .1s ease,box-shadow .15s ease}
 .dbig:hover{transform:translateY(-1px);box-shadow:0 7px 15px -5px rgba(255,90,31,.5)}
+.dbig.ghostdoc{background:#fff;color:var(--ink);border:1.5px solid #E2E5EB;box-shadow:none}
+.dbig.ghostdoc:hover{border-color:var(--orange);color:var(--orange-deep);box-shadow:none}
 .rnext{margin-left:auto}
 .encgo{display:flex;flex-direction:column;align-items:center;gap:2px;flex-basis:100%;margin-top:4px}
 .encgo .dbig{flex:none;padding:13px 32px;font-size:.88rem}
@@ -2858,7 +2860,10 @@ function renderDetail(){
     </div>`;
     menuItems = mi(`finishInt(${v.id})`, "back", "Rouvrir l'intervention");
   } else if(v.done){
-    mainBtns = `<button class="dbig" onclick="openReport(${v.id})">${REPORTS[v.id] ? "Modifier le rapport" : "Rapport d'intervention"}</button>`;
+    /* 04/08 : le rapport enregistré ouvre son DOCUMENT CLIENT (page A4 au
+       logo Tiger, prête à imprimer / envoyer) — rempli avec les vraies données. */
+    mainBtns = `<button class="dbig" onclick="openReport(${v.id})">${REPORTS[v.id] ? "Modifier le rapport" : "Rapport d'intervention"}</button>`
+      + (REPORTS[v.id] && !REPORTS[v.id]._demo ? `<button class="dbig ghostdoc" onclick="window.open('rapport-client.html?id=${v.id}','_blank')" title="Le document remis au client — PDF au logo Tiger">📄 Rapport client</button>` : "");
     menuItems = mi(`finishInt(${v.id})`, "back", "Rouvrir l'intervention");
   } else if(v.started){
     /* ===== clôture IDENTIQUE pour toutes les interventions : 2 choix ===== */
@@ -3380,6 +3385,34 @@ function cancelStart(id){
 
 /* ===== Rapport d'intervention — assistant en 3 étapes ===== */
 const REPORTS = {};
+/* ===== 04/08 : les rapports enregistrés SURVIVENT au rechargement et
+   alimentent le rapport client (rapport-client.html?id=N). Les Sets passent
+   en tableaux à l'écriture et reviennent en Sets à la lecture. Les rapports
+   démo (_demo) restent volatils. Quota dépassé → on retente sans photos. ===== */
+const RKEY = "tigerflow-reports";
+try{
+  const _sv = JSON.parse(localStorage.getItem(RKEY)) || {};
+  Object.keys(_sv).forEach(k => {
+    const r = _sv[k]; if(!r) return;
+    ["zones", "signes", "meths", "mats", "tzones", "recos"].forEach(f => { r[f] = new Set(Array.isArray(r[f]) ? r[f] : []); });
+    REPORTS[k] = r;
+  });
+}catch(e){}
+function repPersist(){
+  const dump = sansPhotos => {
+    const o = {};
+    Object.keys(REPORTS).forEach(k => {
+      const r = REPORTS[k]; if(!r || r._demo) return;
+      const c = Object.assign({}, r);
+      ["zones", "signes", "meths", "mats", "tzones", "recos"].forEach(f => { c[f] = [...(r[f] || [])]; });
+      if(sansPhotos) c.photos = [];
+      o[k] = c;
+    });
+    return JSON.stringify(o);
+  };
+  try{ localStorage.setItem(RKEY, dump(false)); }
+  catch(e){ try{ localStorage.setItem(RKEY, dump(true)); toast("⚠️ Photos trop lourdes pour la sauvegarde locale — le rapport est gardé sans elles"); }catch(e2){} }
+}
 /* ===== l'agenda propre : chaque intervention TERMINÉE a son rapport rempli ===== */
 function seedReports(){
   const OBS = {
@@ -3723,7 +3756,23 @@ function rPhotoAdd(id, files){
   images.forEach(f => {
     if(f.size > RPH_MAX){ toast("⛔ " + f.name + " dépasse 4 Mo"); if(--restants === 0) renderReport(id); return; }
     const rd = new FileReader();
-    rd.onload = () => { r.photos.push({n:f.name, src:rd.result}); if(--restants === 0) renderReport(id); };
+    /* 04/08 (rapport PDF) : la photo est COMPRESSÉE à l'entrée (max 1000 px,
+       JPEG) — le rapport se garde en localStorage et part léger dans le PDF. */
+    rd.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        try{
+          const k = Math.min(1, 1000 / Math.max(im.width, im.height));
+          const cv = document.createElement("canvas");
+          cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+          cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+          r.photos.push({n: f.name, src: cv.toDataURL("image/jpeg", .74)});
+        }catch(e){ r.photos.push({n: f.name, src: rd.result}); }
+        if(--restants === 0) renderReport(id);
+      };
+      im.onerror = () => { r.photos.push({n: f.name, src: rd.result}); if(--restants === 0) renderReport(id); };
+      im.src = rd.result;
+    };
     rd.onerror = () => { if(--restants === 0) renderReport(id); };
     rd.readAsDataURL(f);
   });
@@ -3892,6 +3941,22 @@ function rSave(id){
       }
     }catch(e){}
   }
+  /* ===== 04/08 (validé patron) : le rapport devient un VRAI document —
+     photographie de l'intervention + produits résolus en clair, puis
+     persistance : la page rapport-client.html (le PDF au logo Tiger) se
+     remplit toute seule avec ces données. ===== */
+  try{
+    const T2 = typeDe(v);
+    r.iv = {ref: refInt(id), client: v.client, date: v.date, start: v.start, dur: v.dur,
+      tech: (TECHS[v.tech] || {}).nom || "", type: v.typeLibre || T2.lbl,
+      mode: v.mode || "", cadre: v.mode === "ctr" ? "Sous contrat" : (v.mode === "devis" ? "Visite devis" : "Hors contrat"),
+      montant: v.montant ? (parseFloat(String(v.montant).replace(/\s/g, "").replace(",", ".")) || 0) : (v.mode === "encais" ? 80 + (v.id * 37) % 160 : 0),
+      paid: !!v.paid, encm: v.encm || "", rue: v.rue || "", cp: v.cp || "", ville: v.ville || ""};
+    try{ r.iv.tel = telOf(v) || ""; }catch(e){ r.iv.tel = ""; }
+    r.prodsTxt = (r.prods || []).filter(p => p && p.p).map(p => ({nom: (p.p > 0 ? PRODUITS[p.p] : p.nom) || "", c: p.c || "", q: p.q || 1})).filter(p => p.nom);
+    if(chGet(id)) r.tps = chElapsed(id);
+  }catch(e){}
+  repPersist();
   toast("✓ Intervention terminée — rapport enregistré" + extra);
   DTAB = "rap";
   renderDetail();
