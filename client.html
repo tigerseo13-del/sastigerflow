@@ -352,6 +352,29 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .dt tr:last-child td{border:0}
 .dt .ref{font-family:'Sora';font-weight:700;font-size:.8rem}
 .dt .amt{font-family:'Sora';font-weight:700;white-space:nowrap}
+
+/* ── 04/08 (patron : « aligne tout propre, le montant est collé au statut ») —
+   RÈGLE COMMUNE À TOUS LES TABLEAUX DE LA FICHE CLIENT. Le problème : les
+   colonnes se partageaient la largeur au hasard, le montant (aligné à droite)
+   venait toucher le statut, et l'espace vide se logeait n'importe où.
+   Désormais : la colonne « objet / référence » absorbe le vide, les colonnes
+   courtes (date, montant, statut, actions) prennent juste ce qu'il leur faut,
+   et le montant garde un espace franc avant le statut. ── */
+[data-tab] table.dt{width:100%;table-layout:auto}
+/* l'espace disponible se répartit ENTRE TOUTES les colonnes au lieu de
+   s'entasser au milieu : chacune prend sa part, rien ne se tasse à droite. */
+[data-tab] table.dt th, [data-tab] table.dt td{white-space:nowrap}
+[data-tab] table.dt td:nth-child(2), [data-tab] table.dt th:nth-child(2){white-space:normal}
+/* le montant respire avant le statut */
+[data-tab] table.dt th.amt, [data-tab] table.dt td.amt{text-align:right;padding-right:26px;width:1%}
+/* le statut : colonne étroite, pastille alignée à gauche de sa colonne */
+[data-tab] table.dt td:has(.st), [data-tab] table.dt th:has(+ th:last-child){width:1%}
+/* la dernière colonne (actions) se colle à droite */
+[data-tab] table.dt th:last-child, [data-tab] table.dt td:last-child{width:1%;text-align:right;padding-right:4px}
+[data-tab] table.dt td:last-child .rlink, [data-tab] table.dt td:last-child .qact{white-space:nowrap}
+@media(max-width:900px){
+  [data-tab] table.dt th.amt, [data-tab] table.dt td.amt{padding-right:14px}
+}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;padding:4px 11px;border-radius:14px;white-space:nowrap}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .st-envoye{background:var(--blue-bg);color:var(--blue-d)}
@@ -869,15 +892,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <div class="grid" data-tab="equip">
       <div class="card full">
         <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span>Équipements installés<button class="addbtn" style="margin-left:auto" onclick="eqOpen()">+ Ajouter un équipement</button></div>
-        <a class="equip" href="plan-appatage.html">
-          <span class="eic">🗺️</span>
-          <div>
-            <b>Plan d'appâtage — 14 postes</b>
-            <small>12 postes rongeurs + 2 détecteurs insectes · relevé le 12/07/2026</small>
-            <span class="ebadges"><span class="eb g">11 RAS</span><span class="eb a">2 consommation</span><span class="eb r">1 remplacé (PA-11)</span></span>
-          </div>
-          <span class="go">Ouvrir le plan →</span>
-        </a>
+        <!-- 04/08 (patron) : le plan d'appâtage est parti en bêta dans Réglages. -->
         <div id="eqlist" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
       </div>
       <!-- 29/07 (patron) : la carte Registre est retiree. -->

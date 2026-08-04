@@ -18,6 +18,19 @@ html{background:#F7F8FA}
    s'affichait en TEXTE BRUT sur bureau aussi — ses styles vivaient dans le bloc
    MORT en fin de page (le piège connu des <style> dans les chaînes JS). Les
    règles vivent désormais ICI, dans le premier bloc, comme le veut la méthode. */
+/* 04/08 — rubrique en bêta. ⚠️ classes préfixées pb* : « betabox » et « bicon »
+   appartiennent déjà à l'ancien bloc « Fonctions en bêta » de bas de page, qui
+   se masque sur mobile avec un !important — les réutiliser cassait tout. */
+.pbtag{margin-left:9px;font-size:.62rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  background:#F1EAFD;color:#6D28D9;border:1px solid #DDD0FA;border-radius:999px;padding:3px 10px}
+.pbbox{display:flex;gap:16px;align-items:flex-start;padding:6px 2px 2px}
+.pbbox .pbic{width:52px;height:52px;border-radius:15px;background:var(--orange-soft,#FFF1E9);display:grid;place-items:center;font-size:1.5rem;flex:none}
+.pbbox b{font-family:'Sora';font-size:.95rem;display:block;margin-bottom:6px}
+.pbbox p{margin:0 0 13px;font-size:.85rem;line-height:1.6;color:var(--ink-2,#3D434E);max-width:640px}
+.pbbtn{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--orange,#FF5A1F);
+  color:var(--orange-deep,#D63B05);border-radius:11px;padding:9px 15px;font-size:.82rem;font-weight:700;text-decoration:none}
+.pbbtn:hover{background:var(--orange-soft,#FFF1E9)}
+@media(max-width:560px){.pbbox{flex-direction:column;gap:11px}}
 .betabox{margin-top:28px;border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
 .betah{padding:13px 16px;background:#FAFBFC;border-bottom:1px solid var(--line)}
 .betah b{display:block;font-size:.82rem;font-weight:800;color:var(--ink)}
@@ -540,6 +553,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <div class="sl">Prestations</div>
         <button data-s="cats"><span class="sic"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg></span>Catégories de services</button>
         <button data-s="prest"><span class="sic"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.9H21l-5.3 4 2 6.9-5.7-4.2L6.3 20l2-7-5.3-4h6.6z"/></svg></span>Prestations</button>
+        <button data-s="plan"><span class="sic"><svg viewBox="0 0 24 24"><path d="M9 20l-5.4 2V6L9 4m0 16l6-2m-6 2V4m6 14l5.4 2V4L15 6m0 12V6m0 0L9 4"/></svg></span>Plan d'appâtage</button>
         <button data-s="tva"><span class="sic"><svg viewBox="0 0 24 24"><path d="M19 5L5 19M7.5 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM16.5 21a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg></span>Taux de TVA</button>
         <div class="sl">Documents</div>
         <button data-s="num"><span class="sic"><svg viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M9 4l-1 16M16 4l-1 16"/></svg></span>Numérotation</button>
@@ -1025,6 +1039,24 @@ R.feries = () => `
     <div class="tfoot"><span>1-${FERIES.length} sur ${FERIES.length} affichés</span></div>
   </div>`;
 
+/* ----- plan d'appâtage — EN BÊTA (04/08, patron) : la fonction existe et
+   fonctionne, mais elle n'est reliée à rien pour l'instant. On l'annonce
+   clairement au lieu de la laisser traîner dans la fiche client. ----- */
+R.plan = () => `
+  <div class="card">
+    <div class="card-h">Plan d'appâtage<span class="pbtag">Bêta</span></div>
+    <div class="pbbox">
+      <div class="pbic">🗺️</div>
+      <div>
+        <b>Cartographier les postes d'appâtage d'un site</b>
+        <p>Plan du local, postes numérotés, relevé de consommation par passage et export PDF pour l'audit HACCP.
+        La page existe et fonctionne&nbsp;; elle n'est pas encore reliée aux fiches clients ni aux contrats —
+        c'est le prochain chantier.</p>
+        <a class="pbbtn" href="plan-appatage.html">Voir la démonstration →</a>
+      </div>
+    </div>
+  </div>`;
+
 /* ----- catégories de services ----- */
 function catAdd(i){
   const edit = (typeof i === "number");
@@ -1460,6 +1492,7 @@ let SPK = "info";
 const PANEL_LBL = {
   info:"Identité et mentions légales", users:"Utilisateurs", jours:"Horaires de travail",
   feries:"Jours fériés", cats:"Catégories de services", prest:"Prestations", tva:"Taux de TVA",
+  plan:"Plan d'appâtage",
   num:"Numérotation", docs:"Bibliothèque de documents",
   mdevis:"Modèle de devis", mfacture:"Modèle de facture", mavoir:"Modèle d'avoir",
   mcontrat:"Modèle de contrat", mrapport:"Modèle de rapport d'intervention"
@@ -1505,7 +1538,7 @@ function spRender(){
 const SPFAM = {
   societe: ["info", "users"],
   calendrier: ["jours", "feries"],
-  prestations: ["cats", "prest", "tva"],
+  prestations: ["cats", "prest", "tva", "plan"],
   documents: ["num", "docs"],
   modeles: ["mdevis", "mfacture", "mavoir", "mcontrat", "mrapport"]
 };
@@ -1931,6 +1964,7 @@ label[for]{cursor:pointer}
 
 /* 30/07 audit mobile : le bloc « Fonctions en beta » fuyait en texte brut en bas de page */
 @media(max-width:760px){.betabox{display:none}}
+
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
