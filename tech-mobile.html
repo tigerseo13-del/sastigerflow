@@ -94,8 +94,10 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .hav{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#FF7A45,#E24408);color:#fff;display:grid;place-items:center;font-family:Sora;font-weight:800;font-size:1.02rem;flex:none;box-shadow:0 0 0 3px #fff,0 0 0 4.5px #FFD9C4,0 8px 18px -6px rgba(255,90,31,.4)}
 .hav{width:54px;height:54px;font-size:1.08rem}
 .hl2{display:flex;flex-direction:column;gap:5px}
-.hl2 .hnm{font-family:Sora;font-weight:800;font-size:1.52rem;letter-spacing:-.6px;line-height:1.05;color:var(--ink)}
-.hl2 .hnm span{background:linear-gradient(100deg,var(--orange) 10%,#D63B05 90%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.hl2 .hnm{font-family:Sora;font-weight:800;font-size:1.24rem;letter-spacing:-.4px;line-height:1.1;color:var(--ink)}
+.hl2 .hsrv{display:block;font-size:.76rem;font-weight:600;color:#9A6A4A;margin-top:3px}
+.hello .hsrvp{margin-left:auto;flex:none;align-self:center}
+.hello{align-items:center}
 .hmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
 .pillv{display:inline-flex;align-items:center;gap:6px;background:#ECFDF5;color:var(--green-d);border-radius:999px;padding:4.5px 11px;font-size:.72rem;font-weight:800}
 .pillg{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--line);color:#5B6270;border-radius:999px;padding:4.5px 11px;font-size:.72rem;font-weight:700;box-shadow:0 1px 4px -2px rgba(23,26,32,.08)}
@@ -631,16 +633,19 @@ try{
       <button class="tico" onclick="go('notifs')"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg><span class="bdg" id="bell-b">2</span></button>
     </div>
 
+    <!-- 04/08 (patron, visuel « 16 ») — LA BARRE DE SERVICE. « Bonjour Jo » et
+         ses trois pastilles grises disparaissent : le nom complet (on vérifie
+         qu'on est sur le bon compte avant de valider une intervention), la
+         prise de service et la date sur une ligne, le statut à droite.
+         Les chiffres de la journée ne sont PAS repris ici : les quatre tuiles
+         juste dessous les donnent déjà — pas deux fois la même info. -->
     <div class="hello">
       <span class="hav">TH</span>
       <div class="hl2">
-        <b class="hnm">Bonjour <span id="hnm-user">Thomas</span></b>
-        <span class="hmeta">
-          <span class="pillv"><span class="dot"></span>En service</span>
-          <span class="pillg">ven. 24 mai</span>
-          <span class="pillg">4 interventions</span>
-        </span>
+        <b class="hnm" id="hnm-user">Thomas Martin</b>
+        <small class="hsrv" id="hnm-sub">En service depuis 08:00 · <span id="hnm-date">ven. 24 mai</span></small>
       </div>
+      <span class="pillv hsrvp"><span class="dot"></span>En service</span>
     </div>
 
     <div class="cd next" id="nextcard"></div>
@@ -1909,7 +1914,12 @@ setInterval(function(){
 /* 30/07 audit : le prénom suit le compte connecté */
 try{
   const c = JSON.parse(localStorage.getItem("tigerflow-compte"));
-  if(c && c.nom){ const el = document.getElementById("hnm-user"); if(el) el.textContent = c.nom.split(" ")[0]; }
+  if(c && c.nom){ const el = document.getElementById("hnm-user"); if(el) el.textContent = c.nom; }
+}catch(e){}
+/* 04/08 : la date de l'en-tête suit le vrai jour — plus de « ven. 24 mai » figé */
+try{
+  const d = document.getElementById("hnm-date");
+  if(d) d.textContent = new Date().toLocaleDateString("fr-FR", {weekday:"short", day:"numeric", month:"long"});
 }catch(e){}
 </script>
 <script>
