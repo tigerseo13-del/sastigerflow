@@ -120,6 +120,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .fmenu .danger:hover{background:var(--red-bg)}
 
 /* ===== compteurs ===== */
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:22px}
 .kpi{border-radius:18px;padding:16px 18px;border:1px solid transparent}
 .kpi.k-orange{background:var(--orange-soft);border-color:#FFD9C4}
 /* 04/08 (patron, « 1 ») : le montant est un CHIFFRE, pas une action — tuile
@@ -329,6 +330,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
   .back-m svg{width:18px;height:18px}
   .title-m{display:block}
   .page{padding:6px 14px 70px}
+  .kpis{grid-template-columns:1fr}
   .fhead .btn2{flex:1;justify-content:center}
 }
 
@@ -543,7 +545,20 @@ a.hcli:hover{color:var(--orange-deep)}
 .fhead .idtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .fhead .refchip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;font-weight:700;color:var(--muted);background:#F4F5F8;border:1px solid var(--line);border-radius:8px;padding:3px 8px;letter-spacing:.02em}
 .fhead .idobj{font-size:.84rem;color:var(--ink-2);font-weight:600}
+.fhead .rail{display:flex;margin-left:4px}
+.fhead .rail:empty{display:none}
+.fhead .rk{padding:2px 16px;border-left:1px solid var(--line)}
+.fhead .rk:first-child{border-left:0}
+.fhead .rk small{display:block;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A6ABBB;margin-bottom:3px}
+.fhead .rk b{font-size:.8rem;font-weight:700;color:var(--ink);white-space:nowrap;display:block}
+.fhead .rk .tok{color:#047857}
+.fhead .rk .tw{color:#2148C0}
+.fhead .rk .tk{color:#D33A31}
 .fhead .btns{margin-left:auto;display:flex;gap:10px;align-items:center}
+@media(max-width:1680px){
+  .fhead .rail{flex-basis:100%;order:5;border-top:1px solid var(--line);padding-top:10px;margin-left:0}
+  .fhead .rk:first-child{padding-left:0}
+}
 [data-tab="det"] .grid2{grid-template-columns:1fr}
 [data-tab="det"] .grid2 > .card:first-child{display:none}
 /* ── 04/08 (patron : « 2 ») — LA VIE EN FRISE, PLEINE LARGEUR. Fini la
@@ -551,15 +566,17 @@ a.hcli:hover{color:var(--orange-deep)}
    horizontale sous les tuiles, les Lignes prennent toute la largeur,
    Notes internes et Pièces jointes se partagent la rangée du bas. ── */
 [data-tab="det"].show{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
-[data-tab="det"] > #lcard{grid-column:1 / -1;grid-row:1;margin:0}
-[data-tab="det"] > .grid2{grid-column:1;grid-row:2;margin:0}
-[data-tab="det"] > #pjcard{grid-column:2;grid-row:2;margin:0;padding:14px 18px!important}
+[data-tab="det"] > #viecard{grid-column:1 / -1;grid-row:1;margin:0}
+[data-tab="det"] > #lcard{grid-column:1 / -1;grid-row:2;margin:0}
+[data-tab="det"] > .grid2{grid-column:1;grid-row:3;margin:0}
+[data-tab="det"] > #pjcard{grid-column:2;grid-row:3;margin:0;padding:14px 18px!important}
 [data-tab="det"] .grid2 > .card:last-child{height:100%;box-sizing:border-box;margin:0}
 #pjcard .pjhint{display:none}
 #pjcard .pjrow{margin-top:13px}
 #pjcard .pjadd{font-size:.78rem}
 @media(max-width:1100px){
   [data-tab="det"].show{grid-template-columns:1fr}
+  [data-tab="det"] > #viecard{grid-column:1;grid-row:auto;order:1}
   [data-tab="det"] > #lcard{grid-column:1;grid-row:auto;order:2}
   [data-tab="det"] > .grid2{grid-column:1;grid-row:auto;order:3}
   [data-tab="det"] > #pjcard{grid-column:1;grid-row:auto;order:4}
@@ -598,6 +615,8 @@ a.hcli:hover{color:var(--orange-deep)}
 .vlife li.late small{color:var(--red)}
 .vact{display:inline-flex;align-items:center;gap:6px;margin-top:9px;background:var(--orange);color:#fff;border:0;border-radius:9px;padding:8px 13px;font-size:.78rem;font-weight:800;font-family:'Sora';cursor:pointer;box-shadow:0 3px 8px rgba(255,90,31,.3);transition:.13s}
 .vact:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.vall{display:inline-block;margin-top:2px;font-size:.75rem;font-weight:700;color:var(--muted)}
+.vall:hover{color:var(--orange-deep)}
 /* version degraissee : ligne unique par jalon, etape courante cliquable */
 .vlife li{padding:0 0 13px 27px}
 .vlife li::before{top:16px}
@@ -610,26 +629,17 @@ a.hcli:hover{color:var(--orange-deep)}
 /* 04/08 — en pleine largeur, le fil devient une FRISE : dots en haut relies
    par des traits (vert = fait, gris = a venir), titre et date dessous.
    Sur petit ecran on garde le fil vertical, plus lisible en colonne. */
-/* 04/08 (patron GO « 8 ») — la frise à UNE rangée : la date et le détail
-   se mettent À CÔTÉ du titre, des traits flexibles relient les étapes.
-   Moitié moins haute, toute l'info conservée. */
-#viecard .vlife{display:flex;align-items:center;margin:0;padding:0}
-#viecard .vlife li{display:flex;align-items:center;flex:1 1 auto;min-width:0;padding:0;text-align:left}
-#viecard .vlife li:last-child{flex:0 0 auto}
-#viecard .vlife li::before{display:none}
-#viecard .vlife li::after{content:"";flex:1;height:2px;border-radius:2px;background:var(--line);margin:0 14px;min-width:22px}
-#viecard .vlife li:last-child::after{display:none}
-#viecard .vlife li.done::after, #viecard .vlife li.skip::after{background:#BCE5CF}
-#viecard .vdot{position:static;transform:none;margin-right:9px;flex:none}
-#viecard .vlife li>b{line-height:1.3;font-size:.8rem;white-space:nowrap}
-#viecard .vlife .vd{display:inline;margin:0 0 0 7px;white-space:nowrap}
-#viecard .vlife small{display:inline-block;vertical-align:middle;margin:0 0 0 8px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#viecard .vact{margin:0 0 0 12px;padding:6px 12px;flex:none}
-@media(max-width:900px){
-  #viecard .vlife{flex-wrap:wrap;row-gap:9px}
-  #viecard .vlife small{display:none}
-  #viecard .vlife li::after{margin:0 9px;min-width:12px}
-  #viecard .vlife li>b{font-size:.72rem}
+@media(min-width:1101px){
+  #viecard{padding:16px 22px 13px}
+  #viecard .vlife{display:flex;align-items:flex-start;margin:14px 0 0;padding:2px 4px 0}
+  #viecard .vlife li{flex:1 1 0;min-width:0;padding:25px 8px 4px;text-align:center}
+  #viecard .vlife li::before{left:calc(50% + 14px);right:calc(-50% + 14px);top:7px;bottom:auto;width:auto;height:2px}
+  #viecard .vlife li:last-child::before{display:none}
+  #viecard .vdot{left:50%;transform:translateX(-50%);top:0}
+  #viecard .vlife li>b{line-height:1.35}
+  #viecard .vlife .vd{display:block;margin:3px 0 0}
+  #viecard .vlife small{margin-top:3px}
+  #viecard .vall{margin-top:8px}
 }
 
 /* mu2 : tuile « Prochaine étape » — un guide, pas un doublon */
@@ -647,34 +657,6 @@ a.hcli:hover{color:var(--orange-deep)}
 .kpi.k-next.att{background:#FFFBEB;border-color:#F6DE8B}
 .kpi.k-next.att .num{color:#A16207}
 .kpi.k-next.att:hover{box-shadow:0 8px 20px -12px rgba(161,98,7,.35)}
-/* ── 04/08 (patron : « trop chargé » + « le rail fait doublon ») — visuel « 5 » :
-   ZÉRO boîte en haut. Nom, montant et prochaine étape posés sur la page,
-   onglets soulignés, la vie du dossier en carte fine — et PLUS de rail
-   Établi/Envoyé/Échéance : la frise datée raconte déjà tout ça. ── */
-.hero4{margin:2px 0 4px}
-.hero4 .fhead{border:0;background:none;box-shadow:none;margin:0;padding:10px 4px 0}
-.hero4 .fhead::before{display:none}
-.h4vie{display:flex;align-items:center;gap:26px;padding:12px 4px 2px;flex-wrap:wrap}
-.hero4 .cash{display:flex;flex-direction:column;align-items:flex-start;text-align:left;margin-right:auto}
-.hero4 .cash small{font-size:.6rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
-.hero4 .cash .num{font-family:'Sora';font-size:1.52rem;font-weight:800;letter-spacing:-.03em;color:var(--ink);margin-top:1px;line-height:1.1}
-.hero4 .cash .sub{font-size:.7rem;font-weight:600;color:var(--muted);margin-top:2px;white-space:nowrap}
-.h4vie .kpi{margin:0;flex:0 1 auto;max-width:380px;padding:8px 15px 9px;border-radius:12px}
-.h4vie .kpi .lbl{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
-.h4vie .kpi .num{font-size:.92rem;margin-top:2px}
-.h4vie .kpi .sub{font-size:.66rem;margin-top:2px;color:var(--muted);font-weight:600}
-.h4vie .kpi .paywrap{margin:7px 0 0;min-width:210px}
-.h4foot{padding:6px 4px 0;margin-bottom:12px}
-.hero4 .tabs{background:none;border:0;box-shadow:none;margin:0;padding:0;border-bottom:1.5px solid #E3E5EC;border-radius:0;width:100%;gap:0;overflow:visible}
-.hero4 .tab{border-radius:0;padding:9px 3px;margin:0 22px -1.5px 0;color:var(--muted);border-bottom:2.5px solid transparent}
-.hero4 .tab:hover{background:none;color:var(--ink)}
-.hero4 .tab.active{background:none;color:var(--orange-deep);border-bottom-color:var(--orange);box-shadow:none;font-weight:800}
-.hero4 .tab.active .n{background:#FFF1E9;color:var(--orange-deep)}
-#viecard{padding:11px 18px}
-@media(max-width:760px){
-  .h4vie{gap:14px}
-  .hero4 .cash .sub{white-space:normal}
-}
 </style>
 </head>
 <body>
@@ -735,8 +717,6 @@ a.hcli:hover{color:var(--orange-deep)}
   <div class="page">
 
     <!-- en-tête : réf + statut + actions -->
-    <!-- 04/08 (patron GO « 4 ») — TOUT L'ÉTAT DANS UNE SEULE CARTE TEINTÉE -->
-    <div class="hero4">
     <div class="fhead">
       <span class="mono" id="h-mono" aria-hidden="true">—</span>
       <div class="idbloc"><div class="idtop">
@@ -754,6 +734,7 @@ a.hcli:hover{color:var(--orange-deep)}
         </div>
       </span>
       </div><span class="idobj" id="h-obj">—</span></div>
+      <div class="rail" id="hmeta"></div>
       <div class="btns">
       <button class="btn2" onclick="pdfDevis()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
       
@@ -777,23 +758,17 @@ a.hcli:hover{color:var(--orange-deep)}
       </div>
     </div>
 
-    <!-- la frise et la prochaine étape, au cœur de la carte -->
-    <div class="h4vie">
-      <span class="cash"><small>Montant total</small><b class="num" id="k-total">—</b><span class="sub" id="k-total-sub"></span></span>
+    <!-- compteurs -->
+    <div class="kpis">
+      <div class="kpi k-cash"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div><span class="sub" id="k-total-sub"></span></div>
       <div class="kpi k-green" id="k-etat-tile"><div class="lbl">État</div><div class="num" id="k-etat">—</div><span class="sub" id="k-etat-sub"></span></div>
     </div>
 
-    <!-- onglets + repères, en pied de carte -->
-    <div class="h4foot">
+    <!-- onglets -->
     <div class="tabs">
       <button class="tab active" onclick="showTab('det',this)">Détails</button>
       <button class="tab" onclick="showTab('hist',this)">Historique</button>
     </div>
-    </div>
-    </div>
-
-    <!-- la vie du devis — une carte fine, seule -->
-    <div class="card" id="viecard"><ol class="vlife" id="vielist"></ol></div>
 
     <!-- ═══ DÉTAILS ═══ -->
     <div data-tab="det" class="show">
@@ -823,6 +798,11 @@ a.hcli:hover{color:var(--orange-deep)}
           <div class="rline ttc"><span>Total TTC</span><b id="r-ttc">—</b></div>
           <div class="paidchip" id="paidchip" style="display:none"></div>
         </div></div>
+      </div>
+      <div class="card" id="viecard">
+        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Vie du devis</div>
+        <ol class="vlife" id="vielist"></ol>
+        <a class="vall" href="#" onclick="vieHisto(event)">Tout l’historique →</a>
       </div>
       <div class="card" id="pjcard" style="padding:14px 20px">
         <!-- 28/07 : cette carte n'avait pas d'en-tete. Une zone de depot posee
