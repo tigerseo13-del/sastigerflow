@@ -498,10 +498,12 @@ td.due small{color:#B3261E;font-weight:800;display:block;font-size:.66rem;letter
     
 
 
-    <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-      <div class="kpi k-amber" onclick="setStat('todo')" style="cursor:pointer" title="Filtrer : à faire"><div class="kico"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></div><div class="lbl">À faire</div><div class="num" id="k-todo">0</div></div>
-      <div class="kpi k-blue" onclick="setStat('prog')" style="cursor:pointer" title="Filtrer : en cours"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/></svg></div><div class="lbl">En cours</div><div class="num" id="k-prog">0</div></div>
-      <div class="kpi k-green" onclick="setStat('done')" style="cursor:pointer" title="Filtrer : terminées"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div><div class="lbl">Terminées</div><div class="num" id="k-done">0</div></div>
+    <div class="kpis">
+      <div class="kpi k-amber" onclick="setStat('todo')" style="cursor:pointer" title="Filtrer : à faire"><div class="kico"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></div><div class="lbl">À faire</div><div class="num" id="k-todo">0</div><div class="ksub" id="k-todo-s">—</div></div>
+      <div class="kpi k-blue" onclick="setStat('prog')" style="cursor:pointer" title="Filtrer : en cours"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z"/></svg></div><div class="lbl">En cours</div><div class="num" id="k-prog">0</div><div class="ksub" id="k-prog-s">—</div></div>
+      <div class="kpi k-green" onclick="setStat('done')" style="cursor:pointer" title="Filtrer : terminées"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div><div class="lbl">Terminées</div><div class="num" id="k-done">0</div><div class="ksub" id="k-done-s">—</div></div>
+      <!-- 04/08 (patron) — le feu se voit en arrivant : ROUGE, en dernier. -->
+      <div class="kpi k-red" onclick="setStat('late')" style="cursor:pointer" title="Filtrer : en retard"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.5l3.5 2"/></svg></div><div class="lbl">En retard</div><div class="num" id="k-late">0</div><div class="ksub" id="k-late-s">—</div></div>
     </div>
 
 
@@ -525,6 +527,7 @@ td.due small{color:#B3261E;font-weight:800;display:block;font-size:.66rem;letter
         <option value="todo">À faire</option>
         <option value="prog">En cours</option>
         <option value="done">Terminées</option>
+        <option value="late">En retard</option>
         <option value="annul">Annulées</option>
       </select>
       <select class="fsel" id="f-prio" onchange="render()">
@@ -709,7 +712,7 @@ function filtered(){
      « À faire », on passe une tache « En cours », et elle s'evapore sous le
      curseur. Vue du bureau, elle a disparu. */
   const list = TASKS.filter(t =>
-    (FSTAT === "all" || t.st === FSTAT || t._juste) &&
+    (FSTAT === "all" || (FSTAT === "late" ? isLate(t) : t.st === FSTAT) || t._juste) &&
     (pr === "all" || t.prio === pr) &&
     (wh === "all" || t.who === wh) &&
     (!du || t.due >= du) &&
@@ -821,7 +824,9 @@ function appliqueFiltre(v){
   const sel = document.getElementById("f-stat");
   if(sel) sel.value = FSTAT;
   document.querySelectorAll(".kpi[onclick]").forEach(k => k.style.outline = "");
-  const _kt = {todo:".kpi.k-blue", prog:".kpi.k-amber", done:".kpi.k-green"}[FSTAT];
+  /* 04/08 — la map suivait les ANCIENNES couleurs (todo bleu, prog ambre) :
+     depuis la grammaire, à faire = ambre et en cours = bleu. */
+  const _kt = {todo:".kpi.k-amber", prog:".kpi.k-blue", done:".kpi.k-green", late:".kpi.k-red"}[FSTAT];
   if(_kt){ const k = document.querySelector(_kt); if(k) k.style.outline = "2.5px solid var(--orange)"; }
 }
 function setStat(s){
@@ -1487,9 +1492,22 @@ function statsT(){
   if(!g("k-todo")) return;
   const today = new Date().toISOString().slice(0, 10);
   const open_ = TASKS.filter(t => t.st !== "done");
-  g("k-todo").textContent = TASKS.filter(t => t.st === "todo").length;
-  const _kp = g("k-prog"); if(_kp) _kp.textContent = TASKS.filter(t => t.st === "prog").length;
-  g("k-done").textContent = TASKS.filter(t => t.st === "done").length;
+  const _todo = TASKS.filter(t => t.st === "todo"), _prog = TASKS.filter(t => t.st === "prog"),
+        _done = TASKS.filter(t => t.st === "done"), _late = TASKS.filter(isLate);
+  g("k-todo").textContent = _todo.length;
+  const _kp = g("k-prog"); if(_kp) _kp.textContent = _prog.length;
+  g("k-done").textContent = _done.length;
+  const _kl = g("k-late"); if(_kl) _kl.textContent = _late.length;
+  /* 04/08 (patron) — la 2e ligne : ce que le chiffre veut dire aujourd'hui. */
+  const put = (id, txt) => { const e = g(id); if(e) e.textContent = txt; };
+  const _auj = _todo.filter(t => t.due === today).length;
+  put("k-todo-s", _auj ? _auj + " pour aujourd'hui" : (_todo.length ? "rien pour aujourd'hui" : "—"));
+  const _eq = [...new Set(_prog.map(t => t.who))].length;
+  put("k-prog-s", _prog.length ? _eq + " technicien" + (_eq > 1 ? "s" : "") + " dessus" : "—");
+  const _sem = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10);
+  const _rec = _done.filter(t => (t.due || "") >= _sem).length;
+  put("k-done-s", _done.length ? _rec + " cette semaine" : "—");
+  put("k-late-s", _late.length ? "à traiter en priorité" : "rien en retard ✓");
   const P = [["Urgente","#D63B33"],["Haute","#D9A408"],["Normale","#2E5CE6"],["Basse","#C6CCD8"]];
   const tot = open_.length || 1;
   if(!g("pipe") || !g("pipeleg")) return;   /* pas de barre de répartition sur cette page */
