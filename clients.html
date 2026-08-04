@@ -164,9 +164,11 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
 
 /* ============ RESPONSIVE ============ */
 @media(max-width:900px){
+  /* 04/08 : la 3e colonne est maintenant le STATUT — on ne le masque jamais.
+     Disparaissent : Type, Contrats et Source (analyse, pas action). */
   .dt th:nth-child(2),.dt td:nth-child(2),
-  .dt th:nth-child(3),.dt td:nth-child(3),
-  .dt th:nth-child(4),.dt td:nth-child(4){display:none}
+  .dt th:nth-child(4),.dt td:nth-child(4),
+  .dt th:nth-child(7),.dt td:nth-child(7){display:none}
   .acts .ab.hidem{display:none}
 }
 @media(max-width:760px){
@@ -471,16 +473,16 @@ tbody td .cl b, tbody td.cl b{font-weight:800}
     <div class="card">
       <div class="tscroll"><table class="dt clients-t">
         <colgroup>
-          <col class="c-client"><col class="c-type"><col class="c-source"><col class="c-contrats"><col class="c-ca"><col class="c-enc"><col class="c-statut"><col class="c-act">
+          <col class="c-client"><col class="c-type"><col class="c-statut"><col class="c-contrats"><col class="c-ca"><col class="c-enc"><col class="c-source"><col class="c-act">
         </colgroup>
         <thead><tr>
           <th>Client</th>
           <th>Type</th>
-          <th>Source</th>
+          <th>Statut</th>
           <th class="num">Contrats</th>
           <th class="sort num" onclick="sortCA()">CA total <span class="arr" id="arr" title="Ordre d'ajout — les derniers créés en tête">↕</span></th>
           <th class="num">À encaisser</th>
-          <th>Statut</th>
+          <th>Source</th>
           <th style="text-align:right;padding-right:18px">Actions</th>
         </tr></thead>
         <tbody id="rows"></tbody>
@@ -768,11 +770,11 @@ function render(){
     return `<tr onclick="location.href='client.html?c='+encodeURIComponent('${c.nom.replace(/'/g,"\\'")}')" title="Ouvrir la fiche client">
       <td><span class="cl"><span><b>${c.nom}</b><small>${c.cp} · ${c.ville}</small></span></span></td>
       <td><span class="typ ${tk}">${c.type}</span></td>
-      <td class="srcd" title="Source du client">${c.source || "—"}</td>
+      <td><span class="st ${cls}">${lbl}</span></td>
       <td class="num">${c.nb || "—"}</td>
       <td class="amt num">${euro(c.caV)}</td>
       <td class="num ${c.dueV ? "due" : "due zero"}">${c.dueV ? euro(c.dueV) : "—"}</td>
-      <td><span class="st ${cls}">${lbl}</span></td>
+      <td class="srcd" title="Source du client">${c.source || "—"}</td>
       <td class="acts" onclick="event.stopPropagation()">
         <span class="rowact">
           ${c.tel ? `<a class="call" href="tel:${c.tel}" title="Appeler ${c.nom.replace(/"/g,'&quot;')}" aria-label="Appeler"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>` : ""}
