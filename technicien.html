@@ -625,6 +625,11 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 .compc{margin-left:auto;flex:none;font-family:'Sora';font-weight:800;font-size:.82rem;color:var(--green-d,#0F8A4F);
   background:var(--green-bg,#ECFDF5);border:1px solid #C9EBDC;border-radius:8px;padding:3px 9px;line-height:1.35}
 @media(max-width:560px){.comnom{font-size:.79rem}}
+
+/* 04/08 — la charge du jour dans le calendrier de disponibilité */
+.day.charge{transition:.13s}
+.day.charge:hover{border-color:var(--orange,#FF5A1F);box-shadow:0 6px 16px -10px rgba(255,90,31,.5)}
+.dnb{display:block;margin-top:6px;font-size:.7rem;font-weight:800;color:var(--orange-deep,#D63B05)}
 </style>
 </head>
 <body>
@@ -1211,10 +1216,32 @@ function dispo(){
   const JD = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
   const off = T.dispo === "conge";
   const ti = (new Date().getDay() + 6) % 7;
+  /* 04/08 (patron GO) — LA CHARGE, pas le détail : chaque jour dit combien
+     d'interventions il a. On ne recopie PAS l'agenda dans la fiche (ce serait
+     le doublon qu'on vient de supprimer) — juste le nombre, et un clic mène
+     à l'agenda ouvert sur ce jour-là. */
+  const lun = new Date(); lun.setHours(12, 0, 0, 0);
+  lun.setDate(lun.getDate() - ti);
+  const isoDe = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  let boite = [];
+  try{ boite = JSON.parse(localStorage.getItem("tigerflow-inbox-interventions") || "[]"); }catch(e){}
+  const prenom = (NAME || "").trim().split(/\s+/)[0].toLowerCase();
+  const compte = iso => {
+    let n = boite.filter(x => x && x.date === iso && String(x.tech || "").trim().toLowerCase().split(/\s+/)[0] === prenom).length;
+    if(iso === isoDe(new Date())) n += (T.planning || []).length;   /* le planning du jour de la fiche */
+    return n;
+  };
   g("i-week").innerHTML = JD.map((j, i) => {
     const on = !off && (h.jours || []).includes(j);
     const td = i === ti;
-    return '<div class="day ' + (on ? "on" : "off") + (td ? " today" : "") + '"><b>' + j + (td ? ' <span class="tdy">Aujourd&#39;hui</span>' : "") + '</b><small>' + (off ? "Indisponible" : on ? (h.deb || "08:00") + " – " + (h.fin || "17:00") : "Repos") + '</small></div>';
+    const dj = new Date(lun); dj.setDate(lun.getDate() + i);
+    const iso = isoDe(dj);
+    const n = compte(iso);
+    return '<div class="day ' + (on ? "on" : "off") + (td ? " today" : "") + (n ? " charge" : "") + '"'
+      + (n ? ' onclick="location.href=\'calendrier.html?d=' + iso + '\'" title="Voir cette journée dans l\'agenda" style="cursor:pointer"' : "")
+      + '><b>' + j + (td ? ' <span class="tdy">Aujourd&#39;hui</span>' : "") + '</b><small>'
+      + (off ? "Indisponible" : on ? (h.deb || "08:00") + " – " + (h.fin || "17:00") : "Repos") + '</small>'
+      + (n ? '<span class="dnb">' + n + ' intervention' + (n > 1 ? "s" : "") + ' →</span>' : "") + '</div>';
   }).join("");
 }
 

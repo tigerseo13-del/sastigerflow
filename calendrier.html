@@ -4900,6 +4900,20 @@ renderTray();
       }
     }
   }catch(e){}
+  /* 04/08 : on peut aussi arriver sur un JOUR précis — calendrier.html?d=AAAA-MM-JJ
+     (depuis le calendrier de disponibilité d'un technicien). */
+  try{
+    var qd = new URLSearchParams(location.search).get("d");
+    if(qd && /^\d{4}-\d{2}-\d{2}$/.test(qd)){
+      CUR = new Date(qd + "T12:00:00");
+      VIEW = "day";
+      ["day","week","month"].forEach(function(x){
+        var el = document.getElementById("v-" + x);
+        if(el) el.classList.toggle("on", x === "day");
+      });
+      return;
+    }
+  }catch(e){}
   var q = new URLSearchParams(location.search).get("m");
   if(!q || !/^\d{4}-\d{2}$/.test(q)) return;
   var a = +q.slice(0,4), m = +q.slice(5,7);
