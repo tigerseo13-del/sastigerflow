@@ -802,6 +802,7 @@ const CATALOGUE = [
    depuis son brouillon, ce chemin-la ne change pas. */
 let LIGNES = [];
 let FRAIS = [];
+let REMAMT = 0;   /* 04/08 : la remise calculée, exposée pour l'enregistrement */
 let STAT2 = "brouillon";
 const g = id => document.getElementById(id);
 const eur = n => (Math.round(n * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
@@ -986,6 +987,7 @@ function calc(){
   const remIn = parseFloat(String((g("v-rem") || {value:0}).value).replace(",", ".")) || 0;
   const remT = (g("v-remt") || {value:"%"}).value;
   let remAmt = remT === "%" ? ht * Math.min(remIn, 100) / 100 : Math.min(remIn, ht);
+  REMAMT = remAmt;
   const scale = ht > 0 ? (ht - remAmt) / ht : 1;
   ht -= remAmt; t10 *= scale; t20 *= scale;
   if(g("v-remv")) g("v-remv").textContent = remAmt ? "− " + eur(remAmt) : "—";
@@ -1649,7 +1651,11 @@ function pushDevisInbox(){
     const dv = new Date(); dv.setDate(dv.getDate() + vd);
     const rec = {ref:DREF, pro:false, client:cli, ct:"", tech:DTECH, inter:DINT, titre:(document.getElementById("v-objet") || {value:""}).value,
       montant, statut:CURSTAT, date:iso(d), valid:iso(dv),
-      lignes: LIGNES.map(l => ({designation:l.designation, desc:l.desc || "", qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""}))};
+      lignes: LIGNES.map(l => ({designation:l.designation, desc:l.desc || "", qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""})),
+      /* 04/08 (bug patron) : les FRAIS et la REMISE partent AVEC le devis —
+         sans eux, les pages de lecture montraient un total inexplicable. */
+      frais: FRAIS.map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10})),
+      remise: Math.round((REMAMT || 0) * 100) / 100};
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]").filter(x => x.ref !== DREF);
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-devis", JSON.stringify(box.slice(0, 30)));
@@ -1832,6 +1838,9 @@ setInterval(pushDevisInbox, 4000);   /* l'autosave alimente aussi la liste */
     const ob = document.getElementById("v-objet"); if(ob && rec.titre){ ob.value = rec.titre; try{ OBJEDIT = true; }catch(e){} }   /* objet du brouillon prioritaire sur l'objet auto */
     if(Array.isArray(rec.lignes) && rec.lignes.length && rec.lignes[0].designation){
       LIGNES = rec.lignes.map(l => ({designation:l.designation, desc:l.desc || "", qte:l.qte || 1, pu:l.pu || 0, tva:(l.tva == null ? 10 : l.tva), emo:l.emo || "🧾", img:l.img || ""}));
+      /* 04/08 : les frais et la remise reviennent aussi à la reprise du brouillon */
+      FRAIS = (rec.frais || []).map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10}));
+      try{ if(rec.remise > 0){ g("v-rem").value = rec.remise; g("v-remt").value = "€"; if(typeof remOpen === "function") remOpen(); } }catch(e){}
       if(typeof drawL === "function") drawL();
     }
     if(rec.statut && typeof setStat2 === "function"){

@@ -1369,7 +1369,31 @@ function lignes(){
       '<td class="r">' + (l.qte||0) + '</td><td class="r">' + eur(l.pu||0) + '</td><td class="r">' + (l.tva||10) + ' %</td>' +
       '<td class="r"><span class="ltot">' + eur(lht) + '</span></td></tr>';
   }).join('') || '<tr><td colspan="6" class="empty2">Aucune ligne détaillée.</td></tr>';
-  g('r-ht').textContent = eur(ht); g('r-tva').textContent = eur(tva); g('r-ttc').textContent = eur(REC.montant || ht + tva);
+  /* ===== 04/08 (bug patron) : les FRAIS OPTIONNELS et la REMISE s'affichent
+     enfin — avant, le total les incluait sans les montrer : chiffres
+     inexplicables sur le résumé. Mêmes règles de calcul que l'atelier. ===== */
+  const F = REC.frais || [];
+  let fht = 0, ftva = 0;
+  if(F.length){
+    g('lbody').innerHTML += F.map(f => {
+      const m = +f.m || 0, tx = +f.tva || 10;
+      fht += m; ftva += m * tx / 100;
+      return '<tr><td style="width:52px"><span class="lemoji">🚐</span></td><td><b>' + (f.n || "Frais") + '</b> <small style="color:var(--muted);font-weight:600">· frais optionnel</small></td>' +
+        '<td class="r">—</td><td class="r">' + eur(m) + '</td><td class="r">' + tx + ' %</td>' +
+        '<td class="r"><span class="ltot">' + eur(m) + '</span></td></tr>';
+    }).join('');
+  }
+  const rem = +REC.remise || 0;
+  const scale = (ht > 0 && rem) ? (ht - rem) / ht : 1;
+  const rh = g('r-ht').closest('.rline');
+  rh.querySelector('span').textContent = F.length ? 'Sous-total prestations HT' : 'Sous-total HT';
+  let extra = document.getElementById('r-extra');
+  if(!extra){ extra = document.createElement('div'); extra.id = 'r-extra'; extra.style.display = 'contents'; rh.after(extra); }
+  extra.innerHTML = (fht ? '<div class="rline"><span>Frais optionnels HT</span><b>' + eur(fht) + '</b></div>' : '')
+    + (rem ? '<div class="rline"><span>Remise commerciale</span><b>− ' + eur(rem) + '</b></div>' : '');
+  g('r-ht').textContent = eur(ht);
+  g('r-tva').textContent = eur(tva * scale + ftva);
+  g('r-ttc').textContent = eur(REC.montant || (ht - rem + tva * scale + fht + ftva));
 }
 function paylist(){
   const P = pays();

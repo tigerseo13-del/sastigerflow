@@ -849,6 +849,7 @@ const CATALOGUE = [
    depuis son brouillon, ce chemin-la ne change pas. */
 let LIGNES = [];
 let FRAIS = [];
+let REMAMT = 0;
 let STAT2 = "brouillon";
 const g = id => document.getElementById(id);
 const eur = n => (Math.round(n * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
@@ -1010,6 +1011,7 @@ function calc(){
   const remIn = parseFloat(String((g("v-rem") || {value:0}).value).replace(",", ".")) || 0;
   const remT = (g("v-remt") || {value:"%"}).value;
   let remAmt = remT === "%" ? ht * Math.min(remIn, 100) / 100 : Math.min(remIn, ht);
+  REMAMT = remAmt;
   const scale = ht > 0 ? (ht - remAmt) / ht : 1;
   ht -= remAmt; t10 *= scale; t20 *= scale;
   if(g("v-remv")) g("v-remv").textContent = remAmt ? "− " + eur(remAmt) : "—";
@@ -1692,7 +1694,9 @@ function pushDevisInbox(){
       montant, statut:CURSTAT, date:iso(d), valid:iso(dv),
       bc:(document.getElementById("v-bc") || {value:""}).value.trim(),
       contrat:(document.getElementById("v-contrat") || {value:""}).value.trim(),
-      lignes: LIGNES.map(l => ({designation:l.designation, qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""}))};
+      lignes: LIGNES.map(l => ({designation:l.designation, qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""})),
+      frais: FRAIS.map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10})),
+      remise: Math.round((REMAMT || 0) * 100) / 100};
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").filter(x => x.ref !== DREF);
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-factures", JSON.stringify(box.slice(0, 30)));
@@ -1883,6 +1887,8 @@ document.body.classList.toggle("proforma-on", CURSTAT === "brouillon");   /* ét
     const ctr = document.getElementById("v-contrat"); if(ctr && rec.contrat) ctr.value = rec.contrat;
     if(Array.isArray(rec.lignes) && rec.lignes.length && rec.lignes[0].designation){
       LIGNES = rec.lignes.map(l => ({designation:l.designation, desc:l.desc || "", qte:l.qte || 1, pu:l.pu || 0, tva:(l.tva == null ? 10 : l.tva), emo:l.emo || "🧾", img:l.img || ""}));
+      FRAIS = (rec.frais || []).map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10}));
+      try{ if(rec.remise > 0){ g("v-rem").value = rec.remise; g("v-remt").value = "€"; if(typeof remOpen === "function") remOpen(); } }catch(e){}
       if(typeof drawL === "function") drawL();
     }
     if(rec.statut && rec.statut !== CURSTAT){
