@@ -341,13 +341,12 @@ h1,.num{font-family:'Sora',sans-serif}
 .rlab:first-child{margin-top:0}
 .rlab .rlc{color:var(--green-d);font-weight:800;letter-spacing:0;font-size:.74rem}
 .rlab .rmulti{margin-left:auto;font-family:'Inter';font-weight:600;color:#A6ABBB;font-size:.68rem;letter-spacing:0}
-/* detail d'un produit coche : nom + concentration + quantite, tout facultatif.
-   En GRID a pistes explicites : aucune regle globale sur input/b ne peut
-   ecraser les largeurs (un conflit flex rendait le nom invisible). */
+/* detail d'un produit coche : nom + quantite, c'est tout (04/08, patron :
+   « degage les concentrations, sert a rien »). En GRID a pistes explicites :
+   aucune regle globale sur input/b ne peut ecraser les largeurs. */
 .prodet{margin-top:10px;display:flex;flex-direction:column;gap:7px}
-.prow2{display:grid;grid-template-columns:minmax(0,1fr) 180px 64px;gap:9px;align-items:center;background:#F7F8FA;border:1px solid #EFF1F5;border-radius:11px;padding:8px 12px}
+.prow2{display:grid;grid-template-columns:minmax(0,1fr) 74px;gap:9px;align-items:center;background:#F7F8FA;border:1px solid #EFF1F5;border-radius:11px;padding:8px 12px}
 .prow2 .pname{min-width:0;font-size:.8rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.prow2 .pconc{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:7px 10px;font:600 .76rem Inter,sans-serif;background:#fff;box-sizing:border-box}
 .prow2 .pqty{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font:600 .78rem Inter,sans-serif;background:#fff;text-align:center;box-sizing:border-box}
 .rchip.autre{background:#fff;border:1.5px dashed #D8DBE2;color:var(--muted);font-weight:700}
 .rchip.more{background:#fff;border:1.5px solid #E6E9EF;color:var(--orange-deep);font-weight:700}
@@ -2863,7 +2862,7 @@ function renderDetail(){
     /* 04/08 : le rapport enregistré ouvre son DOCUMENT CLIENT (page A4 au
        logo Tiger, prête à imprimer / envoyer) — rempli avec les vraies données. */
     mainBtns = `<button class="dbig" onclick="openReport(${v.id})">${REPORTS[v.id] ? "Modifier le rapport" : "Rapport d'intervention"}</button>`
-      + (REPORTS[v.id] && !REPORTS[v.id]._demo ? `<button class="dbig ghostdoc" onclick="window.open('rapport-client.html?id=${v.id}','_blank')" title="Le document remis au client — PDF au logo Tiger">📄 Rapport client</button>` : "");
+      + (REPORTS[v.id] && !REPORTS[v.id]._demo ? `<button class="dbig ghostdoc" onclick="window.open('rapport-client.html?id=${v.id}&v=20260804','_blank')" title="Le document remis au client — PDF au logo Tiger">📄 Rapport client</button>` : "");
     menuItems = mi(`finishInt(${v.id})`, "back", "Rouvrir l'intervention");
   } else if(v.started){
     /* ===== clôture IDENTIQUE pour toutes les interventions : 2 choix ===== */
@@ -3065,7 +3064,7 @@ function renderDetail(){
         <div class="dcard">
           <div class="dh">Étape 2 — Traitement</div>
           ${kv("Méthode", [...r.meths].join(", "))}
-          ${kv("Produits utilisés", r.prods.filter(p=>p.p).map(p=>((p.p > 0 ? PRODUITS[p.p] : p.nom) || "") + (p.c ? " · " + p.c : "") + " ×" + p.q).filter(Boolean).join(", "))}
+          ${kv("Produits utilisés", r.prods.filter(p=>p.p).map(p=>((p.p > 0 ? PRODUITS[p.p] : p.nom) || "") + " ×" + p.q).filter(Boolean).join(", "))}
           ${kv("Matériel", st(r.mats))}
           ${kv("Zones traitées", st(r.tzones))}
           ${kv("Actions réalisées", r.act)}
@@ -3463,7 +3462,6 @@ function openReport(id){
   if(!REPORTS[id]) REPORTS[id] = {niv:"", zones:new Set(), signes:new Set(), obs:"", urg:"Moyenne",
     meths:new Set(), prods:[], mats:new Set(), tzones:new Set(), act:"", temps:"",
     recos:new Set(), quote:false, quoteDesc:"", next:"", notes:"", creneau:"", photos:[]};
-  if(REPORTS[id].prods) REPORTS[id].prods.forEach(pr => { if(pr.c === undefined) pr.c = ""; });
   RSTEP = 1;
   RCAL_OPEN = false; RTZ_OPEN = false; RPR_OPEN = false; RMORE = new Set();
   renderReport(id);
@@ -3532,8 +3530,8 @@ function renderReport(id){
       ${(function(){
         /* 29/07 (patron) : « des cases a cocher, genre insecticide » — les
            produits se cochent comme tout le reste du rapport. Chaque produit
-           coche gagne sa ligne de detail (concentration + quantite),
-           facultative. Le menu deroulant illisible disparait. */
+           coche gagne sa ligne de detail (quantite seule — la concentration
+           a degage le 04/08). Le menu deroulant illisible disparait. */
         const sel = r.prods.filter(x => x.p !== 0);
         return `<span class="rlab">Produits utilisés <b class="rlc">${sel.length ? "· " + sel.length : ""}</b></span>
       <div class="rchips">${(function(){
@@ -3550,7 +3548,6 @@ function renderReport(id){
       ${sel.length ? `<div class="prodet">${r.prods.map((pr,j) => pr.p === 0 ? "" : `
         <div class="prow2">
           <span class="pname">${pr.p > 0 ? PRODUITS[pr.p] : (pr.nom || "")}</span>
-          <input class="pconc" placeholder="Concentration (ex : 0,5 %)" value="${pr.c || ""}" oninput="REPORTS[${id}].prods[${j}].c=this.value">
           <input class="pqty" type="number" inputmode="decimal" min="1" value="${pr.q}" title="Quantité" oninput="REPORTS[${id}].prods[${j}].q=+this.value||1">
         </div>`).join("")}</div>` : ""}`;
       })()}
@@ -3953,7 +3950,7 @@ function rSave(id){
       montant: v.montant ? (parseFloat(String(v.montant).replace(/\s/g, "").replace(",", ".")) || 0) : (v.mode === "encais" ? 80 + (v.id * 37) % 160 : 0),
       paid: !!v.paid, encm: v.encm || "", rue: v.rue || "", cp: v.cp || "", ville: v.ville || ""};
     try{ r.iv.tel = telOf(v) || ""; }catch(e){ r.iv.tel = ""; }
-    r.prodsTxt = (r.prods || []).filter(p => p && p.p).map(p => ({nom: (p.p > 0 ? PRODUITS[p.p] : p.nom) || "", c: p.c || "", q: p.q || 1})).filter(p => p.nom);
+    r.prodsTxt = (r.prods || []).filter(p => p && p.p).map(p => ({nom: (p.p > 0 ? PRODUITS[p.p] : p.nom) || "", q: p.q || 1})).filter(p => p.nom);
     if(chGet(id)) r.tps = chElapsed(id);
   }catch(e){}
   repPersist();
