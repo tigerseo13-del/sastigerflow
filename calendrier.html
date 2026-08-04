@@ -1713,7 +1713,7 @@ function fileRender(){
       <span class="frq">${lt ? "à relancer" : "devis"}<br>J+${jN}</span>
       <div class="frmid">
         <div class="frl1">${x.client} ${x.tel ? `<small>${telFmt(x.tel)}</small>` : ""}<span class="dvamt">${dvEur(x.montant)} en attente</span>${(x.tent || 1) > 1 ? `<span class="ftent">${x.tent}ᵉ relance</span>` : ""}</div>
-        <div class="frl2">Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")}${x.note ? ` · <i>« ${x.note} »</i>` : ""}</div>
+        <div class="frl2">Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")}${x.autoR ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""}</div>
       </div>
       ${telC ? `<a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${x.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>` : ""}
       <button class="dvoui" onclick="dvOui('${x.ref}')" title="Le client accepte le devis">✓ A dit OUI</button>
@@ -1735,11 +1735,11 @@ function fileRender(){
         <div class="frl2">${motif}${p.note ? ` · <i>${p.note}</i>` : ""}</div>
       </div>
       <a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${p.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
-      <button class="frcal" onclick="fileCaler(${p.pid})">📅 Caler le RDV</button>
+      <button class="frcal" onclick="fileCaler('${p.pid}')">📅 Caler le RDV</button>
       <span class="frszg" title="Toujours injoignable — repousser le rappel de 1, 2 ou 7 jours">
-        <button onclick="fileSnooze(${p.pid},1)">+1 j</button><button onclick="fileSnooze(${p.pid},2)">+2 j</button><button onclick="fileSnooze(${p.pid},7)">+7 j</button>
+        <button onclick="fileSnooze('${p.pid}',1)">+1 j</button><button onclick="fileSnooze('${p.pid}',2)">+2 j</button><button onclick="fileSnooze('${p.pid}',7)">+7 j</button>
       </span>
-      <button class="frnote ${p.note ? "has" : ""}" onclick="fileNoteEdit(${p.pid})" title="${p.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
+      <button class="frnote ${p.note ? "has" : ""}" onclick="fileNoteEdit('${p.pid}')" title="${p.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
     </div>
     ${FNEDIT === p.pid ? `<div class="frned">
       <textarea id="fned-${p.pid}" rows="2" placeholder="Ex. : m'a demandé de le rappeler demain à 17 h…">${p.note || ""}</textarea>
@@ -1758,6 +1758,8 @@ function fileRender(){
   body.innerHTML = rows.map(r => r.k === "p" ? rowPending(r.o) : rowDevis(r.o)).join("");
 }
 function fileCaler(pid){
+  pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
+
   /* 31/07 (patron) : « la pop-up en bas du panneau, pas tout écran » — le
      planificateur s'ouvre SOUS la ligne, dans la file, comme la note. La file
      reste ouverte : on planifie, la ligne part, on enchaîne l'appel suivant. */
@@ -1813,7 +1815,7 @@ function calPickHTML(p){
     </div>
     <div class="cdgo">
       <button class="go" ${pretA ? "" : "disabled"} onclick="calGo()">${pretA ? `✓ Planifier — ${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)} · ${TECHS[CTECH].nom}` : "Choisis la date, l'heure et le technicien"}</button>
-      <button class="no" onclick="fileCaler(${p.pid})">Annuler</button>
+      <button class="no" onclick="fileCaler('${p.pid}')">Annuler</button>
     </div>`;
 }
 function calGo(){
@@ -1832,6 +1834,9 @@ function calGo(){
   nv.fromTray = true;
   INTERVS.push(nv);
   LANDID = nv.id;
+  /* 04/08 : chantier calé depuis un devis gagné → la tâche filet « Planifier »
+     est soldée toute seule (même retrait par iid que la page Tâches). */
+  if(p._dvtask){ try{ const tb = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]"); localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(tb.filter(z => !z || z.iid !== p._dvtask))); }catch(e){} }
   plannedAdd({client:p.client, cp:p.cp, ville:p.ville, type:p.type, dur:p.dur, date:CDATE, h:CHEUR, col:CTECH});
   PENDING.splice(i, 1);
   CDPID = null;
@@ -1855,11 +1860,15 @@ function calGo(){
    client.html : tigerflow-notes-<client>). */
 let FNEDIT = null;
 function fileNoteEdit(pid){
+  pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
+
   FNEDIT = (FNEDIT === pid) ? null : pid;
   fileRender();
   if(FNEDIT != null) setTimeout(() => { const a = document.getElementById("fned-" + pid); if(a){ a.focus(); a.selectionStart = a.value.length; } }, 0);
 }
 function fileNoteSave(pid){
+  pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
+
   const p = PENDING.find(x => x.pid === pid); if(!p) return;
   const a = document.getElementById("fned-" + pid);
   const txt = (a ? a.value : "").trim();
@@ -1877,6 +1886,8 @@ function fileNoteSave(pid){
   toast(txt ? "📝 Note enregistrée — elle est aussi sur la fiche client" : "Note vide — rien à garder");
 }
 function fileSnooze(pid, nj){
+  pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
+
   const p = PENDING.find(x => x.pid === pid);
   if(!p) return;
   nj = nj || 2;   /* 31/07 (patron) : +1 j, +2 j ou +7 j au choix */
@@ -1991,6 +2002,16 @@ if(!DEVAT.some(x => x && x.ref === "DEV-2026-01340")){
     envoye: _h2, relance: _h2, tent: 1, note: "attend le vote du conseil syndical", etat: "attente"});
   dvSave();
 }
+/* 04/08 — démo relances auto : un devis qui a ÉPUISÉ son cycle d'e-mails
+   (J+3/7/14 passés) → les relances auto sont visibles ET la ligne est rouge :
+   c'est au téléphone de jouer. */
+if(!DEVAT.some(x => x && x.ref === "DEV-2026-01298")){
+  const _v16 = (() => { const x = new Date(TODAYD); x.setDate(x.getDate() - 16); return iso(x); })();
+  const _v13 = (() => { const x = new Date(TODAYD); x.setDate(x.getDate() - 13); return iso(x); })();
+  DEVAT.push({ref: "DEV-2026-01298", client: "M. Lopez", tel: "06 24 51 87 20", montant: 340,
+    envoye: _v16, relance: _v13, tent: 1, note: "voulait comparer avec un confrère", etat: "attente"});
+  dvSave();
+}
 /* réconciliation au chargement : si le module Devis a tranché (gagné/perdu
    depuis la fiche devis), l'attente se ferme toute seule ici aussi. */
 try{
@@ -2000,6 +2021,48 @@ try{
     if(x && x.etat === "attente" && (_stq[x.ref] === "gagne" || _stq[x.ref] === "perdu")){ x.etat = _stq[x.ref]; _chg = true; }
   });
   if(_chg) dvSave();
+}catch(e){}
+/* ===== 04/08 (validé patron) : RELANCES AUTOMATIQUES (bêta) — branchées sur
+   le réglage de la page Réglages (tigerflow-relance-devis-v2 : cadence
+   particuliers J+3/7/14, entreprises J+5/12/21). Tant que le cycle auto
+   tourne, l'e-mail « part tout seul » (simulé : tentative +1, mention ✉️ sur
+   la ligne) et l'appel HUMAIN attend l'étape suivante ; le cycle épuisé,
+   la ligne repasse rouge « à relancer » — au tour du téléphone. ===== */
+try{
+  let _rel = {on: true,
+    part: [{j:3}, {j:7}, {j:14}],
+    pro:  [{j:5}, {j:12}, {j:21}]};
+  try{ const sv = JSON.parse(localStorage.getItem("tigerflow-relance-devis-v2")); if(sv && sv.part && sv.pro) _rel = sv; }catch(e){}
+  if(_rel.on){
+    const _proRe = /syndic|sci\b|sarl|sas\b|hôtel|hotel|restaurant|clinique|entrepôt|société|agence|immobilier|école|ecole|mairie|pharmacie|boulangerie|tabac|crèche|creche/i;
+    const _estPro = nom => {
+      try{ const c = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]").find(z => z && z.nom === nom); if(c && c.type) return c.type !== "particulier"; }catch(e){}
+      return _proRe.test(String(nom || ""));
+    };
+    const _t12 = d => new Date(d + "T12:00:00");
+    let _chg2 = false;
+    DEVAT.forEach(x => {
+      if(!x || x.etat !== "attente" || !x.envoye) return;
+      const steps = (_estPro(x.client) ? _rel.pro : _rel.part) || [];
+      const jN = Math.round((_t12(iso(TODAYD)) - _t12(x.envoye)) / 86400000);
+      const franchies = steps.filter(st => st && st.j <= jN).length;
+      if(franchies > (x.autoN || 0)){
+        x.autoN = franchies;
+        const d = _t12(x.envoye); d.setDate(d.getDate() + steps[franchies - 1].j);
+        x.autoR = iso(d);
+        x.tent = Math.max(x.tent || 1, franchies + 1);
+        _chg2 = true;
+      }
+      if(x.autoN){
+        const next = steps.find(st => st && st.j > jN);
+        if(next){
+          const nd = _t12(x.envoye); nd.setDate(nd.getDate() + next.j);
+          if(iso(nd) > (x.relance || "")){ x.relance = iso(nd); _chg2 = true; }
+        } /* plus d'étapes : x.relance reste — dépassée, la ligne vire au rouge */
+      }
+    });
+    if(_chg2) dvSave();
+  }
 }catch(e){}
 const dvActifs = () => DEVAT.filter(x => x && x.etat === "attente");
 const dvDe = c => dvActifs().find(x => x.client === c);
@@ -2012,15 +2075,39 @@ function dvModuleSt(ref, st){
 function dvOui(ref){
   const x = DEVAT.find(z => z.ref === ref); if(!x) return;
   x.etat = "gagne"; dvSave(); dvModuleSt(ref, "gagne");
+  /* tâche filet : si le calage n'est pas fait dans la foulée, elle reste ;
+     si calGo aboutit, il la solde tout seul (retrait par iid). */
+  const tid = Date.now();
   try{
     const inbox = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]");
-    inbox.unshift({iid: Date.now(), titre: "📅 Planifier l'intervention — " + x.client,
+    inbox.unshift({iid: tid, titre: "📅 Planifier l'intervention — " + x.client,
       desc: "Devis " + ref + " accepté (" + dvEur(x.montant) + "). Caler la date des travaux avec le client.", due: iso(TODAYD), lien: ref});
     localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(inbox));
   }catch(e){}
+  /* ===== 04/08 (validé patron) : le client dit OUI AU TÉLÉPHONE — on cale le
+     chantier PENDANT qu'il est en ligne. Le planificateur inline s'ouvre
+     directement sous une ligne de calage, prérempli depuis le devis (montant,
+     type et adresse retrouvés sur ses interventions ou sa fiche). ===== */
+  const prev = [...INTERVS].reverse().find(v => v && v.client === x.client && (v.cp || v.ville)) || null;
+  let _cp = prev ? (prev.cp || "") : "", _vl = prev ? (prev.ville || "") : "", _rue = prev ? (prev.rue || "") : "";
+  if(!_cp && !_vl){ try{ const bc = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]").find(c => c && c.nom === x.client); if(bc){ _cp = bc.cp || ""; _vl = bc.ville || ""; _rue = bc.adresse || ""; } }catch(e){} }
+  const pdv = [...INTERVS].reverse().find(v => v && v.client === x.client && v.mode === "devis") || null;
+  const pid = "dvcal-" + ref;
+  if(!PENDING.some(p => p && p.pid === pid)){
+    PENDING.push({pid, client: x.client, tel: x.tel || "", cp: _cp, ville: _vl, rue: _rue,
+      type: (pdv && pdv.type) || "rongeur", dur: 2, mode: "encais", montant: x.montant || 0,
+      note: "Chantier du devis " + ref + " accepté — à caler avec le client", rappel: iso(TODAYD), tent: 0,
+      _dvcal: true, _dvtask: tid});
+  }
+  CDPID = pid;
   render(); fileRender(); renderTray();
-  toast("🎉 " + x.client + " a dit OUI — devis gagné · tâche « planifier » créée",
-    () => { x.etat = "attente"; dvSave(); dvModuleSt(ref, "envoye"); render(); fileRender(); renderTray(); });
+  setTimeout(() => { const e = document.getElementById("fcaled"); if(e) e.scrollIntoView({block: "center", behavior: "smooth"}); }, 120);
+  toast("🎉 " + x.client + " a dit OUI — cale le chantier pendant qu'il est en ligne 👇",
+    () => { x.etat = "attente"; dvSave(); dvModuleSt(ref, "envoye");
+      const k = PENDING.findIndex(p => p && p.pid === pid); if(k > -1) PENDING.splice(k, 1);
+      if(CDPID === pid) CDPID = null;
+      try{ const tb = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]"); localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(tb.filter(z => !z || z.iid !== tid))); }catch(e){}
+      render(); fileRender(); renderTray(); });
 }
 function dvPerdu(ref){
   const x = DEVAT.find(z => z.ref === ref); if(!x) return;
@@ -5405,6 +5492,7 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fr.dv.lt{border-color:#DCC9F8;box-shadow:inset 3px 0 0 #7C3AED}
 .fr.dv .frq{background:#F1EAFD;color:#6D3BC4}
 .dvamt{font-size:.7rem;font-weight:800;color:#A16207;background:#FFFBEB;border-radius:7px;padding:2px 8px;white-space:nowrap}
+.dvauto{color:#6D3BC4;font-weight:700}
 .dvoui{flex:none;cursor:pointer;background:#ECFDF5;border:1.5px solid #BFE6D8;color:#047857;font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 12px;white-space:nowrap}
 .dvoui:hover{background:#D7F0E5}
 .dvko{flex:none;width:32px;height:32px;border-radius:10px;background:#fff;border:1.5px solid #E2E5EB;color:#B3261E;font-size:.74rem;font-weight:800;cursor:pointer;font-family:inherit}
