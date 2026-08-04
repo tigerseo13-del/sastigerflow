@@ -788,6 +788,7 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
       <div class="okic"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
       <h3 id="ok-h">C&rsquo;est bouclé</h3>
       <p id="ok-t">Le bureau voit tout en temps réel.</p>
+      <button class="bo" id="ok-doc" style="max-width:240px;margin:0 auto 10px;background:#fff;color:var(--ink);border:1.5px solid var(--line);box-shadow:none;display:none">📄 Voir le rapport client</button>
       <button class="bo" onclick="go('home')" style="max-width:240px;margin:0 auto">Retour à l&rsquo;accueil</button>
     </div>
   </section>
@@ -1049,6 +1050,17 @@ function rdetail(){
     : m.st === "encours" ? `<span class="stb b">EN COURS</span>`
     : m.type === "devis" ? `<span class="stb o">DEVIS À ÉTABLIR</span>` : `<span class="stb n">PLANIFIÉE</span>`;
   let ban = "";
+  /* 04/08 : une mission terminee dont le rapport a ete fait ICI garde son
+     document a portee de pouce — le meme que celui du bureau. */
+  if(m.st === "done"){
+    try{
+      const sv = JSON.parse(localStorage.getItem("tigerflow-reports") || "{}");
+      if(sv["m" + m.id] && sv["m" + m.id].iv)
+        ban += `<div class="ban" style="background:#ECFDF5;border:1px solid #BFE6D8;color:#065F46" onclick="window.open('rapport-client.html?id=m${m.id}&v=20260804b','_blank')">
+      <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#0F8A4F;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+      <span class="bb"><b>RAPPORT CLIENT</b><small>Le document 2 pages, prêt à montrer ou envoyer.</small></span><span class="chev">›</span></div>`;
+    }catch(e){}
+  }
   if(m.type === "devis" && (m.st === "todo" || m.st === "encours"))
     ban += `<div class="ban o" onclick="toast('Le devis se fait sur place, avec la bibliothèque de prestations')">
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
@@ -1306,6 +1318,7 @@ function encDone(){
   } else {
     g("ok-h").textContent = "La boucle est bouclée";
     g("ok-t").textContent = "Devis accepté et " + EUR(raw) + " encaissés. Le bureau planifie l’intervention de traitement — c’est elle qui aura le rapport.";
+    const okd2 = g("ok-doc"); if(okd2) okd2.style.display = "none";
     ENCTX = null; go("ok");
   }
 }
@@ -1541,12 +1554,56 @@ function dureeReelle(m){
   if(!m || !m.debut) return "";
   return dureeTxt((m.fin || Date.now()) - m.debut);
 }
+/* 04/08 (patron : « fait tout ») — le rapport du TERRAIN produit le MÊME
+   document que le bureau : à la clôture, l'enregistrement part dans
+   tigerflow-reports (clé "m<id>") au format que lit rapport-client.html.
+   Même appareil = même stockage : le technicien ouvre le document 2 pages
+   au logo Tiger, signature comprise. */
+function rapMobPersist(m){
+  if(!m || !RAPD) return "";
+  const key = "m" + m.id;
+  const hDec = t => { const x = String(t || "8:00").split(":"); return (+x[0] || 8) + ((+x[1] || 0) / 60); };
+  const durDec = d => { const mm = String(d || "").match(/(\d+)\s*h\s*(\d*)/i); if(mm) return (+mm[1]) + ((+mm[2] || 0) / 60); const m2 = String(d || "").match(/(\d+)\s*min/i); return m2 ? (+m2[1]) / 60 : 1; };
+  const vt = String(m.ville || "").trim().split(/\s+/);
+  const cp = /^\d{5}$/.test(vt[0] || "") ? vt[0] : "";
+  const ville = cp ? vt.slice(1).join(" ") : (m.ville || "");
+  let sig = "";
+  try{ const c = g("rsig"), hh2 = g("rsigh"); if(c && hh2 && hh2.style.display === "none") sig = c.toDataURL("image/png"); }catch(e){}
+  const tps = m.debut ? Math.max(60, Math.floor(((m.fin || Date.now()) - m.debut) / 1000)) : (RAPD.tps || 0);
+  const mode = m.itype === "ctr" ? "ctr" : (m.itype === "devis" ? "devis" : "encais");
+  const rec = {
+    niv: RAPD.niv || "", urg: RAPD.urg || "Moyenne",
+    zones: [...RAPD.zones], signes: [...RAPD.signes], obs: RAPD.obs || "",
+    meths: [...RAPD.meths], mats: [...RAPD.mats], tzones: [...(RAPD.ztr || [])],
+    act: RAPD.met || "",
+    recos: [...RAPD.recos],
+    quote: !!RAPD.quote, quoteDesc: RAPD.qd || "",
+    next: RAPD.next || "", creneau: RAPD.creneau || "",
+    notes: "", photos: [],
+    prods: (RAPD.prods || []).filter(p => p && p.n).map(p => ({p: -1, nom: p.n, q: p.q || 1})),
+    prodsTxt: (RAPD.prods || []).filter(p => p && p.n).map(p => ({nom: p.n, q: p.q || 1})),
+    tps: tps, sig: sig, mobile: true,
+    iv: {ref: m.ref || key, client: m.client || "—", date: new Date().toISOString().slice(0, 10),
+      start: hDec(m.h), dur: durDec(m.dur), tech: "Thomas Martin",
+      type: (m.nuis && m.nuis.length ? m.nuis.join(", ") : "Intervention"),
+      mode: mode, cadre: mode === "ctr" ? "Sous contrat" : (mode === "devis" ? "Visite devis" : "Hors contrat"),
+      montant: +(m.prix || m.solde || 0) || 0, paid: !!m.paid, encm: m.paid ? "Encaissé sur place" : "",
+      rue: m.adr || "", cp: cp, ville: ville, tel: m.tel || ""}
+  };
+  try{
+    const sv = JSON.parse(localStorage.getItem("tigerflow-reports") || "{}");
+    sv[key] = rec;
+    localStorage.setItem("tigerflow-reports", JSON.stringify(sv));
+  }catch(e){ return ""; }
+  return key;
+}
 function finishRap(){
   const m = M[RAPID];
   if(m){
     m.st = "done";
     if(m.debut && !m.fin) m.fin = Date.now();   /* le chrono s'arrete ici */
   }
+  const rkey = rapMobPersist(m);
   delete RAPDRAFTS[RAPID];
   if(RAPD && RAPD.quote && m){
     DEVIS.push({id:"d" + Date.now(), mid:m.id, client:m.client, m:0, st:"attente",
@@ -1556,6 +1613,11 @@ function finishRap(){
   g("ok-h").textContent = "Rapport envoyé";
   const _d = dureeReelle(m);
   g("ok-t").textContent = "Mission bouclée" + (_d ? " en " + _d : "") + (m && m.paid ? ", paiement encaissé" : "") + " — le bureau voit tout en temps réel.";
+  const okd = g("ok-doc");
+  if(okd){
+    okd.style.display = rkey ? "" : "none";
+    okd.onclick = () => window.open("rapport-client.html?id=" + rkey + "&v=20260804b", "_blank");
+  }
   RAPID = null; go("ok");
 }
 
