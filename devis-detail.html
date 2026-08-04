@@ -1437,6 +1437,11 @@ function vieDraw(){
   S.push({t:"Créé", d:fdate(REC.date), k:"done"});
   if(sent) S.push({t:"Envoyé", d:(env.date || "").split(" ")[0], s:(env.to || "") + (env.relance ? " · relancé" : ""), k:"done"});
   else if(fini) S.push({t:"Envoi", s:"pas d’envoi tracé", k:"skip"});
+  /* 04/08 (patron) : statut passé à « Envoyé » au badge SANS envoi tracé —
+     la frise disait encore « À envoyer » en orange, en contradiction avec le
+     badge et la tuile. L'étape est réputée faite (coche pâle), l'attente de
+     réponse devient l'étape courante. */
+  else if(st === "envoye") S.push({t:"Envoyé", s:"déclaré — pas d’envoi tracé", k:"skip"});
   else S.push({t:"À envoyer", k:"now", fn:"envoyer()", h:"Envoyer le devis au client"});
   if(st === "gagne"){
     S.push({t:"Accepté", k:"done"});
@@ -1446,7 +1451,7 @@ function vieDraw(){
   } else if(sent && st === "expire"){
     S.push({t:"Expiré" + (j !== null && j < 0 ? " · " + (-j) + " j" : ""), s:"renvoyer une offre", k:"now", late:true, fn:"envoyer()", h:"Renvoyer une offre au client"});
     S.push({t:"Facturation", k:"todo"});
-  } else if(sent){
+  } else if(sent || st === "envoye"){
     S.push({t:"Réponse du client", s:(j !== null && j > 0 ? "valide encore " + j + " j · relancer" : "relancer"), k:"now", fn:"envoyer()", h:"Relancer le client"});
     S.push({t:"Facturation", k:"todo"});
   } else {
