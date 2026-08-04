@@ -1345,6 +1345,16 @@ const CAT_PHOTO = {
   "Frais de déplacement Île-de-France": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/160px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg",
 };
 const photoDe = l => l.img || CAT_PHOTO[(l.designation || "").trim()] || "";
+/* 04/08 (bug patron : « il affiche pas les bonnes photos que dans le catalogue »)
+   — les fiches étaient les SEULES pages sans referrerpolicy="no-referrer" :
+   Wikimedia refusait la vignette et le repli emoji prenait la main. On ajoute
+   la politique de référent ET le second recours du catalogue (Special:FilePath)
+   avant de retomber sur l'emoji. */
+const photo2 = u => {
+  const p = String(u).split("/");
+  return /upload\.wikimedia\.org/.test(u) && p.length > 2
+    ? "https://commons.wikimedia.org/wiki/Special:FilePath/" + p[p.length - 2] + "?width=160" : "";
+};
 function lignes(){
   const L = REC.lignes || [];
   let ht = 0, tva = 0;
@@ -1352,7 +1362,8 @@ function lignes(){
     const lht = (l.qte||0) * (l.pu||0); ht += lht; tva += lht * (l.tva||10) / 100;
     const ph = photoDe(l);
     const vis = ph
-      ? '<img class="lph" src="' + ph + '" alt="" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;lemoji&quot;>' + (l.emo||"🧾") + '</span>\'">'
+      ? '<img class="lph" src="' + ph + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-f2="' + photo2(ph) + '"'
+        + ' onerror="if(this.dataset.f2 &amp;&amp; !this.dataset.t){this.dataset.t=1;this.src=this.dataset.f2}else{this.outerHTML=\'<span class=&quot;lemoji&quot;>' + (l.emo||"🧾") + '</span>\'}">'
       : '<span class="lemoji">' + (l.emo||"🧾") + '</span>';
     return '<tr><td style="width:52px">' + vis + '</td><td><b>' + (l.designation||"—") + '</b></td>' +
       '<td class="r">' + (l.qte||0) + '</td><td class="r">' + eur(l.pu||0) + '</td><td class="r">' + (l.tva||10) + ' %</td>' +
