@@ -545,6 +545,20 @@ function relTog(e, ref){
   try{ localStorage.setItem(RELKEY + "-pause", JSON.stringify([...PAUSED])); }catch(err){}
   render();
 }
+/* ── 04/08 (patron : « des devis datés dans le futur, ça le fait pas ») —
+   LE JEU DE DÉMONSTRATION SUIT LA DATE DU JOUR. Il avait été écrit pour le
+   25/08/2026 ; passé cette date, les documents se retrouvaient établis dans
+   le futur. On décale tout du même nombre de jours : les écarts (« expire
+   dans 3 j », « en retard de 22 j ») restent EXACTEMENT ceux d'origine. ── */
+const DEMO_ANCRE = "2026-08-25";
+const TODAY = (function(){ const t = new Date(); t.setHours(0, 0, 0, 0); return t; })();
+const DEMO_SHIFT = Math.round((TODAY - new Date(DEMO_ANCRE + "T00:00:00")) / 864e5);
+function dcal(iso){
+  if(!iso || !DEMO_SHIFT) return iso;
+  const d = new Date(iso + "T12:00:00");
+  d.setDate(d.getDate() + DEMO_SHIFT);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
 const DEVIS = [
   {ref:"DEV-2026-01287", pro:true, client:"Ironwood Solutions",   ct:"John Thompson",   titre:"Punaises de lit — appartement T3",       montant:536.80,  statut:"envoye",  date:"2026-08-25", valid:"2026-09-25"},
   {ref:"DEV-2026-01286", pro:true, client:"Boulangerie Dupont",   ct:"Raymond Berger",  titre:"Dératisation annuelle — fournil",        montant:1490.00, statut:"gagne",   date:"2026-08-22", valid:"2026-09-22"},
@@ -559,6 +573,7 @@ const DEVIS = [
   {ref:"DEV-2026-01277", pro:true, client:"Résidence Beau Site",  ct:"Syndic Citya",    titre:"Traitement chenilles processionnaires",  montant:890.00,  statut:"expire",  date:"2026-07-15", valid:"2026-08-15"},
   {ref:"DEV-2026-01276", pro:true, client:"Café de la Gare",      ct:"Babacar",   titre:"Dératisation cave + terrasse",           montant:410.00,  statut:"gagne",   date:"2026-07-11", valid:"2026-08-11"},
 ];
+DEVIS.forEach(function(d){ d.date = dcal(d.date); d.valid = dcal(d.valid); });
 
 const LBL = {brouillon:"Brouillon", envoye:"Envoyé", gagne:"Gagné", perdu:"Perdu", expire:"Expiré"};
 /* ===== les devis créés dans l'atelier rejoignent la liste ===== */
@@ -589,7 +604,6 @@ try{ const m = stSaved(); DEVIS.forEach(d => { if(m[d.ref]) d.statut = m[d.ref];
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
 const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014"; const [y,m,d]=String(iso).split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
-const TODAY = new Date("2026-08-25");
 function joursRestants(d){
   return Math.ceil((new Date(d.valid) - TODAY) / 86400000);
 }
