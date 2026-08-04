@@ -419,10 +419,10 @@ tbody td .cl b, tbody td.cl b{font-weight:800}
      existaient toujours dans le code mais plus rien ne les appelait :
      le clic avait disparu, la mecanique de filtrage etait restee. -->
     <div class="kpis">
-      <div class="kpi k-cash" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="lbl">Clients</div><div class="num" id="k-n">0</div></div>
-      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('ca')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('actif')}"><div class="kico"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lbl">Chiffre d'affaires</div><div class="num" id="k-ca">0 €</div></div>
-      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('due')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('due')}"><div class="kico"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="lbl">À encaisser</div><div class="num" id="k-due">0 €</div></div>
-      <div class="kpi k-slate" role="button" tabindex="0" title="Voir seulement les clients sous contrat" onclick="kfil('ctr')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('ctr')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg></div><div class="lbl">Contrats &amp; suivis</div><div class="num" id="k-nb">0</div></div>
+      <div class="kpi k-cash" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('all')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('all')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div class="lbl">Clients</div><div class="num" id="k-n">0</div><div class="ksub" id="k-n-s">—</div></div>
+      <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('ca')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('actif')}"><div class="kico"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="lbl">Chiffre d'affaires</div><div class="num" id="k-ca">0 €</div><div class="ksub" id="k-ca-s">—</div></div>
+      <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('due')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('due')}"><div class="kico"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div class="lbl">À encaisser</div><div class="num" id="k-due">0 €</div><div class="ksub" id="k-due-s">—</div></div>
+      <div class="kpi k-slate" role="button" tabindex="0" title="Voir seulement les clients sous contrat" onclick="kfil('ctr')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('ctr')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg></div><div class="lbl">Contrats &amp; suivis</div><div class="num" id="k-nb">0</div><div class="ksub" id="k-nb-s">—</div></div>
     </div>
 
 <!-- ===== RECHERCHE + FILTRES ===== -->
@@ -1050,12 +1050,25 @@ function statsC(){
   if(!g("k-n")) return;
   const pros = CLIENTS.filter(c => c.type !== "Particulier").length;
   g("k-n").textContent = CLIENTS.length;
+  /* 04/08 (patron) — la 2e ligne, comme sur les autres onglets. */
+  const putC = (id, txt) => { const e = g(id); if(e) e.textContent = txt; };
+  const parts = [];
+  if(pros) parts.push(pros + " pro" + (pros > 1 ? "s" : ""));
+  const _part = CLIENTS.length - pros;
+  if(_part) parts.push(_part + " particulier" + (_part > 1 ? "s" : ""));
+  putC("k-n-s", parts.join(" · ") || "—");
 
-  g("k-ca").textContent = eurC(CLIENTS.reduce((a, c) => a + (c.ca || 0), 0));
+  const _ca = CLIENTS.reduce((a, c) => a + (c.ca || 0), 0);
+  g("k-ca").textContent = eurC(_ca);
+  const _actifs = CLIENTS.filter(c => (c.ca || 0) > 0).length;
+  putC("k-ca-s", _actifs ? "sur " + _actifs + " client" + (_actifs > 1 ? "s" : "") + " facturé" + (_actifs > 1 ? "s" : "") : "—");
   const dues = CLIENTS.filter(c => (c.due || 0) > 0);
   g("k-due").textContent = eurC(dues.reduce((a, c) => a + c.due, 0));
+  putC("k-due-s", dues.length ? dues.length + " client" + (dues.length > 1 ? "s" : "") + " à relancer" : "tout est encaissé ✓");
 
   g("k-nb").textContent = CLIENTS.reduce((a, c) => a + (c.nb || 0), 0);
+  const _sc = CLIENTS.filter(c => (c.nb || 0) > 0).length;
+  putC("k-nb-s", _sc ? "chez " + _sc + " client" + (_sc > 1 ? "s" : "") : "—");
   const ST = [["actif","Actif","#0E8A68"],["attente","En attente","#D9A408"],["retard","Retard de paiement","#D63B33"],["inactif","Inactif","#C6CCD8"]];
   const tot = CLIENTS.reduce((a, c) => a + (c.ca || 0), 0) || 1;
   if(!g("pipe") || !g("pipeleg")) return;   /* pas de barre de répartition sur cette page */
