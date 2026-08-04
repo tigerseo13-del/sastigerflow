@@ -384,6 +384,7 @@ body.mreflow #sheet2 .sigc .sigbox{height:70px;margin:6px 0}
           <div class="reco"><i>✓</i>Retirer les cartons du stockage</div>
           <div class="reco"><i>✓</i>Contrôle mensuel des postes</div>
         </div>
+        <div class="irow" style="margin-top:14px"><span class="ik">Notes de suivi</span><div class="iv obs" id="rc-notes">Contrôle des postes à prévoir sous 15 jours — le gardien est prévenu du plan d'appâtage.</div></div>
         <div class="info" id="rc-quote">🧾&nbsp; <b>Devis complémentaire</b> — rebouchage maçonnerie de la cave, transmis sous 48 h.</div>
       </div>
 
@@ -559,13 +560,16 @@ function pdfTelecharger(){
     g("rc-phtitre").textContent = "Photos de l'intervention";
   } else { g("rc-secph").style.display = "none"; }
 
-  /* 4 — recommandations + devis complémentaire */
+  /* 4 — recommandations + notes de suivi + devis complémentaire (04/08,
+     patron : les notes de suivi n'arrivaient pas sur le document) */
   const recos = setArr(R.recos);
   if(recos.length) g("rc-recos").innerHTML = recos.map(r => `<div class="reco"><i>✓</i>${esc(r)}</div>`).join("");
   else g("rc-recos").style.display = "none";
+  if(R.notes) g("rc-notes").textContent = R.notes;
+  else g("rc-notes").closest(".irow").style.display = "none";
   if(R.quote) g("rc-quote").innerHTML = "🧾&nbsp; <b>Devis complémentaire</b> — " + esc(R.quoteDesc || "travaux repérés en intervention") + ", transmis sous 48 h.";
   else g("rc-quote").style.display = "none";
-  if(!recos.length && !R.quote) g("rc-recos").closest(".sec").style.display = "none";
+  if(!recos.length && !R.quote && !R.notes) g("rc-recos").closest(".sec").style.display = "none";
 
   /* récapitulatif */
   g("rc-recap-rows").innerHTML = `
