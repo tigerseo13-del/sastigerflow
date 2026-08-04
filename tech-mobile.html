@@ -1120,8 +1120,7 @@ function rdetail(){
          </button>
          <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`;
   } else if(m.st === "wait"){
-    cta = `<div class="waitb">Devis ${m.devisM ? "de " + EUR(m.devisM) + " " : ""}envoyé — la fiche attend la réponse du client, même dans 3 jours.</div>
-      <button class="bo g" onclick="cliOui(${m.id})"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Le client a dit OUI — encaisser</button>`;
+    cta = `<div class="waitb">Devis ${m.devisM ? "de " + EUR(m.devisM) + " " : ""}envoyé — le client réfléchit. Le bureau s'occupe de la relance ; s'il accepte, l'intervention arrivera dans ta tournée.</div>`;
   } else {
     cta = `<div class="doneb"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Intervention terminée${m.paid ? " — encaissée" : ""}</div>`;
   }
@@ -1674,7 +1673,14 @@ function sigClear(){ sigInit("sigc", "sigh"); }
    LISTE DE DEVIS, chaque ligne avec son statut en teinte — en attente (ambre),
    encaisse (emeraude), refuse (rouge). Sur un devis en attente, deux gestes
    clairs : le client accepte → j'encaisse, ou il refuse. */
-/* ===== 04/08 (patron : « l'onglet devis c'est le bordel ») =====
+/* ===== 04/08 — DOCTRINE VALIDÉE PATRON (option A) : le mobile SUIT, le
+   bureau DÉCIDE. Le technicien voit SES devis (c'est son travail, son suivi),
+   mais les décisions « accepté / refusé » vivent au BUREAU, dans la File
+   d'appels — qui relance, enregistre la réponse et planifie l'intervention.
+   Plus AUCUN bouton de décision sur le mobile (ni ici, ni sur la fiche d'une
+   mission « devis envoyé »). devisOui/devisNon restent définis mais ne sont
+   plus branchés nulle part. =====
+   (historique : « l'onglet devis c'est le bordel ») =====
    AVANT : une seule pile où tout se mélangeait (un devis avec deux gros
    boutons, un encaissé, un refusé), et le total du jour perdu tout en bas.
    MAINTENANT, l'écran raconte l'histoire dans l'ordre :
@@ -1705,10 +1711,7 @@ function rdevis(){
         </span>
       </div>
       ${d.st === "attente" ? `
-      <div style="display:flex;gap:8px;margin-top:11px">
-        <button class="bo g" style="flex:1;width:auto;padding:11px;font-size:.8rem" onclick="devisOui('${d.id}')">✓ Le client a dit OUI — encaisser</button>
-        <button style="flex:none;border:1.5px solid #F2C4C0;background:#fff;color:#C0342B;border-radius:12px;padding:11px 14px;font:700 .8rem Inter;cursor:pointer" onclick="devisNon('${d.id}')">✗ Il refuse</button>
-      </div>` : ""}
+      <div style="margin-top:9px;font-size:.7rem;font-weight:700;color:var(--muted);background:#F5F6F9;border-radius:9px;padding:7px 11px">📞 Le bureau s'occupe de la relance — si le client accepte, l'intervention arrivera dans ta tournée.</div>` : ""}
     </div>`;
   };
   /* le chiffre que le tech regarde le plus : en tête */
@@ -1716,8 +1719,8 @@ function rdevis(){
     <b style="font-size:.82rem;color:var(--orange-deep)">Encaissé aujourd&rsquo;hui : ${EUR(ENC)}</b>
     <p style="font-size:.74rem;color:var(--ink-2);margin-top:4px;line-height:1.5">Chaque encaissement remonte au bureau en temps réel — rien à ressaisir le soir.</p></div>`;
   if(att.length){
-    h += `<div class="seclab">En attente du client<small>${att.length}</small></div>`;
-    h += `<p style="font-size:.72rem;color:var(--muted);margin:-4px 2px 10px;line-height:1.5">Le client réfléchit — dès qu'il se décide, réponds ici : OUI ouvre l'encaissement.</p>`;
+    h += `<div class="seclab">En attente — le bureau relance<small>${att.length}</small></div>`;
+    h += `<p style="font-size:.72rem;color:var(--muted);margin:-4px 2px 10px;line-height:1.5">Tes devis en réflexion chez le client. Tu n'as rien à faire : la File d'appels du bureau gère les relances.</p>`;
     h += att.map(carte).join("");
   }
   if(fin.length){
