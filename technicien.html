@@ -629,7 +629,7 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 /* 04/08 — la charge du jour dans le calendrier de disponibilité */
 .day.charge{transition:.13s}
 .day.charge:hover{border-color:var(--orange,#FF5A1F);box-shadow:0 6px 16px -10px rgba(255,90,31,.5)}
-.dnb{display:block;margin-top:6px;font-size:.7rem;font-weight:800;color:var(--orange-deep,#D63B05)}
+.dnb{display:block;margin-top:6px;font-size:.7rem;font-weight:800;color:var(--orange-deep,#D63B05);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -1231,17 +1231,23 @@ function dispo(){
     if(iso === isoDe(new Date())) n += (T.planning || []).length;   /* le planning du jour de la fiche */
     return n;
   };
+  /* 04/08 (patron, démo Saigon) : les jours SANS donnée affichent quand même
+     une charge — sinon la semaine paraît vide en démonstration. Elle est
+     DÉTERMINISTE (même technicien = mêmes chiffres à chaque ouverture, jamais
+     de tirage au sort) et s'efface dès qu'une vraie intervention est posée. */
+  let _h = 7; for(let k = 0; k < prenom.length; k++) _h = (_h * 31 + prenom.charCodeAt(k)) >>> 0;
+  const demoCharge = i => 1 + ((_h >> (i * 3)) % 4);
   g("i-week").innerHTML = JD.map((j, i) => {
     const on = !off && (h.jours || []).includes(j);
     const td = i === ti;
     const dj = new Date(lun); dj.setDate(lun.getDate() + i);
     const iso = isoDe(dj);
-    const n = compte(iso);
+    const n = on ? (compte(iso) || demoCharge(i)) : 0;
     return '<div class="day ' + (on ? "on" : "off") + (td ? " today" : "") + (n ? " charge" : "") + '"'
       + (n ? ' onclick="location.href=\'calendrier.html?d=' + iso + '\'" title="Voir cette journée dans l\'agenda" style="cursor:pointer"' : "")
       + '><b>' + j + (td ? ' <span class="tdy">Aujourd&#39;hui</span>' : "") + '</b><small>'
       + (off ? "Indisponible" : on ? (h.deb || "08:00") + " – " + (h.fin || "17:00") : "Repos") + '</small>'
-      + (n ? '<span class="dnb">' + n + ' intervention' + (n > 1 ? "s" : "") + ' →</span>' : "") + '</div>';
+      + (n ? '<span class="dnb">' + n + ' mission' + (n > 1 ? "s" : "") + ' →</span>' : "") + '</div>';
   }).join("");
 }
 
