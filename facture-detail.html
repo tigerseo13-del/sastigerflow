@@ -550,19 +550,23 @@ a.hcli:hover{color:var(--orange-deep)}
 .hmeta .hech{color:#2148C0;font-weight:700;font-size:.76rem}
 [data-tab="det"] .grid2{grid-template-columns:1fr}
 [data-tab="det"] .grid2 > .card:first-child{display:none}
-/* les LIGNES d'abord, les notes ensuite, les pieces jointes en dernier */
-[data-tab="det"].show{display:grid;grid-template-columns:minmax(0,1fr) 328px;gap:16px;align-items:start}
-[data-tab="det"] > #lcard{grid-column:1;grid-row:1 / span 3;margin:0}
-[data-tab="det"] > #viecard{grid-column:2;grid-row:1;margin:0}
-[data-tab="det"] > .grid2{grid-column:2;grid-row:2;margin:0}
+/* ── 04/08 (patron : « 2 ») — LA VIE EN FRISE, PLEINE LARGEUR, comme sur le
+   devis : la vie de la facture (pro forma comme validée) file en frise
+   horizontale sous les tuiles, les Lignes prennent toute la largeur,
+   Notes internes et Pièces jointes se partagent la rangée du bas. ── */
+[data-tab="det"].show{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+[data-tab="det"] > #viecard{grid-column:1 / -1;grid-row:1;margin:0}
+[data-tab="det"] > #lcard{grid-column:1 / -1;grid-row:2;margin:0}
+[data-tab="det"] > .grid2{grid-column:1;grid-row:3;margin:0}
 [data-tab="det"] > #pjcard{grid-column:2;grid-row:3;margin:0;padding:14px 18px!important}
+[data-tab="det"] .grid2 > .card:last-child{height:100%;box-sizing:border-box;margin:0}
 #pjcard .pjhint{display:none}
 #pjcard .pjrow{margin-top:0}
 #pjcard .pjadd{font-size:.78rem}
 @media(max-width:1100px){
   [data-tab="det"].show{grid-template-columns:1fr}
-  [data-tab="det"] > #lcard{grid-column:1;grid-row:auto;order:1}
-  [data-tab="det"] > #viecard{grid-column:1;grid-row:auto;order:2}
+  [data-tab="det"] > #viecard{grid-column:1;grid-row:auto;order:1}
+  [data-tab="det"] > #lcard{grid-column:1;grid-row:auto;order:2}
   [data-tab="det"] > .grid2{grid-column:1;grid-row:auto;order:3}
   [data-tab="det"] > #pjcard{grid-column:1;grid-row:auto;order:4}
 }
@@ -602,6 +606,21 @@ a.hcli:hover{color:var(--orange-deep)}
 .vlife li.now>b{color:var(--orange-deep)}
 .vlife li.now.late>b{color:var(--red)}
 .vlife .vgo{font-weight:900}
+/* 04/08 — en pleine largeur, le fil devient une FRISE : dots en haut relies
+   par des traits (vert = fait, gris = a venir), titre et date dessous.
+   Sur petit ecran on garde le fil vertical, plus lisible en colonne. */
+@media(min-width:1101px){
+  #viecard{padding:16px 22px 13px}
+  #viecard .vlife{display:flex;align-items:flex-start;margin:14px 0 0;padding:2px 4px 0}
+  #viecard .vlife li{flex:1 1 0;min-width:0;padding:25px 8px 4px;text-align:center}
+  #viecard .vlife li::before{left:calc(50% + 14px);right:calc(-50% + 14px);top:7px;bottom:auto;width:auto;height:2px}
+  #viecard .vlife li:last-child::before{display:none}
+  #viecard .vdot{left:50%;transform:translateX(-50%);top:0}
+  #viecard .vlife li>b{line-height:1.35}
+  #viecard .vlife .vd{display:block;margin:3px 0 0}
+  #viecard .vlife small{margin-top:3px}
+  #viecard .vall{margin-top:8px}
+}
 
 /* mu2 : la jauge d'encaissement integree a la tuile Solde du */
 .kpi .paywrap{display:block;margin-top:9px;padding-top:0}
