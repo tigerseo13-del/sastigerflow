@@ -83,7 +83,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 /* 27/07 : une seule zone chaude par page, et elle est en haut. Depuis que
    la barre du haut porte l'orange, ce bandeau le rend : deux bandes orange
    qui se touchent, on ne sait plus laquelle est la navigation. */
-.fhead{position:relative;display:flex;align-items:center;gap:13px;margin:4px 0 14px;flex-wrap:wrap;border-radius:18px;border:1px solid var(--line,#E7E9EF);padding:16px 20px;
+.fhead{position:relative;display:flex;align-items:center;gap:15px;margin:4px 0 14px;flex-wrap:wrap;border-radius:18px;border:1px solid var(--line,#E7E9EF);padding:17px 22px;
   background:#fff}
 .fhead::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:17px;background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 30%,#FFF8F4 65%,#FFF3EC 100%)}
 .fhead>*{position:relative}
@@ -481,7 +481,7 @@ label[for]{cursor:pointer}
 .bell svg{width:18px;height:18px}
 .bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
 
-.fhead .hcli{font-family:'Sora';font-weight:800;font-size:1.05rem;letter-spacing:-.02em;color:var(--ink)}
+.fhead .hcli{font-family:'Sora';font-weight:800;font-size:1.1rem;letter-spacing:-.02em;color:var(--ink)}
 a.hcli:hover{color:var(--orange-deep)}
 .kpi.nolink{pointer-events:none}
 
@@ -531,12 +531,29 @@ a.hcli:hover{color:var(--orange-deep)}
    l'identite du document vit dans le BANDEAU (objet + dates + envoi en une
    ligne grise), la carte Details n'existe plus, les notes passent sous les
    lignes. Une seule place pour chaque info. */
-.hmeta{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);font-weight:600;padding-top:11px;margin-top:3px;border-top:1px dashed var(--line)}
-.hmeta:empty{display:none}
-.hmeta b{color:var(--ink);font-weight:700}
-.hmeta .hsep{color:#D5D8DF}
-.hmeta .hbadge2{font-size:.68rem;font-weight:800;background:#F1F2F6;color:var(--muted);border-radius:8px;padding:3px 9px;letter-spacing:.03em}
-.hmeta .hech{color:#2148C0;font-weight:700;font-size:.76rem}
+/* ── 04/08 (patron : bandeau « 2 ») — FICHE D'IDENTITÉ : monogramme orange,
+   nom + référence en pastille + statut sur une ligne, le titre dessous, et
+   les dates en mini-colonnes verticales. Sur un dossier gagné/perdu/réglé :
+   plus d'échéance ni de « pas encore envoyé » — la frise raconte la suite. ── */
+.fhead .mono{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#FF7A45,#E8410A);color:#fff;font-family:'Sora';font-weight:800;font-size:1rem;display:grid;place-items:center;flex:none;box-shadow:0 6px 16px -7px rgba(255,90,31,.5)}
+.fhead .idbloc{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fhead .idtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fhead .refchip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;font-weight:700;color:var(--muted);background:#F4F5F8;border:1px solid var(--line);border-radius:8px;padding:3px 8px;letter-spacing:.02em}
+.fhead .idobj{font-size:.84rem;color:var(--ink-2);font-weight:600}
+.fhead .rail{display:flex;margin-left:4px}
+.fhead .rail:empty{display:none}
+.fhead .rk{padding:2px 16px;border-left:1px solid var(--line)}
+.fhead .rk:first-child{border-left:0}
+.fhead .rk small{display:block;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A6ABBB;margin-bottom:3px}
+.fhead .rk b{font-size:.8rem;font-weight:700;color:var(--ink);white-space:nowrap;display:block}
+.fhead .rk .tok{color:#047857}
+.fhead .rk .tw{color:#2148C0}
+.fhead .rk .tk{color:#D33A31}
+.fhead .btns{margin-left:auto;display:flex;gap:10px;align-items:center}
+@media(max-width:1680px){
+  .fhead .rail{flex-basis:100%;order:5;border-top:1px solid var(--line);padding-top:10px;margin-left:0}
+  .fhead .rk:first-child{padding-left:0}
+}
 [data-tab="det"] .grid2{grid-template-columns:1fr}
 [data-tab="det"] .grid2 > .card:first-child{display:none}
 /* ── 04/08 (patron : « 2 ») — LA VIE EN FRISE, PLEINE LARGEUR. Fini la
@@ -689,8 +706,10 @@ a.hcli:hover{color:var(--orange-deep)}
 
     <!-- en-tête : réf + statut + actions -->
     <div class="fhead">
+      <span class="mono" id="h-mono" aria-hidden="true">—</span>
+      <div class="idbloc"><div class="idtop">
       <a class="hcli" id="h-client" href="#" title="Ouvrir la fiche client">—</a>
-      <span class="ref" id="h-ref">FAC-…</span>
+      <span class="refchip" id="h-ref">FAC-…</span>
       <!-- 28/07 : le statut se change ICI comme dans l'atelier. La fiche etait
            le seul ecran ou on voyait le statut sans pouvoir le corriger. -->
       <span class="stwrap">
@@ -702,7 +721,9 @@ a.hcli:hover{color:var(--orange-deep)}
           <button class="stc" data-s="perdu" onclick="statutPick('perdu')"><i style="background:var(--red)"></i> Perdu</button>
         </div>
       </span>
-      <div class="spacer"></div>
+      </div><span class="idobj" id="h-obj">—</span></div>
+      <div class="rail" id="hmeta"></div>
+      <div class="btns">
       <button class="btn2" onclick="pdfDevis()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
       
       <button class="btn2 primary" id="a-primary" onclick="apAction()"></button>
@@ -722,7 +743,7 @@ a.hcli:hover{color:var(--orange-deep)}
           <button class="danger" id="fdel" onclick="delDevis2(event)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg><span id="fdel-lbl">Supprimer le devis</span></button>
         </div>
       </span>
-      <div class="hmeta" id="hmeta"></div>
+      </div>
     </div>
 
     <!-- compteurs -->
@@ -1248,11 +1269,24 @@ function details(){
   };
   /* piste H : rangees empilees SANS icones — etiquette puis valeur */
   const row = (ic, cls, k, v) => '<div class="hkv"><small>' + k + '</small><b>' + v + '</b></div>';
+  /* 04/08 (patron : bandeau « 2 ») — monogramme, titre sous le nom, dates en
+     mini-colonnes. Un devis GAGNÉ n'affiche plus d'échéance ni de « pas
+     encore envoyé » : le client a dit oui, compter les jours ne veut plus
+     rien dire — la frise raconte la suite. */
+  const hmono = g('h-mono');
+  if(hmono) hmono.textContent = ((REC.client || "—").trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase()) || "—";
+  const hobj = g('h-obj');
+  if(hobj) hobj.textContent = REC.titre || "—";
   const hm = document.getElementById('hmeta');
-  if(hm) hm.innerHTML = '<b>' + (REC.titre || "—") + '</b>'
-    + '<span class="hsep">·</span>établi le ' + fdate(REC.date)
-    + '<span class="hsep">·</span>échéance <b>' + fdate(REC.valid) + '</b> <span class="hech">' + (echTxt.split("· ")[1] || "") + '</span>'
-    + '<span class="hsep">·</span>' + (env ? '<span class="hbadge2" style="background:var(--green-bg);color:var(--green-d)">ENVOYÉ' + ('devis' === 'facture' ? 'E' : '') + ' LE ' + env.date + '</span>' : '<span class="hbadge2">PAS ENCORE ENVOYÉ' + ('devis' === 'facture' ? 'E' : '') + '</span>');
+  const rk = (k2, val, cls) => '<div class="rk"><small>' + k2 + '</small><b' + (cls ? ' class="' + cls + '"' : '') + '>' + val + '</b></div>';
+  if(hm){
+    let rail = rk("Établi", fdate(REC.date));
+    if(env && env.date) rail += rk("Envoyé", (String(env.date).split(" ")[0]) || "—");
+    if(st === "gagne") rail += rk("Accepté", "oui du client ✓", "tok");
+    else if(st === "perdu") rail += rk("Refusé", "offre à retenter", "tk");
+    else rail += rk("Échéance", fdate(REC.valid) + (echTxt.indexOf("· ") > -1 ? ' <span class="' + echCls2 + '">· ' + echTxt.split("· ")[1] + '</span>' : ''));
+    hm.innerHTML = rail;
+  }
   g('detrows').innerHTML =
     '<div class="dlines">' +
     row("", "", "Client", '<a href="client.html?c=' + encodeURIComponent(REC.client || "") + '" style="color:var(--orange-deep)">' + (REC.client || "—") + ' →</a>') +

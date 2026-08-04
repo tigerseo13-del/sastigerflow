@@ -3883,6 +3883,25 @@ function rText(id){
     + (r.notes ? "Notes : " + r.notes + "\n" : "")
     + "\nTiger Hygiène 3D — Certibiocide";
 }
+/* photographie de l'intervention + produits en clair — appelee a la
+   validation (rSave) ET a l'ouverture du document (rPdf), pour que
+   rapport-client.html trouve toujours des donnees fraiches, meme apres
+   « Modifier le rapport ». */
+function repSnap(id){
+  const v = INTERVS.find(x => x.id === id), r = REPORTS[id];
+  if(!v || !r) return;
+  try{
+    const T2 = typeDe(v);
+    r.iv = {ref: refInt(id), client: v.client, date: v.date, start: v.start, dur: v.dur,
+      tech: (TECHS[v.tech] || {}).nom || "", type: v.typeLibre || T2.lbl,
+      mode: v.mode || "", cadre: v.mode === "ctr" ? "Sous contrat" : (v.mode === "devis" ? "Visite devis" : "Hors contrat"),
+      montant: v.montant ? (parseFloat(String(v.montant).replace(/\s/g, "").replace(",", ".")) || 0) : (v.mode === "encais" ? 80 + (v.id * 37) % 160 : 0),
+      paid: !!v.paid, encm: v.encm || "", rue: v.rue || "", cp: v.cp || "", ville: v.ville || ""};
+    try{ r.iv.tel = telOf(v) || ""; }catch(e){ r.iv.tel = ""; }
+    r.prodsTxt = (r.prods || []).filter(p => p && p.p).map(p => ({nom: (p.p > 0 ? PRODUITS[p.p] : p.nom) || "", q: p.q || 1})).filter(p => p.nom);
+    if(chGet(id)) r.tps = chElapsed(id);
+  }catch(e){}
+}
 function rSave(id){
   const r = REPORTS[id];
   const sc = document.getElementById("rsig");
@@ -3942,68 +3961,23 @@ function rSave(id){
      photographie de l'intervention + produits résolus en clair, puis
      persistance : la page rapport-client.html (le PDF au logo Tiger) se
      remplit toute seule avec ces données. ===== */
-  try{
-    const T2 = typeDe(v);
-    r.iv = {ref: refInt(id), client: v.client, date: v.date, start: v.start, dur: v.dur,
-      tech: (TECHS[v.tech] || {}).nom || "", type: v.typeLibre || T2.lbl,
-      mode: v.mode || "", cadre: v.mode === "ctr" ? "Sous contrat" : (v.mode === "devis" ? "Visite devis" : "Hors contrat"),
-      montant: v.montant ? (parseFloat(String(v.montant).replace(/\s/g, "").replace(",", ".")) || 0) : (v.mode === "encais" ? 80 + (v.id * 37) % 160 : 0),
-      paid: !!v.paid, encm: v.encm || "", rue: v.rue || "", cp: v.cp || "", ville: v.ville || ""};
-    try{ r.iv.tel = telOf(v) || ""; }catch(e){ r.iv.tel = ""; }
-    r.prodsTxt = (r.prods || []).filter(p => p && p.p).map(p => ({nom: (p.p > 0 ? PRODUITS[p.p] : p.nom) || "", q: p.q || 1})).filter(p => p.nom);
-    if(chGet(id)) r.tps = chElapsed(id);
-  }catch(e){}
+  repSnap(id);
   repPersist();
   toast("✓ Intervention terminée — rapport enregistré" + extra);
   DTAB = "rap";
   renderDetail();
 }
 function rPdf(id){
-  const v = INTERVS.find(x=>x.id===id), r = REPORTS[id];
+  const r = REPORTS[id];
   if(!r){ toast("⚠️ Aucun rapport — crée-le d'abord"); return; }
-  const T = typeDe(v);
-  const kv = (k, val) => val ? `<div class="rp-kv"><span class="k">${k}</span><span class="v">${val}</span></div>` : "";
-  document.getElementById("rpsheet").innerHTML = `
-    <div class="rp-head">
-      <div class="rp-brand">
-        <span class="lg">TF</span>
-        <div><b>Tiger Hygiène 3D</b>
-        <small>24 av. des Tilleuls, 75012 Paris · 01 84 25 36 47<br>SIRET 902 415 678 00021 · Certibiocide n° 123456</small></div>
-      </div>
-      <div class="rp-doc">
-        <div class="t">Rapport d'intervention</div>
-        <div><b>${refInt(id)}</b> · ${T.ic} ${T.lbl}</div>
-        <div>Client : <b>${v.client}</b> · <svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.cp} ${v.ville}</div>
-        <div>Le <b>${v.date.split("-").reverse().join("/")}</b> · ${hstr(v.start)} – ${hstr(v.start + v.dur)} · ${TECHS[v.tech].nom}${chGet(id) ? ` · <b>${chHuman(chElapsed(id))} sur place</b>` : ""}</div>
-      </div>
-    </div>
-    <div class="rp-sec"><b>1 · Observation</b>
-      ${kv("Niveau d'infestation", r.niv)}
-      ${kv("Urgence client", r.urg)}
-      ${kv("Zones touchées", [...r.zones].join(", "))}
-      ${kv("Signes de présence", [...r.signes].join(", "))}
-      ${kv("Observations", r.obs)}
-    </div>
-    <div class="rp-sec"><b>2 · Traitement</b>
-      ${kv("Méthode", [...r.meths].join(", "))}
-      ${kv("Produits utilisés", r.prods.map(p=>PRODUITS[p.p] + " × " + p.q).join(" · "))}
-      ${kv("Matériel", [...r.mats].join(", "))}
-      ${kv("Zones traitées", [...r.tzones].join(", "))}
-      ${kv("Actions réalisées", r.act)}
-    </div>
-    <div class="rp-sec"><b>3 · Clôture</b>
-      ${kv("Recommandations", [...r.recos].join(" · "))}
-      ${kv("Devis complémentaire", r.quote ? "Oui — " + (r.quoteDesc || "à chiffrer") : "Non")}
-      ${kv("Prochain passage conseillé", r.next ? r.next.split("-").reverse().join("/") : "")}
-      ${kv("Notes de suivi", r.notes)}
-    </div>
-    <div class="rp-sig">
-      <div class="box"><b>Le technicien</b>${TECHS[v.tech].nom}<br><span style="color:#6C7285;font-size:9px">Certibiocide</span></div>
-      <div class="box"><b>Le client — bon pour prise de connaissance</b>${r.sig ? '<img src="' + r.sig + '" alt="Signature du client">' : '<span style="color:#C4C8D2;font-size:10px">Non signé</span>'}</div>
-    </div>`;
-  document.getElementById("rpmodal").classList.add("open");
+  /* 04/08 (patron : « ça met l'ancien, répare ») : ce bouton ouvrait encore
+     la vieille modale noire. LE document c'est rapport-client.html — on
+     re-photographie l'intervention (au cas où le rapport vient d'être
+     modifié) et on ouvre la vraie page : 2 pages A4 au logo Tiger. */
+  repSnap(id);
+  repPersist();
+  window.open("rapport-client.html?id=" + id + "&v=20260804", "_blank");
 }
-function rPdfClose(){ document.getElementById("rpmodal").classList.remove("open"); }
 function rMail(id){
   const v = INTERVS.find(x=>x.id===id);
   location.href = "mailto:client@exemple.fr?subject=" + encodeURIComponent("Rapport d'intervention — " + v.client + " — " + refInt(id))
@@ -4909,15 +4883,6 @@ sdRender();   /* le compteur de retards s'affiche des l'ouverture, pas au 1er cl
 </script>
 <div class="dveil" id="dveil" onclick="closeDetail()"></div>
 <aside class="drawer" id="drawer"><div id="dbody"></div></aside>
-<div class="rpmodal" id="rpmodal">
-  <div class="veil" onclick="rPdfClose()"></div>
-  <div class="rpwin">
-    <div class="rpbar"><b>Rapport d'intervention</b>
-      <button class="rpprint" onclick="window.print()">🖨️ Imprimer / PDF</button>
-      <button class="rpx" onclick="rPdfClose()">✕</button></div>
-    <div class="rpscroll"><div class="rpsheet" id="rpsheet"></div></div>
-  </div>
-</div>
 
 <!-- ===== Recherche globale (⌘K) ===== -->
 <style>
