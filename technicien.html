@@ -611,6 +611,17 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 #s-badge{margin-top:10px}
 
 html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran ») : la place de l'ascenseur est reservee, plus de saut de 15px entre pages courtes et longues */
+
+/* 04/08 — nuisibles groupés par taux de commission (plus de barres) */
+.comgrp{display:flex;flex-direction:column;gap:12px;margin-top:2px}
+.comrow{display:flex;align-items:flex-start;gap:13px}
+.compct{flex:none;min-width:58px;text-align:center;font-family:'Sora';font-weight:800;font-size:.95rem;color:var(--green-d,#0F8A4F);
+  background:var(--green-bg,#ECFDF5);border:1px solid #BFE6D8;border-radius:11px;padding:7px 8px;line-height:1}
+.comnuis{display:flex;flex-wrap:wrap;gap:6px;padding-top:1px}
+.comchip{display:inline-flex;align-items:center;gap:5px;background:#F5F6F9;border:1px solid var(--line,#E7E9EF);border-radius:9px;
+  padding:5px 10px;font-size:.78rem;font-weight:600;color:var(--ink-2,#3D434E)}
+.comchip svg{width:13px;height:13px;fill:none;stroke:#9AA0AE;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+@media(max-width:560px){.compct{min-width:52px;font-size:.88rem}.comchip{font-size:.74rem}}
 </style>
 </head>
 <body>
@@ -1097,17 +1108,26 @@ function comp(){
   const entries = Object.entries(T.com || {});
   /* ── ce qu'il sait faire et ce qu'il touche dessus (Profil) ── */
   const hab = document.getElementById("i-hab");
-  if(hab) hab.innerHTML = entries.length
-    ? '<div class="habj">' + entries.map(([n, p]) => {
-        const val = Math.max(0, Math.min(100, parseFloat(p) || 0));
-        return '<div class="habrow" title="Commission du technicien sur ce type d\'intervention">'
-          + '<span class="hn"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>' + n + '</span>'
-          + '<span class="hp">' + val + ' %</span>'
-          + '<span class="habtrack"><i style="width:' + val + '%"></i></span>'
-          + '</div>';
-      }).join("") + '</div>' 
-      + '<div class="skhint">Nuisibles qu\'il est habilité à traiter seul. Le pourcentage est <b>sa commission</b> sur chaque intervention de ce type.</div>'
-    : '<div class="emptybox">Aucune habilitation enregistrée.</div>';
+  /* 04/08 (patron : « la barre fait chelou, c'est pas clair ») — une barre de
+     progression dit « avancement » ; ici c'est un TAUX DE COMMISSION, rien ne
+     progresse. On regroupe par taux : deux lignes au lieu de neuf barres, et
+     la structure de rémunération saute aux yeux. */
+  if(hab){
+    const parTaux = {};
+    entries.forEach(([n, p]) => {
+      const val = Math.max(0, Math.min(100, parseFloat(p) || 0));
+      (parTaux[val] = parTaux[val] || []).push(n);
+    });
+    const taux = Object.keys(parTaux).map(Number).sort((a, b) => b - a);
+    hab.innerHTML = entries.length
+      ? '<div class="comgrp">' + taux.map(t =>
+          '<div class="comrow"><span class="compct">' + t + ' %</span>'
+          + '<span class="comnuis">' + parTaux[t].map(n =>
+              '<span class="comchip"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>' + n + '</span>').join("")
+          + '</span></div>').join("") + '</div>'
+        + '<div class="skhint">Nuisibles qu\'il est habilité à traiter seul. Le pourcentage est <b>sa commission</b> sur chaque intervention de ce type.</div>'
+      : '<div class="emptybox">Aucune habilitation enregistrée.</div>';
+  }
 
   /* ── les certifications saisies à la création / modification (26/07) ──
      i-certs n'était jamais rempli : la carte restait vide quoi qu'on saisisse.
@@ -1717,31 +1737,47 @@ document.addEventListener("click", function(e){
 });
 </script>
 <script>
-/* 31/07 (valide) : la COULEUR du technicien se choisit ICI et suit partout
-   (agenda : colonne, cartouches, points, badges — cle = prenom). */
+/* 31/07 : la COULEUR du technicien suit partout (agenda : colonne, cartouches,
+   points, badges — clé = prénom).
+   04/08 (patron : « le truc de couleur agenda, j'aime pas ici ») — la rangée
+   de dix pastilles mangeait un tiers de la carte pour un réglage qu'on touche
+   une fois. Elle devient UNE pastille collée au nom : on VOIT enfin la couleur
+   en cours, et la palette s'ouvre au clic, juste dessous. */
 (function(){
   const COLS = ["#2E5CE6", "#0E8A7A", "#7B3BEA", "#C87B08", "#E5484D", "#0F8A4F", "#D6409F", "#0EA5E9", "#F76808", "#6E56CF"];
   const key = () => { try{ return ((TECHS[TID].prenom || TECHS[TID].nom || "") + "").trim(); }catch(e){ return ""; } };
   const lit = () => { try{ return JSON.parse(localStorage.getItem("tigerflow-tech-couleurs")) || {}; }catch(e){ return {}; } };
   function pose(){
-    if(document.getElementById("tcolor-row")) return;
-    const anc = [...document.querySelectorAll("button")].find(e => /Poser un congé/.test(e.textContent))
-      || [...document.querySelectorAll("div,span")].find(e => e.children.length === 0 && /CONTACT RAPIDE/i.test(e.textContent));
-    if(!anc) return;
-    const cur = lit()[key()];
-    const d = document.createElement("div");
-    d.id = "tcolor-row";
-    d.innerHTML = '<div style="font:800 .68rem Inter;letter-spacing:.09em;color:#A6ABBB;margin:13px 0 8px;text-transform:uppercase">Couleur dans l\u2019agenda</div>' +
-      '<div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">' + COLS.map(c =>
-        '<button data-c="' + c + '" title="' + c + '" style="width:27px;height:27px;border-radius:50%;border:2.5px solid ' + (cur === c ? "#171A20" : "#fff") + ';box-shadow:0 0 0 1px #E2E5EB;background:' + c + ';cursor:pointer;padding:0"></button>').join("") + "</div>";
-    anc.parentElement.insertBefore(d, anc);
-    d.addEventListener("click", ev => {
+    if(document.getElementById("tcolor-chip")) return;
+    const nom = document.getElementById("s-nom");
+    if(!nom || nom.textContent === "—") return;
+    const cur = lit()[key()] || COLS[0];
+    const wrap = document.createElement("span");
+    wrap.id = "tcolor-chip";
+    wrap.style.cssText = "position:relative;display:inline-flex;vertical-align:middle;margin-left:9px";
+    wrap.innerHTML =
+      '<button id="tcolor-btn" title="Sa couleur dans l\u2019agenda — cliquer pour changer" aria-label="Couleur dans l\u2019agenda"' +
+      ' style="width:19px;height:19px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 1.5px #DDE0E6;background:' + cur + ';cursor:pointer;padding:0"></button>' +
+      '<span id="tcolor-pop" style="display:none;position:absolute;top:26px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #E7E9EF;' +
+      'border-radius:14px;box-shadow:0 14px 34px -12px rgba(23,26,32,.3);padding:11px 12px 9px;z-index:60;width:186px">' +
+      '<span style="display:block;font:800 .6rem Inter;letter-spacing:.09em;color:#A6ABBB;text-transform:uppercase;margin-bottom:8px">Couleur dans l\u2019agenda</span>' +
+      '<span style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center">' + COLS.map(c =>
+        '<button data-c="' + c + '" title="' + c + '" style="width:25px;height:25px;border-radius:50%;border:2.5px solid ' + (cur === c ? "#171A20" : "#fff") +
+        ';box-shadow:0 0 0 1px #E2E5EB;background:' + c + ';cursor:pointer;padding:0"></button>').join("") + '</span></span>';
+    nom.appendChild(wrap);
+    const btn = wrap.querySelector("#tcolor-btn"), pop = wrap.querySelector("#tcolor-pop");
+    btn.addEventListener("click", ev => { ev.stopPropagation(); pop.style.display = pop.style.display === "none" ? "block" : "none"; });
+    document.addEventListener("click", ev => { if(!wrap.contains(ev.target)) pop.style.display = "none"; });
+    document.addEventListener("keydown", ev => { if(ev.key === "Escape") pop.style.display = "none"; });
+    pop.addEventListener("click", ev => {
       const b3 = ev.target.closest("button[data-c]");
       if(!b3) return;
       const m = lit(); m[key()] = b3.dataset.c;
       try{ localStorage.setItem("tigerflow-tech-couleurs", JSON.stringify(m)); }catch(e){}
-      d.querySelectorAll("button[data-c]").forEach(x => x.style.borderColor = x === b3 ? "#171A20" : "#fff");
-      if(typeof toast === "function") toast("🎨 Couleur de " + key() + " enregistrée — regarde l\u2019agenda");
+      pop.querySelectorAll("button[data-c]").forEach(x => x.style.borderColor = x === b3 ? "#171A20" : "#fff");
+      btn.style.background = b3.dataset.c;
+      pop.style.display = "none";
+      if(typeof toast === "function") toast("\ud83c\udfa8 Couleur de " + key() + " enregistr\u00e9e — regarde l\u2019agenda");
     });
   }
   window.addEventListener("load", pose);

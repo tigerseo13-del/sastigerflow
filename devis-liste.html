@@ -160,6 +160,9 @@ h1,.num{font-family:'Sora',sans-serif}
 .chip{font-size:.79rem;font-weight:700;padding:9px 15px;border-radius:20px;border:1.5px solid var(--line);color:var(--muted);background:#fff;transition:.13s}
 .chip .n{font-size:.68rem;opacity:.75;margin-left:3px}
 .chip.on{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
+/* 04/08 : la cartouche filtrante ACTIVE se voit — anneau orange et légère
+   élévation. Sans ce style, kringSync posait une classe invisible. */
+.kpi.on{outline:2.5px solid var(--orange);outline-offset:2px}
 .sortsel{margin-left:0}
 
 /* ============ TABLE (desktop) ============ */
@@ -677,13 +680,19 @@ function kfil(f){
   if(f === "expire-proche"){
     FILTRE = "expire-proche"; PAGE = 1;
     document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+    kringSync("expire-proche");
     render();
     return;
   }
   const b = document.querySelector('.chip[data-f="' + f + '"]'); if(b) b.click();
 }
 function kringSync(f){
-  const map = {all:"k-orange", gagne:"k-green", envoye:"k-amber"};
+  /* 04/08 (patron : « les cartouches et les pastilles, ça fait doublon ? ») —
+     non : la pastille COMPTE, la cartouche donne l'ARGENT. Mais le lien entre
+     les deux était cassé : la table pointait « k-orange », couleur disparue
+     depuis la grammaire du 04/08 (la tuile Taux est passée en k-cash), et
+     « Expire bientôt » n'était jamais surlignée. Cliquer l'une allume l'autre. */
+  const map = {gagne:"k-green", envoye:"k-amber", "expire-proche":"k-red"};
   document.querySelectorAll(".kpi").forEach(k => k.classList.remove("on"));
   if(map[f]){ const el = document.querySelector(".kpi." + map[f]); if(el) el.classList.add("on"); }
 }
@@ -770,6 +779,7 @@ document.getElementById('chips').addEventListener('click', e=>{
   document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   FILTRE = b.dataset.f;
+  kringSync(FILTRE);   /* 04/08 : la cartouche jumelle s'allume — on VOIT que c'est le même filtre */
   try{ localStorage.setItem("tigerflow-devis-filtre", JSON.stringify({f:FILTRE, s:(document.getElementById('sort') || {value:"recent"}).value, q:document.getElementById('q').value})); }catch(err){}
   render();
 });
@@ -778,7 +788,7 @@ document.getElementById('q').addEventListener('input', ()=>{ try{ const m=JSON.p
 try{
   const m = JSON.parse(localStorage.getItem("tigerflow-devis-filtre"));
   if(m){
-    if(m.f){ FILTRE = m.f; document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.dataset.f===m.f)); }
+    if(m.f){ FILTRE = m.f; document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.dataset.f===m.f)); kringSync(m.f); }
     const _s = document.getElementById('sort'); if(m.s && _s) _s.value = m.s;
     if(m.q) document.getElementById('q').value = m.q;
     render();
