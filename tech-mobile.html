@@ -976,26 +976,33 @@ function chrono(m){
   const t = min < 60 ? min + " min" : Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0");
   return `<div class="chrono" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis <b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>`;
 }
+/* 04/08 (patron) : les terminées n'ont RIEN à faire dans l'onglet « À faire »
+   — avant, les onglets ne faisaient que défiler dans une liste unique où tout
+   se mélangeait. Ce sont maintenant de VRAIS onglets : « À faire » = en cours
+   + à venir, « Terminées » = terminées + en attente. Rien d'autre. */
+let LTAB = "todo";
 function rlist(){
   const all = Object.values(M);
   const td = todos(), ec = all.filter(m => m.st === "encours"), wt = all.filter(m => m.st === "wait"), dn = all.filter(m => m.st === "done");
-  /* Deux onglets seulement : le technicien fait un chantier a la fois, un
-     onglet pour une seule carte ne valait pas le tiers de la barre. Ce qui est
-     en cours est epingle en tete de « A faire ». */
   g("lt-todo").innerHTML = `À faire (<span>${td.length + ec.length}</span>)`;
   g("lt-done").innerHTML = `Terminées (<span>${dn.length + wt.length}</span>)`;
   let h = "";
-  if(ec.length){ h += `<div class="lsec o" id="ls-enc">EN COURS</div><div class="encwrap">` + ec.map(m => mcard(m) + chrono(m)).join("") + `</div>`; }
-  if(td.length){ h += `<div class="lsec" id="ls-todo">À FAIRE ENSUITE</div>` + td.map(mcard).join(""); }
-  if(wt.length || dn.length){ h += `<div class="lsec g" id="ls-done">TERMINÉES &amp; EN ATTENTE</div>` + wt.map(mcard).join("") + dn.map(mcard).join(""); }
-  if(!h) h = `<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0">Rien aujourd&rsquo;hui.</p>`;
+  if(LTAB === "todo"){
+    if(ec.length){ h += `<div class="lsec o" id="ls-enc">EN COURS</div><div class="encwrap">` + ec.map(m => mcard(m) + chrono(m)).join("") + `</div>`; }
+    if(td.length){ h += `<div class="lsec" id="ls-todo">À FAIRE ENSUITE</div>` + td.map(mcard).join(""); }
+    if(!h) h = `<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0">Plus rien à faire — journée bouclée 👌</p>`;
+  } else {
+    if(wt.length){ h += `<div class="lsec g" id="ls-wait">EN ATTENTE</div>` + wt.map(mcard).join(""); }
+    if(dn.length){ h += `<div class="lsec g" id="ls-done">TERMINÉES</div>` + dn.map(mcard).join(""); }
+    if(!h) h = `<p style="color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0">Aucune intervention terminée pour l&rsquo;instant.</p>`;
+  }
   g("lbody").innerHTML = h;
 }
 function ltab(k){
+  LTAB = k;
   ["todo", "done"].forEach(x => { const b = g("lt-" + x); if(b) b.classList.toggle("on", x === k); });
-  const el = g("ls-" + k);
-  if(el && el.scrollIntoView) el.scrollIntoView({behavior:"smooth", block:"start"});
-  if(el){ el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 800); }
+  rlist();
+  const sc = g("lbody"); if(sc && sc.scrollIntoView) sc.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
 /* ---------- détail ---------- */
