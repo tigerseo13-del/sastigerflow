@@ -719,9 +719,15 @@ function filtered(){
     (!au || t.due <= au) &&
     (!q || t.titre.toLowerCase().includes(q) || (t.lien && t.lien.l.toLowerCase().includes(q)))
   );
-  list.sort((a,b)=> sort === "prio" ? PRIORDER[a.prio] - PRIORDER[b.prio]
+  /* 04/08 (patron : « c'est logique l'ordre ? ») — NON, il manquait le
+     départage. Deux tâches à la même échéance sortaient dans l'ordre du
+     fichier : une « Haute » passait devant une « Urgente ». Désormais
+     l'échéance décide, la priorité tranche les ex aequo — et inversement
+     quand on trie par priorité. */
+  list.sort((a,b)=> sort === "prio"
+      ? (PRIORDER[a.prio] - PRIORDER[b.prio]) || a.due.localeCompare(b.due)
     : sort === "created" ? b.created.localeCompare(a.created)
-    : a.due.localeCompare(b.due));
+      : a.due.localeCompare(b.due) || (PRIORDER[a.prio] - PRIORDER[b.prio]));
   /* 27/07 : ce qu'on vient de créer passe devant, quelle que soit son échéance.
      Le tri par défaut est l'échéance croissante : une tâche neuve datée loin
      tombait tout en bas. Le tri est stable, donc les autres gardent leur ordre. */
