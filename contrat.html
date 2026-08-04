@@ -448,9 +448,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <span class="qic q-doc"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>
           <div><small>Facturation</small><b>Mensuelle <em>62,54 € / mois</em></b></div>
         </div>
-        <div class="q" onclick="toast('Prolonger le contrat — préavis 2 mois, échéance 12/01/2026')" title="Renouvellement">
+        <div class="q" onclick="toast('Prolonger le contrat — préavis 3 mois, échéance 12/12/2026')" title="Renouvellement">
           <span class="qic q-next"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.9-3L23 10M1 14l4.6 4a9 9 0 0014.9-3"/></svg></span>
-          <div><small>Renouvellement</small><b>12/01/2026 <em>tacite · préavis 2 mois</em></b></div>
+          <div><small>Renouvellement</small><b>12/12/2026 <em>tacite · préavis 3 mois</em></b></div>
         </div>
       </div>
       <div class="next">
@@ -988,6 +988,35 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
 
   /* La copie locale n'a pas la forme d'une ligne de base : on la traduit ICI et
      nulle part ailleurs, pour que le remplissage reste unique. */
+  /* 04/08 — le contrat de démonstration vit AUSSI dans le registre local :
+     les liens historiques (fiche client Ironwood, agenda) pointent sur
+     CTR-2026-04729 depuis toujours ; sans ce seed, un compte connecté
+     tombait sur « Contrat introuvable » et une page à moitié vidée. */
+  (function(){
+    try{
+      const K = "tigerflow-inbox-contrats";
+      const box = JSON.parse(localStorage.getItem(K) || "[]");
+      if(!box.some(x => x && x.ref === "CTR-2026-04729")){
+        box.push({ref:"CTR-2026-04729", client:"Ironwood Solutions", titre:"Dératisation annuelle — 12 passages",
+          montant:750.5, freq:"Mensuelle", nbint:12, faits:7, fin:"2026-12-12", statut:"actif"});
+        localStorage.setItem(K, JSON.stringify(box));
+      }
+      /* deux passages à venir, visibles dans l'onglet Interventions ET l'agenda */
+      const KI = "tigerflow-inbox-interventions";
+      const bi = JSON.parse(localStorage.getItem(KI) || "[]");
+      const plus = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+      let chg = false;
+      [{did:"ctr729-a", j:7, note:"Passage 8/12 — contrôle des postes, renouvellement des appâts"},
+       {did:"ctr729-b", j:35, note:"Passage 9/12 — contrôle mensuel du plan d'appâtage"}].forEach(s => {
+        if(!bi.some(x => x && x.did === s.did)){
+          bi.push({did:s.did, client:"Ironwood Solutions", rue:"12 rue de la Fabrique", cp:"75011", ville:"Paris",
+            date:plus(s.j), start:9, dur:2, type:"rongeur", typeLibre:"", mode:"ctr", tech:"Pablo", montant:"", note:s.note});
+          chg = true;
+        }
+      });
+      if(chg) localStorage.setItem(KI, JSON.stringify(bi));
+    }catch(e){}
+  })();
   function contratLocal(ref){
     try{
       const box = JSON.parse(localStorage.getItem("tigerflow-inbox-contrats") || "[]");
@@ -996,7 +1025,7 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
       return {
         numero: r.ref, client: r.client, titre: r.titre,
         montant_ttc: r.montant, frequence: r.freq,
-        passages_faits: 0, passages_prevus: r.nbint || 0,
+        passages_faits: r.faits || 0, passages_prevus: r.nbint || 0,
         renouvellement: r.fin, statut: r.statut
       };
     }catch(e){ return null; }
@@ -1071,9 +1100,18 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
     if(bs[2]) bs[2].childNodes[0].nodeValue = (c.frequence || "Mensuelle") + " ";
     if(bs[3]) bs[3].childNodes[0].nodeValue = dfr(c.renouvellement) + " ";
 
-    videHistorique();
-    videDemo();
-    cartouches(c);
+    /* 04/08 (patron : « je veux voir l'onglet contrat REMPLI ») — le gabarit
+       statique de cette page EST le contrat CTR-2026-04729 d'Ironwood :
+       historique signé John Thompson, planification, documents, matériel.
+       Quand on ouvre PRÉCISÉMENT ce contrat-là, on garde tout ce contenu au
+       lieu de le vider — c'est le sien. Pour tout autre contrat, on vide
+       comme avant : jamais les données d'un autre client. */
+    const estDemo = c.numero === "CTR-2026-04729" && /Ironwood/i.test(c.client || "");
+    if(!estDemo){
+      videHistorique();
+      videDemo();
+      cartouches(c);
+    }
   }
 
   /* 28/07 — TOUT le reste de la fiche est de la démonstration figée dans le
@@ -1104,13 +1142,16 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
      inventé. On calcule ce qu'on peut, on efface le reste. */
   const PAR_AN = {Mensuelle:12, Trimestrielle:4, Semestrielle:2, Annuelle:1};
   function cartouches(c){
+    /* 04/08 : les index étaient décalés d'un cran — la tuile Montant porte
+       ELLE AUSSI un <em> (« TTC · incl. TVA »), qu'on écrasait par
+       « réalisés ». On repart de la tuile, pas de la liste à plat. */
     const em = document.querySelectorAll(".hero .quick .q b em");
-    if(em[0]) em[0].textContent = "réalisés";
-    if(em[1]){
+    if(em[1]) em[1].textContent = "réalisés";
+    if(em[2]){
       const n = PAR_AN[c.frequence] || 0;
-      em[1].textContent = n > 1 ? eur2((+c.montant_ttc || 0) / n) + " / échéance" : "1 facture / an";
+      em[2].textContent = n > 1 ? eur2((+c.montant_ttc || 0) / n) + " / échéance" : "1 facture / an";
     }
-    if(em[2]) em[2].textContent = "";   /* le préavis n'est pas saisi : on n'invente pas */
+    if(em[3]) em[3].textContent = "";   /* le préavis n'est pas saisi : on n'invente pas */
   }
 
   /* L'onglet Historique contient trois évènements de démonstration en dur,
