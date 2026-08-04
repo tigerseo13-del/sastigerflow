@@ -433,7 +433,15 @@ a,button,input,select,textarea,label,summary{touch-action:manipulation}
 .hids .sep{display:none}
 .hchip{display:inline-flex;align-items:center;gap:6px;background:#F1F2F5;color:#3D434E;border-radius:999px;padding:4px 12px;font-size:.68rem;font-weight:700;border-bottom:0!important;text-decoration:none}
 .hchip.new{background:var(--green-bg);color:var(--green-d);font-weight:800}
-.hchip.src{background:#FFF6E3;color:#8A6407}
+/* 04/08 (patron, « 1 » — hierarchie douce) : chaque pastille prend sa nature.
+   L'anciennete raconte la relation (vert doux, en premier), la reference
+   parle le mono des devis, la source est neutre avec le G de Google, et le
+   SIRET passe en filigrane — lisible, plus envahissant. */
+.hchip.anc{background:var(--green-bg);border:1px solid var(--green-line,#BFE6D8);color:var(--green-d);font-weight:800}
+.hchip.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.66rem;background:#F4F5F8;border:1px solid var(--line);border-radius:9px;color:#6C7285}
+.hchip.src{background:#fff;border:1px solid var(--line);color:#3D434E}
+.hchip.src .g{font-family:'Sora';font-weight:800;background:conic-gradient(from -45deg,#4285F4 0 25%,#34A853 0 50%,#FBBC05 0 75%,#EA4335 0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hchip.sir{background:none;padding:4px 2px;color:#A6ABBB;font-size:.64rem;font-weight:600}
 .hchip.copyref{cursor:copy}
 .hadr .iti{color:var(--orange-deep);font-weight:700}
 
@@ -651,11 +659,11 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </div>
       <div class="hadr" id="h-adr"><a href="https://www.google.com/maps/search/?api=1&query=12+rue+de+la+R%C3%A9publique+75011+Paris" target="_blank" rel="noopener" title="Ouvrir l'itinéraire dans Google Maps">12 rue de la République, 75011 Paris <b class="iti">· Itinéraire →</b></a></div>
       <div class="hids">
-        <span class="hchip copyref" onclick="copyRef()" title="Cliquer pour copier" id="h-ref">CLI-2026-00013</span>
-        <span class="sep">·</span><span class="hchip" id="h-siret">SIRET 812 345 678 00019</span>
-        <span class="sep">·</span><span class="hchip" id="h-depuis">Client depuis décembre 2025</span>
+        <span class="hchip anc" id="h-depuis">Client depuis décembre 2025</span>
+        <span class="sep">·</span><span class="hchip mono copyref" onclick="copyRef()" title="Cliquer pour copier" id="h-ref">CLI-2026-00013</span>
         <!-- 31/07 (patron) : « le résumé manque la source » — en clair, en pastille. -->
-        <span class="sep" id="h-src-sep">·</span><span class="hchip src" id="h-source">Source · Google Ads</span>
+        <span class="sep" id="h-src-sep">·</span><span class="hchip src" id="h-source"><span class="g">G</span>Google Ads</span>
+        <span class="sep">·</span><span class="hchip sir" id="h-siret">SIRET 812 345 678 00019</span>
       </div>
       <div class="quick">
         <!-- 28/07 — « A encaisser » n'apparait QUE si le client doit quelque
@@ -1713,7 +1721,7 @@ function toast(msg, undoFn){
        Sans source renseignée on masque la mention ET son séparateur. */
     var hsrc = document.getElementById("h-source");
     if(hsrc){
-      if(f.source){ hsrc.textContent = "Source · " + f.source; }
+      if(f.source){ hsrc.innerHTML = (/google/i.test(f.source) ? '<span class="g">G</span>' : '') + String(f.source).replace(/</g, "&lt;"); }
       else {
         hsrc.style.display = "none";
         var hsp = document.getElementById("h-src-sep");
