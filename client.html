@@ -59,13 +59,13 @@ textarea:focus{outline:2px solid #FFD9C4;border-color:var(--orange)}
 /* ============ TOPBAR ============ */
 .main{flex:1;margin-left:238px;min-width:0}
 .topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;
-  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.2) 0, transparent 45%),
-  radial-gradient(circle at 92% -60%, rgba(255,90,31,.14) 0, transparent 45%),
-  linear-gradient(115deg,#FFF8F3,#FFEFE4 55%,#FFF4EC);
-  border-bottom:1px solid #FFE2D2;backdrop-filter:blur(12px)}
-.topbar::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(90deg,rgba(234,74,16,.04) 1px,transparent 1px),
-  linear-gradient(rgba(234,74,16,.04) 1px,transparent 1px);background-size:22px 22px}
+  /* 05/08 (patron, visuel 34) : bandeau BLANC + filet orange de 3 px. Le voile
+     teinte etait la seule zone non cliquable peinte en couleur d'action. */
+  background:#fff;border-bottom:1px solid var(--line);
+  box-shadow:inset 0 3px 0 -1px var(--orange);backdrop-filter:blur(12px)}
+/* 05/08 : le quadrillage orange partait avec le voile — il n'a plus de sens
+   sur un fond blanc. */
+.topbar::before{display:none}
 .topbar>*{position:relative}
 
 .back-m{display:none}
@@ -313,37 +313,47 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .ivrow{display:flex;align-items:center;gap:14px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:.13s}
 .ivrow:hover{transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(23,26,32,.07)}
 .ivrow.off{opacity:.72}
-/* 04/08 (patron : visuel 22) — l'historique des interventions passe du tableau
-   a la frise. La pastille calendrier a gauche, deux lignes a droite. Le
-   technicien ouvre la 2e ligne avec son point de couleur : tous les noms
-   tombent a la meme abscisse, la colonne est conservee. */
-.fz{padding:2px 2px 0}
-.fz .fan{font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#B9BDC9;margin:0 0 10px 70px}
-.fz .fit{display:flex;gap:16px;align-items:flex-start;position:relative;padding:0 0 16px}
-.fz .fit:last-child{padding-bottom:2px}
-.fz .fit::before{content:"";position:absolute;left:27px;top:54px;bottom:0;width:2px;background:#EEF0F4}
-.fz .fit:last-child::before{display:none}
-.fz .fcal{width:56px;flex:none;text-align:center;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
-.fz .fcal b{display:block;font-family:'Sora';font-weight:800;font-size:1.05rem;padding:6px 0 1px;color:var(--ink)}
-.fz .fcal small{display:block;font-size:.56rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-bottom:6px}
-.fz .fcal.next{border-color:#FFD9C4;background:#FFF6F0}
-.fz .fcal.next b{color:var(--orange-deep)}
-.fz .fbd{flex:1;min-width:0;padding-top:3px}
-.fz .fl1{display:flex;align-items:center;gap:11px}
-.fz .fl1 b{font-size:.86rem;font-weight:700;color:var(--ink)}
-.fz .fgo{margin-left:auto;color:var(--orange-deep);font-weight:700;font-size:.76rem;white-space:nowrap;text-decoration:none}
-.fz .fgo:hover{text-decoration:underline}
-.fz .fl2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.75rem;color:var(--muted);font-weight:600;margin-top:4px}
-.fz .ftq{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2);font-weight:700}
+/* 04/08 (visuel 22) puis 05/08 (visuel 29, patron : « tout a gauche et rien a
+   droite ») — chaque passage est une carte pleine largeur, et l'information se
+   range dans des colonnes fixes : date · intervention · technicien · creneau ·
+   statut · lien. La frise garde sa pastille calendrier et son liseré orange sur
+   le passage a venir, mais la largeur est enfin occupee. */
+.fz{padding:2px 0 0}
+.fz .fgrid{display:grid;grid-template-columns:66px minmax(160px,1fr) 148px 124px 116px 62px;gap:16px;align-items:center}
+.fz .fan{font-size:.6rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#B9BDC9;margin:0 0 9px 2px}
+.fz .fhh{padding:0 15px 8px;font-size:.61rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fz .fit{background:#fff;border:1px solid #F0F1F4;border-radius:14px;padding:9px 15px;margin-bottom:8px;
+  box-shadow:0 1px 2px rgba(23,26,32,.04);transition:.13s}
+.fz .fit:hover{border-color:#E4E7EC;box-shadow:0 4px 12px rgba(23,26,32,.07)}
+.fz .fit.fnext{border-color:#FFE0CE;background:#FFFBF8}
+.fz .fcal{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);
+  border-radius:11px;background:#fff;padding:6px 0}
+.fz .fcal b{font-family:'Sora';font-weight:800;font-size:.98rem;color:var(--ink)}
+.fz .fcal small{font-size:.55rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.fz .fit.fnext .fcal{border-color:#FFD9C4;background:#FFF6F0}
+.fz .fit.fnext .fcal b{color:var(--orange-deep)}
+.fz .fnat b{display:block;font-size:.86rem;font-weight:700;color:var(--ink)}
+.fz .fnat small{font-size:.71rem;color:var(--muted);font-weight:600}
+.fz .ftq{display:inline-flex;align-items:center;gap:7px;color:var(--ink-2);font-weight:700;font-size:.79rem;white-space:nowrap}
 .fz .ftq i{width:8px;height:8px;border-radius:50%;flex:none}
-.fz .fsep{color:#D4D7DF}
-/* Sur iPhone, « Voir → » ne rentre pas au bout de la 1re ligne : il se cale en
-   haut a droite du passage, hors du flux, au lieu de couper le bloc en deux. */
-@media(max-width:640px){
-  .fz .fit{gap:12px}
-  .fz .fan{margin-left:0}
-  .fz .fl1{flex-wrap:wrap;gap:8px;padding-right:54px}
-  .fz .fgo{position:absolute;right:0;top:3px;margin-left:0}
+.fz .fcr{font-size:.79rem;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.fz .fcr.vide{color:#C9CDD6}
+.fz .fgo{color:var(--orange-deep);font-weight:700;font-size:.76rem;white-space:nowrap;text-decoration:none;text-align:right}
+.fz .fgo:hover{text-decoration:underline}
+/* Sous 1180 px les six colonnes ne tiennent plus : le creneau et le libelle de
+   colonne s'effacent, le reste reste aligne. */
+@media(max-width:1180px){
+  .fz .fgrid{grid-template-columns:62px minmax(120px,1fr) 132px 108px 58px;gap:12px}
+  .fz .fcr,.fz .fhh .h-cr{display:none}
+}
+@media(max-width:760px){
+  .fz .fhh{display:none}
+  .fz .fgrid{grid-template-columns:56px minmax(0,1fr) auto;gap:11px}
+  .fz .fit{padding:10px 12px}
+  .fz .ftq,.fz .fgo{grid-column:2 / -1}
+  .fz .ftq{margin-top:2px}
+  .fz .fgo{text-align:left;margin-top:4px}
+}
 }
 .ivd{width:47px;height:47px;border-radius:12px;background:#F6F7F9;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
 .ivd b{font-family:'Sora';font-weight:800;font-size:1.02rem;line-height:1;color:var(--ink)}
@@ -978,42 +988,52 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         <!-- 04/08 (patron, visuel 22) : la frise remplace le tableau. Les
              cellules vides d'un tableau (le créneau d'un passage ancien, par
              exemple) disparaissent d'elles-mêmes au lieu d'afficher un tiret. -->
+        <!-- 05/08 (patron, visuel 29) : une carte par passage, sur toute la
+             largeur, colonnes alignées comme les autres onglets de la fiche. -->
         <div class="fz" id="hist-tb">
-          <div class="fan">2026</div>
-          <div class="fit" data-st="avenir">
-            <span class="fcal next"><b>29</b><small>Août</small></span>
-            <div class="fbd">
-              <div class="fl1"><b>Contrôle mensuel</b><span class="st st-envoye">À venir</span><a class="fgo" href="calendrier.html">Voir →</a></div>
-              <div class="fl2"><span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span><span class="fsep">·</span>08:00 – 10:00<span class="fsep">·</span>intervention n° 8</div>
-            </div>
+          <div class="fhh fgrid"><span>Date</span><span>Intervention</span><span>Technicien</span>
+            <span class="h-cr">Créneau</span><span>Statut</span><span></span></div>
+          <div class="fit fgrid fnext" data-st="avenir">
+            <span class="fcal"><b>29</b><small>Août</small></span>
+            <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 8</small></span>
+            <span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span>
+            <span class="fcr">08:00 – 10:00</span>
+            <span><span class="st st-envoye">À venir</span></span>
+            <a class="fgo" href="calendrier.html">Voir →</a>
           </div>
-          <div class="fit" data-st="done">
+          <div class="fit fgrid" data-st="done">
             <span class="fcal"><b>12</b><small>Juil.</small></span>
-            <div class="fbd">
-              <div class="fl1"><b>Contrôle mensuel</b><span class="st st-payee">Terminée</span><a class="fgo" href="calendrier.html">Voir →</a></div>
-              <div class="fl2"><span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span><span class="fsep">·</span>intervention n° 7</div>
-            </div>
+            <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 7</small></span>
+            <span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span>
+            <span class="fcr vide">—</span>
+            <span><span class="st st-payee">Terminée</span></span>
+            <a class="fgo" href="calendrier.html">Voir →</a>
           </div>
-          <div class="fit" data-st="done">
+          <div class="fit fgrid" data-st="done">
             <span class="fcal"><b>14</b><small>Juin</small></span>
-            <div class="fbd">
-              <div class="fl1"><b>Contrôle mensuel</b><span class="st st-payee">Terminée</span><a class="fgo" href="calendrier.html">Voir →</a></div>
-              <div class="fl2"><span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span><span class="fsep">·</span>intervention n° 6</div>
-            </div>
+            <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 6</small></span>
+            <span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span>
+            <span class="fcr vide">—</span>
+            <span><span class="st st-payee">Terminée</span></span>
+            <a class="fgo" href="calendrier.html">Voir →</a>
           </div>
-          <div class="fit" data-st="done">
+          <div class="fit fgrid" data-st="done">
             <span class="fcal"><b>10</b><small>Mai</small></span>
-            <div class="fbd">
-              <div class="fl1"><b>Contrôle mensuel</b><span class="st st-payee">Terminée</span><a class="fgo" href="calendrier.html">Voir →</a></div>
-              <div class="fl2"><span class="ftq"><i style="background:#0E8A7A"></i>Otman</span><span class="fsep">·</span>intervention n° 5</div>
-            </div>
+            <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 5</small></span>
+            <span class="ftq"><i style="background:#0E8A7A"></i>Otman</span>
+            <span class="fcr vide">—</span>
+            <span><span class="st st-payee">Terminée</span></span>
+            <a class="fgo" href="calendrier.html">Voir →</a>
           </div>
-          <div class="fit" data-st="done">
+          <div class="fit fgrid" data-st="done">
             <span class="fcal"><b>08</b><small>Mars</small></span>
-            <div class="fbd">
-              <div class="fl1"><b>Traitement punaises</b><span class="st st-payee">Terminée</span><a class="fgo" href="calendrier.html">Voir →</a></div>
-              <div class="fl2"><span class="ftq"><i style="background:#7B3BEA"></i>Fredo</span><span class="fsep">·</span>intervention n° 3</div>
-            </div>
+            <span class="fnat"><b>Traitement punaises</b><small>intervention n° 3</small></span>
+            <span class="ftq"><i style="background:#7B3BEA"></i>Fredo</span>
+            <span class="fcr vide">—</span>
+            <span><span class="st st-payee">Terminée</span></span>
+            <a class="fgo" href="calendrier.html">Voir →</a>
+          </div>
+        </div>
           </div>
         </div>
         <div class="tfoot"><span id="hist-count">1-5 sur 5 affichés</span>

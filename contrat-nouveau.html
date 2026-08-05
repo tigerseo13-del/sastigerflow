@@ -58,13 +58,13 @@ textarea{resize:vertical;min-height:76px}
 /* ===== main / topbar ===== */
 .main{margin-left:238px;min-height:100vh}
 .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:12px 26px;
-  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.2) 0, transparent 45%),
-  radial-gradient(circle at 92% -60%, rgba(255,90,31,.14) 0, transparent 45%),
-  linear-gradient(115deg,#FFF8F3,#FFEFE4 55%,#FFF4EC);
-  border-bottom:1px solid #FFE2D2;backdrop-filter:blur(12px)}
-.topbar::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(90deg,rgba(234,74,16,.04) 1px,transparent 1px),
-  linear-gradient(rgba(234,74,16,.04) 1px,transparent 1px);background-size:22px 22px}
+  /* 05/08 (patron, visuel 34) : bandeau BLANC + filet orange de 3 px. Le voile
+     teinte etait la seule zone non cliquable peinte en couleur d'action. */
+  background:#fff;border-bottom:1px solid var(--line);
+  box-shadow:inset 0 3px 0 -1px var(--orange);backdrop-filter:blur(12px)}
+/* 05/08 : le quadrillage orange partait avec le voile — il n'a plus de sens
+   sur un fond blanc. */
+.topbar::before{display:none}
 .topbar>*{position:relative}
 
 .crumbs{font-size:.95rem;color:var(--muted)}
@@ -90,6 +90,37 @@ textarea{resize:vertical;min-height:76px}
 .page{max-width:1080px;margin:0 auto;padding:24px 30px calc(60px + var(--safe-b))}
 .card{background:var(--card);border:1px solid #F0F1F4;border-radius:16px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:16px}
 .card-h{font-family:'Sora';font-weight:800;font-size:.98rem;display:flex;align-items:center;gap:10px;margin-bottom:15px}
+/* ===== 05/08 (patron : « fais le 26 ») — les 4 etapes en accordeon ===== */
+.acc{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+  margin-bottom:11px;overflow:hidden}
+.acch{display:flex;align-items:center;gap:13px;padding:14px 17px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.acch:hover{background:#FCFCFD}
+.acch:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+.acc.open > .acch{border-bottom:1px solid var(--line)}
+.acch .ar{width:29px;height:29px;border-radius:10px;background:#F0F1F4;color:var(--muted);font-family:'Sora';
+  font-weight:800;font-size:.8rem;display:grid;place-items:center;flex:none;transition:.14s}
+.acc.open > .acch .ar{background:var(--orange);color:#fff;box-shadow:0 4px 10px -3px rgba(255,90,31,.5)}
+.acc.fait > .acch .ar{background:var(--green-bg,#ECFDF5);color:var(--green-d,#047857)}
+.acch .at b{display:block;font-family:'Sora';font-weight:800;font-size:.98rem;letter-spacing:-.2px;line-height:1.2}
+.acch .at small{font-size:.75rem;color:var(--muted);font-weight:500}
+.acch .ares{margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.acch .rsum{display:inline-flex;align-items:center;gap:6px;background:#F5F6F8;border-radius:9px;padding:4px 10px;
+  font-size:.73rem;font-weight:700;color:var(--ink-2);white-space:nowrap}
+.acch .rsum.att{background:#FFF7EC;color:#A16207}
+.acch .rsum.eur{background:var(--green-bg,#ECFDF5);color:var(--green-d,#047857)}
+.acch .achev{width:16px;height:16px;color:var(--muted);flex:none;margin-left:4px;transition:transform .16s}
+.acc.open > .acch .achev{transform:rotate(180deg)}
+.acc:not(.open) > .accb{display:none}
+.accb{padding:15px 17px 6px}
+.accb > .card{box-shadow:none;border:1px solid #F0F1F4}
+.accb > .card:last-child{margin-bottom:11px}
+@media(max-width:760px){
+  .acch{padding:12px 13px;gap:10px}
+  .acch .at small{display:none}
+  .acch .rsum{font-size:.68rem;padding:3px 8px}
+  .accb{padding:12px 12px 4px}
+}
+
 .steph{display:flex;align-items:center;gap:11px;margin:26px 2px 12px;font-family:'Sora';font-weight:800;font-size:1.02rem;letter-spacing:-.2px}
 .steph:first-of-type{margin-top:2px}
 .steph span{width:28px;height:28px;border-radius:9px;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:.85rem;flex:none;box-shadow:0 4px 10px -3px rgba(255,90,31,.5)}
@@ -204,7 +235,9 @@ textarea{resize:vertical;min-height:76px}
    de trou, et donne le même rythme vertical aux 4 étapes. La densité
    horizontale est reprise DANS les cartes (fgrid3, fgrid4, pick). */
 .layout{display:block;padding-bottom:88px}
-.actbar{position:fixed;left:238px;right:0;bottom:0;z-index:45;display:flex;align-items:center;gap:11px;padding:12px 26px;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+/* 05/08 (visuel 26) : elle FLOTTAIT et recouvrait le titre « Categories de
+   services » sur la capture du patron. Elle vit maintenant en fin de page. */
+.actbar{position:static;margin:16px 0 4px;border-radius:15px;box-shadow:0 1px 2px rgba(23,26,32,.05);display:flex;align-items:center;gap:11px;padding:12px 26px;background:#fff;border:1px solid var(--line)}
 .ab-ttc small{display:block;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .ab-ttc b{font-family:'Sora';font-size:1.18rem;letter-spacing:-.3px}
 @media(max-width:900px){.actbar{left:0;padding:11px 14px}}
@@ -523,7 +556,14 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
    <div class="layout">
    <div class="col">
 
-    <div class="steph"><span>1</span>Le contrat <small>— qui, quand, combien</small></div>
+    <section class="acc open" data-step="1">
+      <div class="acch" onclick="accTog(this)" role="button" tabindex="0">
+        <span class="ar">1</span>
+        <span class="at"><b>Le contrat</b><small>— qui, quand, combien</small></span>
+        <span class="ares" id="ares-1"></span>
+        <svg class="achev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="accb">
 
     <!-- ===== 1. INFORMATIONS ===== -->
     <div class="card">
@@ -629,7 +669,17 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
     </div>
 
     <!-- ===== 4. CATÉGORIES DE SERVICES ===== -->
-    <div class="steph"><span>2</span>Le contenu <small>— ce que le technicien fait sur place</small></div>
+      </div>
+    </section>
+
+    <section class="acc" data-step="2">
+      <div class="acch" onclick="accTog(this)" role="button" tabindex="0">
+        <span class="ar">2</span>
+        <span class="at"><b>Le contenu</b><small>— ce que le technicien fait sur place</small></span>
+        <span class="ares" id="ares-2"></span>
+        <svg class="achev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="accb">
 
     <div class="card">
       <div class="card-h"><span class="tick"></span>Catégories de services <small>— ce que couvre le contrat</small></div>
@@ -673,7 +723,17 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
     </div>
 
     <!-- ===== 7. PLANIFICATION ===== -->
-    <div class="steph"><span>3</span>La planification <small>— le rythme des passages</small></div>
+      </div>
+    </section>
+
+    <section class="acc" data-step="3">
+      <div class="acch" onclick="accTog(this)" role="button" tabindex="0">
+        <span class="ar">3</span>
+        <span class="at"><b>La planification</b><small>— le rythme des passages</small></span>
+        <span class="ares" id="ares-3"></span>
+        <svg class="achev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="accb">
 
     <div class="card">
       <div class="card-h"><span class="tick"></span>Planification des interventions</div>
@@ -721,7 +781,17 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
     </div>
 
     <!-- ===== 8. RENOUVELLEMENT & SIGNATURE ===== -->
-    <div class="steph"><span>4</span>Finalisation <small>— renouvellement, signature, documents</small></div>
+      </div>
+    </section>
+
+    <section class="acc" data-step="4">
+      <div class="acch" onclick="accTog(this)" role="button" tabindex="0">
+        <span class="ar">4</span>
+        <span class="at"><b>Finalisation</b><small>— renouvellement, signature, documents</small></span>
+        <span class="ares" id="ares-4"></span>
+        <svg class="achev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="accb">
 
     <div class="card">
       <div class="card-h"><span class="tick"></span>Renouvellement &amp; signature</div>
@@ -763,6 +833,9 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
         <div class="docgrid" id="cpj-liste" style="margin-top:12px"></div>
       </div>
     </div>
+
+      </div>
+    </section>
 
    </div><!-- /.col -->
 
@@ -1511,7 +1584,9 @@ try{
 /* mu-contratnew valide : TOUTES les sections se replient — le formulaire n'est plus un seul pave.
    Informations, Periode et Planification restent ouvertes (l'essentiel), le reste est replie. */
 (function(){
-  const OUVERTES = ["Informations", "P\u00e9riode", "Planification"];
+  /* 05/08 (patron) : « ONGLET CONTRAT CREATION AFFICHE FINANCES » — Finances
+     et Renouvellement ne se replient plus, ce sont eux qui decident. */
+  const OUVERTES = ["Informations", "P\u00e9riode", "Finances", "Cat\u00e9gories", "Planification", "Renouvellement"];
   document.querySelectorAll(".card > .card-h").forEach(h => {
     if(h.classList.contains("fold-h")) return;   /* Materiel & Recapitulatif : deja repliables */
     const c = h.parentElement;
@@ -1536,6 +1611,77 @@ document.addEventListener("click", function(e){
     try{ if(el.showPicker) el.showPicker(); }catch(err){}
   }
 });
+</script>
+
+<script>
+/* ===== 05/08 (patron : « fais le 26 ») — l'accordeon des 4 etapes =====
+   Une seule ouverte a la fois : on remplit, elle se referme en gardant son
+   resume sur sa ligne, la suivante s'ouvre. Un clic rouvre n'importe laquelle,
+   donc rien n'est jamais perdu — c'est la difference avec un tunnel. */
+function accTog(h){
+  const sec = h.parentElement, ouvert = sec.classList.contains("open");
+  document.querySelectorAll(".acc").forEach(a => a.classList.remove("open"));
+  if(!ouvert){
+    sec.classList.add("open");
+    setTimeout(() => { const r = sec.getBoundingClientRect();
+      if(r.top < 70) window.scrollBy({top: r.top - 84, behavior:"smooth"}); }, 60);
+  }
+  accResume();
+}
+function accOuvre(n){
+  const sec = document.querySelector('.acc[data-step="' + n + '"]');
+  if(sec && !sec.classList.contains("open")) accTog(sec.querySelector(".acch"));
+}
+/* Le resume d'une etape repliee : ce qui est rempli en gris, ce qui manque en ambre. */
+function accResume(){
+  const v = id => { const e = document.getElementById(id); return e ? String(e.value || "").trim() : ""; };
+  const puce = (t, cl) => '<span class="rsum' + (cl ? " " + cl : "") + '">' + t + '</span>';
+  const fd = x => { const p = String(x || "").split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0].slice(2) : ""; };
+  const pose = (n, html, complet) => {
+    const e = document.getElementById("ares-" + n), sec = document.querySelector('.acc[data-step="' + n + '"]');
+    if(e) e.innerHTML = sec && sec.classList.contains("open") ? "" : html;
+    if(sec) sec.classList.toggle("fait", !!complet);
+  };
+
+  /* 1 — le contrat */
+  let a = [], manque1 = 0;
+  const cli = v("v-client"), ht = v("v-ht");
+  cli ? a.push(puce(cli)) : manque1++;
+  const d1 = fd(v("v-deb")), d2 = fd(v("v-fin"));
+  if(d1 && d2) a.push(puce(d1 + " \u2192 " + d2));
+  const ttc = document.getElementById("v-ttc");
+  if(ht && ttc) a.push(puce(ttc.textContent.trim() + " TTC", "eur")); else manque1++;
+  if(!v("v-titre")) manque1++;
+  if(manque1) a.push(puce(manque1 + (manque1 > 1 ? " champs \u00e0 remplir" : " champ \u00e0 remplir"), "att"));
+  pose(1, a.join(""), !manque1);
+
+  /* 2 — le contenu */
+  const cats = document.querySelectorAll('#v-cats input:checked').length;
+  pose(2, cats ? puce(cats + (cats > 1 ? " cat\u00e9gories" : " cat\u00e9gorie")) : puce("1 champ \u00e0 remplir", "att"), cats > 0);
+
+  /* 3 — la planification (ids reels : v-freqint, v-nbint, #v-jours, #v-creneaux) */
+  let b = [], manque3 = 0;
+  const fq = v("v-freqint"), nb = v("v-nbint");
+  fq ? b.push(puce(fq)) : manque3++;
+  nb ? b.push(puce(nb + " passages / an")) : manque3++;
+  const jours = document.querySelectorAll('#v-jours input:checked').length;
+  if(jours) b.push(puce(jours + (jours > 1 ? " jours" : " jour"))); else manque3++;
+  if(!document.querySelector('#v-creneaux .on, #v-creneaux input:checked')) manque3++;
+  if(manque3) b.push(puce(manque3 + (manque3 > 1 ? " champs \u00e0 remplir" : " champ \u00e0 remplir"), "att"));
+  pose(3, b.join(""), !manque3);
+
+  /* 4 — finalisation (v-renouv est une case a cocher, cochee par defaut) */
+  const rn = document.getElementById("v-renouv");
+  let c = [puce(rn && rn.checked ? "Renouvellement auto" : "Sans renouvellement")];
+  const pjs = document.querySelectorAll('#cpj-liste > *').length;
+  if(pjs) c.push(puce(pjs + (pjs > 1 ? " pi\u00e8ces jointes" : " pi\u00e8ce jointe")));
+  pose(4, c.join(""), true);
+}
+document.addEventListener("input", accResume);
+document.addEventListener("change", accResume);
+document.addEventListener("click", e => { if(e.target.closest(".card")) setTimeout(accResume, 30); });
+document.addEventListener("DOMContentLoaded", accResume);
+accResume();
 </script>
 </body>
 </html>
