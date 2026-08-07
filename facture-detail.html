@@ -288,6 +288,10 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 #avveil .avpre{margin:12px 0 16px}
 #avveil .sfld textarea{min-height:96px}
 #avveil .sacts{margin-top:auto;padding-top:20px}
+#avveil .avpre .frp{transition:.12s}
+#avveil .avpre .frp:first-child{border-color:#D8DBE2;font-weight:800}
+#avveil .avpre .frp.on{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:800;
+  box-shadow:0 6px 14px -7px rgba(255,90,31,.55)}
 .avdeja{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:.78rem}
 .avdeja .t{font-weight:800;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
 .avdeja .l{display:flex;justify-content:space-between;gap:10px;padding:4px 0;color:var(--ink-2)}
@@ -900,7 +904,7 @@ a.hcli:hover{color:var(--orange-deep)}
     <div class="avhero">
       <div class="c"><small>Solde actuel</small><b id="av-h1">—</b></div>
       <div class="fl">→</div>
-      <div class="c ap" id="av-h2c"><small>Après avoir</small><b id="av-h2">—</b></div>
+      <div class="c ap" id="av-h2c"><small id="av-h2l">Après avoir</small><b id="av-h2">—</b></div>
     </div>
     <input type="hidden" id="av-ref"><input type="hidden" id="av-num">
     <div class="pfgrid">
@@ -911,9 +915,9 @@ a.hcli:hover{color:var(--orange-deep)}
       </select></div>
     </div>
     <div class="avpre">
-      <button type="button" class="frp" onclick="avPreset(1)">Tout le solde</button>
-      <button type="button" class="frp" onclick="avPreset(.5)">50 %</button>
-      <button type="button" class="frp" onclick="avPreset(.1)">10 %</button>
+      <button type="button" class="frp" onclick="avPreset(1, this)">Tout le solde</button>
+      <button type="button" class="frp" onclick="avPreset(.5, this)">50 %</button>
+      <button type="button" class="frp" onclick="avPreset(.1, this)">10 %</button>
     </div>
     <div class="sfld"><label for="av-desc">Description <span style="font-weight:400;text-transform:none;letter-spacing:0">— facultatif</span></label><textarea id="av-desc" rows="3" placeholder="Précision pour le client et la compta…"></textarea></div>
     <div class="sacts">
@@ -1623,12 +1627,21 @@ function renderAll(){ badge(); kpis(); details(); lignes(); vieDraw(); paylist()
 
 /* ===== actions ===== */
 function avSolde(){ return Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0)); }
+/* le plafond d'un avoir : ce qui a ete FACTURE moins les avoirs deja emis.
+   (Pas le solde du — sinon impossible de rembourser une facture payee.) */
+function avMax(){
+  return Math.max(0, REC.montant - avoirs().reduce((a, x) => a + x.m, 0));
+}
 function avOpen(){
   g('av-ref').value = REF;
   g('av-num').value = "AVO-2026-" + String(10000 + Math.floor(Math.random() * 89999));
   g('av-numlbl').textContent = g('av-num').value;
   g('av-meta').innerHTML = "Sur la facture <b>" + REF + "</b>";
-  g('av-montant').value = ""; g('av-montant').placeholder = "max " + eur(avSolde());
+  g('av-montant').value = ""; g('av-montant').placeholder = "max " + eur(avMax());
+  AVPV = null; avChips(null);
+  /* facture soldee : le raccourci « Tout le solde » devient « Tout le montant » */
+  const p1 = document.querySelector('#avveil .avpre .frp');
+  if(p1) p1.textContent = avSolde() > 0.005 ? "Tout le solde" : "Tout le montant";
   g('av-desc').value = "";
   avImpact();
   /* les avoirs deja emis sur cette facture, sous la main */
@@ -1641,35 +1654,52 @@ function avOpen(){
   g('avveil').classList.add('open');
   setTimeout(() => { const f = g('av-montant'); if(f) f.focus(); }, 120);
 }
-function avPreset(r){
-  g('av-montant').value = String(Math.round(avSolde() * r * 100) / 100);
+function avChips(sel){
+  document.querySelectorAll('#avveil .avpre .frp').forEach(c => c.classList.remove('on'));
+  if(sel) sel.classList.add('on');
+}
+let AVPV = null;
+function avPreset(r, el){
+  const base = avSolde() > 0.005 ? avSolde() : avMax();
+  g('av-montant').value = String(Math.round(base * r * 100) / 100);
+  AVPV = g('av-montant').value;      /* la valeur posee par la chip */
+  avChips(el || null);
   avImpact();
   g('av-montant').focus();
 }
 function avImpact(){
   /* 06/08 (visuel 54) : la carte AVANT → APRES fait le travail de l'ancienne
      ligne de texte — en plus gros et en permanence. */
-  const h1 = g('av-h1'), h2 = g('av-h2'), h2c = g('av-h2c');
+  const h1 = g('av-h1'), h2 = g('av-h2'), h2c = g('av-h2c'), h2l = g('av-h2l');
   if(!h1) return;
+  /* montant retouche a la main : la chip ne correspond plus, elle s'eteint */
+  if(AVPV !== null && g('av-montant').value !== AVPV){ avChips(null); AVPV = null; }
   const m = parseFloat(String(g('av-montant').value).replace(",", ".")) || 0;
-  const solde = avSolde();
+  const solde = avSolde(), max = avMax();
   h1.textContent = eur(solde);
-  if(m > solde + 0.005){
+  h2c.classList.remove('ko');
+  if(m > max + 0.005){
+    /* on ne crediten jamais plus que ce qui a ete facture */
     h2c.classList.add('ko');
-    h2.textContent = "− " + eur(m - solde);
-    h2.title = "L'avoir dépasse le solde dû";
-  } else {
-    h2c.classList.remove('ko');
-    h2.textContent = eur(Math.max(0, solde - m));
-    h2.title = "";
+    h2l.textContent = "Dépasse le facturé";
+    h2.textContent = "max " + eur(max);
+    return;
   }
+  if(m > solde + 0.005){
+    /* facture deja payee (en tout ou partie) : l'excedent revient au client */
+    h2l.textContent = "À rembourser au client";
+    h2.textContent = eur(m - solde);
+    return;
+  }
+  h2l.textContent = "Après avoir";
+  h2.textContent = eur(Math.max(0, solde - m));
 }
 function avClose(){ g('avveil').classList.remove('open'); }
 function avEmit(){
   const m = parseFloat(String(g('av-montant').value).replace(",", ".")) || 0;
-  const solde = Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0));
+  const solde = avSolde(), max = avMax();
   if(m <= 0){ toast("Indique le montant de l'avoir"); g('av-montant').focus(); return; }
-  if(m > solde + 0.005){ toast("⚠️ L'avoir dépasse le solde dû (" + eur(solde) + ")"); g('av-montant').focus(); return; }
+  if(m > max + 0.005){ toast("⚠️ L'avoir dépasse le montant facturé (" + eur(max) + " max)"); g('av-montant').focus(); return; }
   const arr = avoirs();
   arr.push({num:g('av-num').value, m, motif:g('av-motif').value, desc:(g('av-desc').value || "").trim(), t:stamp()});
   avoirsSave(arr);
@@ -1677,7 +1707,10 @@ function avEmit(){
      « Acompte recu » — le solde est a zero, elle est reglee. */
   if(avSolde() <= 0.005 && ["attente", "partiel", "retard"].includes(statutGet())) statutSet("payee");
   avClose();
-  toast("Avoir " + g('av-num').value + " émis — " + eur(m) + " déduits du solde");
+  const trop = Math.max(0, m - solde);
+  toast(trop > 0.005
+    ? "Avoir " + g('av-num').value + " émis — " + eur(trop) + " à rembourser au client"
+    : "Avoir " + g('av-num').value + " émis — " + eur(m) + " déduits du solde");
   renderAll();
 }
 function avDel(e, i){
