@@ -91,9 +91,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 
 .main{flex:1;margin-left:238px;min-width:0}
 .topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;
-  /* 05/08 (patron, visuel 34) : bandeau BLANC + filet orange de 3 px. Le voile
-     teinte etait la seule zone non cliquable peinte en couleur d'action. */
-  background:#fff;border-bottom:1px solid var(--line);
+  /* 05/08 (patron) : « trop blanche — un petit peu plus, pas comme avant ». Le
+     voile revient a un tiers de son ancienne force, halos compris. Le filet
+     orange de 3 px reste : c'est lui qui signe la page. */
+  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.07) 0, transparent 45%),
+  radial-gradient(circle at 92% -60%, rgba(255,90,31,.05) 0, transparent 45%),
+  linear-gradient(115deg,#FFFCFB,#FFF9F6 55%,#FFFBF8);
+  border-bottom:1px solid #F7EDE6;
   box-shadow:inset 0 3px 0 -1px var(--orange);backdrop-filter:blur(12px)}
 /* 05/08 : le quadrillage orange partait avec le voile — il n'a plus de sens
    sur un fond blanc. */
@@ -766,10 +770,12 @@ R.info = () => `
   <div class="card">
     <div class="card-h">Identité visuelle</div>
     <div style="display:flex;align-items:center;gap:18px;margin-bottom:20px">
-      <span class="logobox"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="2" style="width:30px;height:30px"><path d="M12 21.2C9.1 21.2 6.5 19.4 5.7 16.6 5.1 14.4 5.2 11.9 6 9.8 6.5 8.4 7.5 7.1 8.9 6.3 9.9 5.8 10.9 5.5 12 5.5c1.1 0 2.1.3 3.1.8 1.4.8 2.4 2.1 2.9 3.5.8 2.1.9 4.6.3 6.8-.8 2.8-3.4 4.6-6.3 4.6z"/></svg></span>
+      <span class="logobox" id="logo-apercu" style="overflow:hidden;padding:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="2" style="width:30px;height:30px"><path d="M12 21.2C9.1 21.2 6.5 19.4 5.7 16.6 5.1 14.4 5.2 11.9 6 9.8 6.5 8.4 7.5 7.1 8.9 6.3 9.9 5.8 10.9 5.5 12 5.5c1.1 0 2.1.3 3.1.8 1.4.8 2.4 2.1 2.9 3.5.8 2.1.9 4.6.3 6.8-.8 2.8-3.4 4.6-6.3 4.6z"/></svg></span>
       <div>
         <span class="lab" style="margin-bottom:6px">Logo de la société <b style="color:var(--red)">*</b></span>
-        <button class="rchip" onclick="toast('Choisis un fichier PNG ou SVG — fond transparent conseillé')">${ic.up} Téléverser</button>
+        <input type="file" id="logo-in" accept="image/png,image/jpeg,image/svg+xml" hidden onchange="logoPrend(this.files[0]);this.value=''">
+        <button class="rchip" onclick="document.getElementById('logo-in').click()">${ic.up} Téléverser</button>
+        <button class="rchip" id="logo-del" style="display:none;color:var(--red)" onclick="logoRetire()">Retirer</button>
       </div>
     </div>
     <div class="fgrid">
@@ -780,7 +786,7 @@ R.info = () => `
   <div class="card">
     <div class="card-h">Mentions légales et contact de la société</div>
     <div class="fgrid">
-      <div class="full"><label class="lab" for="f-reglage-1">Nom de la société <b style="color:var(--red)">*</b></label><input id="f-reglage-1" value="TIGERFLOW"></div>
+      <div class="full"><label class="lab" for="f-reglage-1">Nom de la société <b style="color:var(--red)">*</b></label><input id="f-reglage-1" value="Agence Antinuisible"></div>
       <div class="full"><label class="lab" for="f-reglage-2">Adresse</label><input id="f-reglage-2" value="122 Rue Amelot"></div>
       <div><label class="lab" for="f-reglage-2b">Code postal</label><input id="f-reglage-2b" value="75011"></div>
       <div><label class="lab" for="f-reglage-2c">Ville</label><input id="f-reglage-2c" value="Paris"></div>
@@ -2157,6 +2163,61 @@ document.addEventListener("click", function(e){
     try{ if(el.showPicker) el.showPicker(); }catch(err){}
   }
 });
+</script>
+
+<script>
+/* 05/08 (patron : « modifie le logo ») — LE LOGO DE LA SOCIETE
+   Il ne s'agit pas du logo de TigerFlow mais de celui de l'entreprise qui
+   l'utilise : c'est lui qui part en tete des rapports remis au client. On le
+   reduit a 400 px de large avant de le garder, sinon un PNG d'imprimeur de
+   3 Mo remplit le stockage du navigateur a lui tout seul. */
+const LOGOKEY = "tigerflow-logo";
+function logoPrend(fichier){
+  if(!fichier) return;
+  if(fichier.type === "image/svg+xml"){
+    const fr = new FileReader();
+    fr.onload = e => { logoGarde(e.target.result); };
+    fr.readAsDataURL(fichier);
+    return;
+  }
+  const fr = new FileReader();
+  fr.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 400, r = Math.min(1, MAX / img.width);
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * r);
+      c.height = Math.round(img.height * r);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      logoGarde(c.toDataURL("image/png"));
+    };
+    img.onerror = () => toast("Ce fichier n'est pas une image lisible");
+    img.src = e.target.result;
+  };
+  fr.readAsDataURL(fichier);
+}
+function logoGarde(dataUrl){
+  try{ localStorage.setItem(LOGOKEY, dataUrl); }catch(e){ toast("Le logo est trop lourd pour être gardé"); return; }
+  logoPeint();
+  toast("Logo enregistré — il part en tête des rapports client");
+}
+function logoRetire(){
+  try{ localStorage.removeItem(LOGOKEY); }catch(e){}
+  logoPeint();
+  toast("Logo retiré");
+}
+function logoPeint(){
+  let d = "";
+  try{ d = localStorage.getItem(LOGOKEY) || ""; }catch(e){}
+  const box = document.getElementById("logo-apercu"), del = document.getElementById("logo-del");
+  if(box) box.innerHTML = d ? '<img src="' + d + '" alt="Logo de la société" style="max-width:100%;max-height:100%;object-fit:contain">' : "O";
+  if(del) del.style.display = d ? "" : "none";
+}
+/* le panneau Reglages est reconstruit a chaque changement d'onglet : on repeint
+   apres coup, sinon l'apercu disparait des qu'on revient sur Societe */
+document.addEventListener("click", () => setTimeout(logoPeint, 60));
+document.addEventListener("DOMContentLoaded", () => setTimeout(logoPeint, 120));
+setTimeout(logoPeint, 300);
 </script>
 </body>
 </html>

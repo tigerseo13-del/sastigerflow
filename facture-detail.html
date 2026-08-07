@@ -57,9 +57,13 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .side-user span{font-size:.74rem;color:#7E838F}
 .main{flex:1;margin-left:238px;min-width:0}
 .topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;
-  /* 05/08 (patron, visuel 34) : bandeau BLANC + filet orange de 3 px. Le voile
-     teinte etait la seule zone non cliquable peinte en couleur d'action. */
-  background:#fff;border-bottom:1px solid var(--line);
+  /* 05/08 (patron) : « trop blanche — un petit peu plus, pas comme avant ». Le
+     voile revient a un tiers de son ancienne force, halos compris. Le filet
+     orange de 3 px reste : c'est lui qui signe la page. */
+  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.07) 0, transparent 45%),
+  radial-gradient(circle at 92% -60%, rgba(255,90,31,.05) 0, transparent 45%),
+  linear-gradient(115deg,#FFFCFB,#FFF9F6 55%,#FFFBF8);
+  border-bottom:1px solid #F7EDE6;
   box-shadow:inset 0 3px 0 -1px var(--orange);backdrop-filter:blur(12px)}
 /* 05/08 : le quadrillage orange partait avec le voile — il n'a plus de sens
    sur un fond blanc. */
@@ -254,6 +258,41 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 
 .sendveil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.5);backdrop-filter:blur(3px);z-index:130}
 .sendveil.open{display:grid;place-items:center}
+/* 06/08 (patron) : l'AVOIR se cree en LISANT la facture — la modale centree
+   voilait exactement ce qu'il faut lire (paye, solde, prestations). Il passe
+   en TIROIR a droite : voile leger SANS flou, la page reste lisible. */
+#avveil{background:rgba(16,18,22,.24);backdrop-filter:none}
+#avveil.open{display:block}
+#avveil .sendbox{position:fixed;top:0;right:0;bottom:0;height:100%;width:min(440px,94vw);
+  max-height:none;border-radius:0;padding:22px 24px 28px;overflow-y:auto;
+  box-shadow:-28px 0 70px -28px rgba(16,18,22,.5);
+  animation:avslide .22s cubic-bezier(.2,.8,.3,1)}
+@keyframes avslide{from{transform:translateX(56px);opacity:.4}to{transform:none;opacity:1}}
+@media(max-width:640px){#avveil .sendbox{width:100vw}}
+/* 06/08 — VISUEL 54 : le solde en vedette, formulaire empile, boutons en pied */
+#avveil .sendbox{display:flex;flex-direction:column;padding:26px 26px 28px}
+#avveil .sendbox .sh{margin-bottom:14px}
+#avveil .avmeta{margin-bottom:14px}
+.avhero{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;text-align:center;
+  background:linear-gradient(150deg,#FFF7F2,#FFEFE4);border:1px solid #FFD9C4;border-radius:16px;
+  padding:17px 14px;margin-bottom:20px}
+.avhero .c small{display:block;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  color:#8A5B3F;margin-bottom:5px}
+.avhero .c b{font-family:'Sora';font-weight:800;font-size:1.3rem;color:var(--ink);white-space:nowrap}
+.avhero .c.ap b{color:var(--orange-deep,#E8410A)}
+.avhero .c.ap.ko b{color:var(--red,#D92D20)}
+.avhero .fl{font-size:1.25rem;color:var(--orange-deep,#E8410A)}
+#avveil .pfgrid{grid-template-columns:1fr!important;gap:18px;margin-bottom:4px!important}
+#avveil .plab{margin-bottom:7px;display:block}
+#avveil #av-montant{font-size:1.4rem;padding:13px 15px;font-weight:800}
+#avveil .avpre{margin:12px 0 16px}
+#avveil .sfld textarea{min-height:96px}
+#avveil .sacts{margin-top:auto;padding-top:20px}
+.avdeja{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:.78rem}
+.avdeja .t{font-weight:800;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.avdeja .l{display:flex;justify-content:space-between;gap:10px;padding:4px 0;color:var(--ink-2)}
+.avdeja .l b{font-weight:700;color:var(--ink);white-space:nowrap}
+.avdeja .l small{color:var(--muted)}
 .sendbox{width:min(680px,94vw);max-height:88vh;overflow-y:auto;background:#fff;border-radius:20px;padding:22px 26px;box-shadow:0 30px 80px -20px rgba(16,18,22,.5)}
 .sendbox .sh{font-family:'Sora';font-weight:800;font-size:1.05rem;margin-bottom:14px;display:flex;align-items:baseline;gap:10px}
 .sendbox .shsub{font-family:'Inter';font-weight:700;font-size:.72rem;color:var(--muted);background:var(--bg);border-radius:8px;padding:3px 9px}
@@ -820,7 +859,7 @@ a.hcli:hover{color:var(--orange-deep)}
         <div id="paylist"></div>
         <div class="payform2">
           <div class="pfgrid">
-            <div><label class="plab" for="p-montant">Montant <b class="req">*</b></label><input id="p-montant" inputmode="decimal" placeholder="0,00" onkeydown="if(event.key==='Enter')payAdd()"></div>
+            <div><label class="plab" for="p-montant">Montant <b class="req">*</b></label><input id="p-montant" inputmode="decimal" placeholder="0,00" oninput="payImpact()" onkeydown="if(event.key==='Enter')payAdd()"></div>
             <div><label class="plab" for="p-mode">Mode de paiement <b class="req">*</b></label><select id="p-mode">
               <option>Virement</option><option>Carte en ligne</option><option>Chèque</option><option>Espèces</option>
             </select></div>
@@ -835,6 +874,7 @@ a.hcli:hover{color:var(--orange-deep)}
             <button class="pjadd" type="button"><svg viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.2-9.19a4 4 0 015.65 5.66l-9.2 9.19a2 2 0 01-2.82-2.83l8.49-8.48"/></svg> Joindre un justificatif</button>
             <span class="pjhint" id="ppj-nom">avis de virement, remise de chèque… · PDF, JPG · facultatif</span>
           </div>
+          <div class="avimpact" id="pay-impact" style="margin-top:10px">—</div>
           <div class="docgrid" id="ppj-vue" style="margin-top:10px"></div>
           <input id="p-note" class="pnote" placeholder="Note (facultatif) — ex. « acompte 30 % », « chèque n°1234 »" onkeydown="if(event.key==='Enter')payAdd()">
           <div class="pfacts2">
@@ -854,11 +894,16 @@ a.hcli:hover{color:var(--orange-deep)}
 </div>
 
 <div class="sendveil" id="avveil" onclick="if(event.target===this)avClose()">
-  <div class="sendbox" style="width:min(500px,94vw)">
+  <div class="sendbox" role="dialog" aria-label="Créer un avoir">
     <div class="sh">Créer un avoir<span class="shsub" id="av-numlbl">AVO-…</span></div>
     <div class="avmeta" id="av-meta">—</div>
+    <div class="avhero">
+      <div class="c"><small>Solde actuel</small><b id="av-h1">—</b></div>
+      <div class="fl">→</div>
+      <div class="c ap" id="av-h2c"><small>Après avoir</small><b id="av-h2">—</b></div>
+    </div>
     <input type="hidden" id="av-ref"><input type="hidden" id="av-num">
-    <div class="pfgrid" style="grid-template-columns:1fr 1.4fr;margin-bottom:8px">
+    <div class="pfgrid">
       <div><label class="plab" for="av-montant">Montant <b class="req">*</b></label><input id="av-montant" class="avbig" inputmode="decimal" placeholder="0,00" oninput="avImpact()" onkeydown="if(event.key==='Enter')avEmit()"></div>
       <div><label class="plab" for="av-motif">Motif <b class="req">*</b></label><select id="av-motif">
         <option>Geste commercial</option><option>Erreur de facturation</option>
@@ -870,12 +915,12 @@ a.hcli:hover{color:var(--orange-deep)}
       <button type="button" class="frp" onclick="avPreset(.5)">50 %</button>
       <button type="button" class="frp" onclick="avPreset(.1)">10 %</button>
     </div>
-    <div class="avimpact" id="av-impact">—</div>
     <div class="sfld"><label for="av-desc">Description <span style="font-weight:400;text-transform:none;letter-spacing:0">— facultatif</span></label><textarea id="av-desc" rows="3" placeholder="Précision pour le client et la compta…"></textarea></div>
     <div class="sacts">
       <button class="btn2" onclick="avClose()">Annuler</button>
       <button class="btn2 primary" onclick="avEmit()">Émettre l'avoir</button>
     </div>
+    <div class="avdeja" id="av-deja" hidden></div>
   </div>
 </div>
 
@@ -1582,10 +1627,17 @@ function avOpen(){
   g('av-ref').value = REF;
   g('av-num').value = "AVO-2026-" + String(10000 + Math.floor(Math.random() * 89999));
   g('av-numlbl').textContent = g('av-num').value;
-  g('av-meta').innerHTML = "Sur la facture <b>" + REF + "</b> · solde dû <b>" + eur(avSolde()) + "</b>";
+  g('av-meta').innerHTML = "Sur la facture <b>" + REF + "</b>";
   g('av-montant').value = ""; g('av-montant').placeholder = "max " + eur(avSolde());
   g('av-desc').value = "";
   avImpact();
+  /* les avoirs deja emis sur cette facture, sous la main */
+  const dj = g('av-deja'), arr0 = avoirs();
+  if(dj){
+    dj.hidden = !arr0.length;
+    dj.innerHTML = arr0.length ? '<div class="t">Déjà émis sur cette facture</div>' +
+      arr0.map(x => '<div class="l"><span>' + x.num + ' <small>· ' + (x.motif || "") + '</small></span><b>− ' + eur(x.m) + '</b></div>').join("") : "";
+  }
   g('avveil').classList.add('open');
   setTimeout(() => { const f = g('av-montant'); if(f) f.focus(); }, 120);
 }
@@ -1595,13 +1647,22 @@ function avPreset(r){
   g('av-montant').focus();
 }
 function avImpact(){
-  const el = g('av-impact');
+  /* 06/08 (visuel 54) : la carte AVANT → APRES fait le travail de l'ancienne
+     ligne de texte — en plus gros et en permanence. */
+  const h1 = g('av-h1'), h2 = g('av-h2'), h2c = g('av-h2c');
+  if(!h1) return;
   const m = parseFloat(String(g('av-montant').value).replace(",", ".")) || 0;
   const solde = avSolde();
-  if(m <= 0){ el.className = "avimpact"; el.textContent = "Le nouveau solde s'affichera ici pendant la saisie."; return; }
-  if(m > solde + 0.005){ el.className = "avimpact ko"; el.textContent = "⚠️ " + eur(m) + " dépasse le solde dû (" + eur(solde) + ")"; return; }
-  el.className = "avimpact on";
-  el.textContent = "→ Solde après avoir : " + eur(solde - m) + (Math.abs(solde - m) < 0.005 ? " — la facture sera soldée ✓" : "");
+  h1.textContent = eur(solde);
+  if(m > solde + 0.005){
+    h2c.classList.add('ko');
+    h2.textContent = "− " + eur(m - solde);
+    h2.title = "L'avoir dépasse le solde dû";
+  } else {
+    h2c.classList.remove('ko');
+    h2.textContent = eur(Math.max(0, solde - m));
+    h2.title = "";
+  }
 }
 function avClose(){ g('avveil').classList.remove('open'); }
 function avEmit(){
@@ -1668,6 +1729,19 @@ function ppjRender(){
   if(nom) nom.textContent = PPJ ? PPJ.n : "avis de virement, remise de chèque… · PDF, JPG · facultatif";
   if(vue) vue.innerHTML = PPJ ? fpjVignette(PPJ, -1, false) : "";
 }
+/* 06/08 (patron) : la meme aide que dans l'avoir — le reste a percevoir
+   s'affiche pendant la saisie. Un seul langage pour les deux formulaires. */
+function payImpact(){
+  const el = g('pay-impact');
+  if(!el) return;
+  const solde = Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0));
+  const m = parseFloat(String(g('p-montant').value).replace(",", ".")) || 0;
+  if(m <= 0){ el.className = "avimpact"; el.textContent = "Solde dû : " + eur(solde) + " — le reste s'affiche pendant la saisie."; return; }
+  if(m > solde + 0.005){ el.className = "avimpact ko"; el.textContent = "⚠️ " + eur(m) + " dépasse le solde dû (" + eur(solde) + ")"; return; }
+  el.className = "avimpact on";
+  const reste = solde - m;
+  el.textContent = "→ Reste après ce paiement : " + eur(reste) + (reste < 0.005 ? " — la facture sera soldée ✓" : "");
+}
 function payAdd(montant){
   const m = montant != null ? montant : parseFloat(String(g('p-montant').value).replace(",", ".")) || 0;
   if(m <= 0){ toast("Indique un montant supérieur à 0 😉"); g('p-montant').focus(); return; }
@@ -1680,6 +1754,7 @@ function payAdd(montant){
   paysSave(arr);
   PPJ = null; ppjRender();
   g('p-montant').value = ""; if(g('p-note')) g('p-note').value = "";
+  payImpact();
   const paye = arr.reduce((a,p) => a + p.m, 0);
   const avT = avoirs().reduce((a,x) => a + x.m, 0);
   /* 28/07 — un acompte ne changeait rien : la facture restait « A payer »
@@ -1716,7 +1791,7 @@ function envoyer(){
   setTimeout(() => { const f = g('s-to'); if(f){ f.focus(); f.select(); } }, 120);
 }
 function sendClose(){ g('sendveil').classList.remove('open'); }
-document.addEventListener('keydown', e => { if(e.key === 'Escape') sendClose(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ sendClose(); avClose(); } });
 function sendConfirm(){
   const to = g('s-to').value.trim();
   if(!to || !to.includes("@")){ toast("⚠️ Renseigne l'adresse e-mail du client"); g('s-to').focus(); return; }
