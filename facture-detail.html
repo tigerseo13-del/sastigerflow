@@ -288,6 +288,14 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 #avveil .avpre{margin:12px 0 16px}
 #avveil .sfld textarea{min-height:96px}
 #avveil .sacts{margin-top:auto;padding-top:20px}
+/* 06/08 (visuel 57) — la banniere « annulee par l'avoir … » sous le bandeau */
+.annban{margin:14px 0 0;background:#F1F2F5;border:1px solid #E2E4EA;border-radius:13px;
+  padding:12px 16px;display:flex;gap:11px;align-items:center;font-size:.84rem;color:#3E4350}
+.annban .x{width:26px;height:26px;border-radius:50%;background:#E2E4EA;display:grid;place-items:center;
+  font-weight:800;color:#6C7285;flex:none}
+.annban b{font-weight:800;color:var(--ink)}
+.annban a{margin-left:auto;color:var(--orange-deep);font-weight:700;text-decoration:none;white-space:nowrap}
+.annban a:hover{text-decoration:underline}
 #avveil .avpre .frp{transition:.12s}
 #avveil .avpre .frp:first-child{border-color:#D8DBE2;font-weight:800}
 #avveil .avpre .frp.on{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:800;
@@ -712,6 +720,7 @@ a.hcli:hover{color:var(--orange-deep)}
   </nav>
   <nav class="nav navbot">
     <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.62rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
+    <a href="connexion.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg>Connexion</a>
     <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
   </nav>
   <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
@@ -1099,11 +1108,35 @@ function fpjRender(){
    internes qui ne passent pas de parametre. */
 try{ REF = new URLSearchParams(location.search).get("ref") || sessionStorage.getItem("tigerflow-facture-detail"); }catch(e){}
 let REC = null;
+/* ===== 06/08 (patron : « ?ref= introuvable ») =====
+   La fiche ne lisait QUE localStorage : les factures de DEMONSTRATION de la
+   liste n'y sont jamais, donc tout lien direct vers elles mourait sur
+   « Facture introuvable ». La fiche embarque desormais le meme catalogue que
+   la liste, en REPLI : une facture creee ou validee (stock local) garde
+   toujours la priorite sur son homonyme de demonstration. */
+const FCATA = [
+  {ref:"FAC-2026-00873", client:"Ironwood Solutions",   ct:"John Thompson",   titre:"Punaises de lit — appartement T3",      montant:536.80,  statut:"brouillon", date:"2026-08-25", valid:"2026-09-24"},
+  {ref:"FAC-2026-00872", client:"Boulangerie Dupont",   ct:"Raymond Berger",  titre:"Acompte 30 % — dératisation fournil",   montant:447.00,  statut:"attente",   date:"2026-08-23", valid:"2026-09-22"},
+  {ref:"FAC-2026-00871", client:"Hôtel du Parc",        ct:"Sophie Larson",   titre:"Punaises de lit — 6 chambres (solde)",  montant:1596.00, statut:"attente",   date:"2026-08-20", valid:"2026-09-04"},
+  {ref:"FAC-2026-00870", client:"Restaurant Le Baobab", ct:"Awa Diallo",      titre:"Traitement cafards cuisine + plonge",   montant:720.50,  statut:"payee",     date:"2026-08-19", valid:"2026-09-18"},
+  {ref:"FAC-2026-00869", client:"M. et Mme Garnier",    ct:"Particulier",     titre:"Nid de frelons — jardin",               montant:165.00,  statut:"payee",     date:"2026-08-02", valid:"2026-08-02"},
+  {ref:"FAC-2026-00868", client:"Copropriété Les Lilas",ct:"Syndic Foncia",   titre:"Dératisation caves — passage 2/4",      montant:585.00,  statut:"retard",    date:"2026-07-10", valid:"2026-08-09"},
+  {ref:"FAC-2026-00867", client:"Café de la Gare",      ct:"Babacar",   titre:"Dératisation cave + terrasse",          montant:410.00,  statut:"payee",     date:"2026-07-12", valid:"2026-08-11"},
+  {ref:"FAC-2026-00866", client:"Pharmacie Centrale",   ct:"Roger Seguin",    titre:"Contrat 3D — trimestre 3",              montant:964.87,  statut:"retard",    date:"2026-06-30", valid:"2026-07-30"},
+  {ref:"FAC-2026-00865", client:"Entrepôt Central",     ct:"Josette Blot",    titre:"Dépigeonnage — acompte 40 %",           montant:1260.00, statut:"payee",     date:"2026-07-02", valid:"2026-08-01"},
+  {ref:"FAC-2026-00864", client:"Crèche Les Poussins",  ct:"Nadia Benali",    titre:"Désinfection annuelle NF",              montant:495.00,  statut:"payee",     date:"2026-06-24", valid:"2026-07-24"},
+  {ref:"FAC-2026-00863", client:"Boucherie Martel",     ct:"Paul Martel",     titre:"Intervention souris — boutique",        montant:230.00,  statut:"attente",   date:"2026-08-24", valid:"2026-08-31"},
+  {ref:"FAC-2026-00862", client:"Résidence Beau Site",  ct:"Syndic Citya",    titre:"Chenilles processionnaires — 4 pins",   montant:890.00,  statut:"payee",     date:"2026-06-15", valid:"2026-07-15"},
+];
 try{
   const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]");
   /* Si une reference est demandee, on ne se rabat PAS sur une autre facture :
      afficher le dossier du voisin est pire qu'un ecran vide. */
   REC = REF ? (box.find(x => x.ref === REF) || null) : (box[0] || null);
+  if(!REC && REF){
+    const cat = FCATA.find(x => x.ref === REF);
+    if(cat) REC = {...cat, lignes: cat.lignes || []};
+  }
 }catch(e){}
 if(!REC && !REF){
   REC = {ref:"FAC-2026-00873", client:"Ironwood Solutions", titre:"Punaises de lit — appartement T3",
@@ -1151,7 +1184,8 @@ function statutSet(st){ try{ const m = JSON.parse(localStorage.getItem(STK)) || 
 const STL = {brouillon:["#F1EAFD","#5B3BC4","#B79BF0","Pro forma"], proforma:["#F1EAFD","#5B3BC4","#B79BF0","Pro forma"],
              partiel:["var(--amber-bg)","var(--amber)","var(--amber)","Partiellement payée"],
              attente:["var(--blue-bg)","var(--blue-d)","var(--blue)","À payer"],
-             payee:["var(--green-bg)","var(--green-d)","var(--green)","Payée"], retard:["var(--red-bg)","var(--red)","var(--red)","En retard"]};
+             payee:["var(--green-bg)","var(--green-d)","var(--green)","Payée"], retard:["var(--red-bg)","var(--red)","var(--red)","En retard"],
+             annulee:["#F1F2F5","#6C7285","#C9CEDA","Annulée par un avoir"]};
 
 /* avoirs : registre persistant */
 const AK = "tigerflow-factures-avoirs";
@@ -1623,7 +1657,30 @@ function vieHisto(e){
   const tb = [...document.querySelectorAll('.tab')].find(t => t.textContent.trim().startsWith('Historique'));
   if(tb) showTab('hist', tb);
 }
-function renderAll(){ badge(); kpis(); details(); lignes(); vieDraw(); paylist(); avoirsRender(); histo(); fpjRender(); ppjRender(); }
+function renderAll(){ badge(); kpis(); details(); lignes(); vieDraw(); paylist(); avoirsRender(); histo(); fpjRender(); ppjRender(); annBan(); }
+/* ===== 06/08 (patron, visuel 57) — LA BANNIERE D'ANNULATION =====
+   Un badge dit « annulee » ; la banniere dit PAR QUOI : quel avoir, combien,
+   quand, pourquoi — avec le lien direct vers l'onglet Avoirs. */
+function annBan(){
+  let b = document.getElementById('annban');
+  if(statutGet() !== 'annulee'){ if(b) b.remove(); return; }
+  const arr = avoirs();
+  const a = arr[arr.length - 1] || null;
+  const tot = arr.reduce((x, y) => x + y.m, 0);
+  const quoi = arr.length > 1
+    ? arr.length + ' avoirs (dernier : <b>' + (a ? a.num : '') + '</b>)'
+    : "l'avoir <b>" + (a ? a.num : '—') + '</b>';
+  const quand = a && a.t ? ', émis le ' + fdate(String(a.t).slice(0, 10)) : '';
+  const pourquoi = a && a.motif ? ' — ' + a.motif : '';
+  if(!b){
+    b = document.createElement('div'); b.id = 'annban'; b.className = 'annban';
+    const hero = document.querySelector('.fhead');   /* le bandeau de la fiche */
+    if(hero && hero.parentNode) hero.parentNode.insertBefore(b, hero.nextSibling); else return;
+  }
+  b.innerHTML = '<span class="x">✕</span><span>Facture annulée par ' + quoi +
+    ' — <b>' + eur(tot) + '</b>' + quand + pourquoi + '.</span>' +
+    '<a href="#" onclick="showTab(\'avoirs\', document.getElementById(\'tab-avoirs\'));return false;">Voir l\'avoir →</a>';
+}
 
 /* ===== actions ===== */
 function avSolde(){ return Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0)); }
@@ -1703,9 +1760,16 @@ function avEmit(){
   const arr = avoirs();
   arr.push({num:g('av-num').value, m, motif:g('av-motif').value, desc:(g('av-desc').value || "").trim(), t:stamp()});
   avoirsSave(arr);
-  /* 30/07 (parcours patron) : si l'avoir SOLDE la facture, elle ne reste pas
-     « Acompte recu » — le solde est a zero, elle est reglee. */
-  if(avSolde() <= 0.005 && ["attente", "partiel", "retard"].includes(statutGet())) statutSet("payee");
+  /* 06/08 (patron, capture Stan) : des avoirs qui couvrent TOUT le montant
+     facture ANNULENT la facture — c'est le vocabulaire des logiciels de
+     facturation. Un avoir partiel, lui, ne change pas le statut. */
+  const avT = avoirs().reduce((a, x) => a + x.m, 0);
+  if(avT >= REC.montant - 0.005){
+    statutSet("annulee");
+  } else if(avSolde() <= 0.005 && ["attente", "partiel", "retard"].includes(statutGet())){
+    /* 30/07 : l'avoir partiel qui EPONGE le solde restant vaut reglement */
+    statutSet("payee");
+  }
   avClose();
   const trop = Math.max(0, m - solde);
   toast(trop > 0.005
@@ -1724,6 +1788,11 @@ function avDel(e, i){
   const [gone] = arr.splice(i, 1);
   avoirsSave(arr);
   const solde = REC.montant - pays().reduce((a,p) => a + p.m, 0) - arr.reduce((a,x) => a + x.m, 0);
+  const avT2 = arr.reduce((a,x) => a + x.m, 0);
+  /* la facture n'est plus couverte a 100 % → elle n'est plus « annulee » */
+  if(statutGet() === "annulee" && avT2 < REC.montant - 0.005){
+    statutSet(solde <= 0.005 ? "payee" : "attente");
+  }
   if(solde > 0.005 && statutGet() === "payee") statutSet("attente");
   toast("↩ Avoir " + gone.num + " annulé — solde " + eur(Math.max(0, solde)));
   renderAll();
@@ -1934,7 +2003,7 @@ function logout(){
     {n:"Nouvelle intervention", i:"🗓️", h:"intervention-nouvelle.html"},{n:"Devis", i:"🧾", h:"devis-liste.html"},
     {n:"Nouveau devis", i:"✏️", h:"devis.html"},{n:"Factures", i:"💶", h:"facture-liste.html"},
     {n:"Taches", i:"✅", h:"taches.html"},{n:"Techniciens", i:"👷", h:"techniciens.html"},
-    {n:"Rapports", i:"📊", h:"rapports.html"},{n:"Reglages", i:"⚙️", h:"reglages.html"}
+    {n:"Rapports", i:"📊", h:"rapports.html"},{n:"Connexion", i:"🔒", h:"connexion.html"},{n:"Reglages", i:"⚙️", h:"reglages.html"}
   ];
   var SEL = 0, RES = [];
   var norm = function(x){ return x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\s.\-]/g,""); };
@@ -2061,6 +2130,7 @@ function logout(){
       <a href="taches.html"><span class="i">&#9989;</span>Tâches</a>
       <a href="techniciens.html"><span class="i">&#128295;</span>Techniciens</a>
       <a href="tech-mobile.html"><span class="i">&#128241;</span>Appli mobile</a>
+      <a href="connexion.html"><span class="i">&#128274;</span>Connexion</a>
       <a href="reglages.html"><span class="i">&#9881;&#65039;</span>Réglages</a>
     </div>
   </div>
