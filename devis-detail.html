@@ -1225,14 +1225,10 @@ function kpis(){
   g('k-total').textContent = eur(REC.montant);
   const ksub = g('k-total-sub');
   if(ksub){
-    try{
-      const L = REC.lignes || [];
-      const ht = L.reduce((a, l) => a + (+l.qte || 1) * (+l.pu || 0), 0)
-        + (REC.frais || []).reduce((a, f) => a + (+f.m || 0), 0) - (+REC.remise || 0);
-      const n = L.length;
-      ksub.textContent = (ht > 0 && REC.montant > ht ? "HT " + eur(Math.round(ht * 100) / 100) + " · TVA " + eur(Math.round((REC.montant - ht) * 100) / 100) + " · " : "")
-        + (n ? n + " prestation" + (n > 1 ? "s" : "") : "");
-    }catch(e){ ksub.textContent = ""; }
+    /* 09/08 patron : le HT et la TVA ne vivent plus qu'au pied du tableau —
+       la carte du haut resume : TTC + nombre de prestations. */
+    const n = (REC.lignes || []).length;
+    ksub.textContent = 'TTC · ' + n + ' prestation' + (n > 1 ? 's' : '');
   }
   const j = joursEch();
   const st = effStatut();
