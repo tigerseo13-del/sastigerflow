@@ -728,6 +728,9 @@ h1,.num{font-family:'Sora',sans-serif}
    bac. Elle passe au gris comme les autres — l'information reste, elle ne crie
    plus. */
 .pcard .sbb{font-size:.62rem;font-weight:800;background:#F1F2F5;color:var(--muted);padding:2px 7px;border-radius:8px;white-space:nowrap}
+.pcard .fixb{font-size:.62rem;font-weight:800;background:#FFF8EF;color:#B45309;padding:2px 7px;border-radius:8px;white-space:nowrap;box-shadow:inset 0 0 0 1px #F0D9BF}
+.pcard .fixs{font-size:.62rem;font-weight:700;background:#F1F2F5;color:var(--muted);padding:2px 7px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.pcard .fixs i{width:7px;height:7px;border-radius:50%;display:inline-block}
 .pcard .svb{font-size:.62rem;font-weight:800;background:var(--blue-bg);color:var(--blue);padding:2px 7px;border-radius:8px;white-space:nowrap}
 /* 28/07 : une carte dont le rappel est depasse etait rose pale, seule teintee
    parmi six. Elle redevient blanche comme les autres — le retard reste dit par
@@ -1641,7 +1644,7 @@ function renderTray(){
     ? (nLate ? '<b style="color:var(--red)">' + nLate + ' en retard</b> · ' : '')
       + 'clique pour ouvrir et glisser sur l’agenda'
     : '— rien a planifier';
-  const score = p => isLate(p) ? 0 : p.standby ? 1 : p.urgent ? 2 : p.suivi ? 3 : 4;
+  const score = p => isLate(p) ? 0 : p.fixd ? 0.5 : p.standby ? 1 : p.urgent ? 2 : p.suivi ? 3 : 4;
   const list = [...PENDING].sort((a, b) => score(a) - score(b));
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
     const T = typeDe(p);
@@ -1658,7 +1661,7 @@ function renderTray(){
       </div>
       <div class="pgr">
         <div class="mgr1"><span class="mgic">${T.ic}</span><span class="mgt"><b>${T.lbl}</b></span></div>
-        <div class="mgr2"><span class="ltyp m-${md}">${pendChipTxt(p, md)}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.standby?'<span class="sbb">📞 À rappeler</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}</div>
+        <div class="mgr2"><span class="ltyp m-${md}">${pendChipTxt(p, md)}</span>${p.urgent?'<span class="urg">URGENT</span>':''}${p.fixd?`<span class="fixb" title="Créneau promis au client — la carte se posera d'elle-même à ce créneau au glisser">📅 promis · ${p.fixd.split("-").reverse().slice(0,2).join("/")} ${hcourt(p.fixh)}–${hcourt(p.fixh+p.dur)}</span>`:''}${p.fixd&&p.sugg!=null?`<span class="fixs"><i style="background:${TECHS[p.sugg].c}"></i>suggéré : ${TECHS[p.sugg].nom}</span>`:''}${p.standby?'<span class="sbb">📞 À rappeler</span>':''}${p.suivi?'<span class="svb">Suivi</span>':''}</div>
         <div class="mgr3"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${p.client}${p.rappel ? `<b class="rapl${isLate(p) ? ' late' : ''}" style="margin-left:auto">${p.suivi ? 'prévu ' : 'rappel '}${p.rappel.split("-").reverse().join("/")}</b>` : ''}</div>
       </div>
     </div>`;
@@ -1697,7 +1700,7 @@ function fileOpen(){
   document.getElementById("fapveil").classList.add("on");
 }
 function fileClose(){
-  FNEDIT = null; CDPID = null; DVKO = null;
+  FNEDIT = null; CDPID = null; DVKO = null; CDMANU = false;
   document.getElementById("fap").classList.remove("open");
   document.getElementById("fapveil").classList.remove("on");
 }
@@ -1830,14 +1833,14 @@ function fileCaler(pid){
      planificateur s'ouvre SOUS la ligne, dans la file, comme la note. La file
      reste ouverte : on planifie, la ligne part, on enchaîne l'appel suivant. */
   CDPID = (CDPID === pid) ? null : pid;
-  CDATE = ""; CHEUR = null; CTECH = null;
+  CDATE = ""; CHEUR = null; CTECH = null; CDMANU = false;
   FNEDIT = null;
   fileRender();
   if(CDPID != null) setTimeout(() => { const e = document.getElementById("fcaled"); if(e) e.scrollIntoView({block: "nearest", behavior: "smooth"}); }, 60);
 }
 
 /* ===== CALER LE RDV — le planificateur de la file (31/07) ===== */
-let CDPID = null, CDATE = "", CHEUR = null, CTECH = null;
+let CDPID = null, CDATE = "", CHEUR = null, CTECH = null, CDMANU = false;
 function calSet(k, v){
   if(k === "d") CDATE = v;
   if(k === "h") CHEUR = v;
@@ -1850,12 +1853,83 @@ function calDispo(t, d, h, dur){
   const gene = (h != null) ? list.filter(x => h < x.start + x.dur && x.start < h + dur) : [];
   return {n: list.length, conflit: gene.length > 0, genant: gene[0] || null};
 }
+/* 11/08 (patron, visuel 130) : le logiciel PROPOSE des créneaux TENABLES —
+   « au moins un technicien libre » — au lieu de poser trois questions. La
+   préférence du client (matin / après-midi) passe en premier. La suggestion :
+   un gars déjà en secteur ce jour-là, sinon la tournée la plus légère. */
+function creneauxTenables(p){
+  const dur = p.dur || 2;
+  const slots = [];
+  const matins = [8, 9, 10, 11], aprems = [14, 15, 16];
+  const cren = String(p.cren || "");
+  const pref = cren.includes("matin") ? [matins, aprems] : (cren.includes("après") || cren.includes("apres")) ? [aprems, matins] : [matins, aprems];
+  for(let k = 1; k <= 6 && slots.length < 3; k++){
+    const x = new Date(TODAYD); x.setDate(x.getDate() + k);
+    if(x.getDay() === 0) continue;   /* dimanche : jamais proposé */
+    const d = iso(x);
+    let dayHits = 0;
+    for(const grp of pref){
+      if(slots.length >= 3 || dayHits >= 2) break;
+      for(const h of grp){
+        const libres = TECHS.filter(t => !calDispo(t, d, h, dur).conflit);
+        if(!libres.length) continue;
+        let sugg = libres.find(t => INTERVS.some(v => !v.cancelled && v.tech === t.id && v.date === d && ((p.cp && v.cp === p.cp) || (p.ville && v.ville === p.ville))));
+        let why;
+        if(sugg){ why = "déjà en secteur " + (p.ville || p.cp); }
+        else{
+          sugg = libres.reduce((a, t) => calDispo(t, d, null, 0).n < calDispo(a, d, null, 0).n ? t : a, libres[0]);
+          why = calDispo(sugg, d, null, 0).n ? "tournée légère ce jour-là" : "journée libre";
+        }
+        slots.push({d, h, libres: libres.length, sugg, why});
+        dayHits++;
+        break;   /* un créneau par demi-journée, puis jour suivant */
+      }
+    }
+  }
+  return slots;
+}
+/* le clic « Caler » : date + heure PROMISES au client, technicien À AFFECTER.
+   La carte reste au bac « À planifier » avec le badge promis + la suggestion ;
+   l'affectation se fera au glisser, quand le patron organise ses tournées. */
+function calGoSlot(d, h){
+  const p = PENDING.find(x => x.pid === CDPID); if(!p) return;
+  const s2 = creneauxTenables(p).find(z => z.d === d && z.h === h);
+  const av = {standby: p.standby, suivi: p.suivi, rappel: p.rappel};
+  p.fixd = d; p.fixh = h;
+  p.sugg = s2 ? s2.sugg.id : null;
+  p.standby = false; p.suivi = false; p.rappel = null;   /* le client a son RDV : la ligne quitte la file */
+  if(p._dvtask){ try{ const tb = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]"); localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(tb.filter(z => !z || z.iid !== p._dvtask))); }catch(e){} }
+  CDPID = null; CDMANU = false;
+  const tr = document.getElementById("tray"); if(tr) tr.classList.remove("collapsed");
+  render(); renderTray(); fileRender();
+  toast("📅 RDV promis à " + p.client + " : " + d.split("-").reverse().slice(0, 2).join("/") + " · " + hstr(h) + "–" + hstr(h + (p.dur || 2)) + " — au bac, technicien à affecter",
+    () => { p.fixd = null; p.fixh = null; p.sugg = null; p.standby = av.standby; p.suivi = av.suivi; p.rappel = av.rappel; render(); renderTray(); fileRender(); });
+}
 function calPickHTML(p){
   const JJ = ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."], MM = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
   const jol = d => { const x = new Date(d + "T12:00:00"); return JJ[x.getDay()] + " " + x.getDate() + " " + MM[x.getMonth()]; };
   const opts = [];
   for(let k = 1; k <= 3; k++){ const x = new Date(TODAYD); x.setDate(x.getDate() + k); const i2 = iso(x); opts.push([i2, k === 1 ? "Demain" : jol(i2)]); }
   const heures = [8, 9, 10, 11, 14, 15, 16, 17];
+  if(!CDMANU){
+    const cap = w => w.charAt(0).toUpperCase() + w.slice(1);
+    const dm1 = (() => { const x = new Date(TODAYD); x.setDate(x.getDate() + 1); return iso(x); })();
+    const slots = creneauxTenables(p);
+    const topT = s2 => (s2.d === dm1 ? "Demain" : cap(JOURS[new Date(s2.d + "T12:00:00").getDay()])) + " " + hstr(s2.h) + "–" + hstr(s2.h + (p.dur || 2));
+    const subT = s2 => { const x = new Date(s2.d + "T12:00:00"); return JOURS[x.getDay()] + " " + x.getDate() + " " + MOIS[x.getMonth()]; };
+    return `
+    <div class="cdlab" style="margin-top:2px">${slots.length || "Aucun"} créneau${slots.length > 1 ? "x" : ""} tenable${slots.length > 1 ? "s" : ""} <span style="letter-spacing:0;text-transform:none;font-weight:700">— propose-les au client, le technicien se décidera plus tard</span></div>
+    ${slots.map(s2 => `<div class="cslot">
+      <div class="cw"><b>${topT(s2)}</b><i>${subT(s2)}</i></div>
+      <div class="cs"><span class="csl">✓ ${s2.libres} technicien${s2.libres > 1 ? "s" : ""} libre${s2.libres > 1 ? "s" : ""}</span><span class="css"><i class="cdot" style="background:${s2.sugg.c}"></i>suggestion : ${s2.sugg.nom} — ${s2.why}</span></div>
+      <button type="button" class="cgo2" onclick="calGoSlot('${s2.d}',${s2.h})">✓ Caler</button>
+    </div>`).join("")}
+    ${slots.length ? "" : `<div class="cvide">Aucun créneau libre sous 6 jours — passe en choix manuel.</div>`}
+    <div class="cdgo" style="margin-top:10px">
+      <button class="no" style="flex:1" onclick="CDMANU=true;fileRender()">✎ Choisir la date, l'heure ou le technicien à la main</button>
+      <button class="no" onclick="fileCaler('${p.pid}')">Annuler</button>
+    </div>`;
+  }
   const custom = CDATE && !opts.some(o => o[0] === CDATE);
   const customH = CHEUR != null && !heures.includes(CHEUR);
   const pretA = CDATE && CHEUR != null && CTECH != null;
@@ -1881,6 +1955,7 @@ function calPickHTML(p){
     </div>
     <div class="cdgo">
       <button class="go" ${pretA ? "" : "disabled"} onclick="calGo()">${pretA ? `✓ Planifier — ${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)} · ${TECHS[CTECH].nom}` : "Choisis la date, l'heure et le technicien"}</button>
+      <button class="no" onclick="CDMANU=false;fileRender()">← Créneaux proposés</button>
       <button class="no" onclick="fileCaler('${p.pid}')">Annuler</button>
     </div>`;
 }
@@ -4818,17 +4893,31 @@ function pdragEnd(){
   if(pdrag.col!=null){
     const i = PENDING.findIndex(x=>x.pid===pdrag.pid);
     const p = PENDING[i];
-    const nv = IV(iso(CUR), pdrag.h, p.dur, pdrag.col, p.type, p.client, p.cp, p.ville);
+    /* 11/08 : une carte « promis » se dépose À SON créneau, où qu'on la lâche —
+       la promesse faite au client prime sur la position du doigt. */
+    const dDate = p.fixd || iso(CUR);
+    const dH = (p.fixd && p.fixh != null) ? p.fixh : pdrag.h;
+    if(p.fixd){
+      const cf = calDispo(TECHS[pdrag.col], dDate, dH, p.dur);
+      if(cf.conflit){
+        toast("⚠ " + TECHS[pdrag.col].nom + " est pris le " + dDate.split("-").reverse().slice(0,2).join("/") + " à " + hstr(dH) + " — choisis un autre technicien");
+        pdrag.ghost.remove();
+        pdrag = null;
+        return;
+      }
+    }
+    const nv = IV(dDate, dH, p.dur, pdrag.col, p.type, p.client, p.cp, p.ville);
     if(p.rue) nv.rue = p.rue;   /* sans la rue, l'itinéraire s'arrête au code postal */
     if(p.mode) nv.mode = p.mode;
     if(p.montant) nv.montant = p.montant;
     if(p.encm) nv.encm = p.encm;
     INTERVS.push(nv);
     LANDID = nv.id;   /* la carte du bac ATTERRIT sur l'agenda */
-    plannedAdd({client:p.client, cp:p.cp, ville:p.ville, type:p.type, dur:p.dur, date:iso(CUR), h:pdrag.h, col:pdrag.col});
+    plannedAdd({client:p.client, cp:p.cp, ville:p.ville, type:p.type, dur:p.dur, date:dDate, h:dH, col:pdrag.col});
     PENDING.splice(i,1);
+    if(p.fixd && dDate !== iso(CUR)) CUR = new Date(dDate + "T12:00:00");
     render(); renderTray();
-    toast("📅 " + p.client + " → " + TECHS[pdrag.col].nom + " · " + hstr(pdrag.h),
+    toast("📅 " + p.client + " → " + TECHS[pdrag.col].nom + " · " + (p.fixd ? dDate.split("-").reverse().slice(0,2).join("/") + " " : "") + hstr(dH) + (p.fixd ? " — au créneau promis" : ""),
       () => { const k = INTERVS.indexOf(nv); if(k > -1) INTERVS.splice(k, 1); PENDING.splice(i, 0, p); render(); renderTray(); });
   }
   pdrag.ghost.remove();
@@ -5690,6 +5779,17 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .cdgo .go:hover{background:var(--orange-deep)}
 .cdgo .go:disabled{background:#E9EBF0;color:#A6ABBB;box-shadow:none;cursor:not-allowed}
 .cdgo .no{flex:none;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.76rem;font-weight:800;font-family:inherit;border-radius:12px;padding:12px 16px;cursor:pointer}
+.cslot{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #E4E7EF;border-radius:12px;padding:10px 12px;margin-bottom:7px}
+.cslot .cw{flex:none;width:152px}
+.cslot .cw b{display:block;font-size:.8rem;font-weight:800;color:var(--ink)}
+.cslot .cw i{font-style:normal;font-size:.64rem;color:#8D93A8;font-weight:600}
+.cslot .cs{flex:1;min-width:0}
+.cslot .csl{display:block;font-size:.7rem;font-weight:800;color:#0E7A4E}
+.cslot .css{display:flex;align-items:center;gap:5px;margin-top:1px;font-size:.64rem;color:#8D93A8;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cslot .cdot{width:8px;height:8px;border-radius:50%;flex:none}
+.cslot .cgo2{flex:none;border:1.5px solid #DFE2EC;background:#fff;color:#0E7A4E;font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.cslot .cgo2:hover{background:#F2FBF6;border-color:#BFE6D8}
+.cvide{font-size:.72rem;color:#8D93A8;font-weight:600;padding:8px 2px}
 @media(max-width:640px){ .caldlg{width:calc(100vw - 16px);padding:15px 14px} }
 @media(max-width:900px){ .fap{width:100%} .fapbtn{padding:5px 10px;font-size:.68rem} .frq{width:76px} }
 .pgl b{font-family:'Sora',Inter,sans-serif;font-size:.92rem;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
