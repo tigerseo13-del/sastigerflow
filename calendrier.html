@@ -1258,7 +1258,8 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       <span class="fap-n" id="fap-total"></span>
       <button class="fap-x" onclick="fileClose()" title="Fermer">✕</button>
     </div>
-    <div class="fap-sub">Retards en tête · un appel = un clic · « Caler le RDV » ouvre la planification, « +1 / +2 / +7 j » repousse le rappel</div>
+    <div class="fap-sub">Un appel = un clic · « Accepté → planifier » et « Caler le RDV » ouvrent la planification · « +1 / +2 / +7 j » repousse le rappel · « ✕ » enregistre le refus et son motif</div>
+    <div class="fap-leg"><span style="color:#6D3BC4"><i style="background:#7C5CF0"></i>Devis à relancer — objectif : le OUI</span><span style="color:#137A4B"><i style="background:#16A05F"></i>Client à rappeler — objectif : caler le RDV</span></div>
     <div class="fap-body" id="fapbody"></div>
   </div>
 
@@ -1698,12 +1699,13 @@ function fileOpen(){
   document.getElementById("fapveil").classList.add("on");
 }
 function fileClose(){
-  FNEDIT = null; CDPID = null;
+  FNEDIT = null; CDPID = null; DVKO = null;
   document.getElementById("fap").classList.remove("open");
   document.getElementById("fapveil").classList.remove("on");
 }
 document.addEventListener("keydown", e => {
   if(e.key !== "Escape") return;
+  if(DVKO != null){ DVKO = null; fileRender(); return; }
   if(CDPID != null){ CDPID = null; fileRender(); return; }
   if(document.getElementById("fap").classList.contains("open")) fileClose();
 });
@@ -1743,28 +1745,29 @@ function fileRender(){
     const jN = Math.max(0, Math.round((new Date(t + "T12:00:00") - new Date(x.envoye + "T12:00:00")) / 86400000));
     const telC = String(x.tel || "").replace(/\s/g, "");
     return `<div class="fr dv ${lt ? "lt" : ""}" data-dvref="${x.ref}">
-      <span class="frq">${lt ? "à relancer" : "devis"}<br>J+${jN}</span>
+      <span class="frq">📄 devis${(x.tent || 1) > 1 ? `<i class="fqt">${x.tent}ᵉ relance</i>` : ""}</span>
       <div class="frmid">
-        <div class="frl1">${x.client} ${x.tel ? `<small>${telFmt(x.tel)}</small>` : ""}<span class="dvamt">${dvEur(x.montant)} en attente</span>${(x.tent || 1) > 1 ? `<span class="ftent">${x.tent}ᵉ relance</span>` : ""}</div>
-        <div class="frl2">Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")}${x.autoR ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""}</div>
+        <div class="frl1">${x.client} ${x.tel ? `<small>${telFmt(x.tel)}</small>` : ""}<span class="dvamt">${dvEur(x.montant)} en attente</span>${lt && x.relance ? `<span class="frwhen lt">prévu le ${x.relance.split("-").reverse().slice(0, 2).join("/")}${(n => n > 0 ? " · +" + n + " j" : "")(Math.round((new Date(t + "T12:00:00") - new Date(x.relance + "T12:00:00")) / 86400000))}</span>` : ""}</div>
+        <div class="frl2">Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")} (J+${jN})${x.autoR ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""}</div>
       </div>
       ${telC ? `<a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${x.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>` : ""}
-      <button class="dvoui" onclick="dvOui('${x.ref}')" title="Le client accepte le devis">✓ A dit OUI</button>
+      <button class="dvoui" onclick="dvOui('${x.ref}')" title="Le client accepte — le devis passe « Accepté » et le calage s'ouvre pendant qu'il est en ligne">✓ Accepté → planifier</button>
       <span class="frszg" title="Il réfléchit encore — repousser la relance">
         <button onclick="dvSnooze('${x.ref}',2)">+2 j</button><button onclick="dvSnooze('${x.ref}',7)">+7 j</button>
       </span>
-      <button class="dvko" onclick="dvPerdu('${x.ref}')" title="Devis perdu — on arrête de courir">✗</button>
-    </div>`;
+      <button class="dvko" onclick="dvKoAsk('${x.ref}')" title="Le client refuse — noter le motif">✗</button>
+    </div>
+    ${DVKO === x.ref ? `<div class="fdko"><b>Devis refusé — pour quelle raison ?</b><small>Un clic : le motif part dans les statistiques et le devis passe « Refusé » — Annuler reste possible juste après</small><div class="mots"><button onclick="dvPerduGo('${x.ref}','trop cher')">💰 Trop cher</button><button onclick="dvPerduGo('${x.ref}','parti chez un concurrent')">🏃 Parti chez un concurrent</button><button onclick="dvPerduGo('${x.ref}','plus besoin')">🚫 Plus besoin</button><button onclick="dvPerduGo('${x.ref}','')">— Sans motif</button></div></div>` : ""}`;
   };
   const rowPending = p => {
     const T = typeDe(p), m = p.mode || modeDe(p.client);
     const tel = telOf(p), telC = String(tel || "").replace(/\s/g, "");
     const [q, cls] = fileQ(p);
     const motif = T.lbl + " — " + (MODES[m] ? MODES[m].lbl.split(" / ")[0].replace(/[\s ]*[··][\s ]*€\s*$/, "") : "") + " · " + p.cp + " " + p.ville;
-    return `<div class="fr ${cls}" data-fpid="${p.pid}">
-      <span class="frq">${q}</span>
+    return `<div class="fr rv ${cls}" data-fpid="${p.pid}">
+      <span class="frq">📞 RDV${(p.tent || 1) > 1 ? `<i class="fqt">${p.tent}ᵉ tentative</i>` : ""}</span>
       <div class="frmid">
-        <div class="frl1">${p.client} <small>${telFmt(tel)}</small>${(p.tent || 1) > 1 ? `<span class="ftent">${p.tent}ᵉ tentative</span>` : ""}</div>
+        <div class="frl1">${p.client} <small>${telFmt(tel)}</small>${cls === "lt" ? `<span class="frwhen lt">${q.replace("<br>", " ")}</span>` : (p.cren ? `<span class="frwhen">⏰ ${p.cren}</span>` : "")}</div>
         <div class="frl2">${motif}${p.note ? ` · <i>${p.note}</i>` : ""}</div>
       </div>
       <a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${p.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
@@ -1782,13 +1785,45 @@ function fileRender(){
     </div>` : ""}
     ${CDPID === p.pid ? `<div class="fcaled" id="fcaled">${calPickHTML(p)}</div>` : ""}`;
   };
-  /* fusion : les plus urgents d'abord, devis et rappels confondus */
-  const g = d => !d ? 3 : d < t ? 0 : d === t ? 1 : 2;
+  /* 11/08 (patron, visuels 117-120) : la file se lit PAR JOUR. La section
+     porte le QUAND (retards en tête → aujourd'hui → chaque jour de la
+     semaine → « semaine prochaine et après » REPLIÉ), le badge porte le
+     QUOI (devis violet / RDV vert). Chaque section affiche son argent en
+     attente : on sait ce que vaut la séance d'appels avant de décrocher. */
   const rows = [
-    ...list.map(p => ({k: "p", o: p, d: p.rappel || "9999"})),
-    ...dvs.map(x => ({k: "d", o: x, d: x.relance || "9999"}))
-  ].sort((a, b) => g(a.d) - g(b.d) || String(a.d).localeCompare(String(b.d)));
-  body.innerHTML = rows.map(r => r.k === "p" ? rowPending(r.o) : rowDevis(r.o)).join("");
+    ...list.map(p => ({k: "p", o: p, d: p.rappel || ""})),
+    ...dvs.map(x => ({k: "d", o: x, d: x.relance || ""}))
+  ];
+  const horizon = (() => { const x = new Date(t + "T12:00:00"); x.setDate(x.getDate() + 6); return iso(x); })();
+  const keyOf = r => !r.d ? "acaler" : (r.d < t ? "late" : (r.d <= horizon ? r.d : "apres"));
+  const buckets = {};
+  rows.forEach(r => { const k = keyOf(r); (buckets[k] = buckets[k] || []).push(r); });
+  const triB = b => b.sort((a, z) => String(a.d || "9999").localeCompare(String(z.d || "9999")) || ((z.k === "d" ? +z.o.montant || 0 : -1) - (a.k === "d" ? +a.o.montant || 0 : -1)));
+  const eurB = b => { const n = b.reduce((a, r) => a + (r.k === "d" ? (+r.o.montant || 0) : 0), 0); return n ? dvEur(n) : ""; };
+  const jourTitre = d => {
+    const dt = new Date(d + "T12:00:00");
+    const lib = JOURS[dt.getDay()] + " " + dt.getDate() + " " + MOIS[dt.getMonth()];
+    if(d === t) return ["Aujourd'hui", lib, "tod"];
+    const dm = new Date(t + "T12:00:00"); dm.setDate(dm.getDate() + 1);
+    if(d === iso(dm)) return ["Demain", lib, ""];
+    return [JOURS[dt.getDay()], dt.getDate() + " " + MOIS[dt.getMonth()], ""];
+  };
+  const secHTML = (cls, titre, sous, b) => `<div class="fday ${cls}"><span class="ft">${titre}</span>${sous ? `<span class="fd">${sous}</span>` : ""}<span class="fn">${b.length}</span>${eurB(b) ? `<span class="fe">${eurB(b)} en attente</span>` : ""}</div>`;
+  const rHTML = b => triB(b).map(r => r.k === "p" ? rowPending(r.o) : rowDevis(r.o)).join("");
+  let H = "";
+  if(buckets.late) H += secHTML("red first", "⚠ En retard", "", buckets.late) + rHTML(buckets.late);
+  Object.keys(buckets).filter(k => k !== "late" && k !== "acaler" && k !== "apres").sort().forEach(d => {
+    const [ti, so, cl] = jourTitre(d);
+    H += secHTML(cl + (H ? "" : " first"), ti, so, buckets[d]) + rHTML(buckets[d]);
+  });
+  if(buckets.acaler) H += secHTML(H ? "" : "first", "À caler", "sans date de rappel", buckets.acaler) + rHTML(buckets.acaler);
+  if(buckets.apres){
+    const b = triB(buckets.apres), dmin = b[0].d.split("-").reverse().slice(0, 2).join("/");
+    H += FAPFOLD
+      ? `<div class="ffold" onclick="FAPFOLD=false;fileRender()" title="Déplier"><span class="fch">▸</span><span class="ft">Semaine prochaine et après</span><span class="fs">${b.length} rappel${b.length > 1 ? "s" : ""} · à partir du ${dmin}</span>${eurB(b) ? `<span class="fe">${eurB(b)} en attente</span>` : ""}</div>`
+      : `<div class="ffold" onclick="FAPFOLD=true;fileRender()" title="Replier"><span class="fch">▾</span><span class="ft">Semaine prochaine et après</span><span class="fs">${b.length} rappel${b.length > 1 ? "s" : ""}</span>${eurB(b) ? `<span class="fe">${eurB(b)} en attente</span>` : ""}</div>` + rHTML(b);
+  }
+  body.innerHTML = H;
 }
 function fileCaler(pid){
   pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
@@ -1891,7 +1926,7 @@ function calGo(){
    j'écris ; il m'a dit de rappeler demain 17 h, je note » — et la note part
    AUSSI dans les notes internes de la fiche client (même registre que
    client.html : tigerflow-notes-<client>). */
-let FNEDIT = null;
+let FNEDIT = null, DVKO = null, FAPFOLD = true;
 function fileNoteEdit(pid){
   pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
 
@@ -2135,7 +2170,7 @@ function dvOui(ref){
   CDPID = pid;
   render(); fileRender(); renderTray();
   setTimeout(() => { const e = document.getElementById("fcaled"); if(e) e.scrollIntoView({block: "center", behavior: "smooth"}); }, 120);
-  toast("🎉 " + x.client + " a dit OUI — cale le chantier pendant qu'il est en ligne 👇",
+  toast("🎉 Devis accepté — cale le chantier pendant que " + x.client + " est en ligne 👇",
     () => { x.etat = "attente"; dvSave(); dvModuleSt(ref, "envoye");
       const k = PENDING.findIndex(p => p && p.pid === pid); if(k > -1) PENDING.splice(k, 1);
       if(CDPID === pid) CDPID = null;
@@ -2148,6 +2183,23 @@ function dvPerdu(ref){
   render(); fileRender(); renderTray();
   toast("✗ Devis " + ref + " marqué perdu — on arrête de courir",
     () => { x.etat = "attente"; dvSave(); dvModuleSt(ref, "envoye"); render(); fileRender(); renderTray(); });
+}
+/* 11/08 (patron, visuel 119) : le ✕ ne jette plus la ligne — il demande le
+   POURQUOI en un clic. Dans deux mois les stats diront si l'on perd sur le
+   prix (« trop cher ») ou sur la vitesse (« parti chez un concurrent »). */
+function dvKoAsk(ref){
+  DVKO = (DVKO === ref) ? null : ref;
+  FNEDIT = null;
+  fileRender();
+}
+function dvPerduGo(ref, motif){
+  const x = DEVAT.find(z => z.ref === ref); if(!x) return;
+  DVKO = null;
+  x.etat = "perdu"; x.motif = motif || ""; dvSave(); dvModuleSt(ref, "perdu");
+  try{ const k = "tigerflow-devis-motifs"; const m = JSON.parse(localStorage.getItem(k)) || {}; m[ref] = {motif: motif || "sans motif", quand: iso(TODAYD)}; localStorage.setItem(k, JSON.stringify(m)); }catch(e){}
+  render(); fileRender(); renderTray();
+  toast("✗ Devis " + ref + " refusé" + (motif ? " — " + motif : "") + " · noté dans les statistiques",
+    () => { x.etat = "attente"; x.motif = ""; dvSave(); dvModuleSt(ref, "envoye"); render(); fileRender(); renderTray(); });
 }
 function dvSnooze(ref, nj){
   const x = DEVAT.find(z => z.ref === ref); if(!x) return;
@@ -5544,7 +5596,7 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fap-sub{font-size:.7rem;font-weight:600;color:var(--muted);margin:5px 0 12px}
 .fap-body{flex:1;overflow-y:auto;padding-bottom:8px}
 .fr{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #EEF0F4;border-radius:13px;padding:10px 12px;margin-bottom:8px}
-.fr.lt{border-color:#F3C1BC;box-shadow:inset 3px 0 0 #D63B33}
+.fr.lt{border-color:#F3C1BC;background:#FFFBFB}
 .frq{flex:none;width:92px;text-align:center;font-size:.66rem;font-weight:800;padding:6px 4px;border-radius:9px;background:#F4F5F8;color:#6C7285;line-height:1.35}
 .fr.lt .frq{background:#FDF0EF;color:#B3261E}
 .fr.tod .frq{background:#FFFBEB;color:#A16207}
@@ -5579,6 +5631,35 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fr.dv{border-color:#DCC9F8}
 .fr.dv.lt{border-color:#DCC9F8;box-shadow:inset 3px 0 0 #7C3AED}
 .fr.dv .frq{background:#F1EAFD;color:#6D3BC4}
+.fr.rv .frq{background:#E3F6EC;color:#137A4B}
+.fr.dv{box-shadow:inset 3.5px 0 0 #7C5CF0}
+.fr.rv{box-shadow:inset 3.5px 0 0 #16A05F}
+.fqt{display:block;font-style:normal;font-weight:700;font-size:.56rem;color:#8D93A8;margin-top:3px}
+.frwhen{font-size:.6rem;font-weight:800;border-radius:7px;padding:2px 7px;background:#FFFBEB;color:#A16207;white-space:nowrap}
+.frwhen.lt{background:#FDF0EF;color:#B3261E}
+.fday{display:flex;align-items:baseline;gap:8px;margin:15px 2px 8px;padding-bottom:5px;border-bottom:1.5px solid #EDEFF5}
+.fday.first{margin-top:2px}
+.fday .ft{font-size:.72rem;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#3B4256}
+.fday .fd{font-size:.68rem;color:var(--muted);font-weight:600}
+.fday .fn{font-size:.62rem;font-weight:800;background:#F1F2F7;color:#6C7285;border-radius:99px;padding:2px 8px}
+.fday .fe{margin-left:auto;font-size:.7rem;font-weight:800;color:#B58A10}
+.fday.red{border-bottom-color:#F7D7DD}.fday.red .ft{color:#D6455F}
+.fday.tod{border-bottom-color:#FCE4C9}.fday.tod .ft{color:#E2820E}
+.ffold{display:flex;align-items:center;gap:9px;border:1.5px dashed #E2E5EB;border-radius:12px;padding:10px 13px;margin-top:14px;cursor:pointer;color:#6C7285;user-select:none}
+.ffold:hover{border-color:#C9CCD4}
+.ffold .fch{font-size:.72rem;color:#9AA0B4}
+.ffold .ft{font-size:.7rem;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.ffold .fs{font-size:.68rem;color:var(--muted)}
+.ffold .fe{margin-left:auto;font-size:.7rem;font-weight:800;color:#B58A10}
+.fdko{margin:-3px 0 10px;border:1px solid #EEF0F4;border-radius:13px;background:#fff;box-shadow:0 10px 26px rgba(20,24,40,.1);padding:11px 14px}
+.fdko b{font-size:.74rem;color:var(--ink)}
+.fdko small{display:block;font-size:.62rem;color:var(--muted);margin:2px 0 8px}
+.fdko .mots{display:flex;gap:6px;flex-wrap:wrap}
+.fdko .mots button{cursor:pointer;font-family:inherit;font-size:.68rem;font-weight:700;border:1.5px solid #E2E5EB;background:#FAFBFD;color:#3B4256;border-radius:9px;padding:7px 11px}
+.fdko .mots button:hover{border-color:#F3C1BC;background:#FDF0EF;color:#B3261E}
+.fap-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:.66rem;font-weight:700;margin:-6px 0 11px}
+.fap-leg span{display:inline-flex;align-items:center;gap:5px}
+.fap-leg i{width:9px;height:9px;border-radius:3px}
 .dvamt{font-size:.7rem;font-weight:800;color:#A16207;background:#FFFBEB;border-radius:7px;padding:2px 8px;white-space:nowrap}
 .dvauto{color:#6D3BC4;font-weight:700}
 .dvoui{flex:none;cursor:pointer;background:#ECFDF5;border:1.5px solid #BFE6D8;color:#047857;font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 12px;white-space:nowrap}
