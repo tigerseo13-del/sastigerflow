@@ -240,8 +240,32 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 /* 29/07 : le duo Contacts / Notes internes — deux colonnes egales, cartes
    etirees a la meme hauteur (l'exception assumee au align-items:start) */
 .duo2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+.duo2.trio{grid-template-columns:1fr 1fr 1fr}
 .duo2 .card.eq{display:flex;flex-direction:column;margin:0}
 .duo2 .card.eq .nlist{flex:1}
+/* ===== 11/08 (patron, visuels 135-138) : Adresses & Sites d'intervention ===== */
+.arow{padding:9px 2px}
+.arow + .arow{border-top:1px solid #F1F2F6}
+.alab{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#9AA0B4;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.alab .abadge{font-size:.56rem;letter-spacing:.02em;font-weight:800;background:#E4F6EC;color:#128A46;border-radius:7px;padding:2px 7px;text-transform:none}
+.alab .aedit{margin-left:auto;font-size:.66rem;font-weight:700;color:#8D93A8;text-transform:none;letter-spacing:0;cursor:pointer}
+.alab .aedit:hover{color:var(--ink)}
+.aval{font-size:.8rem;font-weight:700;color:var(--ink);line-height:1.45;overflow-wrap:anywhere}
+.aval small{display:block;font-size:.68rem;font-weight:600;color:#8D93A8;margin-top:1px}
+.amuted{font-size:.76rem;font-weight:600;color:#8D93A8}
+.aaddb{display:inline-flex;align-items:center;gap:6px;margin-top:8px;border:1.5px dashed #D8DCE8;background:#FAFBFD;color:#4A5065;font-size:.72rem;font-weight:700;padding:7px 11px;border-radius:10px;cursor:pointer;font-family:inherit}
+.aaddb:hover{border-color:#C9CCD4;color:var(--ink)}
+.anote{margin-top:8px;font-size:.66rem;font-weight:600;color:#8D93A8;line-height:1.5}
+.sform{margin-top:9px;background:#FAFBFD;border:1.5px solid #EEF0F4;border-radius:12px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sform input{border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .74rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;min-width:0}
+.sform input::placeholder{color:#A6ABBB;font-weight:500}
+.sform input:focus{border-color:var(--orange)}
+.sform .fl{grid-column:1/-1}
+.sform .sact{grid-column:1/-1;display:flex;align-items:center;gap:9px}
+.sform .sact small{font-size:.62rem;color:#9AA0B4;font-weight:600}
+.sform .sact a{font-size:.66rem;font-weight:700;color:#B3261E}
+.sform .save{margin-left:auto;background:var(--orange);color:#fff;border:0;font-weight:700;font-size:.72rem;padding:8px 12px;border-radius:9px;cursor:pointer;font-family:inherit}
+.alt{font-size:.66rem;font-weight:700;color:#8D93A8;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 @media(max-width:900px){.duo2{grid-template-columns:1fr}}
 .grid .wide{grid-column:span 2}
 .grid .full{grid-column:1/-1}
@@ -866,6 +890,12 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         </div>
       </div>
 
+      <!-- 11/08 (patron, visuels 135-138) : Adresses & Sites — le payeur, ses
+           sites d'intervention, son adresse de facturation. Rendu par adrRender(). -->
+      <div class="card eq" id="adrcard">
+        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span id="adr-titre">Adresses</span><span class="more" id="adr-n"></span></div>
+        <div id="adr-body"></div>
+      </div>
       <div class="card eq">
         <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
         <div class="nlist" id="nlist"></div>
@@ -2503,6 +2533,141 @@ document.addEventListener("click", function(e){
     try{ if(el.showPicker) el.showPicker(); }catch(err){}
   }
 });
+</script>
+<script>
+/* ===== 11/08 (patron, visuels 135-138) : ADRESSES & SITES D'INTERVENTION =====
+   Le modèle « un payeur, des sites » : la fiche = celui qui paie ; les sites =
+   là où on intervient (résidence, magasin…). La facturation = UNE adresse au
+   client. Registres : tigerflow-fact-adr {client:{dest,adresse,cp,ville}} et
+   tigerflow-sites {client:[{id,nom,adresse,cp,ville,acces}]}. Étage 2 (spec
+   Saigon) : sélecteur de site à la création + site transférable au changement
+   de syndic (l'historique suit le site). */
+(function(){
+  /* 11/08 (patron) : BÊTA — sans le réglage (Réglages → Beta features →
+     Client sites & billing address), la carte disparaît et la rangée
+     Contacts | Notes reste STRICTEMENT comme avant. */
+  var BETAON = false;
+  try{ BETAON = localStorage.getItem("tigerflow-beta-sites") === "1"; }catch(e){}
+  if(!BETAON){
+    var cardOff = document.getElementById("adrcard");
+    if(cardOff) cardOff.remove();
+    return;
+  }
+  var duoEl = document.querySelector(".duo2.full");
+  if(duoEl) duoEl.classList.add("trio");
+  var ADRK = "tigerflow-fact-adr", SITK = "tigerflow-sites";
+  var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+  var escA = function(v){ return esc(v).replace(/"/g, "&quot;"); };
+  function cli(){
+    var q = new URLSearchParams(location.search).get("c");
+    if(q) return q;
+    var e = document.querySelector(".crumbs .cur");
+    return e ? e.textContent.trim() : "";
+  }
+  function reg(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } }
+  function fact(){ return reg(ADRK)[cli()] || null; }
+  function sites(){ var v = reg(SITK)[cli()]; return Array.isArray(v) ? v : []; }
+  function heroAdr(){
+    var e = document.getElementById("h-adr");
+    return e ? e.textContent.replace("\u00b7 Itin\u00e9raire \u2192", "").trim() : "";
+  }
+  var ADREDIT = null;
+  function ligne(a, c2, v2){ return [a, [c2, v2].filter(Boolean).join(" ")].filter(Boolean).join(", "); }
+  function siteForm(s2){
+    return '<div class="sform">'
+      + '<input id="sf-nom" class="fl" placeholder="Nom du site \u2014 ex. R\u00e9sidence Les Lilas" value="' + (s2 ? escA(s2.nom) : "") + '">'
+      + '<input id="sf-adr" class="fl" placeholder="Adresse" value="' + (s2 ? escA(s2.adresse) : "") + '">'
+      + '<input id="sf-cp" placeholder="Code postal" inputmode="numeric" value="' + (s2 ? escA(s2.cp) : "") + '">'
+      + '<input id="sf-vil" placeholder="Ville" value="' + (s2 ? escA(s2.ville) : "") + '">'
+      + '<input id="sf-acc" class="fl" placeholder="Note d\u2019acc\u00e8s (facultatif) \u2014 code, gardien, horaires" value="' + (s2 ? escA(s2.acces) : "") + '">'
+      + '<div class="sact">' + (s2 ? '<a href="#" onclick="event.preventDefault();adrSiteDel(\'' + s2.id + '\')">Retirer ce site</a>' : '<small>Interventions, rapports et \u00e9quipements viseront ce site</small>')
+      + '<button class="save" onclick="adrSiteSave(' + (s2 ? "'" + s2.id + "'" : "null") + ')">\u2713 Enregistrer le site</button></div></div>';
+  }
+  function factForm(f){
+    return '<div class="sform">'
+      + '<input id="ff-dest" class="fl" placeholder="Destinataire (facultatif) \u2014 ex. Foncia \u00b7 Service comptabilit\u00e9" value="' + (f ? escA(f.dest) : "") + '">'
+      + '<input id="ff-adr" class="fl" placeholder="Adresse" value="' + (f ? escA(f.adresse) : "") + '">'
+      + '<input id="ff-cp" placeholder="Code postal" inputmode="numeric" value="' + (f ? escA(f.cp) : "") + '">'
+      + '<input id="ff-vil" placeholder="Ville" value="' + (f ? escA(f.ville) : "") + '">'
+      + '<div class="sact"><small>Les devis et factures utiliseront cette adresse</small>'
+      + '<button class="save" onclick="adrFactSave()">\u2713 Enregistrer l\u2019adresse</button></div></div>';
+  }
+  window.adrRender = function(){
+    var body = document.getElementById("adr-body"); if(!body) return;
+    var ss = sites(), f = fact();
+    var t = document.getElementById("adr-titre"), nn = document.getElementById("adr-n");
+    if(t) t.textContent = ss.length ? "Sites d'intervention" : "Adresses";
+    if(nn) nn.textContent = ss.length ? (ss.length + 1) + " sites" : "";
+    var H = '<div class="arow"><div class="alab">' + (ss.length ? "Site principal \u2014 adresse de la fiche" : "Intervention \u2014 le site trait\u00e9") + '</div><div class="aval">' + (esc(heroAdr()) || "Adresse \u00e0 compl\u00e9ter") + '</div></div>';
+    ss.forEach(function(s2){
+      H += (ADREDIT === s2.id) ? siteForm(s2)
+        : '<div class="arow"><div class="alab">' + esc(s2.nom) + '<span class="aedit" onclick="adrEdit(\'' + s2.id + '\')">\u270e</span></div>'
+          + '<div class="aval">' + esc(ligne(s2.adresse, s2.cp, s2.ville)) + (s2.acces ? '<small>\ud83d\udd11 ' + esc(s2.acces) + '</small>' : '') + '</div></div>';
+    });
+    H += (ADREDIT === "site") ? siteForm(null) : '<button class="aaddb" onclick="adrEdit(\'site\')">+ Ajouter un site</button>';
+    if(ADREDIT === "fact") H += '<div class="arow"><div class="alab">Facturation</div>' + factForm(f) + (f ? '<div class="anote"><span class="alt" onclick="adrFactDel()">Revenir \u00e0 l\u2019adresse d\u2019intervention</span></div>' : '') + '</div>';
+    else if(f) H += '<div class="arow"><div class="alab">Facturation <span class="abadge">\u2713 adresse d\u00e9di\u00e9e</span><span class="aedit" onclick="adrEdit(\'fact\')">\u270e Modifier</span></div>'
+      + '<div class="aval">' + (f.dest ? esc(f.dest) + '<small>' + esc(ligne(f.adresse, f.cp, f.ville)) + '</small>' : esc(ligne(f.adresse, f.cp, f.ville))) + '</div>'
+      + '<div class="anote">\ud83d\udcc4 Les devis et factures partent \u00e0 cette adresse \u2014 le rapport d\u2019intervention garde l\u2019adresse du site.</div></div>';
+    else H += '<div class="arow"><div class="alab">Facturation</div><div class="amuted">Identique \u00e0 l\u2019adresse d\u2019intervention</div><button class="aaddb" onclick="adrEdit(\'fact\')">+ Adresse de facturation diff\u00e9rente</button></div>';
+    body.innerHTML = H;
+  };
+  window.adrEdit = function(k){
+    ADREDIT = (ADREDIT === k) ? null : k;
+    adrRender();
+    if(ADREDIT) setTimeout(function(){ var e = document.getElementById(ADREDIT === "fact" ? "ff-adr" : "sf-nom"); if(e) e.focus(); }, 0);
+  };
+  window.adrSiteSave = function(id){
+    var g = function(x){ var e = document.getElementById(x); return e ? e.value.trim() : ""; };
+    var nom = g("sf-nom");
+    if(!nom){ toast("Donne un nom au site \u2014 ex. R\u00e9sidence Les Lilas"); return; }
+    var all = reg(SITK), c = cli();
+    var list = Array.isArray(all[c]) ? all[c] : [];
+    if(id){
+      var s2 = list.find(function(z){ return z && z.id === id; });
+      if(s2){ s2.nom = nom; s2.adresse = g("sf-adr"); s2.cp = g("sf-cp"); s2.ville = g("sf-vil"); s2.acces = g("sf-acc"); }
+    } else list.push({id: "s" + Date.now(), nom: nom, adresse: g("sf-adr"), cp: g("sf-cp"), ville: g("sf-vil"), acces: g("sf-acc")});
+    all[c] = list;
+    localStorage.setItem(SITK, JSON.stringify(all));
+    ADREDIT = null; adrRender();
+    toast("\ud83d\udccd Site \u00ab " + nom + " \u00bb enregistr\u00e9");
+  };
+  window.adrSiteDel = function(id){
+    var all = reg(SITK), c = cli();
+    var list = Array.isArray(all[c]) ? all[c] : [];
+    var i = list.findIndex(function(z){ return z && z.id === id; });
+    if(i < 0) return;
+    var old = list[i];
+    list.splice(i, 1); all[c] = list;
+    localStorage.setItem(SITK, JSON.stringify(all));
+    ADREDIT = null; adrRender();
+    toast("Site \u00ab " + old.nom + " \u00bb retir\u00e9", function(){
+      var a2 = reg(SITK); var l2 = Array.isArray(a2[c]) ? a2[c] : [];
+      l2.splice(Math.min(i, l2.length), 0, old); a2[c] = l2;
+      localStorage.setItem(SITK, JSON.stringify(a2)); adrRender();
+    });
+  };
+  window.adrFactSave = function(){
+    var g = function(x){ var e = document.getElementById(x); return e ? e.value.trim() : ""; };
+    if(!g("ff-adr")){ toast("Il manque l\u2019adresse"); return; }
+    var all = reg(ADRK), c = cli();
+    all[c] = {dest: g("ff-dest"), adresse: g("ff-adr"), cp: g("ff-cp"), ville: g("ff-vil")};
+    localStorage.setItem(ADRK, JSON.stringify(all));
+    ADREDIT = null; adrRender();
+    toast("\ud83d\udcb3 Adresse de facturation enregistr\u00e9e \u2014 devis et factures la prendront d\u2019eux-m\u00eames");
+  };
+  window.adrFactDel = function(){
+    var all = reg(ADRK), c = cli();
+    var old = all[c]; if(!old) { ADREDIT = null; adrRender(); return; }
+    delete all[c];
+    localStorage.setItem(ADRK, JSON.stringify(all));
+    ADREDIT = null; adrRender();
+    toast("Retour \u00e0 l\u2019adresse d\u2019intervention", function(){
+      var a2 = reg(ADRK); a2[c] = old; localStorage.setItem(ADRK, JSON.stringify(a2)); adrRender();
+    });
+  };
+  adrRender();
+})();
 </script>
 </body>
 </html>

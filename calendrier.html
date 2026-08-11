@@ -1700,7 +1700,7 @@ function fileOpen(){
   document.getElementById("fapveil").classList.add("on");
 }
 function fileClose(){
-  FNEDIT = null; CDPID = null; DVKO = null; CDMANU = false;
+  FNEDIT = null; CDPID = null; DVKO = null; CDMANU = false; CDMOIS = null;
   document.getElementById("fap").classList.remove("open");
   document.getElementById("fapveil").classList.remove("on");
 }
@@ -1833,14 +1833,14 @@ function fileCaler(pid){
      planificateur s'ouvre SOUS la ligne, dans la file, comme la note. La file
      reste ouverte : on planifie, la ligne part, on enchaîne l'appel suivant. */
   CDPID = (CDPID === pid) ? null : pid;
-  CDATE = ""; CHEUR = null; CTECH = null; CDMANU = false;
+  CDATE = ""; CHEUR = null; CTECH = null; CDMANU = false; CDMOIS = null;
   FNEDIT = null;
   fileRender();
   if(CDPID != null) setTimeout(() => { const e = document.getElementById("fcaled"); if(e) e.scrollIntoView({block: "nearest", behavior: "smooth"}); }, 60);
 }
 
 /* ===== CALER LE RDV — le planificateur de la file (31/07) ===== */
-let CDPID = null, CDATE = "", CHEUR = null, CTECH = null, CDMANU = false;
+let CDPID = null, CDATE = "", CHEUR = null, CTECH = null, CDMANU = false, CDMOIS = null;
 function calSet(k, v){
   if(k === "d") CDATE = v;
   if(k === "h") CHEUR = v;
@@ -1905,6 +1905,40 @@ function calGoSlot(d, h){
   toast("📅 RDV promis à " + p.client + " : " + d.split("-").reverse().slice(0, 2).join("/") + " · " + hstr(h) + "–" + hstr(h + (p.dur || 2)) + " — au bac, technicien à affecter",
     () => { p.fixd = null; p.fixh = null; p.sugg = null; p.standby = av.standby; p.suivi = av.suivi; p.rappel = av.rappel; render(); renderTray(); fileRender(); });
 }
+/* 11/08 (patron) : le mode manuel affiche un VRAI calendrier — mois navigable,
+   passé grisé, aujourd'hui cerclé, jour choisi en orange (même langue que les
+   chips d'heures). Le « ‹ » se bloque sur le mois courant. */
+function calMoisNav(k){
+  const base = CDMOIS ? new Date(CDMOIS + "-15T12:00:00") : (CDATE ? new Date(CDATE + "T12:00:00") : new Date(TODAYD));
+  base.setDate(15);
+  base.setMonth(base.getMonth() + k);
+  CDMOIS = iso(base).slice(0, 7);
+  fileRender();
+}
+function calMoisHTML(){
+  const t = iso(TODAYD);
+  const base = CDMOIS ? new Date(CDMOIS + "-15T12:00:00") : (CDATE ? new Date(CDATE + "T12:00:00") : new Date(TODAYD));
+  const y = base.getFullYear(), m = base.getMonth();
+  const moisAff = y + "-" + String(m + 1).padStart(2, "0");
+  const dow = (new Date(y, m, 1, 12).getDay() + 6) % 7;
+  const nbj = new Date(y, m + 1, 0).getDate();
+  let cells = "";
+  for(let i = 0; i < dow; i++) cells += `<span class="cmj vide"></span>`;
+  for(let j = 1; j <= nbj; j++){
+    const d = moisAff + "-" + String(j).padStart(2, "0");
+    cells += d < t
+      ? `<span class="cmj off">${j}</span>`
+      : `<button type="button" class="cmj ${d === CDATE ? "on" : ""}${d === t ? " tod" : ""}" onclick="calSet('d','${d}')">${j}</button>`;
+  }
+  return `<div class="cmw">
+    <div class="cmh">
+      <button type="button" class="cmn" ${moisAff <= t.slice(0, 7) ? "disabled" : ""} onclick="calMoisNav(-1)">‹</button>
+      <b>${MOIS[m].charAt(0).toUpperCase() + MOIS[m].slice(1)} ${y}</b>
+      <button type="button" class="cmn" onclick="calMoisNav(1)">›</button>
+    </div>
+    <div class="cmg">${["L","M","M","J","V","S","D"].map(x => `<span class="cmd">${x}</span>`).join("")}${cells}</div>
+  </div>`;
+}
 function calPickHTML(p){
   const JJ = ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."], MM = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
   const jol = d => { const x = new Date(d + "T12:00:00"); return JJ[x.getDay()] + " " + x.getDate() + " " + MM[x.getMonth()]; };
@@ -1930,18 +1964,21 @@ function calPickHTML(p){
       <button class="no" onclick="fileCaler('${p.pid}')">Annuler</button>
     </div>`;
   }
-  const custom = CDATE && !opts.some(o => o[0] === CDATE);
   const customH = CHEUR != null && !heures.includes(CHEUR);
   const pretA = CDATE && CHEUR != null && CTECH != null;
   return `
-    <div class="cdlab" style="margin-top:2px">Quand ?</div>
-    <div class="cdrow">
-      ${opts.map(([d2, l]) => `<button type="button" class="cdc ${CDATE === d2 ? "on" : ""}" onclick="calSet('d','${d2}')">${l}</button>`).join("")}
-      <input class="cdin" type="date" title="Autre date" value="${custom ? CDATE : ""}" min="${iso(TODAYD)}" onchange="if(this.value) calSet('d', this.value)" style="${custom ? "box-shadow:inset 0 0 0 1.5px var(--orange);color:var(--orange-deep)" : ""}">
-    </div>
-    <div class="cdrow" style="margin-top:8px">
-      ${heures.map(h => `<button type="button" class="cdc ${CHEUR === h ? "on" : ""}" onclick="calSet('h',${h})">${hstr(h)}</button>`).join("")}
-      <input class="cdin" type="time" title="Autre heure" step="1800" value="${customH ? String(Math.floor(CHEUR)).padStart(2, "0") + ":" + (CHEUR % 1 ? "30" : "00") : ""}" onchange="if(this.value){ const q = this.value.split(':'); calSet('h', +q[0] + (+q[1] >= 30 ? .5 : 0)); }" style="${customH ? "box-shadow:inset 0 0 0 1.5px var(--orange);color:var(--orange-deep)" : ""}">
+    <div class="cmflex">
+      <div style="flex:none">
+        <div class="cdlab" style="margin-top:2px">Quand ?</div>
+        ${calMoisHTML()}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="cdlab" style="margin-top:2px">À quelle heure ?</div>
+        <div class="cdrow">
+          ${heures.map(h => `<button type="button" class="cdc ${CHEUR === h ? "on" : ""}" onclick="calSet('h',${h})">${hstr(h)}</button>`).join("")}
+          <input class="cdin" type="time" title="Autre heure" step="1800" value="${customH ? String(Math.floor(CHEUR)).padStart(2, "0") + ":" + (CHEUR % 1 ? "30" : "00") : ""}" onchange="if(this.value){ const q = this.value.split(':'); calSet('h', +q[0] + (+q[1] >= 30 ? .5 : 0)); }" style="${customH ? "box-shadow:inset 0 0 0 1.5px var(--orange);color:var(--orange-deep)" : ""}">
+        </div>
+      </div>
     </div>
     <div class="cdlab">Quel technicien ? ${CDATE ? `<span style="letter-spacing:0;text-transform:none;font-weight:700">— dispos du ${jol(CDATE)}${CHEUR != null ? " à " + hstr(CHEUR) : ""}</span>` : ""}</div>
     <div class="cdrow">
@@ -5766,6 +5803,22 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .cdc.on{background:var(--orange-soft);color:var(--orange-deep);box-shadow:inset 0 0 0 1.5px var(--orange)}
 .cdc.on:hover{background:var(--orange-soft)}
 .cdc.off{opacity:.45;cursor:not-allowed}
+.cmflex{display:flex;gap:18px;align-items:flex-start}
+.cmw{background:#fff;border:1.5px solid #E4E7EF;border-radius:12px;padding:10px 12px;width:276px}
+.cmh{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.cmh b{font-size:.78rem;font-weight:800}
+.cmn{width:26px;height:26px;border:1.5px solid #E2E5EB;background:#fff;border-radius:8px;font-size:.8rem;color:var(--ink-2);cursor:pointer;font-family:inherit;line-height:1}
+.cmn:disabled{opacity:.3;cursor:default}
+.cmg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cmd{font-size:.56rem;font-weight:800;color:#9AA0B4;text-align:center;padding:3px 0}
+.cmj{height:30px;border:0;background:#fff;border-radius:8px;font-size:.72rem;font-weight:700;color:var(--ink);cursor:pointer;font-family:inherit;text-align:center}
+.cmj:hover{background:#F1F2F5}
+.cmj.vide{cursor:default}
+.cmj.vide:hover{background:#fff}
+.cmj.off{color:#C9CCD4;cursor:default;display:flex;align-items:center;justify-content:center}
+.cmj.tod{box-shadow:inset 0 0 0 1.5px #C9CCD4}
+.cmj.on{background:var(--orange-soft);color:var(--orange-deep);box-shadow:inset 0 0 0 1.5px var(--orange);font-weight:800}
+@media(max-width:900px){ .cmflex{flex-direction:column} .cmw{width:100%} }
 .cdc i{width:9px;height:9px;border-radius:50%;flex:none;font-style:normal}
 .cdc small{font-size:.64rem;font-weight:700}
 .cdc small.ok{color:#0F7B4B}

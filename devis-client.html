@@ -11,17 +11,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* 06/08 — les polices embarquees (fonts) : le devis a la meme tete
+/* 06/08 — les polices embarquees (vendor/fonts) : le devis a la meme tete
    partout, PDF et hors-ligne compris. Declarees APRES Google : elles gagnent. */
-@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('inter-latin-400-normal.woff2') format('woff2')}
-@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url('inter-latin-500-normal.woff2') format('woff2')}
-@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('inter-latin-600-normal.woff2') format('woff2')}
-@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('inter-latin-700-normal.woff2') format('woff2')}
-@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url('inter-latin-800-normal.woff2') format('woff2')}
-@font-face{font-family:'Sora';font-style:normal;font-weight:600;font-display:swap;src:url('sora-latin-600-normal.woff2') format('woff2')}
-@font-face{font-family:'Sora';font-style:normal;font-weight:700;font-display:swap;src:url('sora-latin-700-normal.woff2') format('woff2')}
-@font-face{font-family:'Sora';font-style:normal;font-weight:800;font-display:swap;src:url('sora-latin-800-normal.woff2') format('woff2')}
-@font-face{font-family:'Great Vibes';font-style:normal;font-weight:400;font-display:swap;src:url('great-vibes-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('vendor/fonts/inter-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url('vendor/fonts/inter-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url('vendor/fonts/inter-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('vendor/fonts/inter-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:800;font-display:swap;src:url('vendor/fonts/inter-latin-800-normal.woff2') format('woff2')}
+@font-face{font-family:'Sora';font-style:normal;font-weight:600;font-display:swap;src:url('vendor/fonts/sora-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Sora';font-style:normal;font-weight:700;font-display:swap;src:url('vendor/fonts/sora-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Sora';font-style:normal;font-weight:800;font-display:swap;src:url('vendor/fonts/sora-latin-800-normal.woff2') format('woff2')}
+@font-face{font-family:'Great Vibes';font-style:normal;font-weight:400;font-display:swap;src:url('vendor/fonts/great-vibes-latin-400-normal.woff2') format('woff2')}
 </style>
 <style>
 :root{color-scheme:light only}
@@ -686,8 +686,17 @@ function pdfImprimer(nom){
   })();
   var cl = J("tigerflow-clients-cache").find(function(x){ return x && x.nom === rec.client; }) || {};
   var coord = F("cli-coord");
+  /* 11/08 (patron, visuels 135-138) : si le client a une adresse de FACTURATION
+     dédiée (fiche client, carte Adresses), c'est ELLE qui part sur le devis et
+     la facture — le lieu d'intervention, lui, garde l'adresse du site. */
+  var factA = null, betaSites = false;
+  try{ betaSites = localStorage.getItem("tigerflow-beta-sites") === "1"; }catch(e){}
+  if(betaSites) try{ factA = (JSON.parse(localStorage.getItem("tigerflow-fact-adr")) || {})[rec.client] || null; }catch(e){}
   if(coord){
-    var l = [cl.adresse, [cl.cp, cl.ville].filter(Boolean).join(" "), cl.tel, cl.mail].filter(Boolean);
+    /* tel/mail vivent déjà dans cli-tel / cli-mail — pas de doublon ici */
+    var l = factA
+      ? [factA.dest, factA.adresse, [factA.cp, factA.ville].filter(Boolean).join(" ")].filter(Boolean)
+      : [cl.adresse, [cl.cp, cl.ville].filter(Boolean).join(" ")].filter(Boolean);
     coord.innerHTML = l.length ? l.join("<br>") : "Coordonnées à compléter";
   }
 
@@ -696,7 +705,13 @@ function pdfImprimer(nom){
   var sir = F("cli-siret"); if(sir) sir.style.display = "none";
   var lieuTxt = F("lieu-txt"), lieu = F("lieu");
   var adr = [cl.adresse, [cl.cp, cl.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-  if(lieuTxt && adr) lieuTxt.innerHTML = (rec.client || "") + "<br>" + adr;
+  if(lieuTxt && adr){
+    lieuTxt.innerHTML = (rec.client || "") + "<br>" + adr;
+    /* 11/08 : la case existait mais restait cachée — dès que l'adresse du site
+       est connue, on l'affiche. Avec une adresse de facturation dédiée, c'est
+       ELLE qui distingue le lieu traité de l'adresse qui paie. */
+    if(lieu && betaSites){ lieu.hidden = false; lieu.style.display = ""; }
+  }
   else if(lieu) lieu.style.display = "none";
 
   var L = Array.isArray(rec.lignes) ? rec.lignes : [];
@@ -1045,8 +1060,8 @@ async function pdf(){
   PDFENCOURS = true;
   if(btn){ btn.textContent = "Préparation du PDF…"; btn.disabled = true; }
   try{
-    if(!window.html2canvas) await chargerScript("html2canvas.min.js");
-    if(!window.jspdf) await chargerScript("jspdf.umd.min.js");
+    if(!window.html2canvas) await chargerScript("vendor/html2canvas.min.js");
+    if(!window.jspdf) await chargerScript("vendor/jspdf.umd.min.js");
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({orientation:"portrait", unit:"mm", format:"a4"});
     const feuilles = [...document.querySelectorAll(".sheet")];

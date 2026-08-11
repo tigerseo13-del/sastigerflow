@@ -579,7 +579,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <b>Beta features</b>
           <small>Hidden from the main menu until they ship — note for Saigon Technologie</small>
         </span>
-        <span class="bcount">6 features</span>
+        <span class="bcount">7 features</span>
         <svg class="bchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </summary>
       <a class="betarow" href="tournee.html">
@@ -615,6 +615,14 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <span class="bn">Bait station map</span>
         <span class="bd">Numbered stations on the site plan and consumption log — not linked to client records yet</span>
         <span class="bb">Beta</span>
+      </a>
+      <!-- 11/08 (patron) : « un payeur, des sites » (syndics, multi-sites) passe en
+           bêta — le réglage fait apparaître la carte sur la fiche client et branche
+           l'adresse de facturation sur les devis/factures. OFF par défaut. -->
+      <a class="betarow" href="#" id="beta-sites" onclick="event.preventDefault();betaSitesToggle()">
+        <span class="bn">Client sites &amp; billing address</span>
+        <span class="bd">One paying client, several intervention sites (property managers, chains) — adds the card on the client record and the billing address on quotes and invoices</span>
+        <span class="betaEtat" id="beta-sites-etat">off</span>
       </a>
     </details>
 
@@ -2155,6 +2163,28 @@ function betaApercuToggle(){
              : "Aperçu rapide désactivé — les listes ouvrent la fiche");
 }
 document.addEventListener("DOMContentLoaded", betaApercuEtat);
+
+/* 11/08 (patron) : sites d'intervention & adresse de facturation — bêta.
+   La clé est lue par client.html (carte Adresses/Sites) et devis-client.html
+   (adresse de facturation + lieu d'intervention sur le document). */
+const BSKEY = "tigerflow-beta-sites";
+function betaSitesOn(){ try{ return localStorage.getItem(BSKEY) === "1"; }catch(e){ return false; } }
+function betaSitesEtat(){
+  const e = document.getElementById("beta-sites-etat");
+  if(!e) return;
+  const on = betaSitesOn();
+  e.textContent = on ? "on" : "off";
+  e.classList.toggle("on", on);
+}
+function betaSitesToggle(){
+  const on = !betaSitesOn();
+  try{ localStorage.setItem(BSKEY, on ? "1" : "0"); }catch(e){}
+  betaSitesEtat();
+  if(typeof toast === "function")
+    toast(on ? "Sites & facturation activés — la carte apparaît sur la fiche client"
+             : "Sites & facturation désactivés — la fiche client redevient comme avant");
+}
+document.addEventListener("DOMContentLoaded", betaSitesEtat);
 </script>
 <script>
 /* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
