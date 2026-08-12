@@ -253,7 +253,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(pointer:coarse){
   .aic,.dclose,.px,.rpx,.dnbtn,.tourbtn,.helpbtn,.hidebtn,.zoombtns button,.acti button{min-width:42px;min-height:42px}
 }
-.relbadge{display:inline-flex;align-items:center;gap:4px;font-size:.64rem;font-weight:800;background:var(--blue-bg);color:var(--blue);padding:3px 8px;border-radius:8px;margin-left:7px;white-space:nowrap;cursor:pointer}
+.relbadge{display:inline-flex;align-items:center;gap:5px;font-size:.64rem;font-weight:800;background:#FFF1EA;color:#D2450A;padding:4px 9px;border-radius:8px;white-space:nowrap;cursor:pointer}
+.relbadge svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.relrow{margin-top:5px}
+.pubtag{display:inline-block;font-size:.6rem;font-weight:800;border-radius:6px;padding:2px 7px;margin-top:3px}
+.pubtag.pp{background:var(--blue-bg);color:var(--blue)}
+.pubtag.pe{background:#F3EEFD;color:#7C3AED}
+.chip.seqc svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-1px;margin-right:3px}
 .relbadge:hover{filter:brightness(.94)}
 .relbadge.pause{background:var(--bg);color:var(--muted)}
 @media(pointer:coarse){.rx{min-width:42px;min-height:42px}}
@@ -489,6 +495,7 @@ tr.torelance{box-shadow:inset 3px 0 0 #D9A408}
       <div class="chips" id="chips">
         <button class="chip on" data-f="all">Tous <span class="n" id="n-all"></span></button>
         <button class="chip" data-f="envoye">Envoyé <span class="n" id="n-envoye"></span></button>
+        <button class="chip seqc" data-f="seq"><svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg>En séquence <span class="n" id="n-seq"></span></button>
         <button class="chip" data-f="gagne">Gagné <span class="n" id="n-gagne"></span></button>
         <button class="chip" data-f="perdu">Perdu <span class="n" id="n-perdu"></span></button>
         <button class="chip" data-f="expire">Expiré <span class="n" id="n-expire"></span></button>
@@ -527,24 +534,37 @@ function betaApercu(){
 /* ================= DONNÉES ================= */
 /* ===== Relance automatique des devis (config locale, moteur = backend) ===== */
 const RELKEY = "tigerflow-relance-devis-v2";
+/* 12/08 : defauts alignes sur la page Relances (relances.html), champ rem
+   (l'ancien nom remise est migre a la lecture pour les vieux navigateurs). */
 let REL = {
   on: true,
-  part: [{j:1, remise:0, mail:true, sms:true}, {j:3, remise:5, mail:true, sms:false}, {j:7, remise:10, mail:true, sms:true}],
-  pro:  [{j:7, remise:0, mail:true, sms:false}, {j:14, remise:0, mail:true, sms:true}, {j:21, remise:5, mail:true, sms:false}],
+  part: [{j:3, rem:0, mail:true, sms:true}, {j:7, rem:5, mail:true, sms:true}, {j:14, rem:10, mail:true, sms:false}],
+  pro:  [{j:5, rem:0, mail:true, sms:false}, {j:12, rem:5, mail:true, sms:false}, {j:21, rem:8, mail:true, sms:false}],
+  syn:  [{j:7, rem:0, mail:true, sms:false}, {j:15, rem:0, mail:true, sms:false}, {j:30, rem:5, mail:true, sms:false}]
 };
-try{ const sv = JSON.parse(localStorage.getItem(RELKEY)); if(sv && sv.part && sv.pro) REL = sv; }catch(e){}
+try{
+  const sv = JSON.parse(localStorage.getItem(RELKEY));
+  if(sv && sv.part && sv.pro){
+    REL = sv;
+    ["part", "pro", "syn"].forEach(k => (REL[k] || []).forEach(st => { if(st.rem === undefined) st.rem = st.remise || 0; }));
+  }
+}catch(e){}
 let PAUSED = new Set();
 try{ PAUSED = new Set(JSON.parse(localStorage.getItem(RELKEY + "-pause") || "[]")); }catch(e){}
+const RELSVG = `<svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg>`;
 function relBadge(d){
-  if(!REL.on || (d.statut !== "envoye" && d.statut !== "envoye")) return "";
+  /* 12/08 : le badge était défini mais jamais appelé dans le rendu — il est
+     désormais affiché sous le statut, au format « Relance x/n ». */
+  if(!REL.on || d.statut !== "envoye") return "";
   if(PAUSED.has(d.ref))
     return `<span class="relbadge pause" onclick="relTog(event,'${d.ref}')" title="Relances en pause pour ce devis — cliquer pour reprendre">⏸ en pause</span>`;
   const seq = d.pro ? REL.pro : REL.part;
   const age = Math.floor((new Date() - new Date(d.date)) / 864e5);
   const next = seq.find(st => st.j > age);
-  if(!next) return `<span class="relbadge" onclick="relTog(event,'${d.ref}')">🔁 séquence terminée</span>`;
+  if(!next) return `<span class="relbadge pause" onclick="relTog(event,'${d.ref}')">${RELSVG} séquence terminée</span>`;
   const dans = next.j - age;
-  return `<span class="relbadge" onclick="relTog(event,'${d.ref}')" title="${d.pro ? "Séquence entreprise" : "Séquence particulier"} · relance ${next.mail ? "email" : ""}${next.mail && next.sms ? " + " : ""}${next.sms ? "SMS" : ""}${next.remise ? " avec −" + next.remise + " %" : " sans remise"} · cliquer pour mettre en pause">🔁 J+${next.j}${next.remise ? " · −" + next.remise + " %" : ""} ${dans <= 0 ? "aujourd\u2019hui" : "dans " + dans + " j"}</span>`;
+  const idx = seq.indexOf(next) + 1;
+  return `<span class="relbadge" onclick="relTog(event,'${d.ref}')" title="${d.pro ? "Séquence entreprise" : "Séquence particulier"} · relance ${next.mail ? "email" : ""}${next.mail && next.sms ? " + " : ""}${next.sms ? "SMS" : ""}${next.rem ? " avec −" + next.rem + " %" : " sans remise"} · cliquer pour mettre en pause">${RELSVG}Relance ${idx}/${seq.length} · J+${next.j}${next.rem ? " · −" + next.rem + " %" : ""} · ${dans <= 0 ? "aujourd\u2019hui" : "dans " + dans + " j"}</span>`;
 }
 function relTog(e, ref){
   e.stopPropagation();
@@ -677,6 +697,8 @@ function stats(){
   ["all","envoye","envoye","gagne","perdu","expire"].forEach(f=>{
     document.getElementById('n-'+f).textContent = "(" + cnt(f) + ")";
   });
+  const nseq = document.getElementById('n-seq');
+  if(nseq) nseq.textContent = "(" + DEVIS.filter(d => d.statut === "envoye" && REL.on).length + ")";
 }
 
 /* ===== tuile → filtre : la tuile clique la chip correspondante ===== */
@@ -734,6 +756,8 @@ function render(){
   const sort = (document.getElementById('sort') || {value:"recent"}).value;
   let list = DEVIS.filter(d =>
     (FILTRE==="all" ? true
+      : FILTRE==="seq"
+        ? (d.statut==="envoye" && REL.on)
       : FILTRE==="expire-proche"
         ? (d.statut==="envoye" && (()=>{ if(!d.valid) return false;
              const f=new Date(d.valid), t=new Date(); f.setHours(0,0,0,0); t.setHours(0,0,0,0);
@@ -750,10 +774,10 @@ function render(){
   const slice = pageDe(list);
   document.getElementById('tbody').innerHTML = slice.length ? slice.map(d=>`
     <tr onclick="ouvrirDevis('${d.ref}')">
-      <td class="cl"><b>${d.client}</b><small>${d.ct}</small></td>
+      <td class="cl"><b>${d.client}</b><small>${d.ct}</small><span class="pubtag ${d.pro ? "pe" : "pp"}">${d.pro ? "Entreprise" : "Particulier"}</span></td>
       <td>${d.titre}</td>
       <td class="amt">${eur(d.montant)}</td>
-      <td><span class="st st-${d.statut}">${LBL[d.statut]}</span></td>
+      <td><span class="st st-${d.statut}">${LBL[d.statut]}</span>${relBadge(d) ? `<div class="relrow">${relBadge(d)}</div>` : ""}</td>
       <td class="dte">${fdate(d.date)}${expChip(d)}</td>
       <!-- 28/07 : qui a fait le devis. Vide = le bureau, et c'est une reponse,
            pas une donnee manquante — d'ou le tiret plutot qu'un blanc. -->
@@ -774,6 +798,7 @@ function render(){
       <b class="t">${d.titre}</b>
       <div class="cl">${d.client} · ${d.ct}</div>
       <div class="l2"><span class="amt">${eur(d.montant)}</span><span class="dte">${fdate(d.date)} ${expChip(d)}</span></div>
+      ${relBadge(d) ? `<div class="relrow">${relBadge(d)}</div>` : ""}
     </a>`).join("")
     : `<div class="fmc" style="text-align:center;color:var(--muted)">Aucun devis ne correspond.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><a class="ebtn primary" href="devis.html">＋ Nouveau devis</a></div></div>`;
 }
@@ -1412,10 +1437,9 @@ document.addEventListener("keydown", e => { if(e.key === "Escape") qvClose(); })
   render = function(){
     _render();
     try{
-      const q = document.getElementById("q").value.toLowerCase();
-      const list = DEVIS.filter(d =>
-        (FILTRE === "all" || d.statut === FILTRE) &&
-        (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q)));
+      /* 12/08 : le pied refiltrait de son cote et ignorait « En sequence » et
+         « Expire bientot » — il lit desormais la MEME liste que le tableau. */
+      const list = window._LISTD || [];
       const tot = list.reduce((a, d) => a + d.montant, 0);
       document.getElementById("sumline").innerHTML =
         list.length + " devis · total <b>" + eur(tot) + "</b> TTC";
