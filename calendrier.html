@@ -5166,6 +5166,23 @@ renderTray();
       return;
     }
   }catch(e){}
+  /* 12/08 (patron) : depuis la liste beta des reglages — calendrier.html?imprevu=1.
+     On se pose sur le jour de l'intervention concernee, on n'affiche que son
+     technicien, et on OUVRE sa fiche : la fonction se montre, elle ne se cherche pas. */
+  try{
+    if(new URLSearchParams(location.search).get("imprevu")){
+      var vi = INTERVS.find(function(x){ return x.imprev; });
+      if(vi){
+        CUR = new Date(vi.date + "T12:00:00");
+        VIEW = "day"; render();
+        setTimeout(function(){ soloTech(vi.tech); }, 40);
+        setTimeout(function(){ openDetail(vi.id); }, 260);
+      } else {
+        toast("Aucun imprévu signalé en ce moment");
+      }
+      return;
+    }
+  }catch(e){}
   var q = new URLSearchParams(location.search).get("m");
   if(!q || !/^\d{4}-\d{2}$/.test(q)) return;
   var a = +q.slice(0,4), m = +q.slice(5,7);

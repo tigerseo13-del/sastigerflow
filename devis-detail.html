@@ -236,6 +236,14 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .lph{width:40px;height:40px;border-radius:10px;object-fit:cover;background:var(--orange-soft)}
 .lemoji{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:1.1rem;background:var(--orange-soft)}
 .ltot{font-family:'Sora';font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* 12/08 (patron) : la remise est une LIGNE du devis, ici comme dans l'atelier
+   et sur le document du client — le geste se voit, il ne se déduit pas. */
+.ltbl tr.trem td{background:var(--green-bg,#ECFDF5)}
+.trem .rico{width:40px;height:40px;border-radius:10px;background:#fff;display:grid;place-items:center}
+.trem .rico svg{width:19px;height:19px;fill:none;stroke:var(--green-d,#047857);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.trem b{color:var(--green-d,#047857);letter-spacing:.02em}
+.trem small{display:block;color:#0B7A5E;font-weight:600;margin-top:2px}
+.trem .rbig{font-family:'Sora';font-size:1.24rem;font-weight:800;color:var(--green-d,#047857);white-space:nowrap}
 .recapbox{display:flex;justify-content:flex-end;padding:12px 12px 4px}
 .rbox{width:290px}
 .rline{display:flex;justify-content:space-between;padding:6px 0;font-size:.85rem;color:var(--ink-2)}
@@ -1461,6 +1469,15 @@ function lignes(){
     }).join('');
   }
   const rem = +REC.remise || 0;
+  /* 12/08 (patron) : « elle ne s'affiche pas dans le résumé » — la voilà,
+     dernière ligne du tableau, montant en gros. */
+  if(rem){
+    const PICTAG = '<svg viewBox="0 0 24 24"><path d="M20.6 13.4L12 22l-9-9V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.4"/></svg>';
+    g('lbody').innerHTML += '<tr class="trem"><td style="width:52px"><span class="rico">' + PICTAG + '</span></td>' +
+      '<td><b>REMISE COMMERCIALE EXCEPTIONNELLE</b><small>geste commercial appliqué sur l\'ensemble du devis</small></td>' +
+      '<td class="r">—</td><td class="r">—</td><td class="r">—</td>' +
+      '<td class="r"><span class="rbig">− ' + eur(rem) + '</span></td></tr>';
+  }
   const scale = (ht > 0 && rem) ? (ht - rem) / ht : 1;
   const rh = g('r-ht').closest('.rline');
   rh.querySelector('span').textContent = F.length ? 'Sous-total prestations HT' : 'Sous-total HT';

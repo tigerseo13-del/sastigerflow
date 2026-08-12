@@ -290,6 +290,18 @@ button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-sele
 .lrow{display:grid;grid-template-columns:minmax(0,1fr) 106px 108px 88px 104px 64px;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #F5F6F9}
 .lbtns{display:flex;gap:4px;justify-content:flex-end}
 .lrow.lhead{padding:0 0 9px;border-bottom:1.5px solid var(--line)}
+/* ===== 12/08 (patron) : la remise devient une LIGNE — meme regle que le devis.
+   Non saisissable ici : une seule commande, la carte Remise. ===== */
+.remrow{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid #F5F6F9}
+.remrow[hidden]{display:none}
+.remrow .rico{width:38px;height:38px;border-radius:11px;background:var(--green-bg,#ECFDF5);display:grid;place-items:center;flex:none}
+.remrow .rico svg{width:18px;height:18px;fill:none;stroke:var(--green-d,#047857);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.remrow .rtx{flex:1;min-width:0}
+.remrow .rtx b{display:block;font-size:.88rem;font-weight:800;color:var(--green-d,#047857);letter-spacing:.01em}
+.remrow .rtx small{display:block;font-size:.73rem;color:var(--muted);margin-top:2px}
+.remrow .rbig{font-family:'Sora',sans-serif;font-size:1.42rem;font-weight:800;color:var(--green-d,#047857);white-space:nowrap}
+.remrow .redit{background:none;border:0;font-family:inherit;font-size:.72rem;font-weight:700;color:var(--muted);cursor:pointer;padding:6px 2px;text-decoration:underline;text-underline-offset:3px}
+.remrow .redit:hover{color:var(--orange-deep,#EA4A10)}
 .lrow.lhead span{font-size:.63rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .presta .pin{width:100%;border:0;font-family:inherit;font-size:.86rem;font-weight:700;outline:none;background:none;padding:1px 0}
 .presta .pin.sub{font-size:.72rem;font-weight:500;color:var(--muted);margin-top:2px}
@@ -701,6 +713,12 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
       <div class="vh">Lignes <small id="v-nl">—</small></div>
       <div class="lrow lhead"><span>Prestation</span><span>Qté</span><span>PU HT</span><span>TVA</span><span style="text-align:right" title="Cliquez le montant pour saisir directement en TTC">Total TTC ✏️</span><span></span></div>
       <div id="v-lignes"></div>
+      <div class="remrow" id="remrow" hidden>
+        <span class="rico"><svg viewBox="0 0 24 24"><path d="M20.6 13.4L12 22l-9-9V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.4"/></svg></span>
+        <span class="rtx"><b>REMISE COMMERCIALE EXCEPTIONNELLE</b><small id="remrow-sub">geste commercial appliqué sur l'ensemble de la facture</small></span>
+        <b class="rbig" id="remrow-v">—</b>
+        <button class="redit" onclick="remFocus()" title="Modifier la remise">Modifier</button>
+      </div>
       <div class="laddrow">
         <button class="ladd" onclick="addLibre()">＋ Ligne libre</button>
         <button class="ladd lib" onclick="catOpen()">📚 Bibliothèque</button>
@@ -933,6 +951,13 @@ function drawL(){
   objSmart();
   calc();
 }
+/* 12/08 : la ligne n'est pas saisissable — « Modifier » emmène a LA commande. */
+function remFocus(){
+  const p = g("rem-on");
+  if(p) p.scrollIntoView({behavior:"smooth", block:"center"});
+  const f = g("v-rem");
+  if(f) setTimeout(() => { f.focus(); f.select(); }, 320);
+}
 function dupL(i){
   LIGNES.splice(i + 1, 0, {...LIGNES[i]});
   drawL();
@@ -1017,10 +1042,20 @@ function calc(){
   const remT = (g("v-remt") || {value:"%"}).value;
   let remAmt = remT === "%" ? ht * Math.min(remIn, 100) / 100 : Math.min(remIn, ht);
   REMAMT = remAmt;
+  const htBrut = ht;   /* 12/08 : le sous-total affiché reste AVANT remise */
   const scale = ht > 0 ? (ht - remAmt) / ht : 1;
   ht -= remAmt; t10 *= scale; t20 *= scale;
   if(g("v-remv")) g("v-remv").textContent = remAmt ? "− " + eur(remAmt) : "—";
   if(g("rl-rem")) g("rl-rem").style.display = remAmt ? "" : "none";
+  if(g("remrow")){
+    g("remrow").hidden = !remAmt;
+    if(remAmt){
+      g("remrow-v").textContent = "− " + eur(remAmt);
+      g("remrow-sub").textContent = remT === "%"
+        ? "geste commercial de " + (Math.min(remIn, 100) + "").replace(".", ",") + " % sur l'ensemble de la facture"
+        : "geste commercial appliqué sur l'ensemble de la facture";
+    }
+  }
   if(g("remhint")){ g("remhint").textContent = remAmt ? "− " + eur(remAmt) + " déduits du total — la TVA est recalculée automatiquement." : "Le montant est déduit du total — la TVA suit automatiquement."; g("remhint").classList.toggle("onv", remAmt > 0); }
   /* frais : HT · TVA · TTC, exactement comme les lignes */
   let frH = 0, frT10 = 0, frT20 = 0;
@@ -1047,7 +1082,7 @@ function calc(){
   g("v-nl").textContent = nReel + " prestation" + (nReel > 1 ? "s" : "") + " · " + eur(ttc);
   const vd = (g("v-valid") || {value:"30"}).value;
   if(g("lf-valid")) g("lf-valid").textContent = vd;
-  g("v-ht").textContent = eur(ht);
+  g("v-ht").textContent = eur(htBrut);   /* la remise se lit sur SA ligne, pas deux fois */
   g("v-fr").textContent = fr ? eur(fr) + " HT" : "—";
   g("v-tva").textContent = eur(tva);
   g("v-ttc").textContent = eur(ttc);
