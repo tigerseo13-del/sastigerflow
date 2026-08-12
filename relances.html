@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<link rel="preload" as="image" href="logo-tigre.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light only">
+<title>TigerFlow — Relance devis automatique</title>
+<meta name="theme-color" content="#FF5A1F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light only}
+html{background:#F7F8FA}
+
+:root{
+  --orange:#FF5A1F;
+  --orange-deep:#EA4A10;
+  --orange-soft:#FFF1EA;
+  --orange-border:#FFD9C7;
+  --ink:#16181D;
+  --ink-2:#3D434E;
+  --muted:#6C7285;
+  --line:#ECEDF1;
+  --bg:#F5F6F8;
+  --card:#FFFFFF;
+  --green:#10B981; --green-d:#047857; --green-bg:#ECFDF5;
+  --amber:#A16207; --amber-bg:#FBF3D9;
+  --red:#DC2626;   --red-bg:#FDE8E8;
+  --blue:#2453C6;  --blue-bg:#EAF1FE;
+  --r:14px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+ul{list-style:none}
+.app{display:flex;min-height:100vh}
+
+/* ============ SIDEBAR ============ */
+.sidebar{width:238px;background:#0E0F12;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;position:sticky;top:0;background:#0E0F12;z-index:2}
+.brand .logo{width:46px;height:46px;border-radius:50%;background:#0A0B0E;border:1.5px solid #262A32;display:grid;place-items:center;flex:none}
+.brand .logo svg{width:22px;height:22px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.28rem;letter-spacing:.4px;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+.nav-label{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:#5A5F6B;padding:14px 22px 7px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:4px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:10px;font-size:.9rem;font-weight:500;color:#B4B9C4;transition:.13s}
+.nav a:hover{background:#1B1D22;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600}
+.nav svg{width:17px;height:17px;flex:none}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1E2026;margin-top:auto}
+.ph{border-radius:50%;background:var(--orange);display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+/* ============ TOPBAR ============ */
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;
+  /* 05/08 (patron) : « trop blanche — un petit peu plus, pas comme avant ». Le
+     voile revient a un tiers de son ancienne force, halos compris. Le filet
+     orange de 3 px reste : c'est lui qui signe la page. */
+  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.07) 0, transparent 45%),
+  radial-gradient(circle at 92% -60%, rgba(255,90,31,.05) 0, transparent 45%),
+  linear-gradient(115deg,#FFFCFB,#FFF9F6 55%,#FFFBF8);
+  border-bottom:1px solid #F7EDE6;
+  box-shadow:inset 0 3px 0 -1px var(--orange);backdrop-filter:blur(12px)}
+/* 05/08 : le quadrillage orange partait avec le voile — il n'a plus de sens
+   sur un fond blanc. */
+.topbar::before{display:none}
+.topbar>*{position:relative}
+
+.back-m{display:none}
+.crumbs{font-size:.9rem;color:var(--muted);display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+/* icone de page dans la barre du haut (27/07) : inline-grid + vertical-align
+   pour ne pas casser l'ellipse du titre ni son alignement. */
+.pgico{display:inline-grid;place-items:center;vertical-align:middle;width:26px;height:26px;border-radius:8px;background:var(--orange-soft);color:var(--orange-deep);margin-right:9px;flex:none}
+.pgico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+
+.crumbs .sep{color:#C4C8D0}
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:19px;height:19px}
+.bell .dot{position:absolute;top:2px;right:2px;background:var(--orange);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.top-user .ph{width:40px;height:40px;font-size:.8rem}
+
+.page{padding:24px 30px 90px}
+
+/* ============ EN-TÊTE ============ */
+.head{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:20px 24px;margin-bottom:14px;display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.head .ic{width:52px;height:52px;border-radius:13px;background:var(--orange-soft);display:grid;place-items:center;flex:none}
+.head .ic svg{width:25px;height:25px;stroke:var(--orange)}
+.head h1{font-size:1.3rem;font-weight:800;letter-spacing:-.2px}
+.head .sub{font-size:.82rem;color:var(--muted);margin-top:3px}
+.head .actions{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;font-size:.87rem;font-weight:600;transition:.15s}
+.btn svg{width:16px;height:16px}
+.btn.outline{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.btn.outline:hover{border-color:#D5D8DF}
+.btn.primary{background:var(--orange);color:#fff;box-shadow:none}
+.btn.primary:hover{background:var(--orange-deep)}
+
+/* ============ RELANCE DEVIS AUTOMATIQUE (page, 12/08) ============
+   « c'est une page, on a besoin de réfléchir » — la popup de Réglages devient
+   une page : réglages à gauche, aperçu STICKY à droite qui suit chaque clic. */
+.card{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:20px 22px;margin-bottom:14px}
+.relwrap{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:14px;align-items:start}
+
+.relswitch{display:flex;align-items:center;gap:9px;font-size:.88rem;cursor:pointer;font-weight:600}
+.relswitch input{width:18px;height:18px;accent-color:var(--green)}
+.relswitch:has(input:checked) b{color:var(--green-d)}
+.rgrp{display:flex;align-items:center;gap:9px;font-family:'Sora';font-weight:700;font-size:.85rem;margin:16px 0 9px}
+.rgrp:first-child{margin-top:0}
+.rgrp small{font-family:'Inter';font-weight:500;font-size:.72rem;color:var(--muted)}
+.rgrp .gic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;flex:none}
+.rgrp .gic svg{width:15px;height:15px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* les identités de groupes — la couleur CODE le public, à gauche comme à droite */
+.g-part .gic{background:#EAF1FE}.g-part .gic svg{stroke:#2453C6}
+.g-pro .gic{background:#F3EEFD}.g-pro .gic svg{stroke:#7C3AED}
+.g-syn .gic{background:#FBF3D9}.g-syn .gic svg{stroke:#A16207}
+.rstep.g-part{box-shadow:inset 3px 0 0 #C7D8F5}
+.rstep.g-pro{box-shadow:inset 3px 0 0 #DFD0F6}
+.rstep.g-syn{box-shadow:inset 3px 0 0 #EDDCAC}
+.rchk svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.rstep{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:13px;padding:12px 13px;margin-bottom:9px;flex-wrap:wrap;cursor:pointer;transition:border-color .12s,background .12s}
+.rstep:hover{background:#FBFBFC}
+.rstep.on{border-color:#F0BCA4;background:#FFFDFB}
+.rstep .rn{width:24px;height:24px;border-radius:50%;background:#F1F2F5;color:var(--ink-2);display:grid;place-items:center;font-size:.72rem;font-weight:800;font-family:'Sora';flex:none}
+.rstep label{font-size:.72rem;font-weight:700;color:var(--muted)}
+.rstep input[type=number]{width:58px;border:1.5px solid var(--line);border-radius:9px;padding:8px;font-size:.85rem;font-family:inherit;text-align:center}
+.rstep input[type=number]:focus{outline:none;border-color:var(--orange)}
+.rchk{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:600;color:var(--ink-2)}
+.rchk input{width:15px;height:15px;accent-color:var(--green)}
+.rchk:has(input:checked){color:var(--green-d);font-weight:700}
+.rtip{font-size:.75rem;background:var(--amber-bg);color:var(--ink-2);border-radius:11px;padding:11px 13px;line-height:1.6;margin:8px 0 13px}
+.rtip b{color:var(--amber)}
+.rok{width:100%;background:var(--orange);color:#fff;font-weight:800;font-size:.88rem;padding:13px;border-radius:12px;border:0;cursor:pointer;font-family:inherit}
+.rok:hover{background:var(--orange-deep)}
+
+/* la carte aperçu, collée à l'écran */
+.prevcard{position:sticky;top:76px;margin-bottom:0}
+.prevcard .ph2{display:flex;align-items:center;gap:9px;font-weight:800;font-size:.92rem;margin-bottom:12px}
+.prevcard .ph2 svg{width:17px;height:17px;stroke:var(--orange);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* le badge qui fait le fil avec la rangée cliquée à gauche */
+.pbadge{display:inline-flex;align-items:center;gap:7px;font-size:.68rem;font-weight:800;letter-spacing:.05em;border-radius:9px;padding:6px 11px;margin-bottom:10px}
+.pbadge svg{width:13px;height:13px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pbadge.b-part{background:#EAF1FE;color:#2453C6}.pbadge.b-part svg{stroke:#2453C6}
+.pbadge.b-pro{background:#F3EEFD;color:#7C3AED}.pbadge.b-pro svg{stroke:#7C3AED}
+.pbadge.b-syn{background:#FBF3D9;color:#A16207}.pbadge.b-syn svg{stroke:#A16207}
+/* l'enveloppe : le message ressemble à un mail, pas à un paragraphe */
+.mailbox{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.mailbox .mmeta{background:#F7F8FA;border-bottom:1px solid var(--line);padding:9px 13px;font-size:.72rem;color:var(--muted);line-height:1.6}
+.mailbox .mmeta b{color:var(--ink-2);font-weight:700}
+.mailbox .mbody{padding:12px 14px}
+.mailbox .mbody p{font-size:.82rem;line-height:1.7;color:var(--ink-2)}
+.smsbox{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:.76rem;color:var(--ink-2);line-height:1.6;display:flex;gap:9px;align-items:flex-start;background:#F7F8FA}
+.smsbox[hidden]{display:none}
+.smsbox .stag{display:inline-flex;align-items:center;gap:5px;font-size:.62rem;font-weight:800;letter-spacing:.05em;color:var(--green-d);background:var(--green-bg);border-radius:7px;padding:4px 8px;flex:none;margin-top:1px}
+.smsbox .stag svg{width:11px;height:11px;fill:none;stroke:var(--green-d);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.prevnote{margin-top:13px;padding-top:11px;border-top:1px solid var(--line);font-size:.72rem;font-weight:600;color:#8A8F9C;line-height:1.55}
+
+/* toast (pattern maison) */
+.toast{position:fixed;left:50%;bottom:calc(30px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ MOBILE ============ */
+@media(max-width:1180px){
+  .relwrap{grid-template-columns:1fr}
+  .prevcard{position:static}
+}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px;gap:8px}
+  .back-m{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:var(--ink)}
+  .back-m svg{width:21px;height:21px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .page{padding:14px 13px calc(100px + var(--safe-b))}
+  .head{padding:15px;gap:12px;flex-wrap:wrap;row-gap:9px}
+  .head .ic{width:44px;height:44px}
+  .head h1{font-size:1.08rem}
+  .head .actions{width:100%;margin-left:0}
+  .rstep{row-gap:8px}
+  .topbar{flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+@media(max-width:760px){input,select,textarea{font-size:16px}}
+@media(pointer:coarse){
+  .aic,.dclose,.px,.rpx,.dnbtn,.tourbtn,.helpbtn,.hidebtn,.zoombtns button,.acti button{min-width:42px;min-height:42px}
+}
+@media(max-width:760px){.gsbtn{width:40px;padding:0;justify-content:center}.gsbtn > :not(svg){display:none}}
+a,button,input,select,textarea,label,summary{touch-action:manipulation}
+.crumbs{font-size:.95rem}
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
+.crumbs a{font-weight:600}
+.title-m{font-size:1.08rem}
+
+/* ===== recherche : champ visible + touche / ===== */
+@media(min-width:980px){
+  .gsbtn{min-width:250px;justify-content:flex-start;background:#fff}
+  .gsbtn span{flex:1;text-align:left}
+  .gsbtn kbd.slash{margin-left:0}
+}
+
+/* ===== polissage UX transversal ===== */
+/* 1. focus clavier visible : accessibilité + navigation Tab */
+:focus-visible{outline:2.5px solid var(--orange,var(--orange));outline-offset:2px;border-radius:6px}
+button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
+/* 2. retour tactile universel : tout ce qui se presse se comprime */
+button:active, .chip:active, .fchip:active, .skchip:active, .rchip:active, .bcat:active,
+a.btn:active, .btn:active, .qbig:active, .qsec:active, .dbig:active, .addline:active{transform:scale(.97)}
+/* 3. les lignes cliquables se déclarent : curseur + fond au survol */
+tbody tr[onclick]{cursor:pointer;transition:background .12s}
+tbody tr[onclick]:hover{background:#FAFAFC}
+tbody tr[onclick]:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange,var(--orange))}
+/* 4. les chiffres s'alignent en colonnes (tableaux, montants, KPI) */
+td, .amt, .num, .qamt, .kpi, .dte{font-variant-numeric:tabular-nums}
+/* 5. pas de surlignage accidentel sur l'interactif */
+button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-select:none;user-select:none}
+/* sélection de texte aux couleurs de la maison */
+::selection{background:#FFD9C4;color:#171A20}
+/* 6. barres de défilement fines et discrètes partout */
+*{scrollbar-width:thin;scrollbar-color:#D8DAE1 transparent}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-thumb{background:#D8DAE1;border-radius:5px}
+*::-webkit-scrollbar-thumb:hover{background:#C2C6CE}
+*::-webkit-scrollbar-track{background:transparent}
+/* respect du mode « réduire les animations » du système */
+@media(prefers-reduced-motion:reduce){
+  *, *::before, *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+.navbot{margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}
+.side-user{margin-top:0!important}
+
+/* ===== rythme des en-têtes + tableaux raffinés ===== */
+.hero h1, .page > .hello h1{font-family:'Sora'!important;font-size:1.32rem!important;letter-spacing:-.4px!important;font-weight:800!important}
+tbody tr:nth-child(even){background:#FBFBFD}
+tbody tr[onclick]:hover{background:#F6F7FA!important}
+tbody td{padding-top:14px!important;padding-bottom:14px!important}
+thead th{position:sticky;top:0;background:#fff;z-index:3;box-shadow:0 1.5px 0 var(--line)}
+
+/* ===== ergonomie : anti-zoom iOS · hitbox 44px · densité ===== */
+@media(max-width:760px){
+  input, select, textarea{font-size:16px!important}
+}
+@media(pointer:coarse){
+}
+
+/* ===== anti-saut entre les pages : la gouttière de défilement est réservée ===== */
+html{overflow-y:scroll;scrollbar-gutter:stable}
+.icq.on{background:#FFF1E9;border-color:var(--orange);color:#D63B05}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo" style="position:relative;overflow:hidden"><img src="logo-tigre.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></svg></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="nav-label">Général</div>
+  <nav class="nav">
+    <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="paiements.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Paiements</a>
+    <a href="contrats-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="reglages.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
+  </nav>
+  <nav class="nav navbot">
+    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.62rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
+    <a href="connexion.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg>Connexion</a>
+  </nav>
+  <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
+    <span class="ph">JJ</span>
+    <div><b>Jo Jo</b><span>Administrateur</span></div>
+    <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    <div class="umenu" id="umenu">
+      <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
+        <span class="uic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg></span>Mon compte</button>
+      <button type="button" class="udanger" onclick="event.stopPropagation();logout()">
+        <span class="uic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Déconnexion</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+
+  <div class="topbar">
+    <button class="back-m" onclick="history.back()" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="crumbs"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg></span><a href="reglages.html">Réglages</a><span class="sep">›</span><span class="cur">Relance devis automatique</span></div>
+    <div class="title-m"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg></span>Relances</div>
+    <div class="spacer"></div>
+    <div class="gsbtn" onclick="gsTap()" role="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input class="gsq" id="gs-top" type="text" autocomplete="off" placeholder="Rechercher clients, pages, actions…" aria-label="Recherche globale">
+      <kbd class="slash">/</kbd><kbd>⌘K</kbd>
+      <div class="gsdrop" id="gs-drop"></div>
+    </div>
+    <button class="bell" aria-label="Notifications">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+      <span class="dot">2</span>
+    </button>
+    </div>
+
+  <div class="page">
+
+    <!-- En-tête -->
+    <section class="head">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg></span>
+      <div>
+        <h1>Relance devis automatique</h1>
+        <div class="sub">Chaque devis <b>envoyé</b> et non signé entre dans la séquence. Elle s'arrête net dès que le client signe ou paie. Le lien du message ouvre la page de signature (paiement Stripe compris).</div>
+      </div>
+      <div class="actions">
+        <label class="relswitch"><input type="checkbox" id="rel-on" checked onchange="relSave()"> <b>Séquence active</b></label>
+      </div>
+    </section>
+
+    <div class="relwrap">
+      <!-- gauche : les 3 séquences -->
+      <div class="card" style="margin-bottom:0">
+        <div id="rel-steps"></div>
+        <p class="rtip">💡 Conseil de vente : garde le premier rappel <b>sans remise</b> — beaucoup signent juste parce qu'on leur rappelle. La remise est ta dernière carte, pas la première. Et <b>devis par devis</b> : clique le badge 🔁 d'un devis dans la liste pour mettre SES relances en pause (le client qui a dit « je réfléchis »).</p>
+        <button class="rok" onclick="relSave();toast('🔁 Séquence enregistrée — appliquée aux devis en attente')">Enregistrer la séquence</button>
+      </div>
+
+      <!-- droite : l'aperçu qui suit -->
+      <div class="card prevcard">
+        <div class="ph2"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>Le message que recevra le client</div>
+        <span class="pbadge" id="rel-badge"></span>
+        <div class="mailbox">
+          <div class="mmeta" id="rel-mail-meta"></div>
+          <div class="mbody"><p id="rel-prev-p"></p></div>
+        </div>
+        <div class="smsbox" id="rel-prev-sms" hidden></div>
+        <p class="prevnote">Cliquez une étape à gauche : son message s'affiche ici, et il suit vos réglages — délai, remise (affichée seulement si vous en donnez une), Email et SMS.</p>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* 12/08 (patron) : « c'est une page, on a besoin de réfléchir » — le réglage
+   des relances quitte la popup de Réglages pour SA page : les 3 séquences à
+   gauche, l'aperçu sticky à droite qui suit chaque clic et chaque saisie.
+   devis-liste.html lit la même clé tigerflow-relance-devis-v2 — format
+   inchangé. L'envoi réel viendra avec la version connectée. */
+
+let toastT = null;
+function toast(m){
+  const t = document.getElementById("toast");
+  t.textContent = m;
+  t.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove("show"), 3200);
+}
+
+const RELKEY = "tigerflow-relance-devis-v2";
+const RELSYNDEF = [{j:7, rem:0, mail:true, sms:false}, {j:15, rem:0, mail:true, sms:false}, {j:30, rem:5, mail:true, sms:false}];
+let REL = {
+  on: true,
+  part: [{j:3, rem:0, mail:true, sms:true}, {j:7, rem:5, mail:true, sms:true}, {j:14, rem:10, mail:true, sms:false}],
+  pro:  [{j:5, rem:0, mail:true, sms:false}, {j:12, rem:5, mail:true, sms:false}, {j:21, rem:8, mail:true, sms:false}],
+  syn:  RELSYNDEF.map(s => ({...s}))
+};
+try{ const sv = JSON.parse(localStorage.getItem(RELKEY)); if(sv && sv.part && sv.pro){ REL = sv; if(!REL.syn) REL.syn = RELSYNDEF.map(s => ({...s})); } }catch(e){}
+let APC = {g: "part", i: 0};   /* la rangée dont on montre l'aperçu */
+
+const RELGRP = {part: "Particuliers", pro: "Entreprises", syn: "Syndics"};
+/* les mêmes silhouettes partout, en SVG : rendu identique sur toutes les machines */
+const GICO = {
+  part: `<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z"/></svg>`,
+  pro:  `<svg viewBox="0 0 24 24"><rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 9h5a1 1 0 011 1v11M8 7h2M8 11h2M8 15h2M17 14h.01M17 17h.01M3 21h18"/></svg>`,
+  syn:  `<svg viewBox="0 0 24 24"><path d="M3 21h18M4 18h16M6 18v-8M10 18v-8M14 18v-8M18 18v-8M3 10h18L12 3 3 10z"/></svg>`
+};
+const ICO_MAIL = `<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>`;
+const ICO_SMS = `<svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>`;
+const RELCAS = {
+  part: {qui: "M. Thompson", objet: "punaises de lit", obj: "Votre devis punaises de lit", mnt: 536.80, ht: ""},
+  pro:  {qui: "Mme Garnier", objet: "dératisation de vos locaux", obj: "Votre devis — dératisation de vos locaux", mnt: 1240.00, ht: " HT"},
+  syn:  {qui: "M. Barros", objet: "traitement des parties communes — Résidence Les Glycines", obj: "Devis — parties communes, Résidence Les Glycines", mnt: 2180.00, ht: " HT"}
+};
+function relEur(x){ return x.toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " €"; }
+function relPrev(){
+  const bg = document.getElementById("rel-badge"), mm = document.getElementById("rel-mail-meta"),
+        p = document.getElementById("rel-prev-p"), sm = document.getElementById("rel-prev-sms");
+  if(!bg) return;
+  const st = REL[APC.g][APC.i], cas = RELCAS[APC.g];
+  const M = relEur(cas.mnt) + cas.ht;
+  const lien = `<span style="color:var(--orange-deep);font-weight:700">tigerflow.fr/d/x7Kp2m</span>`;
+  const remD = st.rem > 0 ? `<b>−${st.rem} % si vous signez sous 48 h</b> : ${relEur(cas.mnt * (1 - st.rem / 100))}${cas.ht} au lieu de ${relEur(cas.mnt)}${cas.ht}. ` : "";
+  const remP = st.rem > 0 ? `<b>−${st.rem} %</b> en cas d'accord avant la fin de validité : ${relEur(cas.mnt * (1 - st.rem / 100))}${cas.ht} au lieu de ${relEur(cas.mnt)}${cas.ht}. ` : "";
+  const TXT = {
+    part: [
+      `Bonjour ${cas.qui}, petit rappel : votre devis ${cas.objet} (${M}) est prêt. ${remD}Signature et paiement en ligne en 2 min : ${lien} — Tiger Hygiène 3D`,
+      `Bonjour ${cas.qui}, votre devis ${cas.objet} (${M}) est toujours disponible. ${remD}Une question ? Répondez simplement à ce message. Signer en ligne : ${lien} — Tiger Hygiène 3D`,
+      `Bonjour ${cas.qui}, votre devis ${cas.objet} (${M}) expire bientôt. ${remD}Signer et régler en 2 min : ${lien} — Tiger Hygiène 3D`
+    ],
+    pro: [
+      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) vous est bien parvenu ? Le PDF est joint, signature en ligne : ${lien}. Nous restons disponibles pour toute précision technique. — Tiger Hygiène 3D`,
+      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) reste valable. Si la validation passe par un autre interlocuteur, transférez-lui simplement ce message. ${remP}Signature en ligne : ${lien} — Tiger Hygiène 3D`,
+      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) arrive à échéance. ${remP}Un passage de repérage avant validation reste possible : répondez à ce message. Signer : ${lien} — Tiger Hygiène 3D`
+    ],
+    syn: [
+      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) est à votre disposition pour transmission au conseil syndical. Le PDF est joint, signature en ligne : ${lien}. — Tiger Hygiène 3D`,
+      `Bonjour ${cas.qui}, en vue du prochain conseil : plan d'intervention, attestations et n° Certibiocide sont disponibles sur simple demande. Notre devis (${M}) reste valable. ${remP}Signature en ligne : ${lien} — Tiger Hygiène 3D`,
+      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) arrive à échéance. Si le passage en conseil demande un délai, dites-le nous : nous prolongeons la validité. ${remP}Signature en ligne : ${lien} — Tiger Hygiène 3D`
+    ]
+  };
+  bg.className = "pbadge b-" + APC.g;
+  bg.innerHTML = `${GICO[APC.g]}${RELGRP[APC.g].toUpperCase()} · ÉTAPE ${APC.i + 1} · J+${st.j}`;
+  mm.innerHTML = `<b>De :</b> Tiger Hygiène 3D<br><b>Objet :</b> ${cas.obj}`;
+  p.innerHTML = TXT[APC.g][APC.i];
+  if(st.sms){
+    sm.hidden = false;
+    sm.innerHTML = `<span class="stag">${ICO_SMS}SMS</span><span>Tiger Hygiène 3D — votre devis (${relEur(cas.mnt)}${cas.ht}) attend votre signature : tigerflow.fr/d/x7Kp2m</span>`;
+  } else {
+    sm.hidden = true;
+  }
+}
+function relPick(key, i, ev){
+  if(ev && ev.target.closest("input, .rchk")) return;   /* on laisse saisir */
+  APC = {g: key, i: i};
+  document.querySelectorAll("#rel-steps .rstep").forEach(el =>
+    el.classList.toggle("on", el.dataset.g === key && +el.dataset.i === i));
+  relPrev();
+}
+function relSteps(list, key){
+  return list.map((st, i) => `
+    <div class="rstep g-${key}${APC.g === key && APC.i === i ? " on" : ""}" data-g="${key}" data-i="${i}" onclick="relPick('${key}',${i},event)" title="Cliquer pour voir le message de cette étape">
+      <span class="rn">${i + 1}</span>
+      <label>J +</label><input type="number" inputmode="decimal" min="1" max="60" value="${st.j}" onchange="REL.${key}[${i}].j=+this.value;relSave()">
+      <label>remise</label><input type="number" inputmode="decimal" min="0" max="50" value="${st.rem}" onchange="REL.${key}[${i}].rem=+this.value;relSave()"><label>%</label>
+      <span style="flex:1"></span>
+      <label class="rchk"><input type="checkbox" ${st.mail ? "checked" : ""} onchange="REL.${key}[${i}].mail=this.checked;relSave()">${ICO_MAIL}Email</label>
+      <label class="rchk"><input type="checkbox" ${st.sms ? "checked" : ""} onchange="REL.${key}[${i}].sms=this.checked;relSave()">${ICO_SMS}SMS</label>
+    </div>`).join("");
+}
+function relRender(){
+  document.getElementById("rel-steps").innerHTML =
+    `<p class="rgrp g-part"><span class="gic">${GICO.part}</span>Particuliers <small>— décident vite, on relance vite</small></p>` +
+    relSteps(REL.part, "part") +
+    `<p class="rgrp g-pro"><span class="gic">${GICO.pro}</span>Entreprises <small>— circuits de validation, on laisse respirer une semaine</small></p>` +
+    relSteps(REL.pro, "pro") +
+    `<p class="rgrp g-syn"><span class="gic">${GICO.syn}</span>Syndics &amp; copropriétés <small>— décision en conseil syndical, on relance posé et par écrit</small></p>` +
+    relSteps(REL.syn, "syn");
+}
+function relSave(){
+  const c = document.getElementById("rel-on");
+  if(c) REL.on = c.checked;
+  try{ localStorage.setItem(RELKEY, JSON.stringify(REL)); }catch(e){}
+  relPrev();   /* l'aperçu suit chaque réglage : délai, remise, canaux */
+}
+document.getElementById("rel-on").checked = REL.on;
+relRender();
+relPrev();
+</script>
+
+<!-- ===== Recherche globale (⌘K) ===== -->
+<style>
+.gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line,var(--line));color:var(--muted,var(--muted));font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit}
+.gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,var(--ink-2))}
+.gsbtn svg{width:15px;height:15px;flex:none}
+.gsbtn kbd{font-family:inherit;font-size:.66rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted,var(--muted))}
+/* ===== recherche directe dans la barre (27/07) =====
+   On ecrit dans la barre du haut, les resultats tombent dessous. La fenetre
+   centrale ne sert plus que sur telephone, ou la barre se reduit a une icone
+   de 40px : il n'y a pas la place d'un champ de saisie. C'est la regle
+   .gsbtn > :not(svg){display:none} du bloc telephone qui masque le champ,
+   la liste et les raccourcis en dessous de 760px. */
+.gsbtn{position:relative;cursor:text;z-index:130}
+.gsbtn:focus-within{border-color:var(--orange,#FF5A1F)}
+.gsbtn .gsq{flex:1;min-width:0;border:0;background:none;padding:0;font-family:inherit;font-size:.8rem;font-weight:600;color:var(--ink,#171A20)}
+.gsbtn .gsq:focus{outline:none;box-shadow:none}
+.gsbtn .gsq::placeholder{color:var(--muted,#8A90A0);font-weight:500}
+.gsdrop{position:absolute;top:calc(100% + 7px);left:0;right:0;background:#fff;border:1px solid var(--line,#E7E9EF);
+  border-radius:14px;box-shadow:0 18px 44px rgba(16,18,22,.16);max-height:52vh;overflow-y:auto;padding:8px;
+  display:none;z-index:130;text-align:left;cursor:default}
+.gsdrop.open{display:block}
+.gs-veil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:120;backdrop-filter:blur(2px)}
+.gs-veil.open{display:block}
+.gs-pal{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 26px));background:#fff;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);z-index:121;overflow:hidden;display:none}
+.gs-pal.open{display:block}
+.gs-in{display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid #EBECF1}
+.gs-in svg{width:18px;height:18px;stroke:var(--muted);flex:none}
+.gs-in input{flex:1;border:0;font-family:inherit;font-size:1rem;color:#171A20;background:none;padding:0}
+.gs-in input:focus{outline:none;box-shadow:none}
+.gs-res{max-height:52vh;overflow-y:auto;padding:8px}
+.gs-g{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:9px 12px 4px}
+.gs-r{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;cursor:pointer;font-size:.88rem}
+.gs-r:hover,.gs-r.sel{background:var(--orange-soft)}
+.gs-r .gi{width:32px;height:32px;border-radius:10px;background:#F1F2F5;display:grid;place-items:center;font-size:.95rem;flex:none}
+.gs-r b{display:block;font-weight:600;color:#171A20}
+.gs-r small{display:block;font-size:.73rem;color:var(--muted)}
+.gs-r .go{margin-left:auto;font-size:.68rem;color:#C4C8D2;flex:none}
+.gs-r.sel .go{color:var(--orange-deep);font-weight:700}
+.gs-empty{padding:26px;text-align:center;color:var(--muted);font-size:.86rem}
+@media(max-width:760px){.gsbtn span,.gsbtn kbd{display:none}.gsbtn{width:40px;justify-content:center;padding:0}}
+</style>
+<div class="gs-veil" id="gs-veil" onclick="gsClose()"></div>
+<div class="gs-pal" id="gs-pal">
+  <div class="gs-in">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="gs-q" placeholder="Client, téléphone, devis, facture, page…" autocomplete="off">
+  </div>
+  <div class="gs-res" id="gs-res"></div>
+</div>
+<script>
+(function(){
+  /* 28/07 — lit les vraies donnees, plus une liste de demonstration en dur.
+     Bloc recopie sur 23 pages : garder ce commentaire court, chaque octet y
+     compte 23 fois. Detail dans le commit. PG (navigation) reste en dur. */
+  var CL = [], DOC = [];
+  (function(){
+    var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+    var vu = {};
+    J("tigerflow-inbox-clients").concat(J("tigerflow-clients-cache")).forEach(function(c){
+      if(!c || !c.nom || vu[c.nom]) return;   /* un client est dans les deux stocks */
+      vu[c.nom] = 1;
+      CL.push({n:c.nom, s:[c.ville, c.tel].filter(Boolean).join(" - "),
+               h:"client.html?c=" + encodeURIComponent(c.nom)});
+    });
+    var piece = function(cle, mot, page, param){
+      J(cle).forEach(function(x){
+        if(!x || !x.ref) return;
+        DOC.push({n:x.ref, s:mot + (x.client ? " - " + x.client : ""),
+                  h:page + "?" + param + "=" + encodeURIComponent(x.ref)});
+      });
+    };
+    piece("tigerflow-inbox-devis",    "Devis",    "devis-detail.html", "ref");
+    piece("tigerflow-inbox-contrats", "Contrat",  "contrat.html",      "n");
+    piece("tigerflow-inbox-factures", "Facture",  "facture-detail.html","ref");
+    J("tigerflow-added-interventions").forEach(function(i){
+      if(!i || !i.client) return;
+      DOC.push({n:i.client + " - intervention", s:[i.date, i.ville].filter(Boolean).join(" - "),
+                h:"calendrier.html"});
+    });
+  })();
+  var PG = [
+    {n:"Tableau de bord", i:"🏠", h:"index.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},{n:"Tournees", i:"🗺️", h:"tournee.html"},
+    {n:"Clients", i:"👥", h:"clients.html"},{n:"Nouveau client", i:"➕", h:"client-nouveau.html"},
+    {n:"Nouvelle intervention", i:"🗓️", h:"intervention-nouvelle.html"},{n:"Devis", i:"🧾", h:"devis-liste.html"},
+    {n:"Nouveau devis", i:"✏️", h:"devis.html"},{n:"Factures", i:"💶", h:"facture-liste.html"},
+    {n:"Taches", i:"✅", h:"taches.html"},{n:"Techniciens", i:"👷", h:"techniciens.html"},
+    {n:"Rapports", i:"📊", h:"rapports.html"},{n:"Connexion", i:"🔒", h:"connexion.html"},{n:"Reglages", i:"⚙️", h:"reglages.html"}
+  ];
+  var SEL = 0, RES = [];
+  var norm = function(x){ return x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\s.\-]/g,""); };
+  function search(q){
+    var nq = norm(q);
+    if(!nq) return [];
+    var out = [];
+    CL.forEach(function(c){ if(norm(c.n).indexOf(nq) > -1 || norm(c.s).indexOf(nq) > -1) out.push({g:"Clients", i:"👤", n:c.n, s:c.s, h:c.h}); });
+    DOC.forEach(function(d){ if(norm(d.n).indexOf(nq) > -1 || norm(d.s).indexOf(nq) > -1) out.push({g:"Documents", i:"📄", n:d.n, s:d.s, h:d.h}); });
+    PG.forEach(function(p){ if(norm(p.n).indexOf(nq) > -1) out.push({g:"Pages", i:p.i, n:p.n, s:"", h:p.h}); });
+    return out.slice(0, 9);
+  }
+  function draw(){
+    var box = document.getElementById("gs-res");
+    if(!RES.length){
+      var q = document.getElementById("gs-q").value.trim();
+      box.innerHTML = q ? '<div class="gs-empty">Aucun resultat pour « ' + q + ' »</div>'
+        : '<div class="gs-empty">Tape un nom de client, un numero de telephone,<br>une reference de devis/facture ou une page…</div>';
+      return;
+    }
+    var html = "", lastG = "";
+    RES.forEach(function(r, i){
+      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
+      html += '<div class="gs-r ' + (i === SEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsSel(' + i + ')">'
+        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
+        + '<span class="go">Entree ↵</span></div>';
+    });
+    box.innerHTML = html;
+  }
+  window.gsSel = function(i){ SEL = i; draw(); };
+  window.gsOpen = function(){
+    /* Sur ordinateur la barre est un vrai champ : / et Cmd+K y placent le
+       curseur au lieu d'ouvrir la fenetre. La fenetre reste pour le telephone. */
+    var ch = document.getElementById("gs-top");
+    if(ch && window.innerWidth > 760){ ch.focus(); ch.select(); return; }
+    document.getElementById("gs-veil").classList.add("open");
+    document.getElementById("gs-pal").classList.add("open");
+    var inp = document.getElementById("gs-q");
+    inp.value = ""; RES = []; SEL = 0; draw();
+    setTimeout(function(){ inp.focus(); }, 30);
+  };
+  window.gsClose = function(){
+    document.getElementById("gs-veil").classList.remove("open");
+    document.getElementById("gs-pal").classList.remove("open");
+  };
+  /* ===== resultats sous la barre (27/07) : meme moteur que la fenetre ===== */
+  var IRES = [], ISEL = 0;
+  function gsInPaint(){
+    var box = document.getElementById("gs-drop"), ch = document.getElementById("gs-top");
+    if(!box || !ch) return;
+    var q = ch.value.trim();
+    if(!q){ box.classList.remove("open"); box.innerHTML = ""; return; }
+    box.classList.add("open");
+    if(!IRES.length){ box.innerHTML = '<div class="gs-empty">Aucun resultat pour \u00ab ' + q + ' \u00bb</div>'; return; }
+    var html = "", lastG = "";
+    IRES.forEach(function(r, i){
+      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
+      html += '<div class="gs-r ' + (i === ISEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsInSel(' + i + ')">'
+        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
+        + '<span class="go">Entree \u21b5</span></div>';
+    });
+    box.innerHTML = html;
+  }
+  window.gsInPaint = gsInPaint;
+  window.gsInSel = function(i){ ISEL = i; gsInPaint(); };
+  window.gsInClose = function(){ var b = document.getElementById("gs-drop"); if(b){ b.classList.remove("open"); } };
+  /* sur telephone le champ est masque : un appui rouvre la fenetre */
+  window.gsTap = function(){
+    /* clic n'importe ou dans la barre = curseur dans le champ, comme une vraie
+       barre de recherche. Sur telephone le champ est masque : on rouvre la fenetre. */
+    if(window.innerWidth <= 760){ gsOpen(); return; }
+    var ch = document.getElementById("gs-top");
+    if(ch) ch.focus();
+  };
+  (function(){
+    var ch = document.getElementById("gs-top");
+    if(!ch) return;
+    ch.addEventListener("input", function(){ IRES = search(this.value); ISEL = 0; gsInPaint(); });
+    ch.addEventListener("focus", function(){ if(this.value.trim()){ IRES = search(this.value); gsInPaint(); } });
+    ch.addEventListener("keydown", function(e){
+      if(e.key === "Escape"){ gsInClose(); this.blur(); return; }
+      if(!IRES.length) return;
+      if(e.key === "ArrowDown"){ e.preventDefault(); ISEL = Math.min(IRES.length - 1, ISEL + 1); gsInPaint(); }
+      else if(e.key === "ArrowUp"){ e.preventDefault(); ISEL = Math.max(0, ISEL - 1); gsInPaint(); }
+      else if(e.key === "Enter" && IRES[ISEL]){ location.href = IRES[ISEL].h; }
+    });
+    document.addEventListener("click", function(e){ if(!e.target.closest || !e.target.closest(".gsbtn")) gsInClose(); });
+  })();
+  document.getElementById("gs-q").addEventListener("input", function(){
+    RES = search(this.value); SEL = 0; draw();
+  });
+  document.addEventListener("keydown", function(e){
+    var open = document.getElementById("gs-pal").classList.contains("open");
+    if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); open ? gsClose() : gsOpen(); return; }
+    if(e.key === "/" && !open){
+      const t = e.target;
+      if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      e.preventDefault(); gsOpen(); return;
+    }
+    if(!open) return;
+    if(e.key === "Escape"){ gsClose(); }
+    else if(e.key === "ArrowDown"){ e.preventDefault(); SEL = Math.min(RES.length - 1, SEL + 1); draw(); }
+    else if(e.key === "ArrowUp"){ e.preventDefault(); SEL = Math.max(0, SEL - 1); draw(); }
+    else if(e.key === "Enter" && RES[SEL]){ location.href = RES[SEL].h; }
+  });
+})();
+</script>
+
+<style>
+.bnv{display:none}
+@media(max-width:760px){
+  .bnv{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;align-items:stretch;
+    background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line,#EBECF1);
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+  .bnv a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;
+    font-size:.6rem;font-weight:700;color:#8A8F9C;border-radius:11px;text-decoration:none;min-height:48px;justify-content:center}
+  .bnv a svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .bnv a.on{color:var(--orange-deep,var(--orange-deep))}
+  .bnv a.ctr{margin-top:-24px;color:var(--orange-deep,var(--orange-deep))}
+  .bnv a.ctr .dsc{width:52px;height:52px;border-radius:50%;background:var(--orange,var(--orange));display:grid;place-items:center;
+    box-shadow:0 8px 20px -6px rgba(255,90,31,.55);border:4px solid var(--bg,#F4F5F8)}
+  .bnv a.ctr .dsc svg{width:22px;height:22px;stroke:#fff;stroke-width:2.2}
+  .main{padding-bottom:86px}
+}
+.bnvsheet{position:fixed;inset:0;background:rgba(16,18,22,.55);z-index:80;display:none;align-items:flex-end}
+.bnvsheet.open{display:flex}
+.bnvcard{background:#fff;border-radius:22px 22px 0 0;width:100%;padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px));animation:bnvup .22s ease}
+@keyframes bnvup{from{transform:translateY(40px);opacity:.4}to{transform:translateY(0);opacity:1}}
+.bnvcard h3{font-family:'Sora',sans-serif;font-size:.95rem;margin:0 0 13px;padding-left:4px}
+.bnvgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bnvgrid a{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 6px;border-radius:14px;background:var(--bg,#F4F5F8);
+  font-size:.68rem;font-weight:700;color:var(--ink-2,var(--ink-2));text-decoration:none;text-align:center}
+.bnvgrid a span.i{font-size:1.25rem}
+@media(prefers-reduced-motion:reduce){.bnvcard{animation:none}}
+.bnv a:active{transform:scale(.93);transition:transform .08s}
+.bnv a.ctr:active .dsc{transform:scale(.93);transition:transform .08s}
+.bnvgrid a:active{transform:scale(.95);transition:transform .08s}
+.bnvgrid a.here{background:var(--orange-soft,var(--orange-soft));color:var(--orange-deep,var(--orange-deep))}
+
+/* ===== UX : retour tactile + focus clavier (25/07) ===== */
+tr:active,.row:active,.card:active,.line:active,.itm:active,.tdrow:active{background:#F5F6F9}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+
+/* ===== impression : le client reçoit un document, pas l'interface ===== */
+@media print{
+  .sidebar,.topbar,.rail,.bnv,.bnvsheet,.mobbar,.actbar,.abar,.toast,.gs-veil,.gs-pal,button,.btn,.qbar,.toolrow{display:none!important}
+  .main{margin-left:0!important}
+  .page,.wrap{padding:0!important;max-width:none!important}
+  .card,.sheet{box-shadow:none!important;border:0!important;border-radius:0!important;break-inside:avoid}
+  body{background:#fff!important}
+  a[href]:after{content:""}
+}
+
+/* ===== menu du compte (bas du menu latéral) ===== */
+.side-user{position:relative;cursor:pointer;transition:background .12s}
+.side-user:hover{background:#1B1E25}
+.side-user .uchev{width:15px;height:15px;stroke:#7E838F;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-left:auto;flex:none;transition:transform .18s}
+.side-user.open .uchev{transform:rotate(180deg)}
+.umenu{display:none;position:absolute;left:12px;right:12px;bottom:calc(100% + 6px);background:#fff;border-radius:14px;padding:6px;box-shadow:0 18px 44px -12px rgba(0,0,0,.45);z-index:80}
+.side-user.open .umenu{display:block}
+.umenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;font-family:inherit;font-size:.84rem;font-weight:700;color:#171A20;padding:10px 11px;border-radius:10px;cursor:pointer;transition:background .1s}
+.umenu button:hover{background:#F4F5F8}
+.umenu .uic{width:28px;height:28px;border-radius:9px;background:#F3F4F7;display:grid;place-items:center;flex:none}
+.umenu .uic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.umenu .udanger{color:#B3261E}
+.umenu .udanger:hover{background:#FCECEA}
+.umenu .udanger .uic{background:#FCECEA}
+
+/* ===== recherche globale : POSITION FIXE, identique sur toutes les pages =====
+   la barre du haut n'a pas la même hauteur partout (6 paddings différents),
+   donc on ne se cale plus dessus : la barre est ancrée à l'écran. */
+.topbar{position:relative;min-height:64px}
+@media(min-width:761px){
+  /* La recherche n'est plus centrée : elle se range à droite, juste avant les boutons.
+     Le padding vertical de la barre est neutralisé ici (il valait de 6 à 15 px selon
+     les pages) pour qu'elle reste à la même hauteur à l'écran partout, ce que la
+     position fixe assurait avant. */
+  .topbar{padding-top:0;padding-bottom:0}
+  .topbar .gsbtn{width:min(430px, calc(100vw - 660px));margin-left:auto}
+  .topbar .gsbtn span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .topbar .title-d,.topbar .title-m,.topbar .crumbs{max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(min-width:761px) and (max-width:1180px){
+  .topbar .gsbtn{width:min(320px, calc(100vw - 580px))}
+}
+
+/* ===== tableaux : défilement horizontal maîtrisé sur petit écran ===== */
+@media(max-width:900px){
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px;margin:0 -2px}
+  .tscroll > table{min-width:640px}
+  .tscroll::-webkit-scrollbar{height:7px}
+  .tscroll::-webkit-scrollbar-thumb{background:#D8DBE2;border-radius:99px}
+}
+/* Fond de la barre de recherche (charte TigerFlow, 28/07) : un degrade qui
+   part du blanc et se rechauffe vers la droite, pour s'accorder au fond
+   orange de la barre du haut sans devenir orange lui-meme. */
+.gsbtn{background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 25%,#FFF8F4 55%,#FFF5EF 100%);
+  border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.gsbtn:hover{border-color:#DCE3EB}
+.gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
+
+@media(max-width:760px){
+  .page,.card{min-width:0!important;max-width:100%}
+  .head{flex-wrap:wrap;row-gap:9px}
+  .topbar{flex-wrap:wrap}
+}
+</style>
+<nav class="bnv" aria-label="Navigation mobile">
+  <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
+  <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda</a>
+  <a class="ctr" href="intervention-nouvelle.html"><span class="dsc"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Intervention</a>
+  <a class="bn" href="devis-liste.html"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+  <a class="bn" href="#" onclick="bnvPlus(event)"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Plus</a>
+</nav>
+<div class="bnvsheet" id="bnvsheet" onclick="if(event.target===this){this.classList.remove('open');document.body.style.overflow=''}">
+  <div class="bnvcard">
+    <h3>Toutes les sections</h3>
+    <div class="bnvgrid">
+      <a href="clients.html"><span class="i">&#128101;</span>Clients</a>
+      <a href="devis-liste.html"><span class="i">&#128221;</span>Devis</a>
+      <a href="facture-liste.html"><span class="i">&#128182;</span>Factures</a>
+      <a href="paiements.html"><span class="i">&#128181;</span>Paiements</a>
+      <a href="contrats-liste.html"><span class="i">&#128196;</span>Contrats</a>
+      <a href="techniciens.html"><span class="i">&#128295;</span>Techniciens</a>
+      <a href="taches.html"><span class="i">&#9989;</span>Tâches</a>
+      <a href="reglages.html"><span class="i">&#9881;&#65039;</span>Réglages</a>
+      <a href="tech-mobile.html"><span class="i">&#128241;</span>Appli mobile</a>
+      <a href="connexion.html"><span class="i">&#128274;</span>Connexion</a>
+    </div>
+  </div>
+</div>
+<script>
+function bnvPlus(e){ e.preventDefault(); document.getElementById("bnvsheet").classList.add("open"); document.body.style.overflow = "hidden"; } /* bnvLock */
+document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s = document.getElementById("bnvsheet"); if(s){ s.classList.remove("open"); document.body.style.overflow = ""; } } });
+</script>
+<script>
+(function(){
+  var p = location.pathname.split("/").pop() || "index.html";
+  document.querySelectorAll(".bnvgrid a").forEach(function(a){
+    if(a.getAttribute("href") === p) a.classList.add("here");
+  });
+})();
+</script>
+<script>
+/* ===== raccourcis : « / » et Ctrl+K amènent à la recherche (le header le promet) ===== */
+document.addEventListener("keydown", function(e){
+  var a = document.activeElement, t = a ? a.tagName : "";
+  if(t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || (a && a.isContentEditable)) return;
+  var kk = (e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey);
+  if(e.key !== "/" && !kk) return;
+  var ch = document.getElementById("gs-q") || document.getElementById("q");
+  if(!ch) return;
+  e.preventDefault();
+  var ov = ch.closest(".gsbox, .gswrap, #gs, .palbox");
+  if(ov && getComputedStyle(ov).display === "none") ov.style.display = "";
+  ch.focus(); ch.select();
+});
+
+/* ===== compte : ouvrir le menu, se déconnecter ===== */
+function userMenu(e){
+  if(e) e.stopPropagation();
+  const u = document.getElementById("side-user");
+  if(!u) return;
+  const ouvert = u.classList.toggle("open");
+  u.setAttribute("aria-expanded", ouvert ? "true" : "false");
+}
+document.addEventListener("click", function(){
+  const u = document.getElementById("side-user");
+  if(u && u.classList.contains("open")){ u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+});
+document.addEventListener("keydown", function(e){
+  const u = document.getElementById("side-user");
+  if(e.key === "Escape" && u) { u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
+  if((e.key === "Enter" || e.key === " ") && document.activeElement === u){ e.preventDefault(); userMenu(); }
+});
+function logout(){
+  try{ if(typeof toast === "function") toast("Déconnexion…"); }catch(err){}
+  setTimeout(function(){ location.href = "connexion.html"; }, 350);
+}
+</script>
+<script>
+/* Compte connecté : le bloc en bas à gauche reflète la photo, le nom et le rôle
+   choisis dans Réglages > Utilisateurs (sauvegardés dans le navigateur). */
+(function(){
+  function appliqueCompte(){
+    var c = null;
+    try{ c = JSON.parse(localStorage.getItem("tigerflow-compte")); }catch(e){}
+    if(!c) return;
+    var box = document.getElementById("side-user");
+    if(!box) return;
+    var ph = box.querySelector(".ph");
+    if(ph){
+      if(c.photo){
+        ph.textContent = "";
+        ph.style.backgroundImage = "url(" + c.photo + ")";
+        ph.style.backgroundSize = "cover";
+        ph.style.backgroundPosition = "center";
+      } else {
+        ph.style.backgroundImage = "";
+        if(c.ini) ph.textContent = c.ini;
+      }
+    }
+    var info = null;
+    for(var i = 0; i < box.children.length; i++){
+      var el = box.children[i];
+      if(el.tagName === "DIV" && !el.classList.contains("umenu")){ info = el; break; }
+    }
+    if(info){
+      var b = info.querySelector("b"), r = info.querySelector("span");
+      if(b && c.nom) b.textContent = c.nom;
+      if(r && c.role) r.textContent = c.role;
+    }
+  }
+  window.appliqueCompte = appliqueCompte;
+  if(document.readyState !== "loading") appliqueCompte();
+  else document.addEventListener("DOMContentLoaded", appliqueCompte);
+})();
+</script>
+<script>
+/* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
+   champ date/heure ouvre le calendrier natif (avant, seule la minuscule icone marchait). */
+document.addEventListener("click", function(e){
+  var el = e.target;
+  if(el && el.matches && el.matches('input[type="date"],input[type="time"],input[type="month"]')){
+    try{ if(el.showPicker) el.showPicker(); }catch(err){}
+  }
+});
+</script>
+</body>
+</html>
