@@ -407,6 +407,29 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
 .bell svg{width:18px;height:18px}
 .bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:0.68rem;font-weight:700;min-width:17px;height:17px;border-radius:var(--r-sm);display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.bell:hover{border-color:var(--orange);color:var(--orange-deep)}
+/* ===== 12/08 : le panneau de la cloche — elle sonne quand TOI tu dois agir ===== */
+.bpop{position:absolute;top:calc(100% + 8px);right:0;z-index:60;width:392px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-3);padding:8px;display:none}
+.bpop.open{display:block}
+.bph{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 10px}
+.bph b{font-family:'Sora';font-size:0.92rem}
+.bph button{background:none;border:0;color:var(--orange-deep);font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;padding:0}
+.bph button:hover{text-decoration:underline}
+.brow{display:flex;gap:11px;align-items:flex-start;padding:11px 10px;border-radius:12px;text-decoration:none;color:inherit}
+.brow:hover{background:#F7F8FA}
+.brow.nu{background:#FFF9F5}
+.brow.nu:hover{background:#FFF3EC}
+.brow+.brow{margin-top:2px}
+.bic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}
+.bic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brow .bb{flex:1;min-width:0}
+.brow .bb b{display:block;font-size:0.8rem;line-height:1.35}
+.brow .bb small{display:block;font-size:0.72rem;color:var(--ink-2);line-height:1.45;margin-top:1px}
+.btime{font-size:0.66rem;color:var(--muted);font-weight:700;white-space:nowrap;margin-top:2px}
+.brow.nu .btime::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--orange);margin-right:5px}
+.bfoot{border-top:1px solid var(--line);margin-top:6px;padding:10px 10px 6px;text-align:center}
+.bfoot a{font-size:0.73rem;font-weight:700;color:var(--ink-2);text-decoration:none}
+.bfoot a:hover{color:var(--orange-deep)}
 /* Fond de la barre de recherche (charte TigerFlow, 28/07) : un degrade qui
    part du blanc et se rechauffe vers la droite, pour s'accorder au fond
    orange de la barre du haut sans devenir orange lui-meme. */
@@ -484,10 +507,44 @@ table.novs th:last-child,table.novs td:last-child{display:none}   /* vs mois der
         <div class="mpf">Ouvre l'agenda sur le mois choisi</div>
       </div>
     </div>
-    <button class="bell" aria-label="Notifications">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
-      <span class="dot">2</span>
-    </button>
+    <div class="mwrap">
+      <button class="bell" id="bellbtn" onclick="bellTog(event)" aria-label="Notifications" aria-haspopup="dialog" aria-expanded="false">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
+        <span class="dot" id="bell-dot">3</span>
+      </button>
+      <!-- 12/08 : la cloche notifie l'EXTERNE qui demande une action — devis lu/signé,
+           imprévu terrain, relance en échec, devis qui expire. Jamais le fonctionnement
+           normal (« relance J+3 envoyée » se lit dans la liste, pas ici). -->
+      <div class="bpop" id="bpop" onclick="event.stopPropagation()">
+        <div class="bph"><b id="bph-n">Notifications · 3 nouvelles</b><button onclick="bellLu()">Tout marquer lu</button></div>
+        <a class="brow nu" href="calendrier.html">
+          <span class="bic" style="background:var(--amber-bg);color:var(--amber)"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/></svg></span>
+          <span class="bb"><b>Imprévu — client absent</b><small>Pablo chez Raymond Berger (11 h, Paris 11ᵉ). Rappeler le client ou replanifier.</small></span>
+          <span class="btime">il y a 5 min</span>
+        </a>
+        <a class="brow nu" href="devis-liste.html">
+          <span class="bic" style="background:var(--green-bg);color:var(--green-d)"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <span class="bb"><b>Devis signé</b><small>M. Garnier — 1 240 € HT. À planifier en intervention.</small></span>
+          <span class="btime">il y a 32 min</span>
+        </a>
+        <a class="brow nu" href="devis-liste.html">
+          <span class="bic" style="background:var(--blue-bg);color:var(--blue)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <span class="bb"><b>Devis ouvert par le client</b><small>M. Thompson vient de lire son devis (536,80 €).</small></span>
+          <span class="btime">il y a 1 h</span>
+        </a>
+        <a class="brow" href="relances.html">
+          <span class="bic" style="background:var(--red-bg);color:var(--red)"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></span>
+          <span class="bb"><b>Relance non partie</b><small>L'e-mail de Barros (Les Glycines) est rejeté — vérifier l'adresse.</small></span>
+          <span class="btime">hier</span>
+        </a>
+        <a class="brow" href="devis-liste.html">
+          <span class="bic" style="background:var(--orange-soft);color:var(--orange-deep)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <span class="bb"><b>Devis bientôt expiré</b><small>Les Glycines — 2 180 € HT, expire dans 3 jours.</small></span>
+          <span class="btime">hier</span>
+        </a>
+        <div class="bfoot"><a href="reglages.html">Choisir ce qui te prévient — Réglages →</a></div>
+      </div>
+    </div>
   </div>
 
   <div class="page">
@@ -734,8 +791,25 @@ function moisDraw(){
     return '<button type="button" class="' + (cur ? "on" : "") + '" onclick="moisGo(' + i + ')">' + m + '</button>';
   }).join("");
 }
+function bellTog(e){
+  e.stopPropagation();
+  moisFerme();
+  const p = g("bpop"), b = g("bellbtn");
+  const ouvert = p.classList.toggle("open");
+  b.setAttribute("aria-expanded", ouvert ? "true" : "false");
+}
+function bellFerme(){
+  const p = g("bpop"); if(!p || !p.classList.contains("open")) return;
+  p.classList.remove("open"); g("bellbtn").setAttribute("aria-expanded", "false");
+}
+function bellLu(){
+  document.querySelectorAll("#bpop .brow.nu").forEach(x => x.classList.remove("nu"));
+  const d = g("bell-dot"); if(d) d.remove();
+  g("bph-n").textContent = "Notifications";
+}
 function moisTog(e){
   e.stopPropagation();
+  bellFerme();
   const p = g("mpop"), b = g("c-moisbtn");
   const ouvert = p.classList.toggle("open");
   b.setAttribute("aria-expanded", ouvert ? "true" : "false");
@@ -752,13 +826,13 @@ function moisGo(i){
 moisDraw();
 
 document.addEventListener("click", function(){
-  moisFerme();
+  moisFerme(); bellFerme();
   const u = document.getElementById("side-user");
   if(u && u.classList.contains("open")){ u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
 });
 document.addEventListener("keydown", function(e){
   const u = document.getElementById("side-user");
-  if(e.key === "Escape") moisFerme();
+  if(e.key === "Escape"){ moisFerme(); bellFerme(); }
   if(e.key === "Escape" && u) { u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
   if((e.key === "Enter" || e.key === " ") && document.activeElement === u){ e.preventDefault(); userMenu(); }
 });

@@ -155,6 +155,13 @@ body.mreflow .rapl .rf{font-size:0.68rem}
   stroke-linecap:round;stroke-linejoin:round;margin-top:2px}
 .pres{align-items:flex-start}
 .gar .pic{stroke:var(--green-d,#0F8A4F)}
+/* 12/08 (patron) : la remise est une LIGNE du devis — le client voit le geste
+   dans le corps du document, en gros, pas en petit dans les totaux. */
+.trem td{background:var(--green-bg,#ECFDF5)}
+.trem .pres .pic{stroke:var(--green-d,#047857)}
+.trem b{color:var(--green-d,#047857);letter-spacing:.02em}
+.trem small{color:#0B7A5E}
+.trem .rbig{font-family:'Sora',serif;font-size:1.32rem;font-weight:800;color:var(--green-d,#047857);white-space:nowrap}
 
 /* la quantite : le chiffre lisible, l'unite en second plan — « 1 intervention »
    sur une seule ligne volait 116 px a la designation. */
@@ -755,6 +762,14 @@ function pdfImprimer(nom){
   } else if(Fx.length){ Fx.forEach(function(f){ fht += +f.m || 0; ftva += (+f.m || 0) * (+f.tva || 10) / 100; }); }
   var rem = +rec.remise || 0;
   var scale = (ht > 0 && rem) ? (ht - rem) / ht : 1;
+  /* 12/08 (patron) : « ajoute une ligne au devis — REMISE COMMERCIALE
+     EXCEPTIONNELLE avec le montant en gros ». Derniere ligne du tableau. */
+  if(tb && rem){
+    var PICTAG = '<svg class="pic" viewBox="0 0 24 24"><path d="M20.6 13.4L12 22l-9-9V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.4"/></svg>';
+    tb.innerHTML += '<tr class="trem"><td><div class="pres">' + PICTAG +
+      '<span><b>REMISE COMMERCIALE EXCEPTIONNELLE</b><small>geste commercial appliqué sur l\'ensemble du devis</small></span></div></td>' +
+      '<td>—</td><td>—</td><td>—</td><td><span class="rbig">− ' + eur(rem) + '</span></td></tr>';
+  }
   put("ht", eur(ht));
   put("lbl-tva", "TVA");
   put("tva", eur(tva * scale + ftva));

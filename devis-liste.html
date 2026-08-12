@@ -128,7 +128,11 @@ h1,.num{font-family:'Sora',sans-serif}
 .kpi[role="button"]:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 
 
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
+.kpi.k-seqc{background:#FFF1EA;border-color:#FBD4BE}
+.kpi.k-seqc .num{color:#D2450A}
+.kpi.k-seqc .kico{background:#FDE3D2}
+.kpi.k-seqc .kico svg{stroke:#D2450A}
 .kpi{border-radius:18px;padding:16px 18px;border:1px solid transparent}
 .kpi.k-orange{background:var(--orange-soft);border-color:#FFD9C4}
 .kpi.k-green{background:var(--green-bg);border-color:#BFE5D8}
@@ -480,6 +484,10 @@ tr.torelance{box-shadow:inset 3px 0 0 #D9A408}
      le clic avait disparu, la mecanique de filtrage etait restee. -->
     <div class="kpis">
       <div class="kpi k-amber" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('envoye')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('envoye')}"><div class="kico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="lbl">En attente de réponse</div><div class="num" id="k-att-n">0</div><div class="ksub" id="k-att-m">—</div></div>
+      <!-- 12/08 (patron) : « t'as mis En séquence mais t'as pas de résumé » —
+           la cartouche jumelle du chip : combien de devis le robot relance,
+           pour combien d'euros. Cliquer = filtrer. -->
+      <div class="kpi k-seqc" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('seq')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('seq')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg></div><div class="lbl">En séquence de relance</div><div class="num" id="k-seq-n">0</div><div class="ksub" id="k-seq-m">—</div></div>
       <div class="kpi k-red" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('expire-proche')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('expire-proche')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div><div class="lbl">Expire bientôt</div><div class="num" id="k-exp-n">0</div><div class="ksub" id="k-exp-m">—</div></div>
       <div class="kpi k-green" role="button" tabindex="0" title="Filtrer la liste" onclick="kfil('gagne')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('gagne')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v5a5 5 0 01-10 0z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/></svg></div><div class="lbl">Devis signés</div><div class="num" id="k-sig-n">0</div><div class="ksub" id="k-sig-m">—</div></div>
       <div class="kpi k-cash"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div><div class="lbl">Taux de signature</div><div class="num" id="k-taux">0</div><div class="ksub" id="k-taux-s">—</div></div>
@@ -685,6 +693,9 @@ function stats(){
   const g = id => document.getElementById(id);
   g('k-att-n').textContent = nb(att.length, "devis").replace("deviss","devis");
   g('k-att-m').textContent = som(att);
+  const seqL = att.filter(d => REL.on);
+  g('k-seq-n').textContent = nb(seqL.length, "devis").replace("deviss","devis");
+  g('k-seq-m').textContent = seqL.length ? som(seqL) : "séquence désactivée";
   g('k-exp-n').textContent = nb(exp.length, "devis").replace("deviss","devis");
   g('k-exp-m').textContent = som(exp);
   g('k-sig-n').textContent = nb(sig.length, "devis").replace("deviss","devis");
@@ -719,7 +730,7 @@ function kringSync(f){
      les deux était cassé : la table pointait « k-orange », couleur disparue
      depuis la grammaire du 04/08 (la tuile Taux est passée en k-cash), et
      « Expire bientôt » n'était jamais surlignée. Cliquer l'une allume l'autre. */
-  const map = {gagne:"k-green", envoye:"k-amber", "expire-proche":"k-red"};
+  const map = {gagne:"k-green", envoye:"k-amber", "expire-proche":"k-red", seq:"k-seqc"};
   document.querySelectorAll(".kpi").forEach(k => k.classList.remove("on"));
   if(map[f]){ const el = document.querySelector(".kpi." + map[f]); if(el) el.classList.add("on"); }
 }
