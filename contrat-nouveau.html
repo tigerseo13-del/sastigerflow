@@ -948,6 +948,57 @@ function finCalc(){
     : '<svg class="bic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg> <small>selon la fréquence</small>';
 }
 
+/* ================= 12/08 — MODE ÉDITION =================
+   « Si je veux modifier le contrat, c'est où ? » : ici. On arrive avec
+   ?edit=<réf>, le formulaire se remplit, et l'enregistrement REMPLACE la
+   ligne au lieu d'en créer une nouvelle (même référence). */
+let EDITREF = null;
+(function(){
+  var r = new URLSearchParams(location.search).get("edit");
+  if(!r) return;
+  var box = [];
+  try{ box = JSON.parse(localStorage.getItem("tigerflow-inbox-contrats") || "[]"); }catch(e){}
+  var c = box.filter(function(x){ return x && x.ref === r; })[0];
+  if(!c){ setTimeout(function(){ toast("Contrat " + r + " introuvable — nouveau contrat"); }, 400); return; }
+  EDITREF = r;
+  document.addEventListener("DOMContentLoaded", function(){ ctrRemplir(c); });
+  if(document.readyState !== "loading") ctrRemplir(c);
+})();
+function ctrRemplir(c){
+  var set = function(id, v){ var e = g(id); if(!e || v == null || v === "") return;
+    e.value = v; e.dispatchEvent(new Event("input", {bubbles:true})); e.dispatchEvent(new Event("change", {bubbles:true})); };
+  set("v-client", c.client); set("v-titre", c.titre); set("v-type", c.type);
+  set("v-deb", c.deb); set("v-fin", c.fin); set("v-freqfac", c.freq);
+  set("v-ht", c.ht); set("v-tva", c.tva);
+  set("v-nbint", c.nbint); set("v-freqint", c.freqint);
+  set("v-renech", c.renech); set("v-notes", c.notes);
+  if(g("v-renouv")){ g("v-renouv").checked = c.renouv !== false; if(typeof renTog === "function") renTog(); }
+  if(g("v-signature")) g("v-signature").checked = !!c.signature;
+  var coche = function(sel, vals){
+    (vals || []).forEach(function(v){
+      document.querySelectorAll(sel).forEach(function(i){
+        if(i.value === v || (v && String(i.value).indexOf(String(v).split(" – ")[0]) === 0)){
+          i.checked = true; i.dispatchEvent(new Event("change", {bubbles:true}));
+        }
+      });
+    });
+  };
+  coche("#v-cats input", c.cats);
+  coche("#v-jours input", c.jours);
+  coche("#v-creneaux input", c.creneaux);
+  (c.materiel || []).forEach(function(m){ if(typeof matAdd === "function") matAdd(m.n, m.q); });
+  (c.checklist || []).forEach(function(t){ if(typeof ckAdd === "function") ckAdd(t); });
+  /* le titre de la page et le bouton disent qu'on MODIFIE, pas qu'on crée */
+  document.querySelectorAll("button").forEach(function(b){
+    if(/enregistrer et envoyer/i.test(b.textContent)) b.textContent = "Enregistrer les modifications";
+    else if(/^\s*enregistrer/i.test(b.textContent) && /brouillon/i.test(b.textContent)) b.textContent = "Enregistrer le brouillon";
+  });
+  var h = document.querySelector(".cur") || document.querySelector("h1");
+  if(h && /nouveau contrat/i.test(h.textContent)) h.textContent = "Modifier le contrat " + c.ref;
+  document.title = "Modifier " + c.ref + " — TigerFlow";
+  setTimeout(function(){ toast("Contrat " + c.ref + " ouvert — modifie ce que tu veux puis enregistre"); }, 500);
+}
+
 /* ================= MATÉRIEL & CHECKLIST ================= */
 let MATN = 0, CKN = 0;
 function matAdd(nom, q){
@@ -1116,7 +1167,7 @@ function saveContrat(statut){
   }
   const ht = parseFloat(g("v-ht").value) || 0;
   const ttc = ht * (1 + (parseFloat(g("v-tva").value) || 0) / 100);
-  const ref = "CTR-2026-" + String(10000 + Math.floor(Math.random() * 89999));
+  const ref = EDITREF || ("CTR-2026-" + String(10000 + Math.floor(Math.random() * 89999)));   /* 12/08 : en modification, la référence NE CHANGE PAS */
   const rec = {
     ref, client: g("v-client").value, ct: "",
     titre: g("v-titre").value.trim(),
@@ -1141,9 +1192,11 @@ function saveContrat(statut){
   }catch(e){}
   /* le local d'abord — il ne peut pas echouer — puis la base */
   sbSaveContrat(rec);
-  toast(statut === "brouillon"
-    ? "Brouillon " + ref + " enregistré — visible dans la liste des contrats"
-    : "Contrat " + ref + " enregistré et envoyé à " + rec.client);
+  toast(EDITREF
+    ? "Contrat " + ref + " mis à jour"
+    : (statut === "brouillon"
+       ? "Brouillon " + ref + " enregistré — visible dans la liste des contrats"
+       : "Contrat " + ref + " enregistré et envoyé à " + rec.client));
   setTimeout(() => { location.href = (typeof RETFICHE !== "undefined" && RETFICHE) ? "client.html?c=" + encodeURIComponent(RETFICHE) : "contrats-liste.html"; }, 1200);
 }
 

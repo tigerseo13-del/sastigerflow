@@ -551,14 +551,14 @@ function render(){
       <td class="ref">${c.ref}</td>
       <td class="acti" onclick="event.stopPropagation()">
         <button class="aic" onclick="ouvrirContrat('${c.ref}')" title="Voir le contrat"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-        <button class="aic" onclick="toast('Modification du contrat — bientôt reliée à l\'atelier')" title="Modifier"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>
+        <button class="aic" onclick="event.preventDefault();event.stopPropagation();location.href='contrat-nouveau.html?edit=' + encodeURIComponent(c.ref)" title="Modifier ce contrat"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>
         <button class="aic" onclick="rowMenu2(event,'${c.ref}')" title="Plus d'actions" style="font-weight:900">⋯</button>
       </td>
     </tr>`).join("")
     : `<tr><td colspan="9" class="empty-row">Aucun contrat ne correspond à cette recherche.<div class="emptyacts"><button type="button" class="ebtn" onclick="videFiltres()">Effacer les filtres</button><a class="ebtn primary" href="contrat.html">＋ Nouveau contrat</a></div></td></tr>`;
 
   document.getElementById("cards").innerHTML = list.length ? list.map(c => `
-    <a class="ccard" href="contrat.html?n=${encodeURIComponent(c.ref)}">
+    <a class="ccard" href="contrat.html?n=${encodeURIComponent(c.ref)}" onclick="ctrPousser('${c.ref}')">
       <div class="l1"><span class="ref">${c.ref}</span><span class="st st-${c.statut}">${LBL[c.statut]}</span></div>
       <b class="t">${c.titre}</b>
       <div class="cl2">${c.client} · ${c.ct} · ${c.freq}</div>
@@ -614,6 +614,27 @@ function rowMenu2(e, ref){
   document.body.appendChild(dd);
   RMEL = dd;
   setTimeout(() => { document.addEventListener("click", rmClose); window.addEventListener("scroll", rmClose, true); }, 0);
+}
+/* 12/08 (patron : « je peux télécharger le contrat sur tous les clients ? ») :
+   les contrats de cette liste vivent DANS la page. On les dépose dans le stock
+   avant d'ouvrir le document, sinon il afficherait un autre contrat. */
+function ctrPousser(ref){
+  try{
+    var box = JSON.parse(localStorage.getItem("tigerflow-inbox-contrats") || "[]");
+    if(!box.some(function(x){ return x && x.ref === ref; })){
+      var c = CONTRATS.filter(function(x){ return x.ref === ref; })[0];
+      if(c){
+        box.unshift({
+          ref: c.ref, client: c.client, titre: c.titre, statut: c.statut,
+          deb: c.cree, fin: c.fin, freq: c.freq,
+          ht: Math.round((c.montant || 0) / 1.2 * 100) / 100, tva: 20, montant: c.montant,
+          cats: [], materiel: [], checklist: [], nbint: 0, freqint: "", jours: [], creneaux: [],
+          renouv: true, renech: 12, notes: ""
+        });
+        localStorage.setItem("tigerflow-inbox-contrats", JSON.stringify(box.slice(0, 30)));
+      }
+    }
+  }catch(e){}
 }
 function rmDel(e, ref, el){
   e.stopPropagation();
@@ -1112,6 +1133,7 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
 <aside class="qdrawer" id="qdrawer"><div id="qbody"></div></aside>
 <script>
 function ouvrirContrat(ref){
+  ctrPousser(ref);   /* 12/08 : sans ça, « Exporter PDF » sur la fiche ne trouverait rien */
   location.href = "contrat.html?n=" + encodeURIComponent(ref);
 }
 /* Aperçu rapide : conservé en option (beta), il n'intercepte plus le clic. */
@@ -1130,7 +1152,7 @@ function qv(ref){
       <div class="qkv"><span>Référence</span><b style="font-family:ui-monospace,monospace;font-size:.74rem;color:var(--muted)">${c.ref}</b></div>
     </div>
     <div class="qacts">
-      <a class="qbig" href="contrat.html?n=${encodeURIComponent(c.ref)}">Ouvrir la fiche complète</a>
+      <a class="qbig" href="contrat.html?n=${encodeURIComponent(c.ref)}" onclick="ctrPousser('${c.ref}')">Ouvrir la fiche complète</a>
       ${c.statut === "renouveler" || c.statut === "expire" ? `<button class="qsec" onclick="toast('🔁 Proposition de renouvellement envoyée')">🔁 Proposer le renouvellement</button>` : ""}
       <a class="qsec" href="intervention-nouvelle.html">🗓️ Planifier une intervention</a>
     </div>`;
