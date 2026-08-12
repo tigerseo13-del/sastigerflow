@@ -126,16 +126,6 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 
 /* ===== compteurs ===== */
 .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin-bottom:14px}
-.kpis.rel3{grid-template-columns:repeat(3,1fr)}
-#k-rel-tile[hidden]{display:none}
-.krbtn{display:inline-flex;align-items:center;gap:7px;margin-top:9px;border:1.5px solid #E4E7EF;background:#fff;border-radius:10px;font-size:.74rem;font-weight:700;color:var(--ink-2);padding:8px 13px;font-family:inherit;cursor:pointer;transition:.12s}
-.krbtn:hover{border-color:#C9CDD8;background:#FBFBFC}
-.krbtn svg{width:12px;height:12px;fill:currentColor;stroke:none;flex:none}
-.krbtn.go{color:var(--green-d);border-color:#A7D9C4}
-.krbtn.go:hover{background:var(--green-bg)}
-.krbtn[hidden]{display:none}
-#k-rel-tile .num svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:-2px;margin-right:5px}
-#k-rel-tile.rpause .num{color:#8A8F9C}
 .kpi{border-radius:18px;padding:16px 18px;border:1px solid transparent}
 .kpi.k-orange{background:var(--orange-soft);border-color:#FFD9C4}
 /* 04/08 (patron, « 1 ») : le montant est un CHIFFRE, pas une action — tuile
@@ -776,7 +766,6 @@ a.hcli:hover{color:var(--orange-deep)}
       <div class="kpi k-green" id="k-etat-tile"><div class="lbl">État</div><div class="num" id="k-etat">—</div><span class="sub" id="k-etat-sub"></span></div>
       <!-- 12/08 (patron) : « si tu veux pas le faire, le stopper — tu le mets où ? »
            ICI : l'interrupteur des relances de CE devis, même clé que la liste. -->
-      <div class="kpi" id="k-rel-tile" hidden><div class="lbl">Relances automatiques<span style="font-size:.58rem;font-weight:800;background:#FFF1EA;color:#EA4A10;border:1px solid #FFD9C4;border-radius:7px;padding:2px 7px;letter-spacing:.06em;margin-left:7px;vertical-align:1px">BÊTA</span></div><div class="num" id="k-rel">—</div><span class="sub" id="k-rel-sub"></span><button class="krbtn" id="k-rel-btn" hidden onclick="relTogFiche()"></button></div>
     </div>
 
     <!-- onglets -->
@@ -1271,69 +1260,8 @@ function kpis(){
     : st === "expire" ? "Expiré" : st === "perdu" ? "Refusé" : "Prochaine étape";
   g('k-etat').innerHTML = pe[0] + ' <span class="knfl">→</span>';
   g('k-etat-sub').textContent = pe[2];
-  relFiche();
 }
 
-/* ===== relances de CE devis (12/08) — même moteur que la liste ===== */
-const RELKEY2 = "tigerflow-relance-devis-v2";
-const RELSVG2 = `<svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg>`;
-function relLit(){
-  let R = {on: true,
-    part: [{j:3, rem:0, mail:true, sms:true}, {j:7, rem:5, mail:true, sms:true}, {j:14, rem:10, mail:true, sms:false}],
-    pro:  [{j:5, rem:0, mail:true, sms:false}, {j:12, rem:5, mail:true, sms:false}, {j:21, rem:8, mail:true, sms:false}]};
-  try{
-    const sv = JSON.parse(localStorage.getItem(RELKEY2));
-    if(sv && sv.part && sv.pro){ R = sv; ["part", "pro", "syn"].forEach(k => (R[k] || []).forEach(st => { if(st.rem === undefined) st.rem = st.remise || 0; })); }
-  }catch(e){}
-  let P = new Set();
-  try{ P = new Set(JSON.parse(localStorage.getItem(RELKEY2 + "-pause") || "[]")); }catch(e){}
-  return {R, P};
-}
-function relFiche(){
-  const t = g('k-rel-tile');
-  if(!t || !REC) return;
-  const {R, P} = relLit();
-  const kw = t.closest('.kpis');
-  if(REC.statut !== "envoye" || !R.on){ t.hidden = true; if(kw) kw.classList.remove('rel3'); return; }
-  t.hidden = false;
-  if(kw) kw.classList.add('rel3');
-  const seq = REC.pro ? R.pro : R.part;
-  const age = Math.floor((new Date() - new Date(REC.date)) / 864e5);
-  const next = seq.find(st => st.j > age);
-  t.classList.remove('rpause');
-  const btn = g('k-rel-btn');
-  const svgPause = `<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`;
-  const svgPlay = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
-  if(P.has(REC.ref)){
-    t.classList.add('rpause');
-    g('k-rel').innerHTML = RELSVG2 + "En pause";
-    g('k-rel-sub').textContent = "le client n'est plus sollicité";
-    btn.hidden = false;
-    btn.className = "krbtn go";
-    btn.innerHTML = svgPlay + "Reprendre les relances";
-    btn.title = "Le devis reprend sa séquence là où elle en était";
-  } else if(next){
-    const dans = next.j - age;
-    g('k-rel').innerHTML = RELSVG2 + "Étape " + (seq.indexOf(next) + 1) + "/" + seq.length + " · J+" + next.j;
-    g('k-rel-sub').textContent = (dans <= 0 ? "prochaine : aujourd'hui" : "prochaine dans " + dans + " j") + (next.rem ? " · −" + next.rem + " %" : "");
-    btn.hidden = false;
-    btn.className = "krbtn";
-    btn.innerHTML = svgPause + "Stopper les relances";
-    btn.title = "Le client ne sera plus sollicité pour ce devis (« je réfléchis »)";
-  } else {
-    g('k-rel').innerHTML = RELSVG2 + "Séquence terminée";
-    g('k-rel-sub').textContent = "toutes les relances sont parties — au tour de la file d'appels";
-    btn.hidden = true;
-  }
-}
-function relTogFiche(){
-  if(!REC) return;
-  const {P} = relLit();
-  if(P.has(REC.ref)){ P.delete(REC.ref); toast("▶ Relances reprises pour " + REC.ref); }
-  else { P.add(REC.ref); toast("⏸ Relances en pause pour " + REC.ref + " — le client ne sera plus sollicité"); }
-  try{ localStorage.setItem(RELKEY2 + "-pause", JSON.stringify([...P])); }catch(e){}
-  relFiche();
-}
 let RELMODE = false;
 function details(){
   /* 30/07 — BUG (patron : « devis brouillon j'ai pas le nom ») : personne ne
