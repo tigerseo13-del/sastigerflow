@@ -157,13 +157,6 @@ ul{list-style:none}
 .rhero h1{font-family:'Sora';font-size:1.32rem;font-weight:800;letter-spacing:-.3px}
 .rhsub{font-size:.8rem;color:var(--muted);font-weight:500;margin-top:2px}
 .rhrow .relswitch{margin-left:auto}
-.rhstats{display:flex;gap:12px;margin-top:15px}
-.rstat{flex:1;background:#fff;border-radius:14px;box-shadow:0 6px 18px -8px rgba(234,74,16,.22);padding:13px 17px;text-decoration:none;color:inherit;transition:transform .13s,box-shadow .13s}
-.rstat:hover{transform:translateY(-2px);box-shadow:0 10px 24px -8px rgba(234,74,16,.3)}
-.rstat b{display:block;font-family:'Sora';font-weight:800;font-size:1.4rem;color:var(--ink)}
-.rstat b.v{color:var(--green-d)}
-.rstat b.o{color:var(--orange-deep)}
-.rstat span{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-top:2px}
 
 /* ── la frise du temps ── */
 .fstart{display:flex;align-items:center;gap:14px}
@@ -381,11 +374,6 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </div>
       <label class="relswitch"><input type="checkbox" id="rel-on" checked onchange="relSave()"> <b>Séquence active</b></label>
     </div>
-    <div class="rhstats">
-      <a class="rstat" href="devis-liste.html" title="Voir les devis en attente dans la liste"><b>12</b><span>devis en séquence en ce moment</span></a>
-      <a class="rstat" href="rapports.html" title="Le détail dans Rapport"><b class="v">+34 %</b><span>de signatures grâce aux relances</span></a>
-      <a class="rstat" href="rapports.html" title="Le détail dans Rapport"><b class="o">8 420 €</b><span>signés après relance ce mois-ci</span></a>
-    </div>
   </div>
 
   <div class="page">
@@ -539,13 +527,13 @@ function relSteps(list, key){
 function relGrpFrise(key){
   return `<div class="fstart"><span class="fj0">J 0</span><b>Devis envoyé</b></div>`
     + relSteps(REL[key], key)
-    + `<div class="fend">${relAddBtn(key)}</div>`;
+    ;   /* 12/08 (patron) : « on se limite à 3 » — plus de bouton d'ajout */
 }
-function relAddBtn(key){
-  /* 4 relances maximum : au-delà, ce n'est plus une relance, c'est du harcèlement */
-  return REL[key].length < 4 ? `<button class="raddl" onclick="relAdd('${key}')">+ Ajouter une relance</button>` : "";
-}
+function relAddBtn(){ return ""; }   /* 12/08 : conservé inerte — la séquence est fermée à 3 */
 function relRender(){
+  /* 12/08 : une séquence sauvegardée avant la limite peut porter 4 étapes —
+     on la ramène à 3 au lieu d'afficher ce qu'on ne sait plus créer. */
+  ["part","pro","syn"].forEach(k => { if(REL[k] && REL[k].length > 3) REL[k] = REL[k].slice(0, 3); });
   document.getElementById("rel-steps").innerHTML =
     `<p class="rgrp g-part"><span class="gic">${GICO.part}</span>Particuliers <small>— décident vite, on relance vite</small></p>` +
     relGrpFrise("part") +
@@ -564,7 +552,7 @@ function relDel(key, i, ev){
   toast(`Relance retirée — ${RELGRP[key]} : ${REL[key].length} relance${REL[key].length > 1 ? "s" : ""}`);
 }
 function relAdd(key){
-  if(REL[key].length >= 4) return;
+  if(REL[key].length >= 3) return;   /* 12/08 (patron) : 3 relances, pas une de plus */
   const der = REL[key][REL[key].length - 1];
   REL[key].push({j: Math.min(60, der.j + (key === "syn" ? 15 : 7)), rem: 0, mail: true, sms: false});
   APC = {g: key, i: REL[key].length - 1};

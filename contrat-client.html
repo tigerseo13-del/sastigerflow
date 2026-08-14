@@ -226,15 +226,7 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
     <p>Hors faute grave, la résiliation anticipée peut intervenir moyennant un <b>préavis écrit de 3 mois</b>.</p>
   </div>
 
-  <div class="pied">
-    <span id="pied2b">—</span>
-    <span>Page 2 / 3</span>
-  </div>
-</div>
-
-<!-- ============ PAGE 3 ============ -->
-<div class="sheet">
-  <div class="art" style="margin-top:0">
+  <div class="art">
     <h3>Article 9 — Confidentialité et données personnelles</h3>
     <p>Chaque partie s'engage à respecter la confidentialité des informations techniques et commerciales portées à sa connaissance dans le cadre de l'exécution du présent contrat.</p>
     <p>Les données personnelles collectées sont traitées pour les seuls besoins de l'exécution du contrat et conservées pendant la durée légale applicable. Le Client dispose d'un droit d'accès, de rectification et d'effacement qu'il peut exercer à l'adresse indiquée en tête du présent contrat.</p>
@@ -245,7 +237,15 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
     <p>Le présent contrat est soumis au droit français. En cas de litige, les parties s'efforceront de résoudre le différend à l'amiable. À défaut d'accord amiable dans un délai de deux mois, le litige sera porté devant la juridiction compétente.</p>
   </div>
 
-  <div class="anx" id="c-anx"></div>
+  <div class="pied">
+    <span id="pied2b">—</span>
+    <span>Page 2 / 3</span>
+  </div>
+</div>
+
+<!-- ============ PAGE 3 — annexe et signatures ============ -->
+<div class="sheet">
+  <div class="anx" id="c-anx" style="margin-top:0"></div>
 
   <div class="faitle" id="c-faitle">—</div>
 
@@ -343,11 +343,25 @@ try{
 if(!CL && C._demo) CL = {nom:"Restaurant Le Bistrot", adresse:"24 rue de la Roquette", cp:"75011", ville:"Paris",
   tel:"01 43 55 21 08", email:"contact@lebistrot-paris.fr", siret:"", contact:"M. Alain Berthier", type:"entreprise"};
 
+/* le RCS immatricule l'ENTREPRISE : c'est le SIREN (9 chiffres), pas le SIRET
+   (14, qui désigne l'établissement). Le SIRET reste au pied de page. */
+var siren = function(sir){
+  var d = String(sir || "").replace(/\D/g, "");
+  return d.length >= 9 ? d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6, 9) : (sir || "");
+};
+
+/* ---- dates : une date de début manquante retombe sur la date à laquelle le
+   contrat a été fait (patron 12/08) — un contrat sans date de départ ne veut
+   rien dire. ---- */
+var AUJ = new Date().toISOString().slice(0, 10);
+var D_CREE = C.cree || C.date || C.deb || AUJ;
+var D_DEB  = C.deb || C.cree || C.date || AUJ;
+
 /* ---- en-tête ---- */
 document.title = "Contrat " + C.ref + " — " + soc.nom;
 $("bt").textContent = "Contrat " + C.ref;
 $("c-ref").textContent = C.ref;
-$("c-date").textContent = "établi le " + jolie(C.deb ? (new Date().toISOString().slice(0,10)) : "");
+$("c-date").textContent = "établi le " + jolie(D_CREE);
 var logo = "";
 try{ logo = localStorage.getItem("tigerflow-logo") || ""; }catch(e){}
 $("logo").innerHTML = logo
@@ -357,12 +371,12 @@ $("logo").innerHTML = logo
 if(C.titre) $("c-titre").innerHTML = "CONTRAT DE PRESTATION DE SERVICES DE LUTTE ANTIPARASITAIRE<small>" + esc(C.titre) + "</small>";
 
 /* ---- les deux parties ---- */
+/* 12/08 (patron) : ni capital ni TVA dans l'en-tête du contrat — l'immatriculation
+   suffit. Le greffe suit la ville du siège tant qu'aucun RCS n'est renseigné. */
 $("p-presta").innerHTML =
   '<b class="nm">' + esc(soc.nom) + '</b>' +
-  esc(soc.forme) + (soc.capital ? ' au capital de ' + esc(soc.capital) : ' au capital de ' + VIDE.replace("&nbsp;","") + '') + '<br>' +
   'Dont le siège social est situé au ' + esc(soc.adr) + ', ' + esc(soc.cp) + ' ' + esc(soc.ville) + '<br>' +
-  'SIRET ' + esc(soc.siret) + ' · TVA ' + esc(soc.tva) + '<br>' +
-  'Immatriculée au RCS de ' + (soc.rcs ? esc(soc.rcs) : VIDE) + '<br>' +
+  'Immatriculée au RCS de ' + esc(soc.rcs || soc.ville) + ' sous le ' + esc(siren(soc.siret)) + '<br>' +
   'Représentée par ' + (soc.rep ? esc(soc.rep) : VIDE) + '<br>' +
   esc(soc.tel) + ' · ' + esc(soc.mail) +
   '<span class="role">Ci-après dénommée « le Prestataire »</span>';
@@ -397,12 +411,12 @@ $("c-passages").innerHTML = '<b>Nombre de passages prévus : ' + (C.nbint || "�
 
 /* ---- article 2 : durée ---- */
 var mois = 12;
-if(C.deb && C.fin){
-  var d1 = new Date(C.deb + "T12:00:00"), d2 = new Date(C.fin + "T12:00:00");
+if(D_DEB && C.fin){
+  var d1 = new Date(D_DEB + "T12:00:00"), d2 = new Date(C.fin + "T12:00:00");
   if(!isNaN(d1) && !isNaN(d2)) mois = Math.max(1, Math.round((d2 - d1) / 2629800000));
 }
 $("c-duree").innerHTML = 'Le présent contrat est conclu pour une durée initiale de <b>' + mois + ' mois</b>, à compter du <b>'
-  + jolie(C.deb) + '</b> et jusqu’au <b>' + jolie(C.fin) + '</b>.';
+  + jolie(D_DEB) + '</b>' + (C.fin ? ' et jusqu’au <b>' + jolie(C.fin) + '</b>' : '') + '.';
 $("c-recond").innerHTML = C.renouv === false
   ? 'Il prend fin de plein droit à son échéance, sans reconduction tacite.'
   : 'Il est renouvelable par tacite reconduction pour des périodes successives de même durée, sauf dénonciation par l’une des parties, adressée par lettre recommandée avec accusé de réception, <b>au moins 3 mois avant la date d’échéance</b>.';
@@ -430,7 +444,7 @@ $("c-anx").innerHTML = '<h4>Annexe — Périmètre du contrat</h4>' + (rows.leng
   : '<div class="row" style="color:var(--muted)">Périmètre à préciser.</div>');
 
 /* ---- fait à / signatures / pieds ---- */
-$("c-faitle").innerHTML = 'Fait à <b>' + esc(soc.ville) + '</b>, le <b>' + jolie(new Date().toISOString().slice(0,10))
+$("c-faitle").innerHTML = 'Fait à <b>' + esc(soc.ville) + '</b>, le <b>' + jolie(D_CREE)
   + '</b>, en deux exemplaires originaux, dont un remis à chaque partie.';
 $("s-presta").innerHTML = esc(soc.nom) + (soc.rep ? '<br>' + esc(soc.rep) : "") + '<br>Signature et cachet';
 var pied = soc.nom + " · " + soc.adr + ", " + soc.cp + " " + soc.ville + " · SIRET " + soc.siret + " · Contrat n° " + C.ref;

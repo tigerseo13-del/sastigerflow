@@ -619,9 +619,18 @@ h1,.num{font-family:'Sora',sans-serif}
 .wev .wn span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wev .wb .mchip{display:inline-block;margin-top:5px;font-size:.57rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wev .wc{font-size:.65rem;color:var(--muted);font-weight:600;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wev.done{opacity:.55}
-.wev.done .wn{text-decoration:line-through;text-decoration-thickness:1.5px}
-.wev.cancelled{opacity:.4}
+/* 14/08 : même grammaire qu'en vue jour — un bandeau vert pour ce qui est
+   fait, une croix pour ce qui n'a pas eu lieu. */
+.wev.done{opacity:1;background:#F7FCFA;border-color:#DCEEE5}
+.wev.done .wh{background:#EAF6EF;color:#4E8C74}
+.wev.done .wn{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.8}
+.wev.cancelled{opacity:1;background:#FDFAFA;border-color:#EFD5D3}
+.wev.cancelled .wh{background:#FBF0EF;color:#C99A96}
+.wev.cancelled .wn,.wev.cancelled .wc{color:#A98F8C}
+.wev.cancelled::before{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
+  background-image:
+    linear-gradient(to top right,transparent calc(50% - 1px),rgba(192,64,58,.45) calc(50% - 1px),rgba(192,64,58,.45) calc(50% + 1px),transparent calc(50% + 1px)),
+    linear-gradient(to bottom right,transparent calc(50% - 1px),rgba(192,64,58,.45) calc(50% - 1px),rgba(192,64,58,.45) calc(50% + 1px),transparent calc(50% + 1px))}
 .wev.cancelled .wn{text-decoration:line-through;text-decoration-thickness:1.5px}
 
 /* ----- Vue MOIS ----- */
@@ -2632,7 +2641,9 @@ function renderDay(){
             ? `<span class="lbadge dvlate">🔔 À relancer · ${dvEur(_dv.montant)}</span>`
             : `<span class="lbadge dvwait">📋 Devis en attente</span>`;
         } else {
-          badge = `<span class="lbadge okd">${(typeof REPORTS !== "undefined" && REPORTS[v.id]) ? "✓ Finalisée" : v.paid ? "✓ Encaissée" : "✓ Terminée"}</span>`;
+          /* 14/08 : la coche est portee par le filigrane de la carte — le badge
+             ne la repete plus (une info = un seul objet). */
+          badge = `<span class="lbadge okd">${(typeof REPORTS !== "undefined" && REPORTS[v.id]) ? "Finalisée" : v.paid ? "Encaissée" : "Terminée"}</span>`;
         }
       } else if(isToday){
         if(v.start <= NOWH && NOWH < v.start + v.dur) badge = `<span class="lbadge">En cours</span>`;
@@ -5726,8 +5737,47 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket.late::after{content:"";position:absolute;top:0;right:0;bottom:0;width:3px;background:#D63B33;border-radius:0 12px 12px 0;pointer-events:none}
 /* 30/07 (patron, ameliorations validees) : le travail FAIT s'efface — bloc
    couleur grise et carte en retrait, ce qui reste a faire saute aux yeux. */
-.ev.ticket.done .mgl,.ev.ticket.cancelled .mgl{filter:grayscale(1)}
-.ev.ticket.done,.ev.ticket.cancelled{opacity:.8}
+/* 14/08 (patron — visuels 221 et 227) : les deux états FINAUX doivent se lire
+   à deux mètres, sans lire un seul mot. Le grayscale + opacity .8 délavait
+   justement ce qu'on veut voir ; il est retiré au profit de deux signes francs.
+     TERMINÉE -> bandeau vert plein sur toute la largeur du haut (visuel 221)
+     ANNULÉE  -> la carte entière est rayée d'une croix (visuel 227)
+   Aucune couleur nouvelle : le vert et le rouge sont ceux du produit. */
+.ev.ticket.done{opacity:1;background:#F5FBF8;border-color:#DCEEE5}
+.ev.ticket.done .mgl{filter:none;background:#EAF6EF;color:#4E8C74}
+.ev.ticket.done .mgpin{stroke:#4E8C74}
+.ev.ticket.done .mgr{background:#FBFEFC}
+.ev.ticket.done .mgt b{color:#5E8A78}
+.ev.ticket.done .mgr3{color:#8AA79B}
+.ev.ticket.done .ltyp{opacity:.6}
+/* le badge porte TOUT le vert : lui seul est plein. La carte, elle, s'éteint. */
+.ev.ticket.done .lbadge.okd{background:#0E8A5F;color:#fff;border-color:#0E8A5F;position:relative;z-index:5}
+/* 14/08 (patron : « le vert pâle, on dirait pas que c'est fini ») — la couleur
+   ne suffisait pas : trois teintes, trois confusions. C'est la FORME qui parle,
+   comme la croix de l'annulée. Une grande coche traverse la carte.
+   DEUX SIGNES, UNE GRAMMAIRE : croix = ça n'a pas eu lieu · coche = c'est fait. */
+.ev.ticket.done::before{display:block;content:"";position:absolute;inset:0;
+  width:auto;height:auto;border-radius:0;background-color:transparent;z-index:4;pointer-events:none;
+  background-image:url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cpath%20d%3D%22M9%2033%20L25%2049%20L55%2015%22%20fill%3D%22none%22%20stroke%3D%22rgba%2814%2C138%2C95%2C.45%29%22%20stroke-width%3D%227%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E');background-repeat:no-repeat;
+  background-position:right 14px center;background-size:74px 74px}
+.ev.ticket.md.done::before{background-size:56px 56px;background-position:right 12px center}
+.ev.ticket.sm.done::before{background-size:42px 42px;background-position:right 11px center}
+.ev.ticket.xs.done::before{background-size:26px 26px;background-position:right 9px center}
+.ev.ticket.nrw.done::before{background-size:46px 46px;background-position:right 9px center}
+/* la croix : deux diagonales tracées d'un coin à l'autre, PAR-DESSUS le
+   contenu (z-index 4) pour qu'aucun texte ne vienne les couper. */
+.ev.ticket.cancelled{opacity:1;background:#FDFAFA}
+.ev.ticket.cancelled .mgl{filter:none;background:#FBF0EF;color:#C99A96}
+.ev.ticket.cancelled .mgpin{stroke:#C99A96}
+.ev.ticket.cancelled .mgr{background:#FDFAFA}
+.ev.ticket.cancelled .mgt b,.ev.ticket.cancelled .mgr3{color:#A98F8C}
+.ev.ticket.cancelled::before{display:block;content:"";position:absolute;inset:0;
+  width:auto;height:auto;border-radius:0;background-color:transparent;z-index:4;pointer-events:none;
+  background-image:
+    linear-gradient(to top right,transparent calc(50% - 1.1px),rgba(192,64,58,.45) calc(50% - 1.1px),rgba(192,64,58,.45) calc(50% + 1.1px),transparent calc(50% + 1.1px)),
+    linear-gradient(to bottom right,transparent calc(50% - 1.1px),rgba(192,64,58,.45) calc(50% - 1.1px),rgba(192,64,58,.45) calc(50% + 1.1px),transparent calc(50% + 1.1px))}
+/* le badge repasse au-dessus de la croix, sinon elle le barre */
+.ev.ticket.cancelled .lbadge.cancd{background:#C1352E;color:#fff;border:1px solid #C1352E;position:relative;z-index:5}
 /* survol vivant : la carte se souleve, jamais pendant un glisser */
 .ev.ticket{transition:transform .13s ease,box-shadow .15s ease}
 .ev.ticket:hover{transform:translateY(-1.5px);box-shadow:0 8px 22px -6px rgba(23,26,32,.22)}
