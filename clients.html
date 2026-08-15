@@ -604,7 +604,9 @@ async function sbLoad(silent){
     }
     if(!silent && data && data.length) toastLive("🔄 Liste synchronisée");
   }catch(e){
-    sbBanner("⚠️ Base injoignable (" + ((e && e.message) || "réseau") + ") — affichage de la démo.");
+    /* 15/08 : le detail technique va dans la console, pas sous les yeux du client. */
+    console.warn("[tigerflow] sbLoad :", (e && e.message) || e);
+    sbBanner("⚠️ Base injoignable — affichage de la démo. Vérifie ta connexion, la liste se resynchronise toute seule.");
   }
 }
 (async function(){
@@ -629,7 +631,11 @@ async function sbLoad(silent){
     /* ceinture + bretelles : au retour sur l'onglet (iPhone sorti de veille), on resynchronise */
     document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && SBON) sbLoad(true); });
   }catch(e){
-    sbBanner("⚠️ " + ((e && e.message) || "erreur"));
+    /* 15/08 : pas de message technique a l'ecran. Si la base n'est pas
+       joignable (hors ligne, cle absente, fichier ouvert en local), la page
+       reste en demo SANS rien dire — c'est le comportement normal, pas une
+       panne a annoncer. La console garde la trace pour nous. */
+    console.warn("[tigerflow] base hors ligne — mode démo :", (e && e.message) || e);
   }
 })();
 function sbBanner(html){
