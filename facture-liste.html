@@ -398,6 +398,13 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
 .st-attente  {color:var(--amber);background:var(--amber-bg)}
 .st-payee    {color:var(--green-d);background:var(--green-bg)}
 .st-retard   {color:var(--red);background:var(--red-bg)}
+/* 15/08 (patron, visuel 229) : trois degrés de retard, et le nombre de jours
+   écrit dans la pastille. « En retard » ne se trie pas ; « 51 j » se trie —
+   on sait par quelle facture commencer le lundi matin. */
+.st-ret1{color:#9A6B08;background:#FDF3DF}
+.st-ret2{color:#C6421B;background:#FDEADF}
+.st-ret3{color:#fff;background:#C1352E}
+.st-ret3::before{background:#fff}
 .st-annulee  {color:#6C7285;background:#F1F2F5}
 .anby{display:block;font-size:.64rem;color:#8A90A0;margin-top:2px}
 .st-partiel  {color:var(--blue);background:#EBF1FE}
@@ -485,7 +492,7 @@ tr.overdue{box-shadow:inset 3px 0 0 var(--red)}
       </div>
       <div class="chips" id="chips">
         <button class="chip on" data-f="all">Toutes <span class="n" id="n-all"></span></button>
-        <button class="chip" data-f="brouillon">Pro forma <span class="n" id="n-brouillon"></span></button>
+        <button class="chip" data-f="brouillon">Brouillon &amp; pro forma <span class="n" id="n-brouillon"></span></button>
         <button class="chip" data-f="attente">À payer <span class="n" id="n-attente"></span></button>
         <button class="chip" data-f="payee">Payée <span class="n" id="n-payee"></span></button>
         <button class="chip" data-f="retard">En retard <span class="n" id="n-retard"></span></button>
@@ -556,16 +563,17 @@ function dcal(iso){
 }
 const DEVIS = [
   {ref:"FAC-2026-00873", client:"Ironwood Solutions",   ct:"John Thompson",   titre:"Punaises de lit — appartement T3",      montant:536.80,  statut:"brouillon", date:"2026-08-25", valid:"2026-09-24"},
+  {ref:"FAC-2026-00874", client:"Camping Val de Seine", ct:"Josette Blot",    titre:"Chenilles — devis validé, à facturer",  montant:890.00,  statut:"brouillon", date:"2026-08-26", valid:"2026-09-25"},
   {ref:"FAC-2026-00872", client:"Boulangerie Dupont",   ct:"Raymond Berger",  titre:"Acompte 30 % — dératisation fournil",   montant:447.00,  statut:"attente",   date:"2026-08-23", valid:"2026-09-22"},
   {ref:"FAC-2026-00871", client:"Hôtel du Parc",        ct:"Sophie Larson",   titre:"Punaises de lit — 6 chambres (solde)",  montant:1596.00, statut:"attente",   date:"2026-08-20", valid:"2026-09-04"},
   {ref:"FAC-2026-00870", client:"Restaurant Le Baobab", ct:"Awa Diallo",      titre:"Traitement cafards cuisine + plonge",   montant:720.50,  statut:"payee",     date:"2026-08-19", valid:"2026-09-18"},
   {ref:"FAC-2026-00869", client:"M. et Mme Garnier",    ct:"Particulier",     titre:"Nid de frelons — jardin",               montant:165.00,  statut:"payee",     date:"2026-08-02", valid:"2026-08-02"},
-  {ref:"FAC-2026-00868", client:"Copropriété Les Lilas",ct:"Syndic Foncia",   titre:"Dératisation caves — passage 2/4",      montant:585.00,  statut:"retard",    date:"2026-07-10", valid:"2026-08-09"},
+  {ref:"FAC-2026-00868", client:"Copropriété Les Lilas",ct:"Syndic Foncia",   titre:"Dératisation caves — passage 2/4",      montant:585.00,  statut:"retard",    date:"2026-07-20", valid:"2026-08-19"},
   {ref:"FAC-2026-00867", client:"Café de la Gare",      ct:"Babacar",   titre:"Dératisation cave + terrasse",          montant:410.00,  statut:"payee",     date:"2026-07-12", valid:"2026-08-11"},
-  {ref:"FAC-2026-00866", client:"Pharmacie Centrale",   ct:"Roger Seguin",    titre:"Contrat 3D — trimestre 3",              montant:964.87,  statut:"retard",    date:"2026-06-30", valid:"2026-07-30"},
+  {ref:"FAC-2026-00866", client:"Pharmacie Centrale",   ct:"Roger Seguin",    titre:"Contrat 3D — trimestre 3",              montant:964.87,  statut:"retard",    date:"2026-07-04", valid:"2026-08-03"},
   {ref:"FAC-2026-00865", client:"Entrepôt Central",     ct:"Josette Blot",    titre:"Dépigeonnage — acompte 40 %",           montant:1260.00, statut:"payee",     date:"2026-07-02", valid:"2026-08-01"},
   {ref:"FAC-2026-00864", client:"Crèche Les Poussins",  ct:"Nadia Benali",    titre:"Désinfection annuelle NF",              montant:495.00,  statut:"payee",     date:"2026-06-24", valid:"2026-07-24"},
-  {ref:"FAC-2026-00863", client:"Boucherie Martel",     ct:"Paul Martel",     titre:"Intervention souris — boutique",        montant:230.00,  statut:"attente",   date:"2026-08-24", valid:"2026-08-31"},
+  {ref:"FAC-2026-00863", client:"Boucherie Martel",     ct:"Paul Martel",     titre:"Intervention souris — boutique",        montant:230.00,  statut:"attente",   date:"2026-05-30", valid:"2026-06-29"},
   {ref:"FAC-2026-00862", client:"Résidence Beau Site",  ct:"Syndic Citya",    titre:"Chenilles processionnaires — 4 pins",   montant:890.00,  statut:"payee",     date:"2026-06-15", valid:"2026-07-15"},
 ];
 DEVIS.forEach(function(d){ d.date = dcal(d.date); d.valid = dcal(d.valid); });
@@ -589,7 +597,7 @@ DEVIS.forEach(function(d){ d.date = dcal(d.date); d.valid = dcal(d.valid); });
    retard) : les factures deja enregistrees continuent de s'afficher. Seuls
    les libelles changent. La cle « proforma » pointe sur le meme libelle que
    « brouillon » — c'est la fusion, vue de l'ecran. */
-const LBL = {payee:"Payée", retard:"En retard", attente:"À payer", brouillon:"Pro forma", partiel:"Partiellement payée", proforma:"Pro forma", annulee:"Annulée par un avoir"};
+const LBL = {payee:"Payée", retard:"En retard", attente:"À payer", brouillon:"Brouillon", partiel:"Partiellement payée", proforma:"Pro forma", annulee:"Annulée par un avoir"};
 /* 06/08 (visuel 57) : sous la pastille « Annulee », QUEL avoir l'a annulee */
 function anInfo(d){
   if(stAff(d) !== 'annulee') return '';
@@ -607,22 +615,72 @@ function anInfo(d){
    change pas ; c'est son LIBELLE qui le dit. */
 const ENVOIS = (() => { try{ return JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {}; }catch(e){ return {}; } })();
 const estPF = ref => { const e = ENVOIS[ref]; return !!(e && e.proforma); };
-/* Une facture non validee EST une pro forma : elle porte le libelle, elle doit
-   donc porter la meme couleur, qu'elle ait ete envoyee ou non. */
-const stAff = d => (d.statut === "brouillon") ? "proforma" : d.statut;
+/* 15/08 (patron : « c'est mieux Brouillon ou Pro forma ? ») — LES DEUX, et
+   chacun à sa place. Ce ne sont pas deux mots pour le même objet :
+     Brouillon → document de travail, jamais sorti d'ici. Modifiable, invisible
+                 du client, il n'engage rien.
+     Pro forma → le MÊME document, mais ENVOYÉ. C'est un document provisoire à
+                 valeur commerciale (il sert à obtenir un accord ou un acompte)
+                 et sans valeur comptable : ni TVA exigible, ni créance.
+   Le mot « pro forma » est écrit sur le document que le client reçoit — l'employer
+   pour une facture jamais envoyée lui fait perdre son sens. Et surtout : la
+   question du bureau, c'est « laquelle ai-je déjà envoyée ? ». En affichant tout
+   en « Pro forma » on effaçait exactement cette réponse.
+   estPF() existait déjà, il lit le registre des envois. */
+const stAff = d => (d.statut === "brouillon")
+  ? (estPF(d.ref) ? "proforma" : "brouillon")
+  : d.statut;
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
 const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014"; const [y,m,d]=String(iso).split("-"); return d+"/"+m+"/"+y; };
 let FILTRE = "all";
 function joursRestants(d){
   return Math.ceil((new Date(d.valid) - TODAY) / 86400000);
 }
+/* ===== 15/08 — LES TROIS DÉLAIS DE RETARD DE PAIEMENT (visuel 229) =====
+   Les deux seuils sont ici et nulle part ailleurs : 15 jours, c'est le temps
+   qu'un oubli se corrige et qu'un virement arrive. 45 jours après l'échéance
+   d'une facture à 30 jours, on est à 75 jours d'émission — au-delà du plafond
+   légal de 60 jours : ça ne rentre plus tout seul. */
+const RET_S1 = 15;   /* Retard  → Relance */
+const RET_S2 = 45;   /* Relance → Impayé  */
+/* « En retard » n'est pas un statut saisi : c'est « à payer » + échéance
+   dépassée. Une seule règle, pour la pastille comme pour le filtre. */
+function enRetard(d){
+  return (d.statut === "retard") ||
+         (d.statut === "attente" && joursRestants(d) < 0);
+}
+function joursRetard(d){ return Math.max(0, -joursRestants(d)); }
+/* Le palier : la classe, le mot, et le compteur de jours. */
+function palier(d){
+  if(!enRetard(d)) return null;
+  const r = joursRetard(d);
+  if(r <= RET_S1) return {k:"ret1", lbl:"Retard · "  + r + " j"};
+  if(r <= RET_S2) return {k:"ret2", lbl:"Relance · " + r + " j"};
+  return                 {k:"ret3", lbl:"Impayé · "  + r + " j"};
+}
+/* La pastille de statut, une seule fabrique pour les 3 endroits qui l'affichent
+   (ligne du tableau, carte mobile, aperçu) — sinon elles divergent. */
+/* Le filtre des chips, écrit UNE fois : le tableau et son pied de page
+   doivent lire exactement la même liste, sinon les deux divergent (c'est
+   arrivé : pied « 3 factures », tableau 2 lignes). */
+function passeFiltre(d){
+  if(FILTRE === "all")     return true;
+  if(FILTRE === "retard")  return enRetard(d);
+  if(FILTRE === "attente") return d.statut === "attente" && !enRetard(d);
+  return d.statut === FILTRE;
+}
+function stPill(d){
+  const p = palier(d);
+  return p ? `<span class="st st-${p.k}">${p.lbl}</span>`
+           : `<span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span>`;
+}
 function expChip(d){
   const j = joursRestants(d);
-  if(d.statut==="retard") return `<span class="exp urgent">En retard de ${-j} j</span>`;
+  /* 15/08 : le nombre de jours de retard vit maintenant DANS la pastille de
+     statut (« Relance · 19 j »). L'écrire une 2e fois ici serait un doublon :
+     une info = un seul objet. La puce ne parle plus que de l'à-venir. */
+  if(enRetard(d)) return "";
   if(d.statut==="attente"){
-    /* 04/08 (bug patron) : une facture « À payer » dont la date est passée
-       affichait « Échéance dans -2 j ». Elle est en retard, on le dit. */
-    if(j < 0)  return `<span class="exp urgent">En retard de ${-j} j</span>`;
     if(j === 0) return `<span class="exp urgent">Échéance aujourd'hui</span>`;
     if(j<=3) return `<span class="exp urgent">Échéance dans ${j} j</span>`;
     if(j<=8) return `<span class="exp warn">Échéance dans ${j} j</span>`;
@@ -669,8 +727,11 @@ window.addEventListener("scroll", () => document.querySelectorAll(".rmw.open").f
 /* ================= KPI + compteurs ================= */
 function stats(){
   const p = DEVIS.filter(d=>d.statut==="payee");
-  const a = DEVIS.filter(d=>d.statut==="attente");
-  const r = DEVIS.filter(d=>d.statut==="retard");
+  /* 15/08 : une facture « à payer » dont l'échéance est passée EST en retard.
+     Elle comptait dans « À payer » et pas dans « En retard » — le montant
+     affiché était donc faux. Une seule règle : enRetard(). */
+  const r = DEVIS.filter(enRetard);
+  const a = DEVIS.filter(d=>d.statut==="attente" && !enRetard(d));
   const tot = DEVIS.reduce((s,d)=>s+d.montant,0);
   const enc = p.reduce((s,d)=>s+d.montant,0);
   document.getElementById('k-tot').textContent = eur(tot);
@@ -683,7 +744,10 @@ function stats(){
   document.getElementById('k-enc-n').textContent = nbf(p.length);
   document.getElementById('k-att-n').textContent = nbf(a.length);
   document.getElementById('k-ret-n').textContent = nbf(r.length);
-  const cnt = f => f==="all" ? DEVIS.length : DEVIS.filter(d=>d.statut===f).length;
+  const cnt = f => f==="all" ? DEVIS.length
+    : f==="retard"  ? DEVIS.filter(enRetard).length
+    : f==="attente" ? DEVIS.filter(d=>d.statut==="attente" && !enRetard(d)).length
+    : DEVIS.filter(d=>d.statut===f).length;
   ["all","brouillon","attente","payee","retard"].forEach(f=>{
     document.getElementById('n-'+f).textContent = "(" + cnt(f) + ")";
   });
@@ -719,7 +783,7 @@ function render(){
   const q = document.getElementById('q').value.toLowerCase();
   const sort = document.getElementById('sort').value;
   let list = DEVIS.filter(d =>
-    (FILTRE==="all" || d.statut===FILTRE) &&
+    passeFiltre(d) &&
     (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q) || String(d.montant).includes(q.replace(",", ".")))
   );
   if(sort==="montant-d") list.sort((a,b)=>b.montant-a.montant);
@@ -736,7 +800,7 @@ function render(){
       <td class="cl"><b>${d.client}</b><small>${d.ct}</small></td>
       <td>${d.titre}</td>
       <td class="amt">${eur(d.montant)}</td>
-      <td><span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span>${anInfo(d)}</td>
+      <td>${stPill(d)}${anInfo(d)}</td>
       <td class="dte">${fdate(d.valid)}${expChip(d)}</td>
       <td class="ref">${d.ref}</td>
       <!-- 28/07 : le rendez-vous d'ou vient la facture. Un tiret quand elle a
@@ -750,7 +814,7 @@ function render(){
 
   document.getElementById('cards').innerHTML = slice.length ? slice.map(d=>`
     <a class="fmc" href="facture-detail.html?ref=${encodeURIComponent(d.ref)}">
-      <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span></div>${anInfo(d)}
+      <div class="l1"><span class="ref">${d.ref}</span>${stPill(d)}</div>${anInfo(d)}
       <b class="t">${d.titre}</b>
       <div class="cl">${d.client} · ${d.ct}</div>
       <div class="l2"><span class="amt">${eur(d.montant)}</span><span class="dte">éch. ${fdate(d.valid)} ${expChip(d)}</span></div>
@@ -941,7 +1005,7 @@ function openFac(ref){
   document.getElementById("dbody").innerHTML = `
     <div class="dcard dhead2">
       <div class="drow1">
-        <span class="st st-${stAff(d)}">${LBL[stAff(d)]}</span>
+        ${stPill(d)}
         <button class="dclose" onclick="closeFac()">✕</button>
       </div>
       <h2>${d.client}</h2>
@@ -1585,10 +1649,10 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
     try{
       const q = (document.getElementById("q") || {value:""}).value.toLowerCase();
       const list = DEVIS.filter(d =>
-        (FILTRE === "all" || d.statut === FILTRE) &&
+        passeFiltre(d) &&
         ((d.client || "").toLowerCase().includes(q) || (d.ref || "").toLowerCase().includes(q) || (d.titre || "").toLowerCase().includes(q)));
       const tot = list.reduce((a, d) => a + (d.montant || 0), 0);
-      const due = list.filter(d => d.statut === "retard" || d.statut === "attente" || d.statut === "partiel")
+      const due = list.filter(d => enRetard(d) || d.statut === "attente" || d.statut === "partiel")
                       .reduce((a, d) => a + (d.montant || 0), 0);
       document.getElementById("sumline").innerHTML =
         list.length + " facture" + (list.length > 1 ? "s" : "") + " · total <b>" + eur(tot) + "</b>" +

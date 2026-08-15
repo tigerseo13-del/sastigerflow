@@ -1193,6 +1193,26 @@ const STL = {brouillon:["#F1EAFD","#5B3BC4","#B79BF0","Pro forma"], proforma:["#
              attente:["var(--blue-bg)","var(--blue-d)","var(--blue)","À payer"],
              payee:["var(--green-bg)","var(--green-d)","var(--green)","Payée"], retard:["var(--red-bg)","var(--red)","var(--red)","En retard"],
              annulee:["#F1F2F5","#6C7285","#C9CEDA","Annulée par un avoir"]};
+/* ===== 15/08 (patron, visuel 229) — LES TROIS DÉLAIS DE RETARD =====
+   Mêmes seuils que la liste des factures : 15 jours (l'oubli se corrige, le
+   virement arrive), 45 jours (au-delà, on est à 75 jours d'émission sur une
+   facture à 30 jours — plus loin que le plafond légal de 60 : ça ne rentre
+   plus tout seul). Le NOMBRE DE JOURS est écrit dans la pastille. */
+const RET_S1 = 15, RET_S2 = 45;
+const STL_RET = {
+  ret1:["#FDF3DF","#9A6B08","#D9A408","Retard"],
+  ret2:["#FDEADF","#C6421B","#F26722","Relance"],
+  ret3:["#C1352E","#fff","#fff","Impayé"]
+};
+function palierRet(){
+  const j = joursEch();
+  if(effStatut() !== "retard" || j === null || j >= 0) return null;
+  const r = -j;
+  const k = r <= RET_S1 ? "ret1" : r <= RET_S2 ? "ret2" : "ret3";
+  const c = STL_RET[k].slice();
+  c[3] = c[3] + " · " + r + " j";
+  return c;
+}
 
 /* avoirs : registre persistant */
 const AK = "tigerflow-factures-avoirs";
@@ -1220,7 +1240,7 @@ function effStatut(){
   return st;
 }
 function badge(){
-  const st = effStatut(), c = STL[st] || STL.attente;
+  const st = effStatut(), c = palierRet() || STL[st] || STL.attente;
   const b = g('h-badge');
   b.style.background = c[0]; b.style.color = c[1];
   b.querySelector('i').style.background = c[2];
@@ -1249,7 +1269,13 @@ function kpis(){
   /* le solde raconte la situation : rouge en retard, orange à encaisser, vert soldé */
   const tile = g('k-solde-tile'), sub = g('k-solde-sub'), st = effStatut();
   tile.className = "kpi " + (solde <= 0 ? "k-green" : st === "retard" ? "k-red" : "k-orange");
-  sub.textContent = solde <= 0 ? "✓ facture soldée" + (av > 0 ? " (avoir " + eur(av) + " déduit)" : "") : (st === "retard" ? "⚠ paiement en retard — relance conseillée" : "à encaisser" + (av > 0 ? " · avoir − " + eur(av) : ""));
+  /* 15/08 : le sous-texte du solde dit le PALIER et le geste qui va avec —
+     un rappel à 6 jours, un appel à 22, une mise en demeure à 57. */
+  const _p = palierRet();
+  const _geste = _p ? ({"Retard":"un rappel par mail suffit","Relance":"appeler le client et relancer par écrit","Impayé":"mise en demeure — pénalités de retard + indemnité 40 €"})[_p[3].split(" · ")[0]] : "";
+  sub.textContent = solde <= 0 ? "✓ facture soldée" + (av > 0 ? " (avoir " + eur(av) + " déduit)" : "")
+    : (_p ? "⚠ " + _p[3].toLowerCase() + " — " + _geste
+          : "à encaisser" + (av > 0 ? " · avoir − " + eur(av) : ""));
   sub.style.color = solde <= 0 ? "var(--green-d)" : st === "retard" ? "var(--red)" : "var(--orange-deep)";
   /* jauge de paiement */
   const pct = REC.montant > 0 ? Math.min(100, Math.round(paye / REC.montant * 100)) : 0;
