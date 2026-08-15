@@ -1194,14 +1194,17 @@ const STL = {brouillon:["#F1EAFD","#5B3BC4","#B79BF0","Pro forma"], proforma:["#
              payee:["var(--green-bg)","var(--green-d)","var(--green)","Payée"], retard:["var(--red-bg)","var(--red)","var(--red)","En retard"],
              annulee:["#F1F2F5","#6C7285","#C9CEDA","Annulée par un avoir"]};
 /* ===== 15/08 (patron, visuel 229) — LES TROIS DÉLAIS DE RETARD =====
-   Mêmes seuils que la liste des factures : 15 jours (l'oubli se corrige, le
-   virement arrive), 45 jours (au-delà, on est à 75 jours d'émission sur une
-   facture à 30 jours — plus loin que le plafond légal de 60 : ça ne rentre
-   plus tout seul). Le NOMBRE DE JOURS est écrit dans la pastille. */
-const RET_S1 = 15, RET_S2 = 45;
+   Mêmes seuils que la liste des factures. 15 jours : le temps qu'un oubli se
+   corrige et qu'un virement arrive. 30 jours (choix du patron, 15/08) : sur une
+   facture à 30 jours de délai, J+30 après échéance = 60 jours depuis l'émission,
+   soit EXACTEMENT le plafond légal français (art. L441-10). « Impayé » démarre
+   donc pile quand le délai devient illégal. Le NOMBRE DE JOURS est dans la
+   pastille. */
+const RET_S1 = 15, RET_S2 = 30;
+/* 15/08 : deux mots, trois couleurs. Le chiffre fait la gradation. */
 const STL_RET = {
   ret1:["#FDF3DF","#9A6B08","#D9A408","Retard"],
-  ret2:["#FDEADF","#C6421B","#F26722","Relance"],
+  ret2:["#FDEADF","#C6421B","#F26722","Retard"],
   ret3:["#C1352E","#fff","#fff","Impayé"]
 };
 function palierRet(){
@@ -1271,8 +1274,13 @@ function kpis(){
   tile.className = "kpi " + (solde <= 0 ? "k-green" : st === "retard" ? "k-red" : "k-orange");
   /* 15/08 : le sous-texte du solde dit le PALIER et le geste qui va avec —
      un rappel à 6 jours, un appel à 22, une mise en demeure à 57. */
-  const _p = palierRet();
-  const _geste = _p ? ({"Retard":"un rappel par mail suffit","Relance":"appeler le client et relancer par écrit","Impayé":"mise en demeure — pénalités de retard + indemnité 40 €"})[_p[3].split(" · ")[0]] : "";
+  const _p = palierRet(), _j = _p ? parseInt(_p[3].split("· ")[1]) : 0;
+  /* le mot dit l'état, ce sous-texte dit le geste — c'est ici qu'il a sa place,
+     pas dans une pastille de statut. */
+  const _geste = !_p ? ""
+    : _j <= RET_S1 ? "un rappel par mail suffit"
+    : _j <= RET_S2 ? "appeler le client, puis relancer par écrit"
+    : "mise en demeure — pénalités de retard + indemnité 40 €";
   sub.textContent = solde <= 0 ? "✓ facture soldée" + (av > 0 ? " (avoir " + eur(av) + " déduit)" : "")
     : (_p ? "⚠ " + _p[3].toLowerCase() + " — " + _geste
           : "à encaisser" + (av > 0 ? " · avoir − " + eur(av) : ""));

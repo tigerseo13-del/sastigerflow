@@ -637,12 +637,15 @@ function joursRestants(d){
   return Math.ceil((new Date(d.valid) - TODAY) / 86400000);
 }
 /* ===== 15/08 — LES TROIS DÉLAIS DE RETARD DE PAIEMENT (visuel 229) =====
-   Les deux seuils sont ici et nulle part ailleurs : 15 jours, c'est le temps
-   qu'un oubli se corrige et qu'un virement arrive. 45 jours après l'échéance
-   d'une facture à 30 jours, on est à 75 jours d'émission — au-delà du plafond
-   légal de 60 jours : ça ne rentre plus tout seul. */
-const RET_S1 = 15;   /* Retard  → Relance */
-const RET_S2 = 45;   /* Relance → Impayé  */
+   Les deux seuils sont ici et nulle part ailleurs.
+   15 jours : le temps qu'un oubli se corrige et qu'un virement arrive — un
+     virement SEPA met 1 à 3 jours, une compta de syndic traite par lots.
+   30 jours (choix du patron, 15/08) : sur une facture à 30 jours de délai,
+     J+30 après échéance = 60 jours depuis l'émission — EXACTEMENT le plafond
+     légal français (art. L441-10). « Impayé » démarre donc pile au moment où
+     le délai devient illégal. Ce n'est plus un seuil d'opinion, c'est un fait. */
+const RET_S1 = 15;   /* retard ambre  → retard orange */
+const RET_S2 = 30;   /* retard orange → impayé rouge  */
 /* « En retard » n'est pas un statut saisi : c'est « à payer » + échéance
    dépassée. Une seule règle, pour la pastille comme pour le filtre. */
 function enRetard(d){
@@ -654,9 +657,11 @@ function joursRetard(d){ return Math.max(0, -joursRestants(d)); }
 function palier(d){
   if(!enRetard(d)) return null;
   const r = joursRetard(d);
-  if(r <= RET_S1) return {k:"ret1", lbl:"Retard · "  + r + " j"};
-  if(r <= RET_S2) return {k:"ret2", lbl:"Relance · " + r + " j"};
-  return                 {k:"ret3", lbl:"Impayé · "  + r + " j"};
+  /* 15/08 (patron : « pourquoi Relance ? ») — un STATUT dit un ÉTAT, pas un
+     geste. Deux mots suffisent : c'est le nombre de jours et la couleur qui
+     disent la gravité. « Relance » était en plus un mot sorti du produit. */
+  if(r <= RET_S2) return {k: r <= RET_S1 ? "ret1" : "ret2", lbl:"Retard · " + r + " j"};
+  return                 {k:"ret3", lbl:"Impayé · " + r + " j"};
 }
 /* La pastille de statut, une seule fabrique pour les 3 endroits qui l'affichent
    (ligne du tableau, carte mobile, aperçu) — sinon elles divergent. */
@@ -677,7 +682,7 @@ function stPill(d){
 function expChip(d){
   const j = joursRestants(d);
   /* 15/08 : le nombre de jours de retard vit maintenant DANS la pastille de
-     statut (« Relance · 19 j »). L'écrire une 2e fois ici serait un doublon :
+     statut (« Retard · 19 j »). L'écrire une 2e fois ici serait un doublon :
      une info = un seul objet. La puce ne parle plus que de l'à-venir. */
   if(enRetard(d)) return "";
   if(d.statut==="attente"){
