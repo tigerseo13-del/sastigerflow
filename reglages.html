@@ -738,6 +738,24 @@ function regSaveAll(){
   box.querySelectorAll(".togr").forEach((r, i) => {
     const t = r.querySelector(".tgl"); if(t) d["tog" + i] = t.classList.contains("on");
   });
+  /* ===== 15/08 — LE PONT VERS LES DOCUMENTS =====
+     Les champs sont stockés sous leur id technique (« f-reglage-6 »), ce qui
+     ne veut rien dire pour les pages qui les lisent. Le contrat, lui, demande
+     soc.representant, soc.rcs, soc.siret… On écrit donc EN PLUS les mêmes
+     valeurs sous des noms parlants, dans le même objet. Une seule saisie,
+     deux lectures possibles — et plus aucun document ne sort en pointillés
+     parce qu'un identifiant a changé de numéro. */
+  if(SPK === "info"){
+    const PONT = {
+      "f-reglage-1":"nom", "f-reglage-2":"adresse", "f-reglage-2b":"cp", "f-reglage-2c":"ville",
+      "f-reglage-3":"tel", "f-reglage-4":"email", "f-reglage-5":"site",
+      "f-reglage-6":"siret", "f-reglage-7":"tvaNum", "f-reglage-8":"objectifJour",
+      "f-reglage-9":"banque", "f-reglage-10":"iban", "f-reglage-11":"bic",
+      "f-reglage-21":"representant", "f-reglage-22":"rcs",
+      "f-reglage-23":"certibiocide", "f-reglage-24":"rcpro"
+    };
+    Object.keys(PONT).forEach(function(id){ if(id in d) d[PONT[id]] = d[id]; });
+  }
   try{ localStorage.setItem(RKEY, JSON.stringify(all)); }catch(e){}
 }
 function regFill(){
@@ -801,6 +819,17 @@ R.info = () => `
       <div class="full"><label class="lab" for="f-reglage-5">Site web</label><input id="f-reglage-5" placeholder="https://exemple.com"></div>
       <div><label class="lab" for="f-reglage-6">Numéro SIRET</label><input id="f-reglage-6" value="10392054200018"></div>
       <div><label class="lab" for="f-reglage-7">Numéro de TVA</label><input id="f-reglage-7" placeholder="FRXX999999999"></div>
+      <!-- 15/08 (patron : « le nom des représentants, il se remplit comment ? »)
+           Ces quatre champs alimentent LE CONTRAT : sans eux, le document sort
+           avec des pointillés à la place du signataire et des numéros légaux. -->
+      <div><label class="lab" for="f-reglage-21">Représentant légal</label><input id="f-reglage-21" value="Mikael Ka">
+        <div class="hint">Le nom qui apparaît sur les contrats : « Représentée par… ». Ajoute la qualité (gérant, président) après le nom.</div></div>
+      <div><label class="lab" for="f-reglage-22">RCS de</label><input id="f-reglage-22" placeholder="Ex. : Paris">
+        <div class="hint">Ville du greffe d'immatriculation. Écrit sur le contrat : « Immatriculée au RCS de Paris sous le… ».</div></div>
+      <div><label class="lab" for="f-reglage-23">Numéro Certibiocide</label><input id="f-reglage-23" placeholder="Ex. : CB-2024-XXXXXX">
+        <div class="hint">Obligatoire pour l'usage professionnel de produits biocides. Il figure à l'article 4 du contrat.</div></div>
+      <div><label class="lab" for="f-reglage-24">Police RC professionnelle</label><input id="f-reglage-24" placeholder="N° de contrat d'assurance">
+        <div class="hint">Numéro du contrat d'assurance responsabilité civile professionnelle, cité à l'article 4.</div></div>
       <div class="full"><label class="lab" for="f-reglage-8">Objectif de chiffre d'affaires journalier (€)</label><input id="f-reglage-8" type="number" value="5000">
         <div class="hint">Utilisé par la carte « Chiffre d'affaires du jour » du tableau de bord pour suivre la progression par rapport à votre objectif journalier.</div></div>
     </div>

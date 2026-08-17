@@ -21,6 +21,13 @@
 <style>
 :root{
   --orange:#FF5A1F; --orange-deep:#D63B05; --orange-soft:#FFF1E9; --orange-line:#FFD9C7;
+  /* 15/08 (patron) : sur le DOCUMENT CLIENT, les titres d'articles passent du
+     rouge-orange au bleu du logo Agence Antinuisible. L'orange reste réservé à
+     l'interface (bouton « Télécharger le PDF ») — il ne va plus sur le papier.
+     #01296F n'est pas choisi à l'œil : c'est la couleur relevée AU PIXEL dans
+     logo-agence.png, celle du mot « ANTI ». Les deux teintes dérivées sont
+     calculées à partir d'elle (mélange avec du blanc), pas approximées. */
+  --marine:#01296F; --marine-soft:#F2F5FA; --marine-line:#C5CFE2;
   --ink:#171A20; --ink-2:#3D434E; --muted:#8A90A0;
   --line:#E9EBF0; --line-2:#F2F3F6; --bg:#F5F6F9;
   color-scheme:light only;
@@ -64,16 +71,20 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
 .et{display:grid;place-items:center;font-size:0.72rem;font-weight:800;color:var(--muted)}
 
 /* ===== articles ===== */
-.art{margin-top:13px;break-inside:avoid}
-.art h3{font-size:0.79rem;font-weight:800;color:var(--orange-deep);margin:0 0 4px;letter-spacing:.01em;
-  border-bottom:1px solid var(--orange-line);padding-bottom:3px}
-.art p{margin:0 0 4px;font-size:0.715rem;line-height:1.66;color:var(--ink-2)}
-.art ul{margin:2px 0 5px;padding-left:15px}
-.art li{font-size:0.715rem;line-height:1.62;color:var(--ink-2);margin-bottom:1.5px}
+.art{margin-top:15px;break-inside:avoid}
+.art h3{font-size:0.79rem;font-weight:800;color:var(--marine);margin:0 0 6px;letter-spacing:.01em;
+  border-bottom:1px solid var(--marine-line);padding-bottom:4px}
+.art p{margin:0 0 5.5px;font-size:0.715rem;line-height:1.66;color:var(--ink-2)}
+.art p:last-child{margin-bottom:0}
+.art ul{margin:4px 0 9px;padding-left:15px}
+.art li{font-size:0.715rem;line-height:1.62;color:var(--ink-2);margin-bottom:3px}
 .art b{color:var(--ink);font-weight:700}
 
 /* cases a cocher des prestations */
-.cks{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;margin:5px 0 6px}
+/* 15/08 (patron) : la grille des nuisibles est une LISTE — elle a besoin
+   d'air en dessous, sinon « Nombre de passages prévus » lui reste collé et on
+   croit lire une 9e case. */
+.cks{display:grid;grid-template-columns:1fr 1fr;gap:5px 18px;margin:8px 0 11px}
 .ck{display:flex;align-items:flex-start;gap:7px;font-size:0.715rem;line-height:1.55;color:var(--ink-2)}
 .ck i{width:11px;height:11px;border:1.3px solid var(--ink-2);border-radius:2px;flex:none;margin-top:3px;position:relative;font-style:normal}
 .ck.on i{background:var(--ink);border-color:var(--ink)}
@@ -81,11 +92,13 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
 .ck.on{color:var(--ink);font-weight:600}
 
 /* le tableau de prix */
-.fin{width:100%;border-collapse:collapse;margin:6px 0 5px}
-.fin td{padding:6px 9px;font-size:0.715rem;border-bottom:1px solid var(--line-2);color:var(--ink-2)}
+/* 15/08 (patron) : le tableau de prix se termine sur « Rythme de facturation ».
+   Le paragraphe des conditions de règlement qui suit doit s'en détacher. */
+.fin{width:100%;border-collapse:collapse;margin:9px 0 12px}
+.fin td{padding:6.5px 9px;font-size:0.715rem;border-bottom:1px solid var(--line-2);color:var(--ink-2)}
 .fin td:last-child{text-align:right;font-weight:700;color:var(--ink);white-space:nowrap}
 .fin tr:last-child td{border-bottom:0}
-.fin tr.tt td{background:var(--orange-soft);font-family:Sora;font-weight:800;color:var(--ink);font-size:0.78rem;border-bottom:0}
+.fin tr.tt td{background:var(--marine-soft);font-family:Sora;font-weight:800;color:var(--ink);font-size:0.78rem;border-bottom:0}
 
 /* champ a completer — jamais inventer une mention legale */
 .vide{display:inline-block;min-width:112px;border-bottom:1px dotted #B9BEC9;color:#B9BEC9}
@@ -105,7 +118,8 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
 .faitle{font-size:0.715rem;color:var(--ink-2);margin-top:13px;line-height:1.7}
 
 .pied{margin-top:auto;padding-top:9px;border-top:1px solid var(--line);font-size:0.62rem;color:var(--muted);
-  display:flex;justify-content:space-between;gap:14px;line-height:1.5}
+  display:flex;justify-content:center;align-items:center;gap:10px;line-height:1.5;text-align:center}
+.pied span+span::before{content:"·";margin-right:10px;color:#C9CEDA}
 
 /* ===== impression ===== */
 @page{size:A4;margin:0}
@@ -156,9 +170,10 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
 
   <div class="art">
     <h3>Article 1 — Objet du contrat</h3>
-    <p>Le présent contrat a pour objet la réalisation par le Prestataire, dans les locaux du Client désignés en annexe, de prestations de lutte contre les nuisibles, à savoir :</p>
+    <p id="c-objet"></p>
     <div class="cks" id="c-cats"></div>
     <p id="c-passages"></p>
+    <p id="c-typectr"></p>
     <p>Les prestations sont exécutées avec des produits biocides autorisés à la mise sur le marché, appliqués selon les règles de l'art et la réglementation en vigueur.</p>
   </div>
 
@@ -173,12 +188,11 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
     <table class="fin" id="c-fin"></table>
     <p>Les factures sont payables par virement ou prélèvement dans un délai de <b>30 jours</b> à compter de leur date d'émission.</p>
     <p>Tout retard de paiement donnera lieu, sans mise en demeure préalable, à une pénalité égale à <b>trois fois le taux d'intérêt légal</b>, ainsi qu'à une <b>indemnité forfaitaire de 40 euros</b> pour frais de recouvrement (art. L.441-10 et D.441-5 du Code de commerce).</p>
-    <p>Les prix pourront être révisés une fois par an, à la date anniversaire du contrat, après information écrite du Client adressée au moins deux mois avant la date d'effet.</p>
   </div>
 
   <div class="pied">
     <span id="pied1">—</span>
-    <span>Page 1 / 3</span>
+    <span>Page 1 / 2</span>
   </div>
 </div>
 
@@ -188,12 +202,10 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
     <h3>Article 4 — Obligations du Prestataire</h3>
     <p>Le Prestataire s'engage à :</p>
     <ul>
-      <li>exécuter les prestations avec diligence et compétence, selon les règles de l'art et la réglementation applicable ;</li>
-      <li>n'employer que des produits autorisés, appliqués par du personnel formé et titulaire du <b>Certibiocide</b> n° <span class="vide" id="c-certi">&nbsp;</span> ;</li>
-      <li>respecter les normes d'hygiène, de sécurité et de protection de l'environnement, et tenir les fiches de données de sécurité des produits à disposition du Client ;</li>
-      <li>disposer des agréments et d'une assurance responsabilité civile professionnelle en cours de validité, police n° <span class="vide" id="c-rcpro">&nbsp;</span> ;</li>
-      <li>remettre au Client, après chaque passage, un <b>rapport d'intervention</b> mentionnant les constats, les produits utilisés, les zones traitées et les préconisations ;</li>
-      <li>tenir à jour le <b>plan de lutte</b> (plan des locaux, postes d'appâtage numérotés, relevés de consommation) et le mettre à disposition lors des contrôles sanitaires.</li>
+      <li>exécuter les prestations avec diligence, compétence et selon les règles de l'art ;</li>
+      <li>respecter les normes d'hygiène, de sécurité et environnementales ;</li>
+      <li>disposer des agréments et assurances nécessaires à son activité ;</li>
+      <li>fournir un bon d'intervention après chaque prestation.</li>
     </ul>
   </div>
 
@@ -201,51 +213,39 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
     <h3>Article 5 — Obligations du Client</h3>
     <p>Le Client s'engage à :</p>
     <ul>
-      <li>faciliter l'accès aux locaux et aux installations à traiter aux dates et créneaux convenus ;</li>
-      <li>informer le Prestataire de toute difficulté particulière (présence d'animaux, de denrées alimentaires, de personnes sensibles, allergies, travaux en cours) ;</li>
-      <li>appliquer les préconisations figurant au rapport d'intervention, notamment les mesures d'hygiène, de rangement et d'obturation des accès signalés ;</li>
-      <li>ne pas déplacer, ouvrir ni détériorer les dispositifs posés par le Prestataire ;</li>
+      <li>faciliter l'accès aux installations et équipements à entretenir ;</li>
+      <li>informer le Prestataire de toute difficulté particulière ;</li>
       <li>régler les factures dans les délais convenus ;</li>
-      <li>fournir, sur demande, les documents techniques et l'historique des interventions antérieures.</li>
+      <li>fournir les documents techniques ou historiques d'intervention sur demande.</li>
     </ul>
   </div>
 
   <div class="art">
-    <h3>Article 6 — Résultat et garantie</h3>
-    <p>Le Prestataire est tenu d'une obligation de moyens renforcée. En cas de réapparition constatée de l'infestation traitée dans un délai de <b>30 jours</b> suivant un passage, une intervention complémentaire est réalisée <b>sans frais supplémentaires</b>, sous réserve que le Client ait respecté les préconisations du rapport et que les conditions du site n'aient pas été modifiées.</p>
+    <h3>Article 6 — Responsabilité</h3>
+    <p>Le Prestataire est responsable des dommages causés par sa faute ou sa négligence.</p>
+    <p>Il ne pourra être tenu responsable en cas de force majeure ou d'informations erronées fournies par le Client.</p>
   </div>
 
   <div class="art">
-    <h3>Article 7 — Responsabilité</h3>
-    <p>Le Prestataire est responsable des dommages causés par sa faute ou sa négligence dans l'exécution des prestations. Il ne pourra être tenu responsable en cas de force majeure, d'informations erronées ou incomplètes fournies par le Client, ni des conséquences du non-respect des préconisations.</p>
-  </div>
-
-  <div class="art">
-    <h3>Article 8 — Résiliation</h3>
-    <p>Chaque partie pourra résilier le présent contrat en cas de manquement grave de l'autre partie à ses obligations, après mise en demeure adressée par lettre recommandée avec accusé de réception restée sans effet pendant <b>30 jours</b>.</p>
+    <h3>Article 7 — Résiliation</h3>
+    <p>Chaque partie pourra résilier le présent contrat en cas de manquement grave de l'autre partie, après mise en demeure restée sans effet pendant <b>30 jours</b>.</p>
     <p>Hors faute grave, la résiliation anticipée peut intervenir moyennant un <b>préavis écrit de 3 mois</b>.</p>
   </div>
 
   <div class="art">
-    <h3>Article 9 — Confidentialité et données personnelles</h3>
-    <p>Chaque partie s'engage à respecter la confidentialité des informations techniques et commerciales portées à sa connaissance dans le cadre de l'exécution du présent contrat.</p>
-    <p>Les données personnelles collectées sont traitées pour les seuls besoins de l'exécution du contrat et conservées pendant la durée légale applicable. Le Client dispose d'un droit d'accès, de rectification et d'effacement qu'il peut exercer à l'adresse indiquée en tête du présent contrat.</p>
+    <h3>Article 8 — Confidentialité</h3>
+    <p>Le Prestataire s'engage à respecter la confidentialité des informations techniques et commerciales portées à sa connaissance dans le cadre de l'exécution du présent contrat.</p>
   </div>
 
+  <!-- 15/08 : le dernier article et les signatures vivent sur la MÊME feuille
+       que les articles 4 à 8. Une fois les clauses inventées retirées, tout
+       tient sur deux pages — comme le contrat de référence. -->
   <div class="art">
-    <h3>Article 10 — Droit applicable et litiges</h3>
-    <p>Le présent contrat est soumis au droit français. En cas de litige, les parties s'efforceront de résoudre le différend à l'amiable. À défaut d'accord amiable dans un délai de deux mois, le litige sera porté devant la juridiction compétente.</p>
+    <h3>Article 9 — Droit applicable — Litiges</h3>
+    <p>Le présent contrat est soumis au droit français.</p>
+    <p>En cas de litige, les parties s'efforceront de résoudre le différend à l'amiable.</p>
+    <p id="c-tribunal">À défaut, le tribunal compétent sera seul compétent.</p>
   </div>
-
-  <div class="pied">
-    <span id="pied2b">—</span>
-    <span>Page 2 / 3</span>
-  </div>
-</div>
-
-<!-- ============ PAGE 3 — annexe et signatures ============ -->
-<div class="sheet">
-  <div class="anx" id="c-anx" style="margin-top:0"></div>
 
   <div class="faitle" id="c-faitle">—</div>
 
@@ -256,13 +256,13 @@ body{margin:0;background:var(--bg);font-family:Inter,system-ui,sans-serif;color:
     </div>
     <div class="sigb">
       <b>Le Client</b>
-      <small>Signature et cachet, précédées de la mention manuscrite « Lu et approuvé »</small>
+      <small id="s-client">Signature et cachet</small>
     </div>
   </div>
 
   <div class="pied">
-    <span id="pied3">—</span>
-    <span>Page 3 / 3</span>
+    <span id="pied2b">—</span>
+    <span>Page 2 / 2</span>
   </div>
 </div>
 
@@ -404,7 +404,13 @@ $("c-cats").innerHTML = liste.map(function(n){
 }).join("");
 
 var freqTxt = {Mensuelle:"par mois", Trimestrielle:"par trimestre", Semestrielle:"par semestre", Annuelle:"par an", Hebdomadaire:"par semaine"};
-$("c-passages").innerHTML = '<b>Nombre de passages prévus : ' + (C.nbint || "—") + ' par an</b>'
+/* 15/08 (patron) : plus jamais de « — passages par an ». Si le nombre n'a pas
+   été saisi, la fréquence le donne — même table que les boutons du formulaire. */
+var PARAN = {Mensuelle:12, Bimestrielle:6, Trimestrielle:4, Semestrielle:2, Annuelle:1};
+var _fq = String(C.freqint || C.freq || "").trim();
+var _fqk = _fq ? _fq.charAt(0).toUpperCase() + _fq.slice(1).toLowerCase() : "";
+var nbPass = parseInt(C.nbint, 10) || PARAN[_fqk] || null;
+$("c-passages").innerHTML = '<b>Nombre de passages prévus : ' + (nbPass ? nbPass : VIDE) + ' par an</b>'
   + (C.freqint ? ' — fréquence ' + esc(String(C.freqint).toLowerCase()) : "")
   + ((C.jours || []).length ? ', de préférence le ' + esc(C.jours.join(", ").toLowerCase()) : "")
   + ((C.creneaux || []).length ? ' sur le créneau ' + esc(C.creneaux.join(", ")) : "") + '.';
@@ -419,41 +425,64 @@ $("c-duree").innerHTML = 'Le présent contrat est conclu pour une durée initial
   + jolie(D_DEB) + '</b>' + (C.fin ? ' et jusqu’au <b>' + jolie(C.fin) + '</b>' : '') + '.';
 $("c-recond").innerHTML = C.renouv === false
   ? 'Il prend fin de plein droit à son échéance, sans reconduction tacite.'
+  /* 15/08 (patron) : le préavis de dénonciation est TOUJOURS de 3 mois — il ne
+     se règle pas contrat par contrat. Écrit en dur, volontairement. */
   : 'Il est renouvelable par tacite reconduction pour des périodes successives de même durée, sauf dénonciation par l’une des parties, adressée par lettre recommandée avec accusé de réception, <b>au moins 3 mois avant la date d’échéance</b>.';
+
+/* ---- article 1 : le lieu du chantier et le type de contrat ---- */
+/* 15/08 (patron) : « dans les locaux du Client » ne suffisait pas — un client
+   qui a trois restaurants ne sait pas lequel est couvert. L'adresse du site
+   vient du contrat s'il en porte une, sinon de la fiche client. */
+var lieu = [C.adresse || cl.adresse, C.cp || cl.cp, C.ville || cl.ville].filter(Boolean).join(", ");
+$("c-objet").innerHTML = 'Le présent contrat a pour objet la réalisation par le Prestataire, '
+  + (lieu ? 'dans les locaux du Client situés <b>' + esc(lieu) + '</b>' : 'dans les locaux du Client')
+  + ', de prestations de lutte contre les nuisibles, notamment :';
+$("c-typectr").innerHTML = C.type ? '<b>Type de contrat : ' + esc(C.type) + '</b>' : "";
 
 /* ---- article 3 : le prix ---- */
 var ht = +C.ht || 0, tx = (C.tva === 0 || C.tva) ? +C.tva : 20;
-var ttc = C.montant || Math.round(ht * (1 + tx / 100) * 100) / 100;
+/* 15/08 (patron) : HT et TTC se déduisent l'un de l'autre. Avant, saisir un
+   prix TTC laissait le HT à zéro et faisait passer tout le montant en TVA. */
+var r2 = function(n){ return Math.round((+n || 0) * 100) / 100; };
+var ttc = +C.montant || 0;
+if(!ht && ttc) ht = r2(ttc / (1 + tx / 100));      /* on n'a que le TTC */
+if(!ttc && ht) ttc = r2(ht * (1 + tx / 100));      /* on n'a que le HT  */
+var tva = r2(ttc - ht);
 var perAn = {Mensuelle:12, Trimestrielle:4, Semestrielle:2, Annuelle:1}[C.freq] || 1;
 $("c-fin").innerHTML =
   '<tr><td>Montant des prestations (hors taxes)</td><td>' + eur(ht) + ' HT</td></tr>' +
-  '<tr><td>TVA ' + tx + ' %</td><td>' + eur(ttc - ht) + '</td></tr>' +
+  '<tr><td>TVA ' + tx + ' %</td><td>' + eur(tva) + '</td></tr>' +
   '<tr class="tt"><td>Montant total toutes taxes comprises</td><td>' + eur(ttc) + ' TTC</td></tr>' +
   '<tr><td>Rythme de facturation</td><td>' + esc(C.freq || "Annuelle") + (perAn > 1 ? " (" + perAn + " factures par an)" : "") + '</td></tr>';
 
 /* ---- annexe : ce que le contrat couvre vraiment ---- */
-var rows = [];
-if(cl.adresse || cl.ville) rows.push(["Lieu d’intervention", [cl.adresse, cl.cp, cl.ville].filter(Boolean).join(", ")]);
-if((C.materiel || []).length) rows.push(["Matériel posé", C.materiel.map(function(m){ return m.n + " × " + m.q; }).join(" · ")]);
-if((C.checklist || []).length) rows.push(["Points de contrôle", C.checklist.join(" · ")]);
-if((C.jours || []).length) rows.push(["Jours d’intervention", C.jours.join(", ")]);
-if((C.creneaux || []).length) rows.push(["Créneaux", C.creneaux.join(", ")]);
-if(C.notes) rows.push(["Conditions particulières", C.notes]);
-$("c-anx").innerHTML = '<h4>Annexe — Périmètre du contrat</h4>' + (rows.length
-  ? rows.map(function(r){ return '<div class="row"><span>' + esc(r[0]) + '</span>' + esc(r[1]) + '</div>'; }).join("")
-  : '<div class="row" style="color:var(--muted)">Périmètre à préciser.</div>');
+/* 15/08 : l'annexe « Périmètre du contrat » a été retirée — elle n'existe pas
+   dans le contrat de référence. Les jours et créneaux restent dits à l'article 1,
+   avec le nombre de passages. */
+
+/* le tribunal est celui du siège du Prestataire, comme dans le modèle */
+$("c-tribunal").innerHTML = 'À défaut, le tribunal de <b>' + esc(soc.ville) + '</b> sera seul compétent.';
 
 /* ---- fait à / signatures / pieds ---- */
 $("c-faitle").innerHTML = 'Fait à <b>' + esc(soc.ville) + '</b>, le <b>' + jolie(D_CREE)
-  + '</b>, en deux exemplaires originaux, dont un remis à chaque partie.';
-$("s-presta").innerHTML = esc(soc.nom) + (soc.rep ? '<br>' + esc(soc.rep) : "") + '<br>Signature et cachet';
+  + '</b>.<br>En deux exemplaires originaux.';
+/* 15/08 (patron) : quand le contrat est prévu en signature électronique, on
+   n'imprime plus une case à signer au stylo. La signature électronique a la
+   même valeur qu'une manuscrite (art. 1367 du Code civil) — le document le dit,
+   et le cachet n'est plus demandé. */
+var ESIGN = C.signature === true;
+$("s-presta").innerHTML = esc(soc.nom) + (soc.rep ? '<br>' + esc(soc.rep) : "")
+  + '<br>' + (ESIGN ? 'Signature électronique' : 'Signature et cachet');
+if(ESIGN && $("s-client"))
+  $("s-client").innerHTML = 'Signature électronique — le Client signe depuis le lien reçu par courriel.'
+    + '<br>Elle a la même valeur qu’une signature manuscrite (art. 1367 du Code civil).';
 var pied = soc.nom + " · " + soc.adr + ", " + soc.cp + " " + soc.ville + " · SIRET " + soc.siret + " · Contrat n° " + C.ref;
 ["pied1","pied2b","pied3"].forEach(function(k){ if($(k)) $(k).textContent = pied; });
 
-/* les champs que la société n'a pas encore renseignés restent VIDES et
-   visibles : on n'invente jamais une mention légale. */
-if(soc.certi) $("c-certi").outerHTML = "<b>" + esc(soc.certi) + "</b>";
-if(soc.rcpro) $("c-rcpro").outerHTML = "<b>" + esc(soc.rcpro) + "</b>";
+/* 15/08 : le n° Certibiocide et la police RC Pro ne figurent plus sur le
+   document — le contrat de référence dit seulement « disposer des agréments et
+   assurances nécessaires ». Les deux champs restent saisissables dans Réglages :
+   ils servent aux autres documents, pas à celui-ci. */
 </script>
 </body>
 </html>

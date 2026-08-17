@@ -564,6 +564,29 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
 .doccard:hover .docx,.docx:focus-visible{opacity:1}
 .docx:hover{background:var(--red-bg);color:var(--red)}
 
+
+/* ============================================================
+   TÉLÉPHONE (≤ 640 px) — 15/08. Mesuré sur iPhone 390 × 844 :
+   312 px de boutons s'empilaient AVANT le premier champ. Sur un téléphone on
+   vient remplir un devis, pas l'exporter. Les actions de sortie (aperçu, PDF,
+   enregistrer) rejoignent le menu ⋯ qui est fait pour ça ; l'envoi reste, mais
+   une seule fois — dans la barre collée en bas, celle qui suit le doigt.
+   ============================================================ */
+@media(max-width:640px){
+  /* aperçu · PDF · enregistrer → tous dans le ⋯, qui reste visible */
+  .abar .btn2:not(.primary):not([onclick^="moreMenu"]){display:none}
+  /* « Envoyer au client » vit dans la barre du bas : celui du haut est un doublon */
+  .abar .btn2.primary{display:none}
+  .abar{gap:6px;padding-bottom:2px;flex-wrap:wrap}
+  .autosave2{font-size:.7rem}
+  /* la barre du bas porte tout : total + envoi, à portée de pouce */
+  .vfoot{padding:9px 12px calc(9px + var(--safe-b,0px))}
+  .vfoot .ft{font-size:.76rem}
+  .vfoot .ft b{font-size:1.05rem}
+  /* les cartes du formulaire respirent moins large et plus haut */
+  .vcard{padding:14px 13px;border-radius:14px}
+  .vh{font-size:.88rem}
+}
 </style>
 <style>
 /* ═══ 09/08 patron (choix final 111) : la validité EN HAUT, en pastille à
@@ -1754,7 +1777,9 @@ window.addEventListener("beforeunload", e => {
 try{ const r = document.getElementById("dref2"); if(r && typeof DREF === "string") r.textContent = DREF; }catch(e){}
 /* astuce TTC : montrée une seule fois */
 try{
-  if(!localStorage.getItem("tigerflow-tip-ttc2")){
+  /* 15/08 : sur téléphone il n'y a pas de colonnes — l'astuce désignait
+     quelque chose d'invisible, et son message recouvrait la zone Lignes. */
+  if(!localStorage.getItem("tigerflow-tip-ttc2") && window.innerWidth > 640){
     setTimeout(() => {
       toast("💡 Astuce : clique un montant dans la colonne Total TTC ✏️ pour le saisir directement — le prix HT se recalcule tout seul");
       const zone = document.getElementById("v-lignes");

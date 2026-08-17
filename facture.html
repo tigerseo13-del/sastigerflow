@@ -585,6 +585,29 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
    la liste des factures, pour qu'on reconnaisse la meme chose. */
 .srow.spf b{color:#5B3BC4}
 .pfnote{font-size:.76rem;color:#5B3BC4;background:#F1EAFD;border-radius:9px;padding:8px 11px;margin:2px 0 8px;line-height:1.45}
+
+/* ============================================================
+   TÉLÉPHONE (≤ 640 px) — 15/08. Mesuré sur iPhone 390 × 844 :
+   312 px de boutons s'empilaient AVANT le premier champ. Sur un téléphone on
+   vient remplir un devis, pas l'exporter. Les actions de sortie (aperçu, PDF,
+   enregistrer) rejoignent le menu ⋯ qui est fait pour ça ; l'envoi reste, mais
+   une seule fois — dans la barre collée en bas, celle qui suit le doigt.
+   ============================================================ */
+@media(max-width:640px){
+  /* aperçu · PDF · enregistrer → tous dans le ⋯, qui reste visible */
+  .abar .btn2:not(.primary):not([onclick^="moreMenu"]){display:none}
+  /* « Envoyer au client » vit dans la barre du bas : celui du haut est un doublon */
+  .abar .btn2.primary{display:none}
+  .abar{gap:6px;padding-bottom:2px;flex-wrap:wrap}
+  .autosave2{font-size:.7rem}
+  /* la barre du bas porte tout : total + envoi, à portée de pouce */
+  .vfoot{padding:9px 12px calc(9px + var(--safe-b,0px))}
+  .vfoot .ft{font-size:.76rem}
+  .vfoot .ft b{font-size:1.05rem}
+  /* les cartes du formulaire respirent moins large et plus haut */
+  .vcard{padding:14px 13px;border-radius:14px}
+  .vh{font-size:.88rem}
+}
 </style>
 </head>
 <body>
@@ -653,7 +676,7 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
         <button class="dstatb2" id="dstatb2" onclick="stMenu(event)" title="Changer le statut de la facture"><i></i>Pro forma<em class="caret">▾</em></button>
         <div class="stmenu" id="stmenu">
           <button class="stc on" data-s="brouillon" onclick="setStat2('brouillon',this);stMenuClose()"><i style="background:#9CA1AD"></i> Pro forma</button>
-          <button class="stc" data-s="attente" onclick="setStat2('attente',this);stMenuClose()"><i style="background:var(--blue)"></i> À payer</button>
+          <button class="stc" data-s="attente" onclick="setStat2('attente',this);stMenuClose()"><i style="background:var(--blue)"></i> En attente</button>
           <button class="stc" data-s="payee" onclick="setStat2('payee',this);stMenuClose()"><i style="background:var(--green)"></i> Payée</button>
           <!-- 28/07 : « En retard » retire du menu. Ce n'est pas un choix, c'est
                « À payer » + echeance depassee — effStatut() le calcule. -->
@@ -918,7 +941,7 @@ function setStat2(k, el){
   document.querySelectorAll(".stc").forEach(c => c.classList.remove("on"));
   el.classList.add("on");
   const b = g("dstatb2");
-  const conf = {brouillon:["#9CA1AD","Pro forma",""], proforma:["#9CA1AD","Pro forma",""], attente:["var(--blue)","À payer","sent"], payee:["var(--green)","Payée","ok"], retard:["var(--red,#D63B33)","En retard","ko"]}[k] || ["#9CA1AD",k,""];
+  const conf = {brouillon:["#9CA1AD","Pro forma",""], proforma:["#9CA1AD","Pro forma",""], attente:["var(--blue)","En attente","sent"], payee:["var(--green)","Payée","ok"], retard:["var(--red,#D63B33)","En retard","ko"]}[k] || ["#9CA1AD",k,""];
   document.body.classList.toggle("proforma-on", k === "brouillon");   /* PDF pro forma tant que non validée */
   b.className = "dstatb2 " + conf[2];
   b.innerHTML = "<i style='background:" + conf[0] + "'></i>" + conf[1];
@@ -1783,7 +1806,9 @@ window.addEventListener("beforeunload", e => {
 try{ const r = document.getElementById("dref2"); if(r && typeof DREF === "string") r.textContent = DREF; }catch(e){}
 /* astuce TTC : montrée une seule fois */
 try{
-  if(!localStorage.getItem("tigerflow-tip-ttc2")){
+  /* 15/08 : sur téléphone il n'y a pas de colonnes — l'astuce désignait
+     quelque chose d'invisible, et son message recouvrait la zone Lignes. */
+  if(!localStorage.getItem("tigerflow-tip-ttc2") && window.innerWidth > 640){
     setTimeout(() => {
       toast("💡 Astuce : clique un montant dans la colonne Total TTC ✏️ pour le saisir directement — le prix HT se recalcule tout seul");
       const zone = document.getElementById("v-lignes");
