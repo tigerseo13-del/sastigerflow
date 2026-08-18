@@ -1545,10 +1545,10 @@ const PENDING = [
   {pid:PID++, type:"punaise", client:"Mme Perrin",          cp:"75013", ville:"Paris",      dur:2},
   {pid:PID++, type:"rongeur", client:"Tabac de la Mairie",  cp:"92600", ville:"Asnières",   dur:2},
   {pid:PID++, type:"desinf",  client:"Food-truck Marcel",   cp:"75019", ville:"Paris",      dur:1},
-  {pid:PID++, type:"punaise", client:"Mme Ferreira",        cp:"94200", ville:"Ivry",       dur:2, standby:true, since:"2026-08-14", rappel:"2026-08-20", cren:"après-midi", tent:3, note:"Préfère être rappelée après 12h"},
-  {pid:PID++, type:"rongeur", client:"Hôtel du Parc",       cp:"75017", ville:"Paris",      dur:1.5, standby:true, since:"2026-08-23", rappel:"2026-08-25", cren:"matin", tent:2, note:"Réception fermée entre 14h et 16h"},
+  {pid:PID++, type:"punaise", client:"Mme Ferreira",        cp:"94200", ville:"Ivry",       dur:2, standby:true, since:"2026-08-14", rappel:"2026-08-20", cren:"après-midi", tent:3, note:"Préfère être rappelée après 12h", last:"2026-08-14"},
+  {pid:PID++, type:"rongeur", client:"Hôtel du Parc",       cp:"75017", ville:"Paris",      dur:1.5, standby:true, since:"2026-08-23", rappel:"2026-08-25", cren:"matin", tent:2, note:"Réception fermée entre 14h et 16h", last:"2026-08-23"},
   /* 31/07 (patron) : le rappel type du Syndic Foncia — gardien injoignable */
-  {pid:PID++, type:"rongeur", client:"Syndic Foncia",       cp:"93100", ville:"Montreuil",  dur:1, standby:true, since:"2026-08-24", rappel:"2026-08-25", cren:"matin", tent:2, note:"Gardien injoignable — passer par la loge entre 8h et 11h"},
+  {pid:PID++, type:"rongeur", client:"Syndic Foncia",       cp:"93100", ville:"Montreuil",  dur:1, standby:true, since:"2026-08-24", rappel:"2026-08-25", cren:"matin", tent:2, note:"Gardien injoignable — passer par la loge entre 8h et 11h", last:"2026-08-24"},
 ];
 
 /* ===== persistance des placements du bac : survivre au changement d'onglet ===== */
@@ -1743,12 +1743,13 @@ function fileOpen(){
   document.getElementById("fapveil").classList.add("on");
 }
 function fileClose(){
-  FNEDIT = null; CDPID = null; DVKO = null; CDMANU = false; CDMOIS = null;
+  FNEDIT = null; CDPID = null; DVKO = null; DVNED = null; CDMANU = false; CDMOIS = null;
   document.getElementById("fap").classList.remove("open");
   document.getElementById("fapveil").classList.remove("on");
 }
 document.addEventListener("keydown", e => {
   if(e.key !== "Escape") return;
+  if(DVNED != null){ DVNED = null; fileRender(); return; }
   if(DVKO != null){ DVKO = null; fileRender(); return; }
   if(CDPID != null){ CDPID = null; fileRender(); return; }
   if(document.getElementById("fap").classList.contains("open")) fileClose();
@@ -1758,8 +1759,10 @@ function fileQ(p){
   if(!p.rappel) return ["à caler", ""];
   const dj = d => d.split("-").reverse().slice(0, 2).join("/");
   if(p.rappel < t){
+    /* 18/08 (patron, GO) : la section crie déjà EN RETARD — le chip ne garde
+       que le compteur « +n j », la date précise vit en ligne 2. */
     const j = Math.round((new Date(t + "T12:00:00") - new Date(p.rappel + "T12:00:00")) / 86400000);
-    return ["en retard<br>" + (j === 1 ? "depuis hier" : "· " + j + " jours"), "lt"];
+    return ["+" + Math.max(1, j) + " j", "lt"];
   }
   if(p.rappel === t) return ["aujourd'hui" + (p.cren ? "<br>" + p.cren : ""), "tod"];
   const dm = new Date(t + "T12:00:00"); dm.setDate(dm.getDate() + 1);
@@ -1791,16 +1794,23 @@ function fileRender(){
     return `<div class="fr dv ${lt ? "lt" : ""}" data-dvref="${x.ref}">
       <span class="frq">📄 devis${(x.tent || 1) > 1 ? `<i class="fqt">${x.tent}ᵉ relance</i>` : ""}</span>
       <div class="frmid">
-        <div class="frl1">${x.client} ${x.tel ? `<small>${telFmt(x.tel)}</small>` : ""}<span class="dvamt">${dvEur(x.montant)} en attente</span>${lt && x.relance ? `<span class="frwhen lt">prévu le ${x.relance.split("-").reverse().slice(0, 2).join("/")}${(n => n > 0 ? " · +" + n + " j" : "")(Math.round((new Date(t + "T12:00:00") - new Date(x.relance + "T12:00:00")) / 86400000))}</span>` : ""}</div>
-        <div class="frl2">Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")} (J+${jN})${x.autoR ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""}</div>
+        <div class="frl1">${x.client}<span class="dvamt">${dvEur(x.montant)} en attente</span>${lt && x.relance ? `<span class="frwhen lt">${(n => "+" + Math.max(1, n) + " j")(Math.round((new Date(t + "T12:00:00") - new Date(x.relance + "T12:00:00")) / 86400000))}</span>` : ""}</div>
       </div>
       ${telC ? `<a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${x.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>` : ""}
       <button class="dvoui" onclick="dvOui('${x.ref}')" title="Le client accepte — le devis passe « Accepté » et le calage s'ouvre pendant qu'il est en ligne">✓ Accepté → planifier</button>
       <span class="frszg" title="Il réfléchit encore — repousser la relance">
-        <button onclick="dvSnooze('${x.ref}',2)">+2 j</button><button onclick="dvSnooze('${x.ref}',7)">+7 j</button>
+        <button onclick="dvSnooze('${x.ref}',1)">+1 j</button><button onclick="dvSnooze('${x.ref}',2)">+2 j</button><button onclick="dvSnooze('${x.ref}',7)">+7 j</button>
       </span>
       <button class="dvko" onclick="dvKoAsk('${x.ref}')" title="Le client refuse — noter le motif">✗</button>
+      <button class="frnote ${x.note ? "has" : ""}" onclick="dvNoteEdit('${x.ref}')" title="${x.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
+      <div class="frl2">Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")} (J+${jN})${x.last && x.last <= t ? ` · <b class="frlast">dernier appel le ${x.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${lt && x.relance ? ` · relance prévue le ${x.relance.split("-").reverse().slice(0, 2).join("/")}` : ""}${x.autoR ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""}${x.tel ? ` · ${telFmt(x.tel)}` : ""}</div>
     </div>
+    ${DVNED === x.ref ? `<div class="frned">
+      <textarea id="fnedd-${x.ref}" rows="2" placeholder="Ex. : veut négocier — rappeler après le 20…">${x.note || ""}</textarea>
+      <div class="frnbtns"><small>📝 La note s'ajoute aussi aux notes internes de la fiche client</small>
+        <button class="ok" onclick="dvNoteSave('${x.ref}')">✓ Enregistrer</button>
+        <button class="no" onclick="DVNED=null;fileRender()">Annuler</button></div>
+    </div>` : ""}
     ${DVKO === x.ref ? `<div class="fdko"><b>Devis refusé — pour quelle raison ?</b><small>Un clic : le motif part dans les statistiques et le devis passe « Refusé » — Annuler reste possible juste après</small><div class="mots"><button onclick="dvPerduGo('${x.ref}','trop cher')">💰 Trop cher</button><button onclick="dvPerduGo('${x.ref}','parti chez un concurrent')">🏃 Parti chez un concurrent</button><button onclick="dvPerduGo('${x.ref}','plus besoin')">🚫 Plus besoin</button><button onclick="dvPerduGo('${x.ref}','')">— Sans motif</button></div></div>` : ""}`;
   };
   const rowPending = p => {
@@ -1811,8 +1821,7 @@ function fileRender(){
     return `<div class="fr rv ${cls}" data-fpid="${p.pid}">
       <span class="frq">📞 RDV${(p.tent || 1) > 1 ? `<i class="fqt">${p.tent}ᵉ tentative</i>` : ""}</span>
       <div class="frmid">
-        <div class="frl1">${p.client} <small>${telFmt(tel)}</small>${cls === "lt" ? `<span class="frwhen lt">${q.replace("<br>", " ")}</span>` : (p.cren ? `<span class="frwhen">⏰ ${p.cren}</span>` : "")}</div>
-        <div class="frl2">${motif}${p.note ? ` · <i>${p.note}</i>` : ""}</div>
+        <div class="frl1">${p.client}${cls === "lt" ? `<span class="frwhen lt">${q.replace("<br>", " ")}</span>` : (p.cren ? `<span class="frwhen">⏰ ${p.cren}</span>` : "")}</div>
       </div>
       <a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${p.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
       <button class="frcal" onclick="fileCaler('${p.pid}')">📅 Caler le RDV</button>
@@ -1820,6 +1829,7 @@ function fileRender(){
         <button onclick="fileSnooze('${p.pid}',1)">+1 j</button><button onclick="fileSnooze('${p.pid}',2)">+2 j</button><button onclick="fileSnooze('${p.pid}',7)">+7 j</button>
       </span>
       <button class="frnote ${p.note ? "has" : ""}" onclick="fileNoteEdit('${p.pid}')" title="${p.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
+      <div class="frl2">${motif}${p.last && p.last <= t ? ` · <b class="frlast">dernier appel le ${p.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${p.note ? ` · <i>${p.note}</i>` : ""}${tel ? ` · ${telFmt(tel)}` : ""}</div>
     </div>
     ${FNEDIT === p.pid ? `<div class="frned">
       <textarea id="fned-${p.pid}" rows="2" placeholder="Ex. : m'a demandé de le rappeler demain à 17 h…">${p.note || ""}</textarea>
@@ -1842,7 +1852,10 @@ function fileRender(){
   const keyOf = r => !r.d ? "acaler" : (r.d < t ? "late" : (r.d <= horizon ? r.d : "apres"));
   const buckets = {};
   rows.forEach(r => { const k = keyOf(r); (buckets[k] = buckets[k] || []).push(r); });
-  const triB = b => b.sort((a, z) => String(a.d || "9999").localeCompare(String(z.d || "9999")) || ((z.k === "d" ? +z.o.montant || 0 : -1) - (a.k === "d" ? +a.o.montant || 0 : -1)));
+  /* 18/08 (patron, GO) : dans un même groupe, l'ARGENT d'abord — à retard
+     comparable on appelle 1 240 € avant 340 €. Les RDV (sans montant) suivent,
+     triés par date. */
+  const triB = b => b.sort((a, z) => ((z.k === "d" ? +z.o.montant || 0 : -1) - (a.k === "d" ? +a.o.montant || 0 : -1)) || String(a.d || "9999").localeCompare(String(z.d || "9999")));
   const eurB = b => { const n = b.reduce((a, r) => a + (r.k === "d" ? (+r.o.montant || 0) : 0), 0); return n ? dvEur(n) : ""; };
   const jourTitre = d => {
     const dt = new Date(d + "T12:00:00");
@@ -2079,7 +2092,32 @@ function calGo(){
    j'écris ; il m'a dit de rappeler demain 17 h, je note » — et la note part
    AUSSI dans les notes internes de la fiche client (même registre que
    client.html : tigerflow-notes-<client>). */
-let FNEDIT = null, DVKO = null, FAPFOLD = true;
+let FNEDIT = null, DVKO = null, DVNED = null, FAPFOLD = true;
+/* 18/08 (patron, GO) : le crayon existait sur les RDV mais pas sur les DEVIS —
+   alors que c'est là qu'on note « veut négocier », « rappeler après le 20 ». */
+function dvNoteEdit(ref){
+  DVNED = (DVNED === ref) ? null : ref;
+  FNEDIT = null;
+  fileRender();
+  if(DVNED != null) setTimeout(() => { const a = document.getElementById("fnedd-" + ref); if(a){ a.focus(); a.selectionStart = a.value.length; } }, 0);
+}
+function dvNoteSave(ref){
+  const x = DEVAT.find(z => z && z.ref === ref); if(!x) return;
+  const a = document.getElementById("fnedd-" + ref);
+  const txt = (a ? a.value : "").trim();
+  x.note = txt; dvSave();
+  if(txt){
+    try{
+      const k = "tigerflow-notes-" + encodeURIComponent(x.client);
+      const arr = JSON.parse(localStorage.getItem(k) || "[]");
+      const d = new Date(), pad = z => String(z).padStart(2, "0");
+      arr.unshift({t: pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()), a: "Jo Jo", txt: "📞 Relance devis " + x.ref + " — " + txt});
+      localStorage.setItem(k, JSON.stringify(arr));
+    }catch(e){}
+  }
+  DVNED = null; fileRender();
+  toast(txt ? "📝 Note enregistrée — elle est aussi sur la fiche client" : "Note vide — rien à garder");
+}
 function fileNoteEdit(pid){
   pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
 
@@ -2115,6 +2153,7 @@ function fileSnooze(pid, nj){
   const t = iso(TODAYD);
   const base = (!p.rappel || p.rappel < t) ? t : p.rappel;
   const d = new Date(base + "T12:00:00"); d.setDate(d.getDate() + nj);
+  p.last = t;   /* 18/08 : la date du dernier appel s'affiche sur la ligne */
   p.rappel = iso(d);
   p.tent = (p.tent || 1) + 1;
   fileRender(); renderTray();
@@ -2211,7 +2250,8 @@ if(!DEVAT){
   _cand.forEach((v, i) => {
     const d = new Date(TODAYD); d.setDate(d.getDate() + _rel[i]);
     DEVAT.push({ref: "DEV-2026-0" + (1287 + i * 14), client: v.client, tel: telOf(v), montant: _mnt[i],
-      envoye: _hier, relance: iso(d), tent: _tnt[i], note: _txt[i], etat: "attente"});
+      envoye: _hier, relance: iso(d), tent: _tnt[i], note: _txt[i], etat: "attente",
+      last: _tnt[i] > 1 ? _hier : undefined});
   });
   dvSave();
 }
@@ -2359,6 +2399,9 @@ function dvSnooze(ref, nj){
   const t = iso(TODAYD);
   const base = (!x.relance || x.relance < t) ? t : x.relance;
   const d = new Date(base + "T12:00:00"); d.setDate(d.getDate() + nj);
+  /* 18/08 (patron, GO) : le report EST un appel — on garde sa date, la ligne
+     dira « dernier appel le … » au prochain passage dans la file. */
+  x.last = t;
   x.relance = iso(d); x.tent = (x.tent || 1) + 1; dvSave();
   render(); fileRender(); renderTray();
   toast("💤 " + x.client + " réfléchit encore — relance le " + x.relance.split("-").reverse().slice(0, 2).join("/"));
@@ -5913,7 +5956,11 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fap-x{width:34px;height:34px;border-radius:11px;background:#fff;border:1px solid var(--line);font-size:.85rem;color:var(--ink-2);cursor:pointer;flex:none}
 .fap-sub{font-size:.7rem;font-weight:600;color:var(--muted);margin:5px 0 12px}
 .fap-body{flex:1;overflow-y:auto;padding-bottom:8px}
-.fr{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #EEF0F4;border-radius:13px;padding:10px 12px;margin-bottom:8px}
+.fr{display:flex;align-items:center;flex-wrap:wrap;gap:11px;background:#fff;border:1px solid #EEF0F4;border-radius:13px;padding:10px 12px;margin-bottom:8px}
+/* 18/08 : la ligne 2 s'etale sous TOUTE la carte — la colonne du milieu
+   l'ecrasait en « Devis DEV-2026-01… » des qu'on ajoutait un bouton. */
+.fr .frl2{flex:1 1 100%;margin-top:2px;padding-left:103px}
+@media(max-width:900px){ .fr .frl2{padding-left:0} }
 .fr.lt{border-color:#F3C1BC;background:#FFFBFB}
 .frq{flex:none;width:92px;text-align:center;font-size:.66rem;font-weight:800;padding:6px 4px;border-radius:9px;background:#F4F5F8;color:#6C7285;line-height:1.35}
 .fr.lt .frq{background:#FDF0EF;color:#B3261E}
@@ -5924,14 +5971,18 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .frl1 .ftent{font-size:.58rem;font-weight:800;background:#F1F2F5;color:#6C7285;border-radius:7px;padding:2px 7px}
 .frl2{font-size:.68rem;font-weight:600;color:#8A90A0;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .frl2 i{font-style:normal;color:#B0876A}
-.frtel{flex:none;width:34px;height:34px;border-radius:50%;background:#fff;border:1.5px solid #DFE2EC;display:grid;place-items:center;text-decoration:none}
-.frtel svg{width:15px;height:15px;stroke:#4A5065;fill:none;stroke-width:2;stroke-linecap:round}
+/* 18/08 (patron, GO) : le geste de la file, c'est APPELER — seul bouton plein.
+   Les issues (Accepté, +j, ✗, ✎) restent en contours discrets. */
+.frtel{flex:none;width:36px;height:36px;border-radius:50%;background:var(--orange);border:1.5px solid var(--orange);display:grid;place-items:center;text-decoration:none;transition:.12s}
+.frtel:hover{background:var(--orange-deep,#EA4A10);border-color:var(--orange-deep,#EA4A10)}
+.frtel svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+.frlast{font-weight:800;color:#6C7285}
 /* 31/07 (patron) : « 20 dans la liste = beaucoup trop d'orange » — le bouton
    est BLANC liseré orange au repos, il ne s'allume qu'au survol de SA ligne. */
 .frcal{flex:none;cursor:pointer;background:#fff;border:1.5px solid #DFE2EC;color:var(--orange-deep);font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 13px;white-space:nowrap;transition:.12s}
 .fr:hover .frcal{background:#FFF8EF;border-color:#F0D9BF}
 .frszg{flex:none;display:inline-flex;border:1.5px solid #E2E5EB;border-radius:10px;overflow:hidden}
-.frszg button{border:0;cursor:pointer;background:#fff;color:var(--ink-2);font-size:.64rem;font-weight:800;font-family:inherit;padding:9px 8px;border-left:1px solid #EEF0F4;white-space:nowrap}
+.frszg button{border:0;cursor:pointer;background:#fff;color:#8A90A0;font-size:.62rem;font-weight:800;font-family:inherit;padding:9px 7px;border-left:1px solid #EEF0F4;white-space:nowrap}
 .frszg button:first-child{border-left:0}
 .frszg button:hover{background:#F5F6F9;color:var(--ink)}
 .frnote{flex:none;width:32px;height:32px;border-radius:10px;background:#fff;border:1.5px solid #E2E5EB;color:var(--muted);font-size:.8rem;cursor:pointer;font-family:inherit}
