@@ -111,7 +111,10 @@ ul{list-style:none}
    « c'est une page, on a besoin de réfléchir » — la popup de Réglages devient
    une page : réglages à gauche, aperçu STICKY à droite qui suit chaque clic. */
 .card{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:20px 22px;margin-bottom:14px}
-.relwrap{display:grid;grid-template-columns:minmax(640px,1fr) minmax(0,1fr);gap:14px;align-items:start}
+/* 18/08 (283-C) : les bandes horizontales veulent de la largeur — quatre
+   jalons en ligne. La colonne de gauche prend les deux tiers ; le panneau
+   message garde de quoi lire un e-mail confortablement. */
+.relwrap{display:grid;grid-template-columns:minmax(720px,1.62fr) minmax(330px,1fr);gap:14px;align-items:start}
 
 .relswitch{display:flex;align-items:center;gap:9px;font-size:.88rem;cursor:pointer;font-weight:600}
 .relswitch input{width:18px;height:18px;accent-color:var(--green)}
@@ -136,10 +139,23 @@ ul{list-style:none}
 .rstep label{font-size:.72rem;font-weight:700;color:var(--muted)}
 .rstep input[type=number]{width:58px;border:1.5px solid var(--line);border-radius:9px;padding:8px;font-size:.85rem;font-family:inherit;text-align:center}
 .rstep input[type=number]:focus{outline:none;border-color:var(--orange)}
-.rchk{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;color:#8A8F9C;background:#fff;border:1.5px solid #E4E7EF;border-radius:9px;padding:7px 12px;cursor:pointer;position:relative;transition:.12s;user-select:none}
-.rchk:hover{border-color:#C9CDD8}
+/* 18/08 (patron, visuel 280-B validé) — E-MAIL ET SMS NE SONT PLUS JUMEAUX.
+   Ils avaient la même forme, la même taille et le même vert : on ne savait
+   pas qui envoyait quoi. Maintenant deux SILHOUETTES : l'e-mail est un
+   rectangle bleu de courrier, le SMS est une vraie bulle de texto verte
+   avec sa queue — celle que le client voit sur son téléphone. Ça se
+   reconnaît de loin, en petit, en noir et blanc, et même daltonien. */
+.rchk{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;cursor:pointer;position:relative;transition:.12s;user-select:none;
+  background:#F4F5F8;color:#B4B9C4;border:1.5px solid #E7E9EF;border-radius:8px;padding:7px 12px}
+.rchk:hover{filter:brightness(.985)}
 .rchk input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
-.rchk:has(input:checked){background:var(--green-bg);color:var(--green-d);border-color:#A7D9C4}
+.rchk.k-mail:has(input:checked){background:#EAF1FE;color:#2148C0;border-color:#C9DAFB}
+/* la bulle : coins ronds + la petite queue en bas à gauche */
+.rchk.k-sms{border-radius:99px;margin-bottom:5px}
+.rchk.k-sms::after{content:"";position:absolute;left:12px;bottom:-6px;width:10px;height:10px;
+  background:#F4F5F8;clip-path:polygon(0 0,100% 0,0 100%);transition:.12s}
+.rchk.k-sms:has(input:checked){background:var(--green-d,#0E8A5F);color:#fff;border-color:var(--green-d,#0E8A5F)}
+.rchk.k-sms:has(input:checked)::after{background:var(--green-d,#0E8A5F)}
 .rdel{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:none;border:0;color:#C4C8D0;font-size:.8rem;cursor:pointer;flex:none;font-family:inherit;transition:.12s}
 .rdel:hover{background:var(--red-bg);color:var(--red)}
 .raddl{display:inline-flex;align-items:center;gap:5px;background:none;border:0;font-family:inherit;font-size:.74rem;font-weight:700;color:var(--muted);cursor:pointer;padding:2px 4px;margin:-3px 0 3px 2px}
@@ -159,6 +175,131 @@ ul{list-style:none}
 .rhrow .relswitch{margin-left:auto}
 
 /* ── la frise du temps ── */
+/* ================= 18/08 (patron, visuel 283-C validé) ==================
+   LA PAGE EN TROIS BANDES HORIZONTALES. Avant, « Particuliers », « J0 » et
+   « J+3 » vivaient tous dans la même colonne, au même niveau — alors que ce
+   sont trois choses différentes : un public, un point de départ, une
+   relance. Ici la géométrie les sépare : le public est le TITRE d'une bande,
+   J0 est un point noir au départ du fil, les relances sont des jalons sur ce
+   fil, et le temps va de gauche à droite comme sur un calendrier. Les délais
+   deviennent des distances : on voit que les syndics sont deux fois et demie
+   plus lents que les particuliers. 1 104 px → ~330 px. ===================== */
+.lane{border:1px solid #ECEDF2;border-radius:14px;padding:13px 15px 15px;margin-bottom:11px;background:#fff;transition:.12s}
+.lane:last-child{margin-bottom:0}
+.lane.on{border-color:#F0C7AC;background:#FFFCF9}
+.lnh{display:flex;align-items:center;gap:9px;font-family:'Sora';font-weight:700;font-size:.85rem;margin-bottom:12px}
+.lnh small{font-family:'Inter';font-weight:500;font-size:.72rem;color:var(--muted)}
+.lnh .gic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;flex:none}
+.lnh .gic svg{width:15px;height:15px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lnh .cad{margin-left:auto;font-family:'Inter';font-size:.68rem;font-weight:800;color:var(--ink-2);background:#F4F5F8;border-radius:99px;padding:4px 11px;white-space:nowrap}
+.lfil{position:relative;display:flex;align-items:stretch;gap:10px}
+/* le fil : chaque jalon porte ses deux demi-segments (le gap de 10 px est
+   couvert par le débord). Le premier n'a pas d'amont, le dernier pas d'aval —
+   le trait commence donc au centre de J0 et s'arrête au centre du dernier. */
+.jal::before,.jal::after{content:"";position:absolute;top:16px;height:2.5px;background:#E6E9EF}
+.jal::before{left:-10px;right:50%}
+.jal::after{left:50%;right:-10px}
+.jal:first-child::before,.jal:last-child::after{display:none}
+.lane.g-part .jal::before,.lane.g-part .jal::after{background:#C7D8F5}
+.lane.g-pro .jal::before,.lane.g-pro .jal::after{background:#DFD0F6}
+.lane.g-syn .jal::before,.lane.g-syn .jal::after{background:#EDDCAC}
+.jal{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:9px;justify-content:flex-start}
+.jal .jbx{flex:1;justify-content:center}
+.jdot{width:36px;height:36px;border-radius:50%;background:#fff;border:2.5px solid #C9D4F2;color:#2453C6;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Sora';font-weight:800;font-size:.62rem;z-index:1;flex:none;line-height:1}
+.jdot i{font-style:normal;font-size:.44rem;letter-spacing:.04em;opacity:.72}
+.jdot input{width:26px;border:0;background:none;text-align:center;font-family:'Sora';font-weight:800;font-size:.78rem;color:inherit;padding:0;border-bottom:1.5px dashed currentColor;border-radius:0}
+.jdot input:focus{outline:none;border-bottom-style:solid}
+.jdot input::-webkit-outer-spin-button,.jdot input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.lane.g-part .jdot{border-color:#C7D8F5;color:#2453C6;background:#EAF1FE}
+.lane.g-pro .jdot{border-color:#DFD0F6;color:#7C3AED;background:#F3EEFD}
+.lane.g-syn .jdot{border-color:#EDDCAC;color:#A16207;background:#FBF3D9}
+.jdot.z{background:var(--ink);border-color:var(--ink);color:#fff;font-size:.55rem}
+.jal .jbx{position:relative;width:100%;max-width:196px;border:1.5px solid #F0F1F5;border-radius:12px;padding:9px 10px 10px;background:#FAFBFD;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:.12s}
+.jal .jbx:hover{background:#fff;border-color:#DDE1EA}
+.jal .jbx.on{border-color:#F0BCA4;background:#FFFDFB;box-shadow:0 0 0 3px #FDF1E8}
+.jbx .jrm{display:flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;color:var(--muted)}
+.jbx .jrm input{width:48px;border:1.5px solid var(--line);border-radius:8px;padding:5px;font-size:.78rem;font-family:inherit;text-align:center;background:#fff}
+.jbx .jrm input:focus{outline:none;border-color:var(--orange)}
+.jbx .jch{display:flex;align-items:center;gap:6px}
+.jbx .jdel{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid #E7E9EF;color:#C4C8D0;display:grid;place-items:center;font-size:.66rem;cursor:pointer;font-family:inherit;opacity:0;transition:.12s}
+.jal:hover .jbx .jdel{opacity:1}
+.jbx .jdel:hover{color:var(--red);border-color:#F3C4C0}
+.jal.zero{flex:0 0 110px}
+.jal.zero .zlb{font-size:.68rem;font-weight:700;color:var(--muted);text-align:center;line-height:1.3;max-width:76px}
+@media(max-width:640px){ .jal.zero .zlb{max-width:none;white-space:nowrap} }
+.jex{font-size:.62rem;color:#9AA0AE;line-height:1.4;text-align:center;max-width:196px;padding:0 4px;font-style:italic;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* le jour réel d'envoi, sous chaque jalon */
+.jwhen{font-size:.63rem;font-weight:700;color:#9AA0AE;text-align:center;letter-spacing:.01em}
+.jwhen.slid{color:#9A6B08;background:var(--amber-bg,#FDF3DF);border-radius:99px;padding:2px 9px}
+.jcap{font-size:.58rem;font-weight:800;color:#6C7285;background:#F1F2F6;border-radius:99px;padding:2px 8px;white-space:nowrap}
+/* ---- les garde-fous ---- */
+.rgard{margin-top:14px;border:1px solid #ECEDF2;border-radius:14px;background:#fff;padding:13px 15px 14px}
+.rgh{display:flex;align-items:center;gap:8px;font-family:'Sora';font-weight:700;font-size:.8rem;margin-bottom:4px}
+.rgh svg{width:15px;height:15px;fill:none;stroke:var(--ink-2);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rgs{font-size:.72rem;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.rgrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid #F4F5F8}
+.rgrow:first-of-type{border-top:0;padding-top:0}
+.rgl{flex:1;min-width:260px;font-size:.76rem;font-weight:700;color:var(--ink)}
+.rgl small{display:block;font-weight:500;font-size:.7rem;color:var(--muted);margin-top:2px;line-height:1.45}
+.rgi{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;color:var(--muted)}
+.rgi input[type=number]{width:78px;border:1.5px solid var(--line);border-radius:9px;padding:7px;font-size:.82rem;font-family:inherit;text-align:center;background:#fff}
+.rgi input[type=number]:focus{outline:none;border-color:var(--orange)}
+.rgi select{border:1.5px solid var(--line);border-radius:9px;padding:7px 9px;font-size:.78rem;font-family:inherit;background:#fff}
+.rgsw{display:inline-flex;align-items:center;gap:8px;font-size:.76rem;font-weight:700;cursor:pointer}
+.rgsw input{width:17px;height:17px;accent-color:var(--orange)}
+.rgtag{font-size:.68rem;font-weight:800;border-radius:99px;padding:4px 10px;background:var(--green-bg,#ECFDF5);color:var(--green-d,#0E7A54)}
+@media(max-width:1180px){
+  .lfil{flex-wrap:wrap;gap:12px}
+  .jal::before,.jal::after{display:none}
+  .jal{flex:1 1 44%}
+  .jal .jbx{max-width:none}
+}
+/* iPhone : le fil ne tient plus en largeur — J0 passe en tête sur une ligne,
+   les relances se rangent deux par deux, et le sous-titre du public s'efface
+   (il écrasait le titre sur trois lignes). Le bureau ne bouge pas. */
+/* 18/08 (patron) — SUR IPHONE, RETOUR À LA VERTICALE. La frise horizontale
+   n'a aucun sens sur 390 px : elle se cassait en deux colonnes, le fil
+   disparaissait, et la page devenait PLUS haute qu'avant la refonte. Ici
+   chaque étape reprend toute la largeur, le fil redevient vertical à gauche,
+   et on retrouve une vraie liste — celle qu'un pouce sait parcourir. */
+@media(max-width:640px){
+  .lnh small{display:none}
+  .lnh .cad{margin-left:auto}
+  .lane{padding:12px 12px 13px}
+  .lfil{display:block;position:relative}
+  .jal::before,.jal::after{display:none!important}
+  .lfil::before{content:"";position:absolute;display:block;left:18px;right:auto;top:14px;bottom:24px;height:auto;width:2.5px;background:#E6E9EF}
+  .lane.g-part .lfil::before{background:#C7D8F5}
+  .lane.g-pro .lfil::before{background:#DFD0F6}
+  .lane.g-syn .lfil::before{background:#EDDCAC}
+  .jal{flex:none!important;display:grid;grid-template-columns:38px 1fr;
+       grid-template-areas:"dot box" "dot when" "dot ex";
+       align-items:center;column-gap:9px;row-gap:4px;margin-bottom:10px;text-align:left}
+  .jdot{width:32px;height:32px;font-size:.58rem}
+  .jdot input{width:22px;font-size:.72rem}
+  .jal:last-child{margin-bottom:0}
+  .jdot{grid-area:dot;align-self:start}
+  /* la carte tient sur UNE ligne : remise à gauche, canaux à droite —
+     neuf étapes empilées, chaque ligne économisée compte. */
+  /* la carte tient sur UNE ligne : remise à gauche, canaux à droite —
+     neuf étapes empilées, chaque ligne économisée compte. Tout est en
+     flex-wrap : si la place manque, les canaux repassent dessous plutôt
+     que de faire déborder l'écran. */
+  /* la carte tient sur UNE ligne : remise à gauche, canaux à droite —
+     neuf étapes empilées, chaque ligne économisée compte. flex-wrap garde
+     un filet de sécurité si un libellé s'allonge un jour. */
+  .jal .jbx{grid-area:box;max-width:none;min-width:0;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;padding:7px 7px}
+  .jbx .jrm{flex:none;gap:4px;font-size:.72rem}
+  .jbx .jrm input{width:40px;padding:4px}
+  .jbx .jch{flex:none;gap:4px}
+  .rchk{padding:5px 8px;font-size:.68rem;gap:4px}
+  .rchk svg{width:12px;height:12px}
+  .jwhen{grid-area:when;text-align:left;justify-self:start}
+  .jex{grid-area:ex;text-align:left;max-width:none;-webkit-line-clamp:1}
+  .jal.zero{display:flex!important;flex:none!important;flex-direction:row;align-items:center;gap:11px;justify-content:flex-start;margin-bottom:12px}
+  .jal.zero .zlb{text-align:left;max-width:none;white-space:nowrap}
+}
 .fstart{display:flex;align-items:center;gap:14px}
 .fstart .fj0{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:.58rem;font-weight:800;font-family:'Sora';flex:none;margin:0 15px}
 .fstart b{font-size:.74rem;font-weight:600;color:var(--muted)}
@@ -198,6 +339,38 @@ ul{list-style:none}
 .mailbox .mbody{padding:18px 2px 20px}
 .mailbox .mbody p{font-size:.9rem;line-height:1.85;color:#2B3040}
 .smsbox{border-top:1px dashed #E8EAF0;padding:15px 2px 0;font-size:.8rem;color:#2B3040;line-height:1.7;display:flex;gap:11px;align-items:flex-start}
+/* ---- 18/08 : onglets de canal + rédaction ---- */
+.ptabs{display:flex;gap:8px;align-items:flex-end;border-bottom:1px solid #EEF0F4;margin:4px 0 4px}
+.ptab{display:inline-flex;align-items:center;gap:7px;font-size:.76rem;font-weight:800;padding:8px 14px;
+  border:1px solid #EEF0F4;border-bottom:0;background:#F5F7FA;color:#8A90A0;cursor:pointer;margin-bottom:-1px;font-family:inherit}
+.ptab svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ptab.t-mail{border-radius:8px 8px 0 0}
+.ptab.t-sms{border-radius:16px 16px 0 0}
+.ptab.on.t-mail{background:#EAF1FE;color:#2148C0;border-color:#C9DAFB}
+.ptab.on.t-sms{background:var(--green-d,#0E8A5F);color:#fff;border-color:var(--green-d,#0E8A5F)}
+.ptab .pst{font-weight:700;font-size:.66rem;opacity:.8}
+.ptab.cut{color:#B4B9C4;background:#FAFBFC}
+.pcut{margin-top:14px;font-size:.78rem;font-weight:700;color:#8A90A0;background:#F7F8FA;border:1px dashed #E2E5EB;border-radius:11px;padding:12px 13px;line-height:1.55}
+.pcut b{color:var(--ink)}
+.pta{width:100%;border:1.5px solid #C9DAFB;border-radius:11px;padding:12px 13px;font:600 .85rem Inter,system-ui,sans-serif;color:var(--ink);line-height:1.7;background:#FBFCFE;margin-top:14px;resize:vertical}
+.pta.sms{border-color:#BFE3D0;background:#F7FCF9;min-height:88px}
+.pta:focus{outline:2px solid var(--orange);outline-offset:1px}
+.pvars{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pvar{font-size:.68rem;font-weight:800;background:#F4F5F8;border:1px solid #E7E9EF;border-radius:99px;padding:5px 10px;color:#3D434E;cursor:pointer;font-family:inherit}
+.pvar:hover{border-color:#C9CDD8}
+.pvar b{color:#2148C0}
+.pcnt{display:flex;align-items:center;gap:10px;margin-top:11px;font-size:.74rem;font-weight:700;color:var(--green-d,#0E7A54);background:#F2FAF6;border:1px solid #CDEADB;border-radius:10px;padding:8px 11px}
+.pcnt .bar{flex:1;height:5px;border-radius:99px;background:#DCEEE5;overflow:hidden}
+.pcnt .bar i{display:block;height:100%;background:var(--green-d,#0E8A5F);transition:width .15s}
+.pcnt em{font-style:normal;margin-left:auto;font-weight:800;color:var(--ink)}
+.pcnt.over{color:#9A6B08;background:var(--amber-bg,#FDF3DF);border-color:#EEDFAE}
+.pcnt.over .bar{background:#F0E3BE}.pcnt.over .bar i{background:#C69A08}
+.pacts{display:flex;gap:8px;align-items:center;margin-top:14px;padding-top:13px;border-top:1px solid #F1F2F6;flex-wrap:wrap}
+.pbt{font-size:.76rem;font-weight:800;border-radius:10px;padding:9px 14px;border:1.5px solid #DFE2EC;background:#fff;color:var(--ink);cursor:pointer;font-family:inherit}
+.pbt:hover{border-color:#C9CDD8}
+.pbt.k{background:var(--orange);border-color:var(--orange);color:#fff}
+.pbt.gh{color:#8A90A0;border-color:#EDEFF3;margin-left:auto}
+.pedited{display:inline-flex;align-items:center;gap:5px;font-size:.66rem;font-weight:800;color:#7C3AED;background:#F3EEFD;border-radius:99px;padding:4px 10px;margin-left:8px}
 .smsbox[hidden]{display:none}
 .smsbox .stag{display:inline-flex;align-items:center;gap:5px;font-size:.62rem;font-weight:800;letter-spacing:.05em;color:var(--green-d);background:var(--green-bg);border-radius:7px;padding:5px 9px;flex:none;margin-top:2px}
 .smsbox .stag svg{width:11px;height:11px;fill:none;stroke:var(--green-d);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -382,6 +555,9 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <!-- gauche : les 3 séquences -->
       <div class="card" style="margin-bottom:0">
         <div id="rel-steps"></div>
+        <!-- 18/08 (patron, GO 1-2-3) : les deux garde-fous qui protègent
+             l'argent et l'image — plafond de remise auto, fenêtre d'envoi. -->
+        <div class="rgard" id="rel-garde"></div>
         <p class="rtip">💡 Conseil de vente : garde le premier rappel <b>sans remise</b> — beaucoup signent juste parce qu'on leur rappelle. La remise est ta dernière carte, pas la première. Et <b>devis par devis</b> : clique le badge 🔁 d'un devis dans la liste pour mettre SES relances en pause (le client qui a dit « je réfléchis »).</p>
         <button class="rok" onclick="relSave();toast('🔁 Séquence enregistrée — appliquée aux devis en attente')">Enregistrer la séquence</button>
       </div>
@@ -390,12 +566,12 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <div class="card prevcard">
         <div class="ph2"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>Le message que recevra le client</div>
         <span class="pbadge" id="rel-badge"></span>
-        <div class="mailbox">
-          <div class="mmeta" id="rel-mail-meta"></div>
-          <div class="mbody"><p id="rel-prev-p"></p></div>
-        </div>
-        <div class="smsbox" id="rel-prev-sms" hidden></div>
-        <p class="prevnote">Cliquez une étape à gauche : son message s'affiche ici, et il suit vos réglages — délai, remise (affichée seulement si vous en donnez une), Email et SMS.</p>
+        <!-- 18/08 (patron, visuel 281) : les DEUX messages étaient empilés et
+             aucun n'était modifiable. Deux onglets aux mêmes formes que la
+             frise — rectangle bleu / bulle verte — et chaque texte se rédige. -->
+        <div class="ptabs" id="rel-tabs"></div>
+        <div id="rel-pane"></div>
+        <p class="prevnote">Cliquez une étape à gauche, puis l'onglet du canal : son message s'affiche ici et suit vos réglages — délai, remise (affichée seulement si vous en donnez une). <b>« ✎ Modifier ce texte »</b> pour écrire le vôtre, <b>« ↺ Texte d'origine »</b> pour revenir.</p>
       </div>
     </div>
   </div>
@@ -430,6 +606,77 @@ let REL = {
 try{ const sv = JSON.parse(localStorage.getItem(RELKEY)); if(sv && sv.part && sv.pro){ REL = sv; if(!REL.syn) REL.syn = RELSYNDEF.map(s => ({...s})); } }catch(e){}
 let APC = {g: "part", i: 0};   /* la rangée dont on montre l'aperçu */
 
+/* ===== 18/08 (patron, GO 1-2-3) — LES TROIS GARDE-FOUS =====
+
+   1. L'ORDRE DES DÉLAIS. Bug réel : on pouvait poser J+3 puis J+2 puis J+14.
+      La 2e relance serait partie AVANT la 1re, avec le mauvais ton et la
+      mauvaise remise. Un délai est maintenant borné par ses voisins : au
+      moins un jour après le précédent, au plus un jour avant le suivant.
+      On ne refuse pas la saisie en silence : on la ramène et on le dit. */
+function relBornes(key, i){
+  const l = REL[key];
+  return {min: (i === 0) ? 1 : l[i - 1].j + 1,
+          max: (i === l.length - 1) ? 120 : l[i + 1].j - 1};
+}
+function relSetJ(key, i, v){
+  const b = relBornes(key, i);
+  let n = Math.round(+v || 0);
+  let corrige = false;
+  if(n < b.min){ n = b.min; corrige = true; }
+  if(n > b.max){ n = b.max; corrige = true; }
+  REL[key][i].j = n;
+  relSave(); relRender();
+  if(corrige){
+    toast(b.max < b.min
+      ? "Les relances se touchent — laissez au moins un jour entre chacune"
+      : "Une relance ne peut pas doubler la précédente : ramené à J+" + n + " (entre J+" + b.min + " et J+" + b.max + ")");
+  }
+}
+
+/* 2. LA REMISE NE PART PAS TOUTE SEULE SUR UN GROS DEVIS.
+      10 % sur un devis à 3 000 €, c'est 300 € offerts par une machine sans
+      que personne ne valide. Au-dessus du plafond, la remise automatique
+      est retenue : le devis sort de la séquence de remise et le message
+      part SANS remise — le geste commercial redevient une décision humaine. */
+const RGKEY = "tigerflow-relance-garde-v1";
+let RGARDE = {plafond: 1500, ouvres: true, h1: 9, h2: 18};
+try{ const sv = JSON.parse(localStorage.getItem(RGKEY)); if(sv && typeof sv === "object") RGARDE = Object.assign(RGARDE, sv); }catch(e){}
+function rgSave(){ try{ localStorage.setItem(RGKEY, JSON.stringify(RGARDE)); }catch(e){} }
+
+/* 3. LA FENÊTRE D'ENVOI. Un J+3 qui tombe un dimanche à 7 h, le SMS partait
+      quand même. On décale au prochain jour ouvré, dans la plage choisie. */
+const JOURSFR = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+function relQuand(jPlus){
+  /* à titre d'exemple lisible : le devis part aujourd'hui, la relance tombe
+     à J+n ; si ce jour n'est pas ouvré, elle glisse au lundi suivant. */
+  const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + jPlus);
+  let glisse = 0;
+  if(RGARDE.ouvres){ while(d.getDay() === 0 || d.getDay() === 6){ d.setDate(d.getDate() + 1); glisse++; } }
+  return {jour: JOURSFR[d.getDay()], date: d, glisse: glisse,
+          txt: JOURSFR[d.getDay()] + " " + d.getDate() + " " + ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."][d.getMonth()]};
+}
+/* 18/08 (patron, visuel 281) — LE CANAL COURANT + LES TEXTES SUR MESURE.
+   Le panneau montre UN message à la fois : « mail » ou « sms ». Chaque
+   (public × étape × canal) peut porter son propre texte ; tant que
+   l'utilisateur n'écrit rien, le texte d'origine s'écrit tout seul avec
+   le bon ton et la remise du moment. RIEN n'est perdu : « Texte d'origine »
+   efface la version sur mesure et rend la main au générateur. */
+let APCH = "mail";              /* onglet ouvert : "mail" ou "sms" */
+let PEDIT = false;              /* le texte du canal courant est en cours d'édition */
+const TXTKEY = "tigerflow-relance-textes-v1";
+let RTXT = {};
+try{ const sv = JSON.parse(localStorage.getItem(TXTKEY)); if(sv && typeof sv === "object") RTXT = sv; }catch(e){}
+function rtxtSave(){ try{ localStorage.setItem(TXTKEY, JSON.stringify(RTXT)); }catch(e){} }
+const rtxtId = (g, i, ch) => g + ":" + i + ":" + ch;
+/* la limite d'un SMS : 160 caractères en alphabet simple (GSM-7). Au-delà,
+   l'opérateur découpe en segments de 153 et facture chaque segment. */
+const SMSSEG = 160, SMSSEG2 = 153, SMSPRIX = 0.07;
+function smsCount(t){
+  const n = (t || "").length;
+  const seg = n <= SMSSEG ? 1 : Math.ceil(n / SMSSEG2);
+  return {n: n, seg: seg, max: n <= SMSSEG ? SMSSEG : seg * SMSSEG2};
+}
+
 const RELGRP = {part: "Particuliers", pro: "Entreprises", syn: "Syndics"};
 /* les mêmes silhouettes partout, en SVG : rendu identique sur toutes les machines */
 const GICO = {
@@ -450,8 +697,11 @@ function relMsg(g, i){
   const st = REL[g][i], cas = RELCAS[g];
   const M = relEur(cas.mnt) + cas.ht;
   const lien = `<span style="color:var(--orange-deep);font-weight:700">tigerflow.fr/d/x7Kp2m</span>`;
-  const remD = st.rem > 0 ? `<b>−${st.rem} % si vous signez sous 48 h</b> : ${relEur(cas.mnt * (1 - st.rem / 100))}${cas.ht} au lieu de ${relEur(cas.mnt)}${cas.ht}. ` : "";
-  const remP = st.rem > 0 ? `<b>−${st.rem} %</b> en cas d'accord avant la fin de validité : ${relEur(cas.mnt * (1 - st.rem / 100))}${cas.ht} au lieu de ${relEur(cas.mnt)}${cas.ht}. ` : "";
+  /* 18/08 (GO 2) : la remise du message passe par le PLAFOND — au-dessus,
+     la machine n'offre rien et le texte n'en parle pas. */
+  const R = relRemiseAuto(g, i);
+  const remD = R > 0 ? `<b>−${R} % si vous signez sous 48 h</b> : ${relEur(cas.mnt * (1 - R / 100))}${cas.ht} au lieu de ${relEur(cas.mnt)}${cas.ht}. ` : "";
+  const remP = R > 0 ? `<b>−${R} %</b> en cas d'accord avant la fin de validité : ${relEur(cas.mnt * (1 - R / 100))}${cas.ht} au lieu de ${relEur(cas.mnt)}${cas.ht}. ` : "";
   const TXT = {
     part: [
       `Bonjour ${cas.qui}, petit rappel : votre devis ${cas.objet} (${M}) est prêt. ${remD}Signature et paiement en ligne en 2 min : ${lien} — Tiger Hygiène 3D`,
@@ -475,72 +725,252 @@ function relMsg(g, i){
   const ti = i === 0 ? 0 : (i === L - 1 ? 2 : 1);
   return TXT[g][ti];
 }
-function relExtrait(g, i){
+/* 18/08 (patron) — L'EXTRAIT ÉTAIT PERDU. En passant aux bandes horizontales
+   j'avais cessé d'appeler cette fonction : on ne lisait plus ce qui part sans
+   cliquer chaque jalon. Il revient sous la carte, plus court (les jalons sont
+   étroits) et toujours branché sur le VRAI texte, sur mesure compris. */
+function relExtrait(g, i, max){
   const d = document.createElement("div");
-  d.innerHTML = relMsg(g, i);
+  /* 18/08 : l'extrait montre le texte VRAIMENT envoyé — celui de
+     l'utilisateur s'il en a écrit un. Sinon on mentirait sur la frise. */
+  d.innerHTML = (typeof relTexte === "function") ? relTexte(g, i, "mail") : relMsg(g, i);
   let t = d.textContent.replace(/\s+/g, " ").trim();
-  if(t.length > 92) t = t.slice(0, 92).replace(/\s+\S*$/, "") + "…";
+  const L = max || 92;
+  if(t.length > L) t = t.slice(0, L).replace(/\s+\S*$/, "") + "…";
   return "« " + t + " »";
 }
+/* le texte d'origine du SMS — court, une seule idée, le lien à la fin */
+function relSmsDef(g, i){
+  const cas = RELCAS[g], st = REL[g][i], L = REL[g].length;
+  const R = relRemiseAuto(g, i);
+  const rem = (R > 0) ? " (-" + R + "%)" : "";
+  const fin = (i === L - 1) ? " expire bientôt" : " attend votre signature";
+  return "Tiger Hygiène 3D — votre devis (" + relEur(cas.mnt) + cas.ht + ")" + rem + fin + " : tigerflow.fr/d/x7Kp2m";
+}
+/* le texte affiché : celui de l'utilisateur s'il en a écrit un, sinon l'original */
+/* le plafond s'applique à l'aperçu : si le devis de démonstration dépasse le
+   plafond, la remise n'apparaît pas dans le message — c'est exactement ce que
+   fera l'envoi réel. */
+function relRemiseAuto(g, i){
+  const st = REL[g][i], cas = RELCAS[g];
+  if(!(+st.rem > 0)) return 0;
+  if(RGARDE.plafond > 0 && (+cas.mnt || 0) > RGARDE.plafond) return 0;
+  return +st.rem;
+}
+function relTexte(g, i, ch){
+  const sur = RTXT[rtxtId(g, i, ch)];
+  if(typeof sur === "string") return sur;
+  return (ch === "sms") ? relSmsDef(g, i) : relMsg(g, i);
+}
+function relSurMesure(g, i, ch){ return typeof RTXT[rtxtId(g, i, ch)] === "string"; }
 function relPrev(){
-  const bg = document.getElementById("rel-badge"), mm = document.getElementById("rel-mail-meta"),
-        p = document.getElementById("rel-prev-p"), sm = document.getElementById("rel-prev-sms");
-  if(!bg) return;
-  const st = REL[APC.g][APC.i], cas = RELCAS[APC.g];
+  const bg = document.getElementById("rel-badge"), tb = document.getElementById("rel-tabs"),
+        pane = document.getElementById("rel-pane");
+  if(!bg || !tb || !pane) return;
+  const st = REL[APC.g][APC.i], cas = RELCAS[APC.g], ch = APCH;
   bg.className = "pbadge b-" + APC.g;
   bg.innerHTML = `${GICO[APC.g]}${RELGRP[APC.g].toUpperCase()} · ÉTAPE ${APC.i + 1}/${REL[APC.g].length} · J+${st.j}`;
-  mm.innerHTML = `<div class="ml"><span>De</span><b>Tiger Hygiène 3D</b></div><div class="ml"><span>Objet</span><b>${cas.obj}</b></div>`;
-  p.innerHTML = relMsg(APC.g, APC.i);
-  if(st.sms){
-    sm.hidden = false;
-    sm.innerHTML = `<span class="stag">${ICO_SMS}SMS</span><span>Tiger Hygiène 3D — votre devis (${relEur(cas.mnt)}${cas.ht}) attend votre signature : tigerflow.fr/d/x7Kp2m</span>`;
-  } else {
-    sm.hidden = true;
+
+  /* les onglets reprennent EXACTEMENT les formes de la frise : rectangle
+     bleu pour le courrier, bulle verte pour le texto. Un canal coupé garde
+     son onglet — grisé : on ne cache jamais un réglage, on dit pourquoi il dort. */
+  const tab = (k, ico, lbl, actif) => `<button class="ptab t-${k}${APCH === k ? " on" : ""}${actif ? "" : " cut"}"
+      onclick="relChan('${k}')" title="${actif ? "Le message qui part à cette étape" : "Canal coupé à cette étape — l'allumer dans la frise"}">${ico}${lbl}<span class="pst">${actif ? "actif" : "coupé"}</span></button>`;
+  tb.innerHTML = tab("mail", ICO_MAIL, "E-mail", !!st.mail) + tab("sms", ICO_SMS, "SMS", !!st.sms);
+
+  const actif = (ch === "sms") ? !!st.sms : !!st.mail;
+  const txt = relTexte(APC.g, APC.i, ch);
+  const surM = relSurMesure(APC.g, APC.i, ch);
+  const marque = surM ? `<span class="pedited">✎ texte sur mesure</span>` : "";
+
+  /* ------- mode RÉDACTION ------- */
+  if(PEDIT){
+    const c = smsCount(txt);
+    const pc = Math.min(100, Math.round(c.n / c.max * 100));
+    pane.innerHTML =
+      (ch === "mail" ? `<div class="mailbox" style="margin-top:12px"><div class="mmeta">
+          <div class="ml"><span>De</span><b>Tiger Hygiène 3D</b></div>
+          <div class="ml"><span>Objet</span><b>${cas.obj}</b></div></div></div>` : "")
+      + `<textarea class="pta${ch === "sms" ? " sms" : ""}" id="pta" rows="${ch === "sms" ? 4 : 5}"
+           oninput="relCnt()">${txt.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</textarea>
+         <div class="pvars">
+           ${["{prénom}", "{montant}", "{lien}", "{remise}", "{entreprise}"].map(v =>
+             `<button class="pvar" onclick="relVar('${v}')" title="Insérer dans le texte">＋ <b>${v}</b></button>`).join("")}
+         </div>`
+      + (ch === "sms" ? `<div class="pcnt${c.seg > 1 ? " over" : ""}" id="pcnt">
+           <span id="pcnt-n">${c.n} / ${c.max} caractères</span>
+           <span class="bar"><i id="pcnt-b" style="width:${pc}%"></i></span>
+           <em id="pcnt-s">${c.seg} SMS · ~${(c.seg * SMSPRIX).toFixed(2).replace(".", ",")} €</em></div>` : "")
+      + `<div class="pacts">
+           <button class="pbt k" onclick="relTxtSave()">✓ Enregistrer le texte</button>
+           <button class="pbt" onclick="PEDIT=false;relPrev()">Annuler</button>
+           ${surM ? `<button class="pbt gh" onclick="relTxtReset()">↺ Texte d'origine</button>` : ""}
+         </div>`;
+    return;
   }
+
+  /* ------- mode LECTURE ------- */
+  let corps;
+  if(ch === "mail"){
+    corps = `<div class="mailbox">
+        <div class="mmeta"><div class="ml"><span>De</span><b>Tiger Hygiène 3D</b></div>
+        <div class="ml"><span>Objet</span><b>${cas.obj}</b></div></div>
+        <div class="mbody"><p>${txt}</p></div></div>`;
+  } else {
+    const c = smsCount(txt.replace(/<[^>]+>/g, ""));
+    corps = `<div class="smsbox" style="border-top:0;padding-top:16px">
+        <span class="stag">${ICO_SMS}SMS</span><span>${txt}</span></div>
+        <div class="pcnt${c.seg > 1 ? " over" : ""}" style="margin-top:12px"><span>${c.n} / ${c.max} caractères</span>
+        <span class="bar"><i style="width:${Math.min(100, Math.round(c.n / c.max * 100))}%"></i></span>
+        <em>${c.seg} SMS · ~${(c.seg * SMSPRIX).toFixed(2).replace(".", ",")} €</em></div>`;
+  }
+  pane.innerHTML = (actif ? "" :
+      `<div class="pcut">Ce canal est <b>coupé à l'étape ${APC.i + 1}</b> — le message ci-dessous ne part pas.
+       Pour l'allumer, cliquez ${ch === "sms" ? "la bulle verte SMS" : "le rectangle bleu Email"} de cette étape, à gauche.</div>`)
+    + corps
+    + `<div class="pacts">
+         <button class="pbt k" onclick="PEDIT=true;relPrev();setTimeout(function(){var a=document.getElementById('pta');if(a){a.focus();a.selectionStart=a.value.length;}},0)">✎ Modifier ce texte</button>
+         ${marque}
+         ${surM ? `<button class="pbt gh" onclick="relTxtReset()">↺ Texte d'origine</button>` : ""}
+       </div>`;
+}
+/* changer d'onglet — on quitte toujours la rédaction pour ne rien perdre en silence */
+function relChan(k){ if(APCH === k && !PEDIT) return; APCH = k; PEDIT = false; relPrev(); }
+function relCnt(){
+  const a = document.getElementById("pta"); if(!a || APCH !== "sms") return;
+  const c = smsCount(a.value), box = document.getElementById("pcnt");
+  document.getElementById("pcnt-n").textContent = c.n + " / " + c.max + " caractères";
+  document.getElementById("pcnt-b").style.width = Math.min(100, Math.round(c.n / c.max * 100)) + "%";
+  document.getElementById("pcnt-s").textContent = c.seg + " SMS · ~" + (c.seg * SMSPRIX).toFixed(2).replace(".", ",") + " €";
+  if(box) box.classList.toggle("over", c.seg > 1);
+}
+function relVar(v){
+  const a = document.getElementById("pta"); if(!a) return;
+  const p0 = a.selectionStart || a.value.length, p1 = a.selectionEnd || p0;
+  a.value = a.value.slice(0, p0) + v + a.value.slice(p1);
+  a.focus(); a.selectionStart = a.selectionEnd = p0 + v.length;
+  relCnt();
+}
+function relTxtSave(){
+  const a = document.getElementById("pta"); if(!a) return;
+  const t = a.value.trim();
+  if(!t){ toast("Un message vide ne part pas — écrivez un texte ou revenez à l'original"); return; }
+  RTXT[rtxtId(APC.g, APC.i, APCH)] = t; rtxtSave();
+  PEDIT = false; relPrev(); relRender();
+  toast("✓ Texte enregistré — il remplace l'original pour cette étape");
+}
+function relTxtReset(){
+  delete RTXT[rtxtId(APC.g, APC.i, APCH)]; rtxtSave();
+  PEDIT = false; relPrev(); relRender();
+  toast("↺ Texte d'origine rétabli");
 }
 /* 12/08 : plus de relRowSync — le jalon EST le champ, il n'y a plus de
    doublon à synchroniser. */
 function relPick(key, i, ev){
   if(ev && ev.target.closest("input, .rchk")) return;   /* on laisse saisir */
   APC = {g: key, i: i};
-  document.querySelectorAll("#rel-steps .rstep").forEach(el =>
+  PEDIT = false;   /* changer d'étape ferme la rédaction : rien ne se perd en silence */
+  document.querySelectorAll("#rel-steps .jbx").forEach(el =>
     el.classList.toggle("on", el.dataset.g === key && +el.dataset.i === i));
+  document.querySelectorAll("#rel-steps .lane").forEach(el =>
+    el.classList.toggle("on", el.dataset.g === key));
   relPrev();
 }
+/* 18/08 (visuel 283-C) : les jalons deviennent horizontaux. J0 n'est plus
+   une ligne au-dessus de la pile : c'est le PREMIER point du fil. */
+/* 18/08 (patron) — LES DISTANCES DEVIENNENT VRAIES. Avant, les jalons étaient
+   équidistants : J+3→J+7 (4 jours) occupait le même espace que J+7→J+14
+   (7 jours). Je le disais « le temps devient une distance » — c'était faux.
+   Maintenant chaque jalon reçoit une part de largeur proportionnelle à
+   l'intervalle qui le précède, avec un plancher pour rester lisible. */
+function relParts(key){
+  const l = REL[key], MIN = 0.62;          /* aucun jalon sous 62 % de la part moyenne */
+  const ecarts = l.map((st, i) => Math.max(1, st.j - (i === 0 ? 0 : l[i - 1].j)));
+  const tot = ecarts.reduce((a, b) => a + b, 0) || 1;
+  const moy = tot / ecarts.length;
+  const brut = ecarts.map(e => Math.max(e, moy * MIN));
+  const s2 = brut.reduce((a, b) => a + b, 0);
+  return brut.map(v => v / s2);            /* somme = 1 */
+}
 function relSteps(list, key){
-  /* la frise : jalon J+x cerclé à la couleur du public, fil qui relie,
-     extrait du VRAI message (remise comprise) sous chaque rangée */
+  const parts = relParts(key);
   return list.map((st, i) => `
-    <div class="frow g-${key}" data-g="${key}" data-i="${i}">
-      <div class="frail"><span class="fseg"></span><span class="fjal" title="Le délai de cette relance — modifiable ici"><i>J +</i><input type="number" inputmode="decimal" min="1" max="60" value="${st.j}" onfocus="relPick('${key}',${i})" onclick="event.stopPropagation()" onchange="REL.${key}[${i}].j=+this.value;relSave()"></span><span class="fseg"></span></div>
-      <div class="fbody">
-        <div class="rstep${APC.g === key && APC.i === i ? " on" : ""}" data-g="${key}" data-i="${i}" onclick="relPick('${key}',${i},event)" title="Cliquer pour voir le message de cette étape">
-          <label>remise</label><input type="number" inputmode="decimal" min="0" max="50" value="${st.rem}" onchange="REL.${key}[${i}].rem=+this.value;relSave()"><label>%</label>
-          <span style="flex:1"></span>
-          <label class="rchk"><input type="checkbox" ${st.mail ? "checked" : ""} onchange="REL.${key}[${i}].mail=this.checked;relSave()">${ICO_MAIL}Email</label>
-          <label class="rchk"><input type="checkbox" ${st.sms ? "checked" : ""} onchange="REL.${key}[${i}].sms=this.checked;relSave()">${ICO_SMS}SMS</label>
-          ${list.length > 1 ? `<button class="rdel" title="Retirer cette relance" onclick="relDel('${key}',${i},event)">✕</button>` : ""}
-        </div>
+    <div class="jal" data-g="${key}" data-i="${i}" style="flex:${(parts[i] * 100).toFixed(2)} 1 0" title="${i === 0 ? st.j + " jours après l'envoi" : (st.j - list[i - 1].j) + " jours après la relance précédente"}">
+      <span class="jdot" title="Délai de cette relance — entre J+${relBornes(key, i).min} et J+${relBornes(key, i).max}"><i>J +</i><input type="number" inputmode="decimal" min="${relBornes(key, i).min}" max="${relBornes(key, i).max}" value="${st.j}" onfocus="relPick('${key}',${i})" onclick="event.stopPropagation()" onchange="relSetJ('${key}',${i},this.value)"></span>
+      <div class="jbx${APC.g === key && APC.i === i ? " on" : ""}" data-g="${key}" data-i="${i}" onclick="relPick('${key}',${i},event)" title="Cliquer pour voir et modifier le message de cette étape">
+        <span class="jrm"><label>remise</label><input type="number" inputmode="decimal" min="0" max="50" value="${st.rem}" onclick="event.stopPropagation()" onchange="REL.${key}[${i}].rem=+this.value;relSave();relRender()"><label>%</label></span>
+        <span class="jch">
+          <label class="rchk k-mail" title="${st.mail ? "L'e-mail part à cette étape — cliquer pour le couper" : "E-mail coupé à cette étape — cliquer pour l'allumer"}"><input type="checkbox" ${st.mail ? "checked" : ""} onchange="REL.${key}[${i}].mail=this.checked;relSave();relPrev()">${ICO_MAIL}Email</label>
+          <label class="rchk k-sms" title="${st.sms ? "Le SMS part à cette étape — cliquer pour le couper" : "SMS coupé à cette étape — cliquer pour l'allumer"}"><input type="checkbox" ${st.sms ? "checked" : ""} onchange="REL.${key}[${i}].sms=this.checked;relSave();relPrev()">SMS</label>
+        </span>
+        ${list.length > 1 ? `<button class="jdel" title="Retirer cette relance" onclick="relDel('${key}',${i},event)">✕</button>` : ""}
       </div>
+      ${(q => `<span class="jwhen${q.glisse ? " slid" : ""}" title="${q.glisse ? "Ce jour tombait un week-end — l'envoi glisse au prochain jour ouvré" : "Jour d'envoi pour un devis parti aujourd'hui"}">${q.glisse ? "↷ " : ""}${q.txt}</span>`)(relQuand(st.j))}
+      <span class="jex" title="Extrait du message qui part à cette étape — cliquez la carte pour le lire en entier">${relExtrait(key, i, 58)}</span>
     </div>`).join("");
 }
+/* « bouclé en X jours » : le dernier jalon de la séquence, en trois mots */
+function relDuree(key){
+  const l = REL[key]; if(!l || !l.length) return "";
+  return "bouclé en " + l[l.length - 1].j + " jours";
+}
 function relGrpFrise(key){
-  return `<div class="fstart"><span class="fj0">J 0</span><b>Devis envoyé</b></div>`
-    + relSteps(REL[key], key)
-    ;   /* 12/08 (patron) : « on se limite à 3 » — plus de bouton d'ajout */
+  return `<div class="lane g-${key}${APC.g === key ? " on" : ""}" data-g="${key}">
+      <div class="lnh"><span class="gic">${GICO[key]}</span>${RELGRP[key]} <small>— ${RELSOUS[key]}</small><span class="cad">${relDuree(key)}</span></div>
+      <div class="lfil">
+        <span class="jal zero"><span class="jdot z">J 0</span><span class="zlb">Devis envoyé</span></span>
+        ${relSteps(REL[key], key)}
+      </div>
+    </div>`;
 }
 function relAddBtn(){ return ""; }   /* 12/08 : conservé inerte — la séquence est fermée à 3 */
+const RELSOUS = {
+  part: "décident vite, on relance vite",
+  pro:  "circuits de validation, on laisse respirer une semaine",
+  syn:  "décision en conseil syndical, on relance posé et par écrit"
+};
+/* 18/08 (GO 1-2-3) : la barre des garde-fous. Elle dit en clair ce que la
+   machine s'interdit — le plafond de remise et la fenêtre d'envoi. */
+function relGardeRender(){
+  const el = document.getElementById("rel-garde"); if(!el) return;
+  const remisesAuto = ["part","pro","syn"].reduce((a, k) => a + REL[k].filter(x => +x.rem > 0).length, 0);
+  el.innerHTML = `
+    <div class="rgh"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Garde-fous</div>
+    <div class="rgs">Ce que la machine <b>ne fera jamais</b> toute seule — deux réglages qui protègent la marge et l'image.</div>
+    <div class="rgrow">
+      <span class="rgl">Pas de remise automatique au-dessus de
+        <small>${remisesAuto} étape${remisesAuto > 1 ? "s" : ""} de la séquence offre${remisesAuto > 1 ? "nt" : ""} une remise. Au-delà du plafond, le message part <b>sans remise</b> : sur un gros devis, le geste commercial reste une décision humaine.</small></span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="100000" step="100" value="${RGARDE.plafond}" onchange="rgSet('plafond', this.value)">€ HT</span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Envoyer seulement pendant les heures ouvrables
+        <small>Un SMS le dimanche à 7 h, c'est un client agacé. Hors fenêtre, l'envoi glisse au <b>prochain jour ouvré</b> — les jalons ci-dessus affichent déjà la date réelle.</small></span>
+      <label class="rgsw"><input type="checkbox" ${RGARDE.ouvres ? "checked" : ""} onchange="rgSet('ouvres', this.checked)">Jours ouvrés</label>
+      <span class="rgi">de
+        <select onchange="rgSet('h1', this.value)">${[7,8,9,10,11].map(h => `<option value="${h}"${RGARDE.h1 === h ? " selected" : ""}>${h} h</option>`).join("")}</select>
+        à
+        <select onchange="rgSet('h2', this.value)">${[16,17,18,19,20].map(h => `<option value="${h}"${RGARDE.h2 === h ? " selected" : ""}>${h} h</option>`).join("")}</select>
+      </span>
+    </div>`;
+}
+function rgSet(k, v){
+  if(k === "ouvres") RGARDE.ouvres = !!v;
+  else if(k === "plafond") RGARDE.plafond = Math.max(0, Math.round(+v || 0));
+  else {
+    RGARDE[k] = Math.round(+v || 0);
+    if(RGARDE.h2 <= RGARDE.h1){ RGARDE.h2 = Math.min(20, RGARDE.h1 + 1); toast("La fenêtre doit se fermer après son ouverture — ajustée à " + RGARDE.h2 + " h"); }
+  }
+  rgSave(); relRender();
+  if(k === "plafond") toast("Plafond enregistré — au-dessus de " + relEur(RGARDE.plafond) + " HT, aucune remise automatique");
+  if(k === "ouvres") toast(RGARDE.ouvres ? "Envois limités aux jours ouvrés" : "⚠️ Envois possibles le week-end");
+}
 function relRender(){
   /* 12/08 : une séquence sauvegardée avant la limite peut porter 4 étapes —
      on la ramène à 3 au lieu d'afficher ce qu'on ne sait plus créer. */
   ["part","pro","syn"].forEach(k => { if(REL[k] && REL[k].length > 3) REL[k] = REL[k].slice(0, 3); });
   document.getElementById("rel-steps").innerHTML =
-    `<p class="rgrp g-part"><span class="gic">${GICO.part}</span>Particuliers <small>— décident vite, on relance vite</small></p>` +
-    relGrpFrise("part") +
-    `<p class="rgrp g-pro"><span class="gic">${GICO.pro}</span>Entreprises <small>— circuits de validation, on laisse respirer une semaine</small></p>` +
-    relGrpFrise("pro") +
-    `<p class="rgrp g-syn"><span class="gic">${GICO.syn}</span>Syndics &amp; copropriétés <small>— décision en conseil syndical, on relance posé et par écrit</small></p>` +
-    relGrpFrise("syn");
+    relGrpFrise("part") + relGrpFrise("pro") + relGrpFrise("syn");
+  relGardeRender();
 }
 function relDel(key, i, ev){
   if(ev) ev.stopPropagation();
