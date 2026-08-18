@@ -213,6 +213,83 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .docs .dl{margin-left:auto;display:flex;gap:6px}
 .docs .dl button{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
 .docs .dl button:hover{border-color:var(--orange);color:var(--orange-deep)}
+/* ===== 18/08 (patron : « ajoute de document marche pas, active-le avec
+   affichage en grand ») — LES DOCUMENTS DU CONTRAT.
+   « + Ajouter » n'ouvrait rien : il affichait un toast « bientôt relié ».
+   Maintenant le fichier entre pour de vrai (glisser-déposer compris), il est
+   gardé sur le poste, et l'œil ouvre une VISIONNEUSE PLEIN ÉCRAN — PDF, image
+   ou aperçu générique selon le type. ===== */
+/* 18/08 (patron : « faut mettre l'affichage comme ça ») — LA GRILLE DE
+   VIGNETTES de la fiche client arrive ici : mêmes cartes 176 px, même aperçu
+   de 146 px de haut (l'image en cover, la 1re page du PDF dans une iframe
+   figée), même étiquette d'extension, même croix de retrait au survol.
+   Deux pages, un seul objet « document » — on ne réapprend rien en changeant
+   d'écran. Différence assumée : ici l'aperçu est TOUJOURS conservé (limite à
+   8 Mo par fichier), alors que la fiche client lâche l'aperçu au-delà de
+   1,5 Mo et affiche « aperçu non conservé ». */
+/* la colonne Documents de la fiche CONTRAT est plus étroite que celle de la
+   fiche client (341 px contre toute la largeur) : le pas descend à 150 px
+   pour tenir deux vignettes de front au lieu d'une seule étirée. */
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.doccard{position:relative;margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(23,26,32,.04);transition:.14s}
+.doccard.ouvrable{cursor:zoom-in}
+.doccard.ouvrable:hover{border-color:var(--orange);box-shadow:0 12px 26px -16px rgba(23,26,32,.45);transform:translateY(-2px)}
+.docvue{height:146px;background:#fff;display:grid;place-items:center;overflow:hidden;position:relative;border-bottom:1px solid var(--line)}
+.docvue:has(.docext){background:#F5F6F9}
+.docvue img{width:100%;height:100%;object-fit:cover;display:block}
+.docvue iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+.docvue::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34px;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.92))}
+.docvue:has(.docext)::after{display:none}
+.docext{font-family:'Sora';font-weight:800;font-size:1.02rem;color:var(--muted);letter-spacing:.06em}
+.doctag{position:absolute;left:8px;bottom:8px;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;background:rgba(23,26,32,.72);color:#fff;padding:2px 7px;border-radius:6px}
+.docvue:has(.docext) .doctag{display:none}
+.doccard figcaption{padding:10px 12px 12px;display:block}
+.doccard figcaption b{display:block;font-size:.76rem;font-weight:700;line-height:1.35;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doccard figcaption small{display:block;font-size:.69rem;color:var(--muted);margin-top:4px}
+.docacts{position:absolute;top:8px;right:8px;z-index:3;display:flex;gap:5px;opacity:0;transition:.14s}
+.doccard:hover .docacts,.docacts:focus-within{opacity:1}
+.docacts button{width:24px;height:24px;border-radius:50%;border:0;background:rgba(255,255,255,.94);color:var(--ink-2);cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 4px rgba(23,26,32,.22)}
+.docacts button svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.docacts button:hover{color:var(--orange-deep)}
+.docacts button.sup:hover{background:var(--red-bg);color:var(--red)}
+.docvide{grid-column:1/-1;border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);font-size:.84rem;line-height:1.6}
+.docvide b{display:block;color:var(--ink);font-weight:700;margin-bottom:3px}
+.doccard.newdoc{animation:docin .6s ease}
+@keyframes docin{0%{box-shadow:0 0 0 3px #A7D9C4}100%{box-shadow:0 1px 2px rgba(23,26,32,.04)}}
+.docs .fic.f-img{background:var(--blue-bg,#EAF1FE);color:var(--blue,#2E5CE6)}
+.docs .fic.f-doc{background:#EDE9FE;color:#6D3BC4}
+.docs .fic.f-xls{background:var(--green-bg,#ECFDF5);color:var(--green-d,#0E7A54)}
+.docs .fic.f-any{background:#F1F2F6;color:#6C7285}
+.dropz{border:1.5px dashed #DDE1EA;border-radius:13px;padding:14px;text-align:center;font-size:.82rem;color:var(--muted);cursor:pointer;transition:.13s;background:#FCFDFE}
+.dropz:hover,.dropz.over{border-color:var(--orange);background:#FFF8F3;color:var(--orange-deep)}
+.dropz b{display:block;color:var(--ink);font-weight:700;margin-bottom:2px}
+.dropz.over b{color:var(--orange-deep)}
+/* la visionneuse */
+.dvw{position:fixed;inset:0;z-index:120;background:rgba(12,14,18,.86);display:none;flex-direction:column;backdrop-filter:blur(3px)}
+.dvw.open{display:flex}
+.dvw-h{display:flex;align-items:center;gap:12px;padding:14px 18px;color:#fff;flex:none}
+.dvw-h .nm{font-weight:800;font-size:.95rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dvw-h .sz{font-size:.76rem;color:rgba(255,255,255,.62);flex:none}
+.dvw-h .sp{flex:1}
+.dvw-h button{border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.1);color:#fff;border-radius:10px;
+  padding:8px 13px;font-size:.8rem;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.dvw-h button:hover{background:rgba(255,255,255,.19)}
+.dvw-h button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dvw-b{flex:1;min-height:0;margin:0 18px 18px;background:#fff;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.dvw-b iframe{width:100%;height:100%;border:0}
+.dvw-b img{max-width:100%;max-height:100%;object-fit:contain}
+.dvw-np{text-align:center;color:var(--muted);padding:40px 24px;font-size:.9rem;line-height:1.7}
+.dvw-np b{display:block;color:var(--ink);font-size:1rem;margin-bottom:6px}
+/* iPhone : la barre de la visionneuse tient sur DEUX lignes propres —
+   nom + taille dessus, les deux boutons dessous, chacun à sa moitié. */
+@media(max-width:640px){
+  .dvw-h{padding:10px 12px 8px;flex-wrap:wrap;gap:6px}
+  .dvw-h .nm{flex:1 1 100%;font-size:.88rem}
+  .dvw-h .sz{flex:1 1 100%;order:2}
+  .dvw-h .sp{display:none}
+  .dvw-h button{order:3;flex:1;justify-content:center;padding:10px 12px}
+  .dvw-b{margin:0 10px 10px}
+}
 .docs .dl svg{width:14px;height:14px}
 
 /* Historique */
@@ -581,8 +658,13 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       </div>
 
       <div class="card">
-        <div class="card-h"><span class="tick"></span>Documents<button class="addbtn" style="margin-left:auto" onclick="toast('📎 Ajouter un document — bientôt relié')">+ Ajouter</button></div>
-        <ul class="docs">
+        <div class="card-h"><span class="tick"></span>Documents<button class="addbtn" style="margin-left:auto" onclick="docPick()">+ Ajouter</button></div>
+        <input type="file" id="doc-input" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,.csv,.txt" style="display:none" onchange="docAdd(this.files);this.value=''">
+        <div class="dropz" id="doc-drop" onclick="docPick()" title="Cliquer ou déposer un fichier">
+          <b>Déposer un fichier ici</b>PDF, image, Word, Excel — ou cliquer pour choisir
+        </div>
+        <div class="docgrid" id="docgrid"></div>
+        <ul class="docs" hidden>
           <li>
             <span class="fic">PDF</span>
             <div><b>contrat-signe.pdf</b><small>1,2 Mo · signé le 12/12/2025</small></div>
@@ -1207,7 +1289,10 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
       u.innerHTML = '<li style="color:var(--muted);font-size:.84rem;list-style:none;padding:11px 0">' + msg + '</li>';
     });
     vide("ul.tl",    "Aucune intervention programmée pour ce contrat.");
-    vide("ul.docs",  "Aucun document joint.");
+    /* 18/08 : les documents ne sont plus « vidés » d'office — docRender()
+       affiche ceux que l'utilisateur a réellement ajoutés, et l'état vide
+       seulement s'il n'y en a aucun. */
+    if(typeof docRender === "function") docRender();
     vide("ul.items", "Aucun matériel renseigné.");
 
     /* Les compteurs d'onglets annonçaient 5 évènements et 12 interventions. */
@@ -1538,6 +1623,137 @@ function ctrEdit(){
   if(!n){ toast("Ouvre un contrat depuis la liste pour le modifier"); return; }
   location.href = "contrat-nouveau.html?edit=" + encodeURIComponent(n);
 }
+</script>
+
+<!-- 18/08 (patron) : la visionneuse plein écran des documents du contrat -->
+<div class="dvw" id="dvw" onclick="if(event.target===this)docClose()">
+  <div class="dvw-h">
+    <span class="nm" id="dvw-nm"></span><span class="sz" id="dvw-sz"></span>
+    <span class="sp"></span>
+    <button onclick="docDl()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Télécharger</button>
+    <button onclick="docClose()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>Fermer</button>
+  </div>
+  <div class="dvw-b" id="dvw-b"></div>
+</div>
+
+<script>
+/* ================= 18/08 (patron) — LES DOCUMENTS DU CONTRAT =================
+   « + Ajouter » ne faisait qu'afficher un toast. Ici le fichier entre pour de
+   vrai : sélecteur natif OU glisser-déposer, gardé sur le poste (base64 dans
+   le stockage local, par référence de contrat), et l'œil ouvre une
+   VISIONNEUSE PLEIN ÉCRAN — le PDF se lit dans la page, l'image s'affiche en
+   grand, le reste propose le téléchargement. Rien ne part sur un serveur tant
+   que la base n'est pas branchée : c'est un stockage honnête, pas une fausse
+   promesse. Limite volontaire à 8 Mo par fichier — au-delà le stockage local
+   du navigateur sature et on perdrait TOUT sans prévenir. ========================= */
+const DOCMAX = 8 * 1024 * 1024;
+function docKey(){ return "tigerflow-contrat-docs-" + (cRef() || "demo"); }
+function docBox(){ try{ return JSON.parse(localStorage.getItem(docKey()) || "[]"); }catch(e){ return []; } }
+function docSave(l){ try{ localStorage.setItem(docKey(), JSON.stringify(l)); }catch(e){ toast("Mémoire du navigateur pleine — supprimez un document avant d'en ajouter un autre"); } }
+function docPick(){ const i = document.getElementById("doc-input"); if(i) i.click(); }
+function docPoids(n){
+  if(n < 1024) return n + " o";
+  if(n < 1024 * 1024) return (n / 1024).toFixed(0) + " Ko";
+  return (n / 1048576).toFixed(1).replace(".", ",") + " Mo";
+}
+function docType(nom, mime){
+  const e = (nom.split(".").pop() || "").toLowerCase();
+  if(mime === "application/pdf" || e === "pdf")            return {k: "pdf", lbl: "PDF", cls: ""};
+  if(/^image\//.test(mime) || ["png","jpg","jpeg","webp","gif"].includes(e)) return {k: "img", lbl: e.toUpperCase().slice(0, 4), cls: "f-img"};
+  if(["doc","docx"].includes(e))                            return {k: "doc", lbl: "DOC", cls: "f-doc"};
+  if(["xls","xlsx","csv"].includes(e))                      return {k: "xls", lbl: e === "csv" ? "CSV" : "XLS", cls: "f-xls"};
+  return {k: "any", lbl: (e || "FIC").toUpperCase().slice(0, 4), cls: "f-any"};
+}
+function docAdd(files){
+  if(!files || !files.length) return;
+  const list = docBox();
+  let reste = files.length, ajoutes = 0, refuses = [];
+  Array.from(files).forEach(f => {
+    if(f.size > DOCMAX){ refuses.push(f.name); if(--reste === 0) docFin(list, ajoutes, refuses); return; }
+    const r = new FileReader();
+    r.onload = () => {
+      const d = new Date(), p2 = x => String(x).padStart(2, "0");
+      list.push({nom: f.name, taille: f.size, mime: f.type || "",
+        le: p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear(),
+        data: r.result});
+      ajoutes++;
+      if(--reste === 0) docFin(list, ajoutes, refuses);
+    };
+    r.onerror = () => { refuses.push(f.name); if(--reste === 0) docFin(list, ajoutes, refuses); };
+    r.readAsDataURL(f);
+  });
+}
+function docFin(list, ajoutes, refuses){
+  if(ajoutes) docSave(list);
+  docRender(ajoutes);
+  if(refuses.length) toast("Trop lourd (max 8 Mo) : " + refuses.join(", "));
+  else if(ajoutes) toast("📎 " + ajoutes + " document" + (ajoutes > 1 ? "s" : "") + " ajouté" + (ajoutes > 1 ? "s" : "") + " au contrat");
+}
+function docSuppr(i, ev){
+  if(ev) ev.stopPropagation();
+  const l = docBox(), d = l[i]; if(!d) return;
+  l.splice(i, 1); docSave(l); docRender();
+  toast("Document « " + d.nom + " » retiré", () => { const b = docBox(); b.splice(i, 0, d); docSave(b); docRender(); });
+}
+function docRender(neuf){
+  const box = document.getElementById("docgrid"); if(!box) return;
+  const l = docBox();
+  if(!l.length){
+    box.innerHTML = `<div class="docvide"><b>Aucun document joint à ce contrat</b>Contrat signé, attestation, plan d'appâtage, photo d'un local — déposez-les ci-dessus.</div>`;
+    return;
+  }
+  box.innerHTML = l.map((d, i) => {
+    const T = docType(d.nom, d.mime);
+    const vue = T.k === "img" ? `<img src="${d.data}" alt="">`
+      : T.k === "pdf" ? `<iframe src="${d.data}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>`
+      : `<span class="docext">${T.lbl}</span>`;
+    return `<figure class="doccard ouvrable${(neuf && i >= l.length - neuf) ? " newdoc" : ""}" onclick="docOpen(${i})" title="Ouvrir ${d.nom}">
+      <span class="docacts">
+        <button title="Télécharger" onclick="event.stopPropagation();docOne(${i})"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>
+        <button class="sup" title="Retirer" onclick="event.stopPropagation();docSuppr(${i},event)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </span>
+      <div class="docvue">${vue}<span class="doctag">${T.lbl}</span></div>
+      <figcaption><b title="${d.nom}">${d.nom}</b><small>${d.le} · ${docPoids(d.taille)}</small></figcaption>
+    </figure>`;
+  }).join("");
+}
+/* --------- la visionneuse --------- */
+let DVCUR = null;
+function docOpen(i){
+  const d = docBox()[i]; if(!d) return;
+  DVCUR = d;
+  const T = docType(d.nom, d.mime), b = document.getElementById("dvw-b");
+  document.getElementById("dvw-nm").textContent = d.nom;
+  document.getElementById("dvw-sz").textContent = docPoids(d.taille) + " · ajouté le " + d.le;
+  if(T.k === "img")      b.innerHTML = `<img src="${d.data}" alt="${d.nom}">`;
+  else if(T.k === "pdf") b.innerHTML = `<iframe src="${d.data}#toolbar=1&navpanes=0" title="${d.nom}"></iframe>`;
+  else b.innerHTML = `<div class="dvw-np"><b>${d.nom}</b>Ce format ne s'affiche pas dans le navigateur —<br>téléchargez-le pour l'ouvrir dans Word, Excel ou l'application adaptée.</div>`;
+  document.getElementById("dvw").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function docClose(){
+  document.getElementById("dvw").classList.remove("open");
+  document.getElementById("dvw-b").innerHTML = "";   /* libère la mémoire du PDF */
+  document.body.style.overflow = ""; DVCUR = null;
+}
+function docTelecharge(d){
+  const a = document.createElement("a");
+  a.href = d.data; a.download = d.nom; document.body.appendChild(a); a.click(); a.remove();
+  toast("⬇️ " + d.nom);
+}
+function docDl(){ if(DVCUR) docTelecharge(DVCUR); }
+function docOne(i){ const d = docBox()[i]; if(d) docTelecharge(d); }
+/* --------- glisser-déposer + clavier --------- */
+document.addEventListener("DOMContentLoaded", function(){
+  docRender();
+  const z = document.getElementById("doc-drop");
+  if(z){
+    ["dragenter","dragover"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.add("over"); }));
+    ["dragleave","drop"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.remove("over"); }));
+    z.addEventListener("drop", ev => { if(ev.dataTransfer && ev.dataTransfer.files) docAdd(ev.dataTransfer.files); });
+  }
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape" && document.getElementById("dvw").classList.contains("open")) docClose(); });
 </script>
 </body>
 </html>
