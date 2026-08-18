@@ -260,10 +260,10 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .docs .fic.f-doc{background:#EDE9FE;color:#6D3BC4}
 .docs .fic.f-xls{background:var(--green-bg,#ECFDF5);color:var(--green-d,#0E7A54)}
 .docs .fic.f-any{background:#F1F2F6;color:#6C7285}
-.dropz{border:1.5px dashed #DDE1EA;border-radius:13px;padding:14px;text-align:center;font-size:.82rem;color:var(--muted);cursor:pointer;transition:.13s;background:#FCFDFE}
-.dropz:hover,.dropz.over{border-color:var(--orange);background:#FFF8F3;color:var(--orange-deep)}
-.dropz b{display:block;color:var(--ink);font-weight:700;margin-bottom:2px}
-.dropz.over b{color:var(--orange-deep)}
+/* 18/08 (patron) : la zone « Déposer un fichier ici » est retirée — le bouton
+   « + Ajouter » fait le travail. Le glisser-déposer reste actif sur toute la
+   carte, sans prendre de place : elle s'éclaire quand un fichier la survole. */
+.card.dragover{outline:2px dashed var(--orange);outline-offset:-4px;background:#FFFCFA}
 /* la visionneuse */
 .dvw{position:fixed;inset:0;z-index:120;background:rgba(12,14,18,.86);display:none;flex-direction:column;backdrop-filter:blur(3px)}
 .dvw.open{display:flex}
@@ -660,9 +660,6 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       <div class="card">
         <div class="card-h"><span class="tick"></span>Documents<button class="addbtn" style="margin-left:auto" onclick="docPick()">+ Ajouter</button></div>
         <input type="file" id="doc-input" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.xls,.xlsx,.csv,.txt" style="display:none" onchange="docAdd(this.files);this.value=''">
-        <div class="dropz" id="doc-drop" onclick="docPick()" title="Cliquer ou déposer un fichier">
-          <b>Déposer un fichier ici</b>PDF, image, Word, Excel — ou cliquer pour choisir
-        </div>
         <div class="docgrid" id="docgrid"></div>
         <ul class="docs" hidden>
           <li>
@@ -1646,10 +1643,52 @@ function ctrEdit(){
    que la base n'est pas branchée : c'est un stockage honnête, pas une fausse
    promesse. Limite volontaire à 8 Mo par fichier — au-delà le stockage local
    du navigateur sature et on perdrait TOUT sans prévenir. ========================= */
-const DOCMAX = 8 * 1024 * 1024;
+/* ===== 18/08 (patron : « ça marche même pas les pièces jointes ») — LE BUG.
+   Une photo de téléphone pèse 8 à 25 Mo : elle était REFUSÉE avec un toast qui
+   file, donc rien n'apparaissait et on croyait le bouton cassé. Deux causes,
+   deux corrections :
+   1. LES IMAGES SONT REDIMENSIONNÉES avant d'être gardées — 1600 px de côté
+      maximum, JPEG qualité 0,75. Une photo de 25 Mo tombe sous 400 Ko sans
+      qu'on voie la différence sur une vignette de 146 px ni en plein écran.
+      Plus aucune photo n'est refusée.
+   2. LE STOCKAGE DU NAVIGATEUR EST PARTAGÉ par tout le SaaS (devis, contrats,
+      notes, relances…) et plafonne vers 5 Mo. Quand il sature, localStorage
+      lève une erreur : avant on l'avalait en silence et la liste restait vide.
+      Maintenant on libère la place, on réessaie, et si ça ne suffit pas on
+      garde le document POUR LA SESSION en le disant. Dans tous les cas
+      l'affichage vient de la MÉMOIRE : ce qu'on ajoute se voit toujours. */
+/* Une IMAGE n'a plus de limite utile : on la redimensionne, donc une photo de
+   40 Mo finit à 300 Ko. La limite ne concerne que ce qu'on ne peut PAS
+   alléger — PDF, Word, Excel. */
+const DOCMAX = 20 * 1024 * 1024;      /* fichiers non-image */
+const DOCMAX_IMG = 60 * 1024 * 1024;  /* garde-fou d'absurdité pour les photos */
+const DOCIMG_MAX_PX = 1600;           /* côté le plus long après redimensionnement */
+const DOCIMG_Q = 0.75;                /* qualité JPEG */
+const DOCIMG_SEUIL = 700 * 1024;      /* en dessous, on garde le fichier tel quel */
+let DOCMEM = null;                    /* la vérité affichée — survit à un stockage plein */
 function docKey(){ return "tigerflow-contrat-docs-" + (cRef() || "demo"); }
-function docBox(){ try{ return JSON.parse(localStorage.getItem(docKey()) || "[]"); }catch(e){ return []; } }
-function docSave(l){ try{ localStorage.setItem(docKey(), JSON.stringify(l)); }catch(e){ toast("Mémoire du navigateur pleine — supprimez un document avant d'en ajouter un autre"); } }
+function docBox(){
+  if(DOCMEM) return DOCMEM;
+  try{ DOCMEM = JSON.parse(localStorage.getItem(docKey()) || "[]"); }catch(e){ DOCMEM = []; }
+  return DOCMEM;
+}
+/* Sauvegarde qui ne ment pas : si le stockage refuse, on libère puis on
+   réessaie, et on dit ce qu'on a dû lâcher. */
+function docSave(l){
+  DOCMEM = l;                                   /* l'affichage suit TOUJOURS */
+  const ecrire = arr => { localStorage.setItem(docKey(), JSON.stringify(arr)); };
+  try{ ecrire(l); return "ok"; }catch(e){}
+  const allege = l.map(d => ({...d}));
+  for(let i = 0; i < allege.length - 1; i++){
+    if(!allege[i].data) continue;
+    allege[i].data = ""; allege[i].sansApercu = true;
+    try{ ecrire(allege); DOCMEM = allege;
+         toast("Stockage presque plein — l'aperçu des plus anciens documents a été libéré"); return "allege"; }catch(e2){}
+  }
+  const nus = l.map(d => ({...d, data: "", sansApercu: true}));
+  try{ ecrire(nus); toast("Stockage plein — le document est gardé pour cette session, sans aperçu conservé"); return "nu"; }
+  catch(e3){ toast("Mémoire du navigateur pleine — le document reste visible tant que la page est ouverte"); return "memoire"; }
+}
 function docPick(){ const i = document.getElementById("doc-input"); if(i) i.click(); }
 function docPoids(n){
   if(n < 1024) return n + " o";
@@ -1664,34 +1703,75 @@ function docType(nom, mime){
   if(["xls","xlsx","csv"].includes(e))                      return {k: "xls", lbl: e === "csv" ? "CSV" : "XLS", cls: "f-xls"};
   return {k: "any", lbl: (e || "FIC").toUpperCase().slice(0, 4), cls: "f-any"};
 }
+/* Redimensionne une image trop lourde : 1600 px de côté max, JPEG 0,75.
+   Rend une chaîne data: prête à stocker, ou l'original si la conversion
+   échoue (fichier corrompu, format exotique) — jamais un refus. */
+function docCompresse(dataURL, mime){
+  return new Promise(res => {
+    if(!/^image\//.test(mime || "") || /svg/.test(mime || "")) return res(null);
+    const img = new Image();
+    img.onload = () => {
+      try{
+        const gr = Math.max(img.width, img.height);
+        const k = gr > DOCIMG_MAX_PX ? DOCIMG_MAX_PX / gr : 1;
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        const x = c.getContext("2d");
+        x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);   /* pas de fond noir sur un PNG transparent */
+        x.drawImage(img, 0, 0, c.width, c.height);
+        res({data: c.toDataURL("image/jpeg", DOCIMG_Q), w: c.width, h: c.height});
+      }catch(e){ res(null); }
+    };
+    img.onerror = () => res(null);
+    img.src = dataURL;
+  });
+}
 function docAdd(files){
   if(!files || !files.length) return;
-  const list = docBox();
-  let reste = files.length, ajoutes = 0, refuses = [];
-  Array.from(files).forEach(f => {
-    if(f.size > DOCMAX){ refuses.push(f.name); if(--reste === 0) docFin(list, ajoutes, refuses); return; }
+  const arr = Array.from(files);
+  const limite = f => (/^image\//.test(f.type || "") ? DOCMAX_IMG : DOCMAX);
+  const trop = arr.filter(f => f.size > limite(f)).map(f => f.name);
+  const bons = arr.filter(f => f.size <= limite(f));
+  if(trop.length) toast("Fichier ignoré, trop volumineux : " + trop.join(", "));
+  if(!bons.length) return;
+
+  let reste = bons.length, ajoutes = 0, compresses = 0;
+  bons.forEach(f => {
     const r = new FileReader();
-    r.onload = () => {
+    r.onload = async () => {
+      let data = r.result, taille = f.size, mime = f.type || "", nom = f.name, reduit = false;
+      /* une photo de téléphone passe de 25 Mo à ~300 Ko sans perte visible */
+      if(/^image\//.test(mime) && f.size > DOCIMG_SEUIL){
+        const c = await docCompresse(data, mime);
+        if(c && c.data.length < data.length){
+          data = c.data;
+          taille = Math.round(c.data.length * 0.75);   /* base64 → octets réels */
+          reduit = true; compresses++;
+          if(!/\.(jpe?g)$/i.test(nom)) nom = nom.replace(/\.[^.]+$/, "") + ".jpg";
+          mime = "image/jpeg";
+        }
+      }
       const d = new Date(), p2 = x => String(x).padStart(2, "0");
-      list.push({nom: f.name, taille: f.size, mime: f.type || "",
-        le: p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear(),
-        data: r.result});
+      const list = docBox().slice();
+      list.push({nom: nom, taille: taille, mime: mime, reduit: reduit,
+        le: p2(d.getDate()) + "/" + p2(d.getMonth() + 1) + "/" + d.getFullYear(), data: data});
+      docSave(list);
       ajoutes++;
-      if(--reste === 0) docFin(list, ajoutes, refuses);
+      if(--reste === 0) docFin(ajoutes, compresses);
     };
-    r.onerror = () => { refuses.push(f.name); if(--reste === 0) docFin(list, ajoutes, refuses); };
+    r.onerror = () => { toast("Lecture impossible : " + f.name); if(--reste === 0) docFin(ajoutes, compresses); };
     r.readAsDataURL(f);
   });
 }
-function docFin(list, ajoutes, refuses){
-  if(ajoutes) docSave(list);
+function docFin(ajoutes, compresses){
   docRender(ajoutes);
-  if(refuses.length) toast("Trop lourd (max 8 Mo) : " + refuses.join(", "));
-  else if(ajoutes) toast("📎 " + ajoutes + " document" + (ajoutes > 1 ? "s" : "") + " ajouté" + (ajoutes > 1 ? "s" : "") + " au contrat");
+  if(!ajoutes) return;
+  toast("📎 " + ajoutes + " document" + (ajoutes > 1 ? "s" : "") + " ajouté" + (ajoutes > 1 ? "s" : "") + " au contrat"
+        + (compresses ? " · " + compresses + " image" + (compresses > 1 ? "s" : "") + " allégée" + (compresses > 1 ? "s" : "") + " pour tenir dans le navigateur" : ""));
 }
 function docSuppr(i, ev){
   if(ev) ev.stopPropagation();
-  const l = docBox(), d = l[i]; if(!d) return;
+  const l = docBox().slice(), d = l[i]; if(!d) return;
   l.splice(i, 1); docSave(l); docRender();
   toast("Document « " + d.nom + " » retiré", () => { const b = docBox(); b.splice(i, 0, d); docSave(b); docRender(); });
 }
@@ -1704,8 +1784,8 @@ function docRender(neuf){
   }
   box.innerHTML = l.map((d, i) => {
     const T = docType(d.nom, d.mime);
-    const vue = T.k === "img" ? `<img src="${d.data}" alt="">`
-      : T.k === "pdf" ? `<iframe src="${d.data}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>`
+    const vue = (d.data && T.k === "img") ? `<img src="${d.data}" alt="">`
+      : (d.data && T.k === "pdf") ? `<iframe src="${d.data}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>`
       : `<span class="docext">${T.lbl}</span>`;
     return `<figure class="doccard ouvrable${(neuf && i >= l.length - neuf) ? " newdoc" : ""}" onclick="docOpen(${i})" title="Ouvrir ${d.nom}">
       <span class="docacts">
@@ -1713,7 +1793,7 @@ function docRender(neuf){
         <button class="sup" title="Retirer" onclick="event.stopPropagation();docSuppr(${i},event)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
       </span>
       <div class="docvue">${vue}<span class="doctag">${T.lbl}</span></div>
-      <figcaption><b title="${d.nom}">${d.nom}</b><small>${d.le} · ${docPoids(d.taille)}</small></figcaption>
+      <figcaption><b title="${d.nom}">${d.nom}</b><small>${d.le} · ${docPoids(d.taille)}${d.reduit ? " · allégée" : ""}${d.sansApercu ? " · aperçu non conservé" : ""}</small></figcaption>
     </figure>`;
   }).join("");
 }
@@ -1721,6 +1801,7 @@ function docRender(neuf){
 let DVCUR = null;
 function docOpen(i){
   const d = docBox()[i]; if(!d) return;
+  if(!d.data){ toast("L'aperçu de ce document n'a pas pu être conservé — le stockage du navigateur était plein"); return; }
   DVCUR = d;
   const T = docType(d.nom, d.mime), b = document.getElementById("dvw-b");
   document.getElementById("dvw-nm").textContent = d.nom;
@@ -1746,10 +1827,12 @@ function docOne(i){ const d = docBox()[i]; if(d) docTelecharge(d); }
 /* --------- glisser-déposer + clavier --------- */
 document.addEventListener("DOMContentLoaded", function(){
   docRender();
-  const z = document.getElementById("doc-drop");
+  /* le glisser-déposer vit sur la CARTE entière : plus de zone qui prend de
+     la place, mais on peut toujours lâcher un fichier n'importe où dessus. */
+  const z = document.getElementById("docgrid") && document.getElementById("docgrid").closest(".card");
   if(z){
-    ["dragenter","dragover"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.add("over"); }));
-    ["dragleave","drop"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.remove("over"); }));
+    ["dragenter","dragover"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.add("dragover"); }));
+    ["dragleave","drop"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.remove("dragover"); }));
     z.addEventListener("drop", ev => { if(ev.dataTransfer && ev.dataTransfer.files) docAdd(ev.dataTransfer.files); });
   }
 });
