@@ -186,7 +186,6 @@ textarea{resize:vertical;min-height:76px}
 .layout .pick button.on{border-color:var(--green);background:var(--green-bg)}
 .layout .pick button.on b{color:var(--green-d)}
 .layout .pick button.on small{color:var(--green-d)}
-.layout .sw input:checked + i{background:var(--green)}
 .skchip:active{transform:scale(.96)}
 .skchips.err .skchip{border-color:var(--red)}
 
@@ -203,16 +202,39 @@ textarea{resize:vertical;min-height:76px}
 .addbox button{all:unset;cursor:pointer;padding:6px 11px;border-radius:9px;background:var(--orange);color:#fff;font-size:.74rem;font-weight:800}
 .emptyline{font-size:.8rem;color:var(--muted);margin-bottom:9px}
 
-/* interrupteur renouvellement */
-.swrow{display:flex;align-items:flex-start;gap:14px}
-.swrow .txt b{display:block;font-size:.88rem;font-weight:700}
-.swrow .txt small{display:block;font-size:.75rem;color:var(--muted);line-height:1.55;margin-top:3px}
-.sw{position:relative;width:46px;height:26px;flex:none;margin-left:auto;cursor:pointer}
-.sw input{position:absolute;opacity:0;width:0}
-.sw i{position:absolute;inset:0;background:#D8DAE1;border-radius:999px;transition:.18s}
-.sw i::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.18s}
-.sw input:checked + i{background:var(--orange)}
-.sw input:checked + i::after{transform:translateX(20px)}
+/* 20/08 (visuel 301, choix patron = B) — LA LIGNE ENTIÈRE DEVIENT LE BOUTON.
+   Avant : « Exiger un renouvellement » tenait à un interrupteur de 46 px posé
+   à l'autre bout de la ligne, et « Exiger une signature électronique » à une
+   case de 16 px reléguée en bas — alors que le titre de la carte annonce DEUX
+   décisions de même rang. Ni l'une ni l'autre ne se voyait (« le bouton vert
+   en haut à droite on le voit pas trop, et exiger une signature aussi »).
+   Un interrupteur est faible pour trois raisons : il est petit, il est loin
+   de son libellé, et son état ne se lit qu'à la POSITION D'UN ROND.
+   Ici la cible fait toute la largeur de la carte, et l'état se lit TROIS FOIS
+   — fond de la carte, coche à gauche, mot à droite — donc aussi sans couleur.
+   L'ancien `.sw` est supprimé de CETTE page seulement : il n'y avait plus
+   qu'un seul usage. Les autres pages gardent le leur inchangé. */
+.brow{display:flex;align-items:flex-start;gap:13px;width:100%;text-align:left;padding:15px;border-radius:14px;border:1.5px solid var(--line);background:#fff;cursor:pointer;user-select:none;transition:.14s}
+.brow:hover{border-color:#D8DAE1}
+.brow input{position:absolute;opacity:0;pointer-events:none;width:0}
+.brow .bck{flex:none;width:22px;height:22px;border-radius:7px;border:1.5px solid #D8DAE1;background:#fff;margin-top:1px;position:relative;transition:.14s}
+.brow .btxt{flex:1 1 auto;min-width:0}
+.brow .btxt > b{display:block;font-size:.88rem;font-weight:700}
+.brow .btxt > small{display:block;font-size:.75rem;color:var(--muted);line-height:1.55;margin-top:4px}
+.brow .bstate{flex:none;font-size:.74rem;font-weight:800;color:var(--muted);padding:4px 10px;border-radius:8px;background:var(--bg);margin-top:1px}
+/* une seule phrase à la fois : celle de l'état COURANT. Afficher l'aide des
+   deux états en permanence (ce qu'on a reproché à Saigon au visuel 300)
+   oblige à lire pour savoir où on en est. */
+.brow .bon,.brow .son{display:none}
+.brow:has(input:checked){border-color:var(--green);background:var(--green-bg)}
+.brow:has(input:checked) .bck{background:var(--green-d);border-color:var(--green-d)}
+.brow:has(input:checked) .bck::after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid #fff;border-width:0 2.4px 2.4px 0;transform:rotate(45deg)}
+.brow:has(input:checked) .bstate{color:#fff;background:var(--green-d)}
+.brow:has(input:checked) .bon,.brow:has(input:checked) .son{display:inline}
+.brow:has(input:checked) .boff,.brow:has(input:checked) .soff{display:none}
+.brow:active{transform:scale(.995)}
+/* téléphone : le mot d'état passe sous le texte plutôt que de l'écraser */
+@media(max-width:520px){.brow{flex-wrap:wrap}.brow .bstate{margin-left:35px;margin-top:9px}}
 .renbox{background:var(--bg);border-radius:13px;padding:15px 16px;margin-top:13px}
 .renprev{display:flex;gap:22px;flex-wrap:wrap;margin-top:11px;padding:11px 13px;background:#fff;border:1px dashed var(--line);border-radius:11px;font-size:.82rem}
 .renprev span{color:var(--muted)}
@@ -263,6 +285,14 @@ textarea{resize:vertical;min-height:76px}
   .fgrid,.fgrid4,.fgrid3{grid-template-columns:1fr}
   .clirow{flex-direction:column}
   .newcli{padding:11px 14px;justify-content:center}
+  /* 20/08 — trouvé en posant le visuel 301 : « Enregistrer et envoyer » fait
+     197 px et ne peut pas rétrécir (un enfant de flex garde `min-width:auto`),
+     donc la barre d'action poussait TOUTE la page 38 px hors écran sur iPhone.
+     Le montant prend sa ligne, les deux boutons partagent la suivante. */
+  .actbar{flex-wrap:wrap;gap:9px}
+  .actbar .ab-ttc{flex:1 1 100%}
+  .actbar > span[style]{display:none}
+  .actbar .btn2{flex:1 1 140px;min-width:0;justify-content:center}
   input,select,textarea{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -800,13 +830,15 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 
     <div class="card">
       <div class="card-h"><span class="tick"></span>Renouvellement &amp; signature</div>
-      <div class="swrow">
-        <div class="txt">
+      <label class="brow">
+        <input type="checkbox" id="v-renouv" checked onchange="renTog()">
+        <span class="bck"></span>
+        <span class="btxt">
           <b>Exiger un renouvellement</b>
-          <small><b style="color:var(--green-d)">Activé :</b> le contrat apparaît dans le widget de renouvellement avant l'échéance, avec un suivi proposé.<br><b style="color:var(--ink-2)">Désactivé :</b> le contrat passe à « Expiré » à sa date de fin.</small>
-        </div>
-        <label class="sw"><input type="checkbox" id="v-renouv" checked onchange="renTog()"><i></i></label>
-      </div>
+          <small><span class="son">Le contrat apparaît dans le widget de renouvellement avant l'échéance, avec un suivi proposé.</span><span class="soff">À sa date de fin, le contrat passera à « Expiré » — aucun suivi ne sera proposé.</span></small>
+        </span>
+        <span class="bstate"><span class="bon">Activé</span><span class="boff">Désactivé</span></span>
+      </label>
       <div class="renbox" id="renbox">
         <label class="lab" for="v-renech">Échéance de renouvellement <em>*</em></label>
         <select id="v-renech" onchange="renPrev()" style="display:none">
@@ -821,9 +853,15 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
         </div>
         <div class="hint">Aperçu uniquement — le renouvellement effectif se fait depuis la fiche du contrat ; le contrat d'origine est conservé.</div>
       </div>
-      <div class="skchips" style="margin-top:14px">
-        <label class="skchip"><input type="checkbox" id="v-signature"> Exiger une signature électronique</label>
-      </div>
+      <label class="brow" style="margin-top:13px">
+        <input type="checkbox" id="v-signature" checked>
+        <span class="bck"></span>
+        <span class="btxt">
+          <b>Exiger une signature électronique</b>
+          <small><span class="son">Le client reçoit le contrat et le signe en ligne ; tant qu'il n'a pas signé, il reste « À signer ».</span><span class="soff">Le contrat est actif dès sa création, sans signature du client.</span></small>
+        </span>
+        <span class="bstate"><span class="bon">Activé</span><span class="boff">Désactivé</span></span>
+      </label>
     </div>
 
     <!-- ===== 9. PIÈCES JOINTES ===== -->
