@@ -489,6 +489,29 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
   .chips > *{flex:none;white-space:nowrap}
   .topbar .btn.primary,.abar .btn2.primary,.abar .newbtn,.topbar .newbtn{display:none}
 }
+/* 20/08 (patron) : la meme barre de recherche que sur la fiche client —
+   loupe SVG, libelle court, filtrage sur la ligne entiere. */
+.ttools{display:flex;gap:8px;align-items:center;margin:10px 0 2px;flex-wrap:wrap}
+.tsrch{position:relative;display:flex;align-items:center;flex:1;min-width:0;max-width:340px}
+.tsrch svg{position:absolute;left:13px;width:15px;height:15px;fill:none;stroke:#9AA0AE;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.tsrch input{width:100%;border:1px solid var(--line,#EBECF1);border-radius:999px;padding:8px 15px 8px 36px;font:600 .78rem Inter,sans-serif;outline:none;background:#fff;color:var(--ink,#171A20)}
+.tsrch input::placeholder{color:#9AA0AE;font-weight:600}
+.tsrch input:focus{border-color:var(--orange,#FF5A1F)}
+.tsrch input:focus~svg{stroke:var(--orange,#FF5A1F)}
+.tcpt{font-size:.74rem;font-weight:700;color:var(--muted,#8A90A0);font-variant-numeric:tabular-nums;white-space:nowrap}
+.orechvide{padding:22px 6px;text-align:center;font-size:.83rem;color:var(--muted,#8A90A0);list-style:none}
+.orechvide b{color:var(--ink,#171A20);font-weight:700}
+.card-h .tcpt{margin-left:auto;flex:none;font-family:'Inter'}
+.card-h .tsrch{flex:0 1 252px;max-width:252px}
+.card-h .tsrch + .addbtn{margin-left:10px}
+@media(max-width:640px){
+  .ttools{flex-wrap:wrap}
+  .ttools .tsrch{flex:1 0 100%;max-width:none;order:-1}
+  .card-h .tsrch{flex:1 0 100%;max-width:none;order:9;margin-left:0}
+  .card-h .more{margin-left:0}          /* sinon il volait l'espace au bouton */
+  .card-h .addbtn,.card-h .tsrch + .addbtn{margin-left:auto}
+  .card-h .tcpt{order:8;margin-left:0}
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 <script>
@@ -741,8 +764,8 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     <!-- ===== ONGLET INTERVENTIONS ===== -->
     <div class="grid" data-tab="interv">
       <div class="card full">
-        <div class="card-h"><span class="tick"></span>Les 12 interventions du contrat<a class="more" href="calendrier.html">Ouvrir l'agenda →</a><a class="addbtn" href="#" onclick="interPanel();return false">+ Planifier</a></div>
-        <ul class="tl">
+        <div class="card-h"><span class="tick"></span>Les 12 interventions du contrat<a class="more" href="calendrier.html">Ouvrir l'agenda →</a><span class="tcpt" id="ctr-interv-cpt"></span><label class="tsrch" data-for="ctr-interv"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher une intervention…" oninput="oRech('ctr-interv',this.value)"></label><a class="addbtn" href="#" onclick="interPanel();return false">+ Planifier</a></div>
+        <ul class="tl" id="ctr-interv">
           <li class="next"><span class="dot2"></span><b>N° 8 — Contrôle mensuel <span class="st nx">À venir</span></b><small>Sam 29/08/2026 · 08:00 – 10:00 · Pablo</small></li>
           <li class="done"><span class="dot2">✓</span><b>N° 7 — Contrôle mensuel <span class="st ok">Terminée</span></b><small>12/07/2026 · Pablo · PA-11 remplacé (80 % consommé)</small></li>
           <li class="done"><span class="dot2">✓</span><b>N° 6 — Contrôle mensuel <span class="st ok">Terminée</span></b><small>14/06/2026 · Pablo · RAS</small></li>
@@ -1837,6 +1860,40 @@ document.addEventListener("DOMContentLoaded", function(){
   }
 });
 document.addEventListener("keydown", e => { if(e.key === "Escape" && document.getElementById("dvw").classList.contains("open")) docClose(); });
+</script>
+<script>
+/* 20/08 : meme moteur que la fiche client — on cherche dans la ligne entiere,
+   donc le libelle reste court ; la barre disparait si la liste est vide. */
+function oRechLignes(id){
+  var z = document.getElementById(id);
+  if(!z) return [];
+  return Array.prototype.slice.call(z.querySelectorAll(":scope > *:not(.orechvide)"));
+}
+function oRech(id, q){
+  q = (q || "").trim();
+  var bas = q.toLowerCase(), l = oRechLignes(id), vu = 0;
+  l.forEach(function(e){
+    var ok = !bas || e.textContent.toLowerCase().indexOf(bas) > -1;
+    e.style.display = ok ? "" : "none";
+    if(ok) vu++;
+  });
+  var c = document.getElementById(id + "-cpt");
+  if(c) c.textContent = q ? (vu + " sur " + l.length) : "";
+  var z = document.getElementById(id), m = z && z.querySelector(".orechvide");
+  if(q && vu === 0){
+    if(!m){ m = document.createElement(z.tagName === "UL" ? "li" : "div");
+      m.className = "orechvide"; m.innerHTML = 'Aucun résultat pour « <b></b> »'; z.appendChild(m); }
+    m.querySelector("b").textContent = q; m.style.display = "";
+  }else if(m){ m.style.display = "none"; }
+}
+document.addEventListener("DOMContentLoaded", function(){
+  document.querySelectorAll(".tsrch[data-for]").forEach(function(t){
+    var n = oRechLignes(t.dataset.for).length;
+    t.style.display = n ? "" : "none";
+    var c = document.getElementById(t.dataset.for + "-cpt");
+    if(c) c.style.display = n ? "" : "none";
+  });
+});
 </script>
 </body>
 </html>

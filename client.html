@@ -212,6 +212,12 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
    voisine : la carte Contacts, avec un seul contact, occupait toute la hauteur
    des notes internes. Chaque carte prend desormais sa hauteur naturelle. */
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+/* 20/08 — BUG iPhone trouvé en posant les recherches, et il etait DEJA en ligne :
+   un enfant de grille garde min-width:auto, donc la carte refusait de descendre
+   sous la largeur de son tableau. Resultat : les tables des onglets poussaient
+   TOUTE la page vers la droite (jusqu'a 277 px) au lieu de defiler dans leur
+   cadre .tscroll. Un min-width:0 rend la main au defilement interne. */
+.grid > *{min-width:0}
 /* 29/07 : numeros cliquables, outils de table (recherche, filtres, pagination)
    — le style de NOS boutons, applique aux onglets refaits sur le modele du
    patron (rapports, historique). */
@@ -220,6 +226,42 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .ttools{display:flex;gap:8px;align-items:center;margin:2px 0 12px;flex-wrap:wrap}
 .tsearch{flex:1;min-width:180px;max-width:340px;border:1px solid var(--line);border-radius:999px;padding:8px 15px;font:600 .78rem Inter,sans-serif;outline:none;background:#fff}
 .tsearch:focus{border-color:var(--orange)}
+/* 20/08 (patron, d'apres les captures Saigon) : chaque onglet de la fiche porte
+   SA recherche. Chez eux le libelle etait coupe (« Rechercher par identifiant
+   d' ») parce qu'il nommait UN champ ; ici on cherche dans TOUTE la ligne, donc
+   le libelle reste court et tient a l'ecran, meme sur un telephone.
+   Et la loupe est un SVG, pas un emoji (regle produit). */
+.tsrch{position:relative;display:flex;align-items:center;flex:1;min-width:0;max-width:340px}
+.tsrch svg{position:absolute;left:13px;width:15px;height:15px;fill:none;stroke:#9AA0AE;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.tsrch input{width:100%;border:1px solid var(--line);border-radius:999px;padding:8px 15px 8px 36px;font:600 .78rem Inter,sans-serif;outline:none;background:#fff;color:var(--ink)}
+.tsrch input::placeholder{color:#9AA0AE;font-weight:600}
+.tsrch input:focus{border-color:var(--orange)}
+.tsrch input:focus~svg{stroke:var(--orange)}
+.tcpt{font-size:.74rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Sur telephone la barre prend toute la ligne : partagee avec un filtre, elle
+   ecrasait son propre libelle — le defaut meme qu'on reproche aux maquettes. */
+/* 20/08 (patron) : « mets toutes les barres de recherche à droite comme eux,
+   avant le bouton Ajouter ». Elle vit donc dans l'en-tete de carte, poussee a
+   droite par le compteur, et collee au bouton d'action. */
+.card-h .tcpt{margin-left:auto;flex:none;font-family:'Inter'}
+.card-h .tsrch{flex:0 1 252px;max-width:252px}
+.card-h .tsrch + .addbtn{margin-left:10px}
+.ttools .tghost:first-of-type{margin-left:auto}
+@media(max-width:640px){
+  .ttools{flex-wrap:wrap}
+  .ttools .tsrch{flex:1 0 100%;max-width:none;order:-1}
+  /* sur telephone l'en-tete passe a la ligne : la recherche prend toute la
+     largeur SOUS le titre et le bouton, elle ne les ecrase pas. */
+  .card-h .tsrch{flex:1 0 100%;max-width:none;order:9;margin-left:0}
+  .card-h .more{margin-left:0}          /* sinon il volait l'espace au bouton */
+  .card-h .addbtn,.card-h .tsrch + .addbtn{margin-left:auto}
+  .card-h .tcpt{order:8;margin-left:0}
+}
+.orechvide,.orechvide td{padding:22px 6px;text-align:center;font-size:.83rem;color:var(--muted);border:0}
+/* la regle « derniere colonne alignee a droite » du tableau collait le message
+   contre le bord : ici la cellule porte tout le tableau, elle se recentre. */
+[data-tab] table.dt td.orechtd,.orechvide td{text-align:center!important;width:auto!important;padding-right:6px!important}
+.orechvide b{color:var(--ink);font-weight:700}
 .tghost{border:1px solid var(--line);border-radius:999px;padding:8px 15px;font:700 .76rem Inter,sans-serif;background:#fff;color:var(--ink-2);cursor:pointer;white-space:nowrap}
 .tghost:hover{border-color:var(--orange);color:var(--orange-deep)}
 .tsel{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font:700 .76rem Inter,sans-serif;background:#fff;color:var(--ink-2);cursor:pointer}
@@ -379,9 +421,15 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
   .fz .fhh{display:none}
   .fz .fgrid{grid-template-columns:56px minmax(0,1fr) auto;gap:11px}
   .fz .fit{padding:10px 12px}
-  .fz .ftq,.fz .fgo{grid-column:2 / -1}
-  .fz .ftq{margin-top:2px}
-  .fz .fgo{text-align:left;margin-top:4px}
+  /* 20/08 — BUG iPhone (deja en ligne) : la pastille de statut n'avait aucune
+     regle, elle tombait dans la colonne de 56 px de la date, debordait, et
+     passait SOUS le lien « Voir → ». Les trois rangees sont maintenant
+     explicites : date+titre, technicien, puis statut a gauche / lien a droite. */
+  .fz .fcal{grid-column:1;grid-row:1}
+  .fz .fnat{grid-column:2 / -1;grid-row:1}
+  .fz .ftq{grid-column:2 / -1;grid-row:2;margin-top:2px}
+  .fz .fgrid > span:nth-child(5){grid-column:2 / 3;grid-row:3;justify-self:start;margin-top:5px}
+  .fz .fgo{grid-column:3 / -1;grid-row:3;justify-self:end;align-self:center;text-align:right;margin-top:5px}
 }
 }
 .ivd{width:47px;height:47px;border-radius:12px;background:#F6F7F9;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
@@ -946,10 +994,10 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     <!-- ===== ONGLET DEVIS ===== -->
     <div class="grid" data-tab="devis">
       <div class="card full">
-        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span>Devis du client<a class="more" href="devis-liste.html">Tous les devis →</a><a class="addbtn" href="devis.html" onclick="neufHref(this,'devis.html','tigerflow-devis-ref')">+ Créer un devis</a></div>
+        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></span>Devis du client<a class="more" href="devis-liste.html">Tous les devis →</a><span class="tcpt" id="devis-tb-cpt"></span><label class="tsrch" data-for="devis-tb"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher un devis…" oninput="oRech('devis-tb',this.value)"></label><a class="addbtn" href="devis.html" onclick="neufHref(this,'devis.html','tigerflow-devis-ref')">+ Créer un devis</a></div>
         <div class="tscroll"><table class="dt">
           <thead><tr><th>N° devis</th><th>Objet</th><th class="amt">Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>
-          <tbody>
+          <tbody id="devis-tb">
             <tr data-ref="DEV-2026-01287"><td class="ref"><a class="reflink" href="devis.html" onclick="devOuvre(event,'DEV-2026-01287','Punaises de lit — appartement T3',578.05,'envoye')">DEV-2026-01287</a></td><td>Punaises de lit — appartement T3</td><td class="amt">578,05 €</td><td>25/08/2026</td><td><span class="st st-envoye">Envoyé</span></td><td style="white-space:nowrap"><button class="qact ok" title="Marquer gagné" onclick="devSt(event,'DEV-2026-01287','gagne')">✓</button><button class="qact ko" title="Marquer perdu" onclick="devSt(event,'DEV-2026-01287','perdu')">✗</button><a class="rlink" href="devis.html" onclick="devOuvre(event,'DEV-2026-01287','Punaises de lit — appartement T3',578.05,'envoye')">Ouvrir →</a></td></tr>
             <tr data-ref="DEV-2026-01198"><td class="ref"><a class="reflink" href="contrat.html">DEV-2026-01198</a></td><td>Extension contrat — punaises (avenant)</td><td class="amt">0,00 €</td><td>03/03/2026</td><td><span class="st st-gagne">Gagné</span></td><td><a class="rlink" href="contrat.html">Contrat →</a></td></tr>
             <tr data-ref="DEV-2025-01102"><td class="ref"><a class="reflink" href="contrat.html">DEV-2025-01102</a></td><td>Dératisation annuelle — 12 passages</td><td class="amt">750,50 €</td><td>05/12/2025</td><td><span class="st st-gagne">Gagné</span></td><td><a class="rlink" href="contrat.html">Contrat →</a></td></tr>
@@ -961,10 +1009,10 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     <!-- ===== ONGLET FACTURES ===== -->
     <div class="grid" data-tab="fact">
       <div class="card full">
-        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Factures du client<a class="more" href="facture-liste.html">Toutes les factures →</a><a class="addbtn" href="facture.html" onclick="neufHref(this,'facture.html','tigerflow-facture-ref')">+ Créer une facture</a></div>
+        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Factures du client<a class="more" href="facture-liste.html">Toutes les factures →</a><span class="tcpt" id="fact-tb-cpt"></span><label class="tsrch" data-for="fact-tb"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher une facture…" oninput="oRech('fact-tb',this.value)"></label><a class="addbtn" href="facture.html" onclick="neufHref(this,'facture.html','tigerflow-facture-ref')">+ Créer une facture</a></div>
         <div class="tscroll"><table class="dt">
           <thead><tr><th>N° facture</th><th>Objet</th><th class="amt">Montant TTC</th><th>Échéance</th><th>Statut</th><th></th></tr></thead>
-          <tbody>
+          <tbody id="fact-tb">
             <tr><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00858</a></td><td>Traitement ponctuel — réserve</td><td class="amt">1 250,00 €</td><td>03/08/2026</td><td><span class="st st-retard">En retard</span></td><td><button class="rlink" onclick="mailRelance()">✉ Relancer</button></td></tr>
             <tr><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00812</a></td><td>Contrat — mensualité juillet</td><td class="amt">62,54 €</td><td>31/07/2026</td><td><span class="st st-payee">Payée</span></td><td></td></tr>
             <tr><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00761</a></td><td>Contrat — mensualité juin</td><td class="amt">62,54 €</td><td>30/06/2026</td><td><span class="st st-payee">Payée</span></td><td></td></tr>
@@ -979,11 +1027,10 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     <!-- ===== ONGLET ÉQUIPEMENTS ===== -->
     <div class="grid" data-tab="rap">
       <div class="card full">
-        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></span>Rapports envoyés au client</div>
+        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg></span>Rapports envoyés au client<span class="tcpt" id="rap-tb-cpt"></span><label class="tsrch" data-for="rap-tb"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher un rapport…" oninput="tblFilter('rap-tb', this.value, 'rap-count')"></label></div>
         <!-- 29/07 (patron) : refait sur son modele — recherche, actions groupees,
              table, pagination — avec le style de NOS boutons. -->
         <div class="ttools">
-          <input class="tsearch" placeholder="🔍 Rechercher un rapport…" oninput="tblFilter('rap-tb', this.value, 'rap-count')">
           <button class="tghost" onclick="toast('⬇️ Export groupé des rapports — bientôt relié')" style="margin-left:auto">Tout exporter</button>
           <button class="tghost" onclick="toast('📤 Envoi groupé au client — bientôt relié')">Tout envoyer</button>
         </div>
@@ -1003,7 +1050,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
 
     <div class="grid" data-tab="equip">
       <div class="card full">
-        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span>Équipements installés<button class="addbtn" style="margin-left:auto" onclick="eqOpen()">+ Ajouter un équipement</button></div>
+        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span>Équipements installés<span class="tcpt" id="eqlist-cpt"></span><label class="tsrch" data-for="eqlist"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher un équipement…" oninput="oRech('eqlist',this.value)"></label><button class="addbtn" style="margin-left:auto" onclick="eqOpen()">+ Ajouter un équipement</button></div>
         <!-- 04/08 (patron) : le plan d'appâtage est parti en bêta dans Réglages. -->
         <div id="eqlist" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
       </div>
@@ -1013,10 +1060,10 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     <!-- ===== ONGLET CONTRATS ===== -->
     <div class="grid" data-tab="paie">
       <div class="card full">
-        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>Paiements reçus</div>
+        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>Paiements reçus<span class="tcpt" id="paie-tb-cpt"></span><label class="tsrch" data-for="paie-tb"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher un paiement…" oninput="oRech('paie-tb',this.value)"></label></div>
         <div class="tscroll"><table class="dt">
           <thead><tr><th>Date</th><th>Référence</th><th>Mode</th><th class="amt">Montant</th><th>Statut</th><th></th></tr></thead>
-          <tbody>
+          <tbody id="paie-tb">
             <tr><td>28/07/2026</td><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00812</a></td><td>Prélèvement</td><td class="amt">62,54 €</td><td><span class="st st-payee">Encaissé</span></td><td><a class="rlink" href="facture-detail.html">Voir →</a></td></tr>
             <tr><td>28/06/2026</td><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00761</a></td><td>Prélèvement</td><td class="amt">62,54 €</td><td><span class="st st-payee">Encaissé</span></td><td><a class="rlink" href="facture-detail.html">Voir →</a></td></tr>
             <tr><td>28/05/2026</td><td class="ref"><a class="reflink" href="facture-detail.html">FAC-2026-00704</a></td><td>Prélèvement</td><td class="amt">62,54 €</td><td><span class="st st-payee">Encaissé</span></td><td><a class="rlink" href="facture-detail.html">Voir →</a></td></tr>
@@ -1027,10 +1074,10 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
 
     <div class="grid" data-tab="ctr">
       <div class="card full">
-        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>Contrats du client<a class="more" href="contrat.html">Ouvrir le contrat →</a><a class="addbtn" href="contrat-nouveau.html" onclick="neufHref(this,'contrat-nouveau.html','')">+ Nouveau contrat</a></div>
+        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>Contrats du client<a class="more" href="contrat.html">Ouvrir le contrat →</a><span class="tcpt" id="ctr-tb-cpt"></span><label class="tsrch" data-for="ctr-tb"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher un contrat…" oninput="oRech('ctr-tb',this.value)"></label><a class="addbtn" href="contrat-nouveau.html" onclick="neufHref(this,'contrat-nouveau.html','')">+ Nouveau contrat</a></div>
         <div class="tscroll"><table class="dt">
           <thead><tr><th>N° contrat</th><th>Objet</th><th class="amt">Montant</th><th>Période</th><th>Statut</th><th></th></tr></thead>
-          <tbody>
+          <tbody id="ctr-tb">
             <tr><td class="ref"><a class="reflink" href="contrat.html">CTR-2026-04729</a></td><td>Dératisation annuelle — 12 passages</td><td class="amt">750,50 € / an</td><td>12/12/2025 → 12/12/2026</td><td><span class="st st-payee">Actif · 7/12</span></td><td><a class="rlink" href="contrat.html">Ouvrir →</a></td></tr>
           </tbody>
         </table></div>
@@ -1040,14 +1087,13 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     <!-- ===== ONGLET HISTORIQUE INTERVENTIONS ===== -->
     <div class="grid" data-tab="histint">
       <div class="card full">
-        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Historique des interventions<a class="more" href="calendrier.html">Ouvrir l'agenda →</a><a class="addbtn" href="#" onclick="interPanel();return false">+ Planifier</a></div>
+        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Historique des interventions<a class="more" href="calendrier.html">Ouvrir l'agenda →</a><span class="tcpt" id="hist-tb-cpt"></span><label class="tsrch" data-for="hist-tb"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher une intervention…" oninput="tblFilter('hist-tb', this.value, 'hist-count')"></label><a class="addbtn" href="#" onclick="interPanel();return false">+ Planifier</a></div>
         <!-- 29/07 (patron) : refait sur son modele — filtre par statut, recherche,
              creneau horaire, assigné, pagination. Les creneaux passes non
              enregistres affichent « — », jamais une heure inventee. -->
         <div class="ttools">
           <select class="tsel" onchange="histStat(this.value)"><option value="">Tous les statuts</option><option value="avenir">À venir</option><option value="done">Terminée</option></select>
-          <input class="tsearch" id="hist-q" placeholder="🔍 Rechercher une intervention…" oninput="tblFilter('hist-tb', this.value, 'hist-count')">
-        </div>
+          </div>
         <!-- 04/08 (patron, visuel 22) : la frise remplace le tableau. Les
              cellules vides d'un tableau (le créneau d'un passage ancien, par
              exemple) disparaissent d'elles-mêmes au lieu d'afficher un tiret. -->
@@ -1112,7 +1158,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     <!-- ===== ONGLET DOCUMENTS ===== -->
     <div class="grid" data-tab="docs">
       <div class="card full">
-        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>Documents du client<button class="addbtn" onclick="document.getElementById('cdoc-in').click()" title="PDF, DOCX ou image">+ Ajouter un document</button></div>
+        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>Documents du client<span class="tcpt" id="cdocs-cpt"></span><label class="tsrch" data-for="cdocs"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher un document…" oninput="oRech('cdocs',this.value)"></label><button class="addbtn" onclick="document.getElementById('cdoc-in').click()" title="PDF, DOCX ou image">+ Ajouter un document</button></div>
         <input type="file" id="cdoc-in" multiple hidden onchange="cdocAdd(this)">
         <div class="docgrid" id="cdocs"></div>
       </div>
@@ -1127,7 +1173,8 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
 /* 29/07 : filtres des tables Rapports / Historique — recherche plein texte et
    statut, compteur « x sur y affichés » toujours juste. */
 function tblFilter(tbId, q, countId){
-  q = (q || "").trim().toLowerCase();
+  var qAff = (q || "").trim();   /* la casse tapee, pour le message « aucun résultat » */
+  q = qAff.toLowerCase();
   /* 04/08 : « tr » pour les tableaux, « .fit » pour la frise de l'historique */
   var rows = document.querySelectorAll("#" + tbId + " tr, #" + tbId + " .fit"), vis = 0;
   rows.forEach(function(tr){
@@ -1147,7 +1194,55 @@ function tblFilter(tbId, q, countId){
   }
   var c = document.getElementById(countId);
   if(c) c.textContent = ((vis + extra) ? "1-" + (vis + extra) : "0") + " sur " + (rows.length + extraTot) + " affichés";
+  if(typeof oRechVide === "function") oRechVide(tbId, qAff, vis + extra);
 }
+/* 20/08 : UNE seule recherche pour tous les onglets — tableaux comme grilles.
+   Elle lit la ligne entiere : taper « Pablo », « 578 » ou « punaises » trouve. */
+function oRechLignes(id){
+  var z = document.getElementById(id);
+  if(!z) return [];
+  return Array.prototype.slice.call(z.querySelectorAll(":scope > *:not(.orechvide):not(.emptybox)"));
+}
+function oRech(id, q){
+  q = (q || "").trim();
+  var bas = q.toLowerCase(), l = oRechLignes(id), vu = 0;
+  l.forEach(function(e){
+    var ok = !bas || e.textContent.toLowerCase().indexOf(bas) > -1;
+    e.style.display = ok ? "" : "none";
+    if(ok) vu++;
+  });
+  var c = document.getElementById(id + "-cpt");
+  if(c) c.textContent = q ? (vu + " sur " + l.length) : "";
+  oRechVide(id, q, vu);
+}
+function oRechVide(id, q, vu){
+  var z = document.getElementById(id); if(!z) return;
+  var m = z.querySelector(".orechvide");
+  if(q && vu === 0){
+    if(!m){
+      var tb = z.tagName === "TBODY";
+      m = document.createElement(tb ? "tr" : "div");
+      m.className = "orechvide";
+      if(!tb) m.style.gridColumn = "1/-1";
+      m.innerHTML = tb ? '<td class="orechtd" colspan="9">Aucun résultat pour « <b></b> »</td>' : 'Aucun résultat pour « <b></b> »';
+      z.appendChild(m);
+    }
+    m.querySelector("b").textContent = q;
+    m.style.display = "";
+  }else if(m){ m.style.display = "none"; }
+}
+/* Chercher dans le vide n'a aucun sens : la barre s'efface quand la liste
+   est vide (defaut visible sur leurs captures : « Aucun devis pour ce
+   client » avec une barre de recherche juste au-dessus). */
+function oRechInit(){
+  document.querySelectorAll(".tsrch[data-for]").forEach(function(t){
+    var n = oRechLignes(t.dataset.for).length;
+    t.style.display = n ? "" : "none";
+    var c = document.getElementById(t.dataset.for + "-cpt");
+    if(c) c.style.display = n ? "" : "none";
+  });
+}
+document.addEventListener("DOMContentLoaded", oRechInit);
 function histStat(v){
   document.querySelectorAll("#hist-tb tr, #hist-tb .fit").forEach(function(tr){
     tr.dataset.hidestat = (v && tr.dataset.st !== v) ? "1" : "";
@@ -1184,6 +1279,7 @@ function cdocRender(){
       '<figcaption><b title="' + d.n + '">' + d.n + '</b><small>' + d.d + ' · ' +
       (d.s ? cdocPoids(d.s) : ext) + (d.src ? '' : ' · aperçu non conservé') + '</small></figcaption></figure>';
   }).join("") : '<div class="emptybox" style="grid-column:1/-1">Aucun document pour ce client.<br><small style="font-size:.75rem">Contrat signé, plan d\'appâtage, registre — bouton « Ajouter un document » ci-dessus.</small></div>';
+  if(typeof oRechInit === "function") oRechInit();
 }
 function cdocAdd(inp){
   const fichiers = [...inp.files];
@@ -2442,6 +2538,7 @@ function eqDraw(){
       </div>
       <button class="qact ko" style="margin-left:auto" title="Retirer" onclick="eqDel(${i})">✗</button>
     </div>`).join("");
+  if(typeof oRechInit === "function") oRechInit();
 }
 document.addEventListener("DOMContentLoaded", eqDraw);
 </script>
