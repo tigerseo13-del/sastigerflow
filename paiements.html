@@ -182,9 +182,32 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
 .dbig:hover{background:var(--orange-deep)}
 .dbig.sec{background:#fff;color:var(--ink-2);border:1.5px solid var(--line);box-shadow:none}
 .dbig.sec:hover{border-color:var(--orange);color:var(--orange-deep)}
-.solde{background:var(--orange-soft);border-radius:13px;padding:14px 16px;text-align:center;margin-bottom:12px}
-.solde b{display:block;font-family:'Sora';font-size:1.5rem;color:var(--orange-deep)}
+/* ===== 18/08 (patron, visuel 293) — LE MONTANT PORTE L'ÉTAT.
+   Il était orange sur fond rosé quel que soit le paiement : sur un
+   encaissement réglé, l'écran avait l'air de signaler un problème. Le montant
+   suit maintenant la grammaire du produit : vert = c'est fait · ambre = ça
+   arrive · rouge = il faut agir · gris = information. Et une ligne dessous
+   dit POURQUOI il est de cette couleur — la couleur attire l'œil, la phrase
+   explique (et un daltonien lit quand même l'état). ===== */
+.solde{border-radius:13px;padding:14px 16px;text-align:center;margin-bottom:12px;border:1px solid transparent}
+.solde b{display:block;font-family:'Sora';font-size:1.5rem}
 .solde small{font-size:.75rem;color:var(--ink-2);font-weight:600}
+.solde i{font-style:normal;display:block;font-size:.72rem;font-weight:700;margin-top:5px}
+.solde.s-enc{background:#F2FAF6;border-color:#CDEADB}
+.solde.s-enc b,.solde.s-enc i{color:var(--green-d,#0E7A54)}
+.solde.s-att{background:#FDF9EF;border-color:#EEDFAE}
+.solde.s-att b,.solde.s-att i{color:#9A6B08}
+.solde.s-ech{background:#FDF1F0;border-color:#F3C4C0}
+.solde.s-ech b,.solde.s-ech i{color:var(--red,#C1352E)}
+.solde.s-remb{background:#F4F5F8;border-color:#E4E6EC}
+.solde.s-remb b,.solde.s-remb i{color:#6C7285}
+/* la barre d'actions : ancrée en bas, poids selon l'état */
+.dacts{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.dacts .duo{display:flex;gap:8px}
+.dacts .duo .dbig{flex:1;min-width:0;margin-bottom:0;font-size:.82rem;padding:11px}
+.dacts .dbig{margin-bottom:0}
+.st-ech{background:#FDEBE9;color:var(--red,#C1352E)}
+.st-remb{background:#F1F2F6;color:#6C7285}
 .lab{display:block;font-size:.75rem;font-weight:700;color:var(--ink-2);margin-bottom:6px}
 .lab em{font-style:normal;color:var(--orange-deep)}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -579,6 +602,8 @@ tbody td small,tbody td .sub,tbody td em{font-weight:400}
         <option value="all">Tous les statuts</option>
         <option value="enc">Encaissé</option>
         <option value="att">En attente</option>
+        <option value="ech">Échoué</option>
+        <option value="remb">Remboursé</option>
       </select>
       <select id="f-mode" onchange="render()">
         <option value="all">Tous les modes</option>
@@ -678,7 +703,13 @@ function buildRows(){
     const _box = JSON.parse(localStorage.getItem("tigerflow-paiements-perso") || "[]");
     _box.forEach((p, k) => ROWS.unshift({...p, _cree: _box.length - k}));
     const ov = JSON.parse(localStorage.getItem("tigerflow-paiements-statuts")) || {};
-    ROWS.forEach(r => { const o = ov[r.id]; if(o){ r.st = o.st; if(o.d) r.d = o.d; } });
+    ROWS.forEach(r => { const o = ov[r.id]; if(o){
+      if(o.st) r.st = o.st;
+      if(o.d) r.d = o.d;
+      /* 18/08 : un justificatif joint depuis le panneau vit dans le même
+         registre que le statut — sinon il disparaissait au rechargement. */
+      if(o.pj && o.pj.length) r.pj = (r.pj || []).concat(o.pj);
+    } });
   }catch(e){}
 }
 
@@ -749,7 +780,7 @@ function render(){
   try{ localStorage.setItem("tigerflow-paiements-filtre", JSON.stringify({q:g("q").value, fs, fm, fc, du, au})); }catch(e){}
   g("cards").innerHTML = list.map(r => `
     <div class="mcard" onclick="openPay('${r.id}')">
-      <div class="m1"><span class="mref">${r.id}</span><span class="st ${r.st === "enc" ? "ok" : "att"}">${r.st === "enc" ? "Encaissé" : "En attente"}</span></div>
+      <div class="m1"><span class="mref">${r.id}</span><span class="st ${pst(r).chip}">${pst(r).lbl}</span></div>
       <b class="mt">${r.client}</b>
       <div class="msub">${r.fac ? "Facture " + r.fac + " · " : ""}${r.mode || "—"}</div>
       <div class="m2"><span class="mamt">${eur(r.m)}</span><span class="mmeta">${r.d ? fdate(r.d) : "non encaissé"}</span></div>
@@ -759,7 +790,7 @@ function render(){
       <td><b>${r.client}</b></td>
       <td>${r.fac ? `<a class="fref" href="facture-detail.html" onclick="event.stopPropagation();try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">${r.fac}</a>` : '<span class="dte">—</span>'}</td>
       <td class="amt"><b>${eur(r.m)}</b></td>
-      <td><span class="st ${r.st === "enc" ? "st-enc" : "st-att"}">${r.st === "enc" ? "Encaissé" : "En attente"}</span></td>
+      <td><span class="st ${pst(r).chip}">${pst(r).lbl}</span></td>
       <td class="dte">${fdate(r.d)}</td>
       <td class="dte">${r.mode}</td>
       <td class="jstf">${r.pj && r.pj.length ? `<span class="jok" title="${r.pj.join(", ")}"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>` : '<span class="jno">—</span>'}</td>
@@ -773,23 +804,36 @@ function render(){
 }
 
 /* ================= TIROIR DÉTAIL ================= */
+/* 18/08 (visuel 293) : un seul endroit décrit chaque état — la pastille, la
+   couleur du montant, le libellé et la phrase qui explique. Ajouter un état
+   demain, c'est ajouter une ligne ici, pas retoucher cinq écrans. */
+const PST = {
+  enc:  {lbl:"Encaissé",   chip:"st-enc",  sol:"s-enc",  titre:"Montant encaissé",
+         ligne:r => "\u2713 reçu le " + fdate(r.d)},
+  att:  {lbl:"En attente", chip:"st-att",  sol:"s-att",  titre:"Montant attendu",
+         ligne:r => "\u23F3 " + (r.note ? r.note : "pas encore encaissé")},
+  ech:  {lbl:"Échoué",     chip:"st-ech",  sol:"s-ech",  titre:"Montant refusé",
+         ligne:r => "\u2715 " + (r.note ? r.note : "paiement refusé")},
+  remb: {lbl:"Remboursé",  chip:"st-remb", sol:"s-remb", titre:"Montant remboursé",
+         ligne:r => "\u21BA remboursé" + (r.d ? " le " + fdate(r.d) : "")}
+};
+const pst = r => PST[r.st] || PST.att;
 function openPay(id){
   const r = ROWS.find(x => x.id === id);
   if(!r) return;
   g("dbody").innerHTML = `
     <div class="dcard">
       <div class="drow1">
-        <span class="st ${r.st === "enc" ? "st-enc" : "st-att"}">${r.st === "enc" ? "Encaissé" : "En attente"}</span>
+        <span class="st ${pst(r).chip}">${pst(r).lbl}</span>
         <button class="dclose" onclick="closeAll()">✕</button>
       </div>
       <h2 style="font-family:'Sora';font-size:1.1rem">${r.client}</h2>
       <div style="font-size:.8rem;color:var(--muted);margin-top:3px">${r.id}</div>
     </div>
-    <div class="solde"><small>Montant du paiement</small><b>${eur(r.m)}</b></div>
+    <div class="solde ${pst(r).sol}"><small>${pst(r).titre}</small><b>${eur(r.m)}</b><i>${pst(r).ligne(r)}</i></div>
     <div class="dcard">
       <div class="dh">Détails</div>
       <div class="dkv"><span class="k">Mode de paiement</span><span class="v">${r.mode}</span></div>
-      <div class="dkv"><span class="k">Statut</span><span class="v">${r.st === "enc" ? "Encaissé ✓" : "En attente"}</span></div>
       <div class="dkv"><span class="k">Date d'encaissement</span><span class="v">${fdate(r.d)}</span></div>
       ${r.mis ? `<div class="dkv"><span class="k">Mission liée</span><span class="v"><a class="fref" href="calendrier.html">${r.mis} →</a></span></div>` : ""}
       ${r.fac ? `<div class="dkv"><span class="k">Facture liée</span><span class="v"><a class="fref" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">${r.fac} →</a></span></div>` : ""}
@@ -807,10 +851,21 @@ function openPay(id){
             <figcaption><b title="${d.n}">${d.n}</b><small>${d.s ? pjPoids(d.s) : ext}${d.src ? "" : " · aperçu non conservé"}</small></figcaption>
           </figure>`;
         }).join("")}</div></div>` : ""}
-      ${r.note ? `<div class="dkv"><span class="k">Note</span><span class="v" style="max-width:60%">${r.note}</span></div>` : ""}
+      ${(r.note && r.st === "enc") ? `<div class="dkv"><span class="k">Note</span><span class="v" style="max-width:60%">${r.note}</span></div>` : ""}
     </div>
-    ${r.st === "att" ? `<button class="dbig" onclick="encaisser('${r.id}')">✓ Marquer comme encaissé aujourd'hui</button>` : ""}
-    ${r.fac ? `<a class="dbig sec" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">📄 Ouvrir la fiche de la facture</a>` : ""}`;
+    <div class="dacts">
+      ${r.st === "att"
+        ? `<button class="dbig" onclick="encaisser('${r.id}')">✓ Marquer comme encaissé aujourd'hui</button>`
+        : r.st === "ech"
+        ? `<button class="dbig" onclick="encaisser('${r.id}')">✓ Le client a régularisé — encaisser</button>`
+        : `<button class="dbig sec" onclick="majPay('${r.id}')">↻ Mettre à jour le statut</button>`}
+      <div class="duo">
+        <button class="dbig sec" onclick="pjAjouter('${r.id}')">📎 Justificatif</button>
+        ${r.fac
+          ? `<a class="dbig sec" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">↗ Voir la facture</a>`
+          : `<button class="dbig sec" disabled style="opacity:.45;cursor:default">↗ Aucune facture</button>`}
+      </div>
+    </div>`;
   g("drawer").classList.add("open");
   g("dveil").classList.add("open");
   g("drawer").scrollTop = 0;
@@ -881,7 +936,7 @@ function openNew(){
         <div><label class="lab" for="n-mode">Mode de paiement <em>*</em></label>
           <select id="n-mode"><option>Virement</option><option>Carte bancaire</option><option>Chèque</option><option>Espèces</option><option>Stripe (en ligne)</option><option>QR code</option><option>Payer plus tard</option></select></div>
         <div><label class="lab" for="n-st">Statut</label>
-          <select id="n-st"><option value="enc">Encaissé</option><option value="att">En attente</option></select></div>
+          <select id="n-st"><option value="enc">Encaissé</option><option value="att">En attente</option><option value="ech">Échoué</option><option value="remb">Remboursé</option></select></div>
         <div><label class="lab" for="n-d">Date d'encaissement <em>*</em></label><input id="n-d" type="date" value="${TODAY}"></div>
         <div class="full"><label class="lab">Justificatif de paiement</label>
           <label class="pjadd"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.2-9.19a4 4 0 015.65 5.66l-9.2 9.19a2 2 0 01-2.82-2.83l8.49-8.48"/></svg> Ajouter un fichier<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="pjAdd(this)"></label><span id="n-pjs"></span>
@@ -925,6 +980,87 @@ function facSync(){
    dans le stockage du navigateur (1,5 Mo), et on le montre. */
 const PJ_MAX = 1500 * 1024;
 const pjPoids = o => o < 1024 ? o + " o" : o < 1048576 ? Math.round(o/1024) + " Ko" : (o/1048576).toFixed(1).replace(".", ",") + " Mo";
+/* ===== 18/08 (patron, visuel 293) — LE JUSTIFICATIF DEPUIS LE PANNEAU.
+   Le bouton n'existait que dans le formulaire de création : sur un paiement
+   déjà enregistré, impossible de joindre le reçu après coup. Même mécanique
+   que les documents du contrat : les photos sont ALLÉGÉES (1600 px, JPEG
+   0,75) au lieu d'être refusées, et si le stockage sature on garde la pièce
+   pour la session en le disant. ===== */
+const PJIMG_PX = 1600, PJIMG_Q = 0.75, PJIMG_SEUIL = 700 * 1024;
+function pjCompresse(dataURL, mime){
+  return new Promise(res => {
+    if(!/^image\//.test(mime || "") || /svg/.test(mime || "")) return res(null);
+    const img = new Image();
+    img.onload = () => {
+      try{
+        const gr = Math.max(img.width, img.height), k = gr > PJIMG_PX ? PJIMG_PX / gr : 1;
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        const x = c.getContext("2d");
+        x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height);
+        x.drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL("image/jpeg", PJIMG_Q));
+      }catch(e){ res(null); }
+    };
+    img.onerror = () => res(null);
+    img.src = dataURL;
+  });
+}
+let PJCUR = null;
+function pjAjouter(id){
+  PJCUR = id;
+  let inp = document.getElementById("pj-drawer-in");
+  if(!inp){
+    inp = document.createElement("input");
+    inp.type = "file"; inp.id = "pj-drawer-in"; inp.multiple = true;
+    inp.accept = ".pdf,.png,.jpg,.jpeg,.webp,.heic,.doc,.docx";
+    inp.style.display = "none";
+    inp.addEventListener("change", () => { pjDrawerAdd(inp.files); inp.value = ""; });
+    document.body.appendChild(inp);
+  }
+  inp.click();
+}
+function pjDrawerAdd(files){
+  if(!files || !files.length || !PJCUR) return;
+  const id = PJCUR;
+  let reste = files.length, ajoutes = 0, allegees = 0;
+  Array.from(files).forEach(f => {
+    const rd = new FileReader();
+    rd.onload = async () => {
+      let src = rd.result, taille = f.size, nom = f.name, mime = f.type || "";
+      if(/^image\//.test(mime) && f.size > PJIMG_SEUIL){
+        const c = await pjCompresse(src, mime);
+        if(c && c.length < src.length){
+          src = c; taille = Math.round(c.length * 0.75); allegees++;
+          if(!/\.(jpe?g)$/i.test(nom)) nom = nom.replace(/\.[^.]+$/, "") + ".jpg";
+          mime = "image/jpeg";
+        }
+      }
+      pjEnregistre(id, {n:nom, t:mime, s:taille, src:src});
+      ajoutes++;
+      if(--reste === 0){
+        buildRows(); render(); openPay(id);
+        toast("📎 " + ajoutes + " justificatif" + (ajoutes > 1 ? "s" : "") + " joint" + (ajoutes > 1 ? "s" : "")
+              + (allegees ? " · " + allegees + " image allégée" : ""));
+      }
+    };
+    rd.onerror = () => { toast("Lecture impossible : " + f.name); if(--reste === 0){ buildRows(); render(); openPay(id); } };
+    rd.readAsDataURL(f);
+  });
+}
+function pjEnregistre(id, rec){
+  let ov = {};
+  try{ ov = JSON.parse(localStorage.getItem("tigerflow-paiements-statuts")) || {}; }catch(e){}
+  ov[id] = ov[id] || {};
+  ov[id].pj = (ov[id].pj || []).concat([rec]);
+  const ecrire = o => localStorage.setItem("tigerflow-paiements-statuts", JSON.stringify(o));
+  try{ ecrire(ov); return; }catch(e){}
+  /* stockage plein : on lâche l'aperçu, on garde la trace du fichier */
+  const nu = JSON.parse(JSON.stringify(ov));
+  Object.keys(nu).forEach(k => (nu[k].pj || []).forEach(x => { delete x.src; }));
+  try{ ecrire(nu); toast("Stockage plein — le justificatif est gardé sans aperçu"); }
+  catch(e2){ toast("Mémoire du navigateur pleine — le justificatif reste visible tant que la page est ouverte"); }
+}
 function pjOuvrir(id, k){
   const r = ROWS.find(x => String(x.id) === String(id));
   const d = r && r.pj && r.pj[k];
@@ -1007,7 +1143,7 @@ function savePay(){
 function exportCSV(){
   buildRows();
   const rows = [["ID", "Facture", "Client", "Montant", "Mode", "Statut", "Date", "Note"]]
-    .concat(ROWS.map(r => [r.id, r.fac || "", r.client, String(r.m).replace(".", ","), r.mode, r.st === "enc" ? "Encaissé" : "En attente", fdate(r.d), (r.note || "").replace(/;/g, ",")]));
+    .concat(ROWS.map(r => [r.id, r.fac || "", r.client, String(r.m).replace(".", ","), r.mode, pst(r).lbl, fdate(r.d), (r.note || "").replace(/;/g, ",")]));
   const csv = "﻿" + rows.map(r => r.join(";")).join("\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
