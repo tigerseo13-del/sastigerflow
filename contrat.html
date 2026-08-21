@@ -188,20 +188,36 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .plan .v{font-weight:800;text-align:right;min-width:0;overflow-wrap:anywhere;display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
 .daychip{font-size:.7rem;font-weight:700;background:#F1F2F5;color:var(--ink-2);border-radius:8px;padding:3.5px 10px;margin-left:5px}
 
-/* Timeline interventions */
-.tl{position:relative;padding-left:26px}
-.tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line)}
-.tl li{position:relative;padding:0 0 16px}
-.tl li:last-child{padding-bottom:0}
-.tl .dot2{position:absolute;left:-26px;top:3px;width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 2px var(--line);display:grid;place-items:center;font-size:.62rem;color:#fff;background:#C6CCD8}
-.tl li.done .dot2{background:var(--green);box-shadow:0 0 0 2px #BFE5D8}
-.tl li.next .dot2{background:var(--orange);box-shadow:0 0 0 2px #FFD9C4}
-.tl b{font-size:.87rem;display:block}
-.tl small{color:var(--muted);font-size:.78rem}
-.tl .st{margin-left:8px;font-size:.66rem;font-weight:800;padding:2.5px 9px;border-radius:10px;vertical-align:1px}
+/* Interventions du contrat — 20/08 (visuel 303) : LA DATE EST L'ANCRE.
+   Avant : une frise verticale à pastilles, le titre en gras (« Contrôle
+   mensuel », écrit douze fois de suite, qui n'apprend rien) et LA DATE en
+   gris clair sur la deuxième ligne. Or sur une fiche contrat on cherche
+   quand est le prochain passage : ce qui distingue une ligne d'une autre
+   était le plus discret de la ligne, il fallait LIRE pour trouver.
+   La date passe donc à gauche, dans une colonne fixe — jour en gros, mois
+   dessous, année en gris — et on balaie la colonne sans lire une phrase.
+   Le numéro de passage remonte dans le titre, l'heure et le technicien
+   descendent : une info, un seul endroit. La pastille de statut suffit à
+   dire l'état, la frise verticale faisait doublon avec elle. */
+.tl{list-style:none}
+.tl li{display:flex;gap:15px;align-items:flex-start;padding:13px 0}
+.tl li + li{border-top:1px solid var(--line)}
+.tl li:first-child{padding-top:2px}
+.tl li:last-child{padding-bottom:2px}
+.tl .dt{flex:none;width:62px;text-align:center;padding-top:1px}
+.tl .dt b{display:block;font-family:'Sora';font-size:1.5rem;line-height:1;letter-spacing:-1px;color:var(--ink)}
+.tl .dt em{display:block;font-style:normal;font-size:.75rem;font-weight:700;color:var(--ink-2);margin-top:3px}
+.tl .dt i{display:block;font-style:normal;font-size:.68rem;color:var(--muted);margin-top:1px}
+.tl li.next .dt b{color:var(--orange-deep)}
+.tl li.done .dt b{color:var(--muted)}
+.tl .ct{flex:1 1 auto;min-width:0;border-left:1px solid var(--line);padding-left:15px}
+.tl .ct > b{display:block;font-size:.88rem;font-weight:700}
+.tl .ct > small{display:block;color:var(--muted);font-size:.79rem;margin-top:4px}
+.tl .st{margin-left:8px;font-size:.66rem;font-weight:800;padding:2.5px 9px;border-radius:10px;vertical-align:1px;display:inline-block}
 .tl .st.ok{background:var(--green-bg);color:var(--green-d)}
 .tl .st.nx{background:var(--orange-soft);color:var(--orange-deep)}
 .tl .rep{font-size:.74rem;font-weight:700;color:var(--orange-deep)}
+@media(max-width:640px){.tl li{gap:12px}.tl .dt{width:50px}.tl .dt b{font-size:1.28rem}.tl .ct{padding-left:12px}}
 
 /* Documents */
 .docs li{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:13px;margin-bottom:9px;font-size:.85rem;transition:.13s}
@@ -658,24 +674,20 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         <div class="card-h"><span class="tick"></span>Interventions récentes<a class="more" href="calendrier.html">Tout voir →</a></div>
         <ul class="tl">
           <li class="next">
-            <span class="dot2"></span>
-            <b>Contrôle mensuel n° 8 <span class="st nx">À venir</span></b>
-            <small>Samedi 29/08/2026 · 08:00 – 10:00 · Pablo</small>
+            <span class="dt"><b>29</b><em>août</em><i>2026</i></span>
+            <div class="ct"><b>Contrôle mensuel n° 8 <span class="st nx">À venir</span></b><small>Samedi · 08:00 – 10:00 · Pablo</small></div>
           </li>
           <li class="done">
-            <span class="dot2">✓</span>
-            <b>Contrôle mensuel n° 7 <span class="st ok">Terminée</span></b>
-            <small>12/07/2026 · Pablo · consommation PA-11 : 80 % — appât remplacé · <a class="rep" href="plan-appatage.html">Voir le plan d'appâtage →</a></small>
+            <span class="dt"><b>12</b><em>juil.</em><i>2026</i></span>
+            <div class="ct"><b>Contrôle mensuel n° 7 <span class="st ok">Terminée</span></b><small>Pablo · consommation PA-11 : 80 % — appât remplacé · <a class="rep" href="plan-appatage.html">Voir le plan d'appâtage →</a></small></div>
           </li>
           <li class="done">
-            <span class="dot2">✓</span>
-            <b>Contrôle mensuel n° 6 <span class="st ok">Terminée</span></b>
-            <small>14/06/2026 · Pablo · RAS sur 12 postes, 2 en légère consommation</small>
+            <span class="dt"><b>14</b><em>juin</em><i>2026</i></span>
+            <div class="ct"><b>Contrôle mensuel n° 6 <span class="st ok">Terminée</span></b><small>Pablo · RAS sur 12 postes, 2 en légère consommation</small></div>
           </li>
           <li class="done">
-            <span class="dot2">✓</span>
-            <b>Contrôle mensuel n° 5 <span class="st ok">Terminée</span></b>
-            <small>10/05/2026 · Otman · remplacement de 2 postes endommagés</small>
+            <span class="dt"><b>10</b><em>mai</em><i>2026</i></span>
+            <div class="ct"><b>Contrôle mensuel n° 5 <span class="st ok">Terminée</span></b><small>Otman · remplacement de 2 postes endommagés</small></div>
           </li>
         </ul>
       </div>
@@ -766,14 +778,14 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       <div class="card full">
         <div class="card-h"><span class="tick"></span>Les 12 interventions du contrat<a class="more" href="calendrier.html">Ouvrir l'agenda →</a><span class="tcpt" id="ctr-interv-cpt"></span><label class="tsrch" data-for="ctr-interv"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher une intervention…" oninput="oRech('ctr-interv',this.value)"></label><a class="addbtn" href="#" onclick="interPanel();return false">+ Planifier</a></div>
         <ul class="tl" id="ctr-interv">
-          <li class="next"><span class="dot2"></span><b>N° 8 — Contrôle mensuel <span class="st nx">À venir</span></b><small>Sam 29/08/2026 · 08:00 – 10:00 · Pablo</small></li>
-          <li class="done"><span class="dot2">✓</span><b>N° 7 — Contrôle mensuel <span class="st ok">Terminée</span></b><small>12/07/2026 · Pablo · PA-11 remplacé (80 % consommé)</small></li>
-          <li class="done"><span class="dot2">✓</span><b>N° 6 — Contrôle mensuel <span class="st ok">Terminée</span></b><small>14/06/2026 · Pablo · RAS</small></li>
-          <li class="done"><span class="dot2">✓</span><b>N° 5 — Contrôle mensuel <span class="st ok">Terminée</span></b><small>10/05/2026 · Otman · 2 postes remplacés</small></li>
-          <li class="done"><span class="dot2">✓</span><b>N° 4 — Contrôle mensuel <span class="st ok">Terminée</span></b><small>12/04/2026 · Pablo · RAS</small></li>
-          <li class="done"><span class="dot2">✓</span><b>N° 3 — Contrôle + traitement punaises <span class="st ok">Terminée</span></b><small>08/03/2026 · Fredo · traitement chambre 2 (avenant n° 1)</small></li>
-          <li class="done"><span class="dot2">✓</span><b>N° 2 — Contrôle mensuel <span class="st ok">Terminée</span></b><small>10/02/2026 · Pablo · consommation modérée cuisine</small></li>
-          <li class="done"><span class="dot2">✓</span><b>N° 1 — Pose du plan d'appâtage <span class="st ok">Terminée</span></b><small>10/01/2026 · Pablo · 14 postes posés · <a class="rep" href="plan-appatage.html">Plan d'appâtage →</a></small></li>
+          <li class="next"><span class="dt"><b>29</b><em>août</em><i>2026</i></span><div class="ct"><b>Contrôle mensuel n° 8 <span class="st nx">À venir</span></b><small>08:00 – 10:00 · Pablo</small></div></li>
+          <li class="done"><span class="dt"><b>12</b><em>juil.</em><i>2026</i></span><div class="ct"><b>Contrôle mensuel n° 7 <span class="st ok">Terminée</span></b><small>Pablo · PA-11 remplacé (80 % consommé)</small></div></li>
+          <li class="done"><span class="dt"><b>14</b><em>juin</em><i>2026</i></span><div class="ct"><b>Contrôle mensuel n° 6 <span class="st ok">Terminée</span></b><small>Pablo · RAS</small></div></li>
+          <li class="done"><span class="dt"><b>10</b><em>mai</em><i>2026</i></span><div class="ct"><b>Contrôle mensuel n° 5 <span class="st ok">Terminée</span></b><small>Otman · 2 postes remplacés</small></div></li>
+          <li class="done"><span class="dt"><b>12</b><em>avr.</em><i>2026</i></span><div class="ct"><b>Contrôle mensuel n° 4 <span class="st ok">Terminée</span></b><small>Pablo · RAS</small></div></li>
+          <li class="done"><span class="dt"><b>08</b><em>mars</em><i>2026</i></span><div class="ct"><b>Contrôle + traitement punaises n° 3 <span class="st ok">Terminée</span></b><small>Fredo · traitement chambre 2 (avenant n° 1)</small></div></li>
+          <li class="done"><span class="dt"><b>10</b><em>févr.</em><i>2026</i></span><div class="ct"><b>Contrôle mensuel n° 2 <span class="st ok">Terminée</span></b><small>Pablo · consommation modérée cuisine</small></div></li>
+          <li class="done"><span class="dt"><b>10</b><em>janv.</em><i>2026</i></span><div class="ct"><b>Pose du plan d'appâtage n° 1 <span class="st ok">Terminée</span></b><small>Pablo · 14 postes posés · <a class="rep" href="plan-appatage.html">Plan d'appâtage →</a></small></div></li>
         </ul>
       </div>
     </div>
@@ -1415,10 +1427,21 @@ function ctIntervDraw(){
   const cli = ctCliNom();
   const mine = box.filter(x => x && x.client === cli);
   const LBL = {rongeur:"Dératisation", cafard:"Cafards", punaise:"Punaises de lit", guepe:"Guêpes / Frelons", chenille:"Chenilles", pigeon:"Pigeons", desinf:"Désinfection", fourmi:"Fourmis"};
+  /* 20/08 (visuel 303) : le gabarit du re-rendu doit porter la MÊME colonne
+     de date que les lignes écrites en dur — sinon les interventions vivantes
+     reviennent à l'ancienne forme dès qu'on ouvre un vrai contrat. */
+  const MOIS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
   const liH = x => {
-    const d = (x.date || "").split("-").reverse().join("/");
-    const hdeb = x.start ? (x.start + "h").replace(".5", "h30") : "";
-    return `<li class="next" data-live="1"><span class="dot2"></span><b>${x.typeLibre || LBL[x.type] || "Intervention"} <span class="st nx">${x.tech ? "Planifiée" : "À affecter"}</span></b><small>${[d, hdeb, x.tech, (x.cp || "") + " " + (x.ville || "")].filter(Boolean).join(" · ")}</small></li>`;
+    const p = (x.date || "").split("-");            /* AAAA-MM-JJ */
+    const jour = p[2] || "—", mois = p[1] ? (MOIS[+p[1] - 1] || "") : "", an = p[0] || "";
+    /* 20/08 : bug d'affichage trouvé en testant sur un vrai contrat —
+       (14.5 + "h").replace(".5","h30") donnait « 14h30h ». On remplace
+       d'abord la demie, on ajoute le « h » seulement si l'heure est ronde. */
+    const hdeb = (x.start || x.start === 0)
+      ? (String(x.start).indexOf(".5") > -1 ? String(x.start).replace(".5", "h30") : String(x.start) + "h")
+      : "";
+    const det = [hdeb, x.tech, ((x.cp || "") + " " + (x.ville || "")).trim()].filter(Boolean).join(" · ");
+    return `<li class="next" data-live="1"><span class="dt"><b>${jour}</b><em>${mois}</em><i>${an}</i></span><div class="ct"><b>${x.typeLibre || LBL[x.type] || "Intervention"} <span class="st nx">${x.tech ? "Planifiée" : "À affecter"}</span></b><small>${det || "Horaire à définir"}</small></div></li>`;
   };
   /* 30/07 (patron) : la carte « Interventions récentes » (Informations) se
      remplit AUSSI — 3 dernières —, l'état vide ne s'affiche que s'il n'y a
@@ -1564,9 +1587,9 @@ function logout(){
 })();
 </script>
 <style>
-/* 30/07 (patron : « trop rapproché ») : respiration des interventions du contrat */
-ul.tl li[data-live]{padding:9px 0 11px}
-ul.tl li[data-live]+li[data-live]{border-top:1px dashed #EEF0F4}
+/* 30/07 (patron : « trop rapproché ») : respiration des interventions du contrat.
+   20/08 : la colonne de date porte déjà le rythme et `.tl li + li` trace le
+   séparateur — ces deux règles faisaient double emploi et un 2ᵉ trait. */
 
 /* 30/07 audit mobile : la fiche gardait ses colonnes — les regles passent par body.mnar
    (pose en JS depuis la largeur ECRAN) : sur cette page, les media queries etaient
