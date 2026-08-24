@@ -100,6 +100,10 @@ textarea:focus{outline:2px solid #FFD9C4;border-color:var(--orange)}
   background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 30%,#FFF8F4 65%,#FFF3EC 100%);
   border:1px solid var(--line,#E7E9EF);box-shadow:var(--shadow)}
 .hero .row{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;position:relative;z-index:1}
+/* 20/08 (suite du même bug) : .row et .quick sont FRÈRES, tous deux z-index:1 —
+   à égalité, c'est le dernier du HTML qui passe dessus, donc .quick recouvrait
+   le bas du menu. Quand le menu est OUVERT, sa rangée monte d'un cran. */
+.hero .row:has(.cmenu.open){z-index:3}
 .hero h1{font-size:1.55rem;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
 .badge{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;background:var(--green-bg);color:var(--green-d);border:1px solid #BFE5D8;padding:4px 12px;border-radius:13px;letter-spacing:.04em;text-transform:uppercase}
 .badge .dotp{width:7px;height:7px;border-radius:50%;background:var(--green);animation:bpulse 2.2s ease-out infinite}
@@ -125,7 +129,14 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .hero .btn.primary2{background:#fff;border:1.5px solid var(--orange);color:var(--orange-deep);font-weight:700}
 .hero .btn.primary2:hover{background:var(--orange-soft)}
 .hero .btn.ic{width:41px;padding:10px 0;justify-content:center}
-.cmenu-wrap{position:relative;display:inline-flex}
+.cmenu-wrap{position:relative;display:inline-flex;
+  /* 20/08 (patron : « quand je clique ici sa marche pas ») — le menu ⋯ a grandi
+     de 2 entrées et son bas tombait SOUS la barre d'actions rapides (.quick,
+     z-index:1). Le z-index:90 du .cmenu ne servait à rien : il ne compte que
+     DANS le contexte d'empilement de son parent, et le parent n'en avait pas.
+     Les clics du bas du menu partaient dans .quick — qui les avalait sans
+     rien faire. On donne le contexte au parent. */
+  z-index:95}
 .cmenu{position:absolute;right:0;top:46px;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 38px -10px rgba(23,26,32,.3);padding:6px;min-width:220px;z-index:90;display:none}
 .cmenu.open{display:block}
 .cmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 11px;border-radius:9px;font-size:.85rem;font-weight:600;color:var(--ink-2);background:none;border:0;cursor:pointer;font-family:inherit}
