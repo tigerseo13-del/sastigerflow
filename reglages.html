@@ -47,6 +47,30 @@ html{background:#F7F8FA}
 .betarow .bb{font-size:.6rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#FEF3E2;color:#A16207;border:1px solid #F3D28B;border-radius:999px;padding:3px 9px;white-space:nowrap}
 .betaEtat{font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:#EEF0F3;color:var(--muted);border-radius:999px;padding:2px 8px}
 .betaEtat.on{background:var(--green-bg);color:var(--green-d)}
+/* 24/08 (patron : « SMS pour les clients, trouver solution ») — LE PANNEAU SMS.
+   Il n'invente rien : les TEXTES existent déjà (page Relances, 18 textes
+   rédigés les 18-19/08). Ce qui manquait, c'est QUAND on envoie et SOUS QUEL
+   NOM. Le panneau règle ces deux-là et se garde en local, prêt à être branché
+   sur un relais serveur — la clé d'API ne peut PAS vivre dans le navigateur,
+   elle serait lisible par n'importe quel client. */
+.smspan{padding:2px 16px 16px;border-bottom:1px solid #F1F2F5;background:#FBFCFD}
+.smspan .sl{display:block;font-size:.7rem;font-weight:700;color:var(--ink-2);margin:12px 0 5px}
+.smspan input[type=text]{width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font:600 .8rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff}
+.smspan input[type=text]:focus{border-color:var(--orange)}
+.smspan input.err{border-color:#D63B33;background:#FFF6F6}
+.smspan .shint{font-size:.7rem;color:var(--muted);margin-top:5px;line-height:1.5}
+.smsm{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:9px;cursor:pointer;user-select:none}
+.smsm input{position:absolute;opacity:0;width:0;pointer-events:none}
+.smsm i{width:19px;height:19px;border-radius:6px;border:1.5px solid #C9CDD8;background:#fff;display:grid;place-items:center;flex:none;margin-top:1px;transition:.13s}
+.smsm:has(input:checked) i{background:#10B981;border-color:#10B981}
+.smsm:has(input:checked) i::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2.2px 2.2px 0;transform:rotate(45deg);margin-top:-2px}
+.smsm .st{flex:1 1 auto;min-width:0}
+.smsm .st b{display:block;font-size:.81rem;font-weight:700}
+.smsm .st small{display:block;font-size:.73rem;color:var(--muted);margin-top:2px;line-height:1.5}
+.smsm .sq{flex:none;font-size:.62rem;font-weight:800;letter-spacing:.04em;border-radius:7px;padding:3px 8px;background:#EBF1FE;color:#2E5CE6;white-space:nowrap}
+.smsnote{margin-top:13px;padding:11px 13px;border-radius:11px;background:#FBF3D9;font-size:.74rem;line-height:1.6;color:var(--ink-2)}
+.smsnote b{font-weight:700}
+
 @media(max-width:720px){
   .betarow{grid-template-columns:minmax(0,1fr) auto;gap:4px 12px}
   .betarow .bd{grid-column:1 / -1}
@@ -558,10 +582,10 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <b>Fonctions bêta</b>
           <small>Masquées du menu principal jusqu'à leur sortie officielle</small>
         </span>
-        <span class="bcount">9 fonctions</span>
+        <span class="bcount">10 fonctions</span>
         <svg class="bchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </summary>
-      <div class="betasec"><b>Version 2</b><span>1 fonction</span><small>la prochaine livraison</small></div>
+      <div class="betasec"><b>Version 2</b><span>2 fonctions</span><small>la prochaine livraison</small></div>
       <!-- 11/08 (patron) : « un payeur, des sites » (syndics, multi-sites) passe en
            bêta — le réglage fait apparaître la carte sur la fiche client et branche
            l'adresse de facturation sur les devis/factures. OFF par défaut. -->
@@ -570,6 +594,26 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <span class="bd">Un client payeur, plusieurs sites d'intervention (syndics, enseignes) — ajoute la carte sur la fiche client et l'adresse de facturation sur les devis et factures</span>
         <span class="betaEtat" id="beta-sites-etat">inactif</span>
       </a>
+      <!-- 24/08 (patron) : SMS au client. Transactionnel uniquement — voir la
+           note du panneau : un rappel d'intervention n'est PAS du marketing,
+           il s'envoie 24 h/24 et n'exige pas de mention STOP. -->
+      <a class="betarow" href="#" id="beta-sms" onclick="event.preventDefault();betaSmsToggle()">
+        <span class="bn">SMS aux clients</span>
+        <span class="bd">Rappel la veille, technicien en route, relance de facture — les textes existent déjà (page Relances), ici on règle QUAND et sous QUEL NOM</span>
+        <span class="betaEtat" id="beta-sms-etat">inactif</span>
+      </a>
+      <div class="smspan" id="smspan" hidden>
+        <label class="sl" for="sms-exp">Nom qui s'affiche sur le téléphone du client</label>
+        <input type="text" id="sms-exp" maxlength="11" placeholder="AntiNuisibl (11 max)" oninput="smsExpSave()">
+        <div class="shint">11 caractères maximum, <b>ni espace ni accent ni caractère spécial</b> — les opérateurs français bloquent. Évite aussi les mots trop génériques (« SMS », « Info »), eux aussi filtrés.</div>
+
+        <label class="sl">Quand on envoie</label>
+        <label class="smsm"><input type="checkbox" id="sms-m1" onchange="smsSave()"><i></i><span class="st"><b>Rappel la veille, à 18 h</b><small>« Bonjour, rappel : notre technicien passe demain entre 8 h et 10 h. »</small></span><span class="sq">le plus utile</span></label>
+        <label class="smsm"><input type="checkbox" id="sms-m2" onchange="smsSave()"><i></i><span class="st"><b>Le technicien est en route</b><small>Parti au client suivant → « il arrive dans environ 40 minutes ». Déclenché depuis l'appli mobile, pas par une horloge.</small></span><span class="sq">moins d'appels</span></label>
+        <label class="smsm"><input type="checkbox" id="sms-m3" onchange="smsSave()"><i></i><span class="st"><b>Relance de facture impayée</b><small>Après les deux e-mails de relance, jamais avant — un SMS pour de l'argent est perçu comme agressif.</small></span><span class="sq">en dernier</span></label>
+
+        <div class="smsnote"><b>Ce qui manque pour envoyer pour de vrai :</b> un relais côté serveur. La clé d'API ne peut pas vivre dans cette page — elle serait lisible par n'importe qui ouvrant le code source. Ce réglage est la spécification que l'équipe de développement branchera sur Twilio (ou OVH / Brevo).</div>
+      </div>
       <div class="betasec"><b>Version 3</b><span>8 fonctions</span><small>après la V2</small></div>
       <a class="betarow" href="tournee.html">
         <span class="bn">Carte</span>
@@ -1976,6 +2020,30 @@ label[for]{cursor:pointer}
 .docx:hover{background:var(--red-bg);color:var(--red)}
 .betaEtat{font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:#EEF0F3;color:var(--muted);border-radius:999px;padding:2px 8px}
 .betaEtat.on{background:var(--green-bg);color:var(--green-d)}
+/* 24/08 (patron : « SMS pour les clients, trouver solution ») — LE PANNEAU SMS.
+   Il n'invente rien : les TEXTES existent déjà (page Relances, 18 textes
+   rédigés les 18-19/08). Ce qui manquait, c'est QUAND on envoie et SOUS QUEL
+   NOM. Le panneau règle ces deux-là et se garde en local, prêt à être branché
+   sur un relais serveur — la clé d'API ne peut PAS vivre dans le navigateur,
+   elle serait lisible par n'importe quel client. */
+.smspan{padding:2px 16px 16px;border-bottom:1px solid #F1F2F5;background:#FBFCFD}
+.smspan .sl{display:block;font-size:.7rem;font-weight:700;color:var(--ink-2);margin:12px 0 5px}
+.smspan input[type=text]{width:100%;max-width:280px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font:600 .8rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff}
+.smspan input[type=text]:focus{border-color:var(--orange)}
+.smspan input.err{border-color:#D63B33;background:#FFF6F6}
+.smspan .shint{font-size:.7rem;color:var(--muted);margin-top:5px;line-height:1.5}
+.smsm{display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-top:9px;cursor:pointer;user-select:none}
+.smsm input{position:absolute;opacity:0;width:0;pointer-events:none}
+.smsm i{width:19px;height:19px;border-radius:6px;border:1.5px solid #C9CDD8;background:#fff;display:grid;place-items:center;flex:none;margin-top:1px;transition:.13s}
+.smsm:has(input:checked) i{background:#10B981;border-color:#10B981}
+.smsm:has(input:checked) i::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2.2px 2.2px 0;transform:rotate(45deg);margin-top:-2px}
+.smsm .st{flex:1 1 auto;min-width:0}
+.smsm .st b{display:block;font-size:.81rem;font-weight:700}
+.smsm .st small{display:block;font-size:.73rem;color:var(--muted);margin-top:2px;line-height:1.5}
+.smsm .sq{flex:none;font-size:.62rem;font-weight:800;letter-spacing:.04em;border-radius:7px;padding:3px 8px;background:#EBF1FE;color:#2E5CE6;white-space:nowrap}
+.smsnote{margin-top:13px;padding:11px 13px;border-radius:11px;background:#FBF3D9;font-size:.74rem;line-height:1.6;color:var(--ink-2)}
+.smsnote b{font-weight:700}
+
 /* Fonctions en beta : une ligne par fonction, colonnes alignees. */
 .betabox{margin-top:28px;border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
 .betah{padding:13px 16px;background:#FAFBFC;border-bottom:1px solid var(--line)}
@@ -2147,6 +2215,58 @@ function betaSitesToggle(){
              : "Sites & facturation désactivés — la fiche client redevient comme avant");
 }
 document.addEventListener("DOMContentLoaded", betaSitesEtat);
+
+/* 24/08 (patron) : SMS aux clients — bêta. Une seule clé porte tout le
+   réglage ; les moments sont des booléens, l'expéditeur une chaîne validée. */
+const SMSKEY = "tigerflow-beta-sms";
+function smsLire(){
+  try{ const v = JSON.parse(localStorage.getItem(SMSKEY)); return (v && typeof v === "object") ? v : null; }catch(e){ return null; }
+}
+function smsOn(){ return !!smsLire(); }
+function smsEtat(){
+  const e = document.getElementById("beta-sms-etat"), pan = document.getElementById("smspan");
+  const cfg = smsLire();
+  if(e){ e.textContent = cfg ? "actif" : "inactif"; e.classList.toggle("on", !!cfg); }
+  if(pan) pan.hidden = !cfg;
+  if(cfg){
+    const g = id => document.getElementById(id);
+    if(g("sms-exp")) g("sms-exp").value = cfg.exp || "";
+    if(g("sms-m1")) g("sms-m1").checked = !!cfg.m1;
+    if(g("sms-m2")) g("sms-m2").checked = !!cfg.m2;
+    if(g("sms-m3")) g("sms-m3").checked = !!cfg.m3;
+  }
+}
+function smsSave(){
+  const g = id => document.getElementById(id);
+  const cfg = smsLire() || {};
+  cfg.exp = (g("sms-exp") || {value:""}).value.trim();
+  cfg.m1 = !!(g("sms-m1") || {}).checked;
+  cfg.m2 = !!(g("sms-m2") || {}).checked;
+  cfg.m3 = !!(g("sms-m3") || {}).checked;
+  try{ localStorage.setItem(SMSKEY, JSON.stringify(cfg)); }catch(e){}
+}
+/* le nom d'expéditeur a une FORME imposée par les opérateurs : on refuse ce
+   qui serait bloqué à l'arrivée plutôt que de le découvrir sur le terrain. */
+function smsExpSave(){
+  const e = document.getElementById("sms-exp");
+  if(!e) return;
+  const mauvais = /[^A-Za-z0-9]/.test(e.value);
+  e.classList.toggle("err", mauvais);
+  if(mauvais && typeof toast === "function") toast("⚠️ Ni espace, ni accent, ni caractère spécial — les opérateurs français bloquent");
+  smsSave();
+}
+function betaSmsToggle(){
+  const on = !smsOn();
+  try{
+    if(on) localStorage.setItem(SMSKEY, JSON.stringify({exp:"", m1:true, m2:false, m3:false}));
+    else localStorage.removeItem(SMSKEY);
+  }catch(e){}
+  smsEtat();
+  if(typeof toast === "function")
+    toast(on ? "SMS clients activés — règle le nom d'expéditeur et les moments"
+             : "SMS clients désactivés");
+}
+document.addEventListener("DOMContentLoaded", smsEtat);
 </script>
 <script>
 /* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
