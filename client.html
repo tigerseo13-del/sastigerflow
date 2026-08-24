@@ -2817,11 +2817,17 @@ document.addEventListener("click", function(e){
       + '<button class="save" onclick="adrSiteSave(' + (s2 ? "'" + s2.id + "'" : "null") + ')">\u2713 Enregistrer le site</button></div></div>';
   }
   function factForm(f){
+    /* 20/08 (patron : « si c'est une société, manque pas SIRET, email ? ») —
+       deux champs FACULTATIFS. Si la facture part chez une société (syndic,
+       compta), le SIRET la rend rattachable ; l'e-mail dit où l'envoyer.
+       Facultatifs parce que le cas courant reste une simple autre adresse. */
     return '<div class="sform">'
       + '<input id="ff-dest" class="fl" placeholder="Destinataire (facultatif) \u2014 ex. Foncia \u00b7 Service comptabilit\u00e9" value="' + (f ? escA(f.dest) : "") + '">'
       + '<input id="ff-adr" class="fl" placeholder="Adresse" value="' + (f ? escA(f.adresse) : "") + '">'
       + '<input id="ff-cp" placeholder="Code postal" inputmode="numeric" value="' + (f ? escA(f.cp) : "") + '">'
       + '<input id="ff-vil" placeholder="Ville" value="' + (f ? escA(f.ville) : "") + '">'
+      + '<input id="ff-siret" placeholder="SIRET (facultatif)" inputmode="numeric" value="' + (f ? escA(f.siret) : "") + '">'
+      + '<input id="ff-mail" placeholder="E-mail d\u2019envoi (facultatif)" inputmode="email" value="' + (f ? escA(f.mail) : "") + '">'
       + '<div class="sact"><small>Les devis et factures utiliseront cette adresse</small>'
       + '<button class="save" onclick="adrFactSave()">\u2713 Enregistrer l\u2019adresse</button></div></div>';
   }
@@ -2863,7 +2869,9 @@ document.addEventListener("click", function(e){
     });
     H += (ADREDIT === "site") ? siteForm(null) : '<button class="aaddb" onclick="adrEdit(\'site\')">+ Ajouter un site</button>';
     if(ADREDIT === "fact") H += '<div class="facband" style="display:block"><div class="stx" style="margin-bottom:7px"><b>Factur\u00e9 \u00e0</b></div>' + factForm(f) + (f ? '<span class="alt2" onclick="adrFactDel()">Revenir \u00e0 l\u2019adresse d\u2019intervention</span>' : '') + '</div>';
-    else if(f) H += '<div class="facband"><span class="sic">\u20ac</span><div class="stx"><b>Factur\u00e9 \u00e0' + (f.dest ? ' \u00b7 ' + esc(f.dest) : '') + '</b><small>' + esc(ligne(f.adresse, f.cp, f.ville)) + '</small><em>Les devis et factures partent \u00e0 cette adresse \u2014 le rapport garde l\u2019adresse du site</em></div><span class="aedit" onclick="adrEdit(\'fact\')">\u270e</span></div>';
+    else if(f) H += '<div class="facband"><span class="sic">\u20ac</span><div class="stx"><b>Factur\u00e9 \u00e0' + (f.dest ? ' \u00b7 ' + esc(f.dest) : '') + '</b><small>' + esc(ligne(f.adresse, f.cp, f.ville)) + '</small>'
+      + ((f.siret || f.mail) ? '<small style="color:var(--muted);font-weight:600;font-size:.72rem">' + [f.siret ? 'SIRET ' + esc(f.siret) : '', esc(f.mail || '')].filter(Boolean).join(' \u00b7 ') + '</small>' : '')
+      + '<em>Les devis et factures partent \u00e0 cette adresse \u2014 le rapport garde l\u2019adresse du site</em></div><span class="aedit" onclick="adrEdit(\'fact\')">\u270e</span></div>';
     /* pas de facturation d\u00e9di\u00e9e : PAS de bandeau \u00ab identique \u00e0\u2026 \u00bb — on
        n\u2019affiche jamais une absence (visuel 309) ; l\u2019action vit dans le \u22ef. */
     body.innerHTML = H;
@@ -2907,7 +2915,7 @@ document.addEventListener("click", function(e){
     var g = function(x){ var e = document.getElementById(x); return e ? e.value.trim() : ""; };
     if(!g("ff-adr")){ toast("Il manque l\u2019adresse"); return; }
     var all = reg(ADRK), c = cli();
-    all[c] = {dest: g("ff-dest"), adresse: g("ff-adr"), cp: g("ff-cp"), ville: g("ff-vil")};
+    all[c] = {dest: g("ff-dest"), adresse: g("ff-adr"), cp: g("ff-cp"), ville: g("ff-vil"), siret: g("ff-siret"), mail: g("ff-mail")};
     localStorage.setItem(ADRK, JSON.stringify(all));
     ADREDIT = null; adrRender();
     toast("\ud83d\udcb3 Adresse de facturation enregistr\u00e9e \u2014 devis et factures la prendront d\u2019eux-m\u00eames");
