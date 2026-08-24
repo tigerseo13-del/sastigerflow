@@ -334,6 +334,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .sform input{border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .74rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;min-width:0}
 .sform input::placeholder{color:#A6ABBB;font-weight:500}
 .sform input:focus{border-color:var(--orange)}
+.sform input.err{border-color:var(--red,#D63B33);background:#FFF6F6}
 .sform .fl{grid-column:1/-1}
 .sform .sact{grid-column:1/-1;display:flex;align-items:center;gap:9px}
 .sform .sact small{font-size:.62rem;color:#9AA0B4;font-weight:600}
@@ -2914,8 +2915,27 @@ document.addEventListener("click", function(e){
   window.adrFactSave = function(){
     var g = function(x){ var e = document.getElementById(x); return e ? e.value.trim() : ""; };
     if(!g("ff-adr")){ toast("Il manque l\u2019adresse"); return; }
+    /* 20/08 (patron a tapé « msmsmsms » et le formulaire a tout avalé) :
+       un champ qui a une forme connue REFUSE ce qui n'a pas cette forme.
+       Un SIRET faux IMPRIMÉ sur une facture est pire qu'un SIRET absent. */
+    var siret = g("ff-siret"), mail = g("ff-mail");
+    if(siret){
+      var chiffres = siret.replace(/\D/g, "");
+      if(chiffres.length !== 14){
+        toast("\u26a0\ufe0f Un SIRET fait 14 chiffres \u2014 celui-ci en a " + chiffres.length);
+        var eS = document.getElementById("ff-siret"); if(eS){ eS.classList.add("err"); eS.focus(); }
+        return;
+      }
+      /* format lisible : 572 044 810 00042 (3+3+3+5) */
+      siret = chiffres.replace(/^(\d{3})(\d{3})(\d{3})(\d{5})$/, "$1 $2 $3 $4");
+    }
+    if(mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)){
+      toast("\u26a0\ufe0f Cet e-mail n\u2019a pas l\u2019air complet (il manque un @ ou un point)");
+      var eM = document.getElementById("ff-mail"); if(eM){ eM.classList.add("err"); eM.focus(); }
+      return;
+    }
     var all = reg(ADRK), c = cli();
-    all[c] = {dest: g("ff-dest"), adresse: g("ff-adr"), cp: g("ff-cp"), ville: g("ff-vil"), siret: g("ff-siret"), mail: g("ff-mail")};
+    all[c] = {dest: g("ff-dest"), adresse: g("ff-adr"), cp: g("ff-cp"), ville: g("ff-vil"), siret: siret, mail: mail};
     localStorage.setItem(ADRK, JSON.stringify(all));
     ADREDIT = null; adrRender();
     toast("\ud83d\udcb3 Adresse de facturation enregistr\u00e9e \u2014 devis et factures la prendront d\u2019eux-m\u00eames");
