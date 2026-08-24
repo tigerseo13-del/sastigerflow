@@ -152,6 +152,25 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
 .hint{font-size:.73rem;color:var(--muted);margin-top:6px}
 .morelink{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;color:var(--orange-deep);opacity:.9;margin:2px 0 6px;cursor:pointer;background:none;border:0;padding:4px 0;font-family:inherit}
 .morelink:hover{text-decoration:underline}
+/* 20/08 (visuel 307) — DEUX LIENS QUI DISENT CE QU'ILS FONT.
+   Chez Saigon, « Ajouter un 2e contact » n'ajoutait pas un contact : il
+   ouvrait un 2e telephone ET un 2e e-mail, TOUS LES DEUX OBLIGATOIRES, et
+   faisait disparaitre le nom et le role. Un lien facultatif qui fabrique des
+   champs obligatoires bloque l'enregistrement : c'etait le vrai bug.
+   Ici : un lien pour un NUMERO, un lien pour une PERSONNE — deux choses
+   differentes, deux liens — et rien de ce qui s'ouvre n'est obligatoire.
+   Chaque bloc ouvert porte son « Retirer » : on revient toujours en arriere. */
+.morerow{display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+/* 20/08 (patron) : le fond orange faisait un pavé de couleur au milieu du
+   formulaire. L'orange dit « clique ici » et ici il n'y a rien à cliquer :
+   un simple cadre blanc suffit à montrer que ce bloc s'est ouvert. */
+.addbloc{margin:4px 0 10px;padding:14px 15px;border:1px solid var(--line);border-radius:13px;background:#fff}
+.addbloc .fgroup{margin-bottom:0}
+.addbloc + .addbloc{margin-top:0}
+.rmlink{display:inline-flex;align-items:center;gap:6px;margin-top:11px;font-size:.74rem;font-weight:700;color:var(--muted);background:none;border:0;padding:2px 0;cursor:pointer;font-family:inherit}
+.rmlink:hover{color:var(--red)}
+/* 20/08 (patron) : la case « c'est elle qui ouvre la porte » est retirée —
+   « sert à rien ». Le CSS part avec elle plutôt que de rester en code mort. */
 
 /* Toast */
 .toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99}
@@ -443,17 +462,50 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         </div>
       </div>
 
-      <button class="morelink" onclick="reveal('more-contact', this)">+ Ajouter un 2ᵉ téléphone / email</button>
-      <div id="more-contact" style="display:none">
-        <div class="frow">
-          <div class="fgroup">
-            <label>Téléphone 2</label>
-            <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg><input autocomplete="off" inputmode="tel"></div>
+      <div class="morerow">
+        <button class="morelink" data-bloc="more-num" onclick="reveal('more-num', this)">+ Un 2ᵉ téléphone / e-mail</button>
+        <button class="morelink" data-bloc="more-pers" onclick="reveal('more-pers', this)">+ Une autre personne à joindre</button>
+      </div>
+
+      <div id="more-num" style="display:none">
+        <div class="addbloc">
+          <div class="frow">
+            <div class="fgroup">
+              <label for="f-tel2">Téléphone 2</label>
+              <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg><input id="f-tel2" autocomplete="off" type="tel" inputmode="tel"></div>
+            </div>
+            <div class="fgroup">
+              <label for="f-email2">E-mail 2</label>
+              <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input id="f-email2" autocomplete="off" inputmode="email"></div>
+            </div>
           </div>
-          <div class="fgroup">
-            <label>Email 2</label>
-            <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input id="f-email2" autocomplete="off" inputmode="email"></div>
+          <button class="rmlink" onclick="blocFerme('more-num')">✕ Retirer</button>
+        </div>
+      </div>
+
+      <div id="more-pers" style="display:none">
+        <div class="addbloc">
+          <div class="frow">
+            <div class="fgroup">
+              <label for="f-p2nom">Prénom et nom</label>
+              <input id="f-p2nom" autocomplete="off">
+            </div>
+            <div class="fgroup">
+              <label for="f-p2role">Qui est-ce&nbsp;?</label>
+              <select id="f-p2role"></select>
+            </div>
           </div>
+          <div class="frow">
+            <div class="fgroup">
+              <label for="f-p2tel">Téléphone</label>
+              <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg><input id="f-p2tel" autocomplete="off" type="tel" inputmode="tel"></div>
+            </div>
+            <div class="fgroup">
+              <label for="f-p2mail">E-mail</label>
+              <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input id="f-p2mail" autocomplete="off" inputmode="email" placeholder="facultatif"></div>
+            </div>
+          </div>
+          <button class="rmlink" onclick="blocFerme('more-pers')">✕ Retirer</button>
         </div>
       </div>
     </div>
@@ -559,13 +611,48 @@ const INPANEL = new URLSearchParams(location.search).get("panel") === "1";
 if(INPANEL) document.documentElement.classList.add("inpanel");
 
 let TYPE = "part";   /* 04/08 patron : Particulier d'abord */
+/* la liste « Qui est-ce ? » doit exister DÈS le chargement : setType() n'est
+   appelé qu'au clic, donc sans ceci le menu restait vide sur un particulier
+   (le type par défaut) — une fonction définie mais jamais branchée. */
+document.addEventListener("DOMContentLoaded", function(){ if(typeof p2Liste === "function") p2Liste(); });
 function reveal(id, btn){
   const el = document.getElementById(id);
   const open = el.style.display !== "none";
   el.style.display = open ? "none" : "";
   if(!btn.dataset.lbl) btn.dataset.lbl = btn.textContent;
-  btn.textContent = open ? btn.dataset.lbl : "− Masquer";
+  /* 20/08 : deux liens côte à côte affichaient tous les deux « − Masquer » —
+     on ne savait plus lequel fermait quoi. Un lien ouvert garde SON nom. */
+  btn.textContent = open ? btn.dataset.lbl
+    : (btn.dataset.bloc ? btn.dataset.lbl.replace(/^\+/, "−") : "− Masquer");
   btn.classList.toggle("openned", !open);
+}
+/* 20/08 (visuel 307) : « Retirer » vide le bloc AVANT de le refermer — sinon
+   un numéro tapé puis masqué partait quand même à l'enregistrement. */
+function blocFerme(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.querySelectorAll("input").forEach(i => { if(i.type === "checkbox") i.checked = false; else i.value = ""; });
+  el.querySelectorAll("select").forEach(sel => sel.selectedIndex = 0);
+  el.style.display = "none";
+  const btn = document.querySelector('[data-bloc="' + id + '"]');
+  if(btn){ if(btn.dataset.lbl) btn.textContent = btn.dataset.lbl; btn.classList.remove("openned"); }
+}
+/* La liste dépend du type : on ne propose pas « Gardien d'immeuble » à une
+   boulangerie ni « Responsable QHSE » à un couple. */
+const P2ROLES = {
+  part: ["Conjoint·e", "Enfant", "Parent", "Locataire", "Voisin·e", "Gardien d'immeuble", "Autre"],
+  pro:  ["Gérant", "Responsable technique", "Responsable QHSE", "Assistant·e", "Comptabilité", "Autre"],
+  syn:  ["Gestionnaire de copropriété", "Assistant·e de copropriété", "Gardien", "Conseil syndical", "Autre"]
+};
+function p2Liste(){
+  const sel = document.getElementById("f-p2role");
+  if(!sel) return;
+  const garde = sel.value;
+  const cle = (typeof TYPE !== "undefined" && TYPE === "part") ? "part"
+            : (typeof TYPE !== "undefined" && TYPE === "syndic") ? "syn" : "pro";
+  sel.innerHTML = '<option value="">Sélectionner…</option>'
+    + P2ROLES[cle].map(r => '<option>' + r + '</option>').join("");
+  if(garde && P2ROLES[cle].indexOf(garde) > -1) sel.value = garde;
 }
 function setType(card){
   document.querySelectorAll(".tcard").forEach(c=>c.classList.remove("on"));
@@ -576,6 +663,7 @@ function setType(card){
   document.getElementById("g-siret").style.display = pro ? "" : "none";
   document.getElementById("g-rs").style.display = pro ? "" : "none";
   document.getElementById("g-np").style.display = pro ? "none" : "";
+  p2Liste();
 }
 function saveClient(){
   const req = [(TYPE === "part" ? "f-nomp" : "f-nom"),"f-tel1","f-adr","f-cp","f-ville"];
@@ -600,7 +688,28 @@ function saveClient(){
   const nom = EDIT || (TYPE === "part"
     ? (document.getElementById("f-prenom").value.trim() + " " + document.getElementById("f-nomp").value.trim()).trim()
     : document.getElementById("f-nom").value.trim());
+  contactsExtra(nom);
   sbSave(nom);
+}
+/* 20/08 (visuel 307) : ce que le formulaire recueille en plus va dans la MÊME
+   boîte que les contacts de la fiche client (`tigerflow-contacts-<nom>`, lue
+   par client.html) — sinon on aurait deux champs remplis que personne
+   n'affiche jamais. Rien n'est ajouté à `row` : cette ligne part dans
+   Supabase, une colonne inconnue ferait échouer l'enregistrement entier. */
+function contactsExtra(nom){
+  const g = id => { const el = document.getElementById(id); return el ? (el.value || "").trim() : ""; };
+  const ajouts = [];
+  const t2 = g("f-tel2"), m2 = g("f-email2");
+  if(t2 || m2) ajouts.push({nom: nom, role: "2ᵉ contact", tel: t2, mail: m2});
+  const pn = g("f-p2nom"), pt = g("f-p2tel"), pm = g("f-p2mail");
+  if(pn || pt) ajouts.push({nom: pn || "Personne à joindre", role: g("f-p2role") || "Contact", tel: pt, mail: pm});
+  if(!ajouts.length) return;
+  try{
+    const k = "tigerflow-contacts-" + nom;
+    const l = JSON.parse(localStorage.getItem(k) || "[]");
+    ajouts.forEach(a => { if(!l.some(x => x && x.tel === a.tel && x.nom === a.nom)) l.push(a); });
+    localStorage.setItem(k, JSON.stringify(l));
+  }catch(e){}
 }
 /* ===== Enregistrement Supabase (repli : mode démo si non connecté) ===== */
 let SB = null; try{ SB = supabase.createClient("https://puyffykimfougdpqkxbu.supabase.co", "sb_publishable_tYmlBZZSCKW2R02FlZbY6w_PQD5xROa"); }catch(e){}   /* 30/07 : la page vit sans le CDN */
