@@ -444,6 +444,21 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .ivh{font-family:'Sora';font-weight:800;font-size:.78rem;background:#F1F2F6;border-radius:9px;padding:6px 11px;color:var(--ink-2);flex:none}
 .st.staff{background:#FBF3D9;color:#A16207}
 .st.stoff{background:#EEF0F3;color:#6C7285}
+/* 20/08 (visuel 304) — UNE INTERVENTION EN RETARD DOIT SE VOIR.
+   Une visite datée d'hier qui n'est toujours pas terminée s'affichait du
+   même gris que celle de demain (« Passée »). Or il n'y a que deux
+   explications : ou elle n'a pas eu lieu, ou personne ne l'a clôturée —
+   les deux coûtent de l'argent. Rouge = il faut agir, et le NOMBRE DE
+   JOURS est écrit dans la pastille : « 6 j » ne se discute pas, un rouge
+   tout seul se discute. Aplat plein et non teinte claire : c'est le seul
+   état de cette liste qui appelle un geste aujourd'hui. */
+.st.stlate{background:var(--red);color:#fff}
+.ivalert,.fzalert{display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:var(--red-bg);border:1px solid #F6C9C6;border-radius:13px;padding:11px 14px;margin-bottom:13px}
+.ivalert .ai,.fzalert .ai{flex:none;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:.75rem;font-weight:800;display:grid;place-items:center}
+.ivalert b,.fzalert b{font-size:.85rem;color:#B3271F;font-weight:800}
+.ivalert span:last-child,.fzalert span:last-child{font-size:.78rem;color:var(--ink-2)}
+.fz .fit.flate{border-color:#F6C9C6;background:#FFFBFB}
+.fz .ftq.non{color:var(--muted);font-style:italic}
 .ctdel{border:0;background:none;color:#C9CDD6;cursor:pointer;font-size:.8rem;padding:2px 4px}
 .ctdel:hover{color:#D63B33}
 
@@ -849,6 +864,12 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
                    sert de page de modification quand elle reçoit ?c=<nom>. -->
               <button onclick="location.href='client-nouveau.html?c='+encodeURIComponent(new URLSearchParams(location.search).get('c')||''); cliMenuClose()"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg> Modifier la fiche</button>
               <button onclick="window.print(); cliMenuClose()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg> Exporter la fiche</button>
+              <!-- 20/08 (patron, capture Thi Huong Giang BUI) : les deux actions
+                   rares de la carte Adresses vivent ici — « ce qu'on fait chaque
+                   semaine est un bouton, le reste vit dans le ⋯ ». Masquées tant
+                   que la bêta Sites & facturation n'est pas activée. -->
+              <button data-adr="1" hidden onclick="adrMenu('site')"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> Ajouter un site d'intervention</button>
+              <button data-adr="1" hidden onclick="adrMenu('fact')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Adresse de facturation différente</button>
               <div class="csep"></div>
               <button class="cdanger" id="cdel" onclick="cliDel(event)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg> <span id="cdel-lbl">Supprimer le client</span></button>
             </div>
@@ -1092,16 +1113,25 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
              creneau horaire, assigné, pagination. Les creneaux passes non
              enregistres affichent « — », jamais une heure inventee. -->
         <div class="ttools">
-          <select class="tsel" onchange="histStat(this.value)"><option value="">Tous les statuts</option><option value="avenir">À venir</option><option value="done">Terminée</option></select>
+          <select class="tsel" onchange="histStat(this.value)"><option value="">Tous les statuts</option><option value="retard">En retard</option><option value="avenir">À venir</option><option value="done">Terminée</option></select>
           </div>
         <!-- 04/08 (patron, visuel 22) : la frise remplace le tableau. Les
              cellules vides d'un tableau (le créneau d'un passage ancien, par
              exemple) disparaissent d'elles-mêmes au lieu d'afficher un tiret. -->
         <!-- 05/08 (patron, visuel 29) : une carte par passage, sur toute la
              largeur, colonnes alignées comme les autres onglets de la fiche. -->
+        <div class="fzalert"><span class="ai">!</span><b>1 intervention en retard</b><span>datée du 14 août et toujours pas terminée — soit elle n'a pas eu lieu, soit personne ne l'a clôturée</span></div>
         <div class="fz" id="hist-tb">
           <div class="fhh fgrid"><span>Date</span><span>Intervention</span><span>Technicien</span>
             <span class="h-cr">Créneau</span><span>Statut</span><span></span></div>
+          <div class="fit fgrid flate" data-st="retard">
+            <span class="fcal"><b>14</b><small>Août</small></span>
+            <span class="fnat"><b>Contrôle ponctuel</b><small>demandé par le syndic</small></span>
+            <span class="ftq non">Personne</span>
+            <span class="fcr">14:00 – 16:00</span>
+            <span><span class="st stlate">En retard · 7 j</span></span>
+            <a class="fgo" href="calendrier.html">Voir →</a>
+          </div>
           <div class="fit fgrid fnext" data-st="avenir">
             <span class="fcal"><b>29</b><small>Août</small></span>
             <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 8</small></span>
@@ -1245,7 +1275,7 @@ function oRechInit(){
 }
 document.addEventListener("DOMContentLoaded", oRechInit);
 function histStat(v){
-  document.querySelectorAll("#hist-tb tr, #hist-tb .fit").forEach(function(tr){
+  document.querySelectorAll("#hist-tb tr, #hist-tb .fit, #hist-tb .ivrow").forEach(function(tr){
     tr.dataset.hidestat = (v && tr.dataset.st !== v) ? "1" : "";
   });
   var q = document.getElementById("hist-q");
@@ -2196,30 +2226,53 @@ function toast(msg, undoFn){
         var TCOL = {Pablo:"#2E5CE6", Otman:"#0E8A7A", Fredo:"#7B3BEA", Babacar:"#C87B08", Wissam:"#D02F2F", Enzo:"#128A46", "\u00c9ric":"#DB2777", Mahamadou:"#0891B2", "R\u00e9mi":"#EA4A10", Jawad:"#65A30D"};
         var MOISC = ["JANV","F\u00c9VR","MARS","AVR","MAI","JUIN","JUIL","AO\u00dbT","SEPT","OCT","NOV","D\u00c9C"];
         var auj3 = new Date(); auj3.setHours(0, 0, 0, 0);
+        /* 20/08 (visuel 304) : « terminée » ne se devine pas, elle se PROUVE —
+           un rapport existe pour ce client à cette date. Tout ce qui est daté
+           dans le passé sans rapport est EN RETARD, pas « Passée ». */
+        var FAIT = {};
+        try{
+          var rp = JSON.parse(localStorage.getItem("tigerflow-reports") || "{}");
+          Object.keys(rp).forEach(function(k){
+            var r = rp[k] && rp[k].iv;
+            if(r && r.client && r.date) FAIT[r.client + "|" + r.date] = 1;
+          });
+        }catch(e){}
+        var nRetard = 0, plusVieux = 0;
         var rows = iv.map(function(x){
           var dt = x.date ? new Date(x.date + "T12:00:00") : null;
           var today = dt && dt.toDateString() === new Date().toDateString();
           var passee = dt && dt < auj3 && !today;
+          var fait = !!FAIT[(x.client || "") + "|" + (x.date || "")];
+          var jours = passee ? Math.round((auj3 - dt) / 86400000) : 0;
+          var retard = passee && !fait;
+          if(retard){ nRetard++; if(jours > plusVieux) plusVieux = jours; }
           var cren = x.start ? (String(x.start).replace(".5", "h30").replace(/^(\d+)$/, "$1h")) : "\u2014";
           var tech = x.tech || "";
-          var chip = passee ? '<span class="st stoff">Pass\u00e9e</span>'
+          var chip = fait ? '<span class="st st-payee">Termin\u00e9e</span>'
+                   : retard ? '<span class="st stlate">En retard \u00b7 ' + jours + '\u00a0j</span>'
                    : tech ? '<span class="st st-envoye">\u00c0 venir</span>'
                    : '<span class="st staff">\u00c0 affecter</span>';
-          return '<div class="ivrow' + (passee ? ' off' : '') + '">'
+          return '<div class="ivrow' + (passee && fait ? ' off' : '') + '" data-st="' + (fait ? "done" : retard ? "retard" : "avenir") + '">'
             + '<div class="ivd' + (today ? ' today' : '') + '"><b>' + (dt ? dt.getDate() : "\u2014") + '</b><span>' + (today ? "AUJ." : (dt ? MOISC[dt.getMonth()] : "")) + '</span></div>'
             + '<div class="ivmain"><b>' + (x.typeLibre || LBL[x.type] || "Intervention") + '</b>'
-            + '<small><i class="ivtd" style="background:' + (TCOL[tech] || "#9CA1AD") + '"></i>' + (tech || "\u00c0 affecter")
+            + '<small><i class="ivtd" style="background:' + (TCOL[tech] || "#9CA1AD") + '"></i>' + (tech || "Personne")
             + ((x.cp || x.ville) ? ' \u00b7 ' + [x.cp, x.ville].filter(Boolean).join(" ") : '') + '</small></div>'
             + '<span class="ivh">' + cren + '</span>' + chip
             + '<a class="rlink" href="calendrier.html">Voir \u2192</a>'
             + '</div>';
         }).join("");
+        /* le signal appelle une reponse : on annonce le retard AU-DESSUS de la
+           liste, avec le nombre et l'anciennete du plus vieux. */
+        var bandeau = nRetard ? '<div class="ivalert"><span class="ai">!</span><b>' + nRetard
+          + (nRetard > 1 ? ' interventions en retard' : ' intervention en retard') + '</b><span>la plus ancienne a '
+          + plusVieux + (plusVieux > 1 ? ' jours' : ' jour')
+          + ' \u2014 soit elle n\'a pas eu lieu, soit personne ne l\'a cl\u00f4tur\u00e9e</span></div>' : '';
         var pane3 = document.querySelector('[data-tab="histint"]');
         var carte3 = pane3 && pane3.querySelector(".card");
         var vin3 = carte3 && carte3.querySelector(".vinner");
         /* meme cause : les interventions vivantes remplacent la frise de demo,
            l'id doit suivre sinon la recherche croit la liste vide. */
-        if(vin3) vin3.outerHTML = '<div class="ivwrap" id="hist-tb">' + rows + '</div>';
+        if(vin3) vin3.outerHTML = bandeau + '<div class="ivwrap" id="hist-tb">' + rows + '</div>';
         if(typeof oRechInit === "function") oRechInit();
       }
     })();
@@ -2698,7 +2751,7 @@ document.addEventListener("click", function(e){
     return;
   }
   var duoEl = document.querySelector(".duo2.full");
-  if(duoEl) duoEl.classList.add("trio");
+  document.querySelectorAll('[data-adr]').forEach(function(b){ b.hidden = false; });
   var ADRK = "tigerflow-fact-adr", SITK = "tigerflow-sites";
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
   var escA = function(v){ return esc(v).replace(/"/g, "&quot;"); };
@@ -2736,9 +2789,29 @@ document.addEventListener("click", function(e){
       + '<div class="sact"><small>Les devis et factures utiliseront cette adresse</small>'
       + '<button class="save" onclick="adrFactSave()">\u2713 Enregistrer l\u2019adresse</button></div></div>';
   }
+  /* 20/08 (patron) : la carte ne s'affiche QUE si elle a quelque chose à dire.
+     Un site unique + facturation identique = elle répétait l'adresse déjà
+     écrite en haut de la fiche et titrait « FACTURATION » au-dessus d'une
+     absence. Quand il n'y a rien de plus qu'en haut, on ne met rien :
+     Contacts et Notes reprennent la ligne. Les deux actions restent
+     accessibles par le ⋯ de l'en-tête (adrMenu), qui rouvre la carte. */
+  window.adrMenu = function(k){
+    ADRFORCE = true;
+    if(typeof cliMenuClose === "function") cliMenuClose();
+    adrRender();
+    window.adrEdit(k);
+    var c2 = document.getElementById("adrcard");
+    if(c2) c2.scrollIntoView({behavior:"smooth", block:"center"});
+  };
+  var ADRFORCE = false;
   window.adrRender = function(){
     var body = document.getElementById("adr-body"); if(!body) return;
     var ss = sites(), f = fact();
+    var carte = document.getElementById("adrcard");
+    var vide2 = !ss.length && !f && !ADREDIT && !ADRFORCE;
+    if(carte) carte.style.display = vide2 ? "none" : "";
+    if(duoEl) duoEl.classList.toggle("trio", !vide2);
+    if(vide2) return;
     var t = document.getElementById("adr-titre"), nn = document.getElementById("adr-n");
     if(t) t.textContent = ss.length ? "Sites d'intervention" : "Adresses";
     if(nn) nn.textContent = ss.length ? (ss.length + 1) + " sites" : "";
