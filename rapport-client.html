@@ -559,7 +559,19 @@ document.addEventListener("click", e => {
   g("m-type").textContent = (iv.type || "Intervention") + " — " + cadreTxt;
   g("c-nom").textContent = iv.client || "—";
   g("c-cadre").textContent = iv.cadre || "";
-  g("c-lieu").textContent = [iv.rue, [iv.cp, iv.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") || "—";
+  /* 20/08 (cas boutiques Nicolas) : le rapport nomme le SITE quand
+     l'intervention en portait un — sinon on retrouve le nom par l'adresse
+     dans les sites du client (les anciens enregistrements n'ont pas iv.site). */
+  var siteNom = iv.site || "";
+  if(!siteNom && iv.rue){
+    try{
+      ((JSON.parse(localStorage.getItem("tigerflow-sites")) || {})[iv.client] || []).forEach(function(z){
+        if(z && z.adresse && iv.rue.indexOf(z.adresse) === 0) siteNom = z.nom;
+      });
+    }catch(e){}
+  }
+  var lieuTxt = [iv.rue, [iv.cp, iv.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") || "—";
+  g("c-lieu").textContent = siteNom ? siteNom + " — " + lieuTxt : lieuTxt;
   const zonesTxt = setArr(R.zones).join(", ");
   g("c-zones").textContent = zonesTxt;
   g("c-tel").textContent = iv.tel || "—";
