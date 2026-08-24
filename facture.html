@@ -714,6 +714,13 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
         <a class="newcli" href="client-nouveau.html" title="Créer un nouveau client"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Nouveau client</a>
       </div>
       <div class="cliadr" id="cliadr">L'adresse du client s'affichera ici</div>
+      <!-- 20/08 (cas « boutiques Nicolas ») : même sélecteur que le devis —
+           jumeaux, même règle. La facture dit QUELLE boutique est traitée
+           pendant que l'en-tête facture le siège. -->
+      <div class="objrow" id="g-vsite" style="display:none">
+        <label class="vlab" for="v-site">Site concerné</label>
+        <select class="vfld" id="v-site"></select>
+      </div>
       <div class="objrow">
         <label class="vlab" for="v-objet">Objet de la facture</label>
         <input class="vfld objbig" id="v-objet" value="" oninput="OBJEDIT=true" title="Se remplit tout seul d'après la prestation principale — modifiable">
@@ -934,6 +941,19 @@ try{
 function pickCli(){
   const c = CLIENTS[g("v-client").value];
   g("cliadr").textContent = c ? "📍 " + c.adr + " · " + c.tel : "L'adresse du client s'affichera ici";
+  /* 20/08 : sites du client (jumeau devis) */
+  try{
+    const gs = g("g-vsite"), sel = g("v-site");
+    if(gs && sel){
+      const m = JSON.parse(localStorage.getItem("tigerflow-sites")) || {};
+      const list = Array.isArray(m[g("v-client").value]) ? m[g("v-client").value] : [];
+      if(list.length){
+        sel.innerHTML = '<option value="">Adresse principale (la fiche)</option>'
+          + list.map(x => '<option value="' + x.nom + '">' + x.nom + ' — ' + [x.adresse, x.cp, x.ville].filter(Boolean).join(" ") + '</option>').join("");
+        gs.style.display = "";
+      } else { gs.style.display = "none"; sel.innerHTML = ""; }
+    }
+  }catch(e){}
   calc();
 }
 function setStat2(k, el){
@@ -1761,7 +1781,8 @@ function pushDevisInbox(){
       contrat:(document.getElementById("v-contrat") || {value:""}).value.trim(),
       lignes: LIGNES.map(l => ({designation:l.designation, qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""})),
       frais: FRAIS.map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10})),
-      remise: Math.round((REMAMT || 0) * 100) / 100};
+      remise: Math.round((REMAMT || 0) * 100) / 100,
+      site: (document.getElementById("v-site") || {value:""}).value || undefined};
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").filter(x => x.ref !== DREF);
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-factures", JSON.stringify(box.slice(0, 30)));

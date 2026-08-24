@@ -468,6 +468,14 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <!-- ===== 2. LIEU ===== -->
     <div class="card">
       <div class="card-h"><span class="num">2</span>Lieu de l'intervention</div>
+      <!-- 20/08 (patron, cas « boutiques Nicolas ») : un client peut porter des
+           SITES (bêta Sites & facturation). Quand il en a, une question « Où ? »
+           apparaît AVANT l'adresse : choisir un site pré-remplit adresse ET
+           consignes d'accès. Un client sans site ne voit rien changer. -->
+      <div class="fgroup" id="g-site" style="display:none;margin-bottom:12px">
+        <label for="f-site">Où&nbsp;?</label>
+        <select id="f-site" onchange="sitePick()"></select>
+      </div>
       <div class="frowadr">
         <div class="fgroup">
           <label for="f-adr">Adresse <span class="req">*</span></label>
@@ -486,7 +494,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <button class="morelink" onclick="reveal('more-lieu', this)">+ Consignes d'accès (digicode, étage, parking…)</button>
       <div id="more-lieu" style="display:none">
         <div class="fgroup">
-          <textarea placeholder="Digicode 2548B, 3e étage porte 12, parking visiteur au sous-sol…"></textarea>
+          <textarea id="f-acces" placeholder="Digicode 2548B, 3e étage porte 12, parking visiteur au sous-sol…"></textarea>
         </div>
       </div>
     </div>
@@ -737,6 +745,41 @@ function majClients(){
   });
   return n;
 }
+/* ===== 20/08 : les sites du client choisi ===== */
+function clientNomCourant(){
+  const sel = document.getElementById("f-client");
+  const o = sel.selectedOptions[0];
+  return o ? (o.text.split(" — ")[0] || sel.value) : "";
+}
+function siteRemplit(){
+  const g = document.getElementById("g-site"), sel = document.getElementById("f-site");
+  if(!g || !sel) return;
+  let list = [];
+  try{ const m = JSON.parse(localStorage.getItem("tigerflow-sites")) || {}; const v = m[clientNomCourant()]; if(Array.isArray(v)) list = v; }catch(e){}
+  if(!list.length){ g.style.display = "none"; sel.innerHTML = ""; return; }
+  sel.innerHTML = '<option value="">Adresse principale (la fiche)</option>'
+    + list.map(function(x){ return '<option value="' + x.id + '">' + (x.nom || "Site") + ' — ' + [x.adresse, x.cp, x.ville].filter(Boolean).join(" ") + '</option>'; }).join("")
+    + '<option value="__autre">Autre adresse…</option>';
+  g.style.display = "";
+}
+function sitePick(){
+  const sel = document.getElementById("f-site");
+  const v = sel.value;
+  const A = id => document.getElementById(id);
+  if(v === "__autre"){ ["f-adr","f-cp","f-ville"].forEach(id => A(id).value = ""); A("f-adr").focus(); A("adr-hint").style.display = "none"; return; }
+  if(!v){ pickClient(); return; }   /* retour à l'adresse de la fiche */
+  let x = null;
+  try{ const m = JSON.parse(localStorage.getItem("tigerflow-sites")) || {}; (m[clientNomCourant()] || []).forEach(function(z){ if(z && z.id === v) x = z; }); }catch(e){}
+  if(!x) return;
+  A("f-adr").value = x.adresse || ""; A("f-cp").value = x.cp || ""; A("f-ville").value = x.ville || "";
+  ["f-adr","f-cp","f-ville"].forEach(id => A(id).classList.remove("err"));
+  const hint = A("adr-hint"); hint.textContent = "\u2713 Site \u00ab " + (x.nom || "") + " \u00bb \u2014 adresse et acc\u00e8s pr\u00e9-remplis"; hint.style.display = "";
+  /* la note d'accès du site remplit les consignes — la seule info que le
+     technicien cherche vraiment ; on ouvre le bloc pour qu'elle se voie */
+  const ta = A("f-acces");
+  if(ta && x.acces){ ta.value = x.acces; const bloc = A("more-lieu"); if(bloc && bloc.style.display === "none"){ const btn = document.querySelector('[onclick*="more-lieu"]'); if(btn) btn.click(); } }
+  if(typeof resume === "function") resume();
+}
 function pickClient(){
   const sel = document.getElementById("f-client");
   const opt = sel.selectedOptions[0];
@@ -747,6 +790,7 @@ function pickClient(){
     if(opt.dataset.cp) document.getElementById("f-cp").value = opt.dataset.cp;
     if(opt.dataset.ville) document.getElementById("f-ville").value = opt.dataset.ville;
     ["f-adr","f-cp","f-ville"].forEach(id => document.getElementById(id).classList.remove("err"));
+    siteRemplit();
     return;
   }
   const v = document.getElementById("f-client").value;
@@ -759,6 +803,7 @@ function pickClient(){
     ["f-adr","f-cp","f-ville"].forEach(id=>document.getElementById(id).classList.remove("err"));
     document.getElementById("adr-hint").style.display = "";
   }
+  siteRemplit();
   // Le contrat lié ne s'active que pour Ironwood (démo)
   document.getElementById("f-ctr").value = v === "iron" ? "CTR-2026-04729 — Dératisation annuelle" : "";
   if(v === "iron"){ pickPayByVal("Inclus au contrat"); }
@@ -1063,6 +1108,10 @@ function saveInter(){
     const inbox = JSON.parse(localStorage.getItem("tigerflow-inbox-interventions") || "[]");
     inbox.push({
       client: (document.getElementById("f-client").selectedOptions[0] || {text:""}).text.split(" — ")[0] || document.getElementById("f-client").value,
+      /* le site voyage avec l'intervention : le rapport et le devis diront
+         « Lieu d'intervention : Boutique République » pendant que la facture
+         part au siège. Vide = adresse principale. */
+      site: (function(){ const e = document.getElementById("f-site"); if(!e || !e.value || e.value === "__autre") return ""; const o = e.selectedOptions[0]; return o ? o.text.split(" — ")[0] : ""; })() || undefined,
       rue: document.getElementById("f-adr").value.trim(),   /* la rue voyage aussi : sans elle, l'itinéraire s'arrête au code postal */
       cp: document.getElementById("f-cp").value.trim(),
       ville: document.getElementById("f-ville").value.trim(),

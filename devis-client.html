@@ -709,10 +709,21 @@ function pdfImprimer(nom){
   /* Le SIRET du client n'est pas dans le cache : on masque plutot que d'afficher
      celui de la societe d'exemple. Le lieu d'intervention suit son adresse. */
   var sir = F("cli-siret"); if(sir) sir.style.display = "none";
+  function esc2(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
   var lieuTxt = F("lieu-txt"), lieu = F("lieu");
-  var adr = [cl.adresse, [cl.cp, cl.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  /* 20/08 (cas « boutiques Nicolas ») : si le devis vise un SITE du client
+     (rec.site, posé par le sélecteur « Où ? »), le lieu d'intervention porte
+     LE SITE — nom + son adresse — pendant que l'en-tête facture le siège.
+     Sans site : l'adresse de la fiche, comme avant. */
+  var siteObj = null;
+  if(rec.site){
+    try{ ((JSON.parse(localStorage.getItem("tigerflow-sites")) || {})[rec.client] || []).forEach(function(z){ if(z && z.nom === rec.site) siteObj = z; }); }catch(e){}
+  }
+  var adr = siteObj
+    ? [siteObj.adresse, [siteObj.cp, siteObj.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ")
+    : [cl.adresse, [cl.cp, cl.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   if(lieuTxt && adr){
-    lieuTxt.innerHTML = (rec.client || "") + "<br>" + adr;
+    lieuTxt.innerHTML = (siteObj ? esc2(rec.site) + " \u2014 " + (rec.client || "") : (rec.client || "")) + "<br>" + adr;
     /* 11/08 : la case existait mais restait cachée — dès que l'adresse du site
        est connue, on l'affiche. Avec une adresse de facturation dédiée, c'est
        ELLE qui distingue le lieu traité de l'adresse qui paie. */
