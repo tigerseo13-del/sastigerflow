@@ -137,7 +137,14 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
      Les clics du bas du menu partaient dans .quick — qui les avalait sans
      rien faire. On donne le contexte au parent. */
   z-index:95}
-.cmenu{position:absolute;right:0;top:46px;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 38px -10px rgba(23,26,32,.3);padding:6px;min-width:220px;z-index:90;display:none}
+.cmenu{position:absolute;right:0;top:46px;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 38px -10px rgba(23,26,32,.3);padding:6px;min-width:252px;z-index:90;display:none}
+/* 20/08 (patron : « le menu s'affiche mal ») — deux causes. 1) le .hero porte
+   overflow:hidden (pour son dégradé arrondi) : le menu, allongé de 2 entrées,
+   était TRONQUÉ à la sortie de la carte — « Supprimer le client » invisible.
+   Quand le menu est ouvert, le hero relâche son overflow. 2) les nouveaux
+   libellés cassaient sur deux lignes : le menu s'élargit et interdit le repli. */
+.hero:has(.cmenu.open){overflow:visible}
+.cmenu button{white-space:nowrap}
 .cmenu.open{display:block}
 .cmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 11px;border-radius:9px;font-size:.85rem;font-weight:600;color:var(--ink-2);background:none;border:0;cursor:pointer;font-family:inherit}
 .cmenu button:hover{background:var(--bg)}
@@ -296,19 +303,33 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .duo2.trio{grid-template-columns:1fr 1fr 1fr}
 .duo2 .card.eq{display:flex;flex-direction:column;margin:0}
 .duo2 .card.eq .nlist{flex:1}
-/* ===== 11/08 (patron, visuels 135-138) : Adresses & Sites d'intervention ===== */
-.arow{padding:9px 2px}
-.arow + .arow{border-top:1px solid #F1F2F6}
-.alab{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#9AA0B4;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.alab .abadge{font-size:.56rem;letter-spacing:.02em;font-weight:800;background:#E4F6EC;color:#128A46;border-radius:7px;padding:2px 7px;text-transform:none}
-.alab .aedit{margin-left:auto;font-size:.66rem;font-weight:700;color:#8D93A8;text-transform:none;letter-spacing:0;cursor:pointer}
-.alab .aedit:hover{color:var(--ink)}
-.aval{font-size:.8rem;font-weight:700;color:var(--ink);line-height:1.45;overflow-wrap:anywhere}
-.aval small{display:block;font-size:.68rem;font-weight:600;color:#8D93A8;margin-top:1px}
-.amuted{font-size:.76rem;font-weight:600;color:#8D93A8}
-.aaddb{display:inline-flex;align-items:center;gap:6px;margin-top:8px;border:1.5px dashed #D8DCE8;background:#FAFBFD;color:#4A5065;font-size:.72rem;font-weight:700;padding:7px 11px;border-radius:10px;cursor:pointer;font-family:inherit}
+/* ===== 11/08 (visuels 135-138) puis 20/08 (visuel 310, patron : « c'est
+   moche ») : Adresses & Sites d'intervention, RHABILLÉS EN RANGÉES.
+   Avant : étiquettes majuscules grises flottantes, lignes nues, le bouton
+   d'ajout coincé au milieu, la facturation collée dessous. À côté, la carte
+   Contacts a de vraies rangées arrondies — les sites parlent maintenant le
+   même langage : rangée bordée + pictogramme SVG + nom en gras + adresse en
+   dessous. Et la FACTURATION QUITTE LA PILE DES SITES : elle ne répond pas à
+   la même question (où on intervient / où part l'argent) — elle vit dans un
+   bandeau gris posé au fond de la carte, sa phrase d'aide DANS le bandeau.
+   Le badge « adresse dédiée » disparaît : le bandeau EST l'information. */
+.srow{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px}
+.srow .sic{width:36px;height:36px;border-radius:12px;background:var(--bg);display:grid;place-items:center;flex:none}
+.srow .sic svg,.facband .sic svg{width:16px;height:16px;stroke:var(--ink-2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.srow .sic.pr{background:var(--orange-soft)}
+.stx{flex:1 1 auto;min-width:0}
+.stx b{display:block;font-size:.84rem;font-weight:700;overflow-wrap:anywhere}
+.stx small{display:block;font-size:.77rem;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.stx em{display:block;font-style:normal;font-size:.7rem;color:var(--muted);margin-top:3px}
+.tagp{font-size:.64rem;font-weight:800;letter-spacing:.05em;background:#F1F2F5;color:var(--muted);border-radius:7px;padding:3px 8px;flex:none}
+.aedit{color:#B9BDC9;font-size:.85rem;flex:none;cursor:pointer}
+.aedit:hover{color:var(--ink)}
+.facband{display:flex;align-items:center;gap:12px;margin-top:13px;padding:12px;border-radius:13px;background:var(--bg)}
+.facband .sic{width:36px;height:36px;border-radius:12px;background:#FBF3D9;color:#A16207;font-weight:800;font-family:'Sora';font-size:.9rem;display:grid;place-items:center;flex:none}
+.facband .stx small{color:var(--ink);font-weight:700;font-size:.8rem}
+.aaddb{display:block;width:100%;border:1.5px dashed var(--line);background:#fff;color:var(--ink-2);font-size:.77rem;font-weight:700;padding:9px;border-radius:12px;cursor:pointer;font-family:inherit;margin-top:2px}
 .aaddb:hover{border-color:#C9CCD4;color:var(--ink)}
-.anote{margin-top:8px;font-size:.66rem;font-weight:600;color:#8D93A8;line-height:1.5}
+.facband .alt2{font-size:.68rem;font-weight:700;color:#8D93A8;text-decoration:underline;text-underline-offset:2px;cursor:pointer;display:inline-block;margin-top:4px}
 .sform{margin-top:9px;background:#FAFBFD;border:1.5px solid #EEF0F4;border-radius:12px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .sform input{border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .74rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;min-width:0}
 .sform input::placeholder{color:#A6ABBB;font-weight:500}
@@ -1414,7 +1435,11 @@ document.addEventListener('click', cliMenuClose);
 function cliDel(e){
   e.stopPropagation();
   const b = document.getElementById('cdel');
-  if(!b.dataset.armed){ b.dataset.armed='1'; b.textContent='⚠️ Confirmer la suppression ?'; return; }
+  /* 20/08 : b.textContent écrasait TOUT le bouton — y compris le span
+     #cdel-lbl que cliMenuClose utilise pour remettre le libellé. Une fois armé
+     puis refermé, le bouton restait « Confirmer la suppression ? » à vie.
+     On n'écrit plus que dans le span. */
+  if(!b.dataset.armed){ b.dataset.armed='1'; var l=document.getElementById('cdel-lbl'); if(l) l.textContent='⚠️ Confirmer la suppression ?'; return; }
   cliMenuClose(); toast('🗑 Client supprimé — bientôt relié à la base');
 }
 
@@ -2826,18 +2851,21 @@ document.addEventListener("click", function(e){
     var t = document.getElementById("adr-titre"), nn = document.getElementById("adr-n");
     if(t) t.textContent = ss.length ? "Sites d'intervention" : "Adresses";
     if(nn) nn.textContent = ss.length ? (ss.length + 1) + " sites" : "";
-    var H = '<div class="arow"><div class="alab">' + (ss.length ? "Site principal \u2014 adresse de la fiche" : "Intervention \u2014 le site trait\u00e9") + '</div><div class="aval">' + (esc(heroAdr()) || "Adresse \u00e0 compl\u00e9ter") + '</div></div>';
+    var PIN = '<svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+    var HOME = '<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>';
+    var KEY = '<svg viewBox="0 0 24 24"><path d="M21 2l-9.6 9.6M15.5 7.5l3 3L22 7l-3-3M11.4 11.6a5 5 0 11-7 7 5 5 0 017-7z"/></svg>';
+    var H = '<div class="srow"><span class="sic pr">' + HOME + '</span><div class="stx"><b>' + (ss.length ? "Site principal" : "Intervention") + '</b><small>' + (esc(heroAdr()) || "Adresse \u00e0 compl\u00e9ter") + '</small></div><span class="tagp">FICHE</span></div>';
     ss.forEach(function(s2){
       H += (ADREDIT === s2.id) ? siteForm(s2)
-        : '<div class="arow"><div class="alab">' + esc(s2.nom) + '<span class="aedit" onclick="adrEdit(\'' + s2.id + '\')">\u270e</span></div>'
-          + '<div class="aval">' + esc(ligne(s2.adresse, s2.cp, s2.ville)) + (s2.acces ? '<small>\ud83d\udd11 ' + esc(s2.acces) + '</small>' : '') + '</div></div>';
+        : '<div class="srow"><span class="sic">' + PIN + '</span><div class="stx"><b>' + esc(s2.nom) + '</b><small>' + esc(ligne(s2.adresse, s2.cp, s2.ville)) + '</small>'
+          + (s2.acces ? '<em>' + KEY.replace('<svg ', '<svg style="width:11px;height:11px;vertical-align:-1px;margin-right:4px;stroke:currentColor;fill:none;stroke-width:2" ') + esc(s2.acces) + '</em>' : '')
+          + '</div><span class="aedit" onclick="adrEdit(\'' + s2.id + '\')">\u270e</span></div>';
     });
     H += (ADREDIT === "site") ? siteForm(null) : '<button class="aaddb" onclick="adrEdit(\'site\')">+ Ajouter un site</button>';
-    if(ADREDIT === "fact") H += '<div class="arow"><div class="alab">Facturation</div>' + factForm(f) + (f ? '<div class="anote"><span class="alt" onclick="adrFactDel()">Revenir \u00e0 l\u2019adresse d\u2019intervention</span></div>' : '') + '</div>';
-    else if(f) H += '<div class="arow"><div class="alab">Facturation <span class="abadge">\u2713 adresse d\u00e9di\u00e9e</span><span class="aedit" onclick="adrEdit(\'fact\')">\u270e Modifier</span></div>'
-      + '<div class="aval">' + (f.dest ? esc(f.dest) + '<small>' + esc(ligne(f.adresse, f.cp, f.ville)) + '</small>' : esc(ligne(f.adresse, f.cp, f.ville))) + '</div>'
-      + '<div class="anote">\ud83d\udcc4 Les devis et factures partent \u00e0 cette adresse \u2014 le rapport d\u2019intervention garde l\u2019adresse du site.</div></div>';
-    else H += '<div class="arow"><div class="alab">Facturation</div><div class="amuted">Identique \u00e0 l\u2019adresse d\u2019intervention</div><button class="aaddb" onclick="adrEdit(\'fact\')">+ Adresse de facturation diff\u00e9rente</button></div>';
+    if(ADREDIT === "fact") H += '<div class="facband" style="display:block"><div class="stx" style="margin-bottom:7px"><b>Factur\u00e9 \u00e0</b></div>' + factForm(f) + (f ? '<span class="alt2" onclick="adrFactDel()">Revenir \u00e0 l\u2019adresse d\u2019intervention</span>' : '') + '</div>';
+    else if(f) H += '<div class="facband"><span class="sic">\u20ac</span><div class="stx"><b>Factur\u00e9 \u00e0' + (f.dest ? ' \u00b7 ' + esc(f.dest) : '') + '</b><small>' + esc(ligne(f.adresse, f.cp, f.ville)) + '</small><em>Les devis et factures partent \u00e0 cette adresse \u2014 le rapport garde l\u2019adresse du site</em></div><span class="aedit" onclick="adrEdit(\'fact\')">\u270e</span></div>';
+    /* pas de facturation d\u00e9di\u00e9e : PAS de bandeau \u00ab identique \u00e0\u2026 \u00bb — on
+       n\u2019affiche jamais une absence (visuel 309) ; l\u2019action vit dans le \u22ef. */
     body.innerHTML = H;
   };
   window.adrEdit = function(k){
