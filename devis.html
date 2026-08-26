@@ -184,6 +184,9 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .bimg img.ld{opacity:1}
 .bemo{font-size:2rem}
 .bnb{position:absolute;top:8px;left:8px;z-index:2;background:var(--orange);color:#fff;font-family:'Sora';font-weight:800;font-size:.68rem;padding:3px 8px;border-radius:8px;box-shadow:0 4px 10px -4px rgba(234,74,16,.5)}
+.bnb.bok{background:var(--green,#10B981);box-shadow:0 4px 10px -4px rgba(16,185,129,.45)}
+.bcard.bdeja{opacity:.62;cursor:default}
+.bcard.bdeja:hover{transform:none;border-color:var(--line);box-shadow:none}
 .bqty b{cursor:text;border-bottom:1px dashed #C9CCD4}
 .bfav{position:absolute;top:8px;right:8px;z-index:2;width:28px;height:28px;border-radius:9px;border:0;background:rgba(255,255,255,.92);color:#C9CCD4;font-size:.9rem;cursor:pointer;line-height:1}
 .bfav.on{color:#F5A623}
@@ -843,14 +846,14 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
 
 <div class="catveil" id="catveil" onclick="if(event.target===this)catClose()">
   <div class="catmodal bib">
-    <div class="cmh"><b>📚 Bibliothèque des prestations</b><button class="cmx" aria-label="Fermer" onclick="catClose()">✕</button></div>
-    <div class="bibsearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg><input id="bibq" placeholder="Rechercher une prestation…" oninput="catRender()"></div>
+    <div class="cmh"><b>📚 Bibliothèque — prestations & frais</b><button class="cmx" aria-label="Fermer" onclick="catClose()">✕</button></div>
+    <div class="bibsearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg><input id="bibq" placeholder="Rechercher une prestation ou un frais…" oninput="catRender()"></div>
     <div class="bibbody">
       <div class="bibrail" id="bibrail"></div>
       <div class="bibgrid" id="catlist"></div>
     </div>
     <div class="bibfoot">
-      <span id="bibsum">Aucune prestation sélectionnée</span>
+      <span id="bibsum">Rien de sélectionné</span>
       <button class="bibcta" id="bibcta" onclick="catConfirm()" disabled>Ajouter au devis</button>
     </div>
   </div>
@@ -886,7 +889,14 @@ const CATALOGUE = [
   {designation:"Traitement punaises de lit — 2 passages", desc:"Pulvérisation certifiée Certibiocide, 2ᵉ passage à J+15 inclus.", pu:380, tva:10, emo:"🪲"},
   {designation:"Désinfection locaux — norme HACCP", desc:"Nébulisation virucide/bactéricide, attestation remise.", pu:160, tva:10, emo:"🧴"},
   {designation:"Dépigeonnage — pics anti-pigeons", desc:"Fourniture et pose de pics inox, au mètre linéaire.", pu:18, tva:10, emo:"🕊️"},
-  {designation:"Frais de déplacement Île-de-France", desc:"Forfait aller-retour, véhicule équipé.", pu:35, tva:10, emo:"🚐"},
+  {designation:"Frais de déplacement Île-de-France", desc:"Forfait aller-retour, véhicule équipé.", pu:35, tva:10, emo:"🚐", frais:true},
+  /* 26/08 (patron) : « ajoute-le au catalogue, ce sera plus simple » — les
+     frais vivent dans la bibliothèque comme le reste de l'offre. Mais un
+     frais pioché ici part dans le bloc Frais optionnels, jamais dans les
+     prestations : sinon il gonfle le sous-total prestations et prend la
+     remise (c'était le défaut de l'entrée Déplacement ci-dessus). */
+  {designation:"Majoration urgence — sous 24 h", desc:"Départ prioritaire, intervention dans la journée.", pu:50, tva:10, emo:"⚡", frais:true},
+  {designation:"Majoration week-end / férié", desc:"Intervention samedi, dimanche ou jour férié.", pu:80, tva:10, emo:"📅", frais:true},
 ];
 /* 28/07 : un devis neuf s'ouvre VIDE. Il demarrait avec trois lignes de
    demonstration (diagnostic, traitement, housses) qu'il fallait supprimer
@@ -1246,10 +1256,10 @@ function doSend(sign, pay){
 const CAT_CATS = [
   {k:"rec", lbl:"Récents", emo:"🕘"}, {k:"fav", lbl:"Favoris", emo:"⭐"}, {k:"all", lbl:"Tout", emo:"📦"},
   {k:"rong", lbl:"Rongeurs", emo:"🐀"}, {k:"ins", lbl:"Insectes", emo:"🪳"}, {k:"pun", lbl:"Punaises", emo:"🪲"},
-  {k:"vol", lbl:"Volatiles", emo:"🕊️"}, {k:"des", lbl:"Désinfection", emo:"🧴"}, {k:"div", lbl:"Divers", emo:"🚐"},
+  {k:"vol", lbl:"Volatiles", emo:"🕊️"}, {k:"des", lbl:"Désinfection", emo:"🧴"}, {k:"div", lbl:"Divers", emo:"🛠️"}, {k:"frs", lbl:"Frais", emo:"🚐"},
 ];
-const CAT_OF = ["rong","ins","ins","pun","des","vol","div"];
-const CAT_UNIT = ["/ intervention","/ nid","/ intervention","/ traitement","/ intervention","/ mètre","/ forfait"];
+const CAT_OF = ["rong","ins","ins","pun","des","vol","frs","frs","frs"];
+const CAT_UNIT = ["/ intervention","/ nid","/ intervention","/ traitement","/ intervention","/ mètre","/ forfait","/ forfait","/ forfait"];
 const BIB_W = "https://commons.wikimedia.org/wiki/Special:FilePath/";
 const BIBWARM = new Set();   /* photos déjà chargées : réaffichage instantané */
 /* Préchauffe DIFFÉRÉE (26/07) : les photos partaient en priorité haute dès
@@ -1270,10 +1280,10 @@ const bibChauffe = () => {
 };
 if(window.requestIdleCallback) requestIdleCallback(bibChauffe, {timeout:2500});
 else setTimeout(bibChauffe, 1200);
-const CAT_IMG = ["WildRat.jpg","European%20wasp%20white%20bg.jpg","Blattella%20germanica%20p1160206.jpg","Bed%20bug%2C%20Cimex%20lectularius.jpg","Fogging.jpg","Rock%20dove%20-%20natures%20pics.jpg","Mercedes-Benz%20Sprinter%20(2018)%20IMG%203503.jpg"];
+const CAT_IMG = ["WildRat.jpg","European%20wasp%20white%20bg.jpg","Blattella%20germanica%20p1160206.jpg","Bed%20bug%2C%20Cimex%20lectularius.jpg","Fogging.jpg","Rock%20dove%20-%20natures%20pics.jpg","Mercedes-Benz%20Sprinter%20(2018)%20IMG%203503.jpg","",""];
 /* URLs directes des vignettes : zéro redirection serveur (repli sur Special:FilePath puis émoji) */
-const CAT_T160 = ["https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/160px-WildRat.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/160px-European_wasp_white_bg.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/160px-Blattella_germanica_p1160206.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/160px-Bed_bug,_Cimex_lectularius.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/160px-Fogging.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/160px-Rock_dove_-_natures_pics.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/160px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg"];
-const CAT_T96  = ["https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/96px-WildRat.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/96px-European_wasp_white_bg.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/96px-Blattella_germanica_p1160206.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/96px-Fogging.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/96px-Rock_dove_-_natures_pics.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/96px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg"];
+const CAT_T160 = ["https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/160px-WildRat.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/160px-European_wasp_white_bg.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/160px-Blattella_germanica_p1160206.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/160px-Bed_bug,_Cimex_lectularius.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/160px-Fogging.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/160px-Rock_dove_-_natures_pics.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/160px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg", "", ""];
+const CAT_T96  = ["https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/WildRat.jpg/96px-WildRat.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/European_wasp_white_bg.jpg/96px-European_wasp_white_bg.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Blattella_germanica_p1160206.jpg/96px-Blattella_germanica_p1160206.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Bed_bug,_Cimex_lectularius.jpg/96px-Bed_bug,_Cimex_lectularius.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Fogging.jpg/96px-Fogging.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Rock_dove_-_natures_pics.jpg/96px-Rock_dove_-_natures_pics.jpg", "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/96px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg", "", ""];
 
 /* 30/07 (patron) : les prestations creees dans Reglages (« own ») rejoignent
    la bibliotheque — meme cle navigateur, avec leur photo, leur prix et leur
@@ -1332,17 +1342,24 @@ function catRender(){
     if(BIBCAT !== "all" && BIBCAT !== "fav" && BIBCAT !== "rec" && CAT_OF[i] !== BIBCAT) return "";
     if(q && !(c.designation + " " + c.desc).toLowerCase().includes(q)) return "";
     const n = BIBSEL[i] || 0;
+    /* 26/08 : un frais n'a pas de quantité — sa carte se coche/décoche. S'il
+       est déjà sur le document, la carte le dit au lieu de laisser doubler,
+       et sa photo mémorisée (tigerflow-frais-photos) s'affiche ici aussi. */
+    const deja = c.frais && FRAIS.some(fr => fr.n === c.designation);
+    const phF = c.frais ? (FRPHOTOS[(c.designation || "").trim().toLowerCase()] || "") : "";
     return `
-    <div class="bcard ${n ? "sel" : ""}" onclick="bibPlus(${i})">
-      ${n ? `<span class="bnb">×${n}</span>` : ""}
+    <div class="bcard ${n ? "sel" : ""}${deja ? " bdeja" : ""}" onclick="${deja ? "" : `bibPlus(${i})`}">
+      ${deja ? `<span class="bnb bok">Déjà ajouté ✓</span>` : n ? `<span class="bnb">${c.frais ? "✓" : "×" + n}</span>` : ""}
       <button class="bfav ${f.has(i) ? "on" : ""}" onclick="togFav(event,${i})" title="Favori">★</button>
-      <div class="bimg">${CAT_IMG[i]
+      <div class="bimg">${phF
+        ? `<img src="${phF}" alt="" class="ld">`
+        : CAT_IMG[i]
         ? `<img src="${CAT_T160[i]}" alt="" loading="lazy" decoding="async" width="160" height="88" referrerpolicy="no-referrer" class="${BIBWARM.has(i) ? "ld" : ""}" onload="this.classList.add('ld');BIBWARM.add(${i})" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${BIB_W + CAT_IMG[i]}?width=160'}else{this.outerHTML='<span class=\\'bemo\\'>${c.emo}</span>'}">`
         : `<span class="bemo">${c.emo}</span>`}</div>
       <div class="bmeta"><b>${c.designation}</b><small>${c.desc}</small><div class="bprice">${eur(c.pu)} <span>${CAT_UNIT[i]}</span></div></div>
-      <div class="bqty ${n ? "" : "ghost"}" onclick="event.stopPropagation()">
+      ${c.frais ? "" : `<div class="bqty ${n ? "" : "ghost"}" onclick="event.stopPropagation()">
         <button onclick="bibMinus(${i})">−</button><b onclick="bibType(${i})" title="Saisir la quantité">${n}</b><button onclick="bibPlus(${i})">＋</button>
-      </div>
+      </div>`}
     </div>`;
   };
   /* V3 : en vue « Tout » sans recherche, la liste se groupe par familles */
@@ -1350,7 +1367,7 @@ function catRender(){
   if(BIBCAT === "all" && !q){
     LISTE = CAT_CATS.filter(c2 => c2.k !== "all" && c2.k !== "fav" && c2.k !== "rec").map(c2 => {
       const morceaux = CATALOGUE.map((x, i2) => CAT_OF[i2] === c2.k ? ITEM(x, i2) : "").join("");
-      const _bt = ({rong:["#EEF1F6","#3D4A63"], ins:["#FCECEA","#A3352E"], pun:["#EAF8F1","#0E7A46"], vol:["#F1EDFA","#5B4A9E"], des:["#E9F6FD","#20618C"]})[c2.k] || ["#F1F3F7","#3D434E"];
+      const _bt = ({rong:["#EEF1F6","#3D4A63"], ins:["#FCECEA","#A3352E"], pun:["#EAF8F1","#0E7A46"], vol:["#F1EDFA","#5B4A9E"], des:["#E9F6FD","#20618C"], frs:["#FCF3E4","#8A5A17"]})[c2.k] || ["#F1F3F7","#3D434E"];
       return morceaux ? `<div class="bband" style="background:${_bt[0]};color:${_bt[1]}">${c2.emo} ${c2.lbl}</div>` + morceaux : "";
     }).join("");
   } else {
@@ -1361,10 +1378,13 @@ function catRender(){
   const nb = ids.reduce((a, i) => a + BIBSEL[i], 0);
   const ht = ids.reduce((a, i) => a + BIBSEL[i] * CATALOGUE[i].pu, 0);
   const tot = ids.reduce((a, i) => a + BIBSEL[i] * CATALOGUE[i].pu * (1 + CATALOGUE[i].tva / 100), 0);
-  g("bibsum").innerHTML = nb ? `<b>${nb}</b> prestation${nb > 1 ? "s" : ""} · ${eur(ht)} HT · <b>${eur(tot)}</b> TTC` : "Aucune prestation sélectionnée";
+  const nbF = ids.filter(i => CATALOGUE[i].frais).length;
+  const nbP = nb - nbF;
+  const lib = [nbP ? nbP + " prestation" + (nbP > 1 ? "s" : "") : "", nbF ? nbF + " frais" : ""].filter(Boolean).join(" + ");
+  g("bibsum").innerHTML = nb ? `<b>${lib}</b> · ${eur(ht)} HT · <b>${eur(tot)}</b> TTC` : "Rien de sélectionné";
   const cta = g("bibcta");
   cta.disabled = !nb;
-  cta.textContent = nb ? `Ajouter ${nb} prestation${nb > 1 ? "s" : ""} au devis` : "Ajouter au devis";
+  cta.textContent = nb ? `Ajouter ${lib} au devis` : "Ajouter au devis";
 }
 function bibType(i){
   const val = prompt("Quantité pour « " + CATALOGUE[i].designation + " » :", BIBSEL[i] || 1);
@@ -1372,21 +1392,30 @@ function bibType(i){
   BIBSEL[i] = Math.max(0, Math.min(999, parseInt(val, 10) || 0));
   catRender();
 }
-function bibPlus(i){ BIBSEL[i] = (BIBSEL[i] || 0) + 1; catRender(); }
+function bibPlus(i){ BIBSEL[i] = CATALOGUE[i].frais ? (BIBSEL[i] ? 0 : 1) : (BIBSEL[i] || 0) + 1; catRender(); }
 function bibMinus(i){ BIBSEL[i] = Math.max(0, (BIBSEL[i] || 0) - 1); catRender(); }
 function catConfirm(){
   recPush(Object.keys(BIBSEL).filter(i => BIBSEL[i] > 0));
-  let n = 0;
+  let n = 0, nf = 0;
   Object.keys(BIBSEL).forEach(i => {
     if(BIBSEL[i] > 0){
-      LIGNES.push({...CATALOGUE[i], qte:BIBSEL[i],
-        img: (typeof CAT_T96 !== "undefined" && CAT_T96[i]) ? CAT_T96[i] : "",
-        imgAlt: (typeof CAT_IMG !== "undefined" && CAT_IMG[i]) ? BIB_W + CAT_IMG[i] + "?width=96" : ""});
-      n++;
+      const c = CATALOGUE[i];
+      if(c.frais){
+        /* 26/08 : un frais reste un frais — il part dans son bloc, avec
+           l'anti-doublon, et sa sélection s'éteint une fois posé. */
+        if(!FRAIS.some(fr => fr.n === c.designation)){ FRAIS.push({n:c.designation, m:c.pu, tva:c.tva || 10}); nf++; }
+        BIBSEL[i] = 0;
+      } else {
+        LIGNES.push({...c, qte:BIBSEL[i],
+          img: (typeof CAT_T96 !== "undefined" && CAT_T96[i]) ? CAT_T96[i] : "",
+          imgAlt: (typeof CAT_IMG !== "undefined" && CAT_IMG[i]) ? BIB_W + CAT_IMG[i] + "?width=96" : ""});
+        n++;
+      }
     }
   });
-  drawL(); catClose();
-  toast("＋ " + n + " prestation" + (n > 1 ? "s" : "") + " ajoutée" + (n > 1 ? "s" : "") + " au devis");
+  drawL(); if(nf) drawF(); catClose();
+  const mots = [n ? n + " prestation" + (n > 1 ? "s" : "") : "", nf ? nf + " frais" : ""].filter(Boolean).join(" et ");
+  if(mots) toast("＋ " + mots + " ajouté" + (n + nf > 1 ? "s" : "") + " au devis");
 }
 function catClose(){ g("catveil").classList.remove("open"); document.body.style.overflow = ""; }
 document.addEventListener("keydown", e => {
