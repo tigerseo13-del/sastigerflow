@@ -325,11 +325,37 @@ button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-sele
 .ladd.lib{border-style:solid;border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
 .frow{display:flex;gap:10px;align-items:center;margin-bottom:9px}
 .frow.fhead{margin-bottom:4px;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
-.frow.fhead span:first-child{flex:1}
+/* 26/08 (patron) : « je veux la photo, on vend du frais de déplacement et de
+   l'urgence » — les frais ont droit à la même vitrine que les prestations.
+   Vignette cliquable : le fourgon habille le déplacement d'office, ta photo
+   pour le reste. La colonne .fsp aligne l'en-tête sur la vignette. */
+.frow.fhead .fsp{width:40px;flex:none}
+.frow.fhead .flib{flex:1}
 .frow.fhead .fh{width:100px;text-align:right}
-.frow.fhead .fh:nth-child(3){width:82px}
-.frow.fhead .fh:nth-child(4){width:104px}
+.frow.fhead .fh:nth-child(4){width:82px}
+.frow.fhead .fh:nth-child(5){width:104px}
 .frow.fhead span:last-child{width:30px}
+.fph{width:40px;height:40px;border-radius:10px;object-fit:cover;flex:none;display:block;background:var(--orange-soft);border:1px solid var(--line);cursor:pointer;padding:0}
+.fph:hover{box-shadow:0 0 0 3px var(--orange-soft)}
+.fph-add{width:40px;height:40px;border-radius:10px;flex:none;border:1.5px dashed #D8DAE1;background:#fff;color:var(--muted);cursor:pointer;display:grid;place-items:center;padding:0}
+.fph-add:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
+.fph-add svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* 26/08 : sous 700 px la rangée-tableau ne tient plus avec la vignette —
+   chaque frais devient une mini-carte : photo + libellé + ✕, puis le trio
+   HT · TVA · TTC en dessous (même ordre que le tableau des lignes). Même
+   point de bascule que .clirow, juste au-dessus. */
+@media(max-width:700px){
+  #v-frais .frow.fhead{display:none}
+  #v-frais .frow{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-areas:"ph lib lib" "mt tv tt";column-gap:8px;row-gap:8px;align-items:center;
+    background:#F7F8FA;border:1px solid var(--line);border-radius:13px;padding:10px 10px 10px 10px;margin-bottom:10px}
+  #v-frais .frow > .fph,#v-frais .frow > .fph-add{grid-area:ph;width:44px;height:44px}
+  #v-frais .frow > input.vfld:not(.num){grid-area:lib;width:100%;padding-right:38px}
+  #v-frais .frow > input.num{grid-area:mt;width:100%!important}
+  #v-frais .frow > select.vfld{grid-area:tv;width:100%!important}
+  #v-frais .frow > input.ltot{grid-area:tt;width:100%!important}
+  #v-frais .frow > .ldel{position:absolute;top:12px;right:8px;width:34px;height:34px;display:grid;place-items:center}
+}
 .clirow{display:flex;gap:10px;align-items:stretch;max-width:560px}
 .stwrap{position:relative;display:inline-flex}
 .dstatb2 .caret{font-style:normal;font-size:.68rem;margin-left:5px;opacity:.7}
@@ -760,6 +786,7 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
     <div class="vcard">
       <div class="vh">Frais optionnels <small>déplacement, urgence, week-end…</small></div>
       <div id="v-frais"></div>
+      <input type="file" id="fr-file" accept="image/*" hidden onchange="frFile(this)">
       <div class="frpre">
         <button class="ladd" onclick="addFrais()">＋ Ajouter un frais</button>
         <button class="frp" onclick="fraisPreset('Frais de déplacement Île-de-France',35)">🚐 Déplacement 35 €</button>
@@ -1020,10 +1047,63 @@ function drawLignes(){ drawL(); }   /* compat bibliothèque */
 function render(){ calc(); }        /* compat bibliothèque */
 
 /* ================= FRAIS ================= */
+/* 26/08 (patron) : « pas de picto, ça fera moche sur le PDF — je veux la photo,
+   on VEND du frais de déplacement et de l'urgence. » Même vitrine que les
+   prestations : le fourgon (photo fiable du catalogue) s'affiche d'office sur
+   le déplacement ; pour les autres frais tu cliques la vignette et tu mets TA
+   photo. Compressée (~320 px), mémorisée par libellé dans
+   tigerflow-frais-photos, elle revient seule sur tous les prochains documents
+   ET chez le client. Sur le PDF : la photo ou rien de décoratif. */
+const FR_VAN = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg/96px-Mercedes-Benz_Sprinter_(2018)_IMG_3503.jpg";
+let FRPHOTOS = {};
+try{ FRPHOTOS = JSON.parse(localStorage.getItem("tigerflow-frais-photos") || "{}") || {}; }catch(e){ FRPHOTOS = {}; }
+function fraisImg(f){
+  if(f && f.img) return f.img;
+  const k = ((f && f.n) || "").trim().toLowerCase();
+  if(k && FRPHOTOS[k]) return FRPHOTOS[k];
+  if(/d[eé]placement/.test(k)) return FR_VAN;
+  return "";
+}
+const FPH_CAM = '<svg viewBox="0 0 24 24"><path d="M3.5 8.2A1.7 1.7 0 0 1 5.2 6.5h2.1l1.6-2h6.2l1.6 2h2.1a1.7 1.7 0 0 1 1.7 1.7v9.1a1.7 1.7 0 0 1-1.7 1.7H5.2a1.7 1.7 0 0 1-1.7-1.7z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+function fraisVign(f, i){
+  const im = fraisImg(f);
+  return im
+    ? `<img class="fph" src="${im}" alt="" title="Changer la photo du frais" onclick="frPhoto(${i})" onerror="frImgErr(this,${i})">`
+    : `<button class="fph-add" type="button" title="Ajouter une photo — elle apparaîtra sur le document client" onclick="frPhoto(${i})">${FPH_CAM}</button>`;
+}
+function frImgErr(el, i){ try{ el.outerHTML = '<button class="fph-add" type="button" title="Ajouter une photo" onclick="frPhoto(' + i + ')">' + FPH_CAM + '</button>'; }catch(e){} }
+let FRPI = -1;
+function frPhoto(i){ FRPI = i; const inp = g("fr-file"); if(inp){ inp.value = ""; inp.click(); } }
+function frFile(inp){
+  const file = inp.files && inp.files[0];
+  if(!file || FRPI < 0 || !FRAIS[FRPI]) return;
+  const rd = new FileReader();
+  rd.onload = ev => {
+    const im = new Image();
+    im.onload = () => {
+      const M = 320, r = Math.min(1, M / Math.max(im.width, im.height, 1));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(im.width * r));
+      c.height = Math.max(1, Math.round(im.height * r));
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      let d = "";
+      try{ d = c.toDataURL("image/jpeg", .72); }catch(e){ return; }
+      const f = FRAIS[FRPI]; if(!f) return;
+      f.img = d;
+      const k = (f.n || "").trim().toLowerCase();
+      if(k){ FRPHOTOS[k] = d; try{ localStorage.setItem("tigerflow-frais-photos", JSON.stringify(FRPHOTOS)); }catch(e){} }
+      drawF();
+      toast("Photo enregistrée — elle reviendra seule sur les prochains documents 📸");
+    };
+    im.src = ev.target.result;
+  };
+  rd.readAsDataURL(file);
+}
 function drawF(){
   g("v-frais").innerHTML = (FRAIS.length ? `
-    <div class="frow fhead"><span>Libellé</span><span class="fh">Montant HT</span><span class="fh">TVA</span><span class="fh">Total TTC ✏️</span><span></span></div>` : "") + FRAIS.map((f, i) => `
+    <div class="frow fhead"><span class="fsp"></span><span class="flib">Libellé</span><span class="fh">Montant HT</span><span class="fh">TVA</span><span class="fh">Total TTC ✏️</span><span></span></div>` : "") + FRAIS.map((f, i) => `
     <div class="frow">
+      ${fraisVign(f, i)}
       <input class="vfld" value="${f.n.replace(/"/g, "&quot;")}" oninput="FRAIS[${i}].n=this.value" placeholder="Libellé du frais">
       <input class="vfld num" id="fp-${i}" value="${f.m}" inputmode="decimal" oninput="FRAIS[${i}].m=parseFloat(String(this.value).replace(',','.'))||0;calc()" style="width:100px" title="Montant HT">
       <select class="vfld" onchange="FRAIS[${i}].tva=+this.value;calc()" style="width:82px">
@@ -1780,7 +1860,7 @@ function pushDevisInbox(){
       bc:(document.getElementById("v-bc") || {value:""}).value.trim(),
       contrat:(document.getElementById("v-contrat") || {value:""}).value.trim(),
       lignes: LIGNES.map(l => ({designation:l.designation, qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""})),
-      frais: FRAIS.map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10})),
+      frais: FRAIS.map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10, img: fraisImg(f) || ""})),
       remise: Math.round((REMAMT || 0) * 100) / 100,
       site: (document.getElementById("v-site") || {value:""}).value || undefined};
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").filter(x => x.ref !== DREF);
@@ -1975,7 +2055,7 @@ document.body.classList.toggle("proforma-on", CURSTAT === "brouillon");   /* ét
     const ctr = document.getElementById("v-contrat"); if(ctr && rec.contrat) ctr.value = rec.contrat;
     if(Array.isArray(rec.lignes) && rec.lignes.length && rec.lignes[0].designation){
       LIGNES = rec.lignes.map(l => ({designation:l.designation, desc:l.desc || "", qte:l.qte || 1, pu:l.pu || 0, tva:(l.tva == null ? 10 : l.tva), emo:l.emo || "🧾", img:l.img || ""}));
-      FRAIS = (rec.frais || []).map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10}));
+      FRAIS = (rec.frais || []).map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10, img: f.img || ""}));
       try{ if(rec.remise > 0){ g("v-rem").value = rec.remise; g("v-remt").value = "€"; if(typeof remOpen === "function") remOpen(); } }catch(e){}
       if(typeof drawL === "function") drawL();
     }
