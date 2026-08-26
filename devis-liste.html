@@ -532,7 +532,7 @@ tbody td small,tbody td .sub,tbody td em{font-weight:400}
            vrai sous-ensemble. Le clic mene donc aux 14 TRAITES (gagnés +
            perdus + expirés), pas au pourcentage — et l'infobulle le dit,
            au lieu du « Filtrer la liste » des trois autres. -->
-      <div class="kpi k-cash" role="button" tabindex="0" title="Voir les devis traités" id="kpi-taux" onclick="kfil('traites')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('traites')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div><div class="lbl">Taux de signature</div><div class="num" id="k-taux">0</div><div class="ksub" id="k-taux-s">—</div></div>
+      <div class="kpi k-cash" role="button" tabindex="0" title="Voir les devis signés" id="kpi-taux" onclick="kfil('gagne')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('gagne')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div><div class="lbl">Taux de signature</div><div class="num" id="k-taux">0</div><div class="ksub" id="k-taux-s">—</div></div>
     </div>
 
     <!-- Pipeline -->
@@ -750,17 +750,13 @@ function stats(){
 
 /* ===== tuile → filtre : la tuile clique la chip correspondante ===== */
 function kfil(f){
-  /* « Traites » n'a pas d'onglet non plus : gagnés + perdus + expirés, soit
-     exactement l'ensemble sur lequel le taux est calculé (stats(): sig +
-     perdus, perdus incluant les expirés). Re-cliquer revient à « Tous ». */
-  if(f === "traites"){
-    if(FILTRE === "traites"){ const t = document.querySelector('.chip[data-f="all"]'); if(t) t.click(); return; }
-    FILTRE = "traites"; PAGE = 1;
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-    kringSync("traites");
-    render();
-    return;
-  }
+  /* 26/08 (patron : « ça affiche les perdus — répare ») : le clic sur le TAUX
+     ouvrait les « traités » (gagnés + perdus + expirés, la base du calcul).
+     Exact, mais illisible : du ROUGE sous un cartouche qui parle de
+     signature. Le clic mène désormais aux SIGNÉS via le chip Gagné — deux
+     portes vers la même liste, et la barre de chips reste d'accord avec ce
+     qu'elle montre. Le sous-titre « sur N devis traités » continue, lui, de
+     dire sur quoi le taux est calculé. */
   /* « Expire bientot » n'a pas d'onglet correspondant : on pose le filtre nous-memes. */
   if(f === "expire-proche"){
     FILTRE = "expire-proche"; PAGE = 1;
@@ -777,7 +773,7 @@ function kringSync(f){
      les deux était cassé : la table pointait « k-orange », couleur disparue
      depuis la grammaire du 04/08 (la tuile Taux est passée en k-cash), et
      « Expire bientôt » n'était jamais surlignée. Cliquer l'une allume l'autre. */
-  const map = {gagne:"k-green", envoye:"k-amber", "expire-proche":"k-red", traites:"k-cash"};
+  const map = {gagne:"k-green", envoye:"k-amber", "expire-proche":"k-red"};
   document.querySelectorAll(".kpi").forEach(k => k.classList.remove("on"));
   if(map[f]){ const el = document.querySelector(".kpi." + map[f]); if(el) el.classList.add("on"); }
 }
@@ -814,8 +810,6 @@ function render(){
   const sort = (document.getElementById('sort') || {value:"recent"}).value;
   let list = DEVIS.filter(d =>
     (FILTRE==="all" ? true
-      : FILTRE==="traites"
-        ? (d.statut==="gagne" || d.statut==="perdu" || d.statut==="expire")
       : FILTRE==="expire-proche"
         ? (d.statut==="envoye" && (()=>{ if(!d.valid) return false;
              const f=new Date(d.valid), t=new Date(); f.setHours(0,0,0,0); t.setHours(0,0,0,0);
@@ -876,6 +870,7 @@ document.getElementById('q').addEventListener('input', ()=>{ try{ const m=JSON.p
 try{
   const m = JSON.parse(localStorage.getItem("tigerflow-devis-filtre"));
   if(m){
+    if(m.f === "traites") m.f = "all";   /* filtre retiré le 26/08 — un réglage mémorisé d'avant ne doit pas vider la liste */
     if(m.f){ FILTRE = m.f; document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on', x.dataset.f===m.f)); kringSync(m.f); }
     const _s = document.getElementById('sort'); if(m.s && _s) _s.value = m.s;
     if(m.q) document.getElementById('q').value = m.q;
