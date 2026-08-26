@@ -330,6 +330,26 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .aaddb{display:block;width:100%;border:1.5px dashed var(--line);background:#fff;color:var(--ink-2);font-size:.77rem;font-weight:700;padding:9px;border-radius:12px;cursor:pointer;font-family:inherit;margin-top:2px}
 .aaddb:hover{border-color:#C9CCD4;color:var(--ink)}
 .facband .alt2{font-size:.68rem;font-weight:700;color:#8D93A8;text-decoration:underline;text-underline-offset:2px;cursor:pointer;display:inline-block;margin-top:4px}
+/* 26/08 (patron) : « si on clique sur le site on a un résumé ? » — la rangée
+   d'un site se déplie : dernier passage avec son état, prochain passage,
+   documents du site, lien vers ses interventions filtrées. Gris = info,
+   vert = fait, rouge = agir ; l'orange reste au geste. */
+.srow.sclick{cursor:pointer;transition:.12s}
+.srow.sclick:hover{background:#FAFBFD}
+.scaret{flex:none;color:#B9BEC9;transition:.13s;display:grid;place-items:center}
+.scaret svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.srow.sopen .scaret{transform:rotate(180deg);color:var(--ink-2)}
+.sres{margin:-4px 0 10px;padding:11px 13px 12px;border-radius:13px;background:var(--bg)}
+.sres .srli{display:flex;align-items:baseline;gap:10px;font-size:.78rem;margin-bottom:6px}
+.sres .srli > span{flex:none;width:122px;color:var(--muted);font-weight:800;font-size:.63rem;text-transform:uppercase;letter-spacing:.06em}
+.sres .srli b{font-weight:700;color:var(--ink)}
+.sres .srli i{font-style:normal;font-weight:800;font-size:.62rem;padding:2px 7px;border-radius:7px;flex:none}
+.sres .srli i.ok{background:#ECFDF5;color:#0F8A4F}
+.sres .srli i.ko{background:#D63B33;color:#fff}
+.sres .srvide{font-size:.77rem;color:var(--muted);font-weight:600;margin-bottom:4px}
+.sres .srgo{display:inline-block;margin-top:3px;font-size:.76rem;font-weight:800;color:#D8480B;cursor:pointer}
+.sres .srgo:hover{text-decoration:underline}
+@media(max-width:760px){.sres .srli{flex-wrap:wrap;row-gap:2px}.sres .srli > span{width:100%}}
 .sform{margin-top:9px;background:#FAFBFD;border:1.5px solid #EEF0F4;border-radius:12px;padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .sform input{border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .74rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;min-width:0}
 .sform input::placeholder{color:#A6ABBB;font-weight:500}
@@ -341,7 +361,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .sform .sact a{font-size:.66rem;font-weight:700;color:#B3261E}
 .sform .save{margin-left:auto;background:var(--orange);color:#fff;border:0;font-weight:700;font-size:.72rem;padding:8px 12px;border-radius:9px;cursor:pointer;font-family:inherit}
 .alt{font-size:.66rem;font-weight:700;color:#8D93A8;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
-@media(max-width:900px){.duo2{grid-template-columns:1fr}}
+@media(max-width:900px){.duo2,.duo2.trio{grid-template-columns:1fr}}   /* 26/08 : .trio (2 classes) battait la media query — 3 colonnes sur téléphone dès que la carte Adresses existait */
 .grid .wide{grid-column:span 2}
 .grid .full{grid-column:1/-1}
 .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px 22px;border:1px solid #F0F1F4}
@@ -2844,6 +2864,8 @@ document.addEventListener("click", function(e){
     return e ? e.textContent.replace("\u00b7 Itin\u00e9raire \u2192", "").trim() : "";
   }
   var ADREDIT = null;
+  var ADRSUM = "";   /* id du site dont le résumé est déplié */
+  window.siteSum = function(id){ ADRSUM = ADRSUM === id ? "" : id; window.adrRender(); };
   function ligne(a, c2, v2){ return [a, [c2, v2].filter(Boolean).join(" ")].filter(Boolean).join(", "); }
   function siteForm(s2){
     return '<div class="sform">'
@@ -2885,6 +2907,67 @@ document.addEventListener("click", function(e){
     if(c2) c2.scrollIntoView({behavior:"smooth", block:"center"});
   };
   var ADRFORCE = false;
+  var CARET = '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+  function siteResume(s2){
+    var J2 = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+    var nomC = cli();
+    var ivs = J2("tigerflow-inbox-interventions").concat(J2("tigerflow-added-interventions"))
+      .filter(function(x){ return x && x.client === nomC && (x.site || "") === s2.nom; });
+    /* « Terminée » se PROUVE par un rapport — même règle que l'historique (304). */
+    var FAIT = {};
+    try{
+      var rp = JSON.parse(localStorage.getItem("tigerflow-reports") || "{}");
+      Object.keys(rp).forEach(function(k){ var r = rp[k] && rp[k].iv; if(r && r.client && r.date) FAIT[r.client + "|" + r.date] = 1; });
+    }catch(e){}
+    var SLBL = {rongeur:"D\u00e9ratisation", cafard:"Cafards", punaise:"Punaises de lit", guepe:"Gu\u00eapes / Frelons", chenille:"Chenilles", pigeon:"D\u00e9pigeonnage", desinf:"D\u00e9sinfection", fourmi:"Fourmis"};
+    var MOIS2 = ["janv.","f\u00e9vr.","mars","avr.","mai","juin","juil.","ao\u00fbt","sept.","oct.","nov.","d\u00e9c."];
+    var fdc = function(d){ return d.getDate() + " " + MOIS2[d.getMonth()]; };
+    var auj = new Date(); auj.setHours(0, 0, 0, 0);
+    var pass = [], fut = [];
+    ivs.forEach(function(x){
+      if(!x.date) return;
+      var dt = new Date(x.date + "T12:00:00");
+      (dt < auj ? pass : fut).push({d: dt, x: x, fait: !!FAIT[(x.client || "") + "|" + (x.date || "")]});
+    });
+    pass.sort(function(a, b){ return b.d - a.d; });
+    fut.sort(function(a, b){ return a.d - b.d; });
+    var H2 = '<div class="sres">';
+    if(!ivs.length) H2 += '<div class="srvide">Aucun passage pour l\u2019instant.</div>';
+    if(pass.length){
+      var p2 = pass[0], jr = Math.round((auj - p2.d) / 86400000);
+      var titre = p2.x.typeLibre || SLBL[p2.x.type] || "Intervention";
+      H2 += '<div class="srli"><span>Dernier passage</span><b>' + fdc(p2.d) + ' \u2014 ' + esc(titre) + '</b>'
+         + (p2.fait ? '<i class="ok">Termin\u00e9e</i>' : '<i class="ko">En retard \u00b7 ' + jr + '\u00a0j</i>') + '</div>';
+    }
+    if(fut.length){
+      var f2 = fut[0];
+      var h = (f2.x.start != null && f2.x.start !== "") ? (String(f2.x.start).indexOf(".5") > -1 ? String(f2.x.start).replace(".5", "h30") : f2.x.start + "h") : "";
+      H2 += '<div class="srli"><span>Prochain passage</span><b>' + fdc(f2.d) + (h ? ' \u00b7 ' + h : '') + ' \u2014 ' + esc(f2.x.tech || "Personne") + '</b></div>';
+    }
+    var dv2 = J2("tigerflow-inbox-devis").filter(function(d){ return d && d.client === nomC && d.site === s2.nom; });
+    var fc2 = J2("tigerflow-inbox-factures").filter(function(f3){ return f3 && f3.client === nomC && f3.site === s2.nom; });
+    if(dv2.length || fc2.length){
+      var mots = [dv2.length ? dv2.length + " devis" : "", fc2.length ? fc2.length + " facture" + (fc2.length > 1 ? "s" : "") : ""].filter(Boolean).join(" \u00b7 ");
+      H2 += '<div class="srli"><span>Documents</span><b>' + mots + '</b></div>';
+    }
+    if(ivs.length) H2 += '<span class="srgo" onclick="siteVoir(\'' + escA(s2.id) + '\')">Voir ses interventions \u2192</span>';
+    H2 += '</div>';
+    return H2;
+  }
+  window.siteVoir = function(id){
+    var s2 = sites().filter(function(x){ return x.id === id; })[0]; if(!s2) return;
+    var tabs = document.querySelectorAll('.tabsrow .tab');
+    for(var i = 0; i < tabs.length; i++){
+      if((tabs[i].getAttribute("onclick") || "").indexOf("'histint'") > -1){ tabs[i].click(); break; }
+    }
+    var sel = document.getElementById("histSiteSel");
+    if(sel){
+      sel.value = s2.nom;
+      if(sel.value !== s2.nom) sel.value = "";
+      if(typeof histSite === "function") histSite(sel.value);
+    }
+    setTimeout(function(){ var el = document.getElementById("hist-tb"); if(el) el.scrollIntoView({behavior: "smooth", block: "start"}); }, 80);
+  };
   window.adrRender = function(){
     var body = document.getElementById("adr-body"); if(!body) return;
     var ss = sites(), f = fact();
@@ -2902,9 +2985,10 @@ document.addEventListener("click", function(e){
     var H = '<div class="srow"><span class="sic pr">' + HOME + '</span><div class="stx"><b>' + (ss.length ? "Site principal" : "Intervention") + '</b><small>' + (esc(heroAdr()) || "Adresse \u00e0 compl\u00e9ter") + '</small></div><span class="tagp">FICHE</span></div>';
     ss.forEach(function(s2){
       H += (ADREDIT === s2.id) ? siteForm(s2)
-        : '<div class="srow"><span class="sic">' + PIN + '</span><div class="stx"><b>' + esc(s2.nom) + '</b><small>' + esc(ligne(s2.adresse, s2.cp, s2.ville)) + '</small>'
+        : '<div class="srow sclick' + (ADRSUM === s2.id ? ' sopen' : '') + '" onclick="siteSum(\'' + escA(s2.id) + '\')"><span class="sic">' + PIN + '</span><div class="stx"><b>' + esc(s2.nom) + '</b><small>' + esc(ligne(s2.adresse, s2.cp, s2.ville)) + '</small>'
           + (s2.acces ? '<em>' + KEY.replace('<svg ', '<svg style="width:11px;height:11px;vertical-align:-1px;margin-right:4px;stroke:currentColor;fill:none;stroke-width:2" ') + esc(s2.acces) + '</em>' : '')
-          + '</div><span class="aedit" onclick="adrEdit(\'' + s2.id + '\')">\u270e</span></div>';
+          + '</div><span class="aedit" onclick="event.stopPropagation();adrEdit(\'' + s2.id + '\')">\u270e</span><span class="scaret">' + CARET + '</span></div>'
+          + (ADRSUM === s2.id ? siteResume(s2) : '');
     });
     H += (ADREDIT === "site") ? siteForm(null) : '<button class="aaddb" onclick="adrEdit(\'site\')">+ Ajouter un site</button>';
     if(ADREDIT === "fact") H += '<div class="facband" style="display:block"><div class="stx" style="margin-bottom:7px"><b>Factur\u00e9 \u00e0</b></div>' + factForm(f) + (f ? '<span class="alt2" onclick="adrFactDel()">Revenir \u00e0 l\u2019adresse d\u2019intervention</span>' : '') + '</div>';
