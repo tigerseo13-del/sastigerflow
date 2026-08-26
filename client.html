@@ -415,6 +415,9 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 /* ── 30/07 (patron, visuel validé) : rangées d'interventions de la fiche ── */
 .ivwrap{display:flex;flex-direction:column;gap:9px;padding:4px 0 2px}
 .ivrow{display:flex;align-items:center;gap:14px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:#fff;transition:.13s}
+/* 26/08 : le site est une INFORMATION — encre discrète, pas de couleur. */
+.ivsite{font-weight:700;color:var(--ink-2,#3D434E)}
+.obsite{color:var(--muted);font-weight:600;white-space:nowrap}
 .ivrow:hover{transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(23,26,32,.07)}
 .ivrow.off{opacity:.72}
 /* 04/08 (visuel 22) puis 05/08 (visuel 29, patron : « tout a gauche et rien a
@@ -1250,7 +1253,10 @@ function tblFilter(tbId, q, countId){
   var extra = 0, extraTot = 0;
   if(tbId === "hist-tb"){
     document.querySelectorAll('[data-tab="histint"] .ivrow').forEach(function(r){
-      var ok = !q || r.textContent.toLowerCase().indexOf(q) > -1;
+      /* 26/08 : les filtres statut et site posent des drapeaux — la recherche
+         les respecte au lieu de les écraser (le statut était écrasé avant). */
+      var ok = (!q || r.textContent.toLowerCase().indexOf(q) > -1)
+            && r.dataset.hidestat !== "1" && r.dataset.hidesite !== "1";
       r.style.display = ok ? "" : "none";
       extraTot++; if(ok) extra++;
     });
@@ -1307,11 +1313,24 @@ function oRechInit(){
   });
 }
 document.addEventListener("DOMContentLoaded", oRechInit);
+function histQ(){
+  /* 26/08 : le champ de recherche n'a pas d'id — le retrouver pour que choisir
+     un statut ou un site ne fasse plus semblant d'effacer la recherche. */
+  return document.querySelector('.tsrch[data-for="hist-tb"] input') || document.getElementById("hist-q");
+}
 function histStat(v){
   document.querySelectorAll("#hist-tb tr, #hist-tb .fit, #hist-tb .ivrow").forEach(function(tr){
     tr.dataset.hidestat = (v && tr.dataset.st !== v) ? "1" : "";
   });
-  var q = document.getElementById("hist-q");
+  var q = histQ();
+  tblFilter("hist-tb", q ? q.value : "", "hist-count");
+}
+/* 26/08 (patron, suivi Nicolas) : suivre une seule boutique dans l'historique. */
+function histSite(v){
+  document.querySelectorAll("#hist-tb .ivrow").forEach(function(tr){
+    tr.dataset.hidesite = (v && (tr.dataset.site || "") !== v) ? "1" : "";
+  });
+  var q = histQ();
   tblFilter("hist-tb", q ? q.value : "", "hist-count");
 }
 </script>
@@ -2207,7 +2226,7 @@ function toast(msg, undoFn){
       if(dv.length){
         pose("devis", dv.map(function(d){
           var st = stD[STD[d.ref] || d.statut] || ["Envoy\u00e9","st-envoye"];
-          return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
+          return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + (d.site ? ' <span class="obsite">\u00b7 ' + d.site + '</span>' : '') + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 devis</th><th>Objet</th><th class="amt">Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>');
         var nd = document.getElementById("n-devis"); if(nd) nd.textContent = dv.length;
       }
@@ -2223,7 +2242,7 @@ function toast(msg, undoFn){
                   : (se === "partiel") ? ["Acompte re\u00e7u","st-envoye"]
                   : (se === "brouillon" || se === "proforma") ? ["Pro forma","st-envoye"]
                   : late ? ["En retard","st-perdu"] : ["\u00c0 payer","st-envoye"];
-          return '<tr><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (f.titre || "\u2014") + '</td><td class="amt">' + eurF(f.montant) + '</td><td>' + fd(f.valid || f.date) + '</td><td><span class="st ' + lbl[1] + '">' + lbl[0] + '</span></td><td><a class="rlink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
+          return '<tr><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (f.titre || "\u2014") + (f.site ? ' <span class="obsite">\u00b7 ' + f.site + '</span>' : '') + '</td><td class="amt">' + eurF(f.montant) + '</td><td>' + fd(f.valid || f.date) + '</td><td><span class="st ' + lbl[1] + '">' + lbl[0] + '</span></td><td><a class="rlink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 facture</th><th>Objet</th><th class="amt">Montant TTC</th><th>\u00c9ch\u00e9ance</th><th>Statut</th><th></th></tr></thead>');
         var nf = document.getElementById("n-fact"); if(nf) nf.textContent = fc.length;
       }
@@ -2289,11 +2308,14 @@ function toast(msg, undoFn){
                    : retard ? '<span class="st stlate">En retard \u00b7 ' + jours + '\u00a0j</span>'
                    : tech ? '<span class="st st-envoye">\u00c0 venir</span>'
                    : '<span class="st staff">\u00c0 affecter</span>';
-          return '<div class="ivrow' + (passee && fait ? ' off' : '') + '" data-st="' + (fait ? "done" : retard ? "retard" : "avenir") + '">'
+          return '<div class="ivrow' + (passee && fait ? ' off' : '') + '" data-st="' + (fait ? "done" : retard ? "retard" : "avenir") + '" data-site="' + String(x.site || "").replace(/"/g, "&quot;") + '">'
             + '<div class="ivd' + (today ? ' today' : '') + '"><b>' + (dt ? dt.getDate() : "\u2014") + '</b><span>' + (today ? "AUJ." : (dt ? MOISC[dt.getMonth()] : "")) + '</span></div>'
             + '<div class="ivmain"><b>' + (x.typeLibre || LBL[x.type] || "Intervention") + '</b>'
             + '<small><i class="ivtd" style="background:' + (TCOL[tech] || "#9CA1AD") + '"></i>' + (tech || "Personne")
-            + ((x.cp || x.ville) ? ' \u00b7 ' + [x.cp, x.ville].filter(Boolean).join(" ") : '') + '</small></div>'
+            /* 26/08 (patron, suivi Nicolas) : le NOM du site plutôt que la
+               ville — cinq boutiques dans la même ville, le CP ne dit rien. */
+            + (x.site ? ' \u00b7 <b class="ivsite">' + x.site + '</b>'
+               : ((x.cp || x.ville) ? ' \u00b7 ' + [x.cp, x.ville].filter(Boolean).join(" ") : '')) + '</small></div>'
             + '<span class="ivh">' + cren + '</span>' + chip
             + '<a class="rlink" href="calendrier.html">Voir \u2192</a>'
             + '</div>';
@@ -2309,8 +2331,24 @@ function toast(msg, undoFn){
         var vin3 = carte3 && carte3.querySelector(".vinner");
         /* meme cause : les interventions vivantes remplacent la frise de demo,
            l'id doit suivre sinon la recherche croit la liste vide. */
-        if(vin3) vin3.outerHTML = bandeau + '<div class="ivwrap" id="hist-tb">' + rows + '</div>';
+        /* 26/08 (patron, suivi Nicolas) — DÉCOUVERTE EN TESTANT : la boucle
+           PANES vide tout ce qui suit le .card-h, donc la barre d'outils (le
+           filtre par statut) avait DISPARU des vraies fiches depuis le 28/07,
+           sans que personne le voie. Même leçon que le 20/08 : ce que le
+           re-rendu détruit, le gabarit du re-rendu doit le recréer. On repose
+           donc la barre ici, avec le sélecteur de site quand les
+           interventions portent au moins deux sites. */
+        var sites3 = [];
+        iv.forEach(function(x){ var s3 = (x.site || "").trim(); if(s3 && sites3.indexOf(s3) < 0) sites3.push(s3); });
+        sites3.sort();
+        var tools3 = '<div class="ttools">'
+          + '<select class="tsel" onchange="histStat(this.value)"><option value="">Tous les statuts</option><option value="retard">En retard</option><option value="avenir">\u00c0 venir</option><option value="done">Termin\u00e9e</option></select>'
+          + (sites3.length >= 2 ? '<select class="tsel" id="histSiteSel" onchange="histSite(this.value)"><option value="">Tous les sites</option>' + sites3.map(function(s4){ return '<option>' + s4 + '</option>'; }).join("") + '</select>' : '')
+          + '</div>';
+        /* le compteur du bas (tfoot) était parti avec PANES lui aussi */
+        if(vin3) vin3.outerHTML = tools3 + bandeau + '<div class="ivwrap" id="hist-tb">' + rows + '</div><div class="tfoot"><span id="hist-count"></span></div>';
         if(typeof oRechInit === "function") oRechInit();
+        try{ tblFilter("hist-tb", "", "hist-count"); }catch(e){}
       }
     })();
     /* 27/07 : l'onglet Documents n'est PLUS vide par ce chemin — il porte son
