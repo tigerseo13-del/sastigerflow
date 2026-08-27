@@ -1824,11 +1824,30 @@ function docSuppr(i, ev){
 function docRender(neuf){
   const box = document.getElementById("docgrid"); if(!box) return;
   const l = docBox();
+  /* 27/08 (patron, étape 3 du plan d'appâtage) : les plans du CLIENT de ce
+     contrat s'affichent ici comme des documents VIVANTS — pas une copie qui
+     vieillit : la carte ouvre le plan à jour, l'export PDF (HACCP) se fait
+     de là. « L'auditeur arrive, le client sort le classeur. » */
+  let plansH = "";
+  try{
+    const nCli = ((typeof ctrBox === "function" ? ctrBox() : []).find(x => x && x.n === (typeof cRef === "function" ? cRef() : "")) || {}).client || "";
+    if(nCli){
+      const P = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+      plansH = Object.keys(P).filter(k => k.indexOf(nCli + "|") === 0 && P[k] && P[k].fond).map(k => {
+        const site = k.slice(k.indexOf("|") + 1);
+        const n2 = (P[k].postes || []).length;
+        return `<figure class="doccard ouvrable" onclick="location.href='plan-appatage.html?plan=${encodeURIComponent(k)}'" title="Ouvrir le plan à jour — l'export PDF se fait depuis le plan">
+          <div class="docvue"><img src="${P[k].fond}" alt=""><span class="doctag">Plan</span></div>
+          <figcaption><b>Plan d'appâtage${site ? " — " + site : ""}</b><small>${n2} poste${n2 > 1 ? "s" : ""} · toujours à jour</small></figcaption>
+        </figure>`;
+      }).join("");
+    }
+  }catch(e){}
   if(!l.length){
-    box.innerHTML = `<div class="docvide"><b>Aucun document joint à ce contrat</b>Contrat signé, attestation, plan d'appâtage, photo d'un local — déposez-les ci-dessus.</div>`;
+    box.innerHTML = plansH || `<div class="docvide"><b>Aucun document joint à ce contrat</b>Contrat signé, attestation, plan d'appâtage, photo d'un local — déposez-les ci-dessus.</div>`;
     return;
   }
-  box.innerHTML = l.map((d, i) => {
+  box.innerHTML = plansH + l.map((d, i) => {
     const T = docType(d.nom, d.mime);
     const vue = (d.data && T.k === "img") ? `<img src="${d.data}" alt="">`
       : (d.data && T.k === "pdf") ? `<iframe src="${d.data}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1" tabindex="-1" scrolling="no"></iframe>`

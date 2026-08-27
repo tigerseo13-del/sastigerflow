@@ -1980,6 +1980,7 @@ function toast(msg, undoFn){
       email: (r && r.email) || "",
       ref: "Nouveau client",
       siret: (r && r.siret) ? r.siret : (r && r.type === "particulier" ? "\u2014 (particulier)" : "\u2014 (\u00e0 compl\u00e9ter)"),
+      type: (r && r.type) || "",
       source: (r && r.source) || "",
       depuis: mois.charAt(0).toUpperCase() + mois.slice(1)
     };
@@ -2047,8 +2048,11 @@ function toast(msg, undoFn){
   /* 29/07 : le SIRET n'existe que pour les entreprises. Un SIRET n'est reel
      que s'il contient des chiffres — « — », « (particulier) » ou
      « a completer » n'en sont pas : on affiche « Particulier ». */
+  /* 27/08 : le chip suit le TYPE — une entreprise sans SIRET saisi n'est pas
+     un « Particulier », c'est un « Professionnel » (défaut noté §5novovicies, réparé). */
   if(_sir) _sir.textContent = (f.siret && /\d{3}/.test(String(f.siret)) && !/particulier/i.test(String(f.siret)))
-    ? "SIRET " + f.siret : "Particulier";
+    ? "SIRET " + f.siret
+    : (f.type === "syndic" ? "Syndic" : (f.type && f.type !== "particulier") ? "Professionnel" : "Particulier");
   var _dep = document.getElementById("h-depuis");
   if(_dep) _dep.textContent = "Client depuis " + f.depuis.toLowerCase();
   /* 29/07 (patron) : les contacts de la demo (John Thompson…) s'affichaient

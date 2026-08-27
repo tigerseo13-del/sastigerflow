@@ -951,7 +951,13 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   };
 
   /* ---- démarrage : on retombe sur le dernier plan ouvert ---- */
-  try{ var m0 = localStorage.getItem("tigerflow-plan-cur"); if(m0 && lireP()[m0]) MODE = m0; }catch(e){}
+  try{
+    /* 27/08 (étape 3) : la carte des Documents du contrat arrive ici avec
+       ?plan=<client|site> — on ouvre CE plan, pas le dernier consulté. */
+    var qp = new URLSearchParams(location.search).get("plan");
+    if(qp && lireP()[qp]){ MODE = qp; localStorage.setItem("tigerflow-plan-cur", MODE); }
+    else { var m0 = localStorage.getItem("tigerflow-plan-cur"); if(m0 && lireP()[m0]) MODE = m0; }
+  }catch(e){}
   remplirSel();
   paint();
 })();

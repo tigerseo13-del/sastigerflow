@@ -564,6 +564,24 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .tb svg{transition:.15s;border-radius:11px;padding:4px;width:30px;height:30px}
 .tb.on svg{background:var(--orange-soft)}
 .lsec{position:sticky;top:0;z-index:5;background:#F4F5F8;padding:8px 2px;margin:8px 0 6px}
+/* ---------- 27/08 (patron, étape 2 du plan d'appâtage) : le relevé des
+   postes par CELUI qui est devant — trois taps, gros doigts bienvenus. ---------- */
+.pbc{font-size:.62rem;font-weight:800;background:#F1F2F7;color:#6C7285;border-radius:99px;padding:2px 8px;margin-left:6px}
+.pbcard{padding:6px 10px}
+.pbrow{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid #F0F1F5;cursor:pointer}
+.pbrow:last-of-type{border-bottom:0}
+.pbn{flex:none;width:30px;height:30px;border-radius:50%;color:#fff;font-weight:800;font-size:.72rem;display:grid;place-items:center}
+.pbz{flex:1;min-width:0}
+.pbz b{display:block;font-size:.8rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbz small{display:block;font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbst{flex:none;font-size:.64rem;font-weight:800;border-radius:99px;padding:4px 9px;white-space:nowrap}
+.pbacts{display:flex;gap:7px;flex-wrap:wrap;padding:2px 6px 12px 46px}
+.pba{border:1.5px solid #E2E5EB;background:#fff;border-radius:10px;padding:9px 12px;font-size:.74rem;font-weight:800;color:#3B4256;font-family:inherit;min-height:42px;cursor:pointer}
+.pba.ok{background:#ECFDF5;border-color:#BFE5D8;color:#047857}
+.pba.co{background:#FBF3D9;border-color:#EAD9A0;color:#8A5A17}
+.pba.ko{background:#FDE8E8;border-color:#F7D7DD;color:#DC2626}
+.pbvide{font-size:.76rem;color:var(--muted);font-weight:600;padding:10px 6px}
+
 /* ---------- 12/08 : sheet « Signaler un imprévu » (panneau de la fiche) ---------- */
 .sheet{position:absolute;inset:0;background:rgba(16,17,20,.45);z-index:50;display:none;align-items:flex-end}
 .sheet.on{display:flex}
@@ -1234,6 +1252,73 @@ function ltab(k){
 
 /* ---------- détail ---------- */
 function openM(id){ CURID = id; rdetail(); go("detail"); }
+/* 27/08 (patron, étape 2 du plan d'appâtage) : le relevé par CELUI qui est
+   devant le poste. Trois taps : le poste → RAS ou Conso → le %. Ça écrit
+   DIRECTEMENT dans tigerflow-plans — l'historique du bureau, la fiche du
+   plan et le registre HACCP suivent tout seuls, rien à recopier. */
+function pbAuj(){ const d = new Date(); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); }
+function planKeyOf(m){
+  try{
+    const P = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+    const ks = Object.keys(P).filter(k => P[k] && P[k].fond);
+    return ks.find(k => k === m.client + "|" + (m.site || "")) || ks.find(k => k.indexOf(m.client + "|") === 0) || null;
+  }catch(e){ return null; }
+}
+let PBOPEN = null;   /* le poste déplié (ses trois boutons) */
+function pbTog(id){ PBOPEN = PBOPEN === id ? null : id; rdetail(); }
+function pbActs(p){
+  if(p.type === "div") return `<div class="pbacts">
+    ${[0, 3, 8, 15].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbDiv('${p.id}',${n2})">${n2} capt.</button>`).join("")}
+  </div>`;
+  return `<div class="pbacts">
+    <button class="pba ok" onclick="event.stopPropagation();pbRas('${p.id}')">✓ RAS</button>
+    ${[25, 50, 75, 100].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbConso('${p.id}',${n2})">${n2} %</button>`).join("")}
+    <button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>
+  </div>`;
+}
+function planBloc(m){
+  const k = planKeyOf(m);
+  if(!k) return "";
+  let P = null;
+  try{ P = JSON.parse(localStorage.getItem("tigerflow-plans"))[k]; }catch(e){}
+  if(!P) return "";
+  const site = k.slice(k.indexOf("|") + 1), auj = pbAuj();
+  const rows = (P.postes || []).map(p => {
+    const fait = p.releve === auj && (p.hist || []).some(h => h[0] === auj && /relevé mobile/.test(h[1] || ""));
+    const open = PBOPEN === p.id;
+    const ch = p.statut === "alerte" ? ["#FDE8E8", "#DC2626", "À remplacer"]
+      : p.statut === "conso" ? ["#FBF3D9", "#8A5A17", (p.conso || 0) + " %"]
+      : p.statut === "div" ? ["#EAF1FE", "#2453C6", (p.conso || 0) + " capt."]
+      : ["#ECFDF5", "#047857", "RAS"];
+    return `<div class="pbrow${open ? " open" : ""}" onclick="pbTog('${p.id}')">
+      <span class="pbn" style="background:${p.statut === "alerte" ? "#DC2626" : p.statut === "conso" ? "#E8930C" : p.statut === "div" ? "#2453C6" : "#1B8A46"}">${p.id.split("-")[1]}</span>
+      <span class="pbz"><b>${p.zone || p.id}</b><small>${p.produit || ""}</small></span>
+      <span class="pbst" style="background:${ch[0]};color:${ch[1]}">${fait ? "✓ " : ""}${ch[2]}</span>
+    </div>${open ? pbActs(p) : ""}`;
+  }).join("");
+  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div>
+  <div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
+}
+/* ⚠️ leçon du jour côté bureau : on mute le poste DANS l'objet qu'on sauve. */
+function pbEcrit(id, muta){
+  const m = M[CURID]; if(!m) return;
+  const k = planKeyOf(m); if(!k) return;
+  try{
+    const all = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+    const pl = all[k], p = ((pl || {}).postes || []).find(x => x.id === id);
+    if(!p) return;
+    const t = muta(p);
+    p.releve = pbAuj();
+    p.hist = [[pbAuj(), t + " — relevé mobile"]].concat(p.hist || []);
+    localStorage.setItem("tigerflow-plans", JSON.stringify(all));
+    PBOPEN = null; rdetail();
+    toast("✓ " + p.id + " — " + t);
+  }catch(e){}
+}
+function pbRas(id){ pbEcrit(id, p => { p.statut = "ok"; p.conso = 0; return "RAS — bloc intact"; }); }
+function pbConso(id, n2){ pbEcrit(id, p => { p.statut = "conso"; p.conso = n2; return "Consommation " + n2 + " % — bloc remplacé"; }); }
+function pbKo(id){ pbEcrit(id, p => { p.statut = "alerte"; p.conso = 0; return "Poste endommagé ou manquant — À REMPLACER"; }); }
+function pbDiv(id, n2){ pbEcrit(id, p => { p.conso = n2; return n2 + " capture" + (n2 > 1 ? "s" : "") + " — plaque changée"; }); }
 function rdetail(){
   const m = M[CURID]; if(!m) return;
   let badge = m.st === "done" ? `<span class="stb g">TERMINÉE</span>`
@@ -1377,6 +1462,7 @@ function rdetail(){
     </div>
     </div>
     ${ban}
+    ${planBloc(m)}
     <div class="ctah" style="margin-top:4px">Contacts</div>
     <div class="cd" style="padding:8px 15px">
       <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin:5px 0 1px">Contact principal</div>

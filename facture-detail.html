@@ -1021,6 +1021,12 @@ function dupFacture2(){
 }
 function delFacture2(e){
   e.stopPropagation();
+  /* garde : même si le bouton restait peint (vieux rendu), la règle tient */
+  const stG = statutGet();
+  if(stG !== "brouillon" && stG !== "proforma"){
+    toast("Une facture validée ne se supprime pas — passe par un avoir (onglet Avoirs)");
+    return;
+  }
   const b = g("fdel");
   if(!b.dataset.armed){ b.dataset.armed = "1"; const l = g("fdel-lbl"); if(l) l.textContent = "Confirmer la suppression ?"; return; }
   try{
@@ -1419,6 +1425,15 @@ function modeProForma(){
   cacher("k-solde-tile", pf);
   cacher("k-paye-tile", pf);
   cacher("paywrap", pf);
+  /* 27/08 (notre propre défaut prouvé le 20/08, §5septvicies) : une facture
+     VALIDÉE a une existence fiscale — elle ne se supprime pas, elle s'annule
+     par un AVOIR. Le bouton du ⋯ disparaît dès que le statut quitte
+     brouillon / pro forma. */
+  const fdelB = g("fdel");
+  if(fdelB){
+    fdelB.style.display = pf ? "" : "none";
+    if(!pf && fdelB.dataset.armed){ fdelB.dataset.armed = ""; const l2 = g("fdel-lbl"); if(l2) l2.textContent = "Supprimer la facture"; }
+  }
   /* si un onglet masque etait ouvert, on revient sur Details */
   if(pf){
     const act = document.querySelector(".tab.active");
