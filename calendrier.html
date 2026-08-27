@@ -1288,12 +1288,13 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       <span class="fap-t">📞 File d'appels</span>
       <!-- 31/07 (patron) : mention pour l'équipe de dev — en anglais, comme demandé -->
       <span class="fap-v2">(call queue — to be developed in V2 · note for Saigon Technologie)</span>
-      <span class="fap-chip late" id="fap-late" style="display:none"></span>
-      <span class="fap-chip today" id="fap-today" style="display:none"></span>
       <span class="fap-chip dort" id="fap-dort" style="display:none"></span>
       <span class="fap-n" id="fap-total"></span>
       <button class="fap-x" onclick="fileClose()" title="Fermer">✕</button>
     </div>
+    <!-- 26/08 (patron) : « trop d'info sur la même page » — un ONGLET par jour.
+         La barre vit hors du défilement : on change de jour sans remonter. -->
+    <div class="faptabs" id="faptabs"></div>
     <div class="fap-body" id="fapbody"></div>
   </div>
 
@@ -1737,7 +1738,9 @@ function fapSync(){
   b.style.display = (list.length + dvs.length) ? "" : "none";
   if(document.getElementById("fap").classList.contains("open")) fileRender();
 }
+let FAPTAB = "";
 function fileOpen(){
+  FAPTAB = "";   /* le défaut se recalcule : des retards → En retard, sinon Aujourd'hui */
   fileRender();
   document.getElementById("fap").classList.add("open");
   document.getElementById("fapveil").classList.add("on");
@@ -1775,15 +1778,12 @@ function fileRender(){
   const list = fileTri(fileItems());
   const dvs = dvActifs();
   const t = iso(TODAYD);
-  const late = list.filter(p => p.rappel && p.rappel < t).length + dvs.filter(dvLate).length;
-  const auj = list.filter(p => p.rappel === t).length + dvs.filter(x => x.relance === t).length;
   const dort = dvs.reduce((a, x) => a + (+x.montant || 0), 0);
   const el = (id, txt, show) => { const e = document.getElementById(id); if(e){ e.textContent = txt; e.style.display = show ? "" : "none"; } };
-  el("fap-late", late + " en retard", late > 0);
-  el("fap-today", auj + " aujourd'hui", auj > 0);
   el("fap-dort", "💤 " + dvs.length + " devis · " + dvEur(dort) + " dorment", dvs.length > 0);
   el("fap-total", (list.length + dvs.length) + " à traiter", true);
   if(!list.length && !dvs.length){
+    const tb0 = document.getElementById("faptabs"); if(tb0) tb0.innerHTML = "";
     body.innerHTML = `<div class="fap-vide">📞 Personne à rappeler — la file est vide.<br><small>« Client injoignable » sur une intervention l'enverra ici avec sa date de rappel.</small></div>`;
     return;
   }
@@ -1873,21 +1873,52 @@ function fileRender(){
   };
   const secHTML = (cls, titre, sous, b) => `<div class="fday ${cls}"><span class="ft">${titre}</span>${sous ? `<span class="fd">${sous}</span>` : ""}<span class="fn">${b.length}</span>${eurB(b) ? `<span class="fe">${eurB(b)} en attente</span>` : ""}</div>`;
   const rHTML = b => triB(b).map(r => r.k === "p" ? rowPending(r.o) : rowDevis(r.o)).join("");
+  /* 26/08 (patron : « trop d'info sur la même page — un onglet Aujourd'hui,
+     un onglet Demain, etc. ») : la file se lit par ONGLET DE JOUR. En retard
+     (rouge, seulement s'il y en a) · Aujourd'hui · Demain · À venir — les
+     jours plus loin gardent leurs barres collantes À L'INTÉRIEUR de À venir.
+     Un jour à la fois. */
+  const dm1 = (() => { const x = new Date(t + "T12:00:00"); x.setDate(x.getDate() + 1); return iso(x); })();
+  const bToday = buckets[t] || [], bDemain = buckets[dm1] || [];
+  const avKeys = Object.keys(buckets).filter(k => k !== "late" && k !== "acaler" && k !== "apres" && k !== t && k !== dm1).sort();
+  const nAvenir = avKeys.reduce((a, k) => a + buckets[k].length, 0) + (buckets.acaler ? buckets.acaler.length : 0) + (buckets.apres ? buckets.apres.length : 0);
+  const nLate = buckets.late ? buckets.late.length : 0;
+  if(!FAPTAB) FAPTAB = nLate ? "late" : "today";
+  if(FAPTAB === "late" && !nLate) FAPTAB = "today";   /* le dernier retard traité → la journée prend la main */
+  const tabsEl = document.getElementById("faptabs");
+  if(tabsEl){
+    const tb = (k, lbl, n, cls) => `<button class="ftab ${FAPTAB === k ? "on" : ""}${cls ? " " + cls : ""}" onclick="fapTab('${k}')">${lbl}<i class="n">${n}</i></button>`;
+    tabsEl.innerHTML = (nLate ? tb("late", "⚠ En retard", nLate, "red") : "")
+      + tb("today", "Aujourd'hui", bToday.length)
+      + tb("demain", "Demain", bDemain.length)
+      + ((nAvenir || FAPTAB === "avenir") ? tb("avenir", "À venir", nAvenir) : "");
+  }
+  const fsum = b => { const e = eurB(b); return `<div class="fsum">${b.length} appel${b.length > 1 ? "s" : ""} à passer${e ? ` · <b>${e} en attente</b>` : ""}</div>`; };
   let H = "";
-  if(buckets.late) H += secHTML("red first", "⚠ En retard", "", buckets.late) + rHTML(buckets.late);
-  Object.keys(buckets).filter(k => k !== "late" && k !== "acaler" && k !== "apres").sort().forEach(d => {
-    const [ti, so, cl] = jourTitre(d);
-    H += secHTML(cl + (H ? "" : " first"), ti, so, buckets[d]) + rHTML(buckets[d]);
-  });
-  if(buckets.acaler) H += secHTML(H ? "" : "first", "À caler", "sans date de rappel", buckets.acaler) + rHTML(buckets.acaler);
-  if(buckets.apres){
-    const b = triB(buckets.apres), dmin = b[0].d.split("-").reverse().slice(0, 2).join("/");
-    H += FAPFOLD
-      ? `<div class="ffold" onclick="FAPFOLD=false;fileRender()" title="Déplier"><span class="fch">▸</span><span class="ft">Semaine prochaine et après</span><span class="fs">${b.length} rappel${b.length > 1 ? "s" : ""} · à partir du ${dmin}</span>${eurB(b) ? `<span class="fe">${eurB(b)} en attente</span>` : ""}</div>`
-      : `<div class="ffold" onclick="FAPFOLD=true;fileRender()" title="Replier"><span class="fch">▾</span><span class="ft">Semaine prochaine et après</span><span class="fs">${b.length} rappel${b.length > 1 ? "s" : ""}</span>${eurB(b) ? `<span class="fe">${eurB(b)} en attente</span>` : ""}</div>` + rHTML(b);
+  if(FAPTAB === "late"){
+    H = nLate ? fsum(buckets.late) + rHTML(buckets.late) : `<div class="fap-vide">✅ Plus aucun retard.</div>`;
+  } else if(FAPTAB === "demain"){
+    H = bDemain.length ? fsum(bDemain) + rHTML(bDemain) : `<div class="fap-vide">Rien pour demain pour l'instant.</div>`;
+  } else if(FAPTAB === "avenir"){
+    avKeys.forEach(d => {
+      const [ti, so, cl] = jourTitre(d);
+      H += secHTML(cl + (H ? "" : " first"), ti, so, buckets[d]) + rHTML(buckets[d]);
+    });
+    if(buckets.acaler) H += secHTML(H ? "" : "first", "À caler", "sans date de rappel", buckets.acaler) + rHTML(buckets.acaler);
+    if(buckets.apres){
+      const b = triB(buckets.apres), dmin = b[0].d.split("-").reverse().slice(0, 2).join("/");
+      H += FAPFOLD
+        ? `<div class="ffold" onclick="FAPFOLD=false;fileRender()" title="Déplier"><span class="fch">▸</span><span class="ft">Semaine prochaine et après</span><span class="fs">${b.length} rappel${b.length > 1 ? "s" : ""} · à partir du ${dmin}</span>${eurB(b) ? `<span class="fe">${eurB(b)} en attente</span>` : ""}</div>`
+        : `<div class="ffold" onclick="FAPFOLD=true;fileRender()" title="Replier"><span class="fch">▾</span><span class="ft">Semaine prochaine et après</span><span class="fs">${b.length} rappel${b.length > 1 ? "s" : ""}</span>${eurB(b) ? `<span class="fe">${eurB(b)} en attente</span>` : ""}</div>` + rHTML(b);
+    }
+    if(!H) H = `<div class="fap-vide">Rien de prévu plus loin.</div>`;
+  } else {
+    H = bToday.length ? fsum(bToday) + rHTML(bToday) : `<div class="fap-vide">✅ Personne à rappeler aujourd'hui.</div>`;
   }
   body.innerHTML = H;
 }
+/* l'onglet choisi tient tant que le panneau vit ; chaque ouverture repart au bon endroit */
+function fapTab(k){ FAPTAB = k; fileRender(); const bd = document.getElementById("fapbody"); if(bd) bd.scrollTop = 0; }
 function fileCaler(pid){
   pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
 
@@ -5980,6 +6011,15 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fap-x{width:34px;height:34px;border-radius:11px;background:#fff;border:1px solid var(--line);font-size:.85rem;color:var(--ink-2);cursor:pointer;flex:none}
 .fap-sub{font-size:.7rem;font-weight:600;color:var(--muted);margin:5px 0 12px}
 .fap-body{flex:1;overflow-y:auto;padding-bottom:8px}
+.faptabs{display:flex;gap:7px;padding:11px 16px 3px;flex-wrap:wrap}
+.ftab{display:inline-flex;align-items:center;gap:7px;border:1.5px solid #E2E5EB;background:#fff;border-radius:11px;padding:8px 13px;font-size:.78rem;font-weight:700;color:#3B4256;cursor:pointer;font-family:inherit;transition:.12s}
+.ftab:hover{border-color:#C9CCD4}
+.ftab .n{font-style:normal;font-size:.64rem;font-weight:800;background:#F1F2F7;color:#6C7285;border-radius:99px;padding:2px 8px}
+.ftab.on{border-color:#F26722;background:#FFF1E9;color:#D8480B}
+.ftab.on .n{background:#fff;color:#D8480B}
+.ftab.red .n{background:#FCECEA;color:#A02922}
+.fsum{font-size:.72rem;font-weight:700;color:#6C7285;margin:10px 2px 11px}
+.fsum b{color:#3B4256}
 .fr{display:flex;align-items:center;flex-wrap:wrap;gap:11px;background:#fff;border:1px solid #EEF0F4;border-radius:13px;padding:10px 12px;margin-bottom:8px}
 /* 18/08 : la ligne 2 s'etale sous TOUTE la carte — la colonne du milieu
    l'ecrasait en « Devis DEV-2026-01… » des qu'on ajoutait un bouton. */
