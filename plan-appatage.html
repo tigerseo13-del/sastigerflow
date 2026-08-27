@@ -189,6 +189,39 @@ ul{list-style:none}
 /* Feuille mobile détail */
 .msheet{display:none}
 
+/* 27/08 (patron, GO « plan réel ») : le vrai plan du client. Le débordement
+   60 px venait du min-width:auto des enfants de grille (piège documenté). */
+.wrap > *{min-width:0}
+.plsel{height:40px;border:1px solid var(--line);border-radius:11px;background:#fff;font:600 .84rem Inter,sans-serif;color:var(--ink-2);padding:0 11px;max-width:300px;cursor:pointer}
+.btn.primary.arm{background:#16181D}
+.rview{position:relative;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#FBFBFC;max-height:560px}
+.rin{position:relative;width:100%}
+.rin img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.rin.addmode{cursor:crosshair}
+.rdot{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;border:2.5px solid #fff;color:#fff;font:800 .68rem Inter,sans-serif;display:grid;place-items:center;box-shadow:0 2px 8px rgba(16,18,22,.3);cursor:pointer;padding:0}
+.rdot.sel{outline:2.5px solid var(--ink);outline-offset:1px}
+.plvide[hidden]{display:none}   /* le piège documenté : display:block bat l'attribut hidden */
+.plvide{display:block;text-align:center;border:2px dashed #D8DAE1;border-radius:14px;background:#FBFBFC;padding:56px 20px;cursor:pointer;width:100%;font-family:inherit}
+.plvide:hover{border-color:var(--orange);background:var(--orange-soft)}
+.plvide b{display:block;font-size:1rem;margin:10px 0 4px;color:var(--ink)}
+.plvide p{font-size:.82rem;color:var(--muted);max-width:420px;margin:0 auto}
+.plvide svg{width:34px;height:34px;stroke:var(--orange);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.plchg{font-size:.74rem;font-weight:700;color:var(--muted);text-decoration:underline;text-underline-offset:2px;cursor:pointer;margin-left:10px;white-space:nowrap}
+.plchg:hover{color:var(--ink-2)}
+.plform label{display:block;font-size:.7rem;font-weight:700;color:var(--ink-2);margin:11px 0 5px}
+.plform input[type=text],.plform input[type=number],.plform select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font:600 .84rem Inter,sans-serif;color:var(--ink);background:#fff}
+.plform input:focus,.plform select:focus{outline:none;border-color:var(--orange)}
+.plrad{display:flex;gap:8px;flex-wrap:wrap}
+.plrad label{flex:1 1 auto;margin:0;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--ink-2)}
+.plrad input{accent-color:var(--orange)}
+.plrad label:has(input:checked){border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
+.plmini{display:flex;gap:14px;margin-top:11px;font-size:.76rem;font-weight:700}
+.plmini span{color:var(--muted);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.plmini span:hover{color:var(--ink-2)}
+.plmini .danger{color:#B3261E}
+/* pointer-events:none — un toast INFORME, il n'avale jamais le clic (trouvé au test : il couvrait le plan pendant « Déplacer »). */
+.tst2{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#16181D;color:#fff;font-size:.84rem;font-weight:600;padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.3);z-index:200;display:none;max-width:min(92vw,560px);text-align:center;pointer-events:none}
+
 /* ============ MOBILE ============ */
 @media(max-width:980px){
   .wrap{grid-template-columns:1fr}
@@ -359,28 +392,32 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <section class="head">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 20l-5.5-2.2a1 1 0 01-.5-.9V4.6a.6.6 0 01.8-.55L9 6.2m0 13.8l6-2.4m-6 2.4V6.2m6 11.4l5.2 2.1a.6.6 0 00.8-.56V7.7a1 1 0 00-.5-.87L15 4.6m0 13l-6-2.4M15 4.6L9 6.2m6-1.6v13"/></svg></span>
       <div>
-        <h1>Plan d'appâtage — Site rue de la République</h1>
-        <div class="sub">Ironwood Solutions · Contrat CTR-2026-04729 · Dernière relève le 12/06/2026 par Pablo</div>
+        <h1 id="pl-titre">Plan d'appâtage — Site rue de la République</h1>
+        <div class="sub" id="pl-sub">Ironwood Solutions · Contrat CTR-2026-04729 · Dernière relève le 12/06/2026 par Pablo</div>
       </div>
       <div class="actions">
-        <button class="btn outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export PDF (HACCP)</button>
-        <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Ajouter un poste</button>
+        <!-- 27/08 (GO plan réel) : on choisit QUEL plan — la démo reste la vitrine. -->
+        <select class="plsel" id="pl-cible" onchange="plPick(this.value)" title="Quel client, quel site ?"></select>
+        <button class="btn outline" id="btn-pdf" onclick="plPdf()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export PDF (HACCP)</button>
+        <button class="btn primary" id="btn-add" onclick="plAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span id="btn-add-l">Ajouter un poste</span></button>
       </div>
     </section>
+    <!-- l'input caché vit HORS de tout conteneur re-rendu (leçon) -->
+    <input type="file" id="pl-file" accept="image/*" hidden onchange="plFile(this)">
 
     <!-- Stats de relève -->
     <div class="relstats">
-      <div class="rs tot"><div><b>14</b><small>Postes installés</small></div></div>
-      <div class="rs ok"><div><b>10</b><small>Conformes (RAS)</small></div></div>
-      <div class="rs conso"><div><b>3</b><small>Consommation constatée</small></div></div>
-      <div class="rs alerte"><div><b>1</b><small>À remplacer</small></div></div>
+      <div class="rs tot"><div><b id="rs-tot">14</b><small>Postes installés</small></div></div>
+      <div class="rs ok"><div><b id="rs-ok">10</b><small>Conformes (RAS)</small></div></div>
+      <div class="rs conso"><div><b id="rs-conso">3</b><small>Consommation constatée</small></div></div>
+      <div class="rs alerte"><div><b id="rs-alerte">1</b><small>À remplacer</small></div></div>
     </div>
 
     <!-- Plan + panneau détail -->
     <div class="wrap">
       <div class="plancard">
         <div class="bar">
-          <b>Rez-de-chaussée · 240 m²</b>
+          <b id="pl-bar">Rez-de-chaussée · 240 m²</b>
           <div class="filters" id="filters">
             <button class="f on" data-f="all">Tous</button>
             <button class="f" data-f="ok">RAS</button>
@@ -425,6 +462,16 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           </svg>
         </div>
 
+        <!-- 27/08 (GO plan réel) : le fond est LA photo/scan du client, les
+             postes sont posés en FRACTIONS (x,y de 0 à 1) — ils survivent au
+             zoom, au téléphone et même à un changement de fond. -->
+        <div class="rview" id="rview" hidden><div class="rin" id="rin"><img id="rimg" alt="Plan du site"><div id="rdots"></div></div></div>
+        <button class="plvide" id="plvide" hidden onclick="document.getElementById('pl-file').click()">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <b>Pose le plan du local</b>
+          <p>Une photo ou un scan du plan (image). Les postes se posent ensuite d'un clic dessus — et ils restent en place même si tu remplaces le fond plus tard.</p>
+        </button>
+
         <div class="legend">
           <span><i class="pastille" style="background:var(--green)"></i>Poste rongeurs — RAS</span>
           <span><i class="pastille" style="background:#E8930C"></i>Consommation constatée</span>
@@ -450,7 +497,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
     <!-- Tableau des postes -->
     <div class="tablecard">
-      <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Registre des postes — relève du 12/06/2026</div>
+      <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span id="pl-reg">Registre des postes — relève du 12/06/2026</span></div>
       <div class="tscroll"><table class="pt"><thead><tr>
         <th>N°</th><th>Emplacement</th><th>Type</th><th>Statut</th><th>Consommation</th><th>Dernière relève</th>
       </tr></thead><tbody id="tbody"></tbody></table></div>
@@ -525,15 +572,22 @@ document.getElementById('filters').addEventListener('click',e=>{
   document.querySelectorAll('.f').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   const f = b.dataset.f;
-  document.querySelectorAll('.poste').forEach(el=>{
+  document.querySelectorAll('.poste, .rdot').forEach(el=>{
     el.style.opacity = (f==="all" || el.dataset.st===f) ? "1" : ".14";
     el.style.pointerEvents = (f==="all" || el.dataset.st===f) ? "auto" : "none";
   });
 });
 
 /* ================= ZOOM ================= */
-let scale = 1;
+let scale = 1, scaleR = 1;
 function zoom(k){
+  /* 27/08 : en mode plan réel, le zoom joue sur la largeur du conteneur —
+     l'image suit, et les pastilles en % restent exactement sur leur poste. */
+  if(window.PLMODE){
+    scaleR = Math.min(3, Math.max(1, scaleR*k));
+    document.getElementById('rin').style.width = (100*scaleR)+"%";
+    return;
+  }
   scale = Math.min(2.4, Math.max(.6, scale*k));
   const svg = document.getElementById('plansvg');
   svg.style.width  = (900*scale)+"px";
@@ -593,6 +647,314 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     <td>${p.type==="div" ? p.conso+" captures" : p.conso+" %"}</td>
     <td>${p.releve}</td>
   </tr>`).join("");
+</script>
+
+<script>
+/* ================================================================
+   27/08 (patron : « go » sur ma reco) — LE PLAN RÉEL.
+   Un plan par client+site dans tigerflow-plans : { "client|site":
+   {fond(dataURL jpeg), postes:[{id,x,y(0..1),type,zone,produit,statut,
+   conso,releve,hist:[[date,note]]}], seq} }. La démo Ironwood reste la
+   vitrine par défaut ; on n'y touche pas.
+   ================================================================ */
+(function(){
+  var PKEY = "tigerflow-plans";
+  var MODE = "", SELID = "", ADD = false, MOVE = "", PENDING = null, RELEV = false, EDIT = false, ARMSUP = false;
+  var $ = function(id){ return document.getElementById(id); };
+  var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); };
+  var DEMO_TBODY = $("tbody").innerHTML;
+  var DEMO_EMPTY = $("detail").innerHTML;
+  var HEX2 = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
+  var SB2  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
+  var LBL2 = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Détecteur insectes"};
+
+  var tdiv = document.createElement("div"); tdiv.className = "tst2"; tdiv.id = "tst2"; document.body.appendChild(tdiv);
+  function tst(m){ tdiv.textContent = m; tdiv.style.display = "block"; clearTimeout(tst._t); tst._t = setTimeout(function(){ tdiv.style.display = "none"; }, 3600); }
+
+  function lireP(){ try{ var v = JSON.parse(localStorage.getItem(PKEY)); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } }
+  function cur(){ return MODE ? (lireP()[MODE] || null) : null; }
+  function sauve(pl){
+    var all = lireP(); all[MODE] = pl;
+    try{ localStorage.setItem(PKEY, JSON.stringify(all)); return true; }
+    catch(e){ tst("⚠️ Mémoire pleine — image trop lourde pour le navigateur. Réessaie avec une photo plus petite."); return false; }
+  }
+  function aujFR(){ var d = new Date(); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); }
+  function nomDe(k){ var i = k.indexOf("|"); return {client: k.slice(0, i), site: k.slice(i + 1)}; }
+
+  /* ---- le sélecteur : les vrais clients × leurs sites ---- */
+  function cibles(){
+    var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+    var seen = {}, out = [];
+    J("tigerflow-inbox-clients").concat(J("tigerflow-clients-cache")).forEach(function(c){
+      if(!c || !c.nom || seen[c.nom]) return; seen[c.nom] = 1;
+      var sites = []; try{ sites = (JSON.parse(localStorage.getItem("tigerflow-sites")) || {})[c.nom] || []; }catch(e){}
+      if(sites.length) sites.forEach(function(st){ out.push({k: c.nom + "|" + st.nom, lbl: c.nom + " — " + st.nom}); });
+      else out.push({k: c.nom + "|", lbl: c.nom});
+    });
+    Object.keys(lireP()).forEach(function(k){
+      if(!out.some(function(o){ return o.k === k; })){ var n = nomDe(k); out.push({k: k, lbl: n.client + (n.site ? " — " + n.site : "")}); }
+    });
+    return out;
+  }
+  function remplirSel(){
+    var sel = $("pl-cible"); if(!sel) return;
+    var all = lireP();
+    sel.innerHTML = '<option value="">Démo — Ironwood Solutions</option>' + cibles().map(function(o){
+      return '<option value="' + esc(o.k) + '">' + esc(o.lbl) + (all[o.k] ? " · plan posé" : "") + '</option>';
+    }).join("");
+    sel.value = MODE;
+  }
+
+  /* ---- peinture ---- */
+  function paint(){
+    window.PLMODE = MODE;
+    var pl = cur(), demo = !MODE;
+    $("planview").hidden = !demo;
+    $("rview").hidden = demo || !pl || !pl.fond;
+    $("plvide").hidden = demo || !!(pl && pl.fond);
+    $("btn-add").classList.toggle("arm", ADD || !!MOVE);
+    $("btn-add-l").textContent = MOVE ? "Cliquez sur le nouvel emplacement…" : (ADD ? "Cliquez sur le plan…" : "Ajouter un poste");
+    if(demo){
+      $("pl-titre").textContent = "Plan d'appâtage — Site rue de la République";
+      $("pl-sub").textContent = "Ironwood Solutions · Contrat CTR-2026-04729 · Dernière relève le 12/06/2026 par Pablo";
+      $("pl-bar").textContent = "Rez-de-chaussée · 240 m²";
+      $("pl-reg").textContent = "Registre des postes — relève du 12/06/2026";
+      $("rs-tot").textContent = "14"; $("rs-ok").textContent = "10"; $("rs-conso").textContent = "3"; $("rs-alerte").textContent = "1";
+      $("tbody").innerHTML = DEMO_TBODY;
+      $("detail").innerHTML = DEMO_EMPTY;
+      return;
+    }
+    var n = nomDe(MODE), ps = (pl && pl.postes) || [];
+    var derniere = ps.map(function(x){ return x.releve || ""; }).sort().reverse()[0] || "";
+    $("pl-titre").textContent = "Plan d'appâtage — " + (n.site || n.client);
+    $("pl-sub").textContent = n.client + (ps.length ? " · " + ps.length + " poste" + (ps.length > 1 ? "s" : "") + (derniere ? " · dernière relève le " + derniere : "") : " · aucun poste pour l'instant");
+    $("pl-bar").innerHTML = esc(n.site || n.client) + (pl && pl.fond ? ' · plan du client<span class="plchg" onclick="document.getElementById(\'pl-file\').click()">Changer le fond</span>' : "");
+    $("pl-reg").textContent = "Registre des postes — " + (n.site || n.client) + (derniere ? " · relève du " + derniere : "");
+    $("rs-tot").textContent = ps.length;
+    $("rs-ok").textContent = ps.filter(function(x){ return x.statut === "ok"; }).length;
+    $("rs-conso").textContent = ps.filter(function(x){ return x.statut === "conso"; }).length;
+    $("rs-alerte").textContent = ps.filter(function(x){ return x.statut === "alerte"; }).length;
+    if(pl && pl.fond){ $("rimg").src = pl.fond; }
+    $("rdots").innerHTML = ps.map(function(x){
+      return '<button class="rdot' + (x.id === SELID ? " sel" : "") + '" data-st="' + x.statut + '" style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + HEX2[x.statut] + '" onclick="plSel(\'' + esc(x.id) + '\')" title="' + esc(x.zone || x.id) + '">' + x.id.split("-")[1] + '</button>';
+    }).join("");
+    $("tbody").innerHTML = ps.length ? ps.map(function(x){
+      return '<tr onclick="plSel(\'' + esc(x.id) + '\')"><td><span class="num" style="background:' + HEX2[x.statut] + '">' + x.id.split("-")[1] + '</span></td>'
+        + '<td class="ref">' + esc(x.zone || "—") + '</td>'
+        + '<td>' + (x.type === "div" ? "Détecteur insectes" : "Poste rongeurs") + '</td>'
+        + '<td><span class="st-badge ' + SB2[x.statut] + '">' + LBL2[x.statut] + '</span></td>'
+        + '<td>' + (x.type === "div" ? (x.conso || 0) + " captures" : (x.conso || 0) + " %") + '</td>'
+        + '<td>' + esc(x.releve || "—") + '</td></tr>';
+    }).join("") : '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste — « Ajouter un poste » puis cliquez sur le plan.</td></tr>';
+    peindreDetail();
+  }
+
+  /* ⚠️ cur() re-parse le stockage : deux appels = deux COPIES. On cherche
+     toujours le poste DANS l'objet qu'on va sauvegarder. */
+  function poste(pl, id){ return pl ? (pl.postes || []).find(function(x){ return x.id === id; }) : null; }
+
+  function peindreDetail(){
+    var box = $("detail"), html;
+    if(PENDING) html = formNouveau();
+    else if(!SELID){ box.innerHTML = DEMO_EMPTY; return; }
+    else {
+      var x = poste(cur(), SELID);
+      if(!x){ SELID = ""; box.innerHTML = DEMO_EMPTY; return; }
+      html = fiche(x);
+    }
+    box.innerHTML = html;
+    if(window.matchMedia("(max-width:980px)").matches){
+      $("mdetail").innerHTML = html;
+      $("msheet").classList.add("open");
+    }
+  }
+
+  function fiche(x){
+    var consoRow = x.type === "div"
+      ? '<div class="d-row"><span class="k">Captures (dernier relevé)</span><span class="v">' + (x.conso || 0) + '</span></div>'
+      : '<div class="d-row" style="display:block"><div style="display:flex;justify-content:space-between"><span class="k">Consommation d\'appât</span><span class="v">' + (x.conso || 0) + ' %</span></div><div class="conso-bar"><i style="width:' + (x.conso || 0) + '%;background:' + ((x.conso || 0) >= 50 ? "#DC2626" : (x.conso || 0) > 0 ? "#E8930C" : "#1B8A46") + '"></i></div></div>';
+    var corps;
+    if(RELEV) corps = formReleve(x);
+    else if(EDIT) corps = formEdit(x);
+    else corps = '<div class="d-rows">'
+      + '<div class="d-row"><span class="k">Produit en place</span><span class="v">' + esc(x.produit || "—") + '</span></div>'
+      + consoRow
+      + '<div class="d-row"><span class="k">Dernière relève</span><span class="v">' + esc(x.releve || "jamais") + '</span></div>'
+      + '</div>'
+      + '<div class="d-hist"><div class="t">Historique des relèves</div><ul>'
+      + ((x.hist || []).slice(0, 8).map(function(h){ return '<li><span class="dte">' + esc(h[0]) + '</span><span>' + esc(h[1]) + '</span></li>'; }).join("") || '<li><span class="dte">—</span><span>Aucun relevé pour l\'instant.</span></li>')
+      + '</ul></div>'
+      + '<div class="d-actions"><button class="btn primary" onclick="plRelever()">Relever</button>'
+      + '<button class="btn outline" onclick="plAlerte()">À remplacer</button></div>'
+      + '<div class="plmini"><span onclick="plEdit()">Modifier</span><span onclick="plMove()">Déplacer</span><span class="danger" onclick="plSup(this)">' + (ARMSUP ? "Confirmer la suppression ?" : "Supprimer") + '</span></div>';
+    return '<div class="d-head"><span class="d-num" style="background:' + HEX2[x.statut] + '">' + x.id.split("-")[1] + '</span>'
+      + '<div><b>' + x.id + ' — ' + (x.type === "div" ? "Détecteur insectes" : "Poste d\'appâtage rongeurs") + '</b><small>' + esc(x.zone || "emplacement à préciser") + '</small></div>'
+      + '<span class="st-badge ' + SB2[x.statut] + '">' + LBL2[x.statut] + '</span></div>' + corps;
+  }
+
+  function formReleve(x){
+    var estDiv = x.type === "div";
+    return '<div class="plform">'
+      + '<label>Relevé du ' + aujFR() + '</label>'
+      + (estDiv
+        ? '<label>Captures constatées</label><input type="number" id="pf-cap" min="0" value="' + (x.conso || 0) + '">'
+        : '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">Consommation</label></div>'
+          + '<label>Consommation (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">')
+      + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estDiv ? "Plaque changée" : "Bloc remplacé") + '</label>'
+      + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estDiv ? "mouches, moucherons…" : "zone à surveiller, passage renforcé…") + '">'
+      + '<div class="d-actions"><button class="btn primary" onclick="plRelSave()">Enregistrer le relevé</button><button class="btn outline" onclick="plRelAnnule()">Annuler</button></div></div>';
+  }
+  function formEdit(x){
+    return '<div class="plform">'
+      + '<label>Emplacement</label><input type="text" id="pf-zone" value="' + esc(x.zone || "") + '" placeholder="Cuisine — angle nord-ouest">'
+      + '<label>Produit en place</label><input type="text" id="pf-prod" value="' + esc(x.produit || "") + '">'
+      + '<div class="d-actions"><button class="btn primary" onclick="plEditSave()">Enregistrer</button><button class="btn outline" onclick="plEditAnnule()">Annuler</button></div></div>';
+  }
+  function formNouveau(){
+    return '<div class="d-head"><span class="d-num" style="background:var(--orange)">+</span><div><b>Nouveau poste</b><small>posé sur le plan — précise-le</small></div></div>'
+      + '<div class="plform">'
+      + '<label>Type</label><div class="plrad"><label><input type="radio" name="pf-t" value="pa" checked>Poste rongeurs</label><label><input type="radio" name="pf-t" value="div">Détecteur insectes</label></div>'
+      + '<label>Emplacement</label><input type="text" id="pf-zone" placeholder="Cuisine — angle nord-ouest">'
+      + '<label>Produit en place</label><input type="text" id="pf-prod" value="Bloc appât sécurisé 20 g">'
+      + '<div class="d-actions"><button class="btn primary" onclick="plNewSave()">Poser le poste</button><button class="btn outline" onclick="plNewAnnule()">Annuler</button></div></div>';
+  }
+
+  /* ---- gestes ---- */
+  window.plPick = function(k){
+    MODE = k; SELID = ""; ADD = false; MOVE = ""; PENDING = null; RELEV = false; EDIT = false; ARMSUP = false;
+    scaleR = 1; var rin = $("rin"); if(rin) rin.style.width = "100%";
+    try{ localStorage.setItem("tigerflow-plan-cur", MODE); }catch(e){}
+    paint();
+  };
+  window.plSel = function(id){
+    if(MOVE) return;
+    SELID = id; PENDING = null; RELEV = false; EDIT = false; ARMSUP = false;
+    paint();
+  };
+  window.plAdd = function(){
+    if(!MODE){ tst("La démo ne s'édite pas — choisis un client dans le sélecteur en haut."); return; }
+    var pl = cur();
+    if(!pl || !pl.fond){ tst("Pose d'abord le plan du local (l'image) — le bouton en pointillé."); $("pl-file").click(); return; }
+    ADD = !ADD; MOVE = ""; PENDING = null; paint();
+    if(ADD) tst("Clique sur le plan à l'endroit exact du poste.");
+  };
+  window.plMove = function(){ MOVE = SELID; ADD = false; RELEV = false; EDIT = false; paint(); tst("Clique sur le plan : le poste " + MOVE + " s'y déplace."); };
+  window.plEdit = function(){ EDIT = true; RELEV = false; ARMSUP = false; peindreDetail(); };
+  window.plEditAnnule = function(){ EDIT = false; peindreDetail(); };
+  window.plEditSave = function(){
+    var pl = cur(), x = poste(pl, SELID); if(!x) return;
+    x.zone = ($("pf-zone") || {value: ""}).value.trim();
+    x.produit = ($("pf-prod") || {value: ""}).value.trim();
+    EDIT = false; if(sauve(pl)) paint();
+  };
+  window.plRelever = function(){ RELEV = true; EDIT = false; ARMSUP = false; peindreDetail(); };
+  window.plRelAnnule = function(){ RELEV = false; peindreDetail(); };
+  window.plRelSave = function(){
+    var pl = cur(), x = poste(pl, SELID); if(!x) return;
+    var note = ($("pf-note") || {value: ""}).value.trim();
+    var rmp = ($("pf-rmp") || {}).checked;
+    var t;
+    if(x.type === "div"){
+      x.conso = Math.max(0, +($("pf-cap") || {value: 0}).value || 0);
+      t = x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — plaque changée" : "");
+    } else {
+      var ras = (document.querySelector('input[name="pf-r"]:checked') || {value: "ras"}).value === "ras";
+      x.conso = ras ? 0 : Math.min(100, Math.max(0, +($("pf-pc") || {value: 0}).value || 0));
+      x.statut = x.conso > 0 ? "conso" : "ok";
+      t = ras || !x.conso ? "RAS — bloc intact" : "Consommation " + x.conso + " %" + (rmp ? " — bloc remplacé" : "");
+    }
+    if(note) t += " — " + note;
+    x.releve = aujFR();
+    x.hist = [[aujFR(), t]].concat(x.hist || []);
+    RELEV = false;
+    if(sauve(pl)){ paint(); tst("✓ Relevé enregistré — " + x.id); }
+  };
+  window.plAlerte = function(){
+    var pl = cur(), x = poste(pl, SELID); if(!x || x.type === "div") return;
+    x.statut = "alerte"; x.releve = aujFR();
+    x.hist = [[aujFR(), "Poste endommagé ou manquant — À REMPLACER"]].concat(x.hist || []);
+    if(sauve(pl)){ paint(); tst("Poste " + x.id + " marqué À remplacer."); }
+  };
+  window.plSup = function(){
+    if(!ARMSUP){ ARMSUP = true; peindreDetail(); return; }
+    var pl = cur(); if(!pl) return;
+    pl.postes = (pl.postes || []).filter(function(x){ return x.id !== SELID; });
+    var id = SELID; SELID = ""; ARMSUP = false;
+    if(sauve(pl)){ paint(); tst("Poste " + id + " supprimé du plan."); }
+  };
+  window.plNewAnnule = function(){ PENDING = null; peindreDetail(); };
+  window.plNewSave = function(){
+    var pl = cur(); if(!pl || !PENDING) return;
+    var type = (document.querySelector('input[name="pf-t"]:checked') || {value: "pa"}).value;
+    pl.seq = (pl.seq || 0) + 1;
+    var x = {
+      id: (type === "div" ? "DIV-" : "PA-") + pl.seq, x: PENDING.x, y: PENDING.y, type: type,
+      zone: ($("pf-zone") || {value: ""}).value.trim(),
+      produit: ($("pf-prod") || {value: ""}).value.trim() || (type === "div" ? "Lampe UV + plaque glue" : "Bloc appât sécurisé 20 g"),
+      statut: type === "div" ? "div" : "ok", conso: 0, releve: aujFR(),
+      hist: [[aujFR(), "Poste installé"]]
+    };
+    pl.postes = (pl.postes || []).concat([x]);
+    PENDING = null; SELID = x.id;
+    if(sauve(pl)){ paint(); tst("✓ " + x.id + " posé sur le plan."); }
+  };
+
+  /* le clic sur le plan : poser un nouveau poste, ou déplacer celui qui est armé */
+  $("rin").addEventListener("click", function(e){
+    if(e.target.closest(".rdot")) return;
+    if(!ADD && !MOVE) return;
+    var r = $("rin").getBoundingClientRect();
+    var fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+    fx = Math.min(1, Math.max(0, fx)); fy = Math.min(1, Math.max(0, fy));
+    if(MOVE){
+      var pl = cur(), x = poste(pl, MOVE); if(x){ x.x = fx; x.y = fy; sauve(pl); }
+      SELID = MOVE; MOVE = ""; paint(); return;
+    }
+    ADD = false; PENDING = {x: fx, y: fy}; SELID = "";
+    paint();
+  });
+
+  /* ---- l'upload du fond : compressé fort (~5 Mo pour TOUT le SaaS) ---- */
+  window.plFile = function(inp){
+    var f = inp.files && inp.files[0]; inp.value = "";
+    if(!f || !MODE) return;
+    var img = new Image();
+    img.onload = function(){
+      var essai = function(maxc, q){
+        var k = Math.min(1, maxc / Math.max(img.width, img.height));
+        var cv = document.createElement("canvas");
+        cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+        var cx = cv.getContext("2d");
+        cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+        cx.drawImage(img, 0, 0, cv.width, cv.height);
+        return cv.toDataURL("image/jpeg", q);
+      };
+      var d = essai(1600, .72);
+      if(d.length > 950000) d = essai(1200, .6);
+      if(d.length > 950000){ tst("⚠️ Image trop lourde même compressée — recadre le plan et réessaie."); return; }
+      var pl = cur() || {postes: [], seq: 0};
+      pl.fond = d;
+      if(sauve(pl)){ paint(); remplirSel(); tst("✓ Plan posé — « Ajouter un poste » puis clique dessus."); }
+    };
+    img.onerror = function(){ tst("Ce fichier n'est pas une image lisible — une photo ou un scan (JPG/PNG)."); };
+    var rd = new FileReader();
+    rd.onload = function(){ img.src = rd.result; };
+    rd.readAsDataURL(f);
+  };
+
+  /* ---- l'export : le document, pas l'interface ---- */
+  window.plPdf = function(){
+    var t0 = document.title;
+    if(MODE){ var n = nomDe(MODE); document.title = "Plan d'appâtage — " + n.client + (n.site ? " — " + n.site : "") + " — " + aujFR(); }
+    window.print();
+    setTimeout(function(){ document.title = t0; }, 400);
+  };
+
+  /* ---- démarrage : on retombe sur le dernier plan ouvert ---- */
+  try{ var m0 = localStorage.getItem("tigerflow-plan-cur"); if(m0 && lireP()[m0]) MODE = m0; }catch(e){}
+  remplirSel();
+  paint();
+})();
 </script>
 
 <!-- ===== Recherche globale (⌘K) ===== -->
@@ -828,6 +1190,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* ===== impression : le client reçoit un document, pas l'interface ===== */
 @media print{
   .sidebar,.topbar,.rail,.bnv,.bnvsheet,.mobbar,.actbar,.abar,.toast,.gs-veil,.gs-pal,button,.btn,.qbar,.toolrow{display:none!important}
+  /* 27/08 : l'export HACCP = le plan + le registre. Les pastilles restent des
+     boutons À L'ÉCRAN mais doivent s'imprimer ; les couleurs aussi. */
+  .detail,.zoom,.filters,.plsel,.plchg,.plvide,.tst2,.msheet{display:none!important}
+  .rdot{display:grid!important;box-shadow:none}
+  .planview,.rview{max-height:none!important;overflow:visible!important;border:0!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .main{margin-left:0!important}
   .page,.wrap{padding:0!important;max-width:none!important}
   .card,.sheet{box-shadow:none!important;border:0!important;border-radius:0!important;break-inside:avoid}
