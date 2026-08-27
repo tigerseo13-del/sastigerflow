@@ -110,6 +110,12 @@ h1{font-family:'Sora';font-weight:800;font-size:1.66rem;color:var(--marine);lett
 .prodbox b{font-size:.8rem;color:var(--marine)}
 .prodbox .q{font-size:.72rem;font-weight:800;color:var(--marine);background:var(--field);border-radius:6px;padding:2px 8px;white-space:nowrap}
 .prodnote{font-size:.66rem;color:var(--muted);font-weight:500;margin-top:2px;line-height:1.5}
+/* 27/08 : le relevé des postes d'appâtage du jour (plan HACCP) */
+.ptab{width:100%;border-collapse:collapse;font-size:.76rem}
+.ptab td{padding:5px 8px;border-bottom:1px dashed var(--line);vertical-align:top}
+.ptab td:first-child{font-weight:800;width:56px;white-space:nowrap}
+.ptab td:nth-child(2){width:32%;font-weight:600}
+.ptab tr:last-child td{border:0}
 
 /* colonne droite */
 .rcard{background:var(--field);border-radius:14px;padding:17px 19px;margin-bottom:14px}
@@ -288,6 +294,11 @@ body.mreflow h1{font-size:1.3rem}
         <div class="trow" id="r-tzones"><div class="lab">Zones traitées</div><div class="val" id="rc-tzones">Pièce entière</div></div>
         <div class="trow" id="r-mats"><div class="lab">Matériel</div><div class="val" id="rc-mats">Pulvérisateur électrique</div></div>
         <div class="trow" id="r-act"><div class="lab">Actions réalisées</div><div class="val field" id="rc-act">456</div></div>
+        <!-- 27/08 : le relevé du JOUR des postes d'appâtage — dérivé du plan
+             HACCP du site, seulement s'il y a eu des relevés à cette date. -->
+        <div class="trow" id="r-postes" hidden><div class="lab">Postes d'appâtage</div>
+          <div><table class="ptab" id="rc-postes"></table>
+          <div class="prodnote">Relevé du jour — le plan complet et l'historique sont tenus au registre HACCP du site.</div></div></div>
       </div>
     </div>
 
@@ -575,6 +586,27 @@ document.addEventListener("click", e => {
   const zonesTxt = setArr(R.zones).join(", ");
   g("c-zones").textContent = zonesTxt;
   g("c-tel").textContent = iv.tel || "—";
+
+  /* 27/08 (« FAIS LES 7 ») : le relevé des postes du JOUR entre dans le
+     rapport signé — une ligne par poste relevé à la date de l'intervention. */
+  try{
+    var P2 = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+    var ks2 = Object.keys(P2);
+    var pk2 = ks2.find(function(k){ return k === iv.client + "|" + (iv.site || ""); })
+      || ks2.find(function(k){ return k.indexOf(iv.client + "|") === 0; }) || null;
+    if(pk2 && iv.date){
+      var dj2 = (function(x){ var d = new Date(x + "T12:00:00"); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); })(iv.date);
+      var lg2 = [];
+      (P2[pk2].postes || []).forEach(function(p3){
+        var h0 = (p3.hist || []).find(function(h){ return h[0] === dj2 && !/^Photo/.test(h[1] || ""); });
+        if(h0) lg2.push([p3.id, p3.zone || "", h0[1]]);
+      });
+      if(lg2.length){
+        g("rc-postes").innerHTML = lg2.map(function(l){ return "<tr><td>" + esc(l[0]) + "</td><td>" + esc(l[1]) + "</td><td>" + esc(l[2]) + "</td></tr>"; }).join("");
+        g("r-postes").hidden = false;
+      }
+    }
+  }catch(e){}
 
   /* 1 — constat */
   g("rc-duo").innerHTML =

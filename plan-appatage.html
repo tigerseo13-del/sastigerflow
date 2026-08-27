@@ -221,6 +221,32 @@ ul{list-style:none}
 .plmini .danger{color:#B3261E}
 /* pointer-events:none — un toast INFORME, il n'avale jamais le clic (trouvé au test : il couvrait le plan pendant « Déplacer »). */
 .tst2{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#16181D;color:#fff;font-size:.84rem;font-weight:600;padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.3);z-index:200;display:none;max-width:min(92vw,560px);text-align:center;pointer-events:none}
+/* 27/08 (« FAIS LES 7 ») : niveaux, tendance, retard, lot, photos, QR */
+.plnivs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 11px}
+.plnivs .f.add{border-style:dashed;color:#8A90A0}
+.tdn{font-weight:800;margin-left:5px}
+.tdn.up{color:#DC2626}.tdn.down{color:#1B8A46}.tdn.flat{color:#B4B9C4}
+.plfreq{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--muted);margin-left:12px;white-space:nowrap}
+.plfreq select{border:1.5px solid var(--line);border-radius:8px;padding:3px 5px;font:700 .72rem Inter,sans-serif;color:var(--ink-2);background:#fff;cursor:pointer}
+.plret{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;border-radius:99px;padding:3px 10px;margin-left:9px;white-space:nowrap;vertical-align:1px}
+.plret.ko{background:var(--red-bg);color:var(--red)}
+.plret.ok{background:var(--green-bg);color:var(--green-d)}
+.phstrip{display:flex;gap:8px;margin:11px 0 2px}
+.phstrip img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:zoom-in}
+.pllb{position:fixed;inset:0;background:rgba(10,12,16,.78);z-index:300;display:none;place-items:center;padding:30px;cursor:zoom-out}
+.pllb.open{display:grid}
+.pllb img{max-width:92vw;max-height:88vh;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.qrov{position:fixed;inset:0;background:#fff;z-index:290;display:none;overflow:auto;padding:26px}
+.qrov.open{display:block}
+.qrbar{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.qrbar b{font-family:'Sora';font-size:1.05rem}
+.qrbar .btn.outline{margin-left:auto}
+.qrgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.qrlab{border:1.5px dashed #C9CCD4;border-radius:12px;padding:14px 10px;text-align:center;break-inside:avoid;page-break-inside:avoid;background:#fff}
+.qrlab img{width:110px;height:110px;image-rendering:pixelated}
+.qrlab .qn{font-family:'Sora';font-weight:800;font-size:1.25rem;margin-top:6px}
+.qrlab .qz{font-size:.7rem;font-weight:700;color:var(--ink-2);min-height:2.1em}
+.qrlab .qs{font-size:.6rem;color:var(--muted);font-weight:600;margin-top:3px}
 
 /* ============ MOBILE ============ */
 @media(max-width:980px){
@@ -404,6 +430,16 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     </section>
     <!-- l'input caché vit HORS de tout conteneur re-rendu (leçon) -->
     <input type="file" id="pl-file" accept="image/*" hidden onchange="plFile(this)">
+    <input type="file" id="pl-photo" accept="image/*" capture="environment" hidden onchange="plPhoto(this)">
+    <div class="pllb" id="pllb" onclick="this.classList.remove('open')"><img id="pllb-img" alt="Photo du poste"></div>
+    <!-- 27/08 : la feuille d'étiquettes QR — une par poste, à imprimer et coller -->
+    <div class="qrov" id="qrov">
+      <div class="qrbar"><b id="qr-t">Étiquettes QR</b>
+        <button class="btn outline" onclick="qrFerme()">Fermer</button>
+        <button class="btn primary" onclick="window.print()">Imprimer les étiquettes</button>
+      </div>
+      <div class="qrgrid" id="qrgrid"></div>
+    </div>
 
     <!-- Stats de relève -->
     <div class="relstats">
@@ -427,6 +463,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           </div>
         </div>
 
+        <div class="plnivs" id="plnivs" hidden></div>
         <div class="planview" id="planview">
           <svg id="plansvg" viewBox="0 0 900 620" width="900" height="620" xmlns="http://www.w3.org/2000/svg">
             <!-- fond -->
@@ -649,17 +686,24 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   </tr>`).join("");
 </script>
 
+<script src="qrcode.min.js"></script>
 <script>
 /* ================================================================
    27/08 (patron : « go » sur ma reco) — LE PLAN RÉEL.
    Un plan par client+site dans tigerflow-plans : { "client|site":
-   {fond(dataURL jpeg), postes:[{id,x,y(0..1),type,zone,produit,statut,
-   conso,releve,hist:[[date,note]]}], seq} }. La démo Ironwood reste la
-   vitrine par défaut ; on n'y touche pas.
+   {niveaux:[{nom,fond(dataURL jpeg)}], freq(jours), postes:[{id,x,y(0..1),
+   niv,type,zone,produit,statut,conso,lot,photos:[{d,img}]≤2,releve,
+   hist:[[date,note]]}], seq} }. L'ancien pl.fond (un seul niveau) est migré
+   en lecture ET reste MIROITÉ (pl.fond = niveaux[0].fond) pour tech-mobile
+   et contrat. La démo Ironwood reste la vitrine par défaut.
+   27/08 (« FAIS LES 7 ») : tendance de conso lue dans l'historique, retard
+   de relevé (fréquence par plan), n° de lot, photos de poste, NIVEAUX,
+   étiquettes QR (+ ?poste= depuis le scan).
    ================================================================ */
 (function(){
   var PKEY = "tigerflow-plans";
   var MODE = "", SELID = "", ADD = false, MOVE = "", PENDING = null, RELEV = false, EDIT = false, ARMSUP = false;
+  var NIV = 0, PENDNIV = false, PENDNIVNOM = "";
   var $ = function(id){ return document.getElementById(id); };
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); };
   var DEMO_TBODY = $("tbody").innerHTML;
@@ -667,6 +711,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   var HEX2 = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
   var SB2  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
   var LBL2 = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Détecteur insectes"};
+  var FL = {up:"\u2197", down:"\u2198", flat:"\u2192"};
 
   var tdiv = document.createElement("div"); tdiv.className = "tst2"; tdiv.id = "tst2"; document.body.appendChild(tdiv);
   function tst(m){ tdiv.textContent = m; tdiv.style.display = "block"; clearTimeout(tst._t); tst._t = setTimeout(function(){ tdiv.style.display = "none"; }, 3600); }
@@ -674,12 +719,49 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   function lireP(){ try{ var v = JSON.parse(localStorage.getItem(PKEY)); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } }
   function cur(){ return MODE ? (lireP()[MODE] || null) : null; }
   function sauve(pl){
+    /* le miroir : tech-mobile et contrat lisent pl.fond — il suit le niveau 1 */
+    if(pl && pl.niveaux && pl.niveaux.length) pl.fond = pl.niveaux[0].fond;
     var all = lireP(); all[MODE] = pl;
     try{ localStorage.setItem(PKEY, JSON.stringify(all)); return true; }
     catch(e){ tst("⚠️ Mémoire pleine — image trop lourde pour le navigateur. Réessaie avec une photo plus petite."); return false; }
   }
   function aujFR(){ var d = new Date(); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); }
+  function dParse(x){ var m = /^(\d\d)\/(\d\d)\/(\d\d)$/.exec(String(x || "")); return m ? new Date(2000 + +m[3], +m[2] - 1, +m[1], 12) : null; }
+  var FDC = function(d){ return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); };
   function nomDe(k){ var i = k.indexOf("|"); return {client: k.slice(0, i), site: k.slice(i + 1)}; }
+  /* les niveaux — l'ancien fond unique est lu comme un niveau 1 */
+  function nivDe(pl){
+    if(!pl) return [];
+    if(pl.niveaux && pl.niveaux.length) return pl.niveaux;
+    return pl.fond ? [{nom: "Rez-de-chaussée", fond: pl.fond}] : [];
+  }
+  /* la TENDANCE : la série des consommations lue dans l'historique (récent → vieux) */
+  function consoSerie(p){
+    var out = [];
+    (p.hist || []).forEach(function(h){
+      var t = String(h[1] || "");
+      var m = p.type === "div" ? /^(\d+) capture/.exec(t) : /Consommation (\d+) ?%/.exec(t);
+      if(m) out.push(+m[1]);
+      else if(/^RAS/.test(t)) out.push(0);
+    });
+    return out.slice(0, 5).reverse();
+  }
+  function tdnDe(p){
+    var sr = consoSerie(p);
+    if(sr.length < 2) return null;
+    var d = sr[sr.length - 1] - sr[sr.length - 2];
+    return {k: d > 0 ? "up" : d < 0 ? "down" : "flat", de: sr[sr.length - 2], a: sr[sr.length - 1]};
+  }
+  /* le RETARD : dernier relevé + fréquence du plan (l'auditeur vérifie la cadence) */
+  function retardInfo(pl){
+    var f = +((pl || {}).freq) || 60, dern = null;
+    ((pl || {}).postes || []).forEach(function(p){ var d = dParse(p.releve); if(d && (!dern || d > dern)) dern = d; });
+    if(!dern) return {f: f, jamais: true, retard: 0};
+    var ech = new Date(dern); ech.setDate(ech.getDate() + f);
+    var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    var r = Math.round((t0 - ech) / 86400000);
+    return {f: f, dern: dern, ech: ech, retard: r > 0 ? r : 0};
+  }
 
   /* ---- le sélecteur : les vrais clients × leurs sites ---- */
   function cibles(){
@@ -709,9 +791,18 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   function paint(){
     window.PLMODE = MODE;
     var pl = cur(), demo = !MODE;
+    var fonds = nivDe(pl);
+    if(NIV >= fonds.length) NIV = 0;
     $("planview").hidden = !demo;
-    $("rview").hidden = demo || !pl || !pl.fond;
-    $("plvide").hidden = demo || !!(pl && pl.fond);
+    $("rview").hidden = demo || !fonds.length;
+    $("plvide").hidden = demo || !!fonds.length;
+    var nv = $("plnivs");
+    if(nv){
+      nv.hidden = demo || !fonds.length;
+      nv.innerHTML = (demo || !fonds.length) ? "" : fonds.map(function(x, i){
+        return '<button class="f' + (i === NIV ? " on" : "") + '" onclick="plNivGo(' + i + ')">' + esc(x.nom || ("Niveau " + (i + 1))) + '</button>';
+      }).join("") + '<button class="f add" onclick="plNivAdd()" title="Un étage, un sous-sol, une annexe — chaque niveau porte sa propre image">+ Niveau</button>';
+    }
     $("btn-add").classList.toggle("arm", ADD || !!MOVE);
     $("btn-add-l").textContent = MOVE ? "Cliquez sur le nouvel emplacement…" : (ADD ? "Cliquez sur le plan…" : "Ajouter un poste");
     if(demo){
@@ -725,25 +816,36 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       return;
     }
     var n = nomDe(MODE), ps = (pl && pl.postes) || [];
-    var derniere = ps.map(function(x){ return x.releve || ""; }).sort().reverse()[0] || "";
+    var ri = retardInfo(pl);
+    var derniere = ps.map(function(x){ var d = dParse(x.releve); return d ? d.getTime() : 0; }).sort().reverse()[0];
     $("pl-titre").textContent = "Plan d'appâtage — " + (n.site || n.client);
-    $("pl-sub").textContent = n.client + (ps.length ? " · " + ps.length + " poste" + (ps.length > 1 ? "s" : "") + (derniere ? " · dernière relève le " + derniere : "") : " · aucun poste pour l'instant");
-    $("pl-bar").innerHTML = esc(n.site || n.client) + (pl && pl.fond ? ' · plan du client<span class="plchg" onclick="document.getElementById(\'pl-file\').click()">Changer le fond</span>' : "");
-    $("pl-reg").textContent = "Registre des postes — " + (n.site || n.client) + (derniere ? " · relève du " + derniere : "");
+    var sub = n.client + (ps.length ? " · " + ps.length + " poste" + (ps.length > 1 ? "s" : "") + (derniere ? " · dernière relève le " + FDC(new Date(derniere)) : "") : " · aucun poste pour l'instant");
+    $("pl-sub").innerHTML = esc(sub) + (ps.length
+      ? (ri.retard ? ' <span class="plret ko">Relevé en retard de ' + ri.retard + ' j</span>'
+        : (ri.ech ? ' <span class="plret ok">prochain avant le ' + FDC(ri.ech) + '</span>' : ""))
+      : "");
+    $("pl-bar").innerHTML = esc(n.site || n.client) + (fonds.length
+      ? ' · plan du client<span class="plchg" onclick="document.getElementById(\'pl-file\').click()">Changer le fond' + (fonds.length > 1 ? " (" + esc((fonds[NIV] || {}).nom || "") + ")" : "") + '</span>'
+        + (ps.length ? '<span class="plchg" onclick="qrOuvre()" title="Une étiquette par poste, à imprimer et coller — le scan ouvre la fiche du poste">Étiquettes QR</span>' : "")
+        + '<span class="plfreq">relevé tous les <select onchange="plFreq(this.value)">' + [30, 45, 60, 90, 180].map(function(v){ return '<option value="' + v + '"' + (v === ri.f ? " selected" : "") + '>' + v + '</option>'; }).join("") + '</select> jours</span>'
+      : "");
+    $("pl-reg").textContent = "Registre des postes — " + (n.site || n.client) + (derniere ? " · relève du " + FDC(new Date(derniere)) : "");
     $("rs-tot").textContent = ps.length;
     $("rs-ok").textContent = ps.filter(function(x){ return x.statut === "ok"; }).length;
     $("rs-conso").textContent = ps.filter(function(x){ return x.statut === "conso"; }).length;
     $("rs-alerte").textContent = ps.filter(function(x){ return x.statut === "alerte"; }).length;
-    if(pl && pl.fond){ $("rimg").src = pl.fond; }
-    $("rdots").innerHTML = ps.map(function(x){
+    if(fonds.length){ $("rimg").src = (fonds[NIV] || {}).fond || ""; }
+    $("rdots").innerHTML = ps.filter(function(x){ return (x.niv || 0) === NIV; }).map(function(x){
       return '<button class="rdot' + (x.id === SELID ? " sel" : "") + '" data-st="' + x.statut + '" style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + HEX2[x.statut] + '" onclick="plSel(\'' + esc(x.id) + '\')" title="' + esc(x.zone || x.id) + '">' + x.id.split("-")[1] + '</button>';
     }).join("");
     $("tbody").innerHTML = ps.length ? ps.map(function(x){
-      return '<tr onclick="plSel(\'' + esc(x.id) + '\')"><td><span class="num" style="background:' + HEX2[x.statut] + '">' + x.id.split("-")[1] + '</span></td>'
-        + '<td class="ref">' + esc(x.zone || "—") + '</td>'
+      var td = tdnDe(x);
+      return '<tr onclick="plSelNiv(\'' + esc(x.id) + '\',' + (x.niv || 0) + ')"><td><span class="num" style="background:' + HEX2[x.statut] + '">' + x.id.split("-")[1] + '</span></td>'
+        + '<td class="ref">' + esc(x.zone || "—") + (fonds.length > 1 ? ' <span style="color:var(--muted);font-weight:600;font-size:.72rem">· ' + esc((fonds[x.niv || 0] || {}).nom || "") + '</span>' : "") + '</td>'
         + '<td>' + (x.type === "div" ? "Détecteur insectes" : "Poste rongeurs") + '</td>'
         + '<td><span class="st-badge ' + SB2[x.statut] + '">' + LBL2[x.statut] + '</span></td>'
-        + '<td>' + (x.type === "div" ? (x.conso || 0) + " captures" : (x.conso || 0) + " %") + '</td>'
+        + '<td>' + (x.type === "div" ? (x.conso || 0) + " captures" : (x.conso || 0) + " %")
+          + (td && td.k !== "flat" ? '<span class="tdn ' + td.k + '" title="' + td.de + ' \u2192 ' + td.a + '">' + FL[td.k] + '</span>' : "") + '</td>'
         + '<td>' + esc(x.releve || "—") + '</td></tr>';
     }).join("") : '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste — « Ajouter un poste » puis cliquez sur le plan.</td></tr>';
     peindreDetail();
@@ -755,7 +857,8 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
 
   function peindreDetail(){
     var box = $("detail"), html;
-    if(PENDING) html = formNouveau();
+    if(PENDNIV) html = formNiveau();
+    else if(PENDING) html = formNouveau();
     else if(!SELID){ box.innerHTML = DEMO_EMPTY; return; }
     else {
       var x = poste(cur(), SELID);
@@ -773,20 +876,24 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var consoRow = x.type === "div"
       ? '<div class="d-row"><span class="k">Captures (dernier relevé)</span><span class="v">' + (x.conso || 0) + '</span></div>'
       : '<div class="d-row" style="display:block"><div style="display:flex;justify-content:space-between"><span class="k">Consommation d\'appât</span><span class="v">' + (x.conso || 0) + ' %</span></div><div class="conso-bar"><i style="width:' + (x.conso || 0) + '%;background:' + ((x.conso || 0) >= 50 ? "#DC2626" : (x.conso || 0) > 0 ? "#E8930C" : "#1B8A46") + '"></i></div></div>';
+    var td = tdnDe(x);
+    var tdRow = td ? '<div class="d-row"><span class="k">Tendance</span><span class="v"><span class="tdn ' + td.k + '">' + FL[td.k] + '</span> ' + (td.k === "up" ? "en hausse" : td.k === "down" ? "en baisse" : "stable") + ' (' + td.de + ' \u2192 ' + td.a + (x.type === "div" ? "" : " %") + ')</span></div>' : "";
+    var lotRow = x.lot ? '<div class="d-row"><span class="k">Lot en place</span><span class="v">' + esc(x.lot) + '</span></div>' : "";
+    var phs = (x.photos || []).length ? '<div class="phstrip">' + x.photos.map(function(ph){ return '<img src="' + ph.img + '" title="Photo du ' + esc(ph.d) + '" onclick="plLb(this.src)">'; }).join("") + '</div>' : "";
     var corps;
     if(RELEV) corps = formReleve(x);
     else if(EDIT) corps = formEdit(x);
     else corps = '<div class="d-rows">'
       + '<div class="d-row"><span class="k">Produit en place</span><span class="v">' + esc(x.produit || "—") + '</span></div>'
-      + consoRow
+      + consoRow + tdRow + lotRow
       + '<div class="d-row"><span class="k">Dernière relève</span><span class="v">' + esc(x.releve || "jamais") + '</span></div>'
-      + '</div>'
+      + '</div>' + phs
       + '<div class="d-hist"><div class="t">Historique des relèves</div><ul>'
       + ((x.hist || []).slice(0, 8).map(function(h){ return '<li><span class="dte">' + esc(h[0]) + '</span><span>' + esc(h[1]) + '</span></li>'; }).join("") || '<li><span class="dte">—</span><span>Aucun relevé pour l\'instant.</span></li>')
       + '</ul></div>'
       + '<div class="d-actions"><button class="btn primary" onclick="plRelever()">Relever</button>'
       + '<button class="btn outline" onclick="plAlerte()">À remplacer</button></div>'
-      + '<div class="plmini"><span onclick="plEdit()">Modifier</span><span onclick="plMove()">Déplacer</span><span class="danger" onclick="plSup(this)">' + (ARMSUP ? "Confirmer la suppression ?" : "Supprimer") + '</span></div>';
+      + '<div class="plmini"><span onclick="plPhotoBtn()">Photo</span><span onclick="plEdit()">Modifier</span><span onclick="plMove()">Déplacer</span><span class="danger" onclick="plSup(this)">' + (ARMSUP ? "Confirmer la suppression ?" : "Supprimer") + '</span></div>';
     return '<div class="d-head"><span class="d-num" style="background:' + HEX2[x.statut] + '">' + x.id.split("-")[1] + '</span>'
       + '<div><b>' + x.id + ' — ' + (x.type === "div" ? "Détecteur insectes" : "Poste d\'appâtage rongeurs") + '</b><small>' + esc(x.zone || "emplacement à préciser") + '</small></div>'
       + '<span class="st-badge ' + SB2[x.statut] + '">' + LBL2[x.statut] + '</span></div>' + corps;
@@ -801,6 +908,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
         : '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">Consommation</label></div>'
           + '<label>Consommation (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">')
       + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estDiv ? "Plaque changée" : "Bloc remplacé") + '</label>'
+      + '<label>N° de lot du produit posé (l\'auditeur le demande)</label><input type="text" id="pf-lot" placeholder="ex. 24B117" value="">'
       + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estDiv ? "mouches, moucherons…" : "zone à surveiller, passage renforcé…") + '">'
       + '<div class="d-actions"><button class="btn primary" onclick="plRelSave()">Enregistrer le relevé</button><button class="btn outline" onclick="plRelAnnule()">Annuler</button></div></div>';
   }
@@ -818,27 +926,49 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       + '<label>Produit en place</label><input type="text" id="pf-prod" value="Bloc appât sécurisé 20 g">'
       + '<div class="d-actions"><button class="btn primary" onclick="plNewSave()">Poser le poste</button><button class="btn outline" onclick="plNewAnnule()">Annuler</button></div></div>';
   }
+  function formNiveau(){
+    return '<div class="d-head"><span class="d-num" style="background:var(--orange)">+</span><div><b>Nouveau niveau</b><small>un étage, un sous-sol, une annexe</small></div></div>'
+      + '<div class="plform">'
+      + '<label>Nom du niveau</label><input type="text" id="pf-nivnom" placeholder="Sous-sol, Étage 1, Annexe…">'
+      + '<div class="d-actions"><button class="btn primary" onclick="plNivImg()">Choisir l\'image du niveau</button><button class="btn outline" onclick="plNivAnnule()">Annuler</button></div>'
+      + '<div class="dwarn">Le niveau se crée quand son image est choisie — les postes se posent ensuite dessus, niveau par niveau.</div></div>';
+  }
 
   /* ---- gestes ---- */
   window.plPick = function(k){
     MODE = k; SELID = ""; ADD = false; MOVE = ""; PENDING = null; RELEV = false; EDIT = false; ARMSUP = false;
+    NIV = 0; PENDNIV = false; PENDNIVNOM = "";
     scaleR = 1; var rin = $("rin"); if(rin) rin.style.width = "100%";
     try{ localStorage.setItem("tigerflow-plan-cur", MODE); }catch(e){}
     paint();
   };
+  window.plNivGo = function(i){ NIV = i; SELID = ""; paint(); };
+  window.plNivAdd = function(){ if(!MODE) return; PENDNIV = true; PENDING = null; SELID = ""; RELEV = false; EDIT = false; peindreDetail(); };
+  window.plNivImg = function(){
+    var nomN = ($("pf-nivnom") || {value: ""}).value.trim();
+    if(!nomN){ tst("Donne un nom au niveau — Sous-sol, Étage 1…"); return; }
+    PENDNIVNOM = nomN; $("pl-file").click();
+  };
+  window.plNivAnnule = function(){ PENDNIV = false; PENDNIVNOM = ""; peindreDetail(); };
+  window.plFreq = function(v){
+    var pl = cur(); if(!pl) return;
+    pl.freq = +v || 60;
+    if(sauve(pl)){ paint(); tst("Cadence enregistrée — relevé tous les " + pl.freq + " jours."); }
+  };
   window.plSel = function(id){
     if(MOVE) return;
-    SELID = id; PENDING = null; RELEV = false; EDIT = false; ARMSUP = false;
+    SELID = id; PENDING = null; PENDNIV = false; RELEV = false; EDIT = false; ARMSUP = false;
     paint();
   };
+  window.plSelNiv = function(id, nv){ NIV = nv || 0; window.plSel(id); };
   window.plAdd = function(){
     if(!MODE){ tst("La démo ne s'édite pas — choisis un client dans le sélecteur en haut."); return; }
     var pl = cur();
-    if(!pl || !pl.fond){ tst("Pose d'abord le plan du local (l'image) — le bouton en pointillé."); $("pl-file").click(); return; }
-    ADD = !ADD; MOVE = ""; PENDING = null; paint();
+    if(!nivDe(pl).length){ tst("Pose d'abord le plan du local (l'image) — le bouton en pointillé."); $("pl-file").click(); return; }
+    ADD = !ADD; MOVE = ""; PENDING = null; PENDNIV = false; paint();
     if(ADD) tst("Clique sur le plan à l'endroit exact du poste.");
   };
-  window.plMove = function(){ MOVE = SELID; ADD = false; RELEV = false; EDIT = false; paint(); tst("Clique sur le plan : le poste " + MOVE + " s'y déplace."); };
+  window.plMove = function(){ MOVE = SELID; ADD = false; RELEV = false; EDIT = false; paint(); tst("Clique sur le plan : le poste " + MOVE + " s'y déplace" + (nivDe(cur()).length > 1 ? " (sur le niveau affiché)" : "") + "."); };
   window.plEdit = function(){ EDIT = true; RELEV = false; ARMSUP = false; peindreDetail(); };
   window.plEditAnnule = function(){ EDIT = false; peindreDetail(); };
   window.plEditSave = function(){
@@ -852,6 +982,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   window.plRelSave = function(){
     var pl = cur(), x = poste(pl, SELID); if(!x) return;
     var note = ($("pf-note") || {value: ""}).value.trim();
+    var lot = ($("pf-lot") || {value: ""}).value.trim();
     var rmp = ($("pf-rmp") || {}).checked;
     var t;
     if(x.type === "div"){
@@ -863,6 +994,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       x.statut = x.conso > 0 ? "conso" : "ok";
       t = ras || !x.conso ? "RAS — bloc intact" : "Consommation " + x.conso + " %" + (rmp ? " — bloc remplacé" : "");
     }
+    if(lot){ t += " · lot " + lot; x.lot = lot; }
     if(note) t += " — " + note;
     x.releve = aujFR();
     x.hist = [[aujFR(), t]].concat(x.hist || []);
@@ -888,7 +1020,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var type = (document.querySelector('input[name="pf-t"]:checked') || {value: "pa"}).value;
     pl.seq = (pl.seq || 0) + 1;
     var x = {
-      id: (type === "div" ? "DIV-" : "PA-") + pl.seq, x: PENDING.x, y: PENDING.y, type: type,
+      id: (type === "div" ? "DIV-" : "PA-") + pl.seq, x: PENDING.x, y: PENDING.y, niv: PENDING.niv || 0, type: type,
       zone: ($("pf-zone") || {value: ""}).value.trim(),
       produit: ($("pf-prod") || {value: ""}).value.trim() || (type === "div" ? "Lampe UV + plaque glue" : "Bloc appât sécurisé 20 g"),
       statut: type === "div" ? "div" : "ok", conso: 0, releve: aujFR(),
@@ -907,10 +1039,10 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
     fx = Math.min(1, Math.max(0, fx)); fy = Math.min(1, Math.max(0, fy));
     if(MOVE){
-      var pl = cur(), x = poste(pl, MOVE); if(x){ x.x = fx; x.y = fy; sauve(pl); }
+      var pl = cur(), x = poste(pl, MOVE); if(x){ x.x = fx; x.y = fy; x.niv = NIV; sauve(pl); }
       SELID = MOVE; MOVE = ""; paint(); return;
     }
-    ADD = false; PENDING = {x: fx, y: fy}; SELID = "";
+    ADD = false; PENDING = {x: fx, y: fy, niv: NIV}; SELID = "";
     paint();
   });
 
@@ -933,7 +1065,15 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       if(d.length > 950000) d = essai(1200, .6);
       if(d.length > 950000){ tst("⚠️ Image trop lourde même compressée — recadre le plan et réessaie."); return; }
       var pl = cur() || {postes: [], seq: 0};
-      pl.fond = d;
+      if(!pl.niveaux || !pl.niveaux.length) pl.niveaux = pl.fond ? [{nom: "Rez-de-chaussée", fond: pl.fond}] : [];
+      if(PENDNIVNOM){
+        pl.niveaux.push({nom: PENDNIVNOM, fond: d});
+        NIV = pl.niveaux.length - 1; PENDNIVNOM = ""; PENDNIV = false;
+        if(sauve(pl)){ paint(); remplirSel(); tst("✓ Niveau « " + pl.niveaux[NIV].nom + " » posé — ses postes se posent dessus."); }
+        return;
+      }
+      if(pl.niveaux.length) pl.niveaux[NIV].fond = d;
+      else { pl.niveaux = [{nom: "Rez-de-chaussée", fond: d}]; NIV = 0; }
       if(sauve(pl)){ paint(); remplirSel(); tst("✓ Plan posé — « Ajouter un poste » puis clique dessus."); }
     };
     img.onerror = function(){ tst("Ce fichier n'est pas une image lisible — une photo ou un scan (JPG/PNG)."); };
@@ -942,21 +1082,59 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     rd.readAsDataURL(f);
   };
 
-  /* ---- l'export : le document, pas l'interface ---- */
-  window.plPdf = function(){
-    var t0 = document.title;
-    if(MODE){ var n = nomDe(MODE); document.title = "Plan d'appâtage — " + n.client + (n.site ? " — " + n.site : "") + " — " + aujFR(); }
-    window.print();
-    setTimeout(function(){ document.title = t0; }, 400);
+  /* ---- la photo du poste : la PREUVE, 2 max par poste ---- */
+  window.plPhotoBtn = function(){ if(!SELID){ return; } $("pl-photo").click(); };
+  window.plPhoto = function(inp){
+    var f = inp.files && inp.files[0]; inp.value = "";
+    if(!f || !MODE || !SELID) return;
+    var img = new Image();
+    img.onload = function(){
+      var k = Math.min(1, 480 / Math.max(img.width, img.height));
+      var cv = document.createElement("canvas");
+      cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      var d = cv.toDataURL("image/jpeg", .6);
+      var pl = cur(), x = poste(pl, SELID); if(!x) return;
+      x.photos = [{d: aujFR(), img: d}].concat(x.photos || []).slice(0, 2);
+      x.hist = [[aujFR(), "Photo du poste ajoutée"]].concat(x.hist || []);
+      if(sauve(pl)){ paint(); tst("📷 Photo gardée sur " + x.id + " — 2 max par poste, les plus récentes."); }
+    };
+    img.onerror = function(){ tst("Cette photo n'est pas lisible."); };
+    var rd = new FileReader();
+    rd.onload = function(){ img.src = rd.result; };
+    rd.readAsDataURL(f);
   };
+  window.plLb = function(src){ $("pllb-img").src = src; $("pllb").classList.add("open"); };
 
-  /* ---- démarrage : on retombe sur le dernier plan ouvert ---- */
+  /* ---- les étiquettes QR : le scan ouvre LA fiche du poste ---- */
+  window.qrOuvre = function(){
+    var pl = cur(); if(!pl || !(pl.postes || []).length) return;
+    var n = nomDe(MODE);
+    $("qr-t").textContent = "Étiquettes QR — " + (n.site || n.client);
+    var base = "https://tigerseo13-del.github.io/sastigerflow/plan-appatage.html?plan=" + encodeURIComponent(MODE) + "&poste=";
+    $("qrgrid").innerHTML = (pl.postes || []).map(function(x){
+      var tag = "";
+      try{ var q = qrcode(0, "M"); q.addData(base + encodeURIComponent(x.id)); q.make(); tag = q.createImgTag(3, 4); }
+      catch(e){ tag = "<small>QR indisponible</small>"; }
+      return '<div class="qrlab">' + tag + '<div class="qn">' + x.id + '</div><div class="qz">' + esc(x.zone || "") + '</div><div class="qs">Agence Antinuisible · ' + esc(n.site || n.client) + '</div></div>';
+    }).join("");
+    document.body.classList.add("qrmode");
+    $("qrov").classList.add("open");
+  };
+  window.qrFerme = function(){ document.body.classList.remove("qrmode"); $("qrov").classList.remove("open"); };
+
+  /* ---- démarrage : ?plan= (carte du contrat), ?poste= (scan d'étiquette),
+          sinon le dernier plan ouvert ---- */
   try{
-    /* 27/08 (étape 3) : la carte des Documents du contrat arrive ici avec
-       ?plan=<client|site> — on ouvre CE plan, pas le dernier consulté. */
-    var qp = new URLSearchParams(location.search).get("plan");
+    var prm = new URLSearchParams(location.search);
+    var qp = prm.get("plan");
     if(qp && lireP()[qp]){ MODE = qp; localStorage.setItem("tigerflow-plan-cur", MODE); }
     else { var m0 = localStorage.getItem("tigerflow-plan-cur"); if(m0 && lireP()[m0]) MODE = m0; }
+    var qpo = prm.get("poste");
+    if(qpo && MODE){
+      var plq = lireP()[MODE], xq = plq && (plq.postes || []).find(function(z){ return z.id === qpo; });
+      if(xq){ SELID = qpo; NIV = xq.niv || 0; }
+    }
   }catch(e){}
   remplirSel();
   paint();
@@ -1198,7 +1376,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .sidebar,.topbar,.rail,.bnv,.bnvsheet,.mobbar,.actbar,.abar,.toast,.gs-veil,.gs-pal,button,.btn,.qbar,.toolrow{display:none!important}
   /* 27/08 : l'export HACCP = le plan + le registre. Les pastilles restent des
      boutons À L'ÉCRAN mais doivent s'imprimer ; les couleurs aussi. */
-  .detail,.zoom,.filters,.plsel,.plchg,.plvide,.tst2,.msheet{display:none!important}
+  .detail,.zoom,.filters,.plsel,.plchg,.plvide,.tst2,.msheet,.plnivs,.plfreq,.pllb{display:none!important}
+  body.qrmode .app{display:none!important}
+  body.qrmode .qrov{position:static;padding:0;display:block!important}
+  body.qrmode .qrbar{display:none!important}
   .rdot{display:grid!important;box-shadow:none}
   .planview,.rview{max-height:none!important;overflow:visible!important;border:0!important}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}

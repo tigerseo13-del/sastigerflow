@@ -581,6 +581,8 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .pba.co{background:#FBF3D9;border-color:#EAD9A0;color:#8A5A17}
 .pba.ko{background:#FDE8E8;border-color:#F7D7DD;color:#DC2626}
 .pbvide{font-size:.76rem;color:var(--muted);font-weight:600;padding:10px 6px}
+.pblot{flex:1 1 150px;min-height:42px;border:1.5px solid #E2E5EB;border-radius:10px;padding:0 11px;font:700 .74rem Inter,system-ui,sans-serif;color:#3B4256;background:#fff}
+.pblot::placeholder{color:#B9BEC9;font-weight:600}
 
 /* ---------- 12/08 : sheet « Signaler un imprévu » (panneau de la fiche) ---------- */
 .sheet{position:absolute;inset:0;background:rgba(16,17,20,.45);z-index:50;display:none;align-items:flex-end}
@@ -1266,14 +1268,27 @@ function planKeyOf(m){
 }
 let PBOPEN = null;   /* le poste déplié (ses trois boutons) */
 function pbTog(id){ PBOPEN = PBOPEN === id ? null : id; rdetail(); }
+/* la tendance lue dans l'historique — une conso qui MONTE se voit de loin */
+function pbTdn(p){
+  const out = [];
+  (p.hist || []).forEach(h => {
+    const t = String(h[1] || "");
+    const m = p.type === "div" ? /^(\d+) capture/.exec(t) : /Consommation (\d+) ?%/.exec(t);
+    if(m) out.push(+m[1]); else if(/^RAS/.test(t)) out.push(0);
+  });
+  return (out.length >= 2 && out[0] > out[1]) ? '<b style="color:#DC2626">\u2197 </b>' : "";
+}
 function pbActs(p){
   if(p.type === "div") return `<div class="pbacts">
     ${[0, 3, 8, 15].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbDiv('${p.id}',${n2})">${n2} capt.</button>`).join("")}
+    <button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>
   </div>`;
   return `<div class="pbacts">
     <button class="pba ok" onclick="event.stopPropagation();pbRas('${p.id}')">✓ RAS</button>
     ${[25, 50, 75, 100].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbConso('${p.id}',${n2})">${n2} %</button>`).join("")}
     <button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>
+    <button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>
+    <input class="pblot" id="pb-lot" placeholder="N° de lot (si remplacé)" onclick="event.stopPropagation()">
   </div>`;
 }
 function planBloc(m){
@@ -1293,7 +1308,7 @@ function planBloc(m){
     return `<div class="pbrow${open ? " open" : ""}" onclick="pbTog('${p.id}')">
       <span class="pbn" style="background:${p.statut === "alerte" ? "#DC2626" : p.statut === "conso" ? "#E8930C" : p.statut === "div" ? "#2453C6" : "#1B8A46"}">${p.id.split("-")[1]}</span>
       <span class="pbz"><b>${p.zone || p.id}</b><small>${p.produit || ""}</small></span>
-      <span class="pbst" style="background:${ch[0]};color:${ch[1]}">${fait ? "✓ " : ""}${ch[2]}</span>
+      <span class="pbst" style="background:${ch[0]};color:${ch[1]}">${fait ? "✓ " : ""}${pbTdn(p)}${ch[2]}</span>
     </div>${open ? pbActs(p) : ""}`;
   }).join("");
   return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div>
@@ -1316,9 +1331,46 @@ function pbEcrit(id, muta){
   }catch(e){}
 }
 function pbRas(id){ pbEcrit(id, p => { p.statut = "ok"; p.conso = 0; return "RAS — bloc intact"; }); }
-function pbConso(id, n2){ pbEcrit(id, p => { p.statut = "conso"; p.conso = n2; return "Consommation " + n2 + " % — bloc remplacé"; }); }
+function pbConso(id, n2){
+  const lot = (document.getElementById("pb-lot") || {value: ""}).value.trim();
+  pbEcrit(id, p => {
+    p.statut = "conso"; p.conso = n2;
+    if(lot) p.lot = lot;
+    return "Consommation " + n2 + " % — bloc remplacé" + (lot ? " · lot " + lot : "");
+  });
+}
 function pbKo(id){ pbEcrit(id, p => { p.statut = "alerte"; p.conso = 0; return "Poste endommagé ou manquant — À REMPLACER"; }); }
 function pbDiv(id, n2){ pbEcrit(id, p => { p.conso = n2; return n2 + " capture" + (n2 > 1 ? "s" : "") + " — plaque changée"; }); }
+/* la PREUVE : la photo du poste, prise sur place — 2 max par poste, très compressée */
+let PBPH = "";
+function pbPhoto(id){ PBPH = id; const i2 = document.getElementById("pb-photo"); if(i2) i2.click(); }
+function pbPhotoIn(inp){
+  const f = inp.files && inp.files[0]; inp.value = "";
+  if(!f || !PBPH) return;
+  const m = M[CURID]; if(!m) return;
+  const k = planKeyOf(m); if(!k) return;
+  const img = new Image();
+  img.onload = () => {
+    const kk = Math.min(1, 480 / Math.max(img.width, img.height));
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(img.width * kk); cv.height = Math.round(img.height * kk);
+    cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+    const d = cv.toDataURL("image/jpeg", .6);
+    try{
+      const all = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+      const p = ((all[k] || {}).postes || []).find(x => x.id === PBPH);
+      if(!p) return;
+      p.photos = [{d: pbAuj(), img: d}].concat(p.photos || []).slice(0, 2);
+      p.hist = [[pbAuj(), "Photo du poste ajoutée — relevé mobile"]].concat(p.hist || []);
+      localStorage.setItem("tigerflow-plans", JSON.stringify(all));
+      PBPH = ""; rdetail();
+      toast("📷 Photo gardée sur " + p.id);
+    }catch(e){}
+  };
+  const rd = new FileReader();
+  rd.onload = () => { img.src = rd.result; };
+  rd.readAsDataURL(f);
+}
 function rdetail(){
   const m = M[CURID]; if(!m) return;
   let badge = m.st === "done" ? `<span class="stb g">TERMINÉE</span>`
@@ -2294,5 +2346,6 @@ function rapPhotoZoom(i){
   document.body.appendChild(v);
 }
 </script>
+<input type="file" id="pb-photo" accept="image/*" capture="environment" hidden onchange="pbPhotoIn(this)">
 </body>
 </html>

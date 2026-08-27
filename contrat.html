@@ -1833,12 +1833,19 @@ function docRender(neuf){
     const nCli = ((typeof ctrBox === "function" ? ctrBox() : []).find(x => x && x.n === (typeof cRef === "function" ? cRef() : "")) || {}).client || "";
     if(nCli){
       const P = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
-      plansH = Object.keys(P).filter(k => k.indexOf(nCli + "|") === 0 && P[k] && P[k].fond).map(k => {
+      plansH = Object.keys(P).filter(k => k.indexOf(nCli + "|") === 0 && P[k] && (P[k].fond || (P[k].niveaux && P[k].niveaux[0] && P[k].niveaux[0].fond))).map(k => {
         const site = k.slice(k.indexOf("|") + 1);
         const n2 = (P[k].postes || []).length;
+        const fondK = P[k].fond || P[k].niveaux[0].fond;
+        /* le retard de relevé se voit AUSSI depuis le contrat — même règle que le plan */
+        const fr = +(P[k].freq) || 60;
+        let dern = null;
+        (P[k].postes || []).forEach(p2 => { const m2 = /^(\d\d)\/(\d\d)\/(\d\d)$/.exec(String(p2.releve || "")); if(m2){ const d2 = new Date(2000 + +m2[3], +m2[2] - 1, +m2[1], 12); if(!dern || d2 > dern) dern = d2; } });
+        let ret = 0;
+        if(dern){ const ech = new Date(dern); ech.setDate(ech.getDate() + fr); const t0 = new Date(); t0.setHours(0, 0, 0, 0); ret = Math.max(0, Math.round((t0 - ech) / 86400000)); }
         return `<figure class="doccard ouvrable" onclick="location.href='plan-appatage.html?plan=${encodeURIComponent(k)}'" title="Ouvrir le plan à jour — l'export PDF se fait depuis le plan">
-          <div class="docvue"><img src="${P[k].fond}" alt=""><span class="doctag">Plan</span></div>
-          <figcaption><b>Plan d'appâtage${site ? " — " + site : ""}</b><small>${n2} poste${n2 > 1 ? "s" : ""} · toujours à jour</small></figcaption>
+          <div class="docvue"><img src="${fondK}" alt=""><span class="doctag">Plan</span></div>
+          <figcaption><b>Plan d'appâtage${site ? " — " + site : ""}</b><small>${n2} poste${n2 > 1 ? "s" : ""} · ${ret ? '<b style="color:#DC2626">relevé en retard de ' + ret + ' j</b>' : "toujours à jour"}</small></figcaption>
         </figure>`;
       }).join("");
     }
