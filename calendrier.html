@@ -1803,7 +1803,7 @@ function fileRender(){
       </span>
       <button class="dvko" onclick="dvKoAsk('${x.ref}')" title="Le client refuse — noter le motif">✗</button>
       <button class="frnote ${x.note ? "has" : ""}" onclick="dvNoteEdit('${x.ref}')" title="${x.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
-      <div class="frl2">Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")} (J+${jN})${x.last && x.last <= t ? ` · <b class="frlast">dernier appel le ${x.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${lt && x.relance ? ` · relance prévue le ${x.relance.split("-").reverse().slice(0, 2).join("/")}` : ""}${x.autoR ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""}${x.tel ? ` · ${telFmt(x.tel)}` : ""}</div>
+      <div class="frl2">${x.tel ? `<b class="frtelno">${telFmt(x.tel)}</b> · ` : ""}Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")} (J+${jN})${x.last && x.last <= t ? ` · <b class="frlast">dernier appel le ${x.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${lt && x.relance ? ` · relance prévue le ${x.relance.split("-").reverse().slice(0, 2).join("/")}` : ""}${x.autoR ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""}</div>
     </div>
     ${DVNED === x.ref ? `<div class="frned">
       <textarea id="fnedd-${x.ref}" rows="2" placeholder="Ex. : veut négocier — rappeler après le 20…">${x.note || ""}</textarea>
@@ -1829,7 +1829,7 @@ function fileRender(){
         <button onclick="fileSnooze('${p.pid}',1)">+1 j</button><button onclick="fileSnooze('${p.pid}',2)">+2 j</button><button onclick="fileSnooze('${p.pid}',7)">+7 j</button>
       </span>
       <button class="frnote ${p.note ? "has" : ""}" onclick="fileNoteEdit('${p.pid}')" title="${p.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
-      <div class="frl2">${motif}${p.last && p.last <= t ? ` · <b class="frlast">dernier appel le ${p.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${p.note ? ` · <i>${p.note}</i>` : ""}${tel ? ` · ${telFmt(tel)}` : ""}</div>
+      <div class="frl2">${tel ? `<b class="frtelno">${telFmt(tel)}</b> · ` : ""}${motif}${p.last && p.last <= t ? ` · <b class="frlast">dernier appel le ${p.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${p.note ? ` · <i>${p.note}</i>` : ""}</div>
     </div>
     ${FNEDIT === p.pid ? `<div class="frned">
       <textarea id="fned-${p.pid}" rows="2" placeholder="Ex. : m'a demandé de le rappeler demain à 17 h…">${p.note || ""}</textarea>
@@ -5965,11 +5965,26 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .frq{flex:none;width:92px;text-align:center;font-size:.66rem;font-weight:800;padding:6px 4px;border-radius:9px;background:#F4F5F8;color:#6C7285;line-height:1.35}
 .fr.lt .frq{background:#FDF0EF;color:#B3261E}
 .fr.tod .frq{background:#FFFBEB;color:#A16207}
-.frmid{flex:1;min-width:0}
+.frmid{flex:1;min-width:150px}
+/* 26/08 : le wrap se RANGE au lieu de tomber au hasard — le badge, le client
+   et l'appel restent à gauche ; TOUS les gestes (action principale, reports,
+   refus, note) forment UN bloc aligné à droite, qui descend d'une pièce quand
+   la place manque ; la ligne d'infos ferme la carte. */
+.fr .dvoui,.fr .frcal{order:5;margin-left:auto}
+.fr .frszg{order:6}
+.fr .dvko,.fr .frnote{order:7}
+.fr .dvko{margin-left:auto}   /* seuls sur leur rangée (devis), le refus et la note s'alignent à droite */
+.fr .frl2{order:9}
 .frl1{font-size:.8rem;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .frl1 small{font-size:.68rem;font-weight:700;color:var(--muted)}
 .frl1 .ftent{font-size:.58rem;font-weight:800;background:#F1F2F5;color:#6C7285;border-radius:7px;padding:2px 7px}
-.frl2{font-size:.68rem;font-weight:600;color:#8A90A0;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frl2{font-size:.68rem;font-weight:600;color:#8A90A0;margin-top:2px;line-height:1.5}
+/* 26/08 (parcours bureau) : la ligne 2 était tronquée par un ellipsis — la
+   NOTE (« préfère être rappelée après 12h ») et le NUMÉRO, c'est-à-dire tout
+   ce qui fait réussir l'appel, étaient amputés. Elle passe à la ligne. Le
+   numéro remonte en tête, en encre : celui qui compose sur un poste fixe
+   doit pouvoir le LIRE, pas seulement le cliquer. */
+.frtelno{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
 .frl2 i{font-style:normal;color:#B0876A}
 /* 18/08 (patron, GO) : le geste de la file, c'est APPELER — seul bouton plein.
    Les issues (Accepté, +j, ✗, ✎) restent en contours discrets. */
