@@ -926,6 +926,10 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
                    que la bêta Sites & facturation n'est pas activée. -->
               <button data-adr="1" hidden onclick="adrMenu('site')"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> Ajouter un site d'intervention</button>
               <button data-adr="1" hidden onclick="adrMenu('fact')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Adresse de facturation différente</button>
+              <!-- 27/08 (patron, GO v315) : couper les notifications d'UN client —
+                   l'exception vit ici, la règle reste dans Réglages. Masqué tant
+                   que la bêta Notifications clients n'est pas activée. -->
+              <button data-ntf="1" hidden onclick="ntfToggle()"><svg viewBox="0 0 24 24"><path d="M13.7 21a2 2 0 01-3.4 0"/><path d="M18.6 13c-.4-1.1-.6-2.4-.6-4a6 6 0 00-9.3-5M6.3 6.3C6.1 6.8 6 7.4 6 8c0 7-3 9-3 9h14"/><path d="M2 2l20 20"/></svg> <span id="ntf-lbl">Couper les notifications</span></button>
               <div class="csep"></div>
               <button class="cdanger" id="cdel" onclick="cliDel(event)"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg> <span id="cdel-lbl">Supprimer le client</span></button>
             </div>
@@ -3073,6 +3077,49 @@ document.addEventListener("click", function(e){
     });
   };
   adrRender();
+})();
+</script>
+<script>
+/* 27/08 (patron, GO sur v315) : l'EXCEPTION aux notifications vit sur la fiche
+   client — la règle (Réglages → Notifications clients) ne bouge pas, ici on
+   coupe UN client. Visible seulement si la bêta est active. */
+(function(){
+  var on = false; try{ on = !!localStorage.getItem("tigerflow-beta-sms"); }catch(e){}
+  if(!on) return;
+  var K = "tigerflow-notif-off";
+  function nom(){
+    var q = new URLSearchParams(location.search).get("c");
+    if(q) return q;
+    var e = document.querySelector(".crumbs .cur");
+    return e ? e.textContent.trim() : "";
+  }
+  function coupes(){ try{ var v = JSON.parse(localStorage.getItem(K)); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } }
+  function ntfEtat(){
+    var off = !!coupes()[nom()];
+    var lbl = document.getElementById("ntf-lbl");
+    if(lbl) lbl.textContent = off ? "Réactiver les notifications" : "Couper les notifications";
+    var chip = document.getElementById("h-ntf");
+    if(off && !chip){
+      var row = document.querySelector(".hids");
+      if(row){
+        chip = document.createElement("span");
+        chip.className = "hchip"; chip.id = "h-ntf";
+        chip.innerHTML = '<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M13.7 21a2 2 0 01-3.4 0"/><path d="M18.6 13c-.4-1.1-.6-2.4-.6-4a6 6 0 00-9.3-5M6.3 6.3C6.1 6.8 6 7.4 6 8c0 7-3 9-3 9h14"/><path d="M2 2l20 20"/></svg> Notifications coupées';
+        row.appendChild(chip);
+      }
+    } else if(!off && chip) chip.remove();
+  }
+  window.ntfToggle = function(){
+    var c = coupes(), n = nom(), off = !c[n];
+    if(off) c[n] = 1; else delete c[n];
+    try{ localStorage.setItem(K, JSON.stringify(c)); }catch(e){}
+    ntfEtat();
+    if(typeof cliMenuClose === "function") cliMenuClose();
+    if(typeof toast === "function")
+      toast(off ? "🔕 " + n + " — plus aucun SMS ni e-mail automatique" : "🔔 " + n + " — les notifications reprennent selon la règle");
+  };
+  document.querySelectorAll("[data-ntf]").forEach(function(b){ b.hidden = false; });
+  ntfEtat();
 })();
 </script>
 </body>

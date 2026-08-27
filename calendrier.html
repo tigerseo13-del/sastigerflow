@@ -1086,6 +1086,17 @@ thead th{position:sticky;top:0;background:#fff;z-index:3;box-shadow:0 1.5px 0 va
 .ivimp{flex-wrap:wrap}
 .ivimp .impgo{margin-left:auto;flex:none;align-self:center;background:#fff;border:1.5px solid #D9A408;color:#7A5A05;font-family:inherit;font-size:.72rem;font-weight:800;border-radius:9px;padding:7px 12px;cursor:pointer}
 .ivimp .impgo:hover{background:var(--amber-bg)}
+/* 27/08 (patron, GO v315) : les messages en attente d'une intervention —
+   dérivés des règles (Réglages → Notifications clients), ✕ pour en annuler UN. */
+.ntfl{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:11px;padding:8px 11px;margin-top:8px;font-size:.76rem;font-weight:700;color:var(--ink-2)}
+.ntfl .nk{flex:none;font-size:.6rem;font-weight:800;letter-spacing:.03em;border-radius:99px;padding:3px 9px}
+.ntfl .nk.s{background:#E9F8F1;color:#0E7A46}
+.ntfl .nk.m{background:#EBF1FE;color:#2E5CE6}
+.ntfl small{margin-left:auto;flex:none;font-size:.68rem;color:var(--muted);font-weight:600}
+.ntfl .nx{flex:none;width:26px;height:26px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:.8rem;font-weight:800;cursor:pointer;font-family:inherit}
+.ntfl .nx:hover{border-color:#C9CCD4;color:var(--ink)}
+.ntfl.gris{background:#FAFBFC;border-style:dashed;color:var(--muted);font-weight:600}
+.ntfvide{font-size:.74rem;color:var(--muted);font-weight:600;margin-top:6px}
 /* la reponse du bureau AU technicien — sans elle le tech poireaute sur place */
 .imprep{flex-basis:100%;border-top:1px dashed #E3CE8E;margin-top:10px;padding-top:10px}
 .imprep .rl{display:block;font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8A6D1F;margin-bottom:7px}
@@ -3145,6 +3156,70 @@ function pjFiles(v){
   }
   return [];
 }
+/* 27/08 (patron, GO sur v315) : la file DÉRIVÉE — rien n'est stocké à part
+   les ✕ (annulations une par une) et les clients coupés depuis leur fiche.
+   Les messages suivent l'intervention : déplacée, ils glissent ; annulée ou
+   terminée, ils meurent. L'envoi réel = relais serveur (note des Réglages). */
+const NTFRK = "tigerflow-notif-regles", NTFXK = "tigerflow-notif-x", NTFOFFK = "tigerflow-notif-off";
+const NTFDEF = { part: {veille: {on:1}, jourj: {on:0}}, pro: {veille: {on:1}}, syn: {veille: {on:1}} };
+function ntfOn(){ try{ return !!localStorage.getItem("tigerflow-beta-sms"); }catch(e){ return false; } }
+function ntfRegles(){
+  try{ const v = JSON.parse(localStorage.getItem(NTFRK)); if(v && typeof v === "object") return v; }catch(e){}
+  return NTFDEF;
+}
+/* le TYPE du client décide de la bande — même clé que la fiche client. */
+function ntfPubOf(client){
+  try{
+    const l = JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || [];
+    const c = l.find(x => x && x.nom === client);
+    if(c){ if(c.type === "syndic") return "syn"; if(c.type === "particulier") return "part"; return "pro"; }
+  }catch(e){}
+  return "part";
+}
+function ntfXmap(){ try{ const v = JSON.parse(localStorage.getItem(NTFXK)); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } }
+function ntfKill(key, client){
+  const x = ntfXmap(); x[key] = 1;
+  try{ localStorage.setItem(NTFXK, JSON.stringify(x)); }catch(e){}
+  renderDetail();
+  toast("✕ Message annulé — la règle ne bouge pas pour les autres", () => {
+    const x2 = ntfXmap(); delete x2[key];
+    try{ localStorage.setItem(NTFXK, JSON.stringify(x2)); }catch(e){}
+    renderDetail();
+  });
+}
+function notifBloc(v){
+  if(!ntfOn() || v.cancelled || v.done) return "";
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  const dv = new Date(v.date + "T12:00:00"); dv.setHours(0, 0, 0, 0);
+  if(dv < t0) return "";
+  const head = `<div class="dcard"><div class="dh">Messages en attente <a class="dre" href="reglages.html" style="text-decoration:none" title="Ouvrir les règles — qui reçoit quoi, et quand">règle : Réglages → Notifications</a></div>`;
+  let off = false;
+  try{ const o = JSON.parse(localStorage.getItem(NTFOFFK)) || {}; off = !!o[v.client]; }catch(e){}
+  if(off) return head + `<div class="ntfl gris">Notifications coupées pour ce client — depuis sa fiche.</div></div>`;
+  const pub = ntfPubOf(v.client), R = ntfRegles(), rp = R[pub] || {};
+  const tel = String(telOf(v) || ""), mob = /^0[67]/.test(tel.replace(/\s/g, ""));
+  const x = ntfXmap(), tech = TECHS[v.tech] ? TECHS[v.tech].nom : "le technicien";
+  const veille = new Date(dv); veille.setDate(veille.getDate() - 1);
+  const fdj = d => (d.getTime() === t0.getTime()) ? "part ce soir à 18 h" : "part le " + String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + " à 18 h";
+  const rows = [];
+  const sms = pub === "part";
+  if(rp.veille && rp.veille.on && veille >= t0){
+    const key = v.client + "|" + v.date + "|veille";
+    if(!x[key]){
+      if(sms && mob) rows.push({k: "s", lbl: "Rappel veille 18 h", cible: telFmt(tel), quand: fdj(veille), key: key});
+      else if(sms) rows.push({gris: 1, lbl: "Rappel veille : pas de mobile (fixe " + telFmt(tel) + ") — pas de SMS"});
+      else rows.push({k: "m", lbl: pub === "syn" ? "E-mail récap au gestionnaire" : "E-mail de rappel", cible: "e-mail du client", quand: fdj(veille), key: key});
+    }
+  }
+  if(sms && rp.jourj && rp.jourj.on && mob){
+    const key2 = v.client + "|" + v.date + "|jourj";
+    if(!x[key2]) rows.push({k: "s", lbl: "« " + tech + " arrive »", cible: telFmt(tel), quand: "jour J, au départ de " + tech, key: key2});
+  }
+  if(!rows.length) return head + `<div class="ntfvide">Rien à envoyer pour cette intervention.</div></div>`;
+  return head + rows.map(r => r.gris
+    ? `<div class="ntfl gris">${r.lbl}</div>`
+    : `<div class="ntfl"><span class="nk ${r.k}">${r.k === "s" ? "SMS" : "E-MAIL"}</span>${r.lbl} → ${r.cible}<small>${r.quand}</small><button class="nx" onclick="ntfKill('${r.key.replace(/'/g, "\\'")}','${String(v.client).replace(/'/g, "\\'")}')" title="Annuler CE message — la règle ne bouge pas">✕</button></div>`).join("") + `</div>`;
+}
 function renderDetail(){
   const v = INTERVS.find(x=>x.id===DID);
   if(!v) return closeDetail();
@@ -3328,7 +3403,7 @@ function renderDetail(){
       <div class="dh">Facturation ${v.mode === "encais" && late ? '<span class="dst late" style="margin-left:auto;font-size:.6rem">En retard</span>' : ''}</div>
       ${inv}
     </div>
-
+    ${notifBloc(v)}
 `;
   }
   else if(DTAB === "cli"){

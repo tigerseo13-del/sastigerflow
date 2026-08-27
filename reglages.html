@@ -70,6 +70,17 @@ html{background:#F7F8FA}
 .smsm .sq{flex:none;font-size:.62rem;font-weight:800;letter-spacing:.04em;border-radius:7px;padding:3px 8px;background:#EBF1FE;color:#2E5CE6;white-space:nowrap}
 .smsnote{margin-top:13px;padding:11px 13px;border-radius:11px;background:#FBF3D9;font-size:.74rem;line-height:1.6;color:var(--ink-2)}
 .smsnote b{font-weight:700}
+/* 27/08 (patron, GO v315) : les règles PAR TYPE de client dans le panneau. */
+.sq.qs{background:#E9F8F1;color:#0E7A46}
+.nrtx{display:none;margin:7px 0 3px 30px}
+.smsm:has(input:checked)+.nrtx{display:block}
+.nrtx textarea{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:9px 12px;font:600 .78rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;resize:vertical;min-height:58px;box-sizing:border-box;line-height:1.55}
+.nrtx textarea:focus{border-color:var(--orange)}
+.nrtx input[type=text]{max-width:none;font-size:.76rem;margin-bottom:7px}
+.nrmeta{display:flex;align-items:center;gap:14px;margin-top:5px;font-size:.68rem;font-weight:700;color:var(--muted)}
+.nrmeta b{color:var(--ink-2)}
+.nrori{color:var(--muted);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.nrori:hover{color:var(--ink-2)}
 
 @media(max-width:720px){
   .betarow{grid-template-columns:minmax(0,1fr) auto;gap:4px 12px}
@@ -594,12 +605,13 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <span class="bd">Un client payeur, plusieurs sites d'intervention (syndics, enseignes) — ajoute la carte sur la fiche client et l'adresse de facturation sur les devis et factures</span>
         <span class="betaEtat" id="beta-sites-etat">inactif</span>
       </a>
-      <!-- 24/08 (patron) : SMS au client. Transactionnel uniquement — voir la
-           note du panneau : un rappel d'intervention n'est PAS du marketing,
-           il s'envoie 24 h/24 et n'exige pas de mention STOP. -->
+      <!-- 24/08 (patron) : SMS au client. Transactionnel uniquement — un rappel
+           d'intervention n'est PAS du marketing, il s'envoie 24 h/24 sans mention STOP.
+           27/08 (GO sur v315) : la bêta grandit en « Notifications clients » —
+           la règle lit le TYPE du client, SMS ET e-mail, textes à variables. -->
       <a class="betarow" href="#" id="beta-sms" onclick="event.preventDefault();betaSmsToggle()">
-        <span class="bn">SMS aux clients</span>
-        <span class="bd">Rappel la veille, technicien en route, relance de facture — les textes existent déjà (page Relances), ici on règle QUAND et sous QUEL NOM</span>
+        <span class="bn">Notifications clients (SMS &amp; e-mail)</span>
+        <span class="bd">La règle lit le type du client : SMS personnalisés aux particuliers, e-mail de rappel aux pros, récap aux syndics — réglée une fois, chaque intervention suit</span>
         <span class="betaEtat" id="beta-sms-etat">inactif</span>
       </a>
       <div class="smspan" id="smspan" hidden>
@@ -607,12 +619,26 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <input type="text" id="sms-exp" maxlength="11" placeholder="AntiNuisibl (11 max)" oninput="smsExpSave()">
         <div class="shint">11 caractères maximum, <b>ni espace ni accent ni caractère spécial</b> — les opérateurs français bloquent. Évite aussi les mots trop génériques (« SMS », « Info »), eux aussi filtrés.</div>
 
-        <label class="sl">Quand on envoie</label>
-        <label class="smsm"><input type="checkbox" id="sms-m1" onchange="smsSave()"><i></i><span class="st"><b>Rappel la veille, à 18 h</b><small>« Bonjour, rappel : notre technicien passe demain entre 8 h et 10 h. »</small></span><span class="sq">le plus utile</span></label>
-        <label class="smsm"><input type="checkbox" id="sms-m2" onchange="smsSave()"><i></i><span class="st"><b>Le technicien est en route</b><small>Parti au client suivant → « il arrive dans environ 40 minutes ». Déclenché depuis l'appli mobile, pas par une horloge.</small></span><span class="sq">moins d'appels</span></label>
-        <label class="smsm"><input type="checkbox" id="sms-m3" onchange="smsSave()"><i></i><span class="st"><b>Relance de facture impayée</b><small>Après les deux e-mails de relance, jamais avant — un SMS pour de l'argent est perçu comme agressif.</small></span><span class="sq">en dernier</span></label>
+        <!-- 27/08 (patron, GO v315) : la règle lit le TYPE du client — on règle
+             UNE fois, les interventions suivent. La relance de facture impayée
+             vit sur la page Relances (séquences par public), pas ici. -->
+        <label class="sl">Particuliers — le SMS rassure, le numéro du technicien évite les portes closes</label>
+        <label class="smsm"><input type="checkbox" id="nr-part-veille" onchange="nrSave()"><i></i><span class="st"><b>Rappel la veille, à 18 h</b><small>Un SMS personnalisé par intervention — dix inters, dix techniciens, zéro saisie.</small></span><span class="sq qs">SMS</span></label>
+        <div class="nrtx"><textarea id="nrt-part-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span id="nrc-part-veille"></span><span class="nrori" onclick="nrReset('part','veille')">texte d'origine</span></div></div>
+        <label class="smsm"><input type="checkbox" id="nr-part-jourj" onchange="nrSave()"><i></i><span class="st"><b>« Le technicien arrive » — jour J</b><small>Part quand il lance sa tournée dans l'appli. Coupé par défaut : à allumer quand les techniciens auront le réflexe.</small></span><span class="sq qs">SMS</span></label>
+        <div class="nrtx"><textarea id="nrt-part-jourj" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span id="nrc-part-jourj"></span><span class="nrori" onclick="nrReset('part','jourj')">texte d'origine</span></div></div>
 
-        <div class="smsnote"><b>Ce qui manque pour envoyer pour de vrai :</b> un relais côté serveur. La clé d'API ne peut pas vivre dans cette page — elle serait lisible par n'importe qui ouvrant le code source. Ce réglage est la spécification que l'équipe de développement branchera sur Twilio (ou OVH / Brevo).</div>
+        <label class="sl">Professionnels — l'e-mail laisse une trace au bureau, avec le site concerné</label>
+        <label class="smsm"><input type="checkbox" id="nr-pro-veille" onchange="nrSave()"><i></i><span class="st"><b>E-mail de rappel, la veille à 18 h</b><small>Au contact de la fiche client — chez un multi-sites, l'e-mail nomme LA boutique.</small></span><span class="sq">E-mail</span></label>
+        <div class="nrtx"><input type="text" id="nro-pro-veille" placeholder="Objet" oninput="nrSave()"><textarea id="nrt-pro-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span class="nrori" onclick="nrReset('pro','veille')">texte d'origine</span></div></div>
+
+        <label class="sl">Syndics — un récap, jamais du SMS à la chaîne</label>
+        <label class="smsm"><input type="checkbox" id="nr-syn-veille" onchange="nrSave()"><i></i><span class="st"><b>E-mail récap au gestionnaire, la veille à 18 h</b><small>UN e-mail, tous les passages du lendemain dans ses immeubles.</small></span><span class="sq">E-mail</span></label>
+        <div class="nrtx"><input type="text" id="nro-syn-veille" placeholder="Objet" oninput="nrSave()"><textarea id="nrt-syn-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span class="nrori" onclick="nrReset('syn','veille')">texte d'origine</span></div></div>
+        <div class="shint" style="margin-top:9px">La bande syndic n'a <b>pas de SMS</b> — réglé une fois, plus jamais un SMS parti chez un gestionnaire par erreur. Jamais de SMS aux fixes (01-09), regroupé par numéro et par jour.</div>
+        <div class="shint">Les mots entre accolades se remplissent tout seuls depuis chaque intervention : <b>{client}</b> <b>{date}</b> <b>{heure}</b> <b>{technicien}</b> <b>{tel_technicien}</b> <b>{adresse}</b> <b>{site}</b>. Les messages en attente se voient sur chaque intervention de l'agenda, avec un ✕ pour en annuler un. L'exception par client : fiche client → ⋯ → « Couper les notifications ».</div>
+
+        <div class="smsnote"><b>Ce qui manque pour envoyer pour de vrai :</b> un relais côté serveur — SMS et e-mails partent par la même file d'attente. La clé d'API ne peut pas vivre dans cette page — elle serait lisible par n'importe qui ouvrant le code source. Ce réglage est la spécification que l'équipe de développement branchera sur Twilio (ou OVH / Brevo).</div>
       </div>
       <div class="betasec"><b>Version 3</b><span>8 fonctions</span><small>après la V2</small></div>
       <a class="betarow" href="tournee.html">
@@ -2043,6 +2069,17 @@ label[for]{cursor:pointer}
 .smsm .sq{flex:none;font-size:.62rem;font-weight:800;letter-spacing:.04em;border-radius:7px;padding:3px 8px;background:#EBF1FE;color:#2E5CE6;white-space:nowrap}
 .smsnote{margin-top:13px;padding:11px 13px;border-radius:11px;background:#FBF3D9;font-size:.74rem;line-height:1.6;color:var(--ink-2)}
 .smsnote b{font-weight:700}
+/* 27/08 (patron, GO v315) : les règles PAR TYPE de client dans le panneau. */
+.sq.qs{background:#E9F8F1;color:#0E7A46}
+.nrtx{display:none;margin:7px 0 3px 30px}
+.smsm:has(input:checked)+.nrtx{display:block}
+.nrtx textarea{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:9px 12px;font:600 .78rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;resize:vertical;min-height:58px;box-sizing:border-box;line-height:1.55}
+.nrtx textarea:focus{border-color:var(--orange)}
+.nrtx input[type=text]{max-width:none;font-size:.76rem;margin-bottom:7px}
+.nrmeta{display:flex;align-items:center;gap:14px;margin-top:5px;font-size:.68rem;font-weight:700;color:var(--muted)}
+.nrmeta b{color:var(--ink-2)}
+.nrori{color:var(--muted);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.nrori:hover{color:var(--ink-2)}
 
 /* Fonctions en beta : une ligne par fonction, colonnes alignees. */
 .betabox{margin-top:28px;border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
@@ -2231,18 +2268,13 @@ function smsEtat(){
   if(cfg){
     const g = id => document.getElementById(id);
     if(g("sms-exp")) g("sms-exp").value = cfg.exp || "";
-    if(g("sms-m1")) g("sms-m1").checked = !!cfg.m1;
-    if(g("sms-m2")) g("sms-m2").checked = !!cfg.m2;
-    if(g("sms-m3")) g("sms-m3").checked = !!cfg.m3;
+    nrEtat();
   }
 }
 function smsSave(){
   const g = id => document.getElementById(id);
   const cfg = smsLire() || {};
   cfg.exp = (g("sms-exp") || {value:""}).value.trim();
-  cfg.m1 = !!(g("sms-m1") || {}).checked;
-  cfg.m2 = !!(g("sms-m2") || {}).checked;
-  cfg.m3 = !!(g("sms-m3") || {}).checked;
   try{ localStorage.setItem(SMSKEY, JSON.stringify(cfg)); }catch(e){}
 }
 /* le nom d'expéditeur a une FORME imposée par les opérateurs : on refuse ce
@@ -2258,15 +2290,70 @@ function smsExpSave(){
 function betaSmsToggle(){
   const on = !smsOn();
   try{
-    if(on) localStorage.setItem(SMSKEY, JSON.stringify({exp:"", m1:true, m2:false, m3:false}));
+    if(on) localStorage.setItem(SMSKEY, JSON.stringify({exp:""}));
     else localStorage.removeItem(SMSKEY);
   }catch(e){}
   smsEtat();
   if(typeof toast === "function")
-    toast(on ? "SMS clients activés — règle le nom d'expéditeur et les moments"
-             : "SMS clients désactivés");
+    toast(on ? "Notifications clients activées — la règle suit le type de chaque client"
+             : "Notifications clients désactivées");
 }
 document.addEventListener("DOMContentLoaded", smsEtat);
+
+/* 27/08 (patron, GO sur v315) : les règles PAR TYPE. Démarrage serré (avis
+   validé) : la veille partout, le jour J coupé tant que les techniciens n'ont
+   pas le réflexe appli. calendrier.html lit la même clé pour dériver la file. */
+const NRKEY = "tigerflow-notif-regles";
+const NRDEF = {
+  part: { veille: {on:1, t:"Bonjour {client}, Agence Antinuisible passe demain à {heure}. Votre technicien : {technicien} — {tel_technicien}. Un empêchement ? 01 89 72 43 96."},
+          jourj:  {on:0, t:"{technicien} est en route pour {adresse}. Son numéro direct : {tel_technicien}."} },
+  pro:  { veille: {on:1, obj:"Passage Agence Antinuisible demain {date} à {heure} — {site}", t:"Le technicien {technicien} interviendra sur {site} ({adresse}). Contact direct : {tel_technicien}. Merci de prévoir l'accès aux locaux."} },
+  syn:  { veille: {on:1, obj:"Vos interventions de demain {date}", t:"La liste des passages prévus dans vos immeubles, avec créneau, technicien et nature de l'intervention."} }
+};
+const NRLIGNES = [["part","veille"],["part","jourj"],["pro","veille"],["syn","veille"]];
+function nrLire(){
+  try{ const v = JSON.parse(localStorage.getItem(NRKEY)); if(v && typeof v === "object") return v; }catch(e){}
+  return JSON.parse(JSON.stringify(NRDEF));
+}
+function nrEtat(){
+  const r = nrLire(), g = id => document.getElementById(id);
+  NRLIGNES.forEach(([p, m]) => {
+    const row = (r[p] && r[p][m]) || (NRDEF[p] && NRDEF[p][m]) || {};
+    if(g("nr-" + p + "-" + m)) g("nr-" + p + "-" + m).checked = !!row.on;
+    if(g("nrt-" + p + "-" + m)) g("nrt-" + p + "-" + m).value = row.t != null ? row.t : "";
+    if(g("nro-" + p + "-" + m)) g("nro-" + p + "-" + m).value = row.obj != null ? row.obj : "";
+  });
+  nrCnt();
+}
+function nrSave(){
+  const r = nrLire(), g = id => document.getElementById(id);
+  NRLIGNES.forEach(([p, m]) => {
+    if(!r[p]) r[p] = {};
+    if(!r[p][m]) r[p][m] = {};
+    if(g("nr-" + p + "-" + m)) r[p][m].on = g("nr-" + p + "-" + m).checked ? 1 : 0;
+    if(g("nrt-" + p + "-" + m)) r[p][m].t = g("nrt-" + p + "-" + m).value;
+    if(g("nro-" + p + "-" + m)) r[p][m].obj = g("nro-" + p + "-" + m).value;
+  });
+  try{ localStorage.setItem(NRKEY, JSON.stringify(r)); }catch(e){}
+  nrCnt();
+}
+/* le compteur dit le VRAI coût : 160 caractères = 1 SMS, ensuite 153 par SMS. */
+function nrCnt(){
+  const g = id => document.getElementById(id);
+  ["part-veille", "part-jourj"].forEach(k => {
+    const ta = g("nrt-" + k), e = g("nrc-" + k);
+    if(!ta || !e) return;
+    const n = ta.value.length, seg = n <= 160 ? 1 : Math.ceil(n / 153);
+    e.innerHTML = "<b>" + n + " / " + (seg === 1 ? 160 : seg * 153) + "</b> · " + seg + " SMS · " + (seg * 0.08).toFixed(2).replace(".", ",") + " €";
+  });
+}
+function nrReset(p, m){
+  const g = id => document.getElementById(id), d = (NRDEF[p] && NRDEF[p][m]) || {};
+  if(g("nrt-" + p + "-" + m)) g("nrt-" + p + "-" + m).value = d.t || "";
+  if(g("nro-" + p + "-" + m)) g("nro-" + p + "-" + m).value = d.obj || "";
+  nrSave();
+  if(typeof toast === "function") toast("Texte d'origine restauré");
+}
 </script>
 <script>
 /* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
