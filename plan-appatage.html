@@ -247,6 +247,10 @@ ul{list-style:none}
 .qrlab .qn{font-family:'Sora';font-weight:800;font-size:1.25rem;margin-top:6px}
 .qrlab .qz{font-size:.7rem;font-weight:700;color:var(--ink-2);min-height:2.1em}
 .qrlab .qs{font-size:.6rem;color:var(--muted);font-weight:600;margin-top:3px}
+/* 27/08 (« FAIT TOUT » poste) : un poste RETIRÉ garde son historique */
+.sb-ret{background:#EEF0F4;color:#6C7285}
+tr.retrow td{opacity:.55}
+tr.retrow .st-badge{opacity:1}
 
 /* ============ MOBILE ============ */
 @media(max-width:980px){
@@ -511,7 +515,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
         <div class="legend">
           <span><i class="pastille" style="background:var(--green)"></i>Poste rongeurs — RAS</span>
-          <span><i class="pastille" style="background:#E8930C"></i>Consommation constatée</span>
+          <span><i class="pastille" style="background:#E8930C"></i>Consommation / capture constatée</span>
           <span><i class="pastille" style="background:var(--red)"></i>À remplacer / manquant</span>
           <span><i class="pastille" style="background:var(--blue)"></i>Détecteur insectes (DIV / UV)</span>
         </div>
@@ -690,20 +694,24 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
 <script>
 /* ================================================================
    27/08 (patron : « go » sur ma reco) — LE PLAN RÉEL.
-   Un plan par client+site dans tigerflow-plans : { "client|site":
-   {niveaux:[{nom,fond(dataURL jpeg)}], freq(jours), postes:[{id,x,y(0..1),
-   niv,type,zone,produit,statut,conso,lot,photos:[{d,img}]≤2,releve,
-   hist:[[date,note]]}], seq} }. L'ancien pl.fond (un seul niveau) est migré
-   en lecture ET reste MIROITÉ (pl.fond = niveaux[0].fond) pour tech-mobile
-   et contrat. La démo Ironwood reste la vitrine par défaut.
-   27/08 (« FAIS LES 7 ») : tendance de conso lue dans l'historique, retard
-   de relevé (fréquence par plan), n° de lot, photos de poste, NIVEAUX,
-   étiquettes QR (+ ?poste= depuis le scan).
+   tigerflow-plans : { "client|site": {niveaux:[{nom,fond}], freq(jours),
+   postes:[{id,nom?,x,y(0..1),niv,type pa/div/mec/mon,zone,produit,fix?,
+   statut,conso,lot,photos≤2,retire?,releve,hist:[[date,note]]}], seq} }.
+   pl.fond MIROITÉ (= niveaux[0].fond) pour tech-mobile/contrat.
+   « FAIS LES 7 » : tendance, retard (freq), lot, photos, niveaux, QR, ?poste=.
+   « FAIT TOUT » (poste) : ① RETIRÉ (jamais de suppression d'historique —
+   grisé au registre, absent du plan, réactivable ; la vraie suppression ne
+   reste possible QUE sur un poste posé du jour sans vie) ② NON ACCESSIBLE
+   au relevé (l'auditeur veut le voir écrit) ③ POSE EN SÉRIE ④ types PIÈGE
+   MÉCANIQUE (capture/RAS) + MONITORING NON TOXIQUE (grignotage %) pour
+   l'agro IFS/BRC ⑤ nom de poste éditable (les étiquettes existantes)
+   ⑥ fixation éditable.
    ================================================================ */
 (function(){
   var PKEY = "tigerflow-plans";
   var MODE = "", SELID = "", ADD = false, MOVE = "", PENDING = null, RELEV = false, EDIT = false, ARMSUP = false;
   var NIV = 0, PENDNIV = false, PENDNIVNOM = "";
+  var SERIE = false, LASTT = "pa", LASTP = "";
   var $ = function(id){ return document.getElementById(id); };
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); };
   var DEMO_TBODY = $("tbody").innerHTML;
@@ -711,6 +719,10 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   var HEX2 = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
   var SB2  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
   var LBL2 = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Détecteur insectes"};
+  var TYPL = {pa:"Poste d'appâtage rongeurs", div:"Détecteur insectes", mec:"Piège mécanique", mon:"Monitoring non toxique"};
+  var TYPC = {pa:"Poste rongeurs", div:"Détecteur insectes", mec:"Piège mécanique", mon:"Monitoring"};
+  var DEFP = {pa:"Bloc appât sécurisé 20 g", div:"Lampe UV + plaque glue", mec:"Piège mécanique sous coffre", mon:"Bloc monitoring non toxique"};
+  var PREF = {pa:"PA-", div:"DIV-", mec:"PM-", mon:"MN-"};
   var FL = {up:"\u2197", down:"\u2198", flat:"\u2192"};
 
   var tdiv = document.createElement("div"); tdiv.className = "tst2"; tdiv.id = "tst2"; document.body.appendChild(tdiv);
@@ -719,7 +731,6 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   function lireP(){ try{ var v = JSON.parse(localStorage.getItem(PKEY)); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } }
   function cur(){ return MODE ? (lireP()[MODE] || null) : null; }
   function sauve(pl){
-    /* le miroir : tech-mobile et contrat lisent pl.fond — il suit le niveau 1 */
     if(pl && pl.niveaux && pl.niveaux.length) pl.fond = pl.niveaux[0].fond;
     var all = lireP(); all[MODE] = pl;
     try{ localStorage.setItem(PKEY, JSON.stringify(all)); return true; }
@@ -729,33 +740,44 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   function dParse(x){ var m = /^(\d\d)\/(\d\d)\/(\d\d)$/.exec(String(x || "")); return m ? new Date(2000 + +m[3], +m[2] - 1, +m[1], 12) : null; }
   var FDC = function(d){ return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); };
   function nomDe(k){ var i = k.indexOf("|"); return {client: k.slice(0, i), site: k.slice(i + 1)}; }
-  /* les niveaux — l'ancien fond unique est lu comme un niveau 1 */
   function nivDe(pl){
     if(!pl) return [];
     if(pl.niveaux && pl.niveaux.length) return pl.niveaux;
     return pl.fond ? [{nom: "Rez-de-chaussée", fond: pl.fond}] : [];
   }
-  /* la TENDANCE : la série des consommations lue dans l'historique (récent → vieux) */
-  function consoSerie(p){
+  /* le numéro AFFICHÉ : le nom donné par l'équipe, sinon l'identifiant */
+  function numDe(x){ return x.nom || x.id.split("-")[1]; }
+  function actifs(pl){ return ((pl || {}).postes || []).filter(function(x){ return !x.retire; }); }
+  function retires(pl){ return ((pl || {}).postes || []).filter(function(x){ return !!x.retire; }); }
+  /* le libellé du statut SUIT le type : capture (mécanique), grignotage (monitoring) */
+  function stLbl(x){
+    if(x.retire) return "Retiré le " + x.retire;
+    if(x.statut === "conso") return x.type === "mec" ? "Capture" : x.type === "mon" ? "Grignotage" : "Consommation";
+    return LBL2[x.statut] || x.statut;
+  }
+  function stCls(x){ return x.retire ? "sb-ret" : SB2[x.statut]; }
+  /* la TENDANCE : consommation OU grignotage lus dans l'historique */
+  function consoSerie(x){
     var out = [];
-    (p.hist || []).forEach(function(h){
+    (x.hist || []).forEach(function(h){
       var t = String(h[1] || "");
-      var m = p.type === "div" ? /^(\d+) capture/.exec(t) : /Consommation (\d+) ?%/.exec(t);
+      var m = x.type === "div" ? /^(\d+) capture/.exec(t) : /(?:Consommation|Grignotage) (\d+) ?%/.exec(t);
       if(m) out.push(+m[1]);
       else if(/^RAS/.test(t)) out.push(0);
     });
     return out.slice(0, 5).reverse();
   }
-  function tdnDe(p){
-    var sr = consoSerie(p);
+  function tdnDe(x){
+    if(x.type === "mec") return null;
+    var sr = consoSerie(x);
     if(sr.length < 2) return null;
     var d = sr[sr.length - 1] - sr[sr.length - 2];
     return {k: d > 0 ? "up" : d < 0 ? "down" : "flat", de: sr[sr.length - 2], a: sr[sr.length - 1]};
   }
-  /* le RETARD : dernier relevé + fréquence du plan (l'auditeur vérifie la cadence) */
+  /* le RETARD : dernier relevé des postes EN SERVICE + fréquence du plan */
   function retardInfo(pl){
     var f = +((pl || {}).freq) || 60, dern = null;
-    ((pl || {}).postes || []).forEach(function(p){ var d = dParse(p.releve); if(d && (!dern || d > dern)) dern = d; });
+    actifs(pl).forEach(function(x){ var d = dParse(x.releve); if(d && (!dern || d > dern)) dern = d; });
     if(!dern) return {f: f, jamais: true, retard: 0};
     var ech = new Date(dern); ech.setDate(ech.getDate() + f);
     var t0 = new Date(); t0.setHours(0, 0, 0, 0);
@@ -763,7 +785,6 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     return {f: f, dern: dern, ech: ech, retard: r > 0 ? r : 0};
   }
 
-  /* ---- le sélecteur : les vrais clients × leurs sites ---- */
   function cibles(){
     var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
     var seen = {}, out = [];
@@ -787,7 +808,6 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     sel.value = MODE;
   }
 
-  /* ---- peinture ---- */
   function paint(){
     window.PLMODE = MODE;
     var pl = cur(), demo = !MODE;
@@ -804,7 +824,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       }).join("") + '<button class="f add" onclick="plNivAdd()" title="Un étage, un sous-sol, une annexe — chaque niveau porte sa propre image">+ Niveau</button>';
     }
     $("btn-add").classList.toggle("arm", ADD || !!MOVE);
-    $("btn-add-l").textContent = MOVE ? "Cliquez sur le nouvel emplacement…" : (ADD ? "Cliquez sur le plan…" : "Ajouter un poste");
+    $("btn-add-l").textContent = MOVE ? "Cliquez sur le nouvel emplacement…" : (ADD ? (SERIE ? "Série — cliquez pour poser le suivant…" : "Cliquez sur le plan…") : "Ajouter un poste");
     if(demo){
       $("pl-titre").textContent = "Plan d'appâtage — Site rue de la République";
       $("pl-sub").textContent = "Ironwood Solutions · Contrat CTR-2026-04729 · Dernière relève le 12/06/2026 par Pablo";
@@ -815,44 +835,46 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       $("detail").innerHTML = DEMO_EMPTY;
       return;
     }
-    var n = nomDe(MODE), ps = (pl && pl.postes) || [];
+    var n = nomDe(MODE), act = actifs(pl), ret = retires(pl);
     var ri = retardInfo(pl);
-    var derniere = ps.map(function(x){ var d = dParse(x.releve); return d ? d.getTime() : 0; }).sort().reverse()[0];
+    var derniere = act.map(function(x){ var d = dParse(x.releve); return d ? d.getTime() : 0; }).sort().reverse()[0];
     $("pl-titre").textContent = "Plan d'appâtage — " + (n.site || n.client);
-    var sub = n.client + (ps.length ? " · " + ps.length + " poste" + (ps.length > 1 ? "s" : "") + (derniere ? " · dernière relève le " + FDC(new Date(derniere)) : "") : " · aucun poste pour l'instant");
-    $("pl-sub").innerHTML = esc(sub) + (ps.length
+    var sub = n.client + (act.length ? " · " + act.length + " poste" + (act.length > 1 ? "s" : "") + " en service" + (ret.length ? " · " + ret.length + " retiré" + (ret.length > 1 ? "s" : "") : "") + (derniere ? " · dernière relève le " + FDC(new Date(derniere)) : "") : " · aucun poste pour l'instant");
+    $("pl-sub").innerHTML = esc(sub) + (act.length
       ? (ri.retard ? ' <span class="plret ko">Relevé en retard de ' + ri.retard + ' j</span>'
         : (ri.ech ? ' <span class="plret ok">prochain avant le ' + FDC(ri.ech) + '</span>' : ""))
       : "");
     $("pl-bar").innerHTML = esc(n.site || n.client) + (fonds.length
       ? ' · plan du client<span class="plchg" onclick="document.getElementById(\'pl-file\').click()">Changer le fond' + (fonds.length > 1 ? " (" + esc((fonds[NIV] || {}).nom || "") + ")" : "") + '</span>'
-        + (ps.length ? '<span class="plchg" onclick="qrOuvre()" title="Une étiquette par poste, à imprimer et coller — le scan ouvre la fiche du poste">Étiquettes QR</span>' : "")
+        + (act.length ? '<span class="plchg" onclick="qrOuvre()" title="Une étiquette par poste, à imprimer et coller — le scan ouvre la fiche du poste">Étiquettes QR</span>' : "")
         + '<span class="plfreq">relevé tous les <select onchange="plFreq(this.value)">' + [30, 45, 60, 90, 180].map(function(v){ return '<option value="' + v + '"' + (v === ri.f ? " selected" : "") + '>' + v + '</option>'; }).join("") + '</select> jours</span>'
       : "");
     $("pl-reg").textContent = "Registre des postes — " + (n.site || n.client) + (derniere ? " · relève du " + FDC(new Date(derniere)) : "");
-    $("rs-tot").textContent = ps.length;
-    $("rs-ok").textContent = ps.filter(function(x){ return x.statut === "ok"; }).length;
-    $("rs-conso").textContent = ps.filter(function(x){ return x.statut === "conso"; }).length;
-    $("rs-alerte").textContent = ps.filter(function(x){ return x.statut === "alerte"; }).length;
+    $("rs-tot").textContent = act.length;
+    $("rs-ok").textContent = act.filter(function(x){ return x.statut === "ok"; }).length;
+    $("rs-conso").textContent = act.filter(function(x){ return x.statut === "conso"; }).length;
+    $("rs-alerte").textContent = act.filter(function(x){ return x.statut === "alerte"; }).length;
     if(fonds.length){ $("rimg").src = (fonds[NIV] || {}).fond || ""; }
-    $("rdots").innerHTML = ps.filter(function(x){ return (x.niv || 0) === NIV; }).map(function(x){
-      return '<button class="rdot' + (x.id === SELID ? " sel" : "") + '" data-st="' + x.statut + '" style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + HEX2[x.statut] + '" onclick="plSel(\'' + esc(x.id) + '\')" title="' + esc(x.zone || x.id) + '">' + x.id.split("-")[1] + '</button>';
+    $("rdots").innerHTML = act.filter(function(x){ return (x.niv || 0) === NIV; }).map(function(x){
+      return '<button class="rdot' + (x.id === SELID ? " sel" : "") + '" data-st="' + x.statut + '" style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + HEX2[x.statut] + '" onclick="plSel(\'' + esc(x.id) + '\')" title="' + esc(x.zone || x.id) + '">' + esc(numDe(x)) + '</button>';
     }).join("");
-    $("tbody").innerHTML = ps.length ? ps.map(function(x){
+    var ligneDe = function(x){
       var td = tdnDe(x);
-      return '<tr onclick="plSelNiv(\'' + esc(x.id) + '\',' + (x.niv || 0) + ')"><td><span class="num" style="background:' + HEX2[x.statut] + '">' + x.id.split("-")[1] + '</span></td>'
+      return '<tr' + (x.retire ? ' class="retrow"' : '') + ' onclick="plSelNiv(\'' + esc(x.id) + '\',' + (x.niv || 0) + ')"><td><span class="num" style="background:' + (x.retire ? "#9AA0AC" : HEX2[x.statut]) + '">' + esc(numDe(x)) + '</span></td>'
         + '<td class="ref">' + esc(x.zone || "—") + (fonds.length > 1 ? ' <span style="color:var(--muted);font-weight:600;font-size:.72rem">· ' + esc((fonds[x.niv || 0] || {}).nom || "") + '</span>' : "") + '</td>'
-        + '<td>' + (x.type === "div" ? "Détecteur insectes" : "Poste rongeurs") + '</td>'
-        + '<td><span class="st-badge ' + SB2[x.statut] + '">' + LBL2[x.statut] + '</span></td>'
-        + '<td>' + (x.type === "div" ? (x.conso || 0) + " captures" : (x.conso || 0) + " %")
+        + '<td>' + TYPC[x.type || "pa"] + '</td>'
+        + '<td><span class="st-badge ' + stCls(x) + '">' + esc(stLbl(x)) + '</span></td>'
+        + '<td>' + (x.type === "mec" ? "—" : x.type === "div" ? (x.conso || 0) + " captures" : (x.conso || 0) + " %")
           + (td && td.k !== "flat" ? '<span class="tdn ' + td.k + '" title="' + td.de + ' \u2192 ' + td.a + '">' + FL[td.k] + '</span>' : "") + '</td>'
         + '<td>' + esc(x.releve || "—") + '</td></tr>';
-    }).join("") : '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste — « Ajouter un poste » puis cliquez sur le plan.</td></tr>';
+    };
+    $("tbody").innerHTML = (act.length || ret.length)
+      ? act.map(ligneDe).join("") + ret.map(ligneDe).join("")
+      : '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste — « Ajouter un poste » puis cliquez sur le plan.</td></tr>';
     peindreDetail();
   }
 
-  /* ⚠️ cur() re-parse le stockage : deux appels = deux COPIES. On cherche
-     toujours le poste DANS l'objet qu'on va sauvegarder. */
+  /* ⚠️ cur() re-parse le stockage : on cherche le poste DANS l'objet sauvé. */
   function poste(pl, id){ return pl ? (pl.postes || []).find(function(x){ return x.id === id; }) : null; }
 
   function peindreDetail(){
@@ -873,59 +895,89 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   }
 
   function fiche(x){
-    var consoRow = x.type === "div"
+    var consoRow = x.type === "mec" ? ""
+      : x.type === "div"
       ? '<div class="d-row"><span class="k">Captures (dernier relevé)</span><span class="v">' + (x.conso || 0) + '</span></div>'
-      : '<div class="d-row" style="display:block"><div style="display:flex;justify-content:space-between"><span class="k">Consommation d\'appât</span><span class="v">' + (x.conso || 0) + ' %</span></div><div class="conso-bar"><i style="width:' + (x.conso || 0) + '%;background:' + ((x.conso || 0) >= 50 ? "#DC2626" : (x.conso || 0) > 0 ? "#E8930C" : "#1B8A46") + '"></i></div></div>';
+      : '<div class="d-row" style="display:block"><div style="display:flex;justify-content:space-between"><span class="k">' + (x.type === "mon" ? "Grignotage" : "Consommation d\'appât") + '</span><span class="v">' + (x.conso || 0) + ' %</span></div><div class="conso-bar"><i style="width:' + (x.conso || 0) + '%;background:' + ((x.conso || 0) >= 50 ? "#DC2626" : (x.conso || 0) > 0 ? "#E8930C" : "#1B8A46") + '"></i></div></div>';
     var td = tdnDe(x);
     var tdRow = td ? '<div class="d-row"><span class="k">Tendance</span><span class="v"><span class="tdn ' + td.k + '">' + FL[td.k] + '</span> ' + (td.k === "up" ? "en hausse" : td.k === "down" ? "en baisse" : "stable") + ' (' + td.de + ' \u2192 ' + td.a + (x.type === "div" ? "" : " %") + ')</span></div>' : "";
     var lotRow = x.lot ? '<div class="d-row"><span class="k">Lot en place</span><span class="v">' + esc(x.lot) + '</span></div>' : "";
+    var fixRow = x.fix ? '<div class="d-row"><span class="k">Fixation</span><span class="v">' + esc(x.fix) + '</span></div>' : "";
     var phs = (x.photos || []).length ? '<div class="phstrip">' + x.photos.map(function(ph){ return '<img src="' + ph.img + '" title="Photo du ' + esc(ph.d) + '" onclick="plLb(this.src)">'; }).join("") + '</div>' : "";
+    var histH = '<div class="d-hist"><div class="t">Historique des relèves</div><ul>'
+      + ((x.hist || []).slice(0, 8).map(function(h){ return '<li><span class="dte">' + esc(h[0]) + '</span><span>' + esc(h[1]) + '</span></li>'; }).join("") || '<li><span class="dte">—</span><span>Aucun relevé pour l\'instant.</span></li>')
+      + '</ul></div>';
     var corps;
-    if(RELEV) corps = formReleve(x);
+    if(x.retire){
+      /* un poste retiré est en LECTURE : l'historique survit, l'auditeur le voit. */
+      corps = '<div class="d-rows">'
+        + '<div class="d-row"><span class="k">Produit (dernier)</span><span class="v">' + esc(x.produit || "—") + '</span></div>'
+        + lotRow + fixRow
+        + '<div class="d-row"><span class="k">Retiré le</span><span class="v">' + esc(x.retire) + '</span></div>'
+        + '</div>' + phs + histH
+        + '<div class="d-actions"><button class="btn primary" onclick="plReactive()">Remettre en service</button></div>'
+        + '<div class="dwarn">Un poste retiré garde tout son historique — la traçabilité ne se supprime jamais.</div>';
+    }
+    else if(RELEV) corps = formReleve(x);
     else if(EDIT) corps = formEdit(x);
     else corps = '<div class="d-rows">'
       + '<div class="d-row"><span class="k">Produit en place</span><span class="v">' + esc(x.produit || "—") + '</span></div>'
-      + consoRow + tdRow + lotRow
+      + consoRow + tdRow + lotRow + fixRow
       + '<div class="d-row"><span class="k">Dernière relève</span><span class="v">' + esc(x.releve || "jamais") + '</span></div>'
-      + '</div>' + phs
-      + '<div class="d-hist"><div class="t">Historique des relèves</div><ul>'
-      + ((x.hist || []).slice(0, 8).map(function(h){ return '<li><span class="dte">' + esc(h[0]) + '</span><span>' + esc(h[1]) + '</span></li>'; }).join("") || '<li><span class="dte">—</span><span>Aucun relevé pour l\'instant.</span></li>')
-      + '</ul></div>'
+      + '</div>' + phs + histH
       + '<div class="d-actions"><button class="btn primary" onclick="plRelever()">Relever</button>'
-      + '<button class="btn outline" onclick="plAlerte()">À remplacer</button></div>'
-      + '<div class="plmini"><span onclick="plPhotoBtn()">Photo</span><span onclick="plEdit()">Modifier</span><span onclick="plMove()">Déplacer</span><span class="danger" onclick="plSup(this)">' + (ARMSUP ? "Confirmer la suppression ?" : "Supprimer") + '</span></div>';
-    return '<div class="d-head"><span class="d-num" style="background:' + HEX2[x.statut] + '">' + x.id.split("-")[1] + '</span>'
-      + '<div><b>' + x.id + ' — ' + (x.type === "div" ? "Détecteur insectes" : "Poste d\'appâtage rongeurs") + '</b><small>' + esc(x.zone || "emplacement à préciser") + '</small></div>'
-      + '<span class="st-badge ' + SB2[x.statut] + '">' + LBL2[x.statut] + '</span></div>' + corps;
+      + (x.type === "div" ? "" : '<button class="btn outline" onclick="plAlerte()">À remplacer</button>') + '</div>'
+      + '<div class="plmini"><span onclick="plPhotoBtn()">Photo</span><span onclick="plEdit()">Modifier</span><span onclick="plMove()">Déplacer</span><span class="danger" onclick="plSup(this)">' + supLbl(x) + '</span></div>';
+    return '<div class="d-head"><span class="d-num" style="background:' + (x.retire ? "#9AA0AC" : HEX2[x.statut]) + '">' + esc(numDe(x)) + '</span>'
+      + '<div><b>' + esc(x.nom ? x.nom + " (" + x.id + ")" : x.id) + ' — ' + TYPL[x.type || "pa"] + '</b><small>' + esc(x.zone || "emplacement à préciser") + '</small></div>'
+      + '<span class="st-badge ' + stCls(x) + '">' + esc(stLbl(x)) + '</span></div>' + corps;
+  }
+  /* la vraie suppression n'existe QUE pour une pose du jour sans vie —
+     tout le reste se RETIRE (l'historique est un document d'audit). */
+  function frais(x){ return (x.hist || []).length <= 1 && x.releve === aujFR(); }
+  function supLbl(x){
+    if(frais(x)) return ARMSUP ? "Confirmer la suppression ?" : "Supprimer";
+    return ARMSUP ? "Confirmer le retrait ?" : "Retirer";
   }
 
   function formReleve(x){
-    var estDiv = x.type === "div";
+    var estDiv = x.type === "div", estMec = x.type === "mec", estMon = x.type === "mon";
+    var haut;
+    if(estMec) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — rien</label><label><input type="radio" name="pf-r" value="capt">Capture</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>';
+    else if(estDiv) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
+      + '<label>Captures constatées</label><input type="number" id="pf-cap" min="0" value="' + (x.conso || 0) + '">';
+    else haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">' + (estMon ? "Grignotage" : "Consommation") + '</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
+      + '<label>' + (estMon ? "Grignotage" : "Consommation") + ' (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">';
     return '<div class="plform">'
-      + '<label>Relevé du ' + aujFR() + '</label>'
-      + (estDiv
-        ? '<label>Captures constatées</label><input type="number" id="pf-cap" min="0" value="' + (x.conso || 0) + '">'
-        : '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">Consommation</label></div>'
-          + '<label>Consommation (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">')
-      + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estDiv ? "Plaque changée" : "Bloc remplacé") + '</label>'
-      + '<label>N° de lot du produit posé (l\'auditeur le demande)</label><input type="text" id="pf-lot" placeholder="ex. 24B117" value="">'
-      + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estDiv ? "mouches, moucherons…" : "zone à surveiller, passage renforcé…") + '">'
+      + '<label>Relevé du ' + aujFR() + '</label>' + haut
+      + (estMec ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estDiv ? "Plaque changée" : "Bloc remplacé") + '</label>')
+      + (estDiv || estMec ? "" : '<label>N° de lot du produit posé (l\'auditeur le demande)</label><input type="text" id="pf-lot" placeholder="ex. 24B117" value="">')
+      + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estDiv ? "mouches, moucherons…" : estMec ? "souris, réarmé, appât mécanique changé…" : "zone à surveiller, passage renforcé…") + '">'
       + '<div class="d-actions"><button class="btn primary" onclick="plRelSave()">Enregistrer le relevé</button><button class="btn outline" onclick="plRelAnnule()">Annuler</button></div></div>';
   }
   function formEdit(x){
     return '<div class="plform">'
+      + '<label>Numéro / nom du poste (les étiquettes déjà en place)</label><input type="text" id="pf-nom" value="' + esc(x.nom || "") + '" placeholder="' + esc(x.id.split("-")[1]) + ' — ou R3, S1…">'
       + '<label>Emplacement</label><input type="text" id="pf-zone" value="' + esc(x.zone || "") + '" placeholder="Cuisine — angle nord-ouest">'
       + '<label>Produit en place</label><input type="text" id="pf-prod" value="' + esc(x.produit || "") + '">'
+      + '<label>Fixation / sécurisation</label><input type="text" id="pf-fix" value="' + esc(x.fix || "") + '" placeholder="Vissé au sol, verrouillé à clé…">'
       + '<div class="d-actions"><button class="btn primary" onclick="plEditSave()">Enregistrer</button><button class="btn outline" onclick="plEditAnnule()">Annuler</button></div></div>';
   }
   function formNouveau(){
+    var t = function(v, lbl){ return '<label><input type="radio" name="pf-t" value="' + v + '"' + (LASTT === v ? " checked" : "") + ' onchange="plTypeDef(this.value)">' + lbl + '</label>'; };
     return '<div class="d-head"><span class="d-num" style="background:var(--orange)">+</span><div><b>Nouveau poste</b><small>posé sur le plan — précise-le</small></div></div>'
       + '<div class="plform">'
-      + '<label>Type</label><div class="plrad"><label><input type="radio" name="pf-t" value="pa" checked>Poste rongeurs</label><label><input type="radio" name="pf-t" value="div">Détecteur insectes</label></div>'
+      + '<label>Type</label><div class="plrad">' + t("pa", "Rongeurs") + t("div", "Détecteur insectes") + '</div>'
+      + '<div class="plrad" style="margin-top:7px">' + t("mec", "Piège mécanique") + t("mon", "Monitoring non toxique") + '</div>'
       + '<label>Emplacement</label><input type="text" id="pf-zone" placeholder="Cuisine — angle nord-ouest">'
-      + '<label>Produit en place</label><input type="text" id="pf-prod" value="Bloc appât sécurisé 20 g">'
+      + '<label>Produit en place</label><input type="text" id="pf-prod" value="' + esc(LASTP || DEFP[LASTT]) + '">'
+      + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-serie"' + (SERIE ? " checked" : "") + ' style="width:auto;accent-color:var(--orange)"> Enchaîner — poser le suivant juste après (même type, même produit)</label>'
       + '<div class="d-actions"><button class="btn primary" onclick="plNewSave()">Poser le poste</button><button class="btn outline" onclick="plNewAnnule()">Annuler</button></div></div>';
   }
+  window.plTypeDef = function(v){
+    var e = $("pf-prod");
+    if(e && (!e.value || Object.keys(DEFP).some(function(k){ return e.value === DEFP[k]; }))) e.value = DEFP[v] || "";
+  };
   function formNiveau(){
     return '<div class="d-head"><span class="d-num" style="background:var(--orange)">+</span><div><b>Nouveau niveau</b><small>un étage, un sous-sol, une annexe</small></div></div>'
       + '<div class="plform">'
@@ -937,7 +989,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   /* ---- gestes ---- */
   window.plPick = function(k){
     MODE = k; SELID = ""; ADD = false; MOVE = ""; PENDING = null; RELEV = false; EDIT = false; ARMSUP = false;
-    NIV = 0; PENDNIV = false; PENDNIVNOM = "";
+    NIV = 0; PENDNIV = false; PENDNIVNOM = ""; SERIE = false;
     scaleR = 1; var rin = $("rin"); if(rin) rin.style.width = "100%";
     try{ localStorage.setItem("tigerflow-plan-cur", MODE); }catch(e){}
     paint();
@@ -965,16 +1017,21 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     if(!MODE){ tst("La démo ne s'édite pas — choisis un client dans le sélecteur en haut."); return; }
     var pl = cur();
     if(!nivDe(pl).length){ tst("Pose d'abord le plan du local (l'image) — le bouton en pointillé."); $("pl-file").click(); return; }
-    ADD = !ADD; MOVE = ""; PENDING = null; PENDNIV = false; paint();
+    ADD = !ADD; MOVE = ""; PENDING = null; PENDNIV = false;
+    if(!ADD) SERIE = false;
+    paint();
     if(ADD) tst("Clique sur le plan à l'endroit exact du poste.");
   };
-  window.plMove = function(){ MOVE = SELID; ADD = false; RELEV = false; EDIT = false; paint(); tst("Clique sur le plan : le poste " + MOVE + " s'y déplace" + (nivDe(cur()).length > 1 ? " (sur le niveau affiché)" : "") + "."); };
+  window.plMove = function(){ MOVE = SELID; ADD = false; RELEV = false; EDIT = false; paint(); tst("Clique sur le plan : le poste s'y déplace" + (nivDe(cur()).length > 1 ? " (sur le niveau affiché)" : "") + "."); };
   window.plEdit = function(){ EDIT = true; RELEV = false; ARMSUP = false; peindreDetail(); };
   window.plEditAnnule = function(){ EDIT = false; peindreDetail(); };
   window.plEditSave = function(){
     var pl = cur(), x = poste(pl, SELID); if(!x) return;
+    x.nom = ($("pf-nom") || {value: ""}).value.trim();
+    if(x.nom === x.id.split("-")[1]) x.nom = "";
     x.zone = ($("pf-zone") || {value: ""}).value.trim();
     x.produit = ($("pf-prod") || {value: ""}).value.trim();
+    x.fix = ($("pf-fix") || {value: ""}).value.trim();
     EDIT = false; if(sauve(pl)) paint();
   };
   window.plRelever = function(){ RELEV = true; EDIT = false; ARMSUP = false; peindreDetail(); };
@@ -984,54 +1041,80 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var note = ($("pf-note") || {value: ""}).value.trim();
     var lot = ($("pf-lot") || {value: ""}).value.trim();
     var rmp = ($("pf-rmp") || {}).checked;
+    var choix = (document.querySelector('input[name="pf-r"]:checked') || {value: "ras"}).value;
     var t;
-    if(x.type === "div"){
+    if(choix === "nonacc"){
+      /* l'auditeur veut le voir ÉCRIT : le passage a eu lieu, le poste non */
+      t = "Poste non accessible ce jour";
+    } else if(x.type === "mec"){
+      if(choix === "capt"){ x.statut = "conso"; t = "Capture constatée — piège réarmé"; }
+      else { x.statut = "ok"; t = "RAS — rien au piège"; }
+    } else if(x.type === "div"){
       x.conso = Math.max(0, +($("pf-cap") || {value: 0}).value || 0);
       t = x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — plaque changée" : "");
     } else {
-      var ras = (document.querySelector('input[name="pf-r"]:checked') || {value: "ras"}).value === "ras";
+      var mot = x.type === "mon" ? "Grignotage" : "Consommation";
+      var ras = choix === "ras";
       x.conso = ras ? 0 : Math.min(100, Math.max(0, +($("pf-pc") || {value: 0}).value || 0));
       x.statut = x.conso > 0 ? "conso" : "ok";
-      t = ras || !x.conso ? "RAS — bloc intact" : "Consommation " + x.conso + " %" + (rmp ? " — bloc remplacé" : "");
+      t = ras || !x.conso ? "RAS — bloc intact" : mot + " " + x.conso + " %" + (rmp ? " — bloc remplacé" : "");
     }
-    if(lot){ t += " · lot " + lot; x.lot = lot; }
+    if(lot && choix !== "nonacc"){ t += " · lot " + lot; x.lot = lot; }
     if(note) t += " — " + note;
     x.releve = aujFR();
     x.hist = [[aujFR(), t]].concat(x.hist || []);
     RELEV = false;
-    if(sauve(pl)){ paint(); tst("✓ Relevé enregistré — " + x.id); }
+    if(sauve(pl)){ paint(); tst("✓ Relevé enregistré — " + (x.nom || x.id)); }
   };
   window.plAlerte = function(){
     var pl = cur(), x = poste(pl, SELID); if(!x || x.type === "div") return;
     x.statut = "alerte"; x.releve = aujFR();
     x.hist = [[aujFR(), "Poste endommagé ou manquant — À REMPLACER"]].concat(x.hist || []);
-    if(sauve(pl)){ paint(); tst("Poste " + x.id + " marqué À remplacer."); }
+    if(sauve(pl)){ paint(); tst("Poste " + (x.nom || x.id) + " marqué À remplacer."); }
   };
+  /* ① retirer ≠ supprimer : l'historique est un document d'audit */
   window.plSup = function(){
+    var pl = cur(), x = poste(pl, SELID); if(!x) return;
     if(!ARMSUP){ ARMSUP = true; peindreDetail(); return; }
-    var pl = cur(); if(!pl) return;
-    pl.postes = (pl.postes || []).filter(function(x){ return x.id !== SELID; });
-    var id = SELID; SELID = ""; ARMSUP = false;
-    if(sauve(pl)){ paint(); tst("Poste " + id + " supprimé du plan."); }
+    ARMSUP = false;
+    if(frais(x)){
+      pl.postes = (pl.postes || []).filter(function(z){ return z.id !== SELID; });
+      var id = SELID; SELID = "";
+      if(sauve(pl)){ paint(); tst("Poste " + id + " supprimé — il venait d'être posé, sans historique."); }
+      return;
+    }
+    x.retire = aujFR();
+    x.hist = [[aujFR(), "Poste retiré — l'historique est conservé"]].concat(x.hist || []);
+    if(sauve(pl)){ paint(); tst("Poste " + (x.nom || x.id) + " RETIRÉ — grisé au registre, historique intact."); }
   };
-  window.plNewAnnule = function(){ PENDING = null; peindreDetail(); };
+  window.plReactive = function(){
+    var pl = cur(), x = poste(pl, SELID); if(!x) return;
+    x.retire = null;
+    x.hist = [[aujFR(), "Poste remis en service"]].concat(x.hist || []);
+    if(sauve(pl)){ paint(); tst("Poste " + (x.nom || x.id) + " remis en service."); }
+  };
+  window.plNewAnnule = function(){ PENDING = null; SERIE = false; peindreDetail(); };
   window.plNewSave = function(){
     var pl = cur(); if(!pl || !PENDING) return;
     var type = (document.querySelector('input[name="pf-t"]:checked') || {value: "pa"}).value;
+    SERIE = !!($("pf-serie") || {}).checked;
     pl.seq = (pl.seq || 0) + 1;
     var x = {
-      id: (type === "div" ? "DIV-" : "PA-") + pl.seq, x: PENDING.x, y: PENDING.y, niv: PENDING.niv || 0, type: type,
+      id: (PREF[type] || "PA-") + pl.seq, x: PENDING.x, y: PENDING.y, niv: PENDING.niv || 0, type: type,
       zone: ($("pf-zone") || {value: ""}).value.trim(),
-      produit: ($("pf-prod") || {value: ""}).value.trim() || (type === "div" ? "Lampe UV + plaque glue" : "Bloc appât sécurisé 20 g"),
+      produit: ($("pf-prod") || {value: ""}).value.trim() || DEFP[type],
       statut: type === "div" ? "div" : "ok", conso: 0, releve: aujFR(),
       hist: [[aujFR(), "Poste installé"]]
     };
+    LASTT = type; LASTP = x.produit;
     pl.postes = (pl.postes || []).concat([x]);
     PENDING = null; SELID = x.id;
-    if(sauve(pl)){ paint(); tst("✓ " + x.id + " posé sur le plan."); }
+    if(sauve(pl)){
+      if(SERIE){ ADD = true; SELID = ""; paint(); tst("✓ " + x.id + " posé — clique pour poser le suivant (série)."); }
+      else { paint(); tst("✓ " + x.id + " posé sur le plan."); }
+    }
   };
 
-  /* le clic sur le plan : poser un nouveau poste, ou déplacer celui qui est armé */
   $("rin").addEventListener("click", function(e){
     if(e.target.closest(".rdot")) return;
     if(!ADD && !MOVE) return;
@@ -1046,7 +1129,6 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     paint();
   });
 
-  /* ---- l'upload du fond : compressé fort (~5 Mo pour TOUT le SaaS) ---- */
   window.plFile = function(inp){
     var f = inp.files && inp.files[0]; inp.value = "";
     if(!f || !MODE) return;
@@ -1082,7 +1164,6 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     rd.readAsDataURL(f);
   };
 
-  /* ---- la photo du poste : la PREUVE, 2 max par poste ---- */
   window.plPhotoBtn = function(){ if(!SELID){ return; } $("pl-photo").click(); };
   window.plPhoto = function(inp){
     var f = inp.files && inp.files[0]; inp.value = "";
@@ -1097,7 +1178,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       var pl = cur(), x = poste(pl, SELID); if(!x) return;
       x.photos = [{d: aujFR(), img: d}].concat(x.photos || []).slice(0, 2);
       x.hist = [[aujFR(), "Photo du poste ajoutée"]].concat(x.hist || []);
-      if(sauve(pl)){ paint(); tst("📷 Photo gardée sur " + x.id + " — 2 max par poste, les plus récentes."); }
+      if(sauve(pl)){ paint(); tst("📷 Photo gardée sur " + (x.nom || x.id) + " — 2 max par poste, les plus récentes."); }
     };
     img.onerror = function(){ tst("Cette photo n'est pas lisible."); };
     var rd = new FileReader();
@@ -1106,25 +1187,22 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   };
   window.plLb = function(src){ $("pllb-img").src = src; $("pllb").classList.add("open"); };
 
-  /* ---- les étiquettes QR : le scan ouvre LA fiche du poste ---- */
   window.qrOuvre = function(){
-    var pl = cur(); if(!pl || !(pl.postes || []).length) return;
+    var pl = cur(); if(!pl || !actifs(pl).length) return;
     var n = nomDe(MODE);
     $("qr-t").textContent = "Étiquettes QR — " + (n.site || n.client);
     var base = "https://tigerseo13-del.github.io/sastigerflow/plan-appatage.html?plan=" + encodeURIComponent(MODE) + "&poste=";
-    $("qrgrid").innerHTML = (pl.postes || []).map(function(x){
+    $("qrgrid").innerHTML = actifs(pl).map(function(x){
       var tag = "";
       try{ var q = qrcode(0, "M"); q.addData(base + encodeURIComponent(x.id)); q.make(); tag = q.createImgTag(3, 4); }
       catch(e){ tag = "<small>QR indisponible</small>"; }
-      return '<div class="qrlab">' + tag + '<div class="qn">' + x.id + '</div><div class="qz">' + esc(x.zone || "") + '</div><div class="qs">Agence Antinuisible · ' + esc(n.site || n.client) + '</div></div>';
+      return '<div class="qrlab">' + tag + '<div class="qn">' + esc(x.nom || x.id) + '</div><div class="qz">' + esc(x.zone || "") + '</div><div class="qs">Agence Antinuisible · ' + esc(n.site || n.client) + '</div></div>';
     }).join("");
     document.body.classList.add("qrmode");
     $("qrov").classList.add("open");
   };
   window.qrFerme = function(){ document.body.classList.remove("qrmode"); $("qrov").classList.remove("open"); };
 
-  /* ---- démarrage : ?plan= (carte du contrat), ?poste= (scan d'étiquette),
-          sinon le dernier plan ouvert ---- */
   try{
     var prm = new URLSearchParams(location.search);
     var qp = prm.get("plan");

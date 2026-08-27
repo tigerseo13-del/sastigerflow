@@ -1273,21 +1273,30 @@ function pbTdn(p){
   const out = [];
   (p.hist || []).forEach(h => {
     const t = String(h[1] || "");
-    const m = p.type === "div" ? /^(\d+) capture/.exec(t) : /Consommation (\d+) ?%/.exec(t);
+    const m = p.type === "div" ? /^(\d+) capture/.exec(t) : /(?:Consommation|Grignotage) (\d+) ?%/.exec(t);
     if(m) out.push(+m[1]); else if(/^RAS/.test(t)) out.push(0);
   });
   return (out.length >= 2 && out[0] > out[1]) ? '<b style="color:#DC2626">\u2197 </b>' : "";
 }
 function pbActs(p){
+  const nonacc = `<button class="pba" onclick="event.stopPropagation();pbNonAcc('${p.id}')">Non accessible</button>`;
+  const photo = `<button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>`;
   if(p.type === "div") return `<div class="pbacts">
     ${[0, 3, 8, 15].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbDiv('${p.id}',${n2})">${n2} capt.</button>`).join("")}
-    <button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>
+    ${nonacc}${photo}
+  </div>`;
+  /* piège mécanique : capture ou rien — pas de pourcentage, pas de lot */
+  if(p.type === "mec") return `<div class="pbacts">
+    <button class="pba ok" onclick="event.stopPropagation();pbRas('${p.id}')">✓ RAS</button>
+    <button class="pba co" onclick="event.stopPropagation();pbCapt('${p.id}')">Capture — réarmé</button>
+    <button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>
+    ${nonacc}${photo}
   </div>`;
   return `<div class="pbacts">
     <button class="pba ok" onclick="event.stopPropagation();pbRas('${p.id}')">✓ RAS</button>
     ${[25, 50, 75, 100].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbConso('${p.id}',${n2})">${n2} %</button>`).join("")}
     <button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>
-    <button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>
+    ${nonacc}${photo}
     <input class="pblot" id="pb-lot" placeholder="N° de lot (si remplacé)" onclick="event.stopPropagation()">
   </div>`;
 }
@@ -1298,11 +1307,11 @@ function planBloc(m){
   try{ P = JSON.parse(localStorage.getItem("tigerflow-plans"))[k]; }catch(e){}
   if(!P) return "";
   const site = k.slice(k.indexOf("|") + 1), auj = pbAuj();
-  const rows = (P.postes || []).map(p => {
+  const rows = (P.postes || []).filter(p => !p.retire).map(p => {
     const fait = p.releve === auj && (p.hist || []).some(h => h[0] === auj && /relevé mobile/.test(h[1] || ""));
     const open = PBOPEN === p.id;
     const ch = p.statut === "alerte" ? ["#FDE8E8", "#DC2626", "À remplacer"]
-      : p.statut === "conso" ? ["#FBF3D9", "#8A5A17", (p.conso || 0) + " %"]
+      : p.statut === "conso" ? ["#FBF3D9", "#8A5A17", p.type === "mec" ? "Capture" : (p.conso || 0) + " %"]
       : p.statut === "div" ? ["#EAF1FE", "#2453C6", (p.conso || 0) + " capt."]
       : ["#ECFDF5", "#047857", "RAS"];
     return `<div class="pbrow${open ? " open" : ""}" onclick="pbTog('${p.id}')">
@@ -1336,9 +1345,11 @@ function pbConso(id, n2){
   pbEcrit(id, p => {
     p.statut = "conso"; p.conso = n2;
     if(lot) p.lot = lot;
-    return "Consommation " + n2 + " % — bloc remplacé" + (lot ? " · lot " + lot : "");
+    return (p.type === "mon" ? "Grignotage " : "Consommation ") + n2 + " % — bloc remplacé" + (lot ? " · lot " + lot : "");
   });
 }
+function pbCapt(id){ pbEcrit(id, p => { p.statut = "conso"; return "Capture constatée — piège réarmé"; }); }
+function pbNonAcc(id){ pbEcrit(id, p => "Poste non accessible ce jour"); }
 function pbKo(id){ pbEcrit(id, p => { p.statut = "alerte"; p.conso = 0; return "Poste endommagé ou manquant — À REMPLACER"; }); }
 function pbDiv(id, n2){ pbEcrit(id, p => { p.conso = n2; return n2 + " capture" + (n2 > 1 ? "s" : "") + " — plaque changée"; }); }
 /* la PREUVE : la photo du poste, prise sur place — 2 max par poste, très compressée */
