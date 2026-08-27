@@ -1798,6 +1798,7 @@ function fileRender(){
       </div>
       ${telC ? `<a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${x.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>` : ""}
       <button class="dvoui" onclick="dvOui('${x.ref}')" title="Le client accepte — le devis passe « Accepté » et le calage s'ouvre pendant qu'il est en ligne">✓ Accepté → planifier</button>
+      <button class="frnorep" onclick="dvNoRep('${x.ref}')" title="Personne n'a décroché — la tentative est notée, le devis reste dans la file du jour">✆ Sans réponse</button>
       <span class="frszg" title="Il réfléchit encore — repousser la relance">
         <button onclick="dvSnooze('${x.ref}',1)">+1 j</button><button onclick="dvSnooze('${x.ref}',2)">+2 j</button><button onclick="dvSnooze('${x.ref}',7)">+7 j</button>
       </span>
@@ -1825,6 +1826,7 @@ function fileRender(){
       </div>
       <a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${p.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
       <button class="frcal" onclick="fileCaler('${p.pid}')">📅 Caler le RDV</button>
+      <button class="frnorep" onclick="fileNoRep('${p.pid}')" title="Personne n'a décroché — la tentative est notée, il reste dans la file du jour">✆ Sans réponse</button>
       <span class="frszg" title="Toujours injoignable — repousser le rappel de 1, 2 ou 7 jours">
         <button onclick="fileSnooze('${p.pid}',1)">+1 j</button><button onclick="fileSnooze('${p.pid}',2)">+2 j</button><button onclick="fileSnooze('${p.pid}',7)">+7 j</button>
       </span>
@@ -1855,7 +1857,11 @@ function fileRender(){
   /* 18/08 (patron, GO) : dans un même groupe, l'ARGENT d'abord — à retard
      comparable on appelle 1 240 € avant 340 €. Les RDV (sans montant) suivent,
      triés par date. */
-  const triB = b => b.sort((a, z) => ((z.k === "d" ? +z.o.montant || 0 : -1) - (a.k === "d" ? +a.o.montant || 0 : -1)) || String(a.d || "9999").localeCompare(String(z.d || "9999")));
+  /* 26/08 (GO « Sans réponse ») : celui qu'on vient de tenter AUJOURD'HUI
+     descend en bas de sa section — on ne rappelle pas deux fois de suite le
+     même, mais il ne quitte pas sa journée. */
+  const dejaT = r => (r.o.last === t ? 1 : 0);
+  const triB = b => b.sort((a, z) => (dejaT(a) - dejaT(z)) || ((z.k === "d" ? +z.o.montant || 0 : -1) - (a.k === "d" ? +a.o.montant || 0 : -1)) || String(a.d || "9999").localeCompare(String(z.d || "9999")));
   const eurB = b => { const n = b.reduce((a, r) => a + (r.k === "d" ? (+r.o.montant || 0) : 0), 0); return n ? dvEur(n) : ""; };
   const jourTitre = d => {
     const dt = new Date(d + "T12:00:00");
@@ -2143,6 +2149,24 @@ function fileNoteSave(pid){
   }
   FNEDIT = null; fileRender(); renderTray();
   toast(txt ? "📝 Note enregistrée — elle est aussi sur la fiche client" : "Note vide — rien à garder");
+}
+/* 26/08 (patron, GO) : l'appel SANS issue existe enfin — la tentative est
+   notée (compteur + « dernier appel le »), la ligne RESTE dans sa journée et
+   descend en bas de sa section pour retenter plus tard dans la séance. */
+function fileNoRep(pid){
+  pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;
+  const p = PENDING.find(x => x.pid === pid); if(!p) return;
+  const t = iso(TODAYD);
+  p.last = t; p.tent = (p.tent || 1) + 1;
+  fileRender(); renderTray();
+  toast("\u2706 " + p.client + " \u2014 sans r\u00e9ponse (" + p.tent + "\u1d49 tentative) \u00b7 il reste dans la file du jour");
+}
+function dvNoRep(ref){
+  const x = DEVAT.find(z => z.ref === ref); if(!x) return;
+  const t = iso(TODAYD);
+  x.last = t; x.tent = (x.tent || 1) + 1; dvSave();
+  render(); fileRender(); renderTray();
+  toast("\u2706 " + x.client + " \u2014 sans r\u00e9ponse (" + x.tent + "\u1d49 tentative) \u00b7 le devis reste dans la file du jour");
 }
 function fileSnooze(pid, nj){
   pid = (pid !== "" && !isNaN(pid)) ? +pid : pid;   /* 04/08 : pids texte (dvcal-…) ET numériques */
@@ -5996,6 +6020,9 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
    est BLANC liseré orange au repos, il ne s'allume qu'au survol de SA ligne. */
 .frcal{flex:none;cursor:pointer;background:#fff;border:1.5px solid #DFE2EC;color:var(--orange-deep);font-size:.72rem;font-weight:800;font-family:inherit;border-radius:10px;padding:8px 13px;white-space:nowrap;transition:.12s}
 .fr:hover .frcal{background:#FFF8EF;border-color:#F0D9BF}
+.frnorep{flex:none;border:1.5px solid #E2E5EB;background:#fff;border-radius:10px;padding:8px 11px;font-size:.66rem;font-weight:800;color:#3B4256;cursor:pointer;font-family:inherit;white-space:nowrap}
+.frnorep:hover{border-color:#C9CCD4;color:var(--ink)}
+.fr .frnorep{order:6}
 .frszg{flex:none;display:inline-flex;border:1.5px solid #E2E5EB;border-radius:10px;overflow:hidden}
 .frszg button{border:0;cursor:pointer;background:#fff;color:#8A90A0;font-size:.62rem;font-weight:800;font-family:inherit;padding:9px 7px;border-left:1px solid #EEF0F4;white-space:nowrap}
 .frszg button:first-child{border-left:0}
@@ -6017,13 +6044,18 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fqt{display:block;font-style:normal;font-weight:700;font-size:.56rem;color:#8D93A8;margin-top:3px}
 .frwhen{font-size:.6rem;font-weight:800;border-radius:7px;padding:2px 7px;background:#F1F2F5;color:#6C7285;white-space:nowrap}
 .frwhen.lt{background:#FDF0EF;color:#B3261E}
-.fday{display:flex;align-items:baseline;gap:8px;margin:15px 2px 8px;padding-bottom:5px;border-bottom:1.5px solid #EDEFF5}
+/* 26/08 (patron : « sépare bien les jours ») : chaque jour est une BARRE
+   pleine — fond gris, rouge pour le retard, ambre doux pour aujourd'hui —
+   et elle COLLE en haut pendant qu'on descend ses cartes : on sait toujours
+   dans quel jour on est. */
+.fday{position:sticky;top:0;z-index:4;display:flex;align-items:center;gap:9px;margin:18px 0 9px;padding:9px 13px;background:#EEF1F6;border-radius:11px}
 .fday.first{margin-top:2px}
-.fday .ft{font-size:.72rem;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#3B4256}
+.fday .ft{font-size:.74rem;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#3B4256}
 .fday .fd{font-size:.68rem;color:var(--muted);font-weight:600}
-.fday .fn{font-size:.62rem;font-weight:800;background:#F1F2F7;color:#6C7285;border-radius:99px;padding:2px 8px}
+.fday .fn{font-size:.62rem;font-weight:800;background:#fff;color:#6C7285;border-radius:99px;padding:2px 8px}
 .fday .fe{margin-left:auto;font-size:.7rem;font-weight:800;color:#6C7285}
-.fday.red{border-bottom-color:#F7D7DD}.fday.red .ft{color:#D6455F}
+.fday.red{background:#FCECEA}.fday.red .ft{color:#A02922}.fday.red .fn{color:#A02922}.fday.red .fe{color:#A02922}
+.fday.tod{background:#FCF3E4}.fday.tod .ft{color:#8A5A17}
 .ffold{display:flex;align-items:center;gap:9px;border:1.5px dashed #E2E5EB;border-radius:12px;padding:10px 13px;margin-top:14px;cursor:pointer;color:#6C7285;user-select:none}
 .ffold:hover{border-color:#C9CCD4}
 .ffold .fch{font-size:.72rem;color:#9AA0B4}
