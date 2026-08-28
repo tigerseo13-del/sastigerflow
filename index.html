@@ -478,6 +478,18 @@ table.novs th:last-child,table.novs td:last-child{display:none}   /* vs mois der
   .chips > *{flex:none;white-space:nowrap}
   .topbar .btn.primary,.abar .btn2.primary,.abar .newbtn,.topbar .newbtn{display:none}
 }
+
+/* ═ v316 (patron, maquette validée) : le bas du tableau de bord en cartouches —
+   du français au lieu de « J-3 », et le geste au bout de chaque ligne. ═ */
+.ktc{display:block;border:1px solid var(--line);border-radius:12px;background:#FAFBFC;padding:11px 13px;margin-bottom:9px;transition:.12s}
+.ktc:hover{border-color:#D8DAE1;background:#fff}
+.ktc:last-child{margin-bottom:0}
+.ktc .k1{display:flex;align-items:baseline;gap:10px}
+.ktc .k1 b{font-weight:600;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ktc .kex{margin-left:auto;flex:none;font-size:.74rem;font-weight:700;font-variant-numeric:tabular-nums}
+.ktc .kex.rouge{color:var(--red)} .ktc .kex.ambre{color:var(--amber)} .ktc .kex.gris{color:var(--muted)}
+.ktc .k2{display:flex;align-items:baseline;gap:10px;font-size:.74rem;color:var(--muted);font-weight:600;margin-top:4px}
+.ktc .kgo{margin-left:auto;flex:none;font-size:.75rem;font-weight:800;color:var(--orange-deep)}
 </style>
 </head>
 <body>
@@ -702,7 +714,7 @@ const g = id => document.getElementById(id);
        {titre: "Commander les pièges à phéromones", sub: "Stock bas signalé par Babacar"}];
   const ic = '<span class="tic"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span>';
   const el = g("hometasks");
-  if(el) el.innerHTML = rows.map(r => '<a class="task" href="taches.html">' + ic + '<div><b>' + r.titre + '</b><small>' + r.sub + '</small></div></a>').join("");
+  if(el) el.innerHTML = rows.map(r => '<a class="ktc" href="taches.html"><div class="k1"><b>' + r.titre + '</b><span class="kgo">Ouvrir →</span></div><div class="k2">' + r.sub + '</div></a>').join("");
 })();
 
 /* ===== date du jour ===== */
@@ -785,11 +797,12 @@ const g = id => document.getElementById(id);
   const fdz = iso => { const p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; };
   g("crenew").innerHTML = C.map(c => {
     const j = Math.round((new Date(c[2]) - REF) / 864e5);
-    const cls = j <= 15 ? "hau" : j <= 45 ? "moy" : "loin";   /* 30/07 : rouge = urgent seulement */
-    return '<a class="task" href="contrats-liste.html">' +
-      '<span class="tic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6"/></svg></span>' +
-      '<div><b>' + c[0] + '</b><small>' + c[1] + ' · ' + c[3] + ' / an · échéance ' + fdz(c[2]) + '</small></div>' +
-      '<span class="pr ' + cls + '">J-' + j + '</span></a>';
+    /* v316 : du FRANÇAIS — rouge = urgent (≤ 7 j), ambre = ça arrive (≤ 30 j), gris = loin */
+    const cls = j <= 7 ? "rouge" : j <= 30 ? "ambre" : "gris";
+    const lib = j < 0 ? "expiré depuis " + (-j) + " j" : j === 0 ? "expire aujourd'hui" : j <= 30 ? "expire dans " + j + " j" : "dans " + j + " j";
+    return '<a class="ktc" href="contrats-liste.html">' +
+      '<div class="k1"><b>' + c[0] + '</b><span class="kex ' + cls + '">' + lib + '</span></div>' +
+      '<div class="k2">' + c[3] + ' / an · échéance ' + fdz(c[2]) + '<span class="kgo">Renouveler →</span></div></a>';
   }).join("");
 })();
 

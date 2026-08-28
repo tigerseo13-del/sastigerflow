@@ -1176,6 +1176,21 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 .mgl b{font-weight:600!important}
 .mgl i{font-weight:600!important}
 .mgh{font-weight:600!important}
+
+/* ═ v317 (patron, maquette validée) : la carte d'appel se lit NOM → CONTEXTE →
+   UNE rangée d'actions. Les reports +1/+2/+7 j sont libellés « Reporter : »,
+   le refus et la note rangés au bout. ═ */
+.fr{flex-direction:column;align-items:stretch;gap:7px}
+.fr .frq{align-self:flex-start;width:auto;min-width:92px;order:0}
+.fr .frmid{order:1}
+.fr .frl2{order:2;padding-left:0!important;margin:0}
+.fr .fract{order:3;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px dashed var(--line)}
+.fr .frned{order:4}
+.fr .fcaled{order:5}
+.fract .frtel{flex:none}
+.fract .dvoui,.fract .frcal,.fract .dvko,.fract .frnote{margin-left:0;order:0}
+.fract .frszg{order:0;margin-left:auto;display:inline-flex;align-items:center}
+.fract .frszg::before{content:"Reporter :";font-size:.72rem;font-weight:700;color:var(--muted);margin-right:7px;padding-left:2px}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 <script>
@@ -6616,6 +6631,33 @@ document.addEventListener("click", function(e){
     var el = e.target, n = 0;
     while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
   }, true);
+})();
+</script>
+<script>
+/* ═ v317 : ranger chaque carte de la file d'appels — la rangée d'actions se
+   construit depuis le DOM existant (les gestes gardent leurs onclick), et le
+   « +9 j » devient « retard 9 j ». Rebranché sur chaque re-peinture. ═ */
+(function(){
+  function frRange(){
+    document.querySelectorAll(".fr").forEach(function(c){
+      if(c.querySelector(":scope > .fract")) return;
+      var act = document.createElement("div"); act.className = "fract";
+      [".frtel", ".dvoui", ".frcal", ".frnorep", ".frszg", ".dvko", ".frnote"].forEach(function(sel){
+        var e = c.querySelector(":scope > " + sel); if(e) act.appendChild(e);
+      });
+      if(act.children.length) c.appendChild(act);
+      c.querySelectorAll(".frwhen.lt").forEach(function(w){
+        w.textContent = w.textContent.replace(/^\s*\+(\d+) j/, "retard $1 j");
+      });
+    });
+  }
+  ["fileRender", "filePaint"].forEach(function(n){
+    if(typeof window[n] === "function"){
+      var o = window[n];
+      window[n] = function(){ var r = o.apply(this, arguments); try{ frRange(); }catch(e){} return r; };
+    }
+  });
+  try{ frRange(); }catch(e){}
 })();
 </script>
 </body>
