@@ -6338,6 +6338,10 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fract .frszg{order:0;margin-left:auto;display:inline-flex;align-items:center}
 .fract .frszg::before{content:"Reporter :";font-size:.72rem;font-weight:700;color:var(--muted);margin-right:7px;padding-left:2px}
 .frl2 .frvoir{color:var(--orange-deep);font-weight:700;white-space:nowrap}
+/* ═ « fait le 1 » : la 1re carte de la file porte le départ — le tri par
+   l'argent existe depuis le 18/08, le marqueur dit juste OÙ commencer. ═ */
+.fr.frfirst{border-color:var(--orange)!important}
+.frstart{flex:none;font-size:.62rem;font-weight:800;background:#FFF1EA;color:var(--orange-deep);border:1px solid #FFD9C4;border-radius:8px;padding:2.5px 8px;letter-spacing:.03em}
 
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
@@ -6652,6 +6656,16 @@ document.addEventListener("click", function(e){
         w.textContent = w.textContent.replace(/^\s*\+(\d+) j/, "retard $1 j");
       });
     });
+    /* la PREMIÈRE carte visible reçoit « Commence ici » — c'est là que dort
+       le plus gros (le tri argent-d'abord fait le reste). */
+    document.querySelectorAll(".fr .frstart").forEach(function(e){ e.remove(); });
+    document.querySelectorAll(".fr.frfirst").forEach(function(e){ e.classList.remove("frfirst"); });
+    var vis = Array.prototype.filter.call(document.querySelectorAll(".fr"), function(x){ return x.offsetParent; });
+    if(vis.length){
+      vis[0].classList.add("frfirst");
+      var l1 = vis[0].querySelector(".frl1");
+      if(l1){ var sp = document.createElement("span"); sp.className = "frstart"; sp.textContent = "Commence ici"; l1.appendChild(sp); }
+    }
   }
   ["fileRender", "filePaint"].forEach(function(n){
     if(typeof window[n] === "function"){
