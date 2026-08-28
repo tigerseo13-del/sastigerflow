@@ -1801,8 +1801,10 @@ function fileRender(){
   const t = iso(TODAYD);
   const dort = dvs.reduce((a, x) => a + (+x.montant || 0), 0);
   const el = (id, txt, show) => { const e = document.getElementById(id); if(e){ e.textContent = txt; e.style.display = show ? "" : "none"; } };
-  el("fap-dort", "💤 " + dvs.length + " devis · " + dvEur(dort) + " dorment", dvs.length > 0);
-  el("fap-total", (list.length + dvs.length) + " à traiter", true);
+  /* 28/08 (patron, « FAIS TOUT ») : UN seul comptage — la ligne de la section
+     (fsum) parle ; le chip « dorment » et le « N à traiter » doublonnaient. */
+  el("fap-dort", "", false);
+  el("fap-total", "", false);
   if(!list.length && !dvs.length){
     const tb0 = document.getElementById("faptabs"); if(tb0) tb0.innerHTML = "";
     body.innerHTML = `<div class="fap-vide">📞 Personne à rappeler — la file est vide.<br><small>« Client injoignable » sur une intervention l'enverra ici avec sa date de rappel.</small></div>`;
@@ -1905,13 +1907,17 @@ function fileRender(){
   const nAvenir = avKeys.reduce((a, k) => a + buckets[k].length, 0) + (buckets.acaler ? buckets.acaler.length : 0) + (buckets.apres ? buckets.apres.length : 0);
   const nLate = buckets.late ? buckets.late.length : 0;
   if(!FAPTAB) FAPTAB = nLate ? "late" : "today";
-  if(FAPTAB === "late" && !nLate) FAPTAB = "today";   /* le dernier retard traité → la journée prend la main */
+  if(nLate) fileRender._lateFini = 0;
+  if(FAPTAB === "late" && !nLate){
+    FAPTAB = "today";   /* le dernier retard traité → la journée prend la main */
+    if(!fileRender._lateFini){ fileRender._lateFini = 1; setTimeout(function(){ try{ toast("✅ En retard : terminé — place à aujourd'hui"); }catch(e){} }, 600); }
+  }
   const tabsEl = document.getElementById("faptabs");
   if(tabsEl){
     const tb = (k, lbl, n, cls) => `<button class="ftab ${FAPTAB === k ? "on" : ""}${cls ? " " + cls : ""}" onclick="fapTab('${k}')">${lbl}<i class="n">${n}</i></button>`;
     tabsEl.innerHTML = (nLate ? tb("late", "⚠ En retard", nLate, "red") : "")
       + tb("today", "Aujourd'hui", bToday.length)
-      + tb("demain", "Demain", bDemain.length)
+      + ((bDemain.length || FAPTAB === "demain") ? tb("demain", "Demain", bDemain.length) : "")
       + ((nAvenir || FAPTAB === "avenir") ? tb("avenir", "À venir", nAvenir) : "");
   }
   const fsum = b => { const e = eurB(b); return `<div class="fsum">${b.length} appel${b.length > 1 ? "s" : ""} à passer${e ? ` · <b>${e} en attente</b>` : ""}</div>`; };
