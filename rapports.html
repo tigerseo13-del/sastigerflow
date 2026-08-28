@@ -1280,18 +1280,21 @@ document.addEventListener("click", function(e){
     var catRows = ["part", "pro", "syn"].filter(function(k){ return cats[k].att || cats[k].env; });
     var catHtml = "";
     if(catRows.length){
-      /* ÉPURE (28/08) : la barre répond à UNE question — quelle catégorie
-         rapporte le plus de devis SIGNÉS — le montant total à droite. */
-      var totG = catRows.reduce(function(sm, k){ return sm + cats[k].gagE; }, 0);
+      /* CARTOUCHES (28/08) : titre + LE chiffre (taux de transformation
+         des devis sur la période) + résumé — la pastille garde la couleur. */
       var CIDX = {part: 1, pro: 0, syn: 5};
-      catHtml = '<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 9px"><span style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Par catégorie de client</span><small style="font-size:.66rem;font-weight:600;color:var(--muted)">devis signés sur la période</small></div>' +
+      catHtml = '<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 9px"><span style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Par catégorie de client</span><small style="font-size:.66rem;font-weight:600;color:var(--muted)">taux de transformation sur la période</small></div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px">' +
         catRows.map(function(k){
-          var c = cats[k];
-          var pc = totG ? Math.round(c.gagE / totG * 100) : 0;
-          var droite = c.gag ? c.gag + ' signé' + (c.gag > 1 ? 's' : '') + ' · ' + eur2(c.gagE) : '0 signé';
-          return '<div class="hrow"><div class="t"><span>' + CATL[k] + '</span><b>' + droite + '</b></div>' +
-            '<div class="tr"><div class="fl" style="width:' + pc + '%;background:' + NUIC[CIDX[k]] + '"></div></div></div>';
-        }).join("");
+          var c = cats[k], tx = c.env ? Math.round(c.gag / c.env * 100) : null;
+          var resume = c.env
+            ? (c.gag ? c.gag + ' signé' + (c.gag > 1 ? 's' : '') + ' sur ' + c.env + ' · <b style="color:var(--green-d)">' + eur2(c.gagE) + '</b>' : '0 signé sur ' + c.env)
+            : 'Rien d\'envoyé sur la période';
+          return '<div class="catk" style="border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:#FAFBFC">' +
+            '<div style="display:flex;align-items:center;gap:7px;font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:' + NUIC[CIDX[k]] + ';flex:none"></span>' + CATL[k] + '</div>' +
+            '<div style="font-family:Sora;font-weight:800;font-size:1.25rem;margin:5px 0 2px">' + (tx === null ? '—' : tx + ' %') + '</div>' +
+            '<div style="font-size:.73rem;font-weight:600;color:var(--muted)">' + resume + '</div></div>';
+        }).join("") + '</div>';
     }
     if(!att.length){
       box.innerHTML = '<div style="font-size:.84rem;color:var(--green-d);font-weight:700;padding:8px 0">Aucun devis en attente — rien ne dort.</div>' + catHtml;
