@@ -1807,5 +1807,27 @@ document.addEventListener("click", function(e){
   }
 });
 </script>
+<script>
+/* ── TF-INFOBULLES (28/08) : tout texte coupé par « … » montre son texte
+   complet au survol — partout, sans toucher aux infobulles déjà écrites. */
+(function(){
+  function coupe(el){
+    if(!el || el.nodeType !== 1 || el.hasAttribute("title")) return false;
+    var cs = getComputedStyle(el);
+    if(cs.textOverflow === "ellipsis" && el.scrollWidth > el.clientWidth + 1){
+      el.title = el.innerText.trim().replace(/\s+/g, " "); return true;
+    }
+    var lc = cs.webkitLineClamp;
+    if(lc && lc !== "none" && el.scrollHeight > el.clientHeight + 1){
+      el.title = el.innerText.trim().replace(/\s+/g, " "); return true;
+    }
+    return false;
+  }
+  document.addEventListener("mouseover", function(e){
+    var el = e.target, n = 0;
+    while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
+  }, true);
+})();
+</script>
 </body>
 </html>
