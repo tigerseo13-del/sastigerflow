@@ -510,7 +510,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <!-- 27/08 (GO plan réel) : le fond est LA photo/scan du client, les
              postes sont posés en FRACTIONS (x,y de 0 à 1) — ils survivent au
              zoom, au téléphone et même à un changement de fond. -->
-        <div class="rview" id="rview" hidden><div class="rin" id="rin"><img id="rimg" alt="Plan du site"><div id="rdots"></div></div></div>
+        <div class="rview" id="rview" hidden><div class="plzoom"><button onclick="plZ(1)" title="Zoomer">+</button><button onclick="plZ(-1)" title="Reculer">−</button><button onclick="plZ(0)" title="Vue entière">⛶</button></div><div class="rin" id="rin"><img id="rimg" alt="Plan du site"><div id="rdots"></div></div></div>
         <button class="plvide" id="plvide" hidden onclick="document.getElementById('pl-file').click()">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           <b>Pose le plan du local</b>
@@ -543,7 +543,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <!-- Tableau des postes -->
     <div class="tablecard">
       <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span id="pl-reg">Registre des postes — relève du 12/06/2026</span></div>
-      <div class="tscroll"><table class="pt"><thead><tr>
+      <div class="plfchips" id="plfchips" hidden></div><div class="tscroll"><table class="pt"><thead><tr>
         <th>N°</th><th>Emplacement</th><th>Type</th><th>Statut</th><th>Consommation</th><th>Dernière relève</th>
       </tr></thead><tbody id="tbody"></tbody></table></div>
     </div>
@@ -817,7 +817,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var pl = cur(), demo = !MODE;
     var fonds = nivDe(pl);
     if(NIV >= fonds.length) NIV = 0;
-    $("planview").hidden = !demo;
+    $("planview").hidden = !demo; var fz = document.querySelector(".plancard .zoom"); if(fz) fz.style.display = demo ? "" : "none"; var ff = $("filters"); if(ff) ff.style.display = demo ? "" : "none";
     $("rview").hidden = demo || !fonds.length;
     $("plvide").hidden = demo || !!fonds.length;
     var nv = $("plnivs");
@@ -835,12 +835,13 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       $("pl-bar").textContent = "Rez-de-chaussée · 240 m²";
       $("pl-reg").textContent = "Registre des postes — relève du 12/06/2026";
       $("rs-tot").textContent = "14"; $("rs-ok").textContent = "10"; $("rs-conso").textContent = "3"; $("rs-alerte").textContent = "1";
+      var fch = $("plfchips"); if(fch){ fch.hidden = true; }
       $("tbody").innerHTML = DEMO_TBODY;
       $("detail").innerHTML = DEMO_EMPTY;
       return;
     }
     var n = nomDe(MODE), act = actifs(pl), ret = retires(pl);
-    var ri = retardInfo(pl);
+    var ri = retardInfo(pl); window.PLFRQ = ri.f || 30; window.plPaint = paint;
     var derniere = act.map(function(x){ var d = dParse(x.releve); return d ? d.getTime() : 0; }).sort().reverse()[0];
     $("pl-titre").textContent = "Plan d'appâtage — " + (n.site || n.client);
     var sub = n.client + (act.length ? " · " + act.length + " poste" + (act.length > 1 ? "s" : "") + " en service" + (ret.length ? " · " + ret.length + " retiré" + (ret.length > 1 ? "s" : "") : "") + (derniere ? " · dernière relève le " + FDC(new Date(derniere)) : "") : " · aucun poste pour l'instant");
@@ -860,7 +861,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     $("rs-alerte").textContent = act.filter(function(x){ return x.statut === "alerte"; }).length;
     if(fonds.length){ $("rimg").src = (fonds[NIV] || {}).fond || ""; }
     $("rdots").innerHTML = act.filter(function(x){ return (x.niv || 0) === NIV; }).map(function(x){
-      return '<button class="rdot' + (x.id === SELID ? " sel" : "") + '" data-st="' + x.statut + '" style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + HEX2[x.statut] + '" onclick="plSel(\'' + esc(x.id) + '\')" title="' + esc(x.zone || x.id) + '">' + esc(numDe(x)) + '</button>';
+      return '<button class="rdot' + (x.id === SELID ? " sel" : "") + (window.plfMatch && !plfMatch(x) ? " dim" : "") + '" data-id="' + esc(x.id) + '" data-st="' + x.statut + '" style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + HEX2[x.statut] + '" onclick="plSel(\'' + esc(x.id) + '\')" title="' + esc(x.zone || x.id) + '">' + esc(numDe(x)) + '</button>';
     }).join("");
     var ligneDe = function(x){
       var td = tdnDe(x);
@@ -872,9 +873,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
           + (td && td.k !== "flat" ? '<span class="tdn ' + td.k + '" title="' + td.de + ' \u2192 ' + td.a + '">' + FL[td.k] + '</span>' : "") + '</td>'
         + '<td>' + esc(x.releve || "—") + '</td></tr>';
     };
-    $("tbody").innerHTML = (act.length || ret.length)
-      ? act.map(ligneDe).join("") + ret.map(ligneDe).join("")
-      : '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste — « Ajouter un poste » puis cliquez sur le plan.</td></tr>';
+    var actF = (window.PLFILT === "ret") ? [] : (window.plfMatch ? act.filter(plfMatch) : act); var retF = (!window.PLFILT || window.PLFILT === "tous" || window.PLFILT === "ret") ? ret : []; $("tbody").innerHTML = (actF.length || retF.length) ? actF.map(ligneDe).join("") + retF.map(ligneDe).join("") : (act.length || ret.length) ? '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste ne correspond à ce filtre.</td></tr>' : '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste — « Ajouter un poste » puis cliquez sur le plan.</td></tr>'; if(window.plfPaint) plfPaint(act, ret, demo);
     peindreDetail();
   }
 
@@ -1528,6 +1527,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .plancard{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .topbar{flex-wrap:wrap}
 }
+
+/* ═ 28/08 (GO FAIT TOUT) : zoom + navigation, registre→plan, filtres ═ */
+.rview{overflow:hidden;touch-action:none}
+.rin{transform-origin:0 0}
+.rin.pan{cursor:grab} .rin.panning{cursor:grabbing}
+.plzoom{position:absolute;right:10px;top:10px;z-index:6;display:flex;flex-direction:column;gap:6px}
+.plzoom button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;font:800 1.05rem Inter,sans-serif;color:var(--ink-2);box-shadow:0 2px 8px rgba(0,0,0,.10);cursor:pointer;display:grid;place-items:center}
+.plzoom button:hover{border-color:#C9CCD4}
+.rdot.dim{opacity:.14;pointer-events:none}
+.rdot.ping{z-index:5;animation:plping 2s ease-out 1}
+@keyframes plping{0%,28%,56%{box-shadow:0 0 0 0 rgba(255,90,31,.85)}14%,42%,72%{box-shadow:0 0 0 15px rgba(255,90,31,0)}100%{box-shadow:0 0 0 0 rgba(255,90,31,0)}}
+.plfchips{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 10px}
+.plfchips button{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;font:700 .74rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;transition:.12s}
+.plfchips button.on{background:#16181D;border-color:#16181D;color:#fff}
+.plfchips button .n{opacity:.7;font-weight:600;margin-left:4px}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
@@ -1671,6 +1685,127 @@ document.addEventListener("click", function(e){
     while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
   }, true);
 })();
+</script>
+<script>
+/* ═ 28/08 (GO FAIT TOUT) — le plan devient un poste de travail :
+   ① zoom molette (focal) + pincement + glisser + boutons ; le clic reste un clic
+   ② clic sur une ligne du registre → la pastille CLIGNOTE sur le plan
+   ③ filtres du registre — les dots des postes hors filtre s'éteignent ═ */
+(function(){
+  var V = document.getElementById("rview"), R = document.getElementById("rin");
+  if(!V || !R) return;
+  var Z = 1, PX = 0, PY = 0;
+  function apply(){
+    var mw = Math.min(0, V.clientWidth - R.offsetWidth * Z);
+    var mh = Math.min(0, V.clientHeight - R.offsetHeight * Z);
+    PX = Math.max(mw, Math.min(0, PX)); PY = Math.max(mh, Math.min(0, PY));
+    R.style.transform = "translate(" + PX + "px," + PY + "px) scale(" + Z + ")";
+    R.classList.toggle("pan", Z > 1 || R.offsetHeight > V.clientHeight);
+  }
+  function zoomVers(mx, my, z2){
+    z2 = Math.max(1, Math.min(4, z2));
+    PX = mx - (mx - PX) * (z2 / Z); PY = my - (my - PY) * (z2 / Z);
+    Z = z2; apply();
+  }
+  window.plZ = function(d){
+    if(d === 0){ Z = 1; PX = PY = 0; apply(); return; }
+    zoomVers(V.clientWidth / 2, V.clientHeight / 2, Z * (d > 0 ? 1.35 : 1 / 1.35));
+  };
+  window.plZoomEtat = function(){ return {z: Z, x: PX, y: PY}; };
+  V.addEventListener("wheel", function(e){
+    e.preventDefault();
+    var r = V.getBoundingClientRect();
+    zoomVers(e.clientX - r.left, e.clientY - r.top, Z * (e.deltaY < 0 ? 1.18 : 1 / 1.18));
+  }, {passive: false});
+  /* glisser (souris/doigt) + pincement — un clic court reste un clic */
+  var pts = new Map(), start = null, moved = false, d0 = 0, z0 = 1;
+  V.addEventListener("pointerdown", function(e){
+    pts.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    if(pts.size === 1){ start = {x: e.clientX, y: e.clientY, px: PX, py: PY}; moved = false; }
+    else if(pts.size === 2){
+      var a = Array.from(pts.values());
+      d0 = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); z0 = Z; start = null;
+    }
+  });
+  V.addEventListener("pointermove", function(e){
+    if(!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    var a = Array.from(pts.values());
+    if(pts.size === 2 && d0){
+      var r = V.getBoundingClientRect();
+      var mx = (a[0].x + a[1].x) / 2 - r.left, my = (a[0].y + a[1].y) / 2 - r.top;
+      moved = true;
+      zoomVers(mx, my, z0 * (Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) / d0));
+      return;
+    }
+    if(!start) return;
+    var dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if(!moved && Math.hypot(dx, dy) < 5) return;
+    moved = true;
+    PX = start.px + dx; PY = start.py + dy;
+    R.classList.add("panning"); apply();
+  });
+  function fin(e){ pts.delete(e.pointerId); if(!pts.size){ start = null; d0 = 0; R.classList.remove("panning"); } }
+  ["pointerup", "pointercancel", "pointerleave"].forEach(function(t){ V.addEventListener(t, fin); });
+  /* un glisser ne doit PAS poser de poste ni ouvrir de fiche */
+  V.addEventListener("click", function(e){ if(moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  /* nouveau plan choisi → vue entière */
+  var sel = document.getElementById("pl-cible");
+  if(sel) sel.addEventListener("change", function(){ Z = 1; PX = PY = 0; apply(); });
+
+  /* ② la ligne du registre fait clignoter la pastille */
+  if(typeof window.plSelNiv === "function"){
+    var o = window.plSelNiv;
+    window.plSelNiv = function(id, nv){
+      o(id, nv);
+      try{
+        V.scrollIntoView({behavior: "smooth", block: "nearest"});
+        var d = document.querySelector('.rdot[data-id="' + id + '"]');
+        if(d){ d.classList.remove("ping"); void d.offsetWidth; d.classList.add("ping");
+          setTimeout(function(){ d.classList.remove("ping"); }, 2100); }
+      }catch(e){}
+    };
+  }
+
+  /* ③ les filtres du registre */
+  window.PLFILT = "tous";
+  function pRel(v){
+    if(!v) return null;
+    var p = String(v).split("/");
+    if(p.length !== 3) return null;
+    var an = +p[2]; if(an < 100) an += 2000;
+    return new Date(an, +p[1] - 1, +p[0], 12);
+  }
+  window.plfMatch = function(x){
+    var f = window.PLFILT || "tous";
+    if(f === "tous") return true;
+    if(f === "ret") return false;
+    if(f === "alerte") return x.statut === "alerte";
+    if(f === "relever"){
+      var d = pRel(x.releve);
+      if(!d) return true;
+      return (Date.now() - d.getTime()) / 864e5 > (window.PLFRQ || 30);
+    }
+    return true;
+  };
+  window.plFiltre = function(k){ window.PLFILT = k; if(window.plPaint) plPaint(); };
+  window.plfPaint = function(act, ret, demo){
+    var el = document.getElementById("plfchips");
+    if(!el) return;
+    var masque = demo || (!act.length && !ret.length);
+    el.hidden = masque;
+    if(masque){ el.innerHTML = ""; return; }
+    var sauve = window.PLFILT;
+    var nRel = act.filter(function(x){ window.PLFILT = "relever"; var m = plfMatch(x); window.PLFILT = sauve; return m; }).length;
+    var nAl = act.filter(function(x){ return x.statut === "alerte"; }).length;
+    var chips = [["tous", "Tous", act.length + ret.length], ["relever", "À relever", nRel], ["alerte", "En alerte", nAl], ["ret", "Retirés", ret.length]];
+    el.innerHTML = chips.map(function(c){
+      return '<button class="' + (window.PLFILT === c[0] ? "on" : "") + '" onclick="plFiltre(\'' + c[0] + '\')">' + c[1] + '<span class="n">' + c[2] + '</span></button>';
+    }).join("");
+  };
+})()
+if(window.plPaint){ try{ plPaint(); }catch(e){} }
+;
 </script>
 </body>
 </html>
