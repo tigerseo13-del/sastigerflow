@@ -2443,12 +2443,19 @@ function dvOui(ref){
       _dvcal: true, _dvtask: tid});
   }
   CDPID = pid;
+  /* 28/08 (patron : « tu cliques Accepté, ça disparaît ») : la ligne de calage
+     vit dans AUJOURD'HUI — si on était sur « En retard » (ou ailleurs), le
+     planificateur s'ouvrait dans un onglet INVISIBLE et la carte semblait
+     s'évaporer. L'onglet suit le calage ; « Annuler » ramène où on était. */
+  const tabAvant = FAPTAB;
+  FAPTAB = "today";
   render(); fileRender(); renderTray();
   setTimeout(() => { const e = document.getElementById("fcaled"); if(e) e.scrollIntoView({block: "center", behavior: "smooth"}); }, 120);
   toast("🎉 Devis accepté — cale le chantier pendant que " + x.client + " est en ligne 👇",
     () => { x.etat = "attente"; dvSave(); dvModuleSt(ref, "envoye");
       const k = PENDING.findIndex(p => p && p.pid === pid); if(k > -1) PENDING.splice(k, 1);
       if(CDPID === pid) CDPID = null;
+      FAPTAB = tabAvant;
       try{ const tb = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]"); localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(tb.filter(z => !z || z.iid !== tid))); }catch(e){}
       render(); fileRender(); renderTray(); });
 }
