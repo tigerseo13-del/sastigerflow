@@ -1280,24 +1280,17 @@ document.addEventListener("click", function(e){
     var catRows = ["part", "pro", "syn"].filter(function(k){ return cats[k].att || cats[k].env; });
     var catHtml = "";
     if(catRows.length){
-      /* la barre dit OÙ dort l'argent (répartition de la somme en attente) ;
-         s'il ne dort rien, elle dit où l'argent a été GAGNÉ sur la période.
-         Le même gabarit .hrow que la Répartition par nuisible. */
-      var enAtt = catRows.reduce(function(sm, k){ return sm + cats[k].attE; }, 0) > 0;
-      var totB = catRows.reduce(function(sm, k){ return sm + (enAtt ? cats[k].attE : cats[k].gagE); }, 0);
+      /* ÉPURE (28/08) : la barre répond à UNE question — quelle catégorie
+         rapporte le plus de devis SIGNÉS — le montant total à droite. */
+      var totG = catRows.reduce(function(sm, k){ return sm + cats[k].gagE; }, 0);
       var CIDX = {part: 1, pro: 0, syn: 5};
-      catHtml = '<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 9px"><span style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Par catégorie de client</span><small style="font-size:.66rem;font-weight:600;color:var(--muted)">' + (enAtt ? "répartition de l'argent en attente" : "répartition du gagné") + '</small></div>' +
+      catHtml = '<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 9px"><span style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Par catégorie de client</span><small style="font-size:.66rem;font-weight:600;color:var(--muted)">devis signés sur la période</small></div>' +
         catRows.map(function(k){
-          var c = cats[k], v = enAtt ? c.attE : c.gagE;
-          var pc = totB ? Math.round(v / totB * 100) : 0;
-          var tx = c.env ? Math.round(c.gag / c.env * 100) : 0;
-          var droite = v ? pc + ' % · ' + eur2(v) : '—';
-          var sous = c.env
-            ? 'Signés ' + c.gag + '/' + c.env + ' · ' + tx + ' %' + (c.gag ? ' — <b style="color:var(--green-d)">' + eur2(c.gagE) + ' gagnés</b>' : '')
-            : 'Rien d\'envoyé sur la période';
-          return '<div class="hrow"><div class="t"><span>' + CATL[k] + '</span><b' + (enAtt && v ? ' style="color:var(--amber)"' : '') + '>' + droite + '</b></div>' +
-            '<div class="tr"><div class="fl" style="width:' + pc + '%;background:' + NUIC[CIDX[k]] + '"></div></div>' +
-            '<small style="display:block;font-size:.7rem;color:var(--muted);font-weight:600;margin-top:4px">' + sous + '</small></div>';
+          var c = cats[k];
+          var pc = totG ? Math.round(c.gagE / totG * 100) : 0;
+          var droite = c.gag ? c.gag + ' signé' + (c.gag > 1 ? 's' : '') + ' · ' + eur2(c.gagE) : '0 signé';
+          return '<div class="hrow"><div class="t"><span>' + CATL[k] + '</span><b>' + droite + '</b></div>' +
+            '<div class="tr"><div class="fl" style="width:' + pc + '%;background:' + NUIC[CIDX[k]] + '"></div></div></div>';
         }).join("");
     }
     if(!att.length){
@@ -1305,18 +1298,11 @@ document.addEventListener("click", function(e){
       return;
     }
     var somme = att.reduce(function(sm, x){ return sm + (+x.montant || 0); }, 0);
-    var ages = att.map(function(x){ return x.date ? Math.max(0, Math.round((t0 - new Date(x.date + "T12:00:00")) / 86400000)) : 0; });
-    var vieux = Math.max.apply(null, ages);
-    var lignes = att.slice().sort(function(a, bb){ return (+bb.montant || 0) - (+a.montant || 0); }).slice(0, 4).map(function(x){
-      var j = x.date ? Math.max(0, Math.round((t0 - new Date(x.date + "T12:00:00")) / 86400000)) : 0;
-      return '<div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.82rem"><b style="flex:none">' + esc2(x.ref) + '</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)">' + esc2(x.client || "") + '</span><span style="flex:none;font-weight:800">' + eur2(+x.montant || 0) + '</span><span style="flex:none;font-size:.7rem;color:' + (j >= 14 ? "var(--red)" : "var(--muted)") + ';font-weight:700">J+' + j + '</span></div>';
-    }).join("");
     box.innerHTML =
       '<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:9px">' +
       '<div><b style="font-family:Sora;font-size:1.3rem">' + att.length + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">devis en attente</small></div>' +
-      '<div><b style="font-family:Sora;font-size:1.3rem;color:var(--amber)">' + eur2(somme) + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">dorment chez les clients</small></div>' +
-      '<div><b style="font-family:Sora;font-size:1.3rem;color:' + (vieux >= 14 ? "var(--red)" : "var(--ink)") + '">J+' + vieux + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">le plus ancien</small></div></div>' +
-      lignes + catHtml;
+      '<div><b style="font-family:Sora;font-size:1.3rem;color:var(--amber)">' + eur2(somme) + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">dorment chez les clients</small></div></div>' +
+      catHtml;
   }
   function topPaint(){
     var box = document.getElementById("topdiv"); if(!box) return;
