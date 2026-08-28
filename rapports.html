@@ -1280,23 +1280,28 @@ document.addEventListener("click", function(e){
     var catRows = ["part", "pro", "syn"].filter(function(k){ return cats[k].att || cats[k].env; });
     var catHtml = "";
     if(catRows.length){
-      var cell = function(txt, coul, gras){ return '<span style="text-align:right;font-variant-numeric:tabular-nums;' + (coul ? 'color:' + coul + ';' : '') + 'font-weight:' + (gras ? '800' : '600') + '">' + txt + '</span>'; };
-      catHtml = '<div style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:13px 0 5px">Par catégorie de client</div>' +
-        '<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:5px 13px;align-items:baseline;font-size:.78rem">' +
-        '<span></span><small style="text-align:right;font-size:.66rem;font-weight:700;color:var(--muted)">En attente</small><small style="text-align:right;font-size:.66rem;font-weight:700;color:var(--muted)">Signés</small><small style="text-align:right;font-size:.66rem;font-weight:700;color:var(--muted)">Gagné</small>' +
+      /* la barre dit OÙ dort l'argent (répartition de la somme en attente) ;
+         s'il ne dort rien, elle dit où l'argent a été GAGNÉ sur la période.
+         Le même gabarit .hrow que la Répartition par nuisible. */
+      var enAtt = catRows.reduce(function(sm, k){ return sm + cats[k].attE; }, 0) > 0;
+      var totB = catRows.reduce(function(sm, k){ return sm + (enAtt ? cats[k].attE : cats[k].gagE); }, 0);
+      var CIDX = {part: 1, pro: 0, syn: 5};
+      catHtml = '<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 9px"><span style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Par catégorie de client</span><small style="font-size:.66rem;font-weight:600;color:var(--muted)">' + (enAtt ? "répartition de l'argent en attente" : "répartition du gagné") + '</small></div>' +
         catRows.map(function(k){
-          var c = cats[k], tx = c.env ? Math.round(c.gag / c.env * 100) : 0;
-          return '<b style="font-size:.8rem">' + CATL[k] + '</b>' +
-            cell(c.att ? eur2(c.attE) + ' (' + c.att + ')' : '—', c.att ? 'var(--amber)' : 'var(--muted)', c.att) +
-            cell(c.env ? c.gag + '/' + c.env + ' · ' + tx + ' %' : '—', c.env ? '' : 'var(--muted)', 0) +
-            cell(c.gag ? eur2(c.gagE) : '—', c.gag ? 'var(--green-d)' : 'var(--muted)', c.gag);
-        }).join("") + '</div>';
+          var c = cats[k], v = enAtt ? c.attE : c.gagE;
+          var pc = totB ? Math.round(v / totB * 100) : 0;
+          var tx = c.env ? Math.round(c.gag / c.env * 100) : 0;
+          var droite = v ? pc + ' % · ' + eur2(v) : '—';
+          var sous = c.env
+            ? 'Signés ' + c.gag + '/' + c.env + ' · ' + tx + ' %' + (c.gag ? ' — <b style="color:var(--green-d)">' + eur2(c.gagE) + ' gagnés</b>' : '')
+            : 'Rien d\'envoyé sur la période';
+          return '<div class="hrow"><div class="t"><span>' + CATL[k] + '</span><b' + (enAtt && v ? ' style="color:var(--amber)"' : '') + '>' + droite + '</b></div>' +
+            '<div class="tr"><div class="fl" style="width:' + pc + '%;background:' + NUIC[CIDX[k]] + '"></div></div>' +
+            '<small style="display:block;font-size:.7rem;color:var(--muted);font-weight:600;margin-top:4px">' + sous + '</small></div>';
+        }).join("");
     }
-    var liens = '<div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">' +
-      '<a href="calendrier.html" style="font-size:.78rem;font-weight:800;color:var(--orange-deep)">Ouvrir la file d\'appels →</a>' +
-      '<a href="relances.html" style="font-size:.78rem;font-weight:800;color:var(--orange-deep);margin-left:auto">Régler les relances auto →</a></div>';
     if(!att.length){
-      box.innerHTML = '<div style="font-size:.84rem;color:var(--green-d);font-weight:700;padding:8px 0">Aucun devis en attente — rien ne dort.</div>' + catHtml + liens;
+      box.innerHTML = '<div style="font-size:.84rem;color:var(--green-d);font-weight:700;padding:8px 0">Aucun devis en attente — rien ne dort.</div>' + catHtml;
       return;
     }
     var somme = att.reduce(function(sm, x){ return sm + (+x.montant || 0); }, 0);
@@ -1311,7 +1316,7 @@ document.addEventListener("click", function(e){
       '<div><b style="font-family:Sora;font-size:1.3rem">' + att.length + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">devis en attente</small></div>' +
       '<div><b style="font-family:Sora;font-size:1.3rem;color:var(--amber)">' + eur2(somme) + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">dorment chez les clients</small></div>' +
       '<div><b style="font-family:Sora;font-size:1.3rem;color:' + (vieux >= 14 ? "var(--red)" : "var(--ink)") + '">J+' + vieux + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">le plus ancien</small></div></div>' +
-      lignes + catHtml + liens;
+      lignes + catHtml;
   }
   function topPaint(){
     var box = document.getElementById("topdiv"); if(!box) return;
