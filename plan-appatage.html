@@ -723,10 +723,10 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   var HEX2 = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
   var SB2  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
   var LBL2 = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Capture / détecteur"};
-  var TYPL = {pa:"Poste d'appâtage rongeurs", div:"Capture / détecteur", mec:"Piège mécanique", mon:"Monitoring non toxique"};
-  var TYPC = {pa:"Poste rongeurs", div:"Capture / détecteur", mec:"Piège mécanique", mon:"Monitoring"};
-  var DEFP = {pa:"Bloc appât sécurisé 20 g", div:"Lampe UV + plaque glue", mec:"Piège mécanique sous coffre", mon:"Bloc monitoring non toxique"};
-  var PREF = {pa:"PA-", div:"DIV-", mec:"PM-", mon:"MN-"};
+  var TYPL = {pa:"Poste d'appâtage rongeurs", eko:"Ekomille — piège à capture multiple", div:"Capture / détecteur", mec:"Piège mécanique", mon:"Monitoring non toxique"};
+  var TYPC = {pa:"Poste rongeurs", eko:"Ekomille", div:"Capture / détecteur", mec:"Piège mécanique", mon:"Monitoring"};
+  var DEFP = {pa:"Bloc appât sécurisé 20 g", eko:"Ekomille", div:"Lampe UV + plaque glue", mec:"Piège mécanique sous coffre", mon:"Bloc monitoring non toxique"};
+  var PREF = {pa:"PA-", eko:"EK-", div:"DIV-", mec:"PM-", mon:"MN-"};
   var FL = {up:"\u2197", down:"\u2198", flat:"\u2192"};
 
   var tdiv = document.createElement("div"); tdiv.className = "tst2"; tdiv.id = "tst2"; document.body.appendChild(tdiv);
@@ -765,7 +765,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var out = [];
     (x.hist || []).forEach(function(h){
       var t = String(h[1] || "");
-      var m = x.type === "div" ? /^(\d+) capture/.exec(t) : /(?:Consommation|Grignotage) (\d+) ?%/.exec(t);
+      var m = (x.type === "div" || x.type === "eko") ? /^(\d+) capture/.exec(t) : /(?:Consommation|Grignotage) (\d+) ?%/.exec(t);
       if(m) out.push(+m[1]);
       else if(/^RAS/.test(t)) out.push(0);
     });
@@ -869,7 +869,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
         + '<td class="ref">' + esc(x.zone || "—") + (fonds.length > 1 ? ' <span style="color:var(--muted);font-weight:600;font-size:.72rem">· ' + esc((fonds[x.niv || 0] || {}).nom || "") + '</span>' : "") + '</td>'
         + '<td>' + TYPC[x.type || "pa"] + '</td>'
         + '<td><span class="st-badge ' + stCls(x) + '">' + esc(stLbl(x)) + '</span></td>'
-        + '<td>' + (x.type === "mec" ? "—" : x.type === "div" ? (x.conso || 0) + " captures" : (x.conso || 0) + " %")
+        + '<td>' + (x.type === "mec" ? "—" : (x.type === "div" || x.type === "eko") ? (x.conso || 0) + " captures" : (x.conso || 0) + " %")
           + (td && td.k !== "flat" ? '<span class="tdn ' + td.k + '" title="' + td.de + ' \u2192 ' + td.a + '">' + FL[td.k] + '</span>' : "") + '</td>'
         + '<td>' + esc(x.releve || "—") + '</td></tr>';
     };
@@ -899,11 +899,11 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
 
   function fiche(x){
     var consoRow = x.type === "mec" ? ""
-      : x.type === "div"
+      : (x.type === "div" || x.type === "eko")
       ? '<div class="d-row"><span class="k">Captures (dernier relevé)</span><span class="v">' + (x.conso || 0) + '</span></div>'
       : '<div class="d-row" style="display:block"><div style="display:flex;justify-content:space-between"><span class="k">' + (x.type === "mon" ? "Grignotage" : "Consommation d\'appât") + '</span><span class="v">' + (x.conso || 0) + ' %</span></div><div class="conso-bar"><i style="width:' + (x.conso || 0) + '%;background:' + ((x.conso || 0) >= 50 ? "#DC2626" : (x.conso || 0) > 0 ? "#E8930C" : "#1B8A46") + '"></i></div></div>';
     var td = tdnDe(x);
-    var tdRow = td ? '<div class="d-row"><span class="k">Tendance</span><span class="v"><span class="tdn ' + td.k + '">' + FL[td.k] + '</span> ' + (td.k === "up" ? "en hausse" : td.k === "down" ? "en baisse" : "stable") + ' (' + td.de + ' \u2192 ' + td.a + (x.type === "div" ? "" : " %") + ')</span></div>' : "";
+    var tdRow = td ? '<div class="d-row"><span class="k">Tendance</span><span class="v"><span class="tdn ' + td.k + '">' + FL[td.k] + '</span> ' + (td.k === "up" ? "en hausse" : td.k === "down" ? "en baisse" : "stable") + ' (' + td.de + ' \u2192 ' + td.a + ((x.type === "div" || x.type === "eko") ? "" : " %") + ')</span></div>' : "";
     var lotRow = x.lot ? '<div class="d-row"><span class="k">Lot en place</span><span class="v">' + esc(x.lot) + '</span></div>' : "";
     var fixRow = x.fix ? '<div class="d-row"><span class="k">Fixation</span><span class="v">' + esc(x.fix) + '</span></div>' : "";
     var phs = (x.photos || []).length ? '<div class="phstrip">' + x.photos.map(function(ph){ return '<img src="' + ph.img + '" title="Photo du ' + esc(ph.d) + '" onclick="plLb(this.src)">'; }).join("") + '</div>' : "";
@@ -952,18 +952,18 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   }
 
   function formReleve(x){
-    var estDiv = x.type === "div", estMec = x.type === "mec", estMon = x.type === "mon";
+    var estDiv = x.type === "div", estMec = x.type === "mec", estMon = x.type === "mon", estEko = x.type === "eko";
     var haut;
     if(estMec) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — rien</label><label><input type="radio" name="pf-r" value="capt">Capture</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>';
-    else if(estDiv) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
+    else if(estDiv || estEko) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
       + '<label>Captures constatées</label><input type="number" id="pf-cap" min="0" value="' + (x.conso || 0) + '">';
     else haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">' + (estMon ? "Grignotage" : "Consommation") + '</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
       + '<label>' + (estMon ? "Grignotage" : "Consommation") + ' (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">';
     return '<div class="plform">'
       + '<label>Relevé du ' + aujFR() + '</label>' + haut
-      + (estMec ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estDiv ? "Plaque / appât changé" : "Bloc remplacé") + '</label>')
-      + (estDiv || estMec ? "" : '<label>N° de lot du produit posé (l\'auditeur le demande)</label><input type="text" id="pf-lot" placeholder="ex. 24B117" value="">')
-      + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estDiv ? "mouches, moucherons…" : estMec ? "souris, réarmé, appât mécanique changé…" : "zone à surveiller, passage renforcé…") + '">'
+      + (estMec ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estEko ? "Appât rechargé" : estDiv ? "Plaque / appât changé" : "Bloc remplacé") + '</label>')
+      + (estDiv || estMec || estEko ? "" : '<label>N° de lot du produit posé (l\'auditeur le demande)</label><input type="text" id="pf-lot" placeholder="ex. 24B117" value="">')
+      + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estEko ? "captures, appât rechargé…" : estDiv ? "mouches, moucherons…" : estMec ? "souris, réarmé, appât mécanique changé…" : "zone à surveiller, passage renforcé…") + '">'
       + '<div class="d-actions"><button class="btn primary" onclick="plRelSave()">Enregistrer le relevé</button><button class="btn outline" onclick="plRelAnnule()">Annuler</button></div></div>';
   }
   function formEdit(x){
@@ -978,8 +978,9 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var t = function(v, lbl){ return '<label><input type="radio" name="pf-t" value="' + v + '"' + (LASTT === v ? " checked" : "") + ' onchange="plTypeDef(this.value)">' + lbl + '</label>'; };
     return '<div class="d-head"><span class="d-num" style="background:var(--orange)">+</span><div><b>Nouveau poste</b><small>posé sur le plan — précise-le</small></div></div>'
       + '<div class="plform">'
-      + '<label>Type</label><div class="plrad">' + t("pa", "Rongeurs") + t("div", "Capture / détecteur") + '</div>'
-      + '<div class="plrad" style="margin-top:7px">' + t("mec", "Piège mécanique") + t("mon", "Monitoring non toxique") + '</div>'
+      + '<label>Type</label><div class="plrad">' + t("pa", "Rongeurs") + t("eko", "Ekomille") + '</div>'
+      + '<div class="plrad" style="margin-top:7px">' + t("div", "Capture / détecteur") + t("mec", "Piège mécanique") + '</div>'
+      + '<div class="plrad" style="margin-top:7px">' + t("mon", "Monitoring non toxique") + '</div>'
       + '<label>Emplacement</label><input type="text" id="pf-zone" placeholder="Cuisine — angle nord-ouest">'
       + '<label>Produit en place</label><input type="text" id="pf-prod" list="plprods" value="' + esc(LASTP || DEFP[LASTT]) + '">'
       + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-serie"' + (SERIE ? " checked" : "") + ' style="width:auto;accent-color:var(--orange)"> Enchaîner — poser le suivant juste après (même type, même produit)</label>'
@@ -1100,6 +1101,10 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     } else if(x.type === "mec"){
       if(choix === "capt"){ x.statut = "conso"; t = "Capture constatée — piège réarmé"; }
       else { x.statut = "ok"; t = "RAS — rien au piège"; }
+    } else if(x.type === "eko"){
+      x.conso = Math.max(0, +($("pf-cap") || {value: 0}).value || 0);
+      x.statut = x.conso > 0 ? "conso" : "ok";
+      t = x.conso ? x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — appât rechargé" : "") : "RAS — aucune capture" + (rmp ? " — appât rechargé" : "");
     } else if(x.type === "div"){
       x.conso = Math.max(0, +($("pf-cap") || {value: 0}).value || 0);
       t = x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — plaque / appât changé" : "");
