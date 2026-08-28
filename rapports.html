@@ -1247,9 +1247,56 @@ document.addEventListener("click", function(e){
   function relPaint(){
     var box = document.getElementById("reldev"); if(!box) return;
     var t0 = new Date(); t0.setHours(12, 0, 0, 0);
-    var att = dvTous().filter(function(x){ return x.statut === "envoye"; });
+    var dvs = dvTous(), b = bornes();
+    var att = dvs.filter(function(x){ return x.statut === "envoye"; });
+    /* ---- la répartition PAR CATÉGORIE DE CLIENT (même règle que la fiche :
+       syndic → Syndic, particulier → Particulier, le reste → Professionnel,
+       client introuvable → Particulier) ---- */
+    var catDe = function(nom){
+      try{
+        var l = J("tigerflow-inbox-clients").concat(J("tigerflow-clients-cache"));
+        for(var i = 0; i < l.length; i++){
+          if(l[i] && l[i].nom === nom){
+            if(l[i].type === "syndic") return "syn";
+            if(l[i].type === "particulier") return "part";
+            return "pro";
+          }
+        }
+      }catch(e){}
+      return "part";
+    };
+    var CATL = {part: "Particulier", pro: "Professionnel", syn: "Syndic"};
+    var cats = {part: {att: 0, attE: 0, env: 0, gag: 0, gagE: 0},
+                pro:  {att: 0, attE: 0, env: 0, gag: 0, gagE: 0},
+                syn:  {att: 0, attE: 0, env: 0, gag: 0, gagE: 0}};
+    dvs.forEach(function(x){
+      var k = catDe(x.client);
+      if(x.statut === "envoye"){ cats[k].att++; cats[k].attE += (+x.montant || 0); }
+      if(x.date && dans(x.date, b.d0, b.d1) && x.statut !== "brouillon"){
+        cats[k].env++;
+        if(x.statut === "gagne"){ cats[k].gag++; cats[k].gagE += (+x.montant || 0); }
+      }
+    });
+    var catRows = ["part", "pro", "syn"].filter(function(k){ return cats[k].att || cats[k].env; });
+    var catHtml = "";
+    if(catRows.length){
+      var cell = function(txt, coul, gras){ return '<span style="text-align:right;font-variant-numeric:tabular-nums;' + (coul ? 'color:' + coul + ';' : '') + 'font-weight:' + (gras ? '800' : '600') + '">' + txt + '</span>'; };
+      catHtml = '<div style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:13px 0 5px">Par catégorie de client</div>' +
+        '<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:5px 13px;align-items:baseline;font-size:.78rem">' +
+        '<span></span><small style="text-align:right;font-size:.66rem;font-weight:700;color:var(--muted)">En attente</small><small style="text-align:right;font-size:.66rem;font-weight:700;color:var(--muted)">Signés</small><small style="text-align:right;font-size:.66rem;font-weight:700;color:var(--muted)">Gagné</small>' +
+        catRows.map(function(k){
+          var c = cats[k], tx = c.env ? Math.round(c.gag / c.env * 100) : 0;
+          return '<b style="font-size:.8rem">' + CATL[k] + '</b>' +
+            cell(c.att ? eur2(c.attE) + ' (' + c.att + ')' : '—', c.att ? 'var(--amber)' : 'var(--muted)', c.att) +
+            cell(c.env ? c.gag + '/' + c.env + ' · ' + tx + ' %' : '—', c.env ? '' : 'var(--muted)', 0) +
+            cell(c.gag ? eur2(c.gagE) : '—', c.gag ? 'var(--green-d)' : 'var(--muted)', c.gag);
+        }).join("") + '</div>';
+    }
+    var liens = '<div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">' +
+      '<a href="calendrier.html" style="font-size:.78rem;font-weight:800;color:var(--orange-deep)">Ouvrir la file d\'appels →</a>' +
+      '<a href="relances.html" style="font-size:.78rem;font-weight:800;color:var(--orange-deep);margin-left:auto">Régler les relances auto →</a></div>';
     if(!att.length){
-      box.innerHTML = '<div style="font-size:.84rem;color:var(--green-d);font-weight:700;padding:8px 0">✅ Aucun devis en attente — rien ne dort.</div>';
+      box.innerHTML = '<div style="font-size:.84rem;color:var(--green-d);font-weight:700;padding:8px 0">Aucun devis en attente — rien ne dort.</div>' + catHtml + liens;
       return;
     }
     var somme = att.reduce(function(sm, x){ return sm + (+x.montant || 0); }, 0);
@@ -1264,10 +1311,7 @@ document.addEventListener("click", function(e){
       '<div><b style="font-family:Sora;font-size:1.3rem">' + att.length + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">devis en attente</small></div>' +
       '<div><b style="font-family:Sora;font-size:1.3rem;color:var(--amber)">' + eur2(somme) + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">dorment chez les clients</small></div>' +
       '<div><b style="font-family:Sora;font-size:1.3rem;color:' + (vieux >= 14 ? "var(--red)" : "var(--ink)") + '">J+' + vieux + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">le plus ancien</small></div></div>' +
-      lignes +
-      '<div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">' +
-      '<a href="calendrier.html" style="font-size:.78rem;font-weight:800;color:var(--orange-deep)">Ouvrir la file d\'appels →</a>' +
-      '<a href="relances.html" style="font-size:.78rem;font-weight:800;color:var(--orange-deep);margin-left:auto">Régler les relances auto →</a></div>';
+      lignes + catHtml + liens;
   }
   function topPaint(){
     var box = document.getElementById("topdiv"); if(!box) return;
