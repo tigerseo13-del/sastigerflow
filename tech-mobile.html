@@ -733,6 +733,17 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 
 /* ── AUDIT GRAS 28/08 : la règle des listes, suite du tour ── */
 .agl .cp{font-weight:600!important}
+
+/* ═ 28/08 : LE PLAN sur la mission — pastilles tapables, pincement pour zoomer ═ */
+.pbplan{position:relative;overflow:hidden;border:1px solid #E8EAF0;border-radius:12px;margin:8px 0 10px;background:#FBFBFC;touch-action:none}
+.pbpin{position:relative;transform-origin:0 0}
+.pbpin img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.pbdot{position:absolute;transform:translate(-50%,-50%);width:27px;height:27px;border-radius:50%;border:2px solid #fff;color:#fff;font:800 .62rem Inter,sans-serif;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.28);padding:0}
+.pbdot.fait{box-shadow:0 0 0 2px #1B8A46}
+.pbdot.on{box-shadow:0 0 0 3px rgba(255,90,31,.75)}
+.pbnivs{display:flex;gap:6px;margin:8px 0 0;flex-wrap:wrap}
+.pbnv{border:1px solid #E4E6ED;background:#fff;border-radius:14px;padding:4px 11px;font:700 .72rem Inter,sans-serif;color:#4C5262}
+.pbnv.on{background:#16181D;border-color:#16181D;color:#fff}
 </style>
 </head>
 <body>
@@ -1269,8 +1280,13 @@ function planKeyOf(m){
     return ks.find(k => k === m.client + "|" + (m.site || "")) || ks.find(k => k.indexOf(m.client + "|") === 0) || null;
   }catch(e){ return null; }
 }
-let PBOPEN = null;   /* le poste déplié (ses trois boutons) */
+let PBOPEN = null;
+let PBNIV = 0;   /* le poste déplié (ses trois boutons) */
 function pbTog(id){ PBOPEN = PBOPEN === id ? null : id; rdetail(); }
+function pbDotTap(id){
+  PBOPEN = id; rdetail();
+  setTimeout(() => { const r = document.querySelector(".pbrow.open"); if(r) r.scrollIntoView({block: "center", behavior: "smooth"}); }, 90);
+}
 /* la tendance lue dans l'historique — une conso qui MONTE se voit de loin */
 function pbTdn(p){
   const out = [];
@@ -1323,8 +1339,18 @@ function planBloc(m){
       <span class="pbst" style="background:${ch[0]};color:${ch[1]}">${fait ? "✓ " : ""}${pbTdn(p)}${ch[2]}</span>
     </div>${open ? pbActs(p) : ""}`;
   }).join("");
-  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div>
-  <div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
+  const nivx = (P.niveaux && P.niveaux.length) ? P.niveaux : (P.fond ? [{nom: "", fond: P.fond}] : []);
+  if(PBNIV >= nivx.length) PBNIV = 0;
+  const pbesc = v => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  const fondN = (nivx[PBNIV] || {}).fond || "";
+  const dotsN = (P.postes || []).filter(p => !p.retire && (p.niv || 0) === PBNIV).map(p => {
+    const c = p.statut === "alerte" ? "#DC2626" : p.statut === "conso" ? "#E8930C" : p.statut === "div" ? "#2453C6" : "#1B8A46";
+    const fait = p.releve === auj && (p.hist || []).some(h => h[0] === auj && /relevé mobile/.test(h[1] || ""));
+    return `<button class="pbdot${fait ? " fait" : ""}${PBOPEN === p.id ? " on" : ""}" style="left:${p.x * 100}%;top:${p.y * 100}%;background:${c}" onclick="event.stopPropagation();pbDotTap('${p.id}')">${pbesc(p.nom || p.id.split("-")[1] || "")}</button>`;
+  }).join("");
+  const chipsN = nivx.length > 1 ? `<div class="pbnivs">${nivx.map((n2, i2) => `<button class="pbnv${i2 === PBNIV ? " on" : ""}" onclick="event.stopPropagation();PBNIV=${i2};rdetail()">${pbesc(n2.nom || ("Niveau " + (i2 + 1)))}</button>`).join("")}</div>` : "";
+  const planHTML = fondN ? `${chipsN}<div class="pbplan"><div class="pbpin"><img src="${fondN}" draggable="false" alt="Plan">${dotsN}</div></div>` : "";
+  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div> ${planHTML}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
 }
 /* ⚠️ leçon du jour côté bureau : on mute le poste DANS l'objet qu'on sauve. */
 function pbEcrit(id, muta){
@@ -2381,6 +2407,85 @@ function rapPhotoZoom(i){
     var el = e.target, n = 0;
     while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
   }, true);
+})();
+</script>
+<script>
+/* ═ 28/08 : pincement + glisser + molette sur le plan de mission — délégué au
+   document (le bloc renaît à chaque re-rendu), l'état de zoom survit. ═ */
+(function(){
+  var PBZ = {z: 1, x: 0, y: 0, key: ""};
+  function els(){ return {V: document.querySelector(".pbplan"), R: document.querySelector(".pbpin")}; }
+  function apply(){
+    var q = els(); if(!q.V || !q.R) return;
+    var mw = Math.min(0, q.V.clientWidth - q.R.offsetWidth * PBZ.z);
+    var mh = Math.min(0, q.V.clientHeight - q.R.offsetHeight * PBZ.z);
+    PBZ.x = Math.max(mw, Math.min(0, PBZ.x)); PBZ.y = Math.max(mh, Math.min(0, PBZ.y));
+    q.R.style.transform = "translate(" + PBZ.x + "px," + PBZ.y + "px) scale(" + PBZ.z + ")";
+  }
+  function zoomVers(mx, my, z2){
+    z2 = Math.max(1, Math.min(4, z2));
+    PBZ.x = mx - (mx - PBZ.x) * (z2 / PBZ.z); PBZ.y = my - (my - PBZ.y) * (z2 / PBZ.z);
+    PBZ.z = z2; apply();
+  }
+  window.pbZoomEtat = function(){ return {z: PBZ.z, x: PBZ.x, y: PBZ.y}; };
+  window.pbZoomVers = zoomVers;
+  document.addEventListener("wheel", function(e){
+    var V = e.target.closest && e.target.closest(".pbplan"); if(!V) return;
+    e.preventDefault();
+    var r = V.getBoundingClientRect();
+    zoomVers(e.clientX - r.left, e.clientY - r.top, PBZ.z * (e.deltaY < 0 ? 1.18 : 1 / 1.18));
+  }, {passive: false});
+  var pts = new Map(), st = null, mv = false, d0 = 0, z0 = 1, lastTap = 0;
+  document.addEventListener("pointerdown", function(e){
+    var V = e.target.closest && e.target.closest(".pbplan"); if(!V) return;
+    pts.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    if(pts.size === 1){
+      st = {x: e.clientX, y: e.clientY, px: PBZ.x, py: PBZ.y}; mv = false;
+      var now = Date.now();
+      if(now - lastTap < 300){                       /* double-tap : ×2 / retour */
+        var r = V.getBoundingClientRect();
+        zoomVers(e.clientX - r.left, e.clientY - r.top, PBZ.z > 1.4 ? 1 : 2.2);
+      }
+      lastTap = now;
+    } else if(pts.size === 2){
+      var a = Array.from(pts.values());
+      d0 = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); z0 = PBZ.z; st = null;
+    }
+  });
+  document.addEventListener("pointermove", function(e){
+    if(!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    var q = els(); if(!q.V) return;
+    var a = Array.from(pts.values());
+    if(pts.size === 2 && d0){
+      var r = q.V.getBoundingClientRect();
+      mv = true;
+      zoomVers((a[0].x + a[1].x) / 2 - r.left, (a[0].y + a[1].y) / 2 - r.top, z0 * (Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) / d0));
+      return;
+    }
+    if(!st) return;
+    var dx = e.clientX - st.x, dy = e.clientY - st.y;
+    if(!mv && Math.hypot(dx, dy) < 6) return;
+    mv = true;
+    PBZ.x = st.px + dx; PBZ.y = st.py + dy; apply();
+  });
+  function fin(e){ pts.delete(e.pointerId); if(!pts.size){ st = null; d0 = 0; } }
+  ["pointerup", "pointercancel"].forEach(function(t){ document.addEventListener(t, fin); });
+  document.addEventListener("click", function(e){
+    if(mv && e.target.closest && e.target.closest(".pbplan")){ e.stopPropagation(); e.preventDefault(); mv = false; }
+  }, true);
+  /* le re-rendu recrée le bloc : on ré-applique l'état ; nouveau plan → vue entière */
+  if(typeof window.rdetail === "function"){
+    var oRD = window.rdetail;
+    window.rdetail = function(){
+      var r = oRD.apply(this, arguments);
+      var q = els();
+      var k = q.R && q.R.querySelector("img") ? q.R.querySelector("img").getAttribute("src").slice(0, 80) + "|" + (typeof PBNIV !== "undefined" ? PBNIV : 0) : "";
+      if(k !== PBZ.key){ PBZ.z = 1; PBZ.x = PBZ.y = 0; PBZ.key = k; }
+      requestAnimationFrame(apply);
+      return r;
+    };
+  }
 })();
 </script>
 </body>

@@ -824,7 +824,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     if(nv){
       nv.hidden = demo || !fonds.length;
       nv.innerHTML = (demo || !fonds.length) ? "" : fonds.map(function(x, i){
-        return '<button class="f' + (i === NIV ? " on" : "") + '" onclick="plNivGo(' + i + ')">' + esc(x.nom || ("Niveau " + (i + 1))) + '</button>';
+        return '<button class="f' + (i === NIV ? " on" : "") + '" onclick="plNivGo(' + i + ')">' + esc(x.nom || ("Niveau " + (i + 1))) + (i === NIV ? ' <span class="nivren" onclick="event.stopPropagation();plNivRenOuvre(' + i + ')" title="Renommer — et supprimer si le niveau est vide">\u270E</span>' : '') + '</button>';
       }).join("") + '<button class="f add" onclick="plNivAdd()" title="Un étage, un sous-sol, une annexe — chaque niveau porte sa propre image">+ Niveau</button>';
     }
     $("btn-add").classList.toggle("arm", ADD || !!MOVE);
@@ -908,7 +908,15 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var fixRow = x.fix ? '<div class="d-row"><span class="k">Fixation</span><span class="v">' + esc(x.fix) + '</span></div>' : "";
     var phs = (x.photos || []).length ? '<div class="phstrip">' + x.photos.map(function(ph){ return '<img src="' + ph.img + '" title="Photo du ' + esc(ph.d) + '" onclick="plLb(this.src)">'; }).join("") + '</div>' : "";
     var histH = '<div class="d-hist"><div class="t">Historique des relèves</div><ul>'
-      + ((x.hist || []).slice(0, 8).map(function(h){ return '<li><span class="dte">' + esc(h[0]) + '</span><span>' + esc(h[1]) + '</span></li>'; }).join("") || '<li><span class="dte">—</span><span>Aucun relevé pour l\'instant.</span></li>')
+      + (function(){
+        var H = x.hist || [];
+        var tout = window.HISTFULL === x.id;
+        var vus = tout ? H : H.slice(0, 5);
+        var li = vus.map(function(h){ return '<li><span class="dte">' + esc(h[0]) + '</span><span>' + esc(h[1]) + '</span></li>'; }).join("");
+        if(!li) return '<li><span class="dte">—</span><span>Aucun relevé pour l\'instant.</span></li>';
+        if(!tout && H.length > 5) li += '<li class="d-histplus" onclick="window.HISTFULL=\'' + esc(x.id) + '\';plSel(\'' + esc(x.id) + '\')">Tout l\'historique (' + H.length + ') →</li>';
+        return li;
+      })()
       + '</ul></div>';
     var corps;
     if(x.retire){
@@ -1012,10 +1020,43 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   };
   window.plSel = function(id){
     if(MOVE) return;
+    if(window.HISTFULL && window.HISTFULL !== id) window.HISTFULL = null;
     SELID = id; PENDING = null; PENDNIV = false; RELEV = false; EDIT = false; ARMSUP = false;
     paint();
   };
   window.plSelNiv = function(id, nv){ NIV = nv || 0; window.plSel(id); };
+  window.plNivRenOuvre = function(i){
+    var chips = document.querySelectorAll("#plnivs .f");
+    var nv = chips[i]; if(!nv || !MODE) return;
+    var pl = cur(); var nom = ((nivDe(pl)[i] || {}).nom) || "";
+    var vide = !(pl.postes || []).some(function(x){ return (x.niv || 0) === i; });
+    var fini = false;
+    nv.innerHTML = '<input id="nivren-in" type="text" value="' + esc(nom) + '" style="width:110px;border:0;background:transparent;font:inherit;outline:none">' +
+      (vide && nivDe(pl).length > 1 ? '<span class="nivsup" onclick="event.stopPropagation();plNivSup(' + i + ')" title="Supprimer ce niveau (vide)">\u2715</span>' : '');
+    var inp = document.getElementById("nivren-in");
+    inp.focus(); inp.select();
+    var clore = function(ok2){
+      if(fini) return; fini = true;
+      if(ok2){
+        var v = inp.value.trim();
+        var pl2 = cur();
+        if(v && pl2.niveaux && pl2.niveaux[i]){ pl2.niveaux[i].nom = v; sauve(pl2); }
+      }
+      paint();
+    };
+    inp.addEventListener("keydown", function(e){ e.stopPropagation(); if(e.key === "Enter") clore(true); if(e.key === "Escape") clore(false); });
+    inp.addEventListener("blur", function(){ setTimeout(function(){ clore(true); }, 120); });
+    inp.addEventListener("click", function(e){ e.stopPropagation(); });
+  };
+  window.plNivSup = function(i){
+    var pl = cur();
+    if((pl.postes || []).some(function(x){ return (x.niv || 0) === i; })){ tst("Ce niveau porte des postes — déplace-les ou retire-les d'abord."); paint(); return; }
+    if(!pl.niveaux || pl.niveaux.length < 2){ tst("Le dernier niveau ne se supprime pas — change plutôt son image."); paint(); return; }
+    pl.niveaux.splice(i, 1);
+    (pl.postes || []).forEach(function(x){ if((x.niv || 0) > i) x.niv = (x.niv || 0) - 1; });
+    if(NIV >= pl.niveaux.length) NIV = 0;
+    if(sauve(pl)){ paint(); tst("Niveau supprimé."); }
+  };
   window.plDrop = function(id, fx, fy){
     if(!MODE) return;
     var pl = cur(), x = poste(pl, id);
@@ -1563,6 +1604,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   #printall .prwrap img{display:block;width:100%;height:auto}
   #printall .prdot{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:2px solid #fff;color:#fff;font:800 .62rem Inter,sans-serif;display:grid;place-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+/* ═ 3e lot : historique replié + gestion des niveaux ═ */
+.d-histplus{color:var(--orange-deep);font-weight:800;font-size:.76rem;cursor:pointer;list-style:none;padding-top:7px}
+.nivren{opacity:.55;font-size:.72rem;margin-left:5px;cursor:pointer}
+.nivren:hover{opacity:1}
+.nivsup{color:var(--red);font-weight:800;margin-left:7px;cursor:pointer}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
