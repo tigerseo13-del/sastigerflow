@@ -1817,7 +1817,7 @@ function fileRender(){
       <div class="frmid">
         <div class="frl1">${x.client}<span class="dvamt">${dvEur(x.montant)} en attente</span>${lt && x.relance ? `<span class="frwhen lt">${(n => "+" + Math.max(1, n) + " j")(Math.round((new Date(t + "T12:00:00") - new Date(x.relance + "T12:00:00")) / 86400000))}</span>` : ""}</div>
       </div>
-      ${telC ? `<a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${x.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>` : ""}
+      ${telC ? `<a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${x.client} — ${telFmt(x.tel)}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>` : ""}
       <button class="dvoui" onclick="dvOui('${x.ref}')" title="Le client accepte — le devis passe « Accepté » et le calage s'ouvre pendant qu'il est en ligne">✓ Accepté → planifier</button>
       <button class="frnorep" onclick="dvNoRep('${x.ref}')" title="Personne n'a décroché — la tentative est notée, le devis reste dans la file du jour">✆ Sans réponse</button>
       <span class="frszg" title="Il réfléchit encore — repousser la relance">
@@ -1825,7 +1825,7 @@ function fileRender(){
       </span>
       <button class="dvko" onclick="dvKoAsk('${x.ref}')" title="Le client refuse — noter le motif">✗</button>
       <button class="frnote ${x.note ? "has" : ""}" onclick="dvNoteEdit('${x.ref}')" title="${x.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
-      <div class="frl2">${x.tel ? `<b class="frtelno">${telFmt(x.tel)}</b> · ` : ""}Devis ${x.ref} envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")} (J+${jN})${x.last && x.last <= t ? ` · <b class="frlast">dernier appel le ${x.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${lt && x.relance ? ` · relance prévue le ${x.relance.split("-").reverse().slice(0, 2).join("/")}` : ""}${x.autoR ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""}</div>
+      <div class="frl2">${dvQuiHTML(x)}${dvObjHTML(x)}envoyé le ${x.envoye.split("-").reverse().slice(0, 2).join("/")}${x.last && x.last <= t ? ` · <b class="frlast">dernier appel le ${x.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${x.relance && x.relance > t ? ` · relance prévue le ${x.relance.split("-").reverse().slice(0, 2).join("/")}` : ""}${x.autoR && x.autoR >= t ? ` · <span class="dvauto">✉️ relance auto le ${x.autoR.split("-").reverse().slice(0, 2).join("/")}</span>` : ""}${x.note ? ` · <i>« ${x.note} »</i>` : ""} · <a class="frvoir" href="devis-detail.html?ref=${x.ref}" onclick="event.stopPropagation()">Voir le devis →</a></div>
     </div>
     ${DVNED === x.ref ? `<div class="frned">
       <textarea id="fnedd-${x.ref}" rows="2" placeholder="Ex. : veut négocier — rappeler après le 20…">${x.note || ""}</textarea>
@@ -1845,14 +1845,14 @@ function fileRender(){
       <div class="frmid">
         <div class="frl1">${p.client}${cls === "lt" ? `<span class="frwhen lt">${q.replace("<br>", " ")}</span>` : (p.cren ? `<span class="frwhen">⏰ ${p.cren}</span>` : "")}</div>
       </div>
-      <a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${p.client}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
+      <a class="frtel" href="tel:+33${telC.slice(1)}" title="Appeler ${p.client} — ${telFmt(tel)}" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.9.5 2.9.7a2 2 0 011.6 2z"/></svg></a>
       <button class="frcal" onclick="fileCaler('${p.pid}')">📅 Caler le RDV</button>
       <button class="frnorep" onclick="fileNoRep('${p.pid}')" title="Personne n'a décroché — la tentative est notée, il reste dans la file du jour">✆ Sans réponse</button>
       <span class="frszg" title="Toujours injoignable — repousser le rappel de 1, 2 ou 7 jours">
         <button onclick="fileSnooze('${p.pid}',1)">+1 j</button><button onclick="fileSnooze('${p.pid}',2)">+2 j</button><button onclick="fileSnooze('${p.pid}',7)">+7 j</button>
       </span>
       <button class="frnote ${p.note ? "has" : ""}" onclick="fileNoteEdit('${p.pid}')" title="${p.note ? "Modifier la note" : "Ajouter une note"} — elle part aussi dans la fiche client">✎</button>
-      <div class="frl2">${tel ? `<b class="frtelno">${telFmt(tel)}</b> · ` : ""}${motif}${p.last && p.last <= t ? ` · <b class="frlast">dernier appel le ${p.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${p.note ? ` · <i>${p.note}</i>` : ""}</div>
+      <div class="frl2">${rdvQuiHTML(p, tel)}${motif}${p.last && p.last <= t ? ` · <b class="frlast">dernier appel le ${p.last.split("-").reverse().slice(0, 2).join("/")}</b>` : ""}${p.note ? ` · <i>${p.note}</i>` : ""}</div>
     </div>
     ${FNEDIT === p.pid ? `<div class="frned">
       <textarea id="fned-${p.pid}" rows="2" placeholder="Ex. : m'a demandé de le rappeler demain à 17 h…">${p.note || ""}</textarea>
@@ -6337,6 +6337,7 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .fract .dvoui,.fract .frcal,.fract .frnorep,.fract .dvko,.fract .frnote{margin-left:0;order:0}
 .fract .frszg{order:0;margin-left:auto;display:inline-flex;align-items:center}
 .fract .frszg::before{content:"Reporter :";font-size:.72rem;font-weight:700;color:var(--muted);margin-right:7px;padding-left:2px}
+.frl2 .frvoir{color:var(--orange-deep);font-weight:700;white-space:nowrap}
 
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
@@ -6659,6 +6660,37 @@ document.addEventListener("click", function(e){
     }
   });
   try{ frRange(); }catch(e){}
+})();
+</script>
+<script>
+/* ═ v318 : QUI on appelle et DE QUOI on parle — l'interlocuteur vient des vrais
+   contacts de la fiche (tigerflow-contacts-<client>, matché par numéro), l'objet
+   du vrai devis (tigerflow-inbox-devis) ; la démo garde sa vitrine. Un
+   particulier n'est pas répété : son nom est déjà en titre. ═ */
+(function(){
+  var T = function(v){ return String(v || "").replace(/[^\d]/g, ""); };
+  function contacts(client){
+    try{ var a = JSON.parse(localStorage.getItem("tigerflow-contacts-" + client)); return Array.isArray(a) ? a : []; }catch(e){ return []; }
+  }
+  var DQUI = {"Syndic Foncia": "Mme Rousseau (gestionnaire)"};
+  var DOBJ = {"DEV-2026-01340": "Dépigeonnage — résidence Les Lilas", "DEV-2026-01298": "Nid de frelons — toiture",
+              "Paul Martel": "Dératisation — pavillon", "Nadia Benali": "Punaises de lit — 2 chambres"};
+  function quiDe(client, tel){
+    var cs = contacts(client);
+    var m = null;
+    if(tel) m = cs.find(function(c){ return c && c.tel && T(c.tel) === T(tel); }) || null;
+    if(!m && cs.length === 1) m = cs[0];
+    if(m && m.nom && m.nom !== client) return m.nom + (m.role ? " (" + m.role + ")" : "");
+    return DQUI[client] || "";
+  }
+  window.dvQuiHTML = function(x){ var q = x.qui || quiDe(x.client, x.tel); return q ? '<b class="frtelno">' + q + '</b> · ' : ""; };
+  window.dvObjHTML = function(x){
+    var o = x.obj || "";
+    if(!o){ try{ var dv = (JSON.parse(localStorage.getItem("tigerflow-inbox-devis")) || []).find(function(d){ return d && (d.ref === x.ref || d.numero === x.ref); }); if(dv) o = dv.titre || dv.objet || ""; }catch(e){} }
+    if(!o) o = DOBJ[x.ref] || DOBJ[x.client] || "";
+    return o ? o + " · " : "";
+  };
+  window.rdvQuiHTML = function(p, tel){ var q = p.qui || quiDe(p.client, tel); return q ? '<b class="frtelno">' + q + '</b> · ' : ""; };
 })();
 </script>
 </body>
