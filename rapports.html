@@ -436,10 +436,10 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <!-- ===== NUISIBLES ===== -->
       <div class="card">
         <div class="card-h">Répartition par nuisible<small>interventions de la période</small></div>
-        <div class="hrow"><div class="t"><span>🐀 Rongeurs</span><b>38 %</b></div><div class="tr"><div class="fl" style="width:38%;background:#B45309"></div><!-- 30/07 : ambre de la palette nuisibles, pas l orange de la marque --></div></div>
-        <div class="hrow"><div class="t"><span>🪲 Punaises de lit</span><b>26 %</b></div><div class="tr"><div class="fl" style="width:26%;background:#2E5CE6"></div></div></div>
-        <div class="hrow"><div class="t"><span>🪳 Cafards</span><b>18 %</b></div><div class="tr"><div class="fl" style="width:18%;background:#0E8A68"></div></div></div>
-        <div class="hrow"><div class="t"><span>🐝 Guêpes / frelons</span><b>12 %</b></div><div class="tr"><div class="fl" style="width:12%;background:#D9A408"></div></div></div>
+        <div class="hrow"><div class="t"><span>Rongeurs</span><b>38 %</b></div><div class="tr"><div class="fl" style="width:38%;background:#B45309"></div><!-- 30/07 : ambre de la palette nuisibles, pas l orange de la marque --></div></div>
+        <div class="hrow"><div class="t"><span>Punaises de lit de lit</span><b>26 %</b></div><div class="tr"><div class="fl" style="width:26%;background:#2E5CE6"></div></div></div>
+        <div class="hrow"><div class="t"><span>Cafards</span><b>18 %</b></div><div class="tr"><div class="fl" style="width:18%;background:#0E8A68"></div></div></div>
+        <div class="hrow"><div class="t"><span>Guêpes / frelons</span><b>12 %</b></div><div class="tr"><div class="fl" style="width:12%;background:#D9A408"></div></div></div>
         <div class="hrow"><div class="t"><span>🕊️ Pigeons &amp; autres</span><b>6 %</b></div><div class="tr"><div class="fl" style="width:6%;background:#6C7285"></div></div></div>
         <p style="font-size:.76rem;color:var(--muted);margin-top:13px">💡 Les punaises progressent de <b>+8 pts</b> sur 6 mois — pensez au stock d'insecticide et à la formation détection canine.</p>
       </div>
@@ -545,14 +545,14 @@ const DOCS = {
     note:"Historique des passages par site — document de suivi sanitaire à joindre aux audits HACCP de vos clients.",
     cols:["Date","Client / site","Nuisible","Action réalisée","Technicien","Statut"],
     rows:[
-      ["04/08/2026","Ironwood Solutions","🐀 Rongeurs","Contrôle postes + réappâtage","Pablo","Terminée"],
-      ["06/08/2026","Boulangerie Dupont","🪳 Cafards","Gel cuisine + plonge","Pablo","Terminée"],
-      ["08/08/2026","Hôtel du Parc","🪲 Punaises","Traitement 6 chambres (2ᵉ passage)","Sofia Leroy","Terminée"],
-      ["12/08/2026","Pharmacie Centrale","🐀 Rongeurs","Contrôle mensuel HACCP","Pablo","Terminée"],
-      ["14/08/2026","Restaurant Le Baobab","🪳 Cafards","Traitement cuisine complet","Sofia Leroy","Terminée"],
-      ["18/08/2026","Syndic Foncia Lilas","🐀 Rongeurs","Dératisation 3 immeubles","Karim Benali","Terminée"],
-      ["21/08/2026","M. Diallo","🐝 Guêpes","Destruction nid sous toiture","Karim Benali","Terminée"],
-      ["24/08/2026","Entrepôt Central","🐀 Rongeurs","Pose 4 nouveaux postes","Karim Benali","Terminée"]]
+      ["04/08/2026","Ironwood Solutions","Rongeurs","Contrôle postes + réappâtage","Pablo","Terminée"],
+      ["06/08/2026","Boulangerie Dupont","Cafards","Gel cuisine + plonge","Pablo","Terminée"],
+      ["08/08/2026","Hôtel du Parc","Punaises de lit","Traitement 6 chambres (2ᵉ passage)","Sofia Leroy","Terminée"],
+      ["12/08/2026","Pharmacie Centrale","Rongeurs","Contrôle mensuel HACCP","Pablo","Terminée"],
+      ["14/08/2026","Restaurant Le Baobab","Cafards","Traitement cuisine complet","Sofia Leroy","Terminée"],
+      ["18/08/2026","Syndic Foncia Lilas","Rongeurs","Dératisation 3 immeubles","Karim Benali","Terminée"],
+      ["21/08/2026","M. Diallo","Guêpes","Destruction nid sous toiture","Karim Benali","Terminée"],
+      ["24/08/2026","Entrepôt Central","Rongeurs","Pose 4 nouveaux postes","Karim Benali","Terminée"]]
   },
   encaiss: {
     titre:"Journal des encaissements",
@@ -596,7 +596,7 @@ function gen(type){
       <div class="ps-doc">
         <div class="t">${d.titre}</div>
         <div>Période : <b>${PERLBL[per]}</b></div>
-        <div>Édité le <b>25/08/2026</b> · ${rows.length} ligne${rows.length>1?"s":""}</div>
+        <div>Édité le <b>${new Date().toLocaleDateString("fr-FR")}</b> · ${rows.length} ligne${rows.length>1?"s":""}</div>
       </div>
     </div>
     <p style="font-size:9.5px;color:#5B6170;margin-top:12px">${d.note}</p>
@@ -1064,6 +1064,297 @@ document.addEventListener("click", function(e){
     try{ if(el.showPicker) el.showPicker(); }catch(err){}
   }
 });
+</script>
+<script>
+/* ════════════════════════════════════════════════════════════════
+   27/08 (patron : « fait tout + le truc de relance de devis ») —
+   LE RAPPORT PASSE AU RÉEL. La page lit les boîtes du logiciel :
+   paiements (tigerflow-factures-paiements), interventions, devis,
+   factures+statuts, plans d'appâtage (biocides !), rapports signés.
+   S'il n'y a AUCUNE vraie donnée → la démo reste telle quelle.
+   ════════════════════════════════════════════════════════════════ */
+(function(){
+  var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+  var JO = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } };
+  var esc2 = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+  var eur2 = function(n){ return n.toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2}).replace(/\u202f/g, "\u00a0") + " €"; };
+  var fdFR = function(iso){ var t = iso.split("-"); return t[2] + "/" + t[1] + "/" + t[0]; };
+  var frISO = function(f){ var m = /^(\d\d)\/(\d\d)\/(\d\d)$/.exec(f || ""); return m ? ("20" + m[3] + "-" + m[2] + "-" + m[1]) : null; };
+  var NUIL = {rongeur: "Rongeurs", cafard: "Cafards", punaise: "Punaises de lit", guepe: "Guêpes / frelons", chenille: "Chenilles", pigeon: "Pigeons", desinf: "Désinfection", fourmi: "Fourmis"};
+  var NUIC = ["#B45309", "#2E5CE6", "#0E8A68", "#D9A408", "#6C7285", "#7C5CE6", "#C2410C", "#0E7490"];
+
+  function bornes(){
+    var y = MPYSEL, d0, d1, p0, p1;
+    if(PERG === "an"){ d0 = new Date(y, 0, 1); d1 = new Date(y, 11, 31); p0 = new Date(y - 1, 0, 1); p1 = new Date(y - 1, 11, 31); }
+    else if(PERG === "tri"){ var q = Math.floor(PERM / 3); d0 = new Date(y, q * 3, 1); d1 = new Date(y, q * 3 + 3, 0); p0 = new Date(y, q * 3 - 3, 1); p1 = new Date(y, q * 3, 0); }
+    else { d0 = new Date(y, PERM, 1); d1 = new Date(y, PERM + 1, 0); p0 = new Date(y, PERM - 1, 1); p1 = new Date(y, PERM, 0); }
+    [d0, d1, p0, p1].forEach(function(d){ d.setHours(12, 0, 0, 0); });
+    return {d0: d0, d1: d1, p0: p0, p1: p1};
+  }
+  var dans = function(iso, a, b){ if(!iso) return false; var t = new Date(iso + "T12:00:00"); return t >= a && t <= b; };
+
+  /* ---- collecteurs ---- */
+  function paieTous(){
+    var reg = JO("tigerflow-factures-paiements"), out = [];
+    var fc = {}; J("tigerflow-inbox-factures").forEach(function(f){ if(f && f.ref) fc[f.ref] = f.client || ""; });
+    Object.keys(reg).forEach(function(ref){
+      (reg[ref] || []).forEach(function(e){
+        var d = e.d || null;
+        if(!d && e.t){ var m = /^(\d\d)\/(\d\d)\/(\d{4})/.exec(e.t); if(m) d = m[3] + "-" + m[2] + "-" + m[1]; }
+        if(d) out.push({ref: ref, d: d, m: +e.m || 0, mode: e.mode || "—", client: fc[ref] || "—"});
+      });
+    });
+    return out.sort(function(a, b){ return a.d < b.d ? 1 : -1; });
+  }
+  function ivTous(){ return J("tigerflow-inbox-interventions").concat(J("tigerflow-added-interventions")).filter(function(x){ return x && x.date; }); }
+  function dvTous(){ return J("tigerflow-inbox-devis").filter(function(x){ return x && x.ref; }); }
+  function fcTous(){
+    var st = JO("tigerflow-factures-statuts"), del = J("tigerflow-factures-del");
+    return J("tigerflow-inbox-factures").filter(function(f){ return f && f.ref && del.indexOf(f.ref) < 0; })
+      .map(function(f){ var o = {}; Object.keys(f).forEach(function(k){ o[k] = f[k]; }); o.st = st[f.ref] || f.statut || "brouillon"; return o; });
+  }
+  var FAIT = (function(){ var o = {}; try{ var rp = JSON.parse(localStorage.getItem("tigerflow-reports")) || {}; Object.keys(rp).forEach(function(k){ var r = rp[k] && rp[k].iv; if(r && r.client && r.date) o[r.client + "|" + r.date] = 1; }); }catch(e){} return o; })();
+
+  /* le registre des biocides S'ÉCRIT DEPUIS LES PLANS : pose, remplacements,
+     plaques — avec le produit, le lot, le poste et la source du relevé. */
+  function bioLignes(a, b){
+    var P = JO("tigerflow-plans"), out = [];
+    Object.keys(P).forEach(function(k){
+      var n = k.indexOf("|"), lieu = k.slice(0, n) + (k.slice(n + 1) ? " — " + k.slice(n + 1) : "");
+      (P[k].postes || []).forEach(function(px){
+        (px.hist || []).forEach(function(h){
+          var t = h[1] || "";
+          if(!/bloc remplacé|plaque changée|Poste installé/.test(t)) return;
+          var iso = frISO(h[0]); if(!iso || !dans(iso, a, b)) return;
+          var lm = /lot ([^\s—·]+)/.exec(t);
+          out.push({iso: iso, d: h[0], lieu: lieu, prod: px.produit || "—", lot: (lm ? lm[1] : (px.lot || "—")), poste: (px.nom || px.id), src: /relevé mobile/.test(t) ? "Mobile" : "Bureau"});
+        });
+      });
+    });
+    return out.sort(function(x, y){ return x.iso < y.iso ? 1 : -1; });
+  }
+  function plansRetards(){
+    var P = JO("tigerflow-plans"), n = 0;
+    Object.keys(P).forEach(function(k){
+      var pl = P[k], f = +pl.freq || 60, dern = null;
+      (pl.postes || []).filter(function(x){ return !x.retire; }).forEach(function(x){
+        var iso = frISO(x.releve); if(!iso) return;
+        var d = new Date(iso + "T12:00:00"); if(!dern || d > dern) dern = d;
+      });
+      if(!dern) return;
+      var ech = new Date(dern); ech.setDate(ech.getDate() + f);
+      var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+      if(t0 > ech) n++;
+    });
+    return n;
+  }
+  function realExiste(){
+    return !!(paieTous().length || ivTous().length || dvTous().length || Object.keys(JO("tigerflow-plans")).length);
+  }
+  var REAL = realExiste();
+  if(!REAL) return;   /* aucune vraie donnée : la démo reste la vitrine, on ne touche à rien */
+
+  /* ---- l'analyse comparée CALCULÉE (+ les lignes d'état) ---- */
+  function realRows(){
+    var b = bornes(), pay = paieTous(), ivs = ivTous(), dvs = dvTous();
+    var caP = 0, caA = 0;
+    pay.forEach(function(x){ if(dans(x.d, b.d0, b.d1)) caP += x.m; else if(dans(x.d, b.p0, b.p1)) caA += x.m; });
+    var ivP = ivs.filter(function(x){ return dans(x.date, b.d0, b.d1); }).length;
+    var ivA = ivs.filter(function(x){ return dans(x.date, b.p0, b.p1); }).length;
+    var envP = dvs.filter(function(x){ return dans(x.date, b.d0, b.d1) && x.statut !== "brouillon"; }).length;
+    var envA = dvs.filter(function(x){ return dans(x.date, b.p0, b.p1) && x.statut !== "brouillon"; }).length;
+    var sgP = dvs.filter(function(x){ return dans(x.date, b.d0, b.d1) && x.statut === "gagne"; }).length;
+    var sgA = dvs.filter(function(x){ return dans(x.date, b.p0, b.p1) && x.statut === "gagne"; }).length;
+    var ev = function(a, av, pts){
+      if(!av) return ["—", 1];
+      var d = pts ? (a - av) : (av ? (a - av) / av * 100 : 0);
+      var txt = pts ? (Math.abs(d) + " pts") : (Math.abs(d).toFixed(0) + " %");
+      return [(d >= 0 ? "+" : "−") + txt, d >= 0 ? 1 : 0];
+    };
+    var rows = [];
+    var e1 = ev(caP, caA); rows.push(["CA encaissé", eur2(caP), caA ? eur2(caA) : "—", e1[0], e1[1]]);
+    var e2 = ev(ivP, ivA); rows.push(["Interventions", "" + ivP, ivA ? "" + ivA : "—", e2[0], e2[1]]);
+    var e3 = ev(envP, envA); rows.push(["Devis envoyés", "" + envP, envA ? "" + envA : "—", e3[0], e3[1]]);
+    var txP = envP ? Math.round(sgP / envP * 100) : 0, txA = envA ? Math.round(sgA / envA * 100) : 0;
+    var e4 = ev(txP, txA, 1); rows.push(["Devis signés", sgP + (envP ? " (" + txP + " %)" : ""), envA ? sgA + " (" + txA + " %)" : "—", e4[0], e4[1]]);
+    if(ivP && caP){
+      var pmP = caP / ivP, pmA = (ivA && caA) ? caA / ivA : 0;
+      var e5 = ev(pmP, pmA); rows.push(["Panier moyen", eur2(pmP), pmA ? eur2(pmA) : "—", e5[0], e5[1]]);
+    }
+    var imp = fcTous().filter(function(f){ return f.st === "attente" || f.st === "retard"; }).reduce(function(sm, f){ return sm + (+f.montant || 0); }, 0);
+    rows.push(["Impayés en cours", eur2(imp), "—", "—", imp ? 0 : 1]);
+    var ret = plansRetards();
+    rows.push(["Plans d'appâtage en retard de relevé", "" + ret, "—", "—", ret ? 0 : 1]);
+    return rows;
+  }
+  function prevLbl(){
+    if(PERG === "an") return "vs " + (MPYSEL - 1);
+    if(PERG === "tri") return "vs trimestre précédent";
+    var i = PERM === 0 ? 11 : PERM - 1, y = PERM === 0 ? MPYSEL - 1 : MPYSEL;
+    return "vs " + MOISFULL[i].toLowerCase() + " " + y;
+  }
+
+  /* ---- la répartition par nuisible RÉELLE (repeinte à chaque période) ---- */
+  var nuiCard = (function(){
+    var c = null;
+    document.querySelectorAll(".card").forEach(function(x){
+      var h = x.querySelector(".card-h");
+      if(h && h.textContent.indexOf("Répartition par nuisible") === 0) c = x;
+    });
+    return c;
+  })();
+  function nuiPaint(){
+    if(!nuiCard) return;
+    var b = bornes();
+    var ivs = ivTous().filter(function(x){ return dans(x.date, b.d0, b.d1); });
+    if(!ivs.length){
+      nuiCard.querySelectorAll(".hrow").forEach(function(e){ e.remove() });
+      var old = nuiCard.querySelector("p"); if(old) old.remove();
+      if(!nuiCard.querySelector(".nvide")){
+        var dv = document.createElement("div");
+        dv.className = "nvide";
+        dv.style.cssText = "font-size:.8rem;color:var(--muted);font-weight:600;padding:12px 0";
+        dv.textContent = "Aucune intervention sur la période choisie.";
+        nuiCard.appendChild(dv);
+      }
+      return;
+    }
+    var cnt = {}, eurN = {};
+    ivs.forEach(function(x){
+      var k = NUIL[x.type] || (x.typeLibre ? x.typeLibre : "Autres");
+      cnt[k] = (cnt[k] || 0) + 1;
+      var mnt = parseFloat(String(x.montant || "").replace(/\s/g, "").replace(",", ".")) || 0;
+      eurN[k] = (eurN[k] || 0) + mnt;
+    });
+    var tot = ivs.length;
+    var tri = Object.keys(cnt).sort(function(a, bb){ return cnt[bb] - cnt[a]; }).slice(0, 6);
+    var html = tri.map(function(k, i){
+      var pc = Math.round(cnt[k] / tot * 100);
+      return '<div class="hrow"><div class="t"><span>' + esc2(k) + '</span><b>' + pc + ' %' + (eurN[k] ? ' · ' + Math.round(eurN[k]).toLocaleString("fr-FR") + ' €' : '') + '</b></div><div class="tr"><div class="fl" style="width:' + pc + '%;background:' + NUIC[i % NUIC.length] + '"></div></div></div>';
+    }).join("");
+    nuiCard.querySelectorAll(".hrow, p, .nvide").forEach(function(e){ e.remove() });
+    nuiCard.insertAdjacentHTML("beforeend", html + '<p style="font-size:.76rem;color:var(--muted);margin-top:13px">Compté sur vos ' + tot + ' intervention' + (tot > 1 ? 's' : '') + ' de la période' + (Object.keys(eurN).some(function(k){ return eurN[k]; }) ? ' — le € dit où est l\'argent, pas seulement les passages' : '') + '.</p>');
+  }
+
+  /* ---- LE BLOC RELANCES DE DEVIS + top clients & techniciens ---- */
+  var grid2 = document.querySelector(".grid2");
+  if(grid2 && !document.getElementById("relgrid")){
+    grid2.insertAdjacentHTML("afterend",
+      '<div class="grid2" id="relgrid" style="margin-top:14px">' +
+      '<div class="card"><div class="card-h">Relances de devis<small>l\'argent qui dort</small></div><div id="reldev"></div></div>' +
+      '<div class="card"><div class="card-h">Top clients &amp; techniciens<small id="toplbl"></small></div><div id="topdiv"></div></div></div>');
+  }
+  function relPaint(){
+    var box = document.getElementById("reldev"); if(!box) return;
+    var t0 = new Date(); t0.setHours(12, 0, 0, 0);
+    var att = dvTous().filter(function(x){ return x.statut === "envoye"; });
+    if(!att.length){
+      box.innerHTML = '<div style="font-size:.84rem;color:var(--green-d);font-weight:700;padding:8px 0">✅ Aucun devis en attente — rien ne dort.</div>';
+      return;
+    }
+    var somme = att.reduce(function(sm, x){ return sm + (+x.montant || 0); }, 0);
+    var ages = att.map(function(x){ return x.date ? Math.max(0, Math.round((t0 - new Date(x.date + "T12:00:00")) / 86400000)) : 0; });
+    var vieux = Math.max.apply(null, ages);
+    var lignes = att.slice().sort(function(a, bb){ return (+bb.montant || 0) - (+a.montant || 0); }).slice(0, 4).map(function(x){
+      var j = x.date ? Math.max(0, Math.round((t0 - new Date(x.date + "T12:00:00")) / 86400000)) : 0;
+      return '<div style="display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.82rem"><b style="flex:none">' + esc2(x.ref) + '</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)">' + esc2(x.client || "") + '</span><span style="flex:none;font-weight:800">' + eur2(+x.montant || 0) + '</span><span style="flex:none;font-size:.7rem;color:' + (j >= 14 ? "var(--red)" : "var(--muted)") + ';font-weight:700">J+' + j + '</span></div>';
+    }).join("");
+    box.innerHTML =
+      '<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:9px">' +
+      '<div><b style="font-family:Sora;font-size:1.3rem">' + att.length + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">devis en attente</small></div>' +
+      '<div><b style="font-family:Sora;font-size:1.3rem;color:var(--amber)">' + eur2(somme) + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">dorment chez les clients</small></div>' +
+      '<div><b style="font-family:Sora;font-size:1.3rem;color:' + (vieux >= 14 ? "var(--red)" : "var(--ink)") + '">J+' + vieux + '</b><small style="display:block;font-size:.72rem;color:var(--muted);font-weight:600">le plus ancien</small></div></div>' +
+      lignes +
+      '<div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">' +
+      '<a href="calendrier.html" style="font-size:.78rem;font-weight:800;color:var(--orange-deep)">Ouvrir la file d\'appels →</a>' +
+      '<a href="relances.html" style="font-size:.78rem;font-weight:800;color:var(--orange-deep);margin-left:auto">Régler les relances auto →</a></div>';
+  }
+  function topPaint(){
+    var box = document.getElementById("topdiv"); if(!box) return;
+    var lbl = document.getElementById("toplbl"); if(lbl) lbl.textContent = PERLBL[PERG] || "";
+    var b = bornes();
+    var pay = paieTous().filter(function(x){ return dans(x.d, b.d0, b.d1); });
+    var cli = {};
+    pay.forEach(function(x){ if(x.client && x.client !== "—") cli[x.client] = (cli[x.client] || 0) + x.m; });
+    var topC = Object.keys(cli).sort(function(a, bb){ return cli[bb] - cli[a]; }).slice(0, 3);
+    var ivs = ivTous().filter(function(x){ return dans(x.date, b.d0, b.d1); });
+    var tec = {};
+    ivs.forEach(function(x){ if(x.tech) tec[x.tech] = (tec[x.tech] || 0) + 1; });
+    var topT = Object.keys(tec).sort(function(a, bb){ return tec[bb] - tec[a]; }).slice(0, 3);
+    var li = function(t, v){ return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6.5px 0;border-bottom:1px dashed var(--line);font-size:.83rem"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:var(--ink-2)">' + esc2(t) + '</span><b style="flex:none">' + v + '</b></div>'; };
+    var h = '<div style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0 4px">Top clients (encaissé)</div>';
+    h += topC.length ? topC.map(function(k){ return li(k, eur2(cli[k])); }).join("") : '<div style="font-size:.78rem;color:var(--muted);font-weight:600;padding:5px 0">Aucun encaissement sur la période.</div>';
+    h += '<div style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:13px 0 4px">Techniciens (interventions)</div>';
+    h += topT.length ? topT.map(function(k){ return li(k, tec[k] + " interv."); }).join("") : '<div style="font-size:.78rem;color:var(--muted);font-weight:600;padding:5px 0">Aucune intervention sur la période.</div>';
+    box.innerHTML = h;
+  }
+
+  /* ---- les registres PDF passent au réel ---- */
+  function majDocs(){
+    var b = bornes();
+    var bl = bioLignes(b.d0, b.d1);
+    DOCS.bio.cols = ["Date", "Site / client", "Produit", "N° de lot", "Poste", "Relevé"];
+    DOCS.bio.rows = bl.length ? bl.map(function(x){ return [x.d, esc2(x.lieu), esc2(x.prod), esc2(x.lot), esc2(x.poste), x.src]; })
+      : [["—", "Aucune pose ni remplacement sur la période choisie", "", "", "", ""]];
+    DOCS.bio.note = "Registre tenu conformément à l'obligation de traçabilité Certibiocide (art. L522-2 CE) — alimenté automatiquement par les relevés des plans d'appâtage.";
+    var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    var ivs = ivTous().filter(function(x){ return dans(x.date, b.d0, b.d1); }).sort(function(a, bb){ return a.date < bb.date ? 1 : -1; });
+    DOCS.interv.rows = ivs.length ? ivs.map(function(x){
+      var st = FAIT[(x.client || "") + "|" + (x.date || "")] ? "Terminée" : (new Date(x.date + "T12:00:00") < t0 ? "En retard" : "Planifiée");
+      return [fdFR(x.date), esc2(x.client + (x.site ? " — " + x.site : "")), esc2(NUIL[x.type] || x.typeLibre || "—"), esc2(x.typeLibre || NUIL[x.type] || "Intervention"), esc2(x.tech || "—"), st];
+    }) : [["—", "Aucune intervention sur la période choisie", "", "", "", ""]];
+    var pay = paieTous().filter(function(x){ return dans(x.d, b.d0, b.d1); });
+    var totP = pay.reduce(function(sm, x){ return sm + x.m; }, 0);
+    DOCS.encaiss.rows = pay.length ? pay.map(function(x){ return [fdFR(x.d), esc2(x.ref), esc2(x.client), esc2(x.mode), {t: eur2(x.m), r: 1}]; })
+      : [["—", "Aucun encaissement sur la période choisie", "", "", {t: "", r: 1}]];
+    DOCS.encaiss.total = ["", "", "", "Total encaissé", {t: eur2(totP), r: 1}];
+  }
+  var genOrig = window.gen;
+  window.gen = function(type){
+    majDocs();
+    genOrig(type);
+    /* l'en-tête du document porte la VRAIE société — le n° Certibiocide reste
+       à compléter par le patron : on n'invente JAMAIS un numéro d'agrément. */
+    var bd = document.querySelector("#psheet .ps-brand div");
+    if(bd) bd.innerHTML = "<b>Agence Antinuisible</b><small>122 Rue Amelot, 75011 Paris · 01 89 72 43 96<br>SIRET 103 920 542 00018 · Certibiocide n° ____________</small>";
+    var lg = document.querySelector("#psheet .ps-brand .lg");
+    if(lg) lg.textContent = "AA";
+    var ft = document.querySelector("#psheet .ps-foot span");
+    if(ft) ft.textContent = "Agence Antinuisible — document généré par TigerFlow";
+  };
+
+  /* ---- l'analyse comparée branchée + tout se repeint ensemble ---- */
+  var perOrig = window.perPaint;
+  window.perPaint = function(){
+    PERS.mois.rows = PERS.mois.rows; /* la démo n'est plus lue : */
+    var rows = realRows();
+    PERS[PERG].rows = rows;
+    PERS[PERG].lbl = prevLbl();
+    document.getElementById("cmp-lbl").textContent = PERS[PERG].lbl;
+    document.getElementById("cmp").innerHTML = rows.map(function(r){
+      var evH = r[3] === "—" ? '<span style="color:var(--muted);font-weight:700">—</span>'
+        : '<span class="ev ' + (r[4] ? "up" : "dn") + '">' + (r[4] ? "▲" : "▼") + ' ' + r[3] + '</span>';
+      return '<tr><td>' + r[0] + '</td><td class="r"><b>' + r[1] + '</b></td><td class="r" style="color:var(--muted)">' + r[2] + '</td><td class="r">' + evH + '</td></tr>';
+    }).join("");
+    document.getElementById("pseg-tri").classList.toggle("on", PERG === "tri");
+    document.getElementById("pseg-an").classList.toggle("on", PERG === "an");
+    nuiPaint(); relPaint(); topPaint();
+  };
+
+  /* la note du bas devient honnête */
+  var note = document.querySelector(".page > .note");
+  if(note) note.textContent = "Calculé en direct sur les données de ce navigateur — les registres PDF (biocides, interventions, encaissements) lisent vos vraies boîtes.";
+
+  /* on ouvre sur le MOIS EN COURS, pas sur le mois de démonstration */
+  var t = new Date();
+  MPY = t.getFullYear(); MPYSEL = t.getFullYear(); PERM = t.getMonth(); PERG = "mois";
+  var lbl0 = MOISFULL[PERM] + " " + MPYSEL;
+  PERLBL.mois = lbl0;
+  var cm = document.getElementById("c-mois"); if(cm) cm.textContent = lbl0;
+  PERLBL.tri = Math.floor(PERM / 3) + 1 + "ᵉ trimestre " + MPYSEL;
+  PERLBL.an = "Année " + MPYSEL;
+  perPaint();
+})();
 </script>
 </body>
 </html>
