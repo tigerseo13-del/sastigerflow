@@ -682,6 +682,10 @@ table.novs th:last-child,table.novs td:last-child{display:none}   /* vs mois der
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>Contrats à renouveler<a href="contrats-liste.html">Voir tout →</a></div>
         <div id="crenew"></div>
       </div>
+      <div class="card" id="plansante-card" hidden>
+        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M9 20l-6-2V4l6 2m0 14l6-2m-6 2V6m6 12l6 2V6l-6-2m0 14V4M9 6l6-2"/></svg></span>Plans d&rsquo;appâtage<a href="plan-appatage.html">Voir les plans →</a></div>
+        <div id="plansante"></div>
+      </div>
     </div>
 
     <!-- ===== ACTIVITÉ DES TECHNICIENS ===== -->
@@ -1166,6 +1170,46 @@ document.addEventListener("click", function(e){
     var el = e.target, n = 0;
     while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
   }, true);
+})();
+</script>
+<script>
+/* ═ 28/08 : la santé des plans REMONTE ici — retards de relève, jamais relevés,
+   postes à remplacer. Fini l'alerte cachée dans la page de chaque client. ═ */
+(function(){
+  var card = document.getElementById("plansante-card"), box = document.getElementById("plansante");
+  if(!card || !box) return;
+  var tous; try{ tous = JSON.parse(localStorage.getItem("tigerflow-plans")) || {}; }catch(e){ tous = {}; }
+  var esc = function(t){ return String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+  var dFR = function(t){ var m = /^(\d{2})\/(\d{2})\/(\d{2})$/.exec(String(t || "")); return m ? new Date(2000 + +m[3], +m[2] - 1, +m[1]) : null; };
+  var FDC = function(d){ return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); };
+  var rows = [];
+  Object.keys(tous).forEach(function(k){
+    var pl = tous[k] || {}, act = (pl.postes || []).filter(function(p){ return !p.retire; });
+    if(!act.length) return;
+    var f = +pl.freq || 60, dern = null;
+    act.forEach(function(p){ var d = dFR(p.releve); if(d && (!dern || d > dern)) dern = d; });
+    var retard = 0, jamais = !dern;
+    if(dern){
+      var ech = new Date(dern); ech.setDate(ech.getDate() + f);
+      var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+      var r = Math.round((t0 - ech) / 86400000); retard = r > 0 ? r : 0;
+    }
+    var nAl = act.filter(function(p){ return p.statut === "alerte"; }).length;
+    if(!retard && !jamais && !nAl) return;
+    var p2 = k.split("|"), nom = (p2[1] ? p2[1] + " · " : "") + p2[0];
+    var kex = retard ? '<span class="kex rouge">retard ' + retard + " j</span>"
+      : jamais ? '<span class="kex gris">jamais relevé</span>'
+      : '<span class="kex ambre">' + nAl + " à remplacer</span>";
+    var sub = "relevé tous les " + f + " j" + (dern ? " · dernier le " + FDC(dern) : "")
+      + (nAl && (retard || jamais) ? " · " + nAl + " poste" + (nAl > 1 ? "s" : "") + " à remplacer" : "");
+    rows.push({tri: retard ? 2000 + retard : (jamais ? 1000 : nAl),
+      h: '<a class="ktc" href="plan-appatage.html?plan=' + encodeURIComponent(k) + '"><div class="k1"><b>' + esc(nom) + "</b>" + kex + '</div><div class="k2">' + esc(sub) + '<span class="kgo">Ouvrir le plan →</span></div></a>'});
+  });
+  if(!rows.length) return;
+  rows.sort(function(a, b){ return b.tri - a.tri; });
+  var top = rows.slice(0, 4).map(function(r){ return r.h; }).join("");
+  if(rows.length > 4) top += '<div style="font-size:.74rem;font-weight:700;color:var(--muted);padding:4px 2px">+ ' + (rows.length - 4) + " autres plans à voir</div>";
+  box.innerHTML = top; card.hidden = false;
 })();
 </script>
 </body>

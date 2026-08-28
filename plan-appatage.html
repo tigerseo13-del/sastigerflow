@@ -521,7 +521,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <span><i class="pastille" style="background:var(--green)"></i>Poste rongeurs — RAS</span>
           <span><i class="pastille" style="background:#E8930C"></i>Consommation / capture constatée</span>
           <span><i class="pastille" style="background:var(--red)"></i>À remplacer / manquant</span>
-          <span><i class="pastille" style="background:var(--blue)"></i>Détecteur insectes (DIV / UV)</span>
+          <span><i class="pastille" style="background:var(--blue)"></i>Capture / détecteur (DIV)</span>
         </div>
 
         <div class="zoom">
@@ -593,7 +593,7 @@ const POSTES = [
 ];
 
 const CLS = {ok:"c-ok", conso:"c-conso", alerte:"c-alerte", div:"c-div"};
-const LBL = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Détecteur insectes"};
+const LBL = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Capture / détecteur"};
 const SB  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
 const HEX = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
 
@@ -650,7 +650,7 @@ function detailHTML(p){
   return `
     <div class="d-head">
       <span class="d-num" style="background:${HEX[p.statut]}">${p.id.split("-")[1]}</span>
-      <div><b>${p.id} — ${p.type==="div"?"Détecteur insectes":"Poste d'appâtage rongeurs"}</b>
+      <div><b>${p.id} — ${p.type==="div"?"Capture / détecteur":"Poste d'appâtage rongeurs"}</b>
       <small>${p.zone}</small></div>
       <span class="st-badge ${SB[p.statut]}">${LBL[p.statut]}</span>
     </div>
@@ -687,7 +687,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   <tr onclick="select('${p.id}')">
     <td><span class="num" style="background:${HEX[p.statut]}">${p.id.split("-")[1]}</span></td>
     <td class="ref">${p.zone}</td>
-    <td>${p.type==="div"?"Détecteur insectes":"Poste rongeurs"}</td>
+    <td>${p.type==="div"?"Capture / détecteur":"Poste rongeurs"}</td>
     <td><span class="st-badge ${SB[p.statut]}">${LBL[p.statut]}</span></td>
     <td>${p.type==="div" ? p.conso+" captures" : p.conso+" %"}</td>
     <td>${p.releve}</td>
@@ -722,9 +722,9 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   var DEMO_EMPTY = $("detail").innerHTML;
   var HEX2 = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
   var SB2  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
-  var LBL2 = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Détecteur insectes"};
-  var TYPL = {pa:"Poste d'appâtage rongeurs", div:"Détecteur insectes", mec:"Piège mécanique", mon:"Monitoring non toxique"};
-  var TYPC = {pa:"Poste rongeurs", div:"Détecteur insectes", mec:"Piège mécanique", mon:"Monitoring"};
+  var LBL2 = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Capture / détecteur"};
+  var TYPL = {pa:"Poste d'appâtage rongeurs", div:"Capture / détecteur", mec:"Piège mécanique", mon:"Monitoring non toxique"};
+  var TYPC = {pa:"Poste rongeurs", div:"Capture / détecteur", mec:"Piège mécanique", mon:"Monitoring"};
   var DEFP = {pa:"Bloc appât sécurisé 20 g", div:"Lampe UV + plaque glue", mec:"Piège mécanique sous coffre", mon:"Bloc monitoring non toxique"};
   var PREF = {pa:"PA-", div:"DIV-", mec:"PM-", mon:"MN-"};
   var FL = {up:"\u2197", down:"\u2198", flat:"\u2192"};
@@ -961,7 +961,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       + '<label>' + (estMon ? "Grignotage" : "Consommation") + ' (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">';
     return '<div class="plform">'
       + '<label>Relevé du ' + aujFR() + '</label>' + haut
-      + (estMec ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estDiv ? "Plaque changée" : "Bloc remplacé") + '</label>')
+      + (estMec ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estDiv ? "Plaque / appât changé" : "Bloc remplacé") + '</label>')
       + (estDiv || estMec ? "" : '<label>N° de lot du produit posé (l\'auditeur le demande)</label><input type="text" id="pf-lot" placeholder="ex. 24B117" value="">')
       + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estDiv ? "mouches, moucherons…" : estMec ? "souris, réarmé, appât mécanique changé…" : "zone à surveiller, passage renforcé…") + '">'
       + '<div class="d-actions"><button class="btn primary" onclick="plRelSave()">Enregistrer le relevé</button><button class="btn outline" onclick="plRelAnnule()">Annuler</button></div></div>';
@@ -978,7 +978,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var t = function(v, lbl){ return '<label><input type="radio" name="pf-t" value="' + v + '"' + (LASTT === v ? " checked" : "") + ' onchange="plTypeDef(this.value)">' + lbl + '</label>'; };
     return '<div class="d-head"><span class="d-num" style="background:var(--orange)">+</span><div><b>Nouveau poste</b><small>posé sur le plan — précise-le</small></div></div>'
       + '<div class="plform">'
-      + '<label>Type</label><div class="plrad">' + t("pa", "Rongeurs") + t("div", "Détecteur insectes") + '</div>'
+      + '<label>Type</label><div class="plrad">' + t("pa", "Rongeurs") + t("div", "Capture / détecteur") + '</div>'
       + '<div class="plrad" style="margin-top:7px">' + t("mec", "Piège mécanique") + t("mon", "Monitoring non toxique") + '</div>'
       + '<label>Emplacement</label><input type="text" id="pf-zone" placeholder="Cuisine — angle nord-ouest">'
       + '<label>Produit en place</label><input type="text" id="pf-prod" list="plprods" value="' + esc(LASTP || DEFP[LASTT]) + '">'
@@ -1102,7 +1102,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       else { x.statut = "ok"; t = "RAS — rien au piège"; }
     } else if(x.type === "div"){
       x.conso = Math.max(0, +($("pf-cap") || {value: 0}).value || 0);
-      t = x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — plaque changée" : "");
+      t = x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — plaque / appât changé" : "");
     } else {
       var mot = x.type === "mon" ? "Grignotage" : "Consommation";
       var ras = choix === "ras";
@@ -1610,6 +1610,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .nivren{opacity:.55;font-size:.72rem;margin-left:5px;cursor:pointer}
 .nivren:hover{opacity:1}
 .nivsup{color:var(--red);font-weight:800;margin-left:7px;cursor:pointer}
+
+/* ═ 28/08 (3 lots plan) : zones actives + consignes d'accès ═ */
+.heatdot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(220,38,38,.5) 0%,rgba(232,147,12,.26) 45%,rgba(232,147,12,0) 72%)}
+.plfchips .heatb{margin-left:auto;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font:700 .78rem Inter,sans-serif;color:var(--ink-2,#3D434E);cursor:pointer}
+.plfchips .heatb.on{border-color:#F0B06A;background:linear-gradient(90deg,#FFF1EA,#FDE8E8);color:#B4400E}
+.placc{display:flex;align-items:baseline;gap:8px;margin-top:9px;font-size:.8rem;font-weight:600;color:var(--ink-2,#3D434E);background:#FFFBEB;border:1px solid #F3E4BB;border-radius:10px;padding:8px 12px}
+.placc>b{flex:none;font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8A5A17}
+.placc .pae{margin-left:auto;flex:none;cursor:pointer;color:var(--muted);font-weight:700;text-decoration:underline;font-size:.74rem}
+.placc.vide{display:inline-flex;background:none;border:1.5px dashed var(--line);color:var(--muted);cursor:pointer}
+.placc textarea{flex:1;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;min-height:52px;resize:vertical;outline:none}
+.placc .pab{flex:none;border:0;border-radius:9px;padding:8px 13px;font:700 .76rem Inter,sans-serif;cursor:pointer;background:var(--orange);color:#fff}
+.placc .pab.g{background:#fff;border:1.5px solid var(--line);color:var(--ink-2,#3D434E)}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
@@ -1958,15 +1970,105 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
 </script>
 <datalist id="plprods">
   <option value="Bloc appât sécurisé 20 g"></option>
-  <option value="Mimetic Box"></option>
   <option value="Pâte d'appâtage fraîche 15 g"></option>
   <option value="Bloc paraffiné extérieur"></option>
   <option value="Poste sécurisé tunnel"></option>
   <option value="Piège mécanique sous coffre"></option>
   <option value="Piège à capture multiple"></option>
+  <option value="Ekomille"></option>
   <option value="Plaque de glue rongeurs"></option>
   <option value="Lampe UV + plaque glue"></option>
   <option value="Bloc monitoring non toxique"></option>
 </datalist>
+<script>
+/* ═ 28/08 : ① ZONES ACTIVES (carte de chaleur 90 j) + ③ CONSIGNES D'ACCÈS ═ */
+(function(){
+  if(!window.plfPaint) return;
+  window.PLHEAT = false; var ACCED = false, HINT = false;
+  function lireTous(){ try{ return JSON.parse(localStorage.getItem("tigerflow-plans")) || {}; }catch(e){ return {}; } }
+  function planCur(){ return window.PLMODE ? (lireTous()[window.PLMODE] || null) : null; }
+  function dFR(t){ var m = /^(\d{2})\/(\d{2})\/(\d{2})$/.exec(String(t || "")); return m ? new Date(2000 + +m[3], +m[2] - 1, +m[1]) : null; }
+  window.heatScore = function(x){
+    var sc = 0, t0 = Date.now(), m;
+    (x.hist || []).forEach(function(h){
+      var d = dFR(h[0]); if(!d) return;
+      var age = (t0 - d.getTime()) / 86400000; if(age < 0 || age > 90) return;
+      var t = String(h[1] || ""), v = 0;
+      if(m = /(\d+)\s*%/.exec(t)) v = Math.min(1, +m[1] / 100);
+      else if(m = /^(\d+) capture/.exec(t)) v = Math.min(1, +m[1] / 10);
+      else if(/Capture constatée/.test(t)) v = .6;
+      if(v) sc += v * (1 - age / 90) * .8;
+    });
+    if(x.statut === "conso") sc = Math.max(sc, .35);
+    if(x.statut === "alerte") sc = Math.max(sc, .5);
+    if(x.statut === "div" && x.conso > 0) sc = Math.max(sc, Math.min(1, x.conso / 10) * .7);
+    return Math.min(1, sc);
+  };
+  function heatApply(demo){
+    var rd = document.getElementById("rdots"); if(!rd) return;
+    rd.querySelectorAll(".heatdot").forEach(function(h){ h.remove(); });
+    if(demo || !window.PLHEAT) return;
+    var pl = planCur(); if(!pl) return;
+    var map = {}; (pl.postes || []).forEach(function(x){ map[x.id] = x; });
+    var html = "";
+    rd.querySelectorAll(".rdot").forEach(function(b){
+      var x = map[b.dataset.id]; if(!x) return;
+      var sc = heatScore(x); if(!sc) return;
+      var w = Math.round(46 + 76 * sc);
+      html += '<span class="heatdot" style="left:' + b.style.left + ';top:' + b.style.top + ';width:' + w + 'px;height:' + w + 'px;opacity:' + (.4 + .5 * sc).toFixed(2) + '"></span>';
+    });
+    if(html) rd.insertAdjacentHTML("afterbegin", html);
+  }
+  window.plHeatTog = function(){
+    window.PLHEAT = !window.PLHEAT;
+    if(window.PLHEAT && !HINT){ HINT = true; if(window.tst) tst("Les halos montrent où ça consomme depuis 90 jours — plus c'est rouge, plus la zone est active."); }
+    if(window.plPaint) plPaint();
+  };
+  /* ③ les consignes d'accès, sous le sous-titre de la page */
+  function accApply(demo){
+    var sub = document.getElementById("pl-sub"); if(!sub) return;
+    var el = document.getElementById("placc");
+    if(!el){ el = document.createElement("div"); el.id = "placc"; sub.insertAdjacentElement("afterend", el); }
+    if(demo){ el.hidden = true; return; }
+    el.hidden = false;
+    var pl = planCur(); var v = (pl && pl.acces) ? String(pl.acces) : "";
+    var esc2 = function(t){ return t.replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+    if(ACCED){
+      el.className = "placc";
+      el.innerHTML = '<b>Accès</b><textarea id="placc-ta" placeholder="Clé chez le gardien, code portail, contact sur place, horaires…">' + esc2(v) + '</textarea><button class="pab" onclick="plAccSave()">Enregistrer</button><button class="pab g" onclick="plAccAnnule()">Annuler</button>';
+      var ta = document.getElementById("placc-ta"); if(ta) ta.focus();
+    } else if(v){
+      el.className = "placc";
+      el.innerHTML = '<b>Accès</b><span>' + esc2(v) + '</span><span class="pae" onclick="plAccEdit()">Modifier</span>';
+    } else {
+      el.className = "placc vide";
+      el.innerHTML = '+ Consignes d\u2019accès (clé, code, contact sur place…) — le technicien les verra sur sa mission';
+      el.onclick = function(){ if(el.classList.contains("vide")) plAccEdit(); };
+    }
+  }
+  window.plAccEdit = function(){ ACCED = true; accApply(false); };
+  window.plAccAnnule = function(){ ACCED = false; accApply(false); };
+  window.plAccSave = function(){
+    var ta = document.getElementById("placc-ta"); if(!ta) return;
+    var tous = lireTous(), pl = tous[window.PLMODE]; if(!pl) return;
+    var v = ta.value.trim();
+    if(v) pl.acces = v; else delete pl.acces;
+    try{ localStorage.setItem("tigerflow-plans", JSON.stringify(tous)); }catch(e){}
+    ACCED = false; accApply(false);
+    if(window.tst) tst(v ? "Consignes d\u2019accès enregistrées — le technicien les voit sur sa mission." : "Consignes d\u2019accès effacées.");
+  };
+  /* le tout suit CHAQUE rendu réel (plfPaint est appelé en fin de paint) */
+  var oFP = window.plfPaint;
+  window.plfPaint = function(act, ret, demo){
+    oFP(act, ret, demo);
+    var el = document.getElementById("plfchips");
+    if(el && !el.hidden) el.insertAdjacentHTML("beforeend",
+      '<button class="heatb' + (window.PLHEAT ? " on" : "") + '" onclick="plHeatTog()" title="Les zones qui consomment ces 90 derniers jours, en halo sur le plan">Zones actives</button>');
+    heatApply(demo);
+    accApply(demo);
+  };
+  if(window.plPaint){ try{ plPaint(); }catch(e){} }
+})();
+</script>
 </body>
 </html>
