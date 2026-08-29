@@ -2077,11 +2077,27 @@ function calPickHTML(p){
     const subT = s2 => { const x = new Date(s2.d + "T12:00:00"); return JOURS[x.getDay()] + " " + x.getDate() + " " + MOIS[x.getMonth()]; };
     return `
     <div class="cdlab" style="margin-top:2px">${slots.length || "Aucun"} créneau${slots.length > 1 ? "x" : ""} tenable${slots.length > 1 ? "s" : ""} <span style="letter-spacing:0;text-transform:none;font-weight:700">— propose-les au client, le technicien se décidera plus tard</span></div>
-    ${slots.map(s2 => `<div class="cslot">
-      <div class="cw"><b>${topT(s2)}</b><i>${subT(s2)}</i></div>
+    ${(() => {
+      /* 29/08 (patron : « marque une séparation entre aujourd'hui et un autre
+         jour, c'est le bordel ») : un bandeau par JOUR, les cartes ne portent
+         plus que l'heure. Aujourd'hui ressort en orange. */
+      const isoAuj = iso(TODAYD);
+      let lastD = null;
+      return slots.map(s2 => {
+        let sep = "";
+        if(s2.d !== lastD){
+          lastD = s2.d;
+          const x2 = new Date(s2.d + "T12:00:00");
+          const lbl = (s2.d === isoAuj ? "Aujourd'hui — " : s2.d === dm1 ? "Demain — " : "") + JOURS[x2.getDay()] + " " + x2.getDate() + " " + MOIS[x2.getMonth()];
+          sep = `<div class="cdsep${s2.d === isoAuj ? " auj" : ""}">${lbl}</div>`;
+        }
+        return sep + `<div class="cslot">
+      <div class="cw"><b>${hstr(s2.h)}–${hstr(s2.h + 2)}</b></div>
       <div class="cs"><span class="csl">✓ ${s2.libres} technicien${s2.libres > 1 ? "s" : ""} libre${s2.libres > 1 ? "s" : ""}</span><span class="css"><i class="cdot" style="background:${s2.sugg.c}"></i>suggestion : ${s2.sugg.nom} — ${s2.why}</span></div>
       <button type="button" class="cgo2" onclick="calGoSlot('${s2.d}',${s2.h})">✓ Caler</button>
-    </div>`).join("")}
+    </div>`;
+      }).join("");
+    })()}
     ${slots.length ? "" : `<div class="cvide">Aucun créneau libre sous 6 jours — passe en choix manuel.</div>`}
     <div class="cdgo" style="margin-top:10px">
       <button class="no" style="flex:1" onclick="CDMANU=true;fileRender()">✎ Choisir la date, l'heure ou le technicien à la main</button>
@@ -6269,6 +6285,11 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .cdgo .go:hover{background:var(--orange-deep)}
 .cdgo .go:disabled{background:#E9EBF0;color:#A6ABBB;box-shadow:none;cursor:not-allowed}
 .cdgo .no{flex:none;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.76rem;font-weight:800;font-family:inherit;border-radius:12px;padding:12px 16px;cursor:pointer}
+.cdsep{margin:13px 2px 3px;font:800 .68rem Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#6C7285);display:flex;align-items:center;gap:9px}
+.cdsep::after{content:"";flex:1;height:1px;background:#E8EAF0}
+.cdsep.auj{color:#C2410C}
+.cdsep.auj::after{background:#F6C9AF}
+.cdsep:first-child{margin-top:2px}
 .cslot{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #E4E7EF;border-radius:12px;padding:10px 12px;margin-bottom:7px}
 .cslot .cw{flex:none;width:152px}
 .cslot .cw b{display:block;font-size:.8rem;font-weight:800;color:var(--ink)}
