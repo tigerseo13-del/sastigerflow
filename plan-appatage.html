@@ -521,7 +521,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <span><i class="pastille" style="background:var(--green)"></i>Poste rongeurs — RAS</span>
           <span><i class="pastille" style="background:#E8930C"></i>Consommation / capture constatée</span>
           <span><i class="pastille" style="background:var(--red)"></i>À remplacer / manquant</span>
-          <span><i class="pastille" style="background:var(--blue)"></i>Capture / détecteur (DIV)</span>
+          <span><i class="pastille" style="background:var(--blue)"></i>DEIV (désinsectiseur UV)</span>
         </div>
 
         <div class="zoom">
@@ -593,7 +593,7 @@ const POSTES = [
 ];
 
 const CLS = {ok:"c-ok", conso:"c-conso", alerte:"c-alerte", div:"c-div"};
-const LBL = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Capture / détecteur"};
+const LBL = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"DEIV"};
 const SB  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
 const HEX = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
 
@@ -650,7 +650,7 @@ function detailHTML(p){
   return `
     <div class="d-head">
       <span class="d-num" style="background:${HEX[p.statut]}">${p.id.split("-")[1]}</span>
-      <div><b>${p.id} — ${p.type==="div"?"Capture / détecteur":"Poste d'appâtage rongeurs"}</b>
+      <div><b>${p.id} — ${p.type==="div"?"DEIV — désinsectiseur UV":"Poste d'appâtage rongeurs"}</b>
       <small>${p.zone}</small></div>
       <span class="st-badge ${SB[p.statut]}">${LBL[p.statut]}</span>
     </div>
@@ -687,7 +687,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   <tr onclick="select('${p.id}')">
     <td><span class="num" style="background:${HEX[p.statut]}">${p.id.split("-")[1]}</span></td>
     <td class="ref">${p.zone}</td>
-    <td>${p.type==="div"?"Capture / détecteur":"Poste rongeurs"}</td>
+    <td>${p.type==="div"?"DEIV":"Poste d'appâtage"}</td>
     <td><span class="st-badge ${SB[p.statut]}">${LBL[p.statut]}</span></td>
     <td>${p.type==="div" ? p.conso+" captures" : p.conso+" %"}</td>
     <td>${p.releve}</td>
@@ -722,9 +722,9 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   var DEMO_EMPTY = $("detail").innerHTML;
   var HEX2 = {ok:"#1B8A46", conso:"#E8930C", alerte:"#DC2626", div:"#2453C6"};
   var SB2  = {ok:"sb-ok", conso:"sb-conso", alerte:"sb-alerte", div:"sb-div"};
-  var LBL2 = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"Capture / détecteur"};
-  var TYPL = {pa:"Poste d'appâtage rongeurs", eko:"Ekomille — piège à capture multiple", div:"Capture / détecteur", mec:"Piège mécanique", mon:"Monitoring non toxique"};
-  var TYPC = {pa:"Poste rongeurs", eko:"Ekomille", div:"Capture / détecteur", mec:"Piège mécanique", mon:"Monitoring"};
+  var LBL2 = {ok:"RAS", conso:"Consommation", alerte:"À remplacer", div:"DEIV"};
+  var TYPL = {pa:"Poste d'appâtage rongeurs", eko:"Ekomille — piège à capture multiple", div:"DEIV — désinsectiseur UV", mec:"Piège mécanique", mon:"Monitoring non toxique"};
+  var TYPC = {pa:"Poste d'appâtage", eko:"Ekomille", div:"DEIV", mec:"Piège mécanique", mon:"Monitoring"};
   var DEFP = {pa:"Bloc appât sécurisé 20 g", eko:"Ekomille", div:"Lampe UV + plaque glue", mec:"Piège mécanique sous coffre", mon:"Bloc monitoring non toxique"};
   var PREF = {pa:"PA-", eko:"EK-", div:"DIV-", mec:"PM-", mon:"MN-"};
   var FL = {up:"\u2197", down:"\u2198", flat:"\u2192"};
@@ -992,9 +992,11 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var t = function(v, lbl){ return '<label><input type="radio" name="pf-t" value="' + v + '"' + (LASTT === v ? " checked" : "") + ' onchange="plTypeDef(this.value)">' + lbl + '</label>'; };
     return '<div class="d-head"><span class="d-num" style="background:var(--orange)">+</span><div><b>Nouveau poste</b><small>posé sur le plan — précise-le</small></div></div>'
       + '<div class="plform">'
-      + '<label>Type</label><div class="plrad">' + t("pa", "Rongeurs") + t("eko", "Ekomille") + '</div>'
-      + '<div class="plrad" style="margin-top:7px">' + t("div", "Capture / détecteur") + t("mec", "Piège mécanique") + '</div>'
-      + '<div class="plrad" style="margin-top:7px">' + t("mon", "Monitoring non toxique") + '</div>'
+      + '<label>Type</label><div class="plrad">' + t("pa", "Poste d\'appâtage") + t("div", "DEIV") + t("eko", "Ekomille") + '</div>'
+      + ((LASTT === "mec" || LASTT === "mon")
+          ? '<div class="plrad" style="margin-top:7px">' + t("mec", "Piège mécanique") + t("mon", "Monitoring non toxique") + '</div>'
+          : '<a class="plautres" onclick="this.nextElementSibling.hidden = false; this.remove();">+ autres types (piège mécanique, monitoring)</a>'
+            + '<div class="plrad" hidden style="margin-top:7px">' + t("mec", "Piège mécanique") + t("mon", "Monitoring non toxique") + '</div>')
       + '<label>Emplacement</label><input type="text" id="pf-zone" placeholder="Cuisine — angle nord-ouest">'
       + '<label>Produit en place</label><input type="text" id="pf-prod" list="plprods" value="' + esc(LASTP || DEFP[LASTT]) + '">'
       + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-serie"' + (SERIE ? " checked" : "") + ' style="width:auto;accent-color:var(--orange)"> Enchaîner — poser le suivant juste après (même type, même produit)</label>'
@@ -1673,6 +1675,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .plfchips .rasb i{font-style:normal;background:#fff;border-radius:999px;padding:1px 8px;font-size:.7rem;font-weight:800}
 .plfchips .rasb.arm{border-color:#F0B06A;background:#FFF1EA;color:#B4400E}
 .plfchips .rasb ~ .heatb{margin-left:0}
+
+.plrad[hidden]{display:none!important}
+.plautres{display:block;margin:7px 2px 0;font-size:.75rem;font-weight:700;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.plautres:hover{color:var(--ink-2,#3D434E)}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
