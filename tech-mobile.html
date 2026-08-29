@@ -765,6 +765,21 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 /* ═ 28/08 : consignes d'accès du site, écrites au bureau, lues ici ═ */
 .pbacc{display:flex;align-items:baseline;gap:8px;background:#FFFBEB;border:1px solid #F3E4BB;border-radius:12px;padding:9px 12px;margin:0 0 9px;font-size:.78rem;font-weight:600;color:#5A4A1E}
 .pbacc b{flex:none;font-size:.64rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8A5A17}
+
+/* ═ 28/08 : la pose de poste depuis le téléphone ═ */
+.pbadd{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;background:#FAFBFC;border:1.5px dashed #D8DCE4;border-radius:13px;padding:11px;margin:0 0 9px;font:800 .8rem Inter,sans-serif;color:var(--ink-2,#3D434E);cursor:pointer}
+.pbadd small{font-size:.68rem;font-weight:600;color:var(--muted)}
+.pbaddhint{display:flex;align-items:center;gap:9px;background:#FFF1EA;border:1.5px solid #FFD9C4;border-radius:12px;padding:10px 13px;margin:0 0 9px;font:700 .78rem Inter,sans-serif;color:#B4400E}
+.pbaddhint span{margin-left:auto;flex:none;text-decoration:underline;cursor:pointer;font-weight:800}
+.pbghost{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:var(--orange,#FF5A1F);opacity:.85;border:2.5px solid #fff;box-shadow:0 3px 10px -2px rgba(244,88,28,.6);animation:pbgp 1s ease infinite}
+@keyframes pbgp{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.18)}}
+.pbform{background:#fff;border:1.5px solid var(--line,#E5E8EE);border-radius:14px;padding:13px 14px;margin:0 0 9px;display:flex;flex-direction:column;gap:6px}
+.pbform b{font:800 .84rem Sora,Inter,sans-serif}
+.pbform label{font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.pbform select,.pbform input{width:100%;border:1.5px solid var(--line,#E5E8EE);border-radius:10px;padding:10px 11px;font:600 16px Inter,sans-serif;background:#fff;outline:none}
+.pbfbtns{display:flex;gap:8px;margin-top:8px}
+.pbfok{flex:1;border:0;border-radius:11px;padding:12px;background:var(--orange,#FF5A1F);color:#fff;font:800 .84rem Sora,Inter,sans-serif;cursor:pointer}
+.pbfno{flex:none;border:1.5px solid var(--line,#E5E8EE);border-radius:11px;padding:12px 15px;background:#fff;color:var(--ink-2,#3D434E);font:700 .8rem Inter,sans-serif;cursor:pointer}
 </style>
 </head>
 <body>
@@ -1405,9 +1420,22 @@ function planBloc(m){
     return `<button class="pbdot${fait ? " fait" : ""}${PBOPEN === p.id ? " on" : ""}" style="left:${p.x * 100}%;top:${p.y * 100}%;background:${c}" onclick="event.stopPropagation();pbDotTap('${p.id}')">${pbesc(p.nom || p.id.split("-")[1] || "")}</button>`;
   }).join("");
   const chipsN = nivx.length > 1 ? `<div class="pbnivs">${nivx.map((n2, i2) => `<button class="pbnv${i2 === PBNIV ? " on" : ""}" onclick="event.stopPropagation();PBNIV=${i2};rdetail()">${pbesc(n2.nom || ("Niveau " + (i2 + 1)))}</button>`).join("")}</div>` : "";
-  const planHTML = fondN ? `${chipsN}<div class="pbplan"><div class="pbpin"><img src="${fondN}" draggable="false" alt="Plan">${dotsN}</div></div>` : "";
+  const ghost = (window.PBADD === 2 && window.PBPT) ? `<span class="pbghost" style="left:${PBPT.fx * 100}%;top:${PBPT.fy * 100}%"></span>` : "";
+  const planHTML = fondN ? `${chipsN}<div class="pbplan"><div class="pbpin"><img src="${fondN}" draggable="false" alt="Plan">${dotsN}${ghost}</div></div>` : "";
+  const addUI = !fondN ? "" : (window.PBADD === 1
+    ? `<div class="pbaddhint">Touche le plan à l\u2019endroit exact du poste<span onclick="event.stopPropagation();pbAddStop()">Annuler</span></div>`
+    : (window.PBADD === 2 && window.PBPT)
+    ? `<div class="pbform" onclick="event.stopPropagation()">
+        <b>Nouveau poste${nivx.length > 1 ? " — " + pbesc((nivx[PBNIV] || {}).nom || "Niveau " + (PBNIV + 1)) : ""}</b>
+        <label>Type</label>
+        <select id="pbf-type" onchange="pbAddType(this.value)">${["pa", "eko", "div", "mec", "mon"].map(t2 => `<option value="${t2}"${t2 === window.PBFT ? " selected" : ""}>${PBTYPL[t2]}</option>`).join("")}</select>
+        <label>Emplacement</label><input type="text" id="pbf-zone" placeholder="Cuisine — sous plonge">
+        <label>Produit en place</label><input type="text" id="pbf-prod" value="${pbesc(PBDEFP[window.PBFT] || "")}">
+        <div class="pbfbtns"><button class="pbfok" onclick="event.stopPropagation();pbAddSave()">Poser le poste</button><button class="pbfno" onclick="event.stopPropagation();pbAddStop()">Annuler</button></div>
+      </div>`
+    : `<button class="pbadd" onclick="event.stopPropagation();pbAddGo()">+ Poser un poste<small>touche ensuite le plan à l\u2019endroit exact</small></button>`);
   const accHTML = P.acces ? `<div class="pbacc"><b>Accès</b><span>${pbesc(P.acces)}</span></div>` : "";
-  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div> ${accHTML}${planHTML}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
+  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div> ${accHTML}${planHTML}${addUI}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
 }
 /* ⚠️ leçon du jour côté bureau : on mute le poste DANS l'objet qu'on sauve. */
 function pbEcrit(id, muta){
@@ -2548,6 +2576,54 @@ function rapPhotoZoom(i){
     };
   }
 })();
+</script>
+<script>
+/* ═ 28/08 : POSER UN POSTE DEPUIS LE TÉLÉPHONE — le plan vit dans les deux sens. ═ */
+window.PBADD = 0; window.PBPT = null; window.PBFT = "pa";
+window.PBTYPL = {pa: "Poste d'app\u00e2tage rongeurs", eko: "Ekomille \u2014 capture multiple", div: "Capture / d\u00e9tecteur", mec: "Pi\u00e8ge m\u00e9canique", mon: "Monitoring non toxique"};
+window.PBDEFP = {pa: "Bloc app\u00e2t s\u00e9curis\u00e9 20 g", eko: "Ekomille", div: "Lampe UV + plaque glue", mec: "Pi\u00e8ge m\u00e9canique sous coffre", mon: "Bloc monitoring non toxique"};
+window.PBPREF = {pa: "PA-", eko: "EK-", div: "DIV-", mec: "PM-", mon: "MN-"};
+window.pbAddGo = function(){
+  PBADD = 1; PBPT = null; PBOPEN = null; rdetail();
+  setTimeout(function(){ var el = document.querySelector(".pbaddhint"); if(el) el.scrollIntoView({block: "center", behavior: "smooth"}); }, 90);
+};
+window.pbAddStop = function(){ PBADD = 0; PBPT = null; rdetail(); };
+window.pbAddType = function(v){
+  var e = document.getElementById("pbf-prod"); PBFT = v;
+  if(e && (!e.value || Object.keys(PBDEFP).some(function(k){ return e.value === PBDEFP[k]; }))) e.value = PBDEFP[v] || "";
+};
+document.addEventListener("click", function(e){
+  if(PBADD !== 1) return;
+  var pin = e.target.closest && e.target.closest(".pbpin");
+  if(!pin) return;
+  var r = pin.getBoundingClientRect();
+  if(!r.width || !r.height) return;
+  PBPT = {fx: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), fy: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))};
+  PBADD = 2; rdetail();
+  setTimeout(function(){ var el = document.querySelector(".pbform"); if(el) el.scrollIntoView({block: "center", behavior: "smooth"}); }, 90);
+});
+window.pbAddSave = function(){
+  var m = (typeof M !== "undefined" && typeof CURID !== "undefined") ? M[CURID] : null;
+  if(!m || !PBPT) return;
+  var k = planKeyOf(m); if(!k) return;
+  try{
+    var all = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+    var pl = all[k]; if(!pl) return;
+    pl.seq = (pl.seq || 0) + 1;
+    var typ = PBFT || "pa";
+    var auj = pbAuj();
+    var x = {id: (PBPREF[typ] || "PA-") + pl.seq, x: PBPT.fx, y: PBPT.fy, niv: PBNIV || 0, type: typ,
+      zone: (document.getElementById("pbf-zone") || {value: ""}).value.trim(),
+      produit: (document.getElementById("pbf-prod") || {value: ""}).value.trim() || PBDEFP[typ],
+      statut: typ === "div" ? "div" : "ok", conso: 0, releve: auj,
+      hist: [[auj, "Poste install\u00e9 \u2014 pos\u00e9 sur place (mobile)"]]};
+    pl.postes = (pl.postes || []).concat([x]);
+    localStorage.setItem("tigerflow-plans", JSON.stringify(all));
+    PBADD = 0; PBPT = null; PBFT = "pa"; PBOPEN = x.id; rdetail();
+    toast("\u2713 " + x.id + " pos\u00e9 \u2014 le bureau le voit sur le plan.");
+    setTimeout(function(){ var r2 = document.querySelector(".pbrow.open"); if(r2) r2.scrollIntoView({block: "center", behavior: "smooth"}); }, 140);
+  }catch(e){}
+};
 </script>
 </body>
 </html>

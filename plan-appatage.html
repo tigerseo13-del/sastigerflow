@@ -850,7 +850,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
         : (ri.ech ? ' <span class="plret ok">prochain avant le ' + FDC(ri.ech) + '</span>' : ""))
       : "");
     $("pl-bar").innerHTML = esc(n.site || n.client) + (fonds.length
-      ? ' · plan du client<span class="plchg" onclick="document.getElementById(\'pl-file\').click()">Changer le fond' + (fonds.length > 1 ? " (" + esc((fonds[NIV] || {}).nom || "") + ")" : "") + '</span>'
+      ? ' · plan du client<span class="plchg" onclick="document.getElementById(\'pl-file\').click()">Changer le fond' + (fonds.length > 1 ? " (" + esc((fonds[NIV] || {}).nom || "") + ")" : "") + '</span><span class="plchg" onclick="plPivote()" title="Tourne le plan d\'un quart de tour — les postes suivent">Pivoter \u21bb</span>'
         + (act.length ? '<span class="plchg" onclick="qrOuvre()" title="Une étiquette par poste, à imprimer et coller — le scan ouvre la fiche du poste">Étiquettes QR</span>' : "")
         + '<span class="plfreq">relevé tous les <select onchange="plFreq(this.value)">' + [30, 45, 60, 90, 180].map(function(v){ return '<option value="' + v + '"' + (v === ri.f ? " selected" : "") + '>' + v + '</option>'; }).join("") + '</select> jours</span>'
       : "");
@@ -906,6 +906,20 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var tdRow = td ? '<div class="d-row"><span class="k">Tendance</span><span class="v"><span class="tdn ' + td.k + '">' + FL[td.k] + '</span> ' + (td.k === "up" ? "en hausse" : td.k === "down" ? "en baisse" : "stable") + ' (' + td.de + ' \u2192 ' + td.a + ((x.type === "div" || x.type === "eko") ? "" : " %") + ')</span></div>' : "";
     var lotRow = x.lot ? '<div class="d-row"><span class="k">Lot en place</span><span class="v">' + esc(x.lot) + '</span></div>' : "";
     var fixRow = x.fix ? '<div class="d-row"><span class="k">Fixation</span><span class="v">' + esc(x.fix) + '</span></div>' : "";
+    var poseRow = (function(){
+      var H = x.hist || [];
+      for(var i = H.length - 1; i >= 0; i--){
+        if(/^Poste installé/.test(String(H[i][1] || ""))){
+          var d = dParse(H[i][0]); var age = "";
+          if(d){
+            var nj = Math.round((Date.now() - d.getTime()) / 86400000);
+            age = nj < 1 ? "aujourd\u2019hui" : nj < 31 ? "il y a " + nj + " j" : nj < 365 ? "il y a " + Math.round(nj / 30.4) + " mois" : "il y a " + (nj / 365).toFixed(1).replace(".", ",") + " an(s)";
+          }
+          return '<div class="d-row"><span class="k">Posé le</span><span class="v">' + esc(H[i][0]) + (age ? ' <small style="color:var(--muted);font-weight:600">· ' + age + "</small>" : "") + '</span></div>';
+        }
+      }
+      return "";
+    })();
     var phs = (x.photos || []).length ? '<div class="phstrip">' + x.photos.map(function(ph){ return '<img src="' + ph.img + '" title="Photo du ' + esc(ph.d) + '" onclick="plLb(this.src)">'; }).join("") + '</div>' : "";
     var histH = '<div class="d-hist"><div class="t">Historique des relèves</div><ul>'
       + (function(){
@@ -933,7 +947,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     else if(EDIT) corps = formEdit(x);
     else corps = '<div class="d-rows">'
       + '<div class="d-row"><span class="k">Produit en place</span><span class="v">' + esc(x.produit || "—") + '</span></div>'
-      + consoRow + tdRow + lotRow + fixRow
+      + consoRow + tdRow + lotRow + fixRow + poseRow
       + '<div class="d-row"><span class="k">Dernière relève</span><span class="v">' + esc(x.releve || "jamais") + '</span></div>'
       + '</div>' + phs + histH
       + '<div class="d-actions"><button class="btn primary" onclick="plRelever()">Relever</button>'
@@ -1057,6 +1071,32 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     (pl.postes || []).forEach(function(x){ if((x.niv || 0) > i) x.niv = (x.niv || 0) - 1; });
     if(NIV >= pl.niveaux.length) NIV = 0;
     if(sauve(pl)){ paint(); tst("Niveau supprimé."); }
+  };
+  window.plPivote = function(){
+    var pl = cur(); if(!pl) return;
+    var nivx = (pl.niveaux && pl.niveaux.length) ? pl.niveaux : null;
+    var fond = nivx ? (nivx[NIV] || {}).fond : pl.fond;
+    if(!fond){ tst("Pas de plan à pivoter sur ce niveau."); return; }
+    var img = new Image();
+    img.onload = function(){
+      var c = document.createElement("canvas");
+      c.width = img.naturalHeight; c.height = img.naturalWidth;
+      var g = c.getContext("2d");
+      g.translate(c.width, 0); g.rotate(Math.PI / 2);
+      g.drawImage(img, 0, 0);
+      var d;
+      try{ d = c.toDataURL("image/jpeg", .9); }catch(e){ tst("Ce plan ne peut pas être pivoté ici."); return; }
+      var pl2 = cur(); if(!pl2) return;
+      var nx2 = (pl2.niveaux && pl2.niveaux.length) ? pl2.niveaux : null;
+      if(nx2){ if(!nx2[NIV]) return; nx2[NIV].fond = d; } else { pl2.fond = d; }
+      (pl2.postes || []).forEach(function(x){
+        if((x.niv || 0) !== NIV) return;
+        var oy = x.y; x.y = x.x; x.x = 1 - oy;
+      });
+      if(sauve(pl2)){ if(window.plZ) plZ(0); paint(); tst("Plan pivoté d\u2019un quart de tour — les postes ont suivi."); }
+    };
+    img.onerror = function(){ tst("Le plan n\u2019a pas pu être rechargé pour pivoter."); };
+    img.src = fond;
   };
   window.plDrop = function(id, fx, fy){
     if(!MODE) return;
