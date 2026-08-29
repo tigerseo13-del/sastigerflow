@@ -784,6 +784,17 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 /* ═ ✓ Tout est RAS (relève groupée mobile) ═ */
 .pbras{width:100%;border:1.5px solid #BFE6D8;background:#ECFDF5;border-radius:13px;padding:12px;margin:0 0 9px;font:800 .82rem Inter,sans-serif;color:#0E7A54;cursor:pointer}
 .pbras.arm{border-color:#F0B06A;background:#FFF1EA;color:#B4400E}
+
+/* ═ le relevé DEIV du technicien : espèces + entretien, au doigt ═ */
+.pbacts.pbdeiv{flex-direction:column;align-items:stretch}
+.pbdvg{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px}
+.pbdvg label{display:flex;flex-direction:column;gap:3px;font-size:.7rem;font-weight:700;color:var(--ink-2,#3D434E)}
+.pbdvg input{width:100%;border:1.5px solid var(--line,#E5E8EE);border-radius:9px;padding:9px 10px;font:700 16px Inter,sans-serif;background:#fff;outline:none}
+.pbdvm{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pbmt{border:1.5px solid var(--line,#E5E8EE);background:#fff;border-radius:999px;padding:8px 12px;font:700 .72rem Inter,sans-serif;color:var(--ink-2,#3D434E);cursor:pointer}
+.pbmt[data-v="oui"]{border-color:#BFE6D8;background:#ECFDF5;color:#0E7A54}
+.pbmt[data-v="non"]{border-color:#F3C1C1;background:#FDF0F0;color:#B43B3B}
+.pbdeiv .pba.ok{margin-top:8px}
 </style>
 </head>
 <body>
@@ -1387,8 +1398,28 @@ function pbTdn(p){
 function pbActs(p){
   const nonacc = `<button class="pba" onclick="event.stopPropagation();pbNonAcc('${p.id}')">Non accessible</button>`;
   const photo = `<button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>`;
-  if(p.type === "div" || p.type === "eko") return `<div class="pbacts">
+  if(p.type === "eko") return `<div class="pbacts">
     ${[0, 3, 8, 15].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbDiv('${p.id}',${n2})">${n2} capt.</button>`).join("")}
+    ${nonacc}${photo}
+  </div>`;
+  if(p.type === "div") return `<div class="pbacts pbdeiv">
+    <div class="pbdvg">
+      <label>Coccinelles<input type="number" inputmode="numeric" min="0" placeholder="0" id="pbdv-coc" onclick="event.stopPropagation()"></label>
+      <label>Hyménoptères<input type="number" inputmode="numeric" min="0" placeholder="0" id="pbdv-hym" onclick="event.stopPropagation()"></label>
+      <label>Moucherons<input type="number" inputmode="numeric" min="0" placeholder="0" id="pbdv-mch" onclick="event.stopPropagation()"></label>
+      <label>Mouches<input type="number" inputmode="numeric" min="0" placeholder="0" id="pbdv-mou" onclick="event.stopPropagation()"></label>
+      <label>Moustiques<input type="number" inputmode="numeric" min="0" placeholder="0" id="pbdv-mst" onclick="event.stopPropagation()"></label>
+      <label>Papillons<input type="number" inputmode="numeric" min="0" placeholder="0" id="pbdv-pap" onclick="event.stopPropagation()"></label>
+      <label>Punaises<input type="number" inputmode="numeric" min="0" placeholder="0" id="pbdv-pun" onclick="event.stopPropagation()"></label>
+    </div>
+    <div class="pbdvm">
+      <button class="pbmt" id="pbmt-net" data-v="" data-l="Nettoyage tubes" onclick="event.stopPropagation();pbMntTog(this)">Nettoyage tubes \u00b7 \u2014</button>
+      <button class="pbmt" id="pbmt-tub" data-v="" data-l="Changement tubes" onclick="event.stopPropagation();pbMntTog(this)">Changement tubes \u00b7 \u2014</button>
+      <button class="pbmt" id="pbmt-lum" data-v="" data-l="Intensité lumineuse" onclick="event.stopPropagation();pbMntTog(this)">Intensité lumineuse \u00b7 \u2014</button>
+      <button class="pbmt" id="pbmt-plq" data-v="" data-l="Plaques collantes" onclick="event.stopPropagation();pbMntTog(this)">Plaques collantes \u00b7 \u2014</button>
+      <button class="pbmt" id="pbmt-str" data-v="" data-l="Starters" onclick="event.stopPropagation();pbMntTog(this)">Starters \u00b7 \u2014</button>
+    </div>
+    <button class="pba ok" onclick="event.stopPropagation();pbDeivSave('${p.id}')">\u2713 Enregistrer le relev\u00e9 DEIV</button>
     ${nonacc}${photo}
   </div>`;
   /* piège mécanique : capture ou rien — pas de pourcentage, pas de lot */
@@ -1471,6 +1502,35 @@ function pbEcrit(id, muta){
     toast("✓ " + p.id + " — " + t);
   }catch(e){}
 }
+window.pbMntTog = function(b2){
+  var v = b2.dataset.v === "" ? "oui" : b2.dataset.v === "oui" ? "non" : "";
+  b2.dataset.v = v;
+  b2.textContent = b2.dataset.l + " \u00b7 " + (v === "oui" ? "Oui" : v === "non" ? "Non" : "\u2014");
+};
+window.pbDeivSave = function(id){
+  var DVESP = [["coc", "coccinelle"], ["hym", "hyménoptère"], ["mch", "moucheron"], ["mou", "mouche"], ["mst", "moustique"], ["pap", "papillon"], ["pun", "punaise"]];
+  var DVMNT = [["net", "tubes nettoyés"], ["tub", "tubes changés"], ["lum", "intensité lumineuse mesurée"], ["plq", "plaques collantes changées"], ["str", "starters vérifiés"]];
+  var dvE = {}, dvDet = [], dvTot = 0;
+  DVESP.forEach(function(e2){
+    var el = document.getElementById("pbdv-" + e2[0]);
+    var v = Math.max(0, +((el || {value: 0}).value) || 0);
+    if(v){ dvE[e2[0]] = v; dvTot += v; dvDet.push(v + " " + e2[1] + (v > 1 ? "s" : "")); }
+  });
+  var dvM = {}, dvF = [];
+  DVMNT.forEach(function(e2){
+    var el = document.getElementById("pbmt-" + e2[0]);
+    var v = el ? (el.dataset.v || "") : "";
+    if(v) dvM[e2[0]] = v;
+    if(v === "oui") dvF.push(e2[1]);
+  });
+  pbEcrit(id, function(p){
+    p.conso = dvTot;
+    p.deiv = {esp: dvE, mnt: dvM};
+    var t2 = dvTot + " capture" + (dvTot > 1 ? "s" : "") + (dvDet.length ? " (" + dvDet.join(", ") + ")" : "");
+    if(dvF.length) t2 += " \u2014 " + dvF.join(", ");
+    return t2;
+  });
+};
 function pbRas(id){ pbEcrit(id, p => { p.statut = "ok"; p.conso = 0; return "RAS — bloc intact"; }); }
 function pbConso(id, n2){
   const lot = (document.getElementById("pb-lot") || {value: ""}).value.trim();

@@ -969,13 +969,20 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var estDiv = x.type === "div", estMec = x.type === "mec", estMon = x.type === "mon", estEko = x.type === "eko";
     var haut;
     if(estMec) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — rien</label><label><input type="radio" name="pf-r" value="capt">Capture</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>';
-    else if(estDiv || estEko) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
+    else if(estEko) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
       + '<label>Captures constatées</label><input type="number" id="pf-cap" min="0" value="' + (x.conso || 0) + '">';
+    else if(estDiv) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
+      + '<label>Captures par espèce</label><div class="dvesp">'
+      + '<span><i>Coccinelles</i><input type="number" id="pf-esp-coc" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Hyménoptères</i><input type="number" id="pf-esp-hym" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Moucherons</i><input type="number" id="pf-esp-mch" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Mouches</i><input type="number" id="pf-esp-mou" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Moustiques</i><input type="number" id="pf-esp-mst" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Papillons</i><input type="number" id="pf-esp-pap" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Punaises</i><input type="number" id="pf-esp-pun" min="0" inputmode="numeric" placeholder="0"></span>'
+      + '</div>'
+      + '<label>Entretien de l\'appareil (l\'auditeur le demande)</label><div class="dvmnt">'
+      + '<div><b>Nettoyage des tubes</b><select id="pf-mnt-net"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>' + '<div><b>Changement des tubes</b><select id="pf-mnt-tub"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>' + '<div><b>Mesure de l\'intensité lumineuse</b><select id="pf-mnt-lum"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>' + '<div><b>Changement des plaques collantes</b><select id="pf-mnt-plq"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>' + '<div><b>Vérification des starters</b><select id="pf-mnt-str"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>'
+      + '</div>';
     else haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">' + (estMon ? "Grignotage" : "Consommation") + '</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
       + '<label>' + (estMon ? "Grignotage" : "Consommation") + ' (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">';
     return '<div class="plform">'
       + '<label>Relevé du ' + aujFR() + '</label>' + haut
-      + (estMec ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estEko ? "Appât rechargé" : estDiv ? "Plaque / appât changé" : "Bloc remplacé") + '</label>')
+      + (estMec || estDiv ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estEko ? "Appât rechargé" : "Bloc remplacé") + '</label>')
       + (estDiv || estMec || estEko ? "" : '<label>N° de lot du produit posé (l\'auditeur le demande)</label><input type="text" id="pf-lot" placeholder="ex. 24B117" value="">')
       + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estEko ? "captures, appât rechargé…" : estDiv ? "mouches, moucherons…" : estMec ? "souris, réarmé, appât mécanique changé…" : "zone à surveiller, passage renforcé…") + '">'
       + '<div class="d-actions"><button class="btn primary" onclick="plRelSave()">Enregistrer le relevé</button><button class="btn outline" onclick="plRelAnnule()">Annuler</button></div></div>';
@@ -1148,8 +1155,23 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       x.statut = x.conso > 0 ? "conso" : "ok";
       t = x.conso ? x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — appât rechargé" : "") : "RAS — aucune capture" + (rmp ? " — appât rechargé" : "");
     } else if(x.type === "div"){
-      x.conso = Math.max(0, +($("pf-cap") || {value: 0}).value || 0);
-      t = x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — plaque / appât changé" : "");
+      var DVESP = [["coc", "coccinelle"], ["hym", "hyménoptère"], ["mch", "moucheron"], ["mou", "mouche"], ["mst", "moustique"], ["pap", "papillon"], ["pun", "punaise"]];
+      var DVMNT = [["net", "tubes nettoyés"], ["tub", "tubes changés"], ["lum", "intensité lumineuse mesurée"], ["plq", "plaques collantes changées"], ["str", "starters vérifiés"]];
+      var dvE = {}, dvDet = [], dvTot = 0;
+      DVESP.forEach(function(e2){
+        var v = Math.max(0, +(($("pf-esp-" + e2[0]) || {value: 0}).value) || 0);
+        if(v){ dvE[e2[0]] = v; dvTot += v; dvDet.push(v + " " + e2[1] + (v > 1 ? "s" : "")); }
+      });
+      var dvM = {}, dvF = [];
+      DVMNT.forEach(function(e2){
+        var v = (($("pf-mnt-" + e2[0]) || {value: ""}).value) || "";
+        if(v) dvM[e2[0]] = v;
+        if(v === "oui") dvF.push(e2[1]);
+      });
+      x.conso = dvTot;
+      x.deiv = {esp: dvE, mnt: dvM};
+      t = dvTot + " capture" + (dvTot > 1 ? "s" : "") + (dvDet.length ? " (" + dvDet.join(", ") + ")" : "");
+      if(dvF.length) t += " — " + dvF.join(", ");
     } else {
       var mot = x.type === "mon" ? "Grignotage" : "Consommation";
       var ras = choix === "ras";
@@ -1679,6 +1701,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .plrad[hidden]{display:none!important}
 .plautres{display:block;margin:7px 2px 0;font-size:.75rem;font-weight:700;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .plautres:hover{color:var(--ink-2,#3D434E)}
+
+/* ═ le relevé DEIV complet (espèces + entretien) ═ */
+.dvesp{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;margin-top:4px}
+.dvesp span{display:flex;flex-direction:column;gap:3px}
+.dvesp i{font-style:normal;font-size:.72rem;font-weight:700;color:var(--ink-2,#3D434E)}
+.dvesp input{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;font:700 .85rem Inter,sans-serif;background:#fff;outline:none}
+.dvmnt{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.dvmnt>div{display:flex;align-items:center;gap:8px}
+.dvmnt b{flex:1;font-size:.76rem;font-weight:600;color:var(--ink-2,#3D434E)}
+.dvmnt select{flex:none;width:104px;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font:700 .78rem Inter,sans-serif;background:#fff}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
