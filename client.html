@@ -1059,7 +1059,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       </div>
       <div class="card eq">
       <div class="card full" id="relcard">
-        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations — syndic, propriétaire, donneur d'ordre<a class="more" href="#" onclick="relForm(event)">+ Relier un client</a></div>
+        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations — syndic, propriétaire, donneur d'ordre<span class="more" id="rel-n"></span></div>
         <div id="rel-list" style="display:flex;flex-direction:column;gap:7px;padding:2px 0 6px"></div>
         <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relchip{border:1.5px solid #E2E5EB;border-radius:7px;background:#fff;color:var(--ink-2);font:700 .74rem Inter,sans-serif;padding:8px 11px;cursor:pointer}.relchip.on{background:var(--orange);border-color:var(--orange);color:#fff}</style>
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:8px;padding:6px 0 8px;align-items:center">
@@ -1070,6 +1070,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
           <button onclick="relStop()" style="border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;color:var(--ink-2);font:700 .78rem Inter,sans-serif;padding:8px 12px;cursor:pointer">Annuler</button>
           <div id="rel-ph" style="display:none;flex:1 1 100%;font:600 .8rem Inter,sans-serif;color:var(--ink-2);background:#FFF8F3;border:1px solid #F3E3D3;border-radius:8px;padding:8px 11px"></div>
         </div>
+        <button id="rel-add" onclick="relForm(event)" style="width:100%;border:1.5px dashed #D7DBE2;border-radius:12px;background:transparent;color:var(--ink-2);font:700 .8rem Inter,sans-serif;padding:11px;cursor:pointer;margin:2px 0 4px">+ Relier un client</button>
       </div>
       <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
         <div class="nlist" id="nlist"></div>
@@ -3184,12 +3185,34 @@ document.addEventListener("click", function(e){
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
   var LBLout = {gere: "Gestionnaire / syndic de", possede: "Propriétaire de", ordonne: "Donneur d'ordre de"};
   var LBLin = {gere: "Géré par", possede: "Bien de", ordonne: "Donneur d'ordre"};
-  function ligne(lbl, autre, i, site){
-    return '<div style="display:flex;align-items:center;gap:9px;background:#FAFBFC;border:1px solid #EEF0F4;border-radius:9px;padding:8px 11px;font-size:.82rem;font-weight:600">'
-      + '<span style="color:var(--muted);font-weight:800;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;flex:none">' + esc(lbl) + '</span>'
-      + '<a href="client.html?c=' + encodeURIComponent(autre) + '" style="color:var(--ink);font-weight:700;text-decoration:none">' + esc(autre) + ' \u2192</a>'
-      + (site ? '<span style="color:var(--muted);font-weight:600;font-size:.74rem">\u00b7 ' + esc(site) + '</span>' : "")
-      + '<span onclick="relDel(' + i + ')" style="margin-left:auto;cursor:pointer;color:#C3C7D0;font-weight:800" title="Retirer ce lien">\u2715</span></div>';
+  /* 29/08 (« FAIS LE MEME DESIGN QYE LA PHOTO 2 ») : les relations en CARTES,
+     comme la carte Sites d'intervention — pastille icône (orange = le chef),
+     nom en gras cliquable, adresse en sous-ligne. */
+  function adrOf(qui){
+    var f = null;
+    try{
+      (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).forEach(function(c){ if(!f && c && c.nom === qui) f = c; });
+      if(!f) (JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).forEach(function(c){ if(!f && c && (c.nom || c.name) === qui) f = c; });
+    }catch(e2){}
+    if(!f) return "";
+    return [f.adresse, [f.cp, f.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  }
+  var ICO = {
+    possede: '<path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
+    gere: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h1.6M13.4 8h1.6M9 12h1.6M13.4 12h1.6M10 21v-4h4v4"/>',
+    ordonne: '<path d="M9 3h6v3H9z"/><path d="M15 4h3a1 1 0 011 1v15a1 1 0 01-1 1H6a1 1 0 01-1-1V5a1 1 0 011-1h3"/><path d="M9 12h6M9 16h4"/>'
+  };
+  function ligne(lbl, autre, i, site, t, chef){
+    var sous = [adrOf(autre), site || ""].filter(Boolean).join(" · ");
+    return '<div style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #E9EBF0;border-radius:12px;padding:10px 13px">'
+      + '<span style="flex:none;width:38px;height:38px;border-radius:11px;background:' + (chef ? "#FDEEE3" : "#F3F4F6") + ';display:flex;align-items:center;justify-content:center">'
+      + '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:' + (chef ? "var(--orange)" : "#6B7280") + '">' + (ICO[t] || ICO.gere) + '</svg></span>'
+      + '<span style="flex:1;min-width:0">'
+      + '<span style="display:block;font:800 .6rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">' + esc(lbl) + '</span>'
+      + '<a href="client.html?c=' + encodeURIComponent(autre) + '" style="font:800 .88rem Inter,sans-serif;color:var(--ink);text-decoration:none">' + esc(autre) + ' →</a>'
+      + (sous ? '<span style="display:block;font:600 .74rem Inter,sans-serif;color:var(--muted);margin-top:1px">' + esc(sous) + '</span>' : "")
+      + '</span>'
+      + '<span onclick="relDel(' + i + ')" style="flex:none;cursor:pointer;color:#C3C7D0;font-weight:800;padding:4px" title="Retirer ce lien">✕</span></div>';
   }
   function paint(){
     var R = lire(), h = "";
@@ -3199,7 +3222,7 @@ document.addEventListener("click", function(e){
       else if(r.a === nom) sort.push([r, i]);
     });
     /* fiche du locataire : « Géré par FONCIA \u2192 · Résidence Les Lilas » */
-    entr.forEach(function(p2){ h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site); });
+    entr.forEach(function(p2){ h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site, p2[0].t, true); });
     /* fiche du syndic : ses clients regroupés PAR IMMEUBLE */
     if(sort.length){
       var grp = {};
@@ -3208,14 +3231,16 @@ document.addEventListener("click", function(e){
       cles.forEach(function(k2){
         if(k2) h += '<div style="font:800 .62rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:5px 2px 0">' + esc(k2) + '</div>';
         else if(cles.length > 1) h += '<div style="font:800 .62rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:5px 2px 0">Sans immeuble</div>';
-        grp[k2].forEach(function(p2){ h += ligne(LBLout[p2[0].t] || p2[0].t, p2[0].b, p2[1], null); });
+        grp[k2].forEach(function(p2){ h += ligne(LBLout[p2[0].t] || p2[0].t, p2[0].b, p2[1], null, p2[0].t, false); });
       });
     }
     document.getElementById("rel-list").innerHTML = h ||
       '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5">Aucune relation. Relie un syndic, un propriétaire ou un donneur d\u2019ordre : tu pourras lui adresser les devis et factures de ce client.</div>';
+    var relN = document.getElementById("rel-n");
+    if(relN){ var nb = entr.length + sort.length; relN.textContent = nb ? nb + " relation" + (nb > 1 ? "s" : "") : ""; }
   }
   window.relDel = function(i){ var R = lire(); R.splice(i, 1); localStorage.setItem(K, JSON.stringify(R)); paint(); };
-  window.relStop = function(){ document.getElementById("rel-form").style.display = "none"; };
+  window.relStop = function(){ document.getElementById("rel-form").style.display = "none"; var ab = document.getElementById("rel-add"); if(ab) ab.hidden = false; };
   /* ── 29/08 (« SA FAUX PAS UNE BARRE DE RECHERCHE ? » + « TU PEUX SIMPLIFIER SA ???? »)
      La nouvelle manière : une RECHERCHE qui filtre en tapant (comme la liste
      produit), TROIS choix seulement — syndic / propriétaire / donneur d'ordre —
@@ -3271,6 +3296,7 @@ document.addEventListener("click", function(e){
     var inp = document.getElementById("rel-qui"); if(inp) inp.value = "";
     relTypPaint(); relPhrase();
     document.getElementById("rel-form").style.display = "flex";
+    var ab = document.getElementById("rel-add"); if(ab) ab.hidden = true;
     relImm();
     if(inp) inp.focus();
   };
