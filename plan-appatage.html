@@ -978,8 +978,17 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       + '<label>Entretien de l\'appareil (l\'auditeur le demande)</label><div class="dvmnt">'
       + '<div class="dvrow"><span>Nettoyage des tubes</span><span class="dvseg" id="pf-mnt-net" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>' + '<div class="dvrow"><span>Changement des tubes</span><span class="dvseg" id="pf-mnt-tub" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>' + '<div class="dvrow"><span>Mesure de l\'intensité lumineuse</span><span class="dvseg" id="pf-mnt-lum" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>' + '<div class="dvrow"><span>Changement des plaques collantes</span><span class="dvseg" id="pf-mnt-plq" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>' + '<div class="dvrow"><span>Vérification des starters</span><span class="dvseg" id="pf-mnt-str" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>'
       + '</div>';
-    else haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">' + (estMon ? "Grignotage" : "Consommation") + '</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
-      + '<label>' + (estMon ? "Grignotage" : "Consommation") + ' (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">';
+    else if(estMon) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">Grignotage</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
+      + '<label>Grignotage (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">';
+    else haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
+      + '<label>Consommation (%)</label><div class="paseg" id="pf-pc2" data-v="' + (x.conso === 25 || x.conso === 50 || x.conso === 75 || x.conso === 100 ? x.conso : 0) + '">'
+      + [0, 25, 50, 75, 100].map(function(n2){ return '<b data-n="' + n2 + '" onclick="paSeg(this)">' + n2 + '</b>'; }).join("")
+      + '</div>'
+      + '<label>État du poste</label><select id="pf-etat"><option value="">\u2014</option><option>Ré-alimenté</option><option>Contrôlé</option><option>Nettoyé</option><option>Nouveau</option><option>Déplacé</option><option>Disparu</option><option>Autre</option></select>'
+      + '<label>Type d\'appâtage</label><div class="dvseg pa3" id="pf-typap" data-v=""><b onclick="dvSeg(this,\'placebo\')">Placebo</b><b onclick="dvSeg(this,\'biocide\')">Biocide</b><b onclick="dvSeg(this,\'capture\')">Capture</b></div>'
+      + '<label>Produit rongeurs</label><input type="text" id="pf-prod2" list="plprods" value="' + esc(x.produit || "") + '">'
+      + '<label>Fixation</label><select id="pf-fix2"><option value="">\u2014</option><option' + (x.fix === "Non fixé" ? ' selected' : '') + '>Non fixé</option><option' + (x.fix === "Fixé" ? ' selected' : '') + '>Fixé</option><option' + (x.fix === "Amarré" ? ' selected' : '') + '>Amarré</option><option' + (x.fix === "Vissé" ? ' selected' : '') + '>Vissé</option><option' + (x.fix === "Collé" ? ' selected' : '') + '>Collé</option></select>'
+      + '<label>Recommandation (le client la lira sur son rapport)</label><input type="text" id="pf-reco" placeholder="ex. : boucher le passage sous la porte de la réserve">';
     return '<div class="plform">'
       + '<label>Relevé du ' + aujFR() + '</label>' + haut
       + (estMec || estDiv ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estEko ? "Appât rechargé" : "Bloc remplacé") + '</label>')
@@ -1081,6 +1090,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     if(NIV >= pl.niveaux.length) NIV = 0;
     if(sauve(pl)){ paint(); tst("Niveau supprimé."); }
   };
+  window.paSeg = function(b2){ b2.parentNode.dataset.v = b2.dataset.n; };
   window.dvSeg = function(b2, v){
     var p2 = b2.parentNode;
     p2.dataset.v = (p2.dataset.v === v ? "" : v);
@@ -1177,12 +1187,29 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       x.deiv = {esp: dvE, mnt: dvM};
       t = dvTot + " capture" + (dvTot > 1 ? "s" : "") + (dvDet.length ? " (" + dvDet.join(", ") + ")" : "");
       if(dvF.length) t += " — " + dvF.join(", ");
-    } else {
-      var mot = x.type === "mon" ? "Grignotage" : "Consommation";
+    } else if(x.type === "mon"){
       var ras = choix === "ras";
       x.conso = ras ? 0 : Math.min(100, Math.max(0, +($("pf-pc") || {value: 0}).value || 0));
       x.statut = x.conso > 0 ? "conso" : "ok";
-      t = ras || !x.conso ? "RAS — bloc intact" : mot + " " + x.conso + " %" + (rmp ? " — bloc remplacé" : "");
+      t = ras || !x.conso ? "RAS — bloc intact" : "Grignotage " + x.conso + " %" + (rmp ? " — bloc remplacé" : "");
+    } else {
+      var pc2 = +((($("pf-pc2") || {dataset: {v: "0"}}).dataset || {v: "0"}).v) || 0;
+      x.conso = pc2;
+      x.statut = pc2 > 0 ? "conso" : "ok";
+      var eta2 = ($("pf-etat") || {value: ""}).value;
+      var tap2 = ((($("pf-typap") || {dataset: {v: ""}}).dataset || {}).v) || "";
+      var fx2 = ($("pf-fix2") || {value: ""}).value;
+      var pr2 = ($("pf-prod2") || {value: ""}).value.trim();
+      var rec2 = ($("pf-reco") || {value: ""}).value.trim();
+      if(pr2) x.produit = pr2;
+      if(fx2) x.fix = fx2;
+      if(rec2) x.reco = rec2;
+      x.rel = {pc: pc2, etat: eta2, typ: tap2, fix: fx2 || (x.fix || "")};
+      t = pc2 ? "Consommation " + pc2 + " %" : "RAS — bloc intact";
+      if(tap2) t += " \u00b7 " + tap2;
+      if(eta2) t += " \u2014 " + eta2.toLowerCase();
+      if(rmp) t += " \u2014 bloc remplacé";
+      if(rec2) t += " \u00b7 reco : " + rec2;
     }
     if(lot && choix !== "nonacc"){ t += " · lot " + lot; x.lot = lot; }
     if(note) t += " — " + note;
@@ -1718,6 +1745,25 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .dvseg b:first-child{border-right:1.5px solid var(--line)}
 .dvseg[data-v="oui"] b:first-child{background:#ECFDF5;color:#0E7A54}
 .dvseg[data-v="non"] b:last-child{background:#FDF0F0;color:#B43B3B}
+
+/* ═ le relevé Rongeur façon pro : paliers + segments ═ */
+.paseg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin-top:4px}
+.paseg b{flex:1;text-align:center;padding:8px 0;font:700 .8rem Inter,sans-serif;color:var(--muted);cursor:pointer;border-right:1.5px solid var(--line)}
+.paseg b:last-child{border-right:0}
+.paseg[data-v="0"] b[data-n="0"],.paseg[data-v="25"] b[data-n="25"],.paseg[data-v="50"] b[data-n="50"],.paseg[data-v="75"] b[data-n="75"],.paseg[data-v="100"] b[data-n="100"]{background:var(--orange);color:#fff}
+.paseg[data-v="0"] b[data-n="0"]{background:#1B8A46}
+.dvseg.pa3{display:flex;margin-top:4px}
+.dvseg.pa3 b{flex:1;text-align:center;border-right:1.5px solid var(--line)}
+.dvseg.pa3 b:last-child{border-right:0}
+.dvseg.pa3[data-v="placebo"] b:nth-child(1){background:#ECFDF5;color:#0E7A54}
+.dvseg.pa3[data-v="biocide"] b:nth-child(2){background:#FDF0F0;color:#B43B3B}
+.dvseg.pa3[data-v="capture"] b:nth-child(3){background:#EAF1FE;color:#2453C6}
+.plform select{margin-top:4px}
+
+/* ═ la zone de chaleur thermique ═ */
+.heatcv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.plfchips .heatleg{display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;color:var(--muted)}
+.plfchips .heatleg i{width:96px;height:8px;border-radius:4px;background:linear-gradient(90deg,#28006e,#be1496,#f57828,#fce65a)}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
@@ -2075,6 +2121,47 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
   <option value="Plaque de glue rongeurs"></option>
   <option value="Lampe UV + plaque glue"></option>
   <option value="Bloc monitoring non toxique"></option>
+  <option value="BLOC Coulé Vertox"></option>
+  <option value="PATE Appât Raviox"></option>
+  <option value="PATE Appât Bonirat Difenacoum"></option>
+  <option value="MELANGE 3 Céréales Viryl"></option>
+  <option value="AVOINE Décortiquée Viryl"></option>
+  <option value="PATE Appât Propasta"></option>
+  <option value="PROPASTA Crème"></option>
+  <option value="HARMONIX Monitoring"></option>
+  <option value="HARMONIX Rodent Paste"></option>
+  <option value="TALON Bloc Brodifacoum"></option>
+  <option value="TALON Soft"></option>
+  <option value="TALON Track"></option>
+  <option value="MUSKIL Bloc Extrudé"></option>
+  <option value="MUSKIL Pâte"></option>
+  <option value="BLE Concassé Raco 25"></option>
+  <option value="AEDEX Grains Raco 25"></option>
+  <option value="AVOINE Décortiquée Strong 25"></option>
+  <option value="BLOC Extrudé Stelliox 25"></option>
+  <option value="AEDEX Bloc Stelliox 25"></option>
+  <option value="AEDEX Pâte Robust 25"></option>
+  <option value="PATE Appât Robust 25"></option>
+  <option value="ROBUST 25 Crème"></option>
+  <option value="PATE Appât Nora Pasta 25"></option>
+  <option value="PATE Appât Broditop"></option>
+  <option value="PATE Appât Difethialone Rodilon"></option>
+  <option value="AVOINE Décortiquée Mulox 25"></option>
+  <option value="AVOINE Décortiquée Control SP Mulot"></option>
+  <option value="BLE Entier Control"></option>
+  <option value="BLE Extrudé Control Bloc"></option>
+  <option value="BLOC Crochet Coulé Control"></option>
+  <option value="PATE Appât Control Pasta"></option>
+  <option value="PATE Appât Gardentop"></option>
+  <option value="AVOINE Décortiquée Cereox"></option>
+  <option value="BLE Concassé Cereox"></option>
+  <option value="BLOC Extrudé Probloc"></option>
+  <option value="BLOC Crochet Coulé Probloc"></option>
+  <option value="PLACEDEX Pâte"></option>
+  <option value="PLACEDEX Bloc"></option>
+  <option value="NARA Lure"></option>
+  <option value="RE-Scent"></option>
+  <option value="RATRON GW"></option>
 </datalist>
 <script>
 /* ═ 28/08 : ① ZONES ACTIVES (carte de chaleur 90 j) + ③ CONSIGNES D'ACCÈS ═ */
@@ -2100,20 +2187,62 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
     if(x.statut === "div" && x.conso > 0) sc = Math.max(sc, Math.min(1, x.conso / 10) * .7);
     return Math.min(1, sc);
   };
+  function tfPlasma(t){
+    var S = [[0, 40, 0, 110], [.35, 190, 20, 150], [.68, 245, 120, 40], [1, 252, 230, 90]];
+    for(var i = 1; i < S.length; i++){
+      if(t <= S[i][0]){
+        var a = S[i - 1], b = S[i], u = (t - a[0]) / ((b[0] - a[0]) || 1);
+        return [Math.round(a[1] + (b[1] - a[1]) * u), Math.round(a[2] + (b[2] - a[2]) * u), Math.round(a[3] + (b[3] - a[3]) * u)];
+      }
+    }
+    return [252, 230, 90];
+  }
+  function tfHeatDraw(cv, W, H, pts){
+    cv.width = W; cv.height = H;
+    var g2 = cv.getContext("2d");
+    pts.forEach(function(p){
+      var r = Math.min(W, H) * (.10 + .13 * p.v);
+      var gr = g2.createRadialGradient(p.x * W, p.y * H, 0, p.x * W, p.y * H, r);
+      gr.addColorStop(0, "rgba(0,0,0," + (.25 + .6 * p.v) + ")");
+      gr.addColorStop(1, "rgba(0,0,0,0)");
+      g2.fillStyle = gr;
+      g2.beginPath(); g2.arc(p.x * W, p.y * H, r, 0, 7); g2.fill();
+    });
+    var im = g2.getImageData(0, 0, W, H), d = im.data;
+    for(var i = 0; i < d.length; i += 4){
+      var a = d[i + 3] / 255;
+      if(a < .02){ d[i + 3] = 0; continue; }
+      var c = tfPlasma(Math.min(1, a * 1.15));
+      d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2];
+      d[i + 3] = Math.round(Math.min(1, a * 1.35) * 215);
+    }
+    g2.putImageData(im, 0, 0);
+  }
+  function heatVal(x){
+    var v = (x.type === "eko" || x.type === "div") ? Math.min(1, (x.conso || 0) / 10) : Math.min(1, (x.conso || 0) / 100);
+    if(x.statut === "alerte") v = Math.max(v, .55);
+    return Math.max(v, (window.heatScore ? heatScore(x) : 0) * .85);
+  }
   function heatApply(demo){
     var rd = document.getElementById("rdots"); if(!rd) return;
+    var old = rd.querySelector(".heatcv"); if(old) old.remove();
     rd.querySelectorAll(".heatdot").forEach(function(h){ h.remove(); });
     if(demo || !window.PLHEAT) return;
     var pl = planCur(); if(!pl) return;
     var map = {}; (pl.postes || []).forEach(function(x){ map[x.id] = x; });
-    var html = "";
+    var pts = [];
     rd.querySelectorAll(".rdot").forEach(function(b){
       var x = map[b.dataset.id]; if(!x) return;
-      var sc = heatScore(x); if(!sc) return;
-      var w = Math.round(46 + 76 * sc);
-      html += '<span class="heatdot" style="left:' + b.style.left + ';top:' + b.style.top + ';width:' + w + 'px;height:' + w + 'px;opacity:' + (.4 + .5 * sc).toFixed(2) + '"></span>';
+      var v = heatVal(x); if(v < .03) return;
+      pts.push({x: parseFloat(b.style.left) / 100, y: parseFloat(b.style.top) / 100, v: v});
     });
-    if(html) rd.insertAdjacentHTML("afterbegin", html);
+    if(!pts.length) return;
+    var img = document.getElementById("rimg");
+    var W = 900, H = (img && img.naturalWidth) ? Math.round(900 * img.naturalHeight / img.naturalWidth) : 560;
+    var cv = document.createElement("canvas");
+    cv.className = "heatcv";
+    tfHeatDraw(cv, W, H, pts);
+    rd.insertAdjacentElement("afterbegin", cv);
   }
   window.plHeatTog = function(){
     window.PLHEAT = !window.PLHEAT;
@@ -2204,7 +2333,8 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
       var nRas = rasRestants().length;
       el.insertAdjacentHTML("beforeend",
         (nRas ? '<button class="rasb' + (RASARM ? " arm" : "") + '" onclick="plRasAll()" title="Tous les postes pas encore relevés aujourd\u2019hui passent RAS d\u2019un coup — chacun garde sa ligne d\u2019historique. Les postes à remplacer ne sont pas touchés.">' + (RASARM ? "Confirmer : " + nRas + " poste" + (nRas > 1 ? "s" : "") + " en RAS ?" : "\u2713 Tout est RAS<i>" + nRas + "</i>") + '</button>' : "")
-        + '<button class="heatb' + (window.PLHEAT ? " on" : "") + '" onclick="plHeatTog()" title="Les zones qui consomment ces 90 derniers jours, en halo sur le plan">Zones actives</button>');
+        + '<button class="heatb' + (window.PLHEAT ? " on" : "") + '" onclick="plHeatTog()" title="La chaleur du site : plus une zone consomme ou capture, plus elle vire au jaune">Zones actives</button>'
+        + (window.PLHEAT ? '<span class="heatleg">0<i></i>100 %</span>' : ""));
     }
     heatApply(demo);
     accApply(demo);

@@ -795,6 +795,17 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 .pbmt[data-v="oui"]{border-color:#BFE6D8;background:#ECFDF5;color:#0E7A54}
 .pbmt[data-v="non"]{border-color:#F3C1C1;background:#FDF0F0;color:#B43B3B}
 .pbdeiv .pba.ok{margin-top:8px}
+
+/* ═ le relevé Rongeur complet, au doigt ═ */
+.pbl2{font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.pbacts.pbdeiv select,.pbacts.pbdeiv input[type=text]{width:100%;border:1.5px solid var(--line,#E5E8EE);border-radius:9px;padding:9px 10px;font:600 16px Inter,sans-serif;background:#fff;outline:none}
+.pbacts.pbdeiv .pblot{flex:0 0 auto;width:100%;min-height:0;padding:9px 10px;font-size:16px}
+.paseg{display:flex;border:1.5px solid var(--line,#E5E8EE);border-radius:10px;overflow:hidden;background:#fff}
+.paseg b{flex:1;text-align:center;padding:10px 0;font:700 .8rem Inter,sans-serif;color:var(--muted);cursor:pointer;border-right:1.5px solid var(--line,#E5E8EE)}
+.paseg b:last-child{border-right:0}
+.paseg[data-v="0"] b[data-n="0"],.paseg[data-v="25"] b[data-n="25"],.paseg[data-v="50"] b[data-n="50"],.paseg[data-v="75"] b[data-n="75"],.paseg[data-v="100"] b[data-n="100"]{background:var(--orange,#FF5A1F);color:#fff}
+.paseg[data-v="0"] b[data-n="0"]{background:#1B8A46}
+.pbrow2{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
 </style>
 </head>
 <body>
@@ -1396,6 +1407,7 @@ function pbTdn(p){
   return (out.length >= 2 && out[0] > out[1]) ? '<b style="color:#DC2626">\u2197 </b>' : "";
 }
 function pbActs(p){
+  const pbesc = v => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const nonacc = `<button class="pba" onclick="event.stopPropagation();pbNonAcc('${p.id}')">Non accessible</button>`;
   const photo = `<button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>`;
   if(p.type === "eko") return `<div class="pbacts">
@@ -1429,12 +1441,23 @@ function pbActs(p){
     <button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>
     ${nonacc}${photo}
   </div>`;
-  return `<div class="pbacts">
-    <button class="pba ok" onclick="event.stopPropagation();pbRas('${p.id}')">✓ RAS</button>
-    ${[25, 50, 75, 100].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbConso('${p.id}',${n2})">${n2} %</button>`).join("")}
-    <button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>
-    ${nonacc}${photo}
-    <input class="pblot" id="pb-lot" placeholder="N° de lot (si remplacé)" onclick="event.stopPropagation()">
+  return `<div class="pbacts pbdeiv">
+    <label class="pbl2">Consommation (%)</label>
+    <div class="paseg" id="pbpa-pc" data-v="${[25, 50, 75, 100].includes(p.conso) ? p.conso : 0}" onclick="event.stopPropagation()">${[0, 25, 50, 75, 100].map(n2 => `<b data-n="${n2}" onclick="event.stopPropagation();paSeg(this)">${n2}</b>`).join("")}</div>
+    <label class="pbl2">État du poste</label>
+    <select id="pbpa-etat" onclick="event.stopPropagation()"><option value="">\u2014</option><option>Ré-alimenté</option><option>Contrôlé</option><option>Nettoyé</option><option>Nouveau</option><option>Déplacé</option><option>Disparu</option><option>Autre</option></select>
+    <label class="pbl2">Type d'appâtage</label>
+    <select id="pbpa-typ" onclick="event.stopPropagation()"><option value="">\u2014</option><option value="placebo">Placebo</option><option value="biocide">Biocide</option><option value="capture">Capture</option></select>
+    <label class="pbl2">Produit rongeurs</label>
+    <input type="text" id="pbpa-prod" list="plprods2" value="${pbesc(p.produit || "")}" onclick="event.stopPropagation()">
+    <label class="pbl2">N° de lot</label>
+    <input class="pblot" id="pb-lot" placeholder="ex. 24B117" onclick="event.stopPropagation()">
+    <label class="pbl2">Fixation</label>
+    <select id="pbpa-fix" onclick="event.stopPropagation()"><option value="">\u2014</option><option>Non fixé</option><option>Fixé</option><option>Amarré</option><option>Vissé</option><option>Collé</option></select>
+    <label class="pbl2">Recommandation (pour le client)</label>
+    <input type="text" id="pbpa-reco" placeholder="boucher le passage sous la porte\u2026" onclick="event.stopPropagation()">
+    <button class="pba ok" onclick="event.stopPropagation();pbPaSave('${p.id}')">\u2713 Enregistrer le relev\u00e9</button>
+    <div class="pbrow2"><button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>${nonacc}${photo}</div>
   </div>`;
 }
 function planBloc(m){
@@ -1502,6 +1525,31 @@ function pbEcrit(id, muta){
     toast("✓ " + p.id + " — " + t);
   }catch(e){}
 }
+window.paSeg = function(b2){ b2.parentNode.dataset.v = b2.dataset.n; };
+window.pbPaSave = function(id){
+  var pc2 = +(((document.getElementById("pbpa-pc") || {dataset: {v: "0"}}).dataset || {v: "0"}).v) || 0;
+  var eta2 = (document.getElementById("pbpa-etat") || {value: ""}).value;
+  var tap2 = (document.getElementById("pbpa-typ") || {value: ""}).value;
+  var pr2 = (document.getElementById("pbpa-prod") || {value: ""}).value.trim();
+  var fx2 = (document.getElementById("pbpa-fix") || {value: ""}).value;
+  var lot2 = (document.getElementById("pb-lot") || {value: ""}).value.trim();
+  var rec2 = (document.getElementById("pbpa-reco") || {value: ""}).value.trim();
+  pbEcrit(id, function(p){
+    p.conso = pc2;
+    p.statut = pc2 > 0 ? "conso" : "ok";
+    if(pr2) p.produit = pr2;
+    if(fx2) p.fix = fx2;
+    if(lot2) p.lot = lot2;
+    if(rec2) p.reco = rec2;
+    p.rel = {pc: pc2, etat: eta2, typ: tap2, fix: fx2 || (p.fix || "")};
+    var t2 = pc2 ? "Consommation " + pc2 + " %" : "RAS \u2014 bloc intact";
+    if(tap2) t2 += " \u00b7 " + tap2;
+    if(eta2) t2 += " \u2014 " + eta2.toLowerCase();
+    if(lot2) t2 += " \u00b7 lot " + lot2;
+    if(rec2) t2 += " \u00b7 reco : " + rec2;
+    return t2;
+  });
+};
 window.pbMntTog = function(b2){
   var v = b2.dataset.v === "" ? "oui" : b2.dataset.v === "oui" ? "non" : "";
   b2.dataset.v = v;
@@ -2738,5 +2786,58 @@ window.pbAddSave = function(){
   }catch(e){}
 };
 </script>
+<datalist id="plprods2">
+  <option value="Bloc appât sécurisé 20 g"></option>
+  <option value="Ekomille"></option>
+  <option value="Pâte d'appâtage fraîche 15 g"></option>
+  <option value="Bloc paraffiné extérieur"></option>
+  <option value="Poste sécurisé tunnel"></option>
+  <option value="Piège mécanique sous coffre"></option>
+  <option value="Piège à capture multiple"></option>
+  <option value="Plaque de glue rongeurs"></option>
+  <option value="Lampe UV + plaque glue"></option>
+  <option value="Bloc monitoring non toxique"></option>
+  <option value="BLOC Coulé Vertox"></option>
+  <option value="PATE Appât Raviox"></option>
+  <option value="PATE Appât Bonirat Difenacoum"></option>
+  <option value="MELANGE 3 Céréales Viryl"></option>
+  <option value="AVOINE Décortiquée Viryl"></option>
+  <option value="PATE Appât Propasta"></option>
+  <option value="PROPASTA Crème"></option>
+  <option value="HARMONIX Monitoring"></option>
+  <option value="HARMONIX Rodent Paste"></option>
+  <option value="TALON Bloc Brodifacoum"></option>
+  <option value="TALON Soft"></option>
+  <option value="TALON Track"></option>
+  <option value="MUSKIL Bloc Extrudé"></option>
+  <option value="MUSKIL Pâte"></option>
+  <option value="BLE Concassé Raco 25"></option>
+  <option value="AEDEX Grains Raco 25"></option>
+  <option value="AVOINE Décortiquée Strong 25"></option>
+  <option value="BLOC Extrudé Stelliox 25"></option>
+  <option value="AEDEX Bloc Stelliox 25"></option>
+  <option value="AEDEX Pâte Robust 25"></option>
+  <option value="PATE Appât Robust 25"></option>
+  <option value="ROBUST 25 Crème"></option>
+  <option value="PATE Appât Nora Pasta 25"></option>
+  <option value="PATE Appât Broditop"></option>
+  <option value="PATE Appât Difethialone Rodilon"></option>
+  <option value="AVOINE Décortiquée Mulox 25"></option>
+  <option value="AVOINE Décortiquée Control SP Mulot"></option>
+  <option value="BLE Entier Control"></option>
+  <option value="BLE Extrudé Control Bloc"></option>
+  <option value="BLOC Crochet Coulé Control"></option>
+  <option value="PATE Appât Control Pasta"></option>
+  <option value="PATE Appât Gardentop"></option>
+  <option value="AVOINE Décortiquée Cereox"></option>
+  <option value="BLE Concassé Cereox"></option>
+  <option value="BLOC Extrudé Probloc"></option>
+  <option value="BLOC Crochet Coulé Probloc"></option>
+  <option value="PLACEDEX Pâte"></option>
+  <option value="PLACEDEX Bloc"></option>
+  <option value="NARA Lure"></option>
+  <option value="RE-Scent"></option>
+  <option value="RATRON GW"></option>
+</datalist>
 </body>
 </html>

@@ -1058,7 +1058,11 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         <div id="adr-body"></div>
       </div>
       <div class="card eq">
-        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
+        <div class="card">
+        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M9 20l-6-2V4l6 2m0 14l6-2m-6 2V6m6 12l6 2V6l-6-2m0 14V4M9 6l6-2"/></svg></span>Plan d&rsquo;appâtage<a class="more" id="plango" href="plan-appatage.html">Ouvrir le plan →</a></div>
+        <div id="plansum" style="font-size:.82rem;color:var(--muted);font-weight:600;padding:4px 0 8px">Le plan du site : postes numérotés, relevés, zones actives.</div>
+      </div>
+      <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
         <div class="nlist" id="nlist"></div>
         <div class="naddrow">
           <input id="n-in" placeholder="Écrire une note… (horodatée et signée automatiquement)" onkeydown="if(event.key==='Enter')noteAdd()">
@@ -3153,6 +3157,34 @@ document.addEventListener("click", function(e){
     var el = e.target, n = 0;
     while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
   }, true);
+})();
+</script>
+<script>
+/* ═ 29/08 (patron : « le plan est rangé où ? je suis perdu ») : la fiche client
+   mène ENFIN au plan — aucun lien n'existait. ═ */
+(function(){
+  var nom = "";
+  try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
+  var go = document.getElementById("plango"), sum = document.getElementById("plansum");
+  if(!go || !sum) return;
+  var plans = {}; try{ plans = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}"); }catch(e){}
+  var k = null;
+  if(nom){
+    var ks = Object.keys(plans).filter(function(x){ return plans[x] && plans[x].fond; });
+    k = ks.find(function(x){ return x === nom + "|"; }) || ks.find(function(x){ return x.indexOf(nom + "|") === 0; }) || null;
+  }
+  if(k){
+    var pl = plans[k], act = (pl.postes || []).filter(function(p){ return !p.retire; });
+    var dern = "";
+    act.forEach(function(p){
+      if(p.releve && (!dern || p.releve.split("/").reverse().join("") > dern.split("/").reverse().join(""))) dern = p.releve;
+    });
+    sum.textContent = act.length + " poste" + (act.length > 1 ? "s" : "") + " en service" + (dern ? " · dernière relève le " + dern : "") + (pl.acces ? " · consignes d'accès notées" : "");
+    go.href = "plan-appatage.html?plan=" + encodeURIComponent(k);
+  } else if(nom){
+    sum.textContent = "Aucun plan posé pour ce client — pose-le : le technicien le verra sur ses missions.";
+    go.textContent = "Poser le plan →";
+  }
 })();
 </script>
 </body>

@@ -225,6 +225,16 @@ body.mreflow .sig{grid-template-columns:1fr}
 body.mreflow .foot{flex-direction:column;gap:8px}
 body.mreflow .foot .r{text-align:left}
 body.mreflow h1{font-size:1.3rem}
+
+/* ═ la zone de chaleur du rapport (thermique, imprimable) ═ */
+.rhwrap{margin-top:14px}
+.rht{display:flex;align-items:center;gap:10px;font-weight:800;font-size:.82rem;color:#171A20}
+.rhleg{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:700;color:#8A90A0}
+.rhleg i{width:110px;height:8px;border-radius:4px;background:linear-gradient(90deg,#28006e,#be1496,#f57828,#fce65a);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rhbox{position:relative;border:1px solid #E4E7ED;border-radius:12px;overflow:hidden;margin-top:7px}
+.rhbox img{display:block;width:100%;height:auto}
+.heatcv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rhtag{position:absolute;transform:translate(-50%,-50%);background:#171A20;color:#fff;font:800 .58rem Inter,sans-serif;padding:3px 8px;border-radius:999px;z-index:2;white-space:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 </style>
 </head>
 <body>
@@ -298,7 +308,7 @@ body.mreflow h1{font-size:1.3rem}
              HACCP du site, seulement s'il y a eu des relevés à cette date. -->
         <div class="trow" id="r-postes" hidden><div class="lab">Postes d'appâtage</div>
           <div><table class="ptab" id="rc-postes"></table>
-          <div class="prodnote">Relevé du jour — le plan complet et l'historique sont tenus au registre HACCP du site.</div></div></div>
+          <div id="rc-heat"></div><div class="prodnote">Relevé du jour — le plan complet et l'historique sont tenus au registre HACCP du site.</div></div></div>
       </div>
     </div>
 
@@ -604,6 +614,81 @@ document.addEventListener("click", e => {
       if(lg2.length){
         g("rc-postes").innerHTML = lg2.map(function(l){ return "<tr><td>" + esc(l[0]) + "</td><td>" + esc(l[1]) + "</td><td>" + esc(l[2]) + "</td></tr>"; }).join("");
         g("r-postes").hidden = false;
+        /* ═ la ZONE DE CHALEUR du jour — le plan de chaque niveau, la
+           consommation relevée CE jour-là en thermique, étiquettes des postes.
+           Chaque rapport a la sienne : le client voit le rouge baisser. ═ */
+        try{
+          var rcHeatV = function(txt){
+            var m2 = /(?:Consommation|Grignotage) (\d+) ?%/.exec(txt); if(m2) return Math.min(1, +m2[1] / 100);
+            m2 = /^(\d+) capture/.exec(txt); if(m2) return Math.min(1, +m2[1] / 10);
+            if(/Capture constatée/.test(txt)) return .6;
+            return 0;
+          };
+          var tfPlasma = function(t){
+    var S = [[0, 40, 0, 110], [.35, 190, 20, 150], [.68, 245, 120, 40], [1, 252, 230, 90]];
+    for(var i = 1; i < S.length; i++){
+      if(t <= S[i][0]){
+        var a = S[i - 1], b = S[i], u = (t - a[0]) / ((b[0] - a[0]) || 1);
+        return [Math.round(a[1] + (b[1] - a[1]) * u), Math.round(a[2] + (b[2] - a[2]) * u), Math.round(a[3] + (b[3] - a[3]) * u)];
+      }
+    }
+    return [252, 230, 90];
+  };
+          var tfHeatDraw = function(cv, W, H, pts){
+    cv.width = W; cv.height = H;
+    var g2 = cv.getContext("2d");
+    pts.forEach(function(p){
+      var r = Math.min(W, H) * (.10 + .13 * p.v);
+      var gr = g2.createRadialGradient(p.x * W, p.y * H, 0, p.x * W, p.y * H, r);
+      gr.addColorStop(0, "rgba(0,0,0," + (.25 + .6 * p.v) + ")");
+      gr.addColorStop(1, "rgba(0,0,0,0)");
+      g2.fillStyle = gr;
+      g2.beginPath(); g2.arc(p.x * W, p.y * H, r, 0, 7); g2.fill();
+    });
+    var im = g2.getImageData(0, 0, W, H), d = im.data;
+    for(var i = 0; i < d.length; i += 4){
+      var a = d[i + 3] / 255;
+      if(a < .02){ d[i + 3] = 0; continue; }
+      var c = tfPlasma(Math.min(1, a * 1.15));
+      d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2];
+      d[i + 3] = Math.round(Math.min(1, a * 1.35) * 215);
+    }
+    g2.putImageData(im, 0, 0);
+  };
+
+          var nivx2 = (P2[pk2].niveaux && P2[pk2].niveaux.length) ? P2[pk2].niveaux : (P2[pk2].fond ? [{nom: "", fond: P2[pk2].fond}] : []);
+          var parNiv = {};
+          (P2[pk2].postes || []).forEach(function(p3){
+            if(p3.retire) return;
+            var h0b = (p3.hist || []).find(function(h){ return h[0] === dj2 && !/^(Photo|Poste retir|Poste remis)/.test(h[1] || ""); });
+            var nv = p3.niv || 0;
+            (parNiv[nv] = parNiv[nv] || []).push({x: p3.x, y: p3.y, id: p3.id, nom: p3.nom, jour: !!h0b, v: h0b ? rcHeatV(h0b[1]) : 0});
+          });
+          var H3 = "";
+          Object.keys(parNiv).sort().forEach(function(nv){
+            var fondN = (nivx2[nv] || {}).fond; if(!fondN) return;
+            if(!parNiv[nv].some(function(q){ return q.jour; })) return;
+            H3 += '<div class="rhwrap"><div class="rht">Zone de chaleur — consommation du jour' + (nivx2.length > 1 ? ' · ' + esc((nivx2[nv] || {}).nom || ("Niveau " + (+nv + 1))) : "") + '<span class="rhleg">0<i></i>100 %</span></div>'
+              + '<div class="rhbox" data-nv="' + nv + '"><img src="' + fondN + '">'
+              + parNiv[nv].map(function(q){ return '<span class="rhtag" style="left:' + (q.x * 100) + '%;top:' + (q.y * 100) + '%">' + esc(q.nom || q.id) + '</span>'; }).join("")
+              + '</div></div>';
+          });
+          if(H3){
+            g("rc-heat").innerHTML = H3;
+            Array.prototype.forEach.call(document.querySelectorAll("#rc-heat .rhbox"), function(bx){
+              var pts = (parNiv[bx.dataset.nv] || []).filter(function(q){ return q.v > .03; });
+              if(!pts.length) return;
+              var im3 = bx.querySelector("img");
+              var pose = function(){
+                var W = 900, H = im3.naturalWidth ? Math.round(900 * im3.naturalHeight / im3.naturalWidth) : 560;
+                var cv = document.createElement("canvas"); cv.className = "heatcv";
+                tfHeatDraw(cv, W, H, pts);
+                im3.insertAdjacentElement("afterend", cv);
+              };
+              if(im3.complete && im3.naturalWidth) pose(); else im3.onload = pose;
+            });
+          }
+        }catch(e){}
       }
     }
   }catch(e){}
