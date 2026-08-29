@@ -1840,7 +1840,7 @@ function fileRender(){
   const rowPending = p => {
     const T = typeDe(p), m = p.mode || modeDe(p.client);
     const tel = telOf(p), telC = String(tel || "").replace(/\s/g, "");
-    const [q, cls] = fileQ(p);
+    const [q, cls] = (p._dvcal ? ["", ""] : fileQ(p));
     const motif = T.lbl + " — " + (MODES[m] ? MODES[m].lbl.split(" / ")[0].replace(/[\s ]*[··][\s ]*€\s*$/, "") : "") + " · " + p.cp + " " + p.ville;
     return `<div class="fr rv ${cls}" data-fpid="${p.pid}">
       <span class="frq">📞 RDV${(p.tent || 1) > 1 ? `<i class="fqt">${p.tent}ᵉ tentative</i>` : ""}</span>
@@ -2435,20 +2435,23 @@ function dvOui(ref){
   let _cp = prev ? (prev.cp || "") : "", _vl = prev ? (prev.ville || "") : "", _rue = prev ? (prev.rue || "") : "";
   if(!_cp && !_vl){ try{ const bc = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]").find(c => c && c.nom === x.client); if(bc){ _cp = bc.cp || ""; _vl = bc.ville || ""; _rue = bc.adresse || ""; } }catch(e){} }
   const pdv = [...INTERVS].reverse().find(v => v && v.client === x.client && v.mode === "devis") || null;
+  const t0dv = iso(TODAYD);
+  const DVRAP = (x.relance && x.relance <= t0dv) ? x.relance : t0dv;
   const pid = "dvcal-" + ref;
   if(!PENDING.some(p => p && p.pid === pid)){
     PENDING.push({pid, client: x.client, tel: x.tel || "", cp: _cp, ville: _vl, rue: _rue,
       type: (pdv && pdv.type) || "rongeur", dur: 2, mode: "encais", montant: x.montant || 0,
-      note: "Chantier du devis " + ref + " accepté — à caler avec le client", rappel: iso(TODAYD), tent: 0,
+      note: "Chantier du devis " + ref + " accepté — à caler avec le client", rappel: DVRAP, tent: 0,
       _dvcal: true, _dvtask: tid});
   }
   CDPID = pid;
-  /* 28/08 (patron : « tu cliques Accepté, ça disparaît ») : la ligne de calage
-     vit dans AUJOURD'HUI — si on était sur « En retard » (ou ailleurs), le
-     planificateur s'ouvrait dans un onglet INVISIBLE et la carte semblait
-     s'évaporer. L'onglet suit le calage ; « Annuler » ramène où on était. */
+  /* 28/08 (patron, 2e passe : « ça bouge de colonne — valider doit ouvrir le
+     RDV sur place, c'est plus simple ») : la ligne de calage hérite de la DATE
+     de la carte devis → MÊME onglet, MÊME section, le planificateur s'ouvre là
+     où on a cliqué, rien ne saute. Seul un devis « à venir » (relance future)
+     passe sur Aujourd'hui — sa ligne de calage y vit. */
   const tabAvant = FAPTAB;
-  FAPTAB = "today";
+  if(DVRAP === t0dv && FAPTAB !== "today") FAPTAB = "today";
   render(); fileRender(); renderTray();
   setTimeout(() => { const e = document.getElementById("fcaled"); if(e) e.scrollIntoView({block: "center", behavior: "smooth"}); }, 120);
   toast("🎉 Devis accepté — cale le chantier pendant que " + x.client + " est en ligne 👇",
