@@ -1667,6 +1667,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .placc textarea{flex:1;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;min-height:52px;resize:vertical;outline:none}
 .placc .pab{flex:none;border:0;border-radius:9px;padding:8px 13px;font:700 .76rem Inter,sans-serif;cursor:pointer;background:var(--orange);color:#fff}
 .placc .pab.g{background:#fff;border:1.5px solid var(--line);color:var(--ink-2,#3D434E)}
+
+/* ═ ✓ Tout est RAS ═ */
+.plfchips .rasb{margin-left:auto;display:inline-flex;align-items:center;gap:7px;border:1.5px solid #BFE6D8;background:#ECFDF5;border-radius:999px;padding:6px 13px;font:700 .78rem Inter,sans-serif;color:#0E7A54;cursor:pointer}
+.plfchips .rasb i{font-style:normal;background:#fff;border-radius:999px;padding:1px 8px;font-size:.7rem;font-weight:800}
+.plfchips .rasb.arm{border-color:#F0B06A;background:#FFF1EA;color:#B4400E}
+.plfchips .rasb ~ .heatb{margin-left:0}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
@@ -2102,13 +2108,59 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
     ACCED = false; accApply(false);
     if(window.tst) tst(v ? "Consignes d\u2019accès enregistrées — le technicien les voit sur sa mission." : "Consignes d\u2019accès effacées.");
   };
+  /* ═ ✓ TOUT EST RAS — la relève groupée (armer → confirmer) ═ */
+  var RASARM = 0, RASTMR = null;
+  function aujFR2(){ var d = new Date(); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); }
+  function rasTexteDe(t2){
+    return t2 === "mec" ? "RAS — rien au piège"
+      : t2 === "eko" ? "RAS — aucune capture"
+      : t2 === "div" ? "0 capture"
+      : "RAS — bloc intact";
+  }
+  function rasRestants(){
+    var pl = planCur(); if(!pl) return [];
+    var auj = aujFR2();
+    return (pl.postes || []).filter(function(x){ return !x.retire && x.releve !== auj && x.statut !== "alerte"; });
+  }
+  window.plRasAll = function(){
+    var reste = rasRestants();
+    if(!reste.length) return;
+    if(!RASARM){
+      RASARM = 1;
+      clearTimeout(RASTMR);
+      RASTMR = setTimeout(function(){ RASARM = 0; if(window.plPaint) plPaint(); }, 4500);
+      if(window.plPaint) plPaint();
+      return;
+    }
+    clearTimeout(RASTMR); RASARM = 0;
+    var tous = lireTous(), pl = tous[window.PLMODE]; if(!pl) return;
+    var auj = aujFR2(), n = 0, nAl = 0;
+    (pl.postes || []).forEach(function(x){
+      if(x.retire || x.releve === auj) return;
+      if(x.statut === "alerte"){ nAl++; return; }
+      x.conso = 0;
+      if(x.statut !== "div") x.statut = "ok";
+      x.releve = auj;
+      x.hist = [[auj, rasTexteDe(x.type) + " \u00b7 relev\u00e9 group\u00e9"]].concat(x.hist || []);
+      n++;
+    });
+    if(!n) return;
+    try{ localStorage.setItem("tigerflow-plans", JSON.stringify(tous)); }catch(e){}
+    if(window.plPaint) plPaint();
+    if(window.tst) tst("\u2713 " + n + " poste" + (n > 1 ? "s" : "") + " relev\u00e9" + (n > 1 ? "s" : "") + " RAS aujourd\u2019hui." + (nAl ? " " + nAl + " \u00ab \u00e0 remplacer \u00bb laiss\u00e9" + (nAl > 1 ? "s" : "") + " de c\u00f4t\u00e9 \u2014 \u00e0 traiter \u00e0 la main." : ""));
+  };
+
   /* le tout suit CHAQUE rendu réel (plfPaint est appelé en fin de paint) */
   var oFP = window.plfPaint;
   window.plfPaint = function(act, ret, demo){
     oFP(act, ret, demo);
     var el = document.getElementById("plfchips");
-    if(el && !el.hidden) el.insertAdjacentHTML("beforeend",
-      '<button class="heatb' + (window.PLHEAT ? " on" : "") + '" onclick="plHeatTog()" title="Les zones qui consomment ces 90 derniers jours, en halo sur le plan">Zones actives</button>');
+    if(el && !el.hidden){
+      var nRas = rasRestants().length;
+      el.insertAdjacentHTML("beforeend",
+        (nRas ? '<button class="rasb' + (RASARM ? " arm" : "") + '" onclick="plRasAll()" title="Tous les postes pas encore relevés aujourd\u2019hui passent RAS d\u2019un coup — chacun garde sa ligne d\u2019historique. Les postes à remplacer ne sont pas touchés.">' + (RASARM ? "Confirmer : " + nRas + " poste" + (nRas > 1 ? "s" : "") + " en RAS ?" : "\u2713 Tout est RAS<i>" + nRas + "</i>") + '</button>' : "")
+        + '<button class="heatb' + (window.PLHEAT ? " on" : "") + '" onclick="plHeatTog()" title="Les zones qui consomment ces 90 derniers jours, en halo sur le plan">Zones actives</button>');
+    }
     heatApply(demo);
     accApply(demo);
   };

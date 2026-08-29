@@ -649,7 +649,7 @@ svg.fillsvg{fill:currentColor;stroke:none}
    pas sur son téléphone — le JS pose AUSSI html.pwa (navigator.standalone),
    le titre de démo disparaît, le menu du bas gagne la safe-area, et le
    bouton d'action se COLLE en bas au lieu de flotter à 38 px. */
-@media(display-mode:standalone),(display-mode:fullscreen){
+@media (display-mode:standalone) and (max-width:900px),(display-mode:fullscreen) and (max-width:900px){
   body{padding:0;background:#F4F5F8;display:block}
   .capt{display:none}
   .sbar{display:none}   /* la vraie barre iOS est au-dessus — pas deux heures */
@@ -780,6 +780,10 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 .pbfbtns{display:flex;gap:8px;margin-top:8px}
 .pbfok{flex:1;border:0;border-radius:11px;padding:12px;background:var(--orange,#FF5A1F);color:#fff;font:800 .84rem Sora,Inter,sans-serif;cursor:pointer}
 .pbfno{flex:none;border:1.5px solid var(--line,#E5E8EE);border-radius:11px;padding:12px 15px;background:#fff;color:var(--ink-2,#3D434E);font:700 .8rem Inter,sans-serif;cursor:pointer}
+
+/* ═ ✓ Tout est RAS (relève groupée mobile) ═ */
+.pbras{width:100%;border:1.5px solid #BFE6D8;background:#ECFDF5;border-radius:13px;padding:12px;margin:0 0 9px;font:800 .82rem Inter,sans-serif;color:#0E7A54;cursor:pointer}
+.pbras.arm{border-color:#F0B06A;background:#FFF1EA;color:#B4400E}
 </style>
 </head>
 <body>
@@ -787,8 +791,20 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 /* mode appli (épinglée iPhone/Android) : détection ceinture + bretelles —
    navigator.standalone (iOS) OU display-mode (le reste). */
 try{
-  if(navigator.standalone === true || (window.matchMedia && (matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches)))
-    document.documentElement.classList.add("pwa");
+  /* 28/08 (patron, plein écran sur GRAND écran) : le plein écran du navigateur
+     matche « display-mode: fullscreen » — la page se croyait installée sur un
+     téléphone et tombait son cadre sur un écran d'ordinateur. Le mode appli
+     n'existe QUE si l'écran est petit (≤ 900 px de côté court). */
+  window.pwaEval = function(){
+    var on = false;
+    try{
+      on = (navigator.standalone === true || (window.matchMedia && (matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches)))
+        && Math.min(window.innerWidth, window.innerHeight) <= 900;
+    }catch(e){}
+    document.documentElement.classList.toggle("pwa", on);
+  };
+  pwaEval();
+  window.addEventListener("resize", function(){ try{ pwaEval(); }catch(e){} });
 }catch(e){}
 </script>
 
@@ -1435,7 +1451,9 @@ function planBloc(m){
       </div>`
     : `<button class="pbadd" onclick="event.stopPropagation();pbAddGo()">+ Poser un poste<small>touche ensuite le plan à l\u2019endroit exact</small></button>`);
   const accHTML = P.acces ? `<div class="pbacc"><b>Accès</b><span>${pbesc(P.acces)}</span></div>` : "";
-  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div> ${accHTML}${planHTML}${addUI}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
+  const rasN = (P.postes || []).filter(p => !p.retire && p.releve !== auj && p.statut !== "alerte").length;
+  const rasUI = (rasN && window.PBADD === 0) ? `<button class="pbras${window.PBRAS ? " arm" : ""}" onclick="event.stopPropagation();pbRasAll()">${window.PBRAS ? "Confirmer : " + rasN + " poste" + (rasN > 1 ? "s" : "") + " en RAS ?" : "\u2713 Tout est RAS — " + rasN + " poste" + (rasN > 1 ? "s" : "") + " \u00e0 relever"}</button>` : "";
+  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div> ${accHTML}${planHTML}${addUI}${rasUI}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
 }
 /* ⚠️ leçon du jour côté bureau : on mute le poste DANS l'objet qu'on sauve. */
 function pbEcrit(id, muta){
@@ -2579,7 +2597,7 @@ function rapPhotoZoom(i){
 </script>
 <script>
 /* ═ 28/08 : POSER UN POSTE DEPUIS LE TÉLÉPHONE — le plan vit dans les deux sens. ═ */
-window.PBADD = 0; window.PBPT = null; window.PBFT = "pa";
+window.PBADD = 0; window.PBPT = null; window.PBFT = "pa"; window.PBRAS = 0; window.PBRASTMR = null;
 window.PBTYPL = {pa: "Poste d'app\u00e2tage rongeurs", eko: "Ekomille \u2014 capture multiple", div: "Capture / d\u00e9tecteur", mec: "Pi\u00e8ge m\u00e9canique", mon: "Monitoring non toxique"};
 window.PBDEFP = {pa: "Bloc app\u00e2t s\u00e9curis\u00e9 20 g", eko: "Ekomille", div: "Lampe UV + plaque glue", mec: "Pi\u00e8ge m\u00e9canique sous coffre", mon: "Bloc monitoring non toxique"};
 window.PBPREF = {pa: "PA-", eko: "EK-", div: "DIV-", mec: "PM-", mon: "MN-"};
@@ -2602,6 +2620,41 @@ document.addEventListener("click", function(e){
   PBADD = 2; rdetail();
   setTimeout(function(){ var el = document.querySelector(".pbform"); if(el) el.scrollIntoView({block: "center", behavior: "smooth"}); }, 90);
 });
+window.pbRasAll = function(){
+  var m = (typeof M !== "undefined" && typeof CURID !== "undefined") ? M[CURID] : null;
+  if(!m) return;
+  var k = planKeyOf(m); if(!k) return;
+  if(!PBRAS){
+    PBRAS = 1;
+    clearTimeout(PBRASTMR);
+    PBRASTMR = setTimeout(function(){ PBRAS = 0; rdetail(); }, 5000);
+    rdetail();
+    return;
+  }
+  clearTimeout(PBRASTMR); PBRAS = 0;
+  try{
+    var all = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+    var pl = all[k]; if(!pl) return;
+    var auj = pbAuj(), n = 0, nAl = 0;
+    (pl.postes || []).forEach(function(x){
+      if(x.retire || x.releve === auj) return;
+      if(x.statut === "alerte"){ nAl++; return; }
+      var txt = x.type === "mec" ? "RAS \u2014 rien au pi\u00e8ge"
+        : x.type === "eko" ? "RAS \u2014 aucune capture"
+        : x.type === "div" ? "0 capture"
+        : "RAS \u2014 bloc intact";
+      x.conso = 0;
+      if(x.statut !== "div") x.statut = "ok";
+      x.releve = auj;
+      x.hist = [[auj, txt + " \u2014 relev\u00e9 mobile (group\u00e9)"]].concat(x.hist || []);
+      n++;
+    });
+    if(!n){ rdetail(); return; }
+    localStorage.setItem("tigerflow-plans", JSON.stringify(all));
+    rdetail();
+    toast("\u2713 " + n + " poste" + (n > 1 ? "s" : "") + " relev\u00e9" + (n > 1 ? "s" : "") + " RAS" + (nAl ? " \u2014 " + nAl + " \u00ab \u00e0 remplacer \u00bb \u00e0 traiter \u00e0 la main" : "") + ".");
+  }catch(e){}
+};
 window.pbAddSave = function(){
   var m = (typeof M !== "undefined" && typeof CURID !== "undefined") ? M[CURID] : null;
   if(!m || !PBPT) return;
