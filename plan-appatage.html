@@ -1014,7 +1014,13 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var haut;
     if(estMec) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — rien</label><label><input type="radio" name="pf-r" value="capt">Capture</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>';
     else if(estEko) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
-      + '<label>Captures constatées</label><input type="number" id="pf-cap" min="0" value="' + (x.conso || 0) + '">';
+      + '<label>Rongeurs capturés (compteur / bac)</label><input type="number" id="pf-cap" min="0" inputmode="numeric" value="' + (x.conso || 0) + '">'
+      + '<label>Entretien de l\'appareil (l\'auditeur le demande)</label><div class="dvmnt">'
+      + '<div class="dvrow"><span>Bac de collecte vidé</span><span class="dvseg" id="pf-ek-bac" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>'
+      + '<div class="dvrow"><span>Liquide conservateur (Ekofix)</span><span class="dvseg ek3" id="pf-ek-liq" data-v=""><b onclick="dvSeg(this,\'ras\')">RAS</b><b onclick="dvSeg(this,\'complete\')">Complété</b><b onclick="dvSeg(this,\'change\')">Changé</b></span></div>'
+      + '<div class="dvrow"><span>Graines / appât rechargés</span><span class="dvseg" id="pf-ek-gra" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>'
+      + '</div>'
+      + '<label>État de l\'appareil</label><select id="pf-ek-eta"><option value="">\u2014</option><option>Fonctionne</option><option>Batterie faible</option><option>Mécanisme à revoir</option><option>Autre</option></select>';
     else if(estDiv) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
       + '<label>Captures par espèce</label><div class="dvesp">'
       + '<div class="dvrow"><span>Coccinelles</span><input type="number" id="pf-esp-coc" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Hyménoptères</span><input type="number" id="pf-esp-hym" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Moucherons</span><input type="number" id="pf-esp-mch" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Mouches</span><input type="number" id="pf-esp-mou" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Moustiques</span><input type="number" id="pf-esp-mst" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Papillons</span><input type="number" id="pf-esp-pap" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Punaises</span><input type="number" id="pf-esp-pun" min="0" inputmode="numeric" placeholder="0"></div>'
@@ -1035,7 +1041,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       + '<label>Recommandation (le client la lira sur son rapport)</label><input type="text" id="pf-reco" placeholder="ex. : boucher le passage sous la porte de la réserve">';
     return '<div class="plform">'
       + '<label>Relevé du ' + aujFR() + '</label>' + haut
-      + (estMec || estDiv ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> ' + (estEko ? "Appât rechargé" : "Bloc remplacé") + '</label>')
+      + (estMec || estDiv || estEko ? "" : '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-rmp" style="width:auto;accent-color:var(--orange)"> Bloc remplacé</label>')
       + (estDiv || estMec || estEko ? "" : '<label>N° de lot du produit posé (l\'auditeur le demande)</label><input type="text" id="pf-lot" placeholder="ex. 24B117" value="">')
       + '<label>Note (facultatif)</label><input type="text" id="pf-note" placeholder="' + (estEko ? "captures, appât rechargé…" : estDiv ? "mouches, moucherons…" : estMec ? "souris, réarmé, appât mécanique changé…" : "zone à surveiller, passage renforcé…") + '">'
       + '<div class="d-actions"><button class="btn primary" onclick="plRelSave()">Enregistrer le relevé</button><button class="btn outline" onclick="plRelAnnule()">Annuler</button></div></div>';
@@ -1211,7 +1217,18 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     } else if(x.type === "eko"){
       x.conso = Math.max(0, +($("pf-cap") || {value: 0}).value || 0);
       x.statut = x.conso > 0 ? "conso" : "ok";
-      t = x.conso ? x.conso + " capture" + (x.conso > 1 ? "s" : "") + (rmp ? " — appât rechargé" : "") : "RAS — aucune capture" + (rmp ? " — appât rechargé" : "");
+      var ekBac = (($("pf-ek-bac") || {dataset: {}}).dataset || {}).v || "";
+      var ekLiq = (($("pf-ek-liq") || {dataset: {}}).dataset || {}).v || "";
+      var ekGra = (($("pf-ek-gra") || {dataset: {}}).dataset || {}).v || "";
+      var ekEta = ($("pf-ek-eta") || {value: ""}).value;
+      var ekG = [];
+      if(ekBac === "oui") ekG.push("bac vidé");
+      if(ekLiq === "complete") ekG.push("liquide complété"); else if(ekLiq === "change") ekG.push("liquide changé");
+      if(ekGra === "oui") ekG.push("graines rechargées");
+      x.eko = {cap: x.conso, bac: ekBac, liq: ekLiq, gra: ekGra, eta: ekEta};
+      t = x.conso ? x.conso + " capture" + (x.conso > 1 ? "s" : "") : "RAS — aucune capture";
+      if(ekG.length) t += " — " + ekG.join(", ");
+      if(ekEta && ekEta !== "Fonctionne") t += " \u00b7 " + ekEta.toLowerCase();
     } else if(x.type === "div"){
       var DVESP = [["coc", "coccinelle"], ["hym", "hyménoptère"], ["mch", "moucheron"], ["mou", "mouche"], ["mst", "moustique"], ["pap", "papillon"], ["pun", "punaise"]];
       var DVMNT = [["net", "tubes nettoyés"], ["tub", "tubes changés"], ["lum", "intensité lumineuse mesurée"], ["plq", "plaques collantes changées"], ["str", "starters vérifiés"]];
@@ -1807,6 +1824,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .dvseg.pa3[data-v="placebo"] b:nth-child(1){background:#ECFDF5;color:#0E7A54}
 .dvseg.pa3[data-v="biocide"] b:nth-child(2){background:#FDF0F0;color:#B43B3B}
 .dvseg.pa3[data-v="capture"] b:nth-child(3){background:#EAF1FE;color:#2453C6}
+.dvseg.ek3 b{border-right:1.5px solid var(--line)}
+.dvseg.ek3 b:last-child{border-right:0}
+.dvseg.ek3[data-v="ras"] b:nth-child(1){background:#F3F4F6;color:#3B4256}
+.dvseg.ek3[data-v="complete"] b:nth-child(2){background:#ECFDF5;color:#0E7A54}
+.dvseg.ek3[data-v="change"] b:nth-child(3){background:#EAF1FE;color:#2453C6}
 .plform select{margin-top:4px}
 
 /* ═ la zone de chaleur thermique ═ */

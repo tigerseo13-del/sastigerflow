@@ -811,7 +811,7 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 
 /* ═ le relevé Rongeur complet, au doigt ═ */
 .pbl2{font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:2px}
-.pbacts.pbdeiv select,.pbacts.pbdeiv input[type=text]{width:100%;border:1.5px solid var(--line,#E5E8EE);border-radius:9px;padding:9px 10px;font:600 16px Inter,sans-serif;background:#fff;outline:none}
+.pbacts.pbdeiv select,.pbacts.pbdeiv input[type=text],.pbacts.pbdeiv>input[type=number]{width:100%;border:1.5px solid var(--line,#E5E8EE);border-radius:9px;padding:9px 10px;font:600 16px Inter,sans-serif;background:#fff;outline:none}
 .pbacts.pbdeiv .pblot{flex:0 0 auto;width:100%;min-height:0;padding:9px 10px;font-size:16px}
 .paseg{display:flex;border:1.5px solid var(--line,#E5E8EE);border-radius:10px;overflow:hidden;background:#fff}
 .paseg b{flex:1;text-align:center;padding:10px 0;font:700 .8rem Inter,sans-serif;color:var(--muted);cursor:pointer;border-right:1.5px solid var(--line,#E5E8EE)}
@@ -1423,9 +1423,19 @@ function pbActs(p){
   const pbesc = v => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const nonacc = `<button class="pba" onclick="event.stopPropagation();pbNonAcc('${p.id}')">Non accessible</button>`;
   const photo = `<button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>`;
-  if(p.type === "eko") return `<div class="pbacts">
-    ${[0, 3, 8, 15].map(n2 => `<button class="pba co" onclick="event.stopPropagation();pbDiv('${p.id}',${n2})">${n2} capt.</button>`).join("")}
-    ${nonacc}${photo}
+  if(p.type === "eko") return `<div class="pbacts pbdeiv">
+    <label class="pbl2">Rongeurs capturés (compteur / bac)</label>
+    <input type="number" inputmode="numeric" min="0" id="pbek-cap" value="${p.conso || 0}" onclick="event.stopPropagation()">
+    <div class="pbdvm">
+      <button class="pbmt" id="pbek-bac" data-v="" data-l="Bac vidé" onclick="event.stopPropagation();pbMntTog(this)">Bac vidé \u00b7 \u2014</button>
+      <button class="pbmt" id="pbek-gra" data-v="" data-l="Graines / appât" onclick="event.stopPropagation();pbMntTog(this)">Graines / appât \u00b7 \u2014</button>
+    </div>
+    <label class="pbl2">Liquide conservateur (Ekofix)</label>
+    <select id="pbek-liq" onclick="event.stopPropagation()"><option value="">\u2014</option><option value="ras">RAS</option><option value="complete">Complété</option><option value="change">Changé</option></select>
+    <label class="pbl2">État de l'appareil</label>
+    <select id="pbek-eta" onclick="event.stopPropagation()"><option value="">\u2014</option><option>Fonctionne</option><option>Batterie faible</option><option>Mécanisme à revoir</option><option>Autre</option></select>
+    <button class="pba ok" onclick="event.stopPropagation();pbEkoSave('${p.id}')">\u2713 Enregistrer le relevé</button>
+    <div class="pbrow2">${nonacc}${photo}</div>
   </div>`;
   if(p.type === "div") return `<div class="pbacts pbdeiv">
     <div class="pbdvg">
@@ -1539,6 +1549,25 @@ function pbEcrit(id, muta){
   }catch(e){}
 }
 window.paSeg = function(b2){ b2.parentNode.dataset.v = b2.dataset.n; };
+window.pbEkoSave = function(id){
+  var cap = Math.max(0, +((document.getElementById("pbek-cap") || {value: 0}).value) || 0);
+  var bac = ((document.getElementById("pbek-bac") || {dataset: {}}).dataset || {}).v || "";
+  var gra = ((document.getElementById("pbek-gra") || {dataset: {}}).dataset || {}).v || "";
+  var liq = (document.getElementById("pbek-liq") || {value: ""}).value;
+  var eta = (document.getElementById("pbek-eta") || {value: ""}).value;
+  var g2 = [];
+  if(bac === "oui") g2.push("bac vidé");
+  if(liq === "complete") g2.push("liquide complété"); else if(liq === "change") g2.push("liquide changé");
+  if(gra === "oui") g2.push("graines rechargées");
+  pbEcrit(id, function(p){
+    p.conso = cap; p.statut = cap > 0 ? "conso" : "ok";
+    p.eko = {cap: cap, bac: bac, liq: liq, gra: gra, eta: eta};
+    var t2 = cap ? cap + " capture" + (cap > 1 ? "s" : "") : "RAS — aucune capture";
+    if(g2.length) t2 += " — " + g2.join(", ");
+    if(eta && eta !== "Fonctionne") t2 += " \u00b7 " + eta.toLowerCase();
+    return t2;
+  });
+};
 window.pbPaSave = function(id){
   var pc2 = +(((document.getElementById("pbpa-pc") || {dataset: {v: "0"}}).dataset || {v: "0"}).v) || 0;
   var eta2 = (document.getElementById("pbpa-etat") || {value: ""}).value;
