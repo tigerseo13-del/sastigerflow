@@ -619,7 +619,7 @@ document.addEventListener("click", e => {
       var dj2 = (function(x){ var d = new Date(x + "T12:00:00"); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); })(iv.date);
       var lg2 = [];
       (P2[pk2].postes || []).forEach(function(p3){
-        var h0 = (p3.hist || []).find(function(h){ return h[0] === dj2 && !/^(Photo|Poste retir|Poste remis)/.test(h[1] || ""); });
+        var h0 = (p3.hist || []).find(function(h){ return h[0] === dj2 && !/^(Photo|Poste retir|Poste remis|Poste déplacé)/.test(h[1] || ""); });
         if(h0) lg2.push([p3.id, p3.zone || "", h0[1]]);
       });
       if(lg2.length){
@@ -671,7 +671,7 @@ document.addEventListener("click", e => {
           var parNiv = {};
           (P2[pk2].postes || []).forEach(function(p3){
             if(p3.retire) return;
-            var h0b = (p3.hist || []).find(function(h){ return h[0] === dj2 && !/^(Photo|Poste retir|Poste remis)/.test(h[1] || ""); });
+            var h0b = (p3.hist || []).find(function(h){ return h[0] === dj2 && !/^(Photo|Poste retir|Poste remis|Poste déplacé)/.test(h[1] || ""); });
             var nv = p3.niv || 0;
             (parNiv[nv] = parNiv[nv] || []).push({x: p3.x, y: p3.y, id: p3.id, nom: p3.nom, jour: !!h0b, v: h0b ? rcHeatV(h0b[1]) : 0});
           });
@@ -710,7 +710,7 @@ document.addEventListener("click", e => {
           var dj2k = dj2.split("/").reverse().join("");
           var dsr = {};
           (P2[pk2].postes || []).forEach(function(p3){ if(p3.retire) return; (p3.hist || []).forEach(function(h){
-            if(/^(Photo|Poste retir|Poste remis)/.test(h[1] || "")) return;
+            if(/^(Photo|Poste retir|Poste remis|Poste déplacé)/.test(h[1] || "")) return;
             if(!svRap(String(h[1] || ""), p3.type)) return;
             if(h[0].split("/").reverse().join("") <= dj2k) dsr[h[0]] = 1;
           }); });
@@ -733,7 +733,7 @@ document.addEventListener("click", e => {
           var phH2 = "";
           (P2[pk2].postes || []).forEach(function(p3){
             if(p3.retire) return;
-            if(!(p3.hist || []).some(function(h){ return h[0] === dj2; })) return;
+            if(!(p3.hist || []).some(function(h){ return h[0] === dj2 && !/^(Photo|Poste retir|Poste remis|Poste déplacé)/.test(h[1] || ""); })) return;
             (p3.photos || []).filter(function(ph){ return ph && ph.img && ph.d === dj2; }).slice(0, 2).forEach(function(ph){
               phH2 += '<figure class="rphf"><img src="' + ph.img + '"><figcaption>' + esc(p3.nom || p3.id) + (p3.zone ? " \u2014 " + esc(p3.zone) : "") + "</figcaption></figure>";
             });

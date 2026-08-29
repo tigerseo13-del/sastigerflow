@@ -3179,7 +3179,17 @@ document.addEventListener("click", function(e){
     act.forEach(function(p){
       if(p.releve && (!dern || p.releve.split("/").reverse().join("") > dern.split("/").reverse().join(""))) dern = p.releve;
     });
-    sum.textContent = act.length + " poste" + (act.length > 1 ? "s" : "") + " en service" + (dern ? " · dernière relève le " + dern : "") + (pl.acces ? " · consignes d'accès notées" : "");
+    var ret = 0;
+    if(dern){
+      var pd = dern.split("/"); var an = +pd[2]; if(an < 100) an += 2000;
+      var ech = new Date(new Date(an, +pd[1] - 1, +pd[0], 12).getTime() + (pl.freq || 30) * 864e5);
+      ret = Math.floor((Date.now() - ech.getTime()) / 864e5);
+      if(ret < 0) ret = 0;
+    }
+    sum.innerHTML = act.length + " poste" + (act.length > 1 ? "s" : "") + " en service"
+      + (dern ? " · dernière relève le " + dern : "")
+      + (ret ? ' · <b style="color:#C0362C">relève en retard de ' + ret + ' j</b>' : "")
+      + (pl.acces ? " · consignes d'accès notées" : "");
     go.href = "plan-appatage.html?plan=" + encodeURIComponent(k);
   } else if(nom){
     sum.textContent = "Aucun plan posé pour ce client — pose-le : le technicien le verra sur ses missions.";

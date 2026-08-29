@@ -829,6 +829,10 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 .paseg[data-v="0"] b[data-n="0"],.paseg[data-v="25"] b[data-n="25"],.paseg[data-v="50"] b[data-n="50"],.paseg[data-v="75"] b[data-n="75"],.paseg[data-v="100"] b[data-n="100"]{background:var(--orange,#FF5A1F);color:#fff}
 .paseg[data-v="0"] b[data-n="0"]{background:#1B8A46}
 .pbrow2{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
+.pbhist{display:flex;flex-direction:column;gap:5px;margin:8px 0 4px;padding:9px 11px;background:#FAFBFC;border:1px solid #EEF0F4;border-radius:10px}
+.pbhist>b{font:800 .62rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#8A90A0}
+.pbhist span{font:600 .76rem Inter,sans-serif;color:#3B4256;display:flex;gap:8px;line-height:1.4}
+.pbhist span i{font-style:normal;font-weight:800;color:#8A90A0;flex:none}
 </style>
 </head>
 <body>
@@ -1429,10 +1433,17 @@ function pbTdn(p){
   });
   return (out.length >= 2 && out[0] > out[1]) ? '<b style="color:#DC2626">\u2197 </b>' : "";
 }
+function pbHist(p){
+  const e2 = v => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const h = (p.hist || []).filter(x => !/^Photo/.test(x[1] || "")).slice(0, 3);
+  if(!h.length) return "";
+  return `<div class="pbhist"><b>Derniers relevés</b>${h.map(x => `<span><i>${e2(x[0])}</i>${e2(x[1])}</span>`).join("")}</div>`;
+}
 function pbActs(p){
   const pbesc = v => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const nonacc = `<button class="pba" onclick="event.stopPropagation();pbNonAcc('${p.id}')">Non accessible</button>`;
   const photo = `<button class="pba" onclick="event.stopPropagation();pbPhoto('${p.id}')">+ Photo</button>`;
+  const mv = `<button class="pba" onclick="event.stopPropagation();pbMoveGo('${p.id}')">Déplacer</button>`;
   if(p.type === "eko") return `<div class="pbacts pbdeiv">
     <label class="pbl2">Rongeurs capturés (compteur / bac)</label>
     <input type="number" inputmode="numeric" min="0" id="pbek-cap" value="${p.conso || 0}" onclick="event.stopPropagation()">
@@ -1445,7 +1456,7 @@ function pbActs(p){
     <label class="pbl2">État de l'appareil</label>
     <select id="pbek-eta" onclick="event.stopPropagation()"><option value="">\u2014</option><option>Fonctionne</option><option>Batterie faible</option><option>Mécanisme à revoir</option><option>Autre</option></select>
     <button class="pba ok" onclick="event.stopPropagation();pbEkoSave('${p.id}')">\u2713 Enregistrer le relevé</button>
-    <div class="pbrow2">${nonacc}${photo}</div>
+    <div class="pbrow2">${nonacc}${photo}${mv}</div>
   </div>`;
   if(p.type === "div") return `<div class="pbacts pbdeiv">
     <div class="pbdvg">
@@ -1465,14 +1476,14 @@ function pbActs(p){
       <button class="pbmt" id="pbmt-str" data-v="" data-l="Starters" onclick="event.stopPropagation();pbMntTog(this)">Starters \u00b7 \u2014</button>
     </div>
     <button class="pba ok" onclick="event.stopPropagation();pbDeivSave('${p.id}')">\u2713 Enregistrer le relev\u00e9 DEIV</button>
-    ${nonacc}${photo}
+    ${nonacc}${photo}${mv}
   </div>`;
   /* piège mécanique : capture ou rien — pas de pourcentage, pas de lot */
   if(p.type === "mec") return `<div class="pbacts">
     <button class="pba ok" onclick="event.stopPropagation();pbRas('${p.id}')">✓ RAS</button>
     <button class="pba co" onclick="event.stopPropagation();pbCapt('${p.id}')">Capture — réarmé</button>
     <button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>
-    ${nonacc}${photo}
+    ${nonacc}${photo}${mv}
   </div>`;
   return `<div class="pbacts pbdeiv">
     <label class="pbl2">Consommation (%)</label>
@@ -1490,7 +1501,7 @@ function pbActs(p){
     <label class="pbl2">Recommandation (pour le client)</label>
     <input type="text" id="pbpa-reco" placeholder="boucher le passage sous la porte\u2026" onclick="event.stopPropagation()">
     <button class="pba ok" onclick="event.stopPropagation();pbPaSave('${p.id}')">\u2713 Enregistrer le relev\u00e9</button>
-    <div class="pbrow2"><button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>${nonacc}${photo}</div>
+    <div class="pbrow2"><button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>${nonacc}${photo}${mv}</div>
   </div>`;
 }
 function planBloc(m){
@@ -1511,7 +1522,7 @@ function planBloc(m){
       <span class="pbn" style="background:${p.statut === "alerte" ? "#DC2626" : p.statut === "conso" ? "#E8930C" : p.statut === "div" ? "#2453C6" : "#1B8A46"}">${p.id.split("-")[1]}</span>
       <span class="pbz"><b>${p.zone || p.id}</b><small>${p.produit || ""}</small></span>
       <span class="pbst" style="background:${ch[0]};color:${ch[1]}">${fait ? "✓ " : ""}${pbTdn(p)}${ch[2]}</span>
-    </div>${open ? pbActs(p) : ""}`;
+    </div>${open ? pbActs(p) + pbHist(p) : ""}`;
   }).join("");
   const nivx = (P.niveaux && P.niveaux.length) ? P.niveaux : (P.fond ? [{nom: "", fond: P.fond}] : []);
   if(PBNIV >= nivx.length) PBNIV = 0;
@@ -1539,8 +1550,9 @@ function planBloc(m){
     : `<div class="pbtools"><button class="pbadd" onclick="event.stopPropagation();pbAddGo()">+ Poser un poste<small>touche ensuite le plan à l\u2019endroit exact</small></button><button class="pbscan" onclick="event.stopPropagation();pbScanGo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10"/></svg>Scanner l\u2019étiquette<small>le relevé du poste s\u2019ouvre</small></button></div>`);
   const accHTML = P.acces ? `<div class="pbacc"><b>Accès</b><span>${pbesc(P.acces)}</span></div>` : "";
   const rasN = (P.postes || []).filter(p => !p.retire && p.releve !== auj && p.statut !== "alerte").length;
-  const rasUI = (rasN && window.PBADD === 0) ? `<button class="pbras${window.PBRAS ? " arm" : ""}" onclick="event.stopPropagation();pbRasAll()">${window.PBRAS ? "Confirmer : " + rasN + " poste" + (rasN > 1 ? "s" : "") + " en RAS ?" : "\u2713 Tout est RAS — " + rasN + " poste" + (rasN > 1 ? "s" : "") + " \u00e0 relever"}</button>` : "";
-  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div> ${accHTML}${planHTML}${addUI}${rasUI}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
+  const moveUI = window.PBMOVE ? `<div class="pbaddhint">Touche le plan au nouvel emplacement du poste<span onclick="event.stopPropagation();pbMoveStop()">Annuler</span></div>` : "";
+  const rasUI = (!window.PBMOVE && rasN && window.PBADD === 0) ? `<button class="pbras${window.PBRAS ? " arm" : ""}" onclick="event.stopPropagation();pbRasAll()">${window.PBRAS ? "Confirmer : " + rasN + " poste" + (rasN > 1 ? "s" : "") + " en RAS ?" : "\u2713 Tout est RAS — " + rasN + " poste" + (rasN > 1 ? "s" : "") + " \u00e0 relever"}</button>` : "";
+  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div> ${accHTML}${planHTML}${window.PBMOVE ? moveUI : addUI}${rasUI}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
 }
 /* ⚠️ leçon du jour côté bureau : on mute le poste DANS l'objet qu'on sauve. */
 function pbEcrit(id, muta){
@@ -2757,7 +2769,7 @@ function rapPhotoZoom(i){
 </script>
 <script>
 /* ═ 28/08 : POSER UN POSTE DEPUIS LE TÉLÉPHONE — le plan vit dans les deux sens. ═ */
-window.PBADD = 0; window.PBPT = null; window.PBFT = "pa"; window.PBRAS = 0; window.PBRASTMR = null;
+window.PBADD = 0; window.PBPT = null; window.PBFT = "pa"; window.PBRAS = 0; window.PBRASTMR = null; window.PBMOVE = null;
 window.PBTYPL = {pa: "Poste d'app\u00e2tage rongeurs", eko: "Ekomille \u2014 capture multiple", div: "DEIV \u2014 d\u00e9sinsectiseur UV", mec: "Pi\u00e8ge m\u00e9canique", mon: "Monitoring non toxique"};
 window.PBDEFP = {pa: "Bloc app\u00e2t s\u00e9curis\u00e9 20 g", eko: "Ekomille", div: "Lampe UV + plaque glue", mec: "Pi\u00e8ge m\u00e9canique sous coffre", mon: "Bloc monitoring non toxique"};
 window.PBPREF = {pa: "PA-", eko: "EK-", div: "DIV-", mec: "PM-", mon: "MN-"};
@@ -2766,11 +2778,39 @@ window.pbAddGo = function(){
   setTimeout(function(){ var el = document.querySelector(".pbaddhint"); if(el) el.scrollIntoView({block: "center", behavior: "smooth"}); }, 90);
 };
 window.pbAddStop = function(){ PBADD = 0; PBPT = null; rdetail(); };
+window.pbMoveGo = function(id){ PBMOVE = id; PBADD = 0; PBPT = null; PBOPEN = null; rdetail(); setTimeout(function(){ var el = document.querySelector(".pbplan"); if(el) el.scrollIntoView({block: "center", behavior: "smooth"}); }, 90); };
+window.pbMoveStop = function(){ PBMOVE = null; rdetail(); };
 window.pbAddType = function(v){
   var e = document.getElementById("pbf-prod"); PBFT = v;
   if(e && (!e.value || Object.keys(PBDEFP).some(function(k){ return e.value === PBDEFP[k]; }))) e.value = PBDEFP[v] || "";
 };
 document.addEventListener("click", function(e){
+  if(window.PBMOVE){
+    var pin2 = e.target.closest && e.target.closest(".pbpin");
+    if(!pin2) return;
+    var r2 = pin2.getBoundingClientRect();
+    if(!r2.width || !r2.height) return;
+    var fx2 = Math.min(1, Math.max(0, (e.clientX - r2.left) / r2.width));
+    var fy2 = Math.min(1, Math.max(0, (e.clientY - r2.top) / r2.height));
+    var id2 = PBMOVE; PBMOVE = null;
+    try{
+      var m2 = M[CURID], k2 = m2 ? planKeyOf(m2) : null;
+      if(k2){
+        var all2 = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+        var p2 = ((all2[k2] || {}).postes || []).find(function(z){ return z.id === id2; });
+        if(p2){
+          p2.x = fx2; p2.y = fy2; p2.niv = PBNIV;
+          /* PAS un relevé : p.releve ne bouge pas, le garde-fou et le
+             rapport ignorent « Poste déplacé » */
+          p2.hist = [[pbAuj(), "Poste déplacé — nouvel emplacement pointé sur le plan"]].concat(p2.hist || []);
+          localStorage.setItem("tigerflow-plans", JSON.stringify(all2));
+          if(typeof toast === "function") toast("\u2713 " + id2 + " déplacé");
+        }
+      }
+    }catch(e3){}
+    rdetail();
+    return;
+  }
   if(PBADD !== 1) return;
   var pin = e.target.closest && e.target.closest(".pbpin");
   if(!pin) return;

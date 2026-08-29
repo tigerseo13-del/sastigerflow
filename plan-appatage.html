@@ -818,7 +818,9 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var sel = $("pl-cible"); if(!sel) return;
     var all = lireP();
     sel.innerHTML = '<option value="">Démo — Ironwood Solutions</option>' + cibles().map(function(o){
-      return '<option value="' + esc(o.k) + '">' + esc(o.lbl) + (all[o.k] ? " · plan posé" : "") + '</option>';
+      var ret0 = "";
+      if(all[o.k]){ try{ var ri0 = retardInfo(all[o.k]); if(ri0 && ri0.retard) ret0 = " — \u26a0 relève en retard de " + ri0.retard + " j"; }catch(e0){} }
+      return '<option value="' + esc(o.k) + '">' + esc(o.lbl) + (all[o.k] ? " · plan posé" + ret0 : "") + '</option>';
     }).join("");
     sel.value = MODE;
   }
@@ -900,7 +902,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     var card = $("synthcard"); if(!card) return;
     var dset = {};
     act.forEach(function(p){ (p.hist || []).forEach(function(h){
-      if(/^(Photo|Poste retir|Poste remis)/.test(h[1] || "")) return;
+      if(/^(Photo|Poste retir|Poste remis|Poste déplacé)/.test(h[1] || "")) return;
       if(synthVal(String(h[1] || ""), p.type)) dset[h[0]] = 1;
     }); });
     var dates = Object.keys(dset).sort(function(a, b){
@@ -2191,7 +2193,7 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
     /* la synthèse des passages — le même tableau vert→rouge que l'écran */
     var dset = {};
     act.forEach(function(p){ (p.hist || []).forEach(function(hh){
-      if(/^(Photo|Poste retir|Poste remis)/.test(hh[1] || "")) return;
+      if(/^(Photo|Poste retir|Poste remis|Poste déplacé)/.test(hh[1] || "")) return;
       if(prSv(String(hh[1] || ""), p.type)) dset[hh[0]] = 1;
     }); });
     var dates = Object.keys(dset).sort(function(a, b){
