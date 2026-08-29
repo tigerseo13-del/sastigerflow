@@ -1980,31 +1980,33 @@ function calDispo(t, d, h, dur){
 function creneauxTenables(p){
   const dur = p.dur || 2;
   const slots = [];
-  const matins = [8, 9, 10, 11], aprems = [14, 15, 16];
-  const cren = String(p.cren || "");
-  const pref = cren.includes("matin") ? [matins, aprems] : (cren.includes("après") || cren.includes("apres")) ? [aprems, matins] : [matins, aprems];
-  for(let k = 1; k <= 6 && slots.length < 3; k++){
+  /* 29/08 (patron : « il doit proposer TOUS les créneaux, les mêmes que dans
+     Ajouter un RDV ») : les horaires de la création de RDV (8h, 10h, 13h,
+     15h, 17h), TOUS ceux où des techniciens sont libres, en partant
+     d'AUJOURD'HUI (ce qui reste de la journée) puis 3 jours ouvrés. */
+  const heures2 = [8, 10, 13, 15, 17];
+  const hNow = new Date().getHours();
+  let jours = 0;
+  for(let k = 0; k <= 6 && jours < 3; k++){
     const x = new Date(TODAYD); x.setDate(x.getDate() + k);
     if(x.getDay() === 0) continue;   /* dimanche : jamais proposé */
     const d = iso(x);
     let dayHits = 0;
-    for(const grp of pref){
-      if(slots.length >= 3 || dayHits >= 2) break;
-      for(const h of grp){
-        const libres = TECHS.filter(t => !calDispo(t, d, h, dur).conflit);
-        if(!libres.length) continue;
-        let sugg = libres.find(t => INTERVS.some(v => !v.cancelled && v.tech === t.id && v.date === d && ((p.cp && v.cp === p.cp) || (p.ville && v.ville === p.ville))));
-        let why;
-        if(sugg){ why = "déjà en secteur " + (p.ville || p.cp); }
-        else{
-          sugg = libres.reduce((a, t) => calDispo(t, d, null, 0).n < calDispo(a, d, null, 0).n ? t : a, libres[0]);
-          why = calDispo(sugg, d, null, 0).n ? "tournée légère ce jour-là" : "journée libre";
-        }
-        slots.push({d, h, libres: libres.length, sugg, why});
-        dayHits++;
-        break;   /* un créneau par demi-journée, puis jour suivant */
+    for(const h of heures2){
+      if(k === 0 && h <= hNow) continue;   /* aujourd'hui : seulement ce qui reste */
+      const libres = TECHS.filter(t => !calDispo(t, d, h, dur).conflit);
+      if(!libres.length) continue;
+      let sugg = libres.find(t => INTERVS.some(v => !v.cancelled && v.tech === t.id && v.date === d && ((p.cp && v.cp === p.cp) || (p.ville && v.ville === p.ville))));
+      let why;
+      if(sugg){ why = "déjà en secteur " + (p.ville || p.cp); }
+      else{
+        sugg = libres.reduce((a, t) => calDispo(t, d, null, 0).n < calDispo(a, d, null, 0).n ? t : a, libres[0]);
+        why = calDispo(sugg, d, null, 0).n ? "tournée légère ce jour-là" : "journée libre";
       }
+      slots.push({d, h, libres: libres.length, sugg, why});
+      dayHits++;
     }
+    if(dayHits) jours++;
   }
   /* 29/08 (patron : « affiche heure dans ordre ») : la préférence du client
      choisit LESQUELS, la chronologie les RANGE — jour puis heure. */
