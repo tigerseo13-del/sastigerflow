@@ -1066,8 +1066,9 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations — syndic, propriétaire, donneur d'ordre<a class="more" href="#" onclick="relForm(event)">+ Relier un client</a></div>
         <div id="rel-list" style="display:flex;flex-direction:column;gap:7px;padding:2px 0 6px"></div>
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:8px;padding:6px 0 8px;align-items:center">
-          <select id="rel-qui" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:220px"></select>
-          <select id="rel-lien" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:280px"></select>
+          <select id="rel-qui" onchange="relImm()" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:220px"></select>
+          <select id="rel-lien" onchange="relImm()" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:280px"></select>
+          <span id="rel-immw" style="display:none"><select id="rel-imm" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:230px"></select></span>
           <button onclick="relSave()" style="border:0;border-radius:9px;background:var(--orange);color:#fff;font:800 .78rem Inter,sans-serif;padding:9px 14px;cursor:pointer">Relier</button>
           <button onclick="relStop()" style="border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;color:var(--ink-2);font:700 .78rem Inter,sans-serif;padding:8px 12px;cursor:pointer">Annuler</button>
         </div>
@@ -3177,6 +3178,15 @@ document.addEventListener("click", function(e){
   try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
   var go = document.getElementById("plango"), sum = document.getElementById("plansum");
   if(!go || !sum) return;
+  /* 29/08 (patron) : EN BÊTA — la carte ne sort du rideau que si la bêta
+     sites est activée dans les Réglages. */
+  try{
+    if(localStorage.getItem("tigerflow-beta-sites") !== "1"){
+      var pc0 = sum.closest ? sum.closest(".card") : null;
+      if(pc0) pc0.style.display = "none"; else sum.style.display = "none";
+      return;
+    }
+  }catch(e0){}
   var plans = {}; try{ plans = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}"); }catch(e){}
   var k = null;
   if(nom){
@@ -3215,24 +3225,41 @@ document.addEventListener("click", function(e){
 (function(){
   var nom = ""; try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
   var card = document.getElementById("relcard"); if(!card) return;
+  /* 29/08 (patron) : EN BÊTA — même rideau que la carte Plan d'appâtage. */
+  try{ if(localStorage.getItem("tigerflow-beta-sites") !== "1"){ card.style.display = "none"; return; } }catch(e0){}
   if(!nom){ card.style.display = "none"; return; }
   var K = "tigerflow-relations";
   var lire = function(){ try{ return JSON.parse(localStorage.getItem(K)) || []; }catch(e){ return []; } };
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
   var LBLout = {gere: "Gestionnaire / syndic de", possede: "Propriétaire de", ordonne: "Donneur d'ordre de"};
   var LBLin = {gere: "Géré par", possede: "Bien de", ordonne: "Donneur d'ordre"};
-  function ligne(lbl, autre, i){
+  function ligne(lbl, autre, i, site){
     return '<div style="display:flex;align-items:center;gap:9px;background:#FAFBFC;border:1px solid #EEF0F4;border-radius:9px;padding:8px 11px;font-size:.82rem;font-weight:600">'
       + '<span style="color:var(--muted);font-weight:800;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;flex:none">' + esc(lbl) + '</span>'
       + '<a href="client.html?c=' + encodeURIComponent(autre) + '" style="color:var(--ink);font-weight:700;text-decoration:none">' + esc(autre) + ' \u2192</a>'
+      + (site ? '<span style="color:var(--muted);font-weight:600;font-size:.74rem">\u00b7 ' + esc(site) + '</span>' : "")
       + '<span onclick="relDel(' + i + ')" style="margin-left:auto;cursor:pointer;color:#C3C7D0;font-weight:800" title="Retirer ce lien">\u2715</span></div>';
   }
   function paint(){
     var R = lire(), h = "";
+    var entr = [], sort = [];
     R.forEach(function(r, i){
-      if(r.b === nom) h += ligne(LBLin[r.t] || r.t, r.a, i);
-      else if(r.a === nom) h += ligne(LBLout[r.t] || r.t, r.b, i);
+      if(r.b === nom) entr.push([r, i]);
+      else if(r.a === nom) sort.push([r, i]);
     });
+    /* fiche du locataire : « Géré par FONCIA \u2192 · Résidence Les Lilas » */
+    entr.forEach(function(p2){ h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site); });
+    /* fiche du syndic : ses clients regroupés PAR IMMEUBLE */
+    if(sort.length){
+      var grp = {};
+      sort.forEach(function(p2){ var k2 = p2[0].site || ""; (grp[k2] = grp[k2] || []).push(p2); });
+      var cles = Object.keys(grp).sort(function(a2, b2){ return (a2 === "" ? "\uffff" : a2).localeCompare(b2 === "" ? "\uffff" : b2, "fr"); });
+      cles.forEach(function(k2){
+        if(k2) h += '<div style="font:800 .62rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:5px 2px 0">' + esc(k2) + '</div>';
+        else if(cles.length > 1) h += '<div style="font:800 .62rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:5px 2px 0">Sans immeuble</div>';
+        grp[k2].forEach(function(p2){ h += ligne(LBLout[p2[0].t] || p2[0].t, p2[0].b, p2[1], null); });
+      });
+    }
     document.getElementById("rel-list").innerHTML = h ||
       '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5">Aucune relation. Relie un syndic, un propriétaire ou un donneur d\u2019ordre : tu pourras lui adresser les devis et factures de ce client.</div>';
   }
@@ -3256,6 +3283,21 @@ document.addEventListener("click", function(e){
     ];
     document.getElementById("rel-lien").innerHTML = L.map(function(x){ return '<option value="' + x[0] + '">' + esc(x[1]) + '</option>'; }).join("");
     document.getElementById("rel-form").style.display = "flex";
+    relImm();
+  };
+  window.relImm = function(){
+    var lien = document.getElementById("rel-lien").value || "in-gere";
+    var qui = document.getElementById("rel-qui").value;
+    /* l'immeuble appartient toujours au GESTIONNAIRE de la formulation */
+    var gest = lien.indexOf("in-") === 0 ? qui : nom;
+    var wrap = document.getElementById("rel-immw"), sel = document.getElementById("rel-imm");
+    var sites = [];
+    try{ sites = (JSON.parse(localStorage.getItem("tigerflow-sites")) || {})[gest] || []; }catch(e2){}
+    if(gest && sites.length){
+      sel.innerHTML = '<option value="">\u2014 immeuble / site (facultatif) \u2014</option>'
+        + sites.map(function(z){ return '<option>' + esc(z.nom) + '</option>'; }).join("");
+      wrap.style.display = "";
+    } else { wrap.style.display = "none"; sel.innerHTML = ""; }
   };
   window.relSave = function(){
     var qui = document.getElementById("rel-qui").value;
@@ -3263,6 +3305,8 @@ document.addEventListener("click", function(e){
     if(!qui) return;
     var sens = lien.split("-")[0], t = lien.split("-")[1];
     var r = sens === "in" ? {a: qui, t: t, b: nom} : {a: nom, t: t, b: qui};
+    var imm = (document.getElementById("rel-imm") || {value: ""}).value;
+    if(imm) r.site = imm;
     var R = lire();
     if(!R.some(function(z){ return z.a === r.a && z.t === r.t && z.b === r.b; })) R.push(r);
     localStorage.setItem(K, JSON.stringify(R));
