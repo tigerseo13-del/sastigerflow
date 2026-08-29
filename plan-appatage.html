@@ -973,10 +973,10 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       + '<label>Captures constatées</label><input type="number" id="pf-cap" min="0" value="' + (x.conso || 0) + '">';
     else if(estDiv) haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="rel" checked>Relevé</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
       + '<label>Captures par espèce</label><div class="dvesp">'
-      + '<span><i>Coccinelles</i><input type="number" id="pf-esp-coc" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Hyménoptères</i><input type="number" id="pf-esp-hym" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Moucherons</i><input type="number" id="pf-esp-mch" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Mouches</i><input type="number" id="pf-esp-mou" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Moustiques</i><input type="number" id="pf-esp-mst" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Papillons</i><input type="number" id="pf-esp-pap" min="0" inputmode="numeric" placeholder="0"></span>' + '<span><i>Punaises</i><input type="number" id="pf-esp-pun" min="0" inputmode="numeric" placeholder="0"></span>'
+      + '<div class="dvrow"><span>Coccinelles</span><input type="number" id="pf-esp-coc" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Hyménoptères</span><input type="number" id="pf-esp-hym" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Moucherons</span><input type="number" id="pf-esp-mch" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Mouches</span><input type="number" id="pf-esp-mou" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Moustiques</span><input type="number" id="pf-esp-mst" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Papillons</span><input type="number" id="pf-esp-pap" min="0" inputmode="numeric" placeholder="0"></div>' + '<div class="dvrow"><span>Punaises</span><input type="number" id="pf-esp-pun" min="0" inputmode="numeric" placeholder="0"></div>'
       + '</div>'
       + '<label>Entretien de l\'appareil (l\'auditeur le demande)</label><div class="dvmnt">'
-      + '<div><b>Nettoyage des tubes</b><select id="pf-mnt-net"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>' + '<div><b>Changement des tubes</b><select id="pf-mnt-tub"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>' + '<div><b>Mesure de l\'intensité lumineuse</b><select id="pf-mnt-lum"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>' + '<div><b>Changement des plaques collantes</b><select id="pf-mnt-plq"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>' + '<div><b>Vérification des starters</b><select id="pf-mnt-str"><option value="">\u2014</option><option value="oui">Oui</option><option value="non">Non</option></select></div>'
+      + '<div class="dvrow"><span>Nettoyage des tubes</span><span class="dvseg" id="pf-mnt-net" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>' + '<div class="dvrow"><span>Changement des tubes</span><span class="dvseg" id="pf-mnt-tub" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>' + '<div class="dvrow"><span>Mesure de l\'intensité lumineuse</span><span class="dvseg" id="pf-mnt-lum" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>' + '<div class="dvrow"><span>Changement des plaques collantes</span><span class="dvseg" id="pf-mnt-plq" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>' + '<div class="dvrow"><span>Vérification des starters</span><span class="dvseg" id="pf-mnt-str" data-v=""><b onclick="dvSeg(this,\'oui\')">Oui</b><b onclick="dvSeg(this,\'non\')">Non</b></span></div>'
       + '</div>';
     else haut = '<div class="plrad"><label><input type="radio" name="pf-r" value="ras" checked>RAS — intact</label><label><input type="radio" name="pf-r" value="conso">' + (estMon ? "Grignotage" : "Consommation") + '</label><label><input type="radio" name="pf-r" value="nonacc">Non accessible</label></div>'
       + '<label>' + (estMon ? "Grignotage" : "Consommation") + ' (%)</label><input type="number" id="pf-pc" min="0" max="100" value="0">';
@@ -1081,6 +1081,10 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     if(NIV >= pl.niveaux.length) NIV = 0;
     if(sauve(pl)){ paint(); tst("Niveau supprimé."); }
   };
+  window.dvSeg = function(b2, v){
+    var p2 = b2.parentNode;
+    p2.dataset.v = (p2.dataset.v === v ? "" : v);
+  };
   window.plPivote = function(){
     var pl = cur(); if(!pl) return;
     var nivx = (pl.niveaux && pl.niveaux.length) ? pl.niveaux : null;
@@ -1164,7 +1168,8 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       });
       var dvM = {}, dvF = [];
       DVMNT.forEach(function(e2){
-        var v = (($("pf-mnt-" + e2[0]) || {value: ""}).value) || "";
+        var el2 = $("pf-mnt-" + e2[0]);
+        var v = el2 ? (el2.dataset.v || "") : "";
         if(v) dvM[e2[0]] = v;
         if(v === "oui") dvF.push(e2[1]);
       });
@@ -1703,14 +1708,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .plautres:hover{color:var(--ink-2,#3D434E)}
 
 /* ═ le relevé DEIV complet (espèces + entretien) ═ */
-.dvesp{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;margin-top:4px}
-.dvesp span{display:flex;flex-direction:column;gap:3px}
-.dvesp i{font-style:normal;font-size:.72rem;font-weight:700;color:var(--ink-2,#3D434E)}
-.dvesp input{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;font:700 .85rem Inter,sans-serif;background:#fff;outline:none}
-.dvmnt{display:flex;flex-direction:column;gap:6px;margin-top:4px}
-.dvmnt>div{display:flex;align-items:center;gap:8px}
-.dvmnt b{flex:1;font-size:.76rem;font-weight:600;color:var(--ink-2,#3D434E)}
-.dvmnt select{flex:none;width:104px;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font:700 .78rem Inter,sans-serif;background:#fff}
+.dvesp,.dvmnt{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.dvrow{display:flex;align-items:center;gap:8px;background:#FAFBFC;border:1px solid #EDEFF3;border-radius:10px;padding:6px 7px 6px 11px}
+.dvrow>span:first-child{flex:1;font-size:.78rem;font-weight:600;color:var(--ink-2,#3D434E)}
+.plform .dvrow input[type=number]{width:72px;flex:none;border:1.5px solid var(--line);border-radius:9px;padding:7px 9px;font:700 .85rem Inter,sans-serif;text-align:right;background:#fff;outline:none;font-variant-numeric:tabular-nums}
+.plform .dvrow input[type=number]:focus{border-color:var(--orange)}
+.dvseg{display:inline-flex;flex:none;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+.dvseg b{padding:6px 13px;font:700 .74rem Inter,sans-serif;color:var(--muted);cursor:pointer;user-select:none;transition:.1s}
+.dvseg b:first-child{border-right:1.5px solid var(--line)}
+.dvseg[data-v="oui"] b:first-child{background:#ECFDF5;color:#0E7A54}
+.dvseg[data-v="non"] b:last-child{background:#FDF0F0;color:#B43B3B}
 </style>
 <nav class="bnv" aria-label="Navigation mobile">
   <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
