@@ -604,6 +604,18 @@ document.addEventListener("click", e => {
   }
   var lieuTxt = [iv.rue, [iv.cp, iv.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") || "—";
   g("c-lieu").textContent = siteNom ? siteNom + " — " + lieuTxt : lieuTxt;
+  /* 29/08 : le donneur d'ordre (relations) apparaît sur le rapport */
+  try{
+    var REL9 = JSON.parse(localStorage.getItem("tigerflow-relations") || "[]");
+    var DO9 = REL9.find(function(z){ return z && z.b === iv.client && (z.t === "gere" || z.t === "ordonne"); });
+    if(DO9){
+      var lieuEl9 = g("c-lieu");
+      var do9 = document.createElement("small");
+      do9.style.cssText = "display:block;margin-top:3px;color:#6C7285;font-weight:600";
+      do9.textContent = "Donneur d'ordre : " + DO9.a;
+      lieuEl9.parentNode.insertBefore(do9, lieuEl9.nextSibling);
+    }
+  }catch(e){}
   const zonesTxt = setArr(R.zones).join(", ");
   g("c-zones").textContent = zonesTxt;
   g("c-tel").textContent = iv.tel || "—";

@@ -1062,6 +1062,16 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M9 20l-6-2V4l6 2m0 14l6-2m-6 2V6m6 12l6 2V6l-6-2m0 14V4M9 6l6-2"/></svg></span>Plan d&rsquo;appâtage<a class="more" id="plango" href="plan-appatage.html">Ouvrir le plan →</a></div>
         <div id="plansum" style="font-size:.82rem;color:var(--muted);font-weight:600;padding:4px 0 8px">Le plan du site : postes numérotés, relevés, zones actives.</div>
       </div>
+      <div class="card full" id="relcard">
+        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations — syndic, propriétaire, donneur d'ordre<a class="more" href="#" onclick="relForm(event)">+ Relier un client</a></div>
+        <div id="rel-list" style="display:flex;flex-direction:column;gap:7px;padding:2px 0 6px"></div>
+        <div id="rel-form" style="display:none;flex-wrap:wrap;gap:8px;padding:6px 0 8px;align-items:center">
+          <select id="rel-qui" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:220px"></select>
+          <select id="rel-lien" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:280px"></select>
+          <button onclick="relSave()" style="border:0;border-radius:9px;background:var(--orange);color:#fff;font:800 .78rem Inter,sans-serif;padding:9px 14px;cursor:pointer">Relier</button>
+          <button onclick="relStop()" style="border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;color:var(--ink-2);font:700 .78rem Inter,sans-serif;padding:8px 12px;cursor:pointer">Annuler</button>
+        </div>
+      </div>
       <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
         <div class="nlist" id="nlist"></div>
         <div class="naddrow">
@@ -3195,6 +3205,70 @@ document.addEventListener("click", function(e){
     sum.textContent = "Aucun plan posé pour ce client — pose-le : le technicien le verra sur ses missions.";
     go.textContent = "Poser le plan →";
   }
+})();
+</script>
+<script>
+/* ═ 29/08 (« FAUT FAIRE UN TRUC GLOBAL ») : les RELATIONS entre fiches —
+   le standard Stann/InterFast. « FONCIA est le gestionnaire de M. Dupont » :
+   visible sur les DEUX fiches, navigable, et le devis/la facture pourront
+   être adressés au gestionnaire. Stock : tigerflow-relations [{a,t,b}]. ═ */
+(function(){
+  var nom = ""; try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
+  var card = document.getElementById("relcard"); if(!card) return;
+  if(!nom){ card.style.display = "none"; return; }
+  var K = "tigerflow-relations";
+  var lire = function(){ try{ return JSON.parse(localStorage.getItem(K)) || []; }catch(e){ return []; } };
+  var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+  var LBLout = {gere: "Gestionnaire / syndic de", possede: "Propriétaire de", ordonne: "Donneur d'ordre de"};
+  var LBLin = {gere: "Géré par", possede: "Bien de", ordonne: "Donneur d'ordre"};
+  function ligne(lbl, autre, i){
+    return '<div style="display:flex;align-items:center;gap:9px;background:#FAFBFC;border:1px solid #EEF0F4;border-radius:9px;padding:8px 11px;font-size:.82rem;font-weight:600">'
+      + '<span style="color:var(--muted);font-weight:800;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;flex:none">' + esc(lbl) + '</span>'
+      + '<a href="client.html?c=' + encodeURIComponent(autre) + '" style="color:var(--ink);font-weight:700;text-decoration:none">' + esc(autre) + ' \u2192</a>'
+      + '<span onclick="relDel(' + i + ')" style="margin-left:auto;cursor:pointer;color:#C3C7D0;font-weight:800" title="Retirer ce lien">\u2715</span></div>';
+  }
+  function paint(){
+    var R = lire(), h = "";
+    R.forEach(function(r, i){
+      if(r.b === nom) h += ligne(LBLin[r.t] || r.t, r.a, i);
+      else if(r.a === nom) h += ligne(LBLout[r.t] || r.t, r.b, i);
+    });
+    document.getElementById("rel-list").innerHTML = h ||
+      '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5">Aucune relation. Relie un syndic, un propriétaire ou un donneur d\u2019ordre : tu pourras lui adresser les devis et factures de ce client.</div>';
+  }
+  window.relDel = function(i){ var R = lire(); R.splice(i, 1); localStorage.setItem(K, JSON.stringify(R)); paint(); };
+  window.relStop = function(){ document.getElementById("rel-form").style.display = "none"; };
+  window.relForm = function(e){
+    if(e) e.preventDefault();
+    var quis = [], vus = {};
+    try{
+      (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).forEach(function(c){ var n2 = c && c.nom; if(n2 && n2 !== nom && !vus[n2]){ vus[n2] = 1; quis.push(n2); } });
+      (JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).forEach(function(c){ var n2 = c && (c.nom || c.name); if(n2 && n2 !== nom && !vus[n2]){ vus[n2] = 1; quis.push(n2); } });
+    }catch(e2){}
+    document.getElementById("rel-qui").innerHTML = '<option value="">\u2014 l\u2019autre client \u2014</option>' + quis.sort(function(a, b){ return a.localeCompare(b, "fr"); }).map(function(q){ return '<option>' + esc(q) + '</option>'; }).join("");
+    var L = [
+      ["in-gere", "est le gestionnaire / syndic de " + nom],
+      ["in-ordonne", "est le donneur d'ordre de " + nom],
+      ["in-possede", "est le propriétaire de " + nom],
+      ["out-gere", "est géré par " + nom],
+      ["out-ordonne", "reçoit ses ordres de " + nom],
+      ["out-possede", "appartient à " + nom]
+    ];
+    document.getElementById("rel-lien").innerHTML = L.map(function(x){ return '<option value="' + x[0] + '">' + esc(x[1]) + '</option>'; }).join("");
+    document.getElementById("rel-form").style.display = "flex";
+  };
+  window.relSave = function(){
+    var qui = document.getElementById("rel-qui").value;
+    var lien = document.getElementById("rel-lien").value || "in-gere";
+    if(!qui) return;
+    var sens = lien.split("-")[0], t = lien.split("-")[1];
+    var r = sens === "in" ? {a: qui, t: t, b: nom} : {a: nom, t: t, b: qui};
+    var R = lire();
+    if(!R.some(function(z){ return z.a === r.a && z.t === r.t && z.b === r.b; })) R.push(r);
+    localStorage.setItem(K, JSON.stringify(R));
+    relStop(); paint();
+  };
+  paint();
 })();
 </script>
 </body>

@@ -731,6 +731,24 @@ function pdfImprimer(nom){
   }
   else if(lieu) lieu.style.display = "none";
 
+  /* 29/08 : la facture au DONNEUR D'ORDRE — « celui qui paie n'est pas
+     celui chez qui on intervient ». L'en-tête porte le payeur, le bloc
+     Lieu d'intervention garde le client traité et son adresse. */
+  if(rec.payeur){
+    put("cli-nom", rec.payeur);
+    var pc9 = null;
+    try{
+      (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).forEach(function(c9){ if(c9 && c9.nom === rec.payeur && !pc9) pc9 = c9; });
+    }catch(e9){}
+    if(coord) coord.innerHTML = pc9
+      ? ([pc9.adresse, [pc9.cp, pc9.ville].filter(Boolean).join(" ")].filter(Boolean).join("<br>") || "Coordonnées à compléter")
+      : "Coordonnées à compléter";
+    if(lieuTxt){
+      lieuTxt.innerHTML = (siteObj ? esc2(rec.site) + " \u2014 " : "") + esc2(rec.client || "") + (adr ? "<br>" + adr : "");
+      if(lieu){ lieu.hidden = false; lieu.style.display = ""; }
+    }
+  }
+
   var L = Array.isArray(rec.lignes) ? rec.lignes : [];
   var tb = document.querySelector('[data-f="tbl"] tbody');
   var ht = 0, tva = 0;

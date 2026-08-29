@@ -750,6 +750,12 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
         <label class="vlab" for="v-site">Site concerné</label>
         <select class="vfld" id="v-site"></select>
       </div>
+      <!-- 29/08 : les RELATIONS — la facture peut partir au gestionnaire,
+           au syndic ou au donneur d'ordre relié sur la fiche client. -->
+      <div class="objrow" id="g-vpayeur" style="display:none">
+        <label class="vlab" for="v-payeur">Facturer à</label>
+        <select class="vfld" id="v-payeur"></select>
+      </div>
       <div class="objrow">
         <label class="vlab" for="v-objet">Objet de la facture</label>
         <input class="vfld objbig" id="v-objet" value="" oninput="OBJEDIT=true" title="Se remplit tout seul d'après la prestation principale — modifiable">
@@ -989,6 +995,21 @@ function pickCli(){
           + list.map(x => '<option value="' + x.nom + '">' + x.nom + ' — ' + [x.adresse, x.cp, x.ville].filter(Boolean).join(" ") + '</option>').join("");
         gs.style.display = "";
       } else { gs.style.display = "none"; sel.innerHTML = ""; }
+    }
+  }catch(e){}
+  /* 29/08 : le payeur — les relations entrantes du client (gestionnaire,
+     donneur d'ordre, propriétaire) peuvent recevoir le document. */
+  try{
+    const gp = g("g-vpayeur"), selp = g("v-payeur");
+    if(gp && selp){
+      const REL = JSON.parse(localStorage.getItem("tigerflow-relations") || "[]");
+      const LT = {gere: "son gestionnaire / syndic", ordonne: "son donneur d'ordre", possede: "son propriétaire"};
+      const pay = REL.filter(r => r && r.b === g("v-client").value && LT[r.t]);
+      if(pay.length){
+        selp.innerHTML = '<option value="">Le client lui-même</option>'
+          + pay.map(r => '<option value="' + String(r.a).replace(/"/g, "&quot;") + '">' + r.a + ' — ' + LT[r.t] + '</option>').join("");
+        gp.style.display = "";
+      } else { gp.style.display = "none"; selp.innerHTML = ""; }
     }
   }catch(e){}
   calc();
@@ -1891,7 +1912,10 @@ function pushDevisInbox(){
       lignes: LIGNES.map(l => ({designation:l.designation, qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""})),
       frais: FRAIS.map(f => ({n: f.n, m: +f.m || 0, tva: +f.tva || 10, img: fraisImg(f) || ""})),
       remise: Math.round((REMAMT || 0) * 100) / 100,
-      site: (document.getElementById("v-site") || {value:""}).value || undefined};
+      site: (document.getElementById("v-site") || {value:""}).value || undefined,
+      /* 29/08 : le payeur voyage avec le document — le client verra
+         « Facturé à : <payeur> » et « Intervention chez : <client> ». */
+      payeur: (document.getElementById("v-payeur") || {value:""}).value || undefined};
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").filter(x => x.ref !== DREF);
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-factures", JSON.stringify(box.slice(0, 30)));
