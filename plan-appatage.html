@@ -236,6 +236,10 @@ ul{list-style:none}
 .pllb{position:fixed;inset:0;background:rgba(10,12,16,.78);z-index:300;display:none;place-items:center;padding:30px;cursor:zoom-out}
 .pllb.open{display:grid}
 .pllb img{max-width:92vw;max-height:88vh;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.pt.synth td{padding:7px 10px}
+.synthc{display:inline-block;min-width:52px;text-align:center;border-radius:8px;padding:4px 7px;font-weight:800;font-size:.7rem}
+.sv0{background:#E8F6EE;color:#1B8A46}.sv1{background:#FEF6E7;color:#A16207}.sv2{background:#FDEBD7;color:#C2410C}.sv3{background:#FBE5E3;color:#C0362C}
+.svn{color:#C3C7D0;font-weight:600}
 .qrov{position:fixed;inset:0;background:#fff;z-index:290;display:none;overflow:auto;padding:26px}
 .qrov.open{display:block}
 .qrbar{display:flex;align-items:center;gap:10px;margin-bottom:18px}
@@ -548,6 +552,13 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       </tr></thead><tbody id="tbody"></tbody></table></div>
     </div>
 
+    <!-- 29/08 : la synthèse des passages — le tableau vert→rouge du concurrent -->
+    <div class="tablecard" id="synthcard" hidden>
+      <div class="card-h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v18h18M7 14l4-4 3 3 5-6"/></svg><span>Synthèse des passages</span></div>
+      <div class="tscroll"><table class="pt synth"><thead id="synthead"></thead><tbody id="synthbody"></tbody></table></div>
+      <div style="padding:10px 16px 13px;font-size:.72rem;color:var(--muted);font-weight:600">Chaque colonne = un passage. Vert = rien à signaler, rouge = forte consommation — la couleur doit redescendre au fil des passages.</div>
+    </div>
+
   </div>
 
   <!-- Feuille détail mobile -->
@@ -836,7 +847,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       $("pl-reg").textContent = "Registre des postes — relève du 12/06/2026";
       $("rs-tot").textContent = "14"; $("rs-ok").textContent = "10"; $("rs-conso").textContent = "3"; $("rs-alerte").textContent = "1";
       var fch = $("plfchips"); if(fch){ fch.hidden = true; }
-      $("tbody").innerHTML = DEMO_TBODY;
+      $("tbody").innerHTML = DEMO_TBODY; var sc0 = $("synthcard"); if(sc0) sc0.hidden = true;
       $("detail").innerHTML = DEMO_EMPTY;
       return;
     }
@@ -873,8 +884,41 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
           + (td && td.k !== "flat" ? '<span class="tdn ' + td.k + '" title="' + td.de + ' \u2192 ' + td.a + '">' + FL[td.k] + '</span>' : "") + '</td>'
         + '<td>' + esc(x.releve || "—") + '</td></tr>';
     };
-    var actF = (window.PLFILT === "ret") ? [] : (window.plfMatch ? act.filter(plfMatch) : act); var retF = (!window.PLFILT || window.PLFILT === "tous" || window.PLFILT === "ret") ? ret : []; $("tbody").innerHTML = (actF.length || retF.length) ? actF.map(ligneDe).join("") + retF.map(ligneDe).join("") : (act.length || ret.length) ? '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste ne correspond à ce filtre.</td></tr>' : '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste — « Ajouter un poste » puis cliquez sur le plan.</td></tr>'; if(window.plfPaint) plfPaint(act, ret, demo);
+    var actF = (window.PLFILT === "ret") ? [] : (window.plfMatch ? act.filter(plfMatch) : act); var retF = (!window.PLFILT || window.PLFILT === "tous" || window.PLFILT === "ret") ? ret : []; $("tbody").innerHTML = (actF.length || retF.length) ? actF.map(ligneDe).join("") + retF.map(ligneDe).join("") : (act.length || ret.length) ? '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste ne correspond à ce filtre.</td></tr>' : '<tr><td colspan="6" style="color:var(--muted);font-weight:600;padding:18px 10px">Aucun poste — « Ajouter un poste » puis cliquez sur le plan.</td></tr>'; if(window.plfPaint) plfPaint(act, ret, demo); synthRender(act);
     peindreDetail();
+  }
+
+  /* 29/08 : la synthèse des passages — mêmes textes d'hist que la tendance */
+  function synthVal(t, ty){
+    var m = /(?:Consommation|Grignotage) (\d+) ?%/.exec(t); if(m) return {v: +m[1], aff: m[1] + " %"};
+    m = /^(\d+) capture/.exec(t); if(m) return {v: Math.min(100, +m[1] * 10), aff: m[1] + " c."};
+    if(/^RAS/.test(t)) return {v: 0, aff: (ty === "div" || ty === "eko") ? "0 c." : "RAS"};
+    if(/Capture constat/.test(t)) return {v: 60, aff: "capt."};
+    return null;
+  }
+  function synthRender(act){
+    var card = $("synthcard"); if(!card) return;
+    var dset = {};
+    act.forEach(function(p){ (p.hist || []).forEach(function(h){
+      if(/^(Photo|Poste retir|Poste remis)/.test(h[1] || "")) return;
+      if(synthVal(String(h[1] || ""), p.type)) dset[h[0]] = 1;
+    }); });
+    var dates = Object.keys(dset).sort(function(a, b){
+      return a.split("/").reverse().join("") < b.split("/").reverse().join("") ? -1 : 1;
+    }).slice(-6);
+    if(dates.length < 2 || !act.length){ card.hidden = true; return; }
+    card.hidden = false;
+    $("synthead").innerHTML = "<tr><th>N°</th><th>Emplacement</th>" + dates.map(function(d){ return "<th>" + esc(d.slice(0, 5)) + "</th>"; }).join("") + "</tr>";
+    $("synthbody").innerHTML = act.map(function(p){
+      var tds = dates.map(function(d){
+        var h = (p.hist || []).find(function(hh){ return hh[0] === d && synthVal(String(hh[1] || ""), p.type); });
+        if(!h) return "<td><span class=\"synthc svn\">\u2014</span></td>";
+        var sv = synthVal(String(h[1] || ""), p.type);
+        var cl = sv.v === 0 ? "sv0" : sv.v < 40 ? "sv1" : sv.v < 70 ? "sv2" : "sv3";
+        return "<td><span class=\"synthc " + cl + "\">" + esc(sv.aff) + "</span></td>";
+      }).join("");
+      return "<tr onclick=\"plSelNiv('" + esc(p.id) + "'," + (p.niv || 0) + ")\" style=\"cursor:pointer\"><td><b>" + esc(numDe(p)) + "</b></td><td>" + esc(p.zone || "\u2014") + "</td>" + tds + "</tr>";
+    }).join("");
   }
 
   /* ⚠️ cur() re-parse le stockage : on cherche le poste DANS l'objet sauvé. */
@@ -1361,6 +1405,11 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     if(qp && lireP()[qp]){ MODE = qp; localStorage.setItem("tigerflow-plan-cur", MODE); }
     else { var m0 = localStorage.getItem("tigerflow-plan-cur"); if(m0 && lireP()[m0]) MODE = m0; }
     var qpo = prm.get("poste");
+    /* 29/08 : l'étiquette scannée par un TÉLÉPHONE doit ouvrir le relevé
+       mobile, pas la page bureau. Les étiquettes déjà imprimées suivent. */
+    if(qpo && (matchMedia("(pointer:coarse)").matches || "ontouchstart" in window) && Math.min(innerWidth, innerHeight) <= 900){
+      location.replace("tech-mobile.html?plan=" + encodeURIComponent(qp || MODE || "") + "&poste=" + encodeURIComponent(qpo));
+    }
     if(qpo && MODE){
       var plq = lireP()[MODE], xq = plq && (plq.postes || []).find(function(z){ return z.id === qpo; });
       if(xq){ SELID = qpo; NIV = xq.niv || 0; }
@@ -2340,6 +2389,61 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
     accApply(demo);
   };
   if(window.plPaint){ try{ plPaint(); }catch(e){} }
+})();
+</script>
+<style>
+.tfdl{position:absolute;background:#fff;border:1.5px solid #E2E5EB;border-radius:10px;box-shadow:0 12px 28px rgba(16,18,24,.13);max-height:224px;overflow:auto;z-index:340}
+.tfdl div{padding:8px 11px;font:600 .78rem Inter,system-ui,sans-serif;color:#3B4256;cursor:pointer;border-bottom:1px solid #F2F3F6}
+.tfdl div:last-child{border-bottom:0}
+.tfdl div:hover{background:#FFF3EC;color:#C2410C}
+</style>
+<script>
+/* ═ 29/08 : la datalist native ne s'ouvre pas quand le champ est pré-rempli
+   (Chrome filtre sur la valeur en place) et Safari iPhone ne la montre pas.
+   → vraie liste déroulante : clic = TOUT le catalogue, frappe = filtre. ═ */
+(function(){
+  var pan = null, cur = null;
+  function ferme(){ if(pan && pan.parentNode) pan.parentNode.removeChild(pan); pan = null; cur = null; }
+  function norm(s){ return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  function remplit(filtre){
+    if(!pan || !cur) return;
+    var dl = document.getElementById(cur.dataset.dl); if(!dl) return;
+    var q = norm(filtre);
+    var opts = Array.prototype.map.call(dl.options, function(o){ return o.value; })
+      .filter(function(v){ return !q || norm(v).indexOf(q) > -1; });
+    pan.innerHTML = opts.map(function(v){ return '<div data-v="' + v.replace(/"/g, "&quot;") + '">' + v + "</div>"; }).join("")
+      || "<div style='cursor:default;color:#9AA0AC'>Pas dans le catalogue — tape librement</div>";
+  }
+  function ouvre(el){
+    var dlid = el.getAttribute("list") || el.dataset.dl;
+    if(!dlid) return;
+    var dl = document.getElementById(dlid);
+    if(!dl || dl.tagName !== "DATALIST") return;
+    el.dataset.dl = dlid; el.removeAttribute("list");
+    ferme(); cur = el;
+    var par = el.parentElement;
+    if(getComputedStyle(par).position === "static") par.style.position = "relative";
+    pan = document.createElement("div"); pan.className = "tfdl";
+    pan.style.top = (el.offsetTop + el.offsetHeight + 4) + "px";
+    pan.style.left = el.offsetLeft + "px";
+    pan.style.width = el.offsetWidth + "px";
+    par.appendChild(pan);
+    remplit("");
+    pan.addEventListener("pointerdown", function(e){
+      var d = e.target.closest("[data-v]"); if(!d) return;
+      e.preventDefault(); e.stopPropagation();
+      cur.value = d.dataset.v;
+      ferme();
+    });
+  }
+  document.addEventListener("focusin", function(e){
+    var el = e.target;
+    if(el.tagName === "INPUT" && (el.getAttribute("list") || el.dataset.dl)) ouvre(el);
+    else if(pan && !pan.contains(el)) ferme();
+  });
+  document.addEventListener("input", function(e){ if(cur === e.target) remplit(e.target.value); });
+  document.addEventListener("pointerdown", function(e){ if(pan && !pan.contains(e.target) && e.target !== cur) ferme(); });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape") ferme(); });
 })();
 </script>
 </body>

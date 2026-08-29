@@ -767,6 +767,19 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 .pbacc b{flex:none;font-size:.64rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8A5A17}
 
 /* ═ 28/08 : la pose de poste depuis le téléphone ═ */
+.pbtools{display:flex;gap:8px;margin:0 0 9px}
+.pbtools .pbadd{margin:0;flex:1}
+.pbscan{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:1.5px dashed #D8DCE4;border-radius:13px;padding:11px;font:800 .8rem Inter,sans-serif;color:var(--ink-2,#3D434E);cursor:pointer}
+.pbscan svg{width:19px;height:19px;stroke:#F26722}
+.pbscan small{font-weight:600;color:#8A90A0;font-size:.64rem}
+.qrsc{position:fixed;inset:0;background:#0B0D12;z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.qrsc[hidden]{display:none!important}
+.qrsc video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.qrsc-top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;color:#fff;z-index:2;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent)}
+.qrsc-top b{font-size:.95rem}
+.qrsc-top button{width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.05rem;cursor:pointer}
+.qrsc-cadre{position:relative;width:230px;height:230px;border-radius:22px;box-shadow:0 0 0 3000px rgba(0,0,0,.45);border:3px solid #fff;z-index:1}
+.qrsc-msg{position:absolute;bottom:34px;left:22px;right:22px;text-align:center;color:#fff;font-weight:700;font-size:.9rem;z-index:2;text-shadow:0 1px 6px rgba(0,0,0,.6)}
 .pbadd{width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;background:#FAFBFC;border:1.5px dashed #D8DCE4;border-radius:13px;padding:11px;margin:0 0 9px;font:800 .8rem Inter,sans-serif;color:var(--ink-2,#3D434E);cursor:pointer}
 .pbadd small{font-size:.68rem;font-weight:600;color:var(--muted)}
 .pbaddhint{display:flex;align-items:center;gap:9px;background:#FFF1EA;border:1.5px solid #FFD9C4;border-radius:12px;padding:10px 13px;margin:0 0 9px;font:700 .78rem Inter,sans-serif;color:#B4400E}
@@ -1500,10 +1513,10 @@ function planBloc(m){
         <label>Type</label>
         <select id="pbf-type" onchange="pbAddType(this.value)">${["pa", "div", "eko"].map(t2 => `<option value="${t2}"${t2 === window.PBFT ? " selected" : ""}>${PBTYPL[t2]}</option>`).join("")}<optgroup label="Autres types">${["mec", "mon"].map(t2 => `<option value="${t2}"${t2 === window.PBFT ? " selected" : ""}>${PBTYPL[t2]}</option>`).join("")}</optgroup></select>
         <label>Emplacement</label><input type="text" id="pbf-zone" placeholder="Cuisine — sous plonge">
-        <label>Produit en place</label><input type="text" id="pbf-prod" value="${pbesc(PBDEFP[window.PBFT] || "")}">
+        <label>Produit en place</label><input type="text" id="pbf-prod" data-dl="plprods2" value="${pbesc(PBDEFP[window.PBFT] || "")}">
         <div class="pbfbtns"><button class="pbfok" onclick="event.stopPropagation();pbAddSave()">Poser le poste</button><button class="pbfno" onclick="event.stopPropagation();pbAddStop()">Annuler</button></div>
       </div>`
-    : `<button class="pbadd" onclick="event.stopPropagation();pbAddGo()">+ Poser un poste<small>touche ensuite le plan à l\u2019endroit exact</small></button>`);
+    : `<div class="pbtools"><button class="pbadd" onclick="event.stopPropagation();pbAddGo()">+ Poser un poste<small>touche ensuite le plan à l\u2019endroit exact</small></button><button class="pbscan" onclick="event.stopPropagation();pbScanGo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10"/></svg>Scanner l\u2019étiquette<small>le relevé du poste s\u2019ouvre</small></button></div>`);
   const accHTML = P.acces ? `<div class="pbacc"><b>Accès</b><span>${pbesc(P.acces)}</span></div>` : "";
   const rasN = (P.postes || []).filter(p => !p.retire && p.releve !== auj && p.statut !== "alerte").length;
   const rasUI = (rasN && window.PBADD === 0) ? `<button class="pbras${window.PBRAS ? " arm" : ""}" onclick="event.stopPropagation();pbRasAll()">${window.PBRAS ? "Confirmer : " + rasN + " poste" + (rasN > 1 ? "s" : "") + " en RAS ?" : "\u2713 Tout est RAS — " + rasN + " poste" + (rasN > 1 ? "s" : "") + " \u00e0 relever"}</button>` : "";
@@ -2786,6 +2799,111 @@ window.pbAddSave = function(){
   }catch(e){}
 };
 </script>
+<div class="qrsc" id="qrsc" hidden>
+  <div class="qrsc-top"><b>Scanner l’étiquette du poste</b><button onclick="pbScanStop()" aria-label="Fermer">✕</button></div>
+  <video id="qrsc-v" playsinline muted></video>
+  <div class="qrsc-cadre"></div>
+  <div class="qrsc-msg" id="qrsc-msg">Vise l’étiquette QR collée sur le poste</div>
+</div>
+<script>
+/* ═ 29/08 : le scanner façon Stann — le tech scanne l'étiquette collée sur
+   le poste, le relevé de CE poste s'ouvre. BarcodeDetector natif quand il
+   existe (Android), sinon jsQR vendorisé chargé à la volée (iPhone). ═ */
+var SCST = null, SCRAF = 0;
+function pbScanHit(txt){
+  try{
+    var po = null, k = null, s2 = String(txt || "").trim();
+    if(/^https?:/i.test(s2) || s2.indexOf("?") > -1){
+      try{ var u = new URL(s2, location.href); po = u.searchParams.get("poste"); k = u.searchParams.get("plan"); }catch(e2){}
+    }else if(/^[A-Za-z]{2,3}-\d+$/.test(s2)){ po = s2; }
+    if(!po) return false;
+    pbScanStop();
+    var m = (typeof M !== "undefined" && CURID != null) ? M[CURID] : null;
+    var kk = m ? planKeyOf(m) : null;
+    if(kk && (!k || k === kk)){
+      var P = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+      var p = ((P[kk] || {}).postes || []).find(function(z){ return z.id === po; });
+      if(p){
+        PBNIV = p.niv || 0; PBOPEN = po; rdetail();
+        setTimeout(function(){ var r = document.querySelector(".pbrow.open"); if(r) r.scrollIntoView({block: "center", behavior: "smooth"}); }, 200);
+        if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e3){}
+        if(typeof toast === "function") toast("\u2713 " + po + (p.zone ? " \u2014 " + p.zone : ""));
+        return true;
+      }
+    }
+    location.href = "tech-mobile.html?plan=" + encodeURIComponent(k || "") + "&poste=" + encodeURIComponent(po);
+    return true;
+  }catch(e){ return false; }
+}
+window.pbScanGo = function(){
+  var ov = document.getElementById("qrsc"); ov.hidden = false;
+  var msg = document.getElementById("qrsc-msg"); msg.textContent = "Vise l\u2019étiquette QR collée sur le poste";
+  var lance = function(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ msg.textContent = "Caméra indisponible ici \u2014 scanne l\u2019étiquette avec l\u2019appareil photo du téléphone : elle ouvre le relevé direct."; return; }
+    navigator.mediaDevices.getUserMedia({video: {facingMode: "environment"}, audio: false}).then(function(st){
+      SCST = st; var v = document.getElementById("qrsc-v"); v.srcObject = st; v.play();
+      var cv = document.createElement("canvas"), g2 = cv.getContext("2d", {willReadFrequently: true});
+      var det = window.BarcodeDetector ? new BarcodeDetector({formats: ["qr_code"]}) : null;
+      var tick = function(){
+        if(!SCST) return;
+        if(v.readyState >= 2){
+          if(det){
+            det.detect(v).then(function(cs){
+              if(cs && cs[0] && pbScanHit(cs[0].rawValue)) return;
+              SCRAF = requestAnimationFrame(tick);
+            }).catch(function(){ SCRAF = requestAnimationFrame(tick); });
+            return;
+          }
+          if(window.jsQR){
+            cv.width = v.videoWidth; cv.height = v.videoHeight;
+            if(cv.width){
+              g2.drawImage(v, 0, 0);
+              var im = g2.getImageData(0, 0, cv.width, cv.height);
+              var c = jsQR(im.data, im.width, im.height);
+              if(c && c.data && pbScanHit(c.data)) return;
+            }
+          }
+        }
+        SCRAF = requestAnimationFrame(tick);
+      };
+      SCRAF = requestAnimationFrame(tick);
+    }).catch(function(){ msg.textContent = "Caméra refusée \u2014 autorise-la, ou scanne l\u2019étiquette avec l\u2019appareil photo du téléphone : elle ouvre le relevé direct."; });
+  };
+  if(window.BarcodeDetector || window.jsQR){ lance(); return; }
+  var sc = document.createElement("script"); sc.src = "jsqr.min.js";
+  sc.onload = lance;
+  sc.onerror = function(){ msg.textContent = "Scanner indisponible \u2014 scanne l\u2019étiquette avec l\u2019appareil photo du téléphone."; };
+  document.head.appendChild(sc);
+};
+window.pbScanStop = function(){
+  if(SCRAF) cancelAnimationFrame(SCRAF); SCRAF = 0;
+  if(SCST){ SCST.getTracks().forEach(function(tr){ tr.stop(); }); SCST = null; }
+  var ov = document.getElementById("qrsc"); if(ov) ov.hidden = true;
+};
+/* le boot depuis une étiquette scannée avec l'appareil photo (?plan&poste) */
+(function(){
+  try{
+    var prm = new URLSearchParams(location.search);
+    var k = prm.get("plan"), po = prm.get("poste");
+    if(!po || typeof M === "undefined") return;
+    var cli = (k || "").split("|")[0];
+    var ids = Object.keys(M);
+    var cand = ids.filter(function(i){ return cli && M[i].client === cli; });
+    if(!cand.length && k) cand = ids.filter(function(i){ return planKeyOf(M[i]) === k; });
+    if(!cand.length) return;
+    var id0 = cand.find(function(i){ return M[i].st !== "done"; }) || cand[0];
+    openM(id0);
+    var P = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+    var kk = (k && P[k]) ? k : planKeyOf(M[id0]);
+    var p = kk && P[kk] ? (P[kk].postes || []).find(function(z){ return z.id === po; }) : null;
+    if(p){
+      PBNIV = p.niv || 0; PBOPEN = po; rdetail();
+      setTimeout(function(){ var r = document.querySelector(".pbrow.open"); if(r) r.scrollIntoView({block: "center", behavior: "smooth"}); }, 350);
+      if(navigator.vibrate) try{ navigator.vibrate(60); }catch(e2){}
+    }
+  }catch(e){}
+})();
+</script>
 <datalist id="plprods2">
   <option value="Bloc appât sécurisé 20 g"></option>
   <option value="Ekomille"></option>
@@ -2839,5 +2957,60 @@ window.pbAddSave = function(){
   <option value="RE-Scent"></option>
   <option value="RATRON GW"></option>
 </datalist>
+<style>
+.tfdl{position:absolute;background:#fff;border:1.5px solid #E2E5EB;border-radius:12px;box-shadow:0 14px 30px rgba(16,18,24,.16);max-height:240px;overflow:auto;z-index:340;-webkit-overflow-scrolling:touch}
+.tfdl div{padding:12px 13px;font:600 .85rem Inter,system-ui,sans-serif;color:#3B4256;cursor:pointer;border-bottom:1px solid #F2F3F6}
+.tfdl div:last-child{border-bottom:0}
+.tfdl div:active{background:#FFF3EC;color:#C2410C}
+</style>
+<script>
+/* ═ 29/08 : Safari iPhone n'affiche pas les datalists et Chrome les filtre
+   sur la valeur pré-remplie → vraie liste au doigt : tap = tout le
+   catalogue, frappe = filtre. ═ */
+(function(){
+  var pan = null, cur = null;
+  function ferme(){ if(pan && pan.parentNode) pan.parentNode.removeChild(pan); pan = null; cur = null; }
+  function norm(s){ return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+  function remplit(filtre){
+    if(!pan || !cur) return;
+    var dl = document.getElementById(cur.dataset.dl); if(!dl) return;
+    var q = norm(filtre);
+    var opts = Array.prototype.map.call(dl.options, function(o){ return o.value; })
+      .filter(function(v){ return !q || norm(v).indexOf(q) > -1; });
+    pan.innerHTML = opts.map(function(v){ return '<div data-v="' + v.replace(/"/g, "&quot;") + '">' + v + "</div>"; }).join("")
+      || "<div style='cursor:default;color:#9AA0AC'>Pas dans le catalogue — tape librement</div>";
+  }
+  function ouvre(el){
+    var dlid = el.getAttribute("list") || el.dataset.dl;
+    if(!dlid) return;
+    var dl = document.getElementById(dlid);
+    if(!dl || dl.tagName !== "DATALIST") return;
+    el.dataset.dl = dlid; el.removeAttribute("list");
+    ferme(); cur = el;
+    var par = el.parentElement;
+    if(getComputedStyle(par).position === "static") par.style.position = "relative";
+    pan = document.createElement("div"); pan.className = "tfdl";
+    pan.style.top = (el.offsetTop + el.offsetHeight + 4) + "px";
+    pan.style.left = el.offsetLeft + "px";
+    pan.style.width = el.offsetWidth + "px";
+    par.appendChild(pan);
+    remplit("");
+    pan.addEventListener("pointerdown", function(e){
+      var d = e.target.closest("[data-v]"); if(!d) return;
+      e.preventDefault(); e.stopPropagation();
+      cur.value = d.dataset.v;
+      ferme();
+    });
+  }
+  document.addEventListener("focusin", function(e){
+    var el = e.target;
+    if(el.tagName === "INPUT" && (el.getAttribute("list") || el.dataset.dl)) ouvre(el);
+    else if(pan && !pan.contains(el)) ferme();
+  });
+  document.addEventListener("input", function(e){ if(cur === e.target) remplit(e.target.value); });
+  document.addEventListener("pointerdown", function(e){ if(pan && !pan.contains(e.target) && e.target !== cur) ferme(); });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape") ferme(); });
+})();
+</script>
 </body>
 </html>

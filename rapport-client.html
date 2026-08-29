@@ -228,6 +228,17 @@ body.mreflow h1{font-size:1.3rem}
 
 /* ═ la zone de chaleur du rapport (thermique, imprimable) ═ */
 .rhwrap{margin-top:14px}
+.rsyw{overflow-x:auto;margin-top:8px}
+.rsyt{border-collapse:collapse;width:100%}
+.rsyt th{font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;color:#8A90A0;text-align:left;padding:5px 8px;border-bottom:1.5px solid #E8EAF0}
+.rsyt td{padding:5px 8px;border-bottom:1px solid #F2F3F6;font-size:.72rem}
+.rsyc{display:inline-block;min-width:46px;text-align:center;border-radius:7px;padding:3px 6px;font-weight:800;font-size:.66rem;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.rs0{background:#E8F6EE;color:#1B8A46}.rs1{background:#FEF6E7;color:#A16207}.rs2{background:#FDEBD7;color:#C2410C}.rs3{background:#FBE5E3;color:#C0362C}
+.rsn{color:#C3C7D0;font-weight:600}
+.rphr{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.rphf{margin:0;width:150px}
+.rphf img{width:150px;height:110px;object-fit:cover;border-radius:10px;border:1px solid #E8EAF0}
+.rphf figcaption{font-size:.62rem;font-weight:700;color:#3B4256;margin-top:4px}
 .rht{display:flex;align-items:center;gap:10px;font-weight:800;font-size:.82rem;color:#171A20}
 .rhleg{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:700;color:#8A90A0}
 .rhleg i{width:110px;height:8px;border-radius:4px;background:linear-gradient(90deg,#28006e,#be1496,#f57828,#fce65a);-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -688,6 +699,46 @@ document.addEventListener("click", e => {
               if(im3.complete && im3.naturalWidth) pose(); else im3.onload = pose;
             });
           }
+          /* 29/08 : la synthèse des passages (vert\u2192rouge) puis les photos du jour */
+          var svRap = function(t3, ty){
+            var m3 = /(?:Consommation|Grignotage) (\d+) ?%/.exec(t3); if(m3) return {v: +m3[1], aff: m3[1] + " %"};
+            m3 = /^(\d+) capture/.exec(t3); if(m3) return {v: Math.min(100, +m3[1] * 10), aff: m3[1] + " c."};
+            if(/^RAS/.test(t3)) return {v: 0, aff: (ty === "div" || ty === "eko") ? "0 c." : "RAS"};
+            if(/Capture constat/.test(t3)) return {v: 60, aff: "capt."};
+            return null;
+          };
+          var dj2k = dj2.split("/").reverse().join("");
+          var dsr = {};
+          (P2[pk2].postes || []).forEach(function(p3){ if(p3.retire) return; (p3.hist || []).forEach(function(h){
+            if(/^(Photo|Poste retir|Poste remis)/.test(h[1] || "")) return;
+            if(!svRap(String(h[1] || ""), p3.type)) return;
+            if(h[0].split("/").reverse().join("") <= dj2k) dsr[h[0]] = 1;
+          }); });
+          var drs = Object.keys(dsr).sort(function(a4, b4){ return a4.split("/").reverse().join("") < b4.split("/").reverse().join("") ? -1 : 1; }).slice(-6);
+          if(drs.length >= 2){
+            var rows3 = (P2[pk2].postes || []).filter(function(p3){ return !p3.retire; }).map(function(p3){
+              return "<tr><td><b>" + esc(p3.nom || p3.id) + "</b></td>" + drs.map(function(d4){
+                var h4 = (p3.hist || []).find(function(hh){ return hh[0] === d4 && svRap(String(hh[1] || ""), p3.type); });
+                if(!h4) return '<td><span class="rsyc rsn">\u2014</span></td>';
+                var s4 = svRap(String(h4[1] || ""), p3.type);
+                var c4 = s4.v === 0 ? "rs0" : s4.v < 40 ? "rs1" : s4.v < 70 ? "rs2" : "rs3";
+                return '<td><span class="rsyc ' + c4 + '">' + esc(s4.aff) + "</span></td>";
+              }).join("") + "</tr>";
+            }).join("");
+            g("rc-heat").insertAdjacentHTML("beforeend",
+              '<div class="rht" style="margin-top:16px">Synth\u00e8se des passages</div>'
+              + '<div class="rsyw"><table class="rsyt"><thead><tr><th>Poste</th>' + drs.map(function(d4){ return "<th>" + esc(d4.slice(0, 5)) + "</th>"; }).join("") + "</tr></thead><tbody>" + rows3 + "</tbody></table></div>"
+              + '<div class="prodnote" style="margin-top:6px">Chaque colonne est un passage \u2014 la couleur doit redescendre vers le vert au fil des interventions.</div>');
+          }
+          var phH2 = "";
+          (P2[pk2].postes || []).forEach(function(p3){
+            if(p3.retire) return;
+            if(!(p3.hist || []).some(function(h){ return h[0] === dj2; })) return;
+            (p3.photos || []).filter(function(ph){ return ph && ph.img && ph.d === dj2; }).slice(0, 2).forEach(function(ph){
+              phH2 += '<figure class="rphf"><img src="' + ph.img + '"><figcaption>' + esc(p3.nom || p3.id) + (p3.zone ? " \u2014 " + esc(p3.zone) : "") + "</figcaption></figure>";
+            });
+          });
+          if(phH2) g("rc-heat").insertAdjacentHTML("beforeend", '<div class="rht" style="margin-top:16px">Photos des postes \u2014 passage du jour</div><div class="rphr">' + phH2 + "</div>");
         }catch(e){}
       }
     }
