@@ -829,6 +829,7 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 .paseg[data-v="0"] b[data-n="0"],.paseg[data-v="25"] b[data-n="25"],.paseg[data-v="50"] b[data-n="50"],.paseg[data-v="75"] b[data-n="75"],.paseg[data-v="100"] b[data-n="100"]{background:var(--orange,#FF5A1F);color:#fff}
 .paseg[data-v="0"] b[data-n="0"]{background:#1B8A46}
 .pbrow2{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
+.pbc2{margin-left:8px;background:#ECFDF5;color:#0E7A54;border-radius:999px;padding:3px 9px;font:800 .64rem Inter,sans-serif;vertical-align:middle}
 .pbhist{display:flex;flex-direction:column;gap:5px;margin:8px 0 4px;padding:9px 11px;background:#FAFBFC;border:1px solid #EEF0F4;border-radius:10px}
 .pbhist>b{font:800 .62rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#8A90A0}
 .pbhist span{font:600 .76rem Inter,sans-serif;color:#3B4256;display:flex;gap:8px;line-height:1.4}
@@ -1205,6 +1206,33 @@ function toast(t){
   const el = g("toast"); el.textContent = t; el.classList.add("on");
   clearTimeout(TT); TT = setTimeout(() => el.classList.remove("on"), 2600);
 }
+function toastU(t, fn){
+  const el = g("toast");
+  el.innerHTML = "";
+  el.appendChild(document.createTextNode(t + " "));
+  const bU = document.createElement("b");
+  bU.textContent = "Annuler";
+  bU.style.cssText = "margin-left:9px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;color:#FFB38A";
+  bU.onclick = e => { e.stopPropagation(); el.classList.remove("on"); if(fn) fn(); };
+  el.appendChild(bU);
+  el.classList.add("on");
+  clearTimeout(TT); TT = setTimeout(() => el.classList.remove("on"), 5200);
+}
+window.pbUndoRel = function(){
+  try{
+    var u = window.PBUNDO; if(!u) return;
+    var all2 = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+    var pl2 = all2[u.k]; if(!pl2) return;
+    var i2 = (pl2.postes || []).findIndex(function(z){ return z.id === u.id; });
+    if(i2 < 0) return;
+    pl2.postes[i2] = u.snap;
+    localStorage.setItem("tigerflow-plans", JSON.stringify(all2));
+    window.PBUNDO = null;
+    PBOPEN = u.id; rdetail();
+    toast("Relevé annulé — " + u.id + " est revenu à son état d'avant.");
+    setTimeout(function(){ var r2 = document.querySelector(".pbrow.open"); if(r2) r2.scrollIntoView({block: "center"}); }, 150);
+  }catch(e){}
+};
 function swTog(el){ el.classList.toggle("on"); toast(el.classList.contains("on") ? "Activé" : "Désactivé"); }
 
 /* ================= petits helpers ================= */
@@ -1552,7 +1580,7 @@ function planBloc(m){
   const rasN = (P.postes || []).filter(p => !p.retire && p.releve !== auj && p.statut !== "alerte").length;
   const moveUI = window.PBMOVE ? `<div class="pbaddhint">Touche le plan au nouvel emplacement du poste<span onclick="event.stopPropagation();pbMoveStop()">Annuler</span></div>` : "";
   const rasUI = (!window.PBMOVE && rasN && window.PBADD === 0) ? `<button class="pbras${window.PBRAS ? " arm" : ""}" onclick="event.stopPropagation();pbRasAll()">${window.PBRAS ? "Confirmer : " + rasN + " poste" + (rasN > 1 ? "s" : "") + " en RAS ?" : "\u2713 Tout est RAS — " + rasN + " poste" + (rasN > 1 ? "s" : "") + " \u00e0 relever"}</button>` : "";
-  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).length}</span></div> ${accHTML}${planHTML}${window.PBMOVE ? moveUI : addUI}${rasUI}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
+  return `<div class="ctah" style="margin-top:4px">Postes d'appâtage${site ? " — " + site : ""}<span class="pbc">${(P.postes || []).filter(z => !z.retire).length}</span>${(function(){ const a9 = auj, ac = (P.postes || []).filter(z => !z.retire), f9 = ac.filter(z => z.releve === a9).length; return f9 ? `<span class="pbc2">\u2713 ${f9}/${ac.length} aujourd\u2019hui</span>` : ""; })()}</div> ${accHTML}${planHTML}${window.PBMOVE ? moveUI : addUI}${rasUI}<div class="cd pbcard">${rows || `<div class="pbvide">Aucun poste sur le plan de ce site.</div>`}</div>`;
 }
 /* ⚠️ leçon du jour côté bureau : on mute le poste DANS l'objet qu'on sauve. */
 function pbEcrit(id, muta){
@@ -1562,12 +1590,19 @@ function pbEcrit(id, muta){
     const all = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
     const pl = all[k], p = ((pl || {}).postes || []).find(x => x.id === id);
     if(!p) return;
+    const SNAP2 = JSON.parse(JSON.stringify(p));
     const t = muta(p);
     p.releve = pbAuj();
     p.hist = [[pbAuj(), t + " — relevé mobile"]].concat(p.hist || []);
     localStorage.setItem("tigerflow-plans", JSON.stringify(all));
-    PBOPEN = null; rdetail();
-    toast("✓ " + p.id + " — " + t);
+    window.PBUNDO = {k: k, id: p.id, snap: SNAP2};
+    /* la tournée guidée : le prochain poste à relever s'ouvre tout seul */
+    var a3 = pbAuj();
+    var nx = (pl.postes || []).find(z => !z.retire && z.id !== p.id && z.releve !== a3) || null;
+    PBOPEN = nx ? nx.id : null;
+    rdetail();
+    if(nx) setTimeout(() => { const r2 = document.querySelector(".pbrow.open"); if(r2) r2.scrollIntoView({block: "center", behavior: "smooth"}); }, 180);
+    toastU("✓ " + p.id + " — " + t + (nx ? "  ·  au suivant : " + (nx.nom || nx.id) : "  ·  tournée complète"), window.pbUndoRel);
   }catch(e){}
 }
 window.paSeg = function(b2){ b2.parentNode.dataset.v = b2.dataset.n; };

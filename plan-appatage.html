@@ -115,6 +115,11 @@ ul{list-style:none}
 .rs.ok{border-color:var(--green)} .rs.ok b{color:var(--green-d)}
 .rs.conso{border-color:var(--amber)} .rs.conso b{color:var(--amber)}
 .rs.alerte{border-color:var(--red)} .rs.alerte b{color:var(--red)}
+.relstats .rs{cursor:pointer;transition:.13s}
+.relstats .rs:hover{box-shadow:0 4px 12px rgba(16,18,24,.09)}
+.relstats .rs.on{outline:2px solid #F26722;outline-offset:-2px}
+.relstats .rs.zero{border-left-color:#E8EAF0}
+.relstats .rs.zero b{color:#C3C7D0}
 .rs.tot{border-color:var(--orange)} .rs.tot b{color:var(--orange)}
 
 /* ============ ZONE PLAN ============ */
@@ -141,7 +146,7 @@ ul{list-style:none}
 /* Légende */
 .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:.79rem;color:var(--ink-2)}
 .legend span{display:inline-flex;align-items:center;gap:7px;font-weight:600}
-.pastille{width:13px;height:13px;border-radius:50%;display:inline-block}
+.pastille{width:14px;height:14px;border-radius:5px;display:inline-block}
 
 /* ============ PANNEAU DÉTAIL ============ */
 .detail{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,20,30,.05);padding:19px;position:sticky;top:76px}
@@ -206,7 +211,8 @@ ul{list-style:none}
 .plvide b{display:block;font-size:1rem;margin:10px 0 4px;color:var(--ink)}
 .plvide p{font-size:.82rem;color:var(--muted);max-width:420px;margin:0 auto}
 .plvide svg{width:34px;height:34px;stroke:var(--orange);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.plchg{font-size:.74rem;font-weight:700;color:var(--muted);text-decoration:underline;text-underline-offset:2px;cursor:pointer;margin-left:10px;white-space:nowrap}
+.plchg{display:inline-flex;align-items:center;font:700 .72rem Inter,sans-serif;color:var(--ink-2);background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;padding:5px 10px;cursor:pointer;margin-left:8px;white-space:nowrap;text-decoration:none;transition:.12s}
+.plchg:hover{border-color:#F26722;color:#C2410C}
 .plchg:hover{color:var(--ink-2)}
 .plform label{display:block;font-size:.7rem;font-weight:700;color:var(--ink-2);margin:11px 0 5px}
 .plform input[type=text],.plform input[type=number],.plform select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font:600 .84rem Inter,sans-serif;color:var(--ink);background:#fff}
@@ -455,10 +461,10 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
     <!-- Stats de relève -->
     <div class="relstats">
-      <div class="rs tot"><div><b id="rs-tot">14</b><small>Postes installés</small></div></div>
-      <div class="rs ok"><div><b id="rs-ok">10</b><small>Conformes (RAS)</small></div></div>
-      <div class="rs conso"><div><b id="rs-conso">3</b><small>Consommation constatée</small></div></div>
-      <div class="rs alerte"><div><b id="rs-alerte">1</b><small>À remplacer</small></div></div>
+      <div class="rs tot" onclick="plStatFiltre('tous')" title="Voir tous les postes au registre"><div><b id="rs-tot">14</b><small>Postes installés</small></div></div>
+      <div class="rs ok" onclick="plStatFiltre('ok')" title="Filtrer le registre : conformes"><div><b id="rs-ok">10</b><small>Conformes (RAS)</small></div></div>
+      <div class="rs conso" onclick="plStatFiltre('conso')" title="Filtrer le registre : consommation"><div><b id="rs-conso">3</b><small>Consommation constatée</small></div></div>
+      <div class="rs alerte" onclick="plStatFiltre('alerte')" title="Filtrer le registre : à remplacer"><div><b id="rs-alerte">1</b><small>À remplacer</small></div></div>
     </div>
 
     <!-- Plan + panneau détail -->
@@ -742,6 +748,17 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
 
   var tdiv = document.createElement("div"); tdiv.className = "tst2"; tdiv.id = "tst2"; document.body.appendChild(tdiv);
   function tst(m){ tdiv.textContent = m; tdiv.style.display = "block"; clearTimeout(tst._t); tst._t = setTimeout(function(){ tdiv.style.display = "none"; }, 3600); }
+  function tstU(m, fn){
+    tdiv.innerHTML = "";
+    tdiv.appendChild(document.createTextNode(m + " "));
+    var bU = document.createElement("b");
+    bU.textContent = "Annuler";
+    bU.style.cssText = "margin-left:10px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;color:#FFB38A";
+    bU.onclick = function(){ tdiv.style.display = "none"; if(fn) fn(); };
+    tdiv.appendChild(bU);
+    tdiv.style.display = "block";
+    clearTimeout(tst._t); tst._t = setTimeout(function(){ tdiv.style.display = "none"; }, 5500);
+  }
 
   function lireP(){ try{ var v = JSON.parse(localStorage.getItem(PKEY)); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } }
   function cur(){ return MODE ? (lireP()[MODE] || null) : null; }
@@ -854,7 +871,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
       return;
     }
     var n = nomDe(MODE), act = actifs(pl), ret = retires(pl);
-    var ri = retardInfo(pl); window.PLFRQ = ri.f || 30; window.plPaint = paint; window.tst = window.tst || tst;
+    var ri = retardInfo(pl); window.PLFRQ = ri.f || 30; window.plPaint = paint; window.tst = window.tst || tst; window.tstU = window.tstU || tstU;
     var derniere = act.map(function(x){ var d = dParse(x.releve); return d ? d.getTime() : 0; }).sort().reverse()[0];
     $("pl-titre").textContent = "Plan d'appâtage — " + (n.site || n.client);
     var sub = n.client + (act.length ? " · " + act.length + " poste" + (act.length > 1 ? "s" : "") + " en service" + (ret.length ? " · " + ret.length + " retiré" + (ret.length > 1 ? "s" : "") : "") + (derniere ? " · dernière relève le " + FDC(new Date(derniere)) : "") : " · aucun poste pour l'instant");
@@ -872,6 +889,11 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     $("rs-ok").textContent = act.filter(function(x){ return x.statut === "ok"; }).length;
     $("rs-conso").textContent = act.filter(function(x){ return x.statut === "conso"; }).length;
     $("rs-alerte").textContent = act.filter(function(x){ return x.statut === "alerte"; }).length;
+    /* on colore l'exception : une cartouche à zéro s'éteint */
+    [["conso", "rs-conso"], ["alerte", "rs-alerte"]].forEach(function(cz){
+      var el9 = document.querySelector(".relstats .rs." + cz[0]);
+      if(el9) el9.classList.toggle("zero", +($(cz[1]).textContent) === 0);
+    });
     if(fonds.length){ $("rimg").src = (fonds[NIV] || {}).fond || ""; }
     $("rdots").innerHTML = act.filter(function(x){ return (x.niv || 0) === NIV; }).map(function(x){
       return '<button class="rdot' + (x.id === SELID ? " sel" : "") + (window.plfMatch && !plfMatch(x) ? " dim" : "") + '" data-id="' + esc(x.id) + '" data-st="' + x.statut + '" style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + HEX2[x.statut] + '" onclick="plSel(\'' + esc(x.id) + '\')" title="' + esc(x.zone || x.id) + '">' + esc(numDe(x)) + '</button>';
@@ -2101,11 +2123,23 @@ document.addEventListener("click", function(e){
     var an = +p[2]; if(an < 100) an += 2000;
     return new Date(an, +p[1] - 1, +p[0], 12);
   }
+  window.plStatFiltre = function(v){
+    window.PLFILT = v;
+    if(window.plPaint) plPaint();
+    var tc = document.querySelector(".tablecard");
+    if(tc) tc.scrollIntoView({block: "start", behavior: "smooth"});
+    document.querySelectorAll(".relstats .rs").forEach(function(el){ el.classList.remove("on"); });
+    var map = {tous: "tot", ok: "ok", conso: "conso", alerte: "alerte"};
+    var el2 = document.querySelector(".relstats .rs." + map[v]);
+    if(el2 && v !== "tous") el2.classList.add("on");
+  };
   window.plfMatch = function(x){
     var f = window.PLFILT || "tous";
     if(f === "tous") return true;
     if(f === "ret") return false;
     if(f === "alerte") return x.statut === "alerte";
+    if(f === "ok") return x.statut === "ok";
+    if(f === "conso") return x.statut === "conso";
     if(f === "relever"){
       var d = pRel(x.releve);
       if(!d) return true;
@@ -2135,10 +2169,35 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
      s'ouvre tout seul, formulaire de relevé prêt, compteur au toast. ═ */
   function frAuj(){ var d = new Date(); return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + String(d.getFullYear()).slice(2); }
   function plDe(){ try{ return (JSON.parse(localStorage.getItem("tigerflow-plans")) || {})[window.PLMODE] || null; }catch(e){ return null; } }
+  window.plUndoRel = function(){
+    try{
+      var u = window.__PUNDO; if(!u) return;
+      var all = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+      var pl2 = all[u.k]; if(!pl2) return;
+      var i2 = (pl2.postes || []).findIndex(function(z){ return z.id === u.id; });
+      if(i2 < 0) return;
+      pl2.postes[i2] = u.snap;
+      localStorage.setItem("tigerflow-plans", JSON.stringify(all));
+      window.__PUNDO = null;
+      if(typeof plRelAnnule === "function") plRelAnnule();
+      if(typeof plSelNiv === "function") plSelNiv(u.id, u.snap.niv || 0);
+      if(window.tst) tst("Relevé annulé — " + (u.snap.nom || u.id) + " est revenu à son état d'avant.");
+    }catch(e){}
+  };
   if(typeof window.plRelSave === "function"){
     var oRS = window.plRelSave;
     window.plRelSave = function(){
+      /* la photo d'avant — « Annuler » restaure le poste tel quel */
+      var avant = {};
+      try{ var plA = plDe(); if(plA) (plA.postes || []).forEach(function(z){ avant[z.id] = JSON.stringify(z); }); }catch(e9){}
       oRS();
+      try{
+        var plU = plDe();
+        if(plU){
+          var chg = (plU.postes || []).find(function(z){ return avant[z.id] && avant[z.id] !== JSON.stringify(z); });
+          if(chg) window.__PUNDO = {k: window.PLMODE, id: chg.id, snap: JSON.parse(avant[chg.id])};
+        }
+      }catch(e8){}
       try{
         var pl = plDe(); if(!pl) return;
         var auj = frAuj();
@@ -2153,10 +2212,10 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
             var det = document.getElementById("detail");
             var b = det && Array.prototype.find.call(det.querySelectorAll("button"), function(x){ return x.textContent.trim() === "Relever"; });
             if(b) b.click();
-            if(window.tst) tst("Relevé " + faits + "/" + act.length + " — au suivant : " + (nx.nom || nx.id));
+            if(window.tstU) tstU("Relevé " + faits + "/" + act.length + " — au suivant : " + (nx.nom || nx.id), window.plUndoRel); else if(window.tst) tst("Relevé " + faits + "/" + act.length + " — au suivant : " + (nx.nom || nx.id));
           }, 420);
         } else if(act.length){
-          setTimeout(function(){ if(window.tst) tst("✓ Relève terminée — " + act.length + "/" + act.length + " postes relevés aujourd'hui."); }, 420);
+          setTimeout(function(){ if(window.tstU) tstU("✓ Relève terminée — " + act.length + "/" + act.length + " postes relevés aujourd'hui.", window.plUndoRel); else if(window.tst) tst("✓ Relève terminée."); }, 420);
         }
       }catch(e){}
     };
