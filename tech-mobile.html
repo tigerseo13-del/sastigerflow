@@ -735,6 +735,16 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
 .agl .cp{font-weight:600!important}
 
 /* ═ 28/08 : LE PLAN sur la mission — pastilles tapables, pincement pour zoomer ═ */
+.pbzb{position:absolute;right:8px;top:8px;z-index:6;display:flex;flex-direction:column;gap:6px}
+.pbzb b{width:34px;height:34px;border-radius:9px;background:#fff;border:1.5px solid #E2E5EB;display:grid;place-items:center;font:800 1.1rem Inter,sans-serif;color:#3B4256;box-shadow:0 2px 8px rgba(16,18,24,.10);cursor:pointer;user-select:none}
+.pbgv{position:fixed;inset:0;background:rgba(11,13,18,.55);z-index:420;display:flex;align-items:flex-end;justify-content:center}
+.pbgv[hidden]{display:none!important}
+.pbg-card{background:#fff;border-radius:18px 18px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:520px;display:flex;flex-direction:column;gap:10px}
+.pbg-card>b{font:800 1rem Sora,Inter,sans-serif;color:#16181D}
+.pbg-l{display:flex;flex-direction:column;gap:6px;margin:2px 0 4px}
+.pbg-l span{font:600 .82rem Inter,sans-serif;color:#3B4256;background:#FAFBFC;border:1px solid #EEF0F4;border-radius:9px;padding:8px 11px}
+.pbg-voir{border:0;border-radius:12px;background:var(--orange,#FF5A1F);color:#fff;font:800 .9rem Inter,sans-serif;padding:13px}
+.pbg-quand{border:0;background:none;color:#8A90A0;font:700 .8rem Inter,sans-serif;padding:6px;text-decoration:underline}
 .pbplan{position:relative;overflow:hidden;border:1px solid #E8EAF0;border-radius:12px;margin:8px 0 10px;background:#FBFBFC;touch-action:none}
 .pbpin{position:relative;transform-origin:0 0}
 .pbpin img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
@@ -1514,7 +1524,7 @@ function planBloc(m){
   }).join("");
   const chipsN = nivx.length > 1 ? `<div class="pbnivs">${nivx.map((n2, i2) => `<button class="pbnv${i2 === PBNIV ? " on" : ""}" onclick="event.stopPropagation();PBNIV=${i2};rdetail()">${pbesc(n2.nom || ("Niveau " + (i2 + 1)))}</button>`).join("")}</div>` : "";
   const ghost = (window.PBADD === 2 && window.PBPT) ? `<span class="pbghost" style="left:${PBPT.fx * 100}%;top:${PBPT.fy * 100}%"></span>` : "";
-  const planHTML = fondN ? `${chipsN}<div class="pbplan"><div class="pbpin"><img src="${fondN}" draggable="false" alt="Plan">${dotsN}${ghost}</div></div>` : "";
+  const planHTML = fondN ? `${chipsN}<div class="pbplan"><div class="pbzb"><b onclick="event.stopPropagation();pbZBtn(1)">+</b><b onclick="event.stopPropagation();pbZBtn(-1)">\u2212</b></div><div class="pbpin"><img src="${fondN}" draggable="false" alt="Plan">${dotsN}${ghost}</div></div>` : "";
   const addUI = !fondN ? "" : (window.PBADD === 1
     ? `<div class="pbaddhint">Touche le plan à l\u2019endroit exact du poste<span onclick="event.stopPropagation();pbAddStop()">Annuler</span></div>`
     : (window.PBADD === 2 && window.PBPT)
@@ -2826,6 +2836,70 @@ window.pbAddSave = function(){
     toast("\u2713 " + x.id + " pos\u00e9 \u2014 le bureau le voit sur le plan.");
     setTimeout(function(){ var r2 = document.querySelector(".pbrow.open"); if(r2) r2.scrollIntoView({block: "center", behavior: "smooth"}); }, 140);
   }catch(e){}
+};
+</script>
+<div class="pbgv" id="pbgv" hidden>
+  <div class="pbg-card">
+    <b id="pbg-t">Il reste des postes non relevés</b>
+    <div class="pbg-l" id="pbg-l"></div>
+    <button class="pbg-voir" onclick="pbGvVoir()">Voir les postes</button>
+    <button class="pbg-quand" onclick="pbGvQuand()">Clôturer quand même — le registre restera incomplet</button>
+  </div>
+</div>
+<script>
+/* ═ 29/08 : le garde-fou de clôture — aucun poste ne passe à travers le
+   registre. Les clics de clôture passent par window.*, les enchaînements
+   internes (encaissement → rapport) ne re-déclenchent pas le garde. ═ */
+var PBGSUITE = null;
+function pbResteARelever(mid){
+  try{
+    var m = M[mid]; if(!m) return [];
+    var k = planKeyOf(m); if(!k) return [];
+    var P = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
+    var a2 = pbAuj();
+    return ((P[k] || {}).postes || []).filter(function(p){ return !p.retire && p.releve !== a2; });
+  }catch(e){ return []; }
+}
+window.pbGvVoir = function(){
+  document.getElementById("pbgv").hidden = true; PBGSUITE = null;
+  var el = document.querySelector(".pbplan");
+  if(el) el.scrollIntoView({block: "center", behavior: "smooth"});
+};
+window.pbGvQuand = function(){
+  document.getElementById("pbgv").hidden = true;
+  var f = PBGSUITE; PBGSUITE = null;
+  if(f) f();
+};
+(function(){
+  ["finCtr", "finSolde", "finTrait", "openRapport"].forEach(function(fn){
+    var orig = window[fn];
+    if(typeof orig !== "function") return;
+    window[fn] = function(mid){
+      var args = arguments;
+      {
+        var reste = pbResteARelever(mid);
+        if(reste.length){
+          /* « quand même » relance l'ORIGINAL (pas le wrapper) : pas de boucle ;
+             un re-clic après « Voir les postes » re-vérifie — c'est voulu. */
+          document.getElementById("pbg-t").textContent = "Il reste " + reste.length + " poste" + (reste.length > 1 ? "s" : "") + " non relevé" + (reste.length > 1 ? "s" : "") + " sur le plan";
+          document.getElementById("pbg-l").innerHTML = reste.slice(0, 4).map(function(p){
+            return "<span>" + (p.nom || p.id) + (p.zone ? " \u2014 " + String(p.zone).replace(/</g, "&lt;") : "") + "</span>";
+          }).join("") + (reste.length > 4 ? "<span>\u2026 et " + (reste.length - 4) + " autre" + (reste.length - 4 > 1 ? "s" : "") + "</span>" : "");
+          PBGSUITE = function(){ orig.apply(null, args); };
+          document.getElementById("pbgv").hidden = false;
+          return;
+        }
+      }
+      return orig.apply(this, args);
+    };
+  });
+})();
+/* les boutons zoom — le pincement / double-tap / molette existaient déjà */
+window.pbZBtn = function(d){
+  var V = document.querySelector(".pbplan");
+  if(!V || !window.pbZoomVers || !window.pbZoomEtat) return;
+  var z = pbZoomEtat().z;
+  pbZoomVers(V.clientWidth / 2, V.clientHeight / 2, d > 0 ? z * 1.5 : z / 1.5);
 };
 </script>
 <div class="qrsc" id="qrsc" hidden>

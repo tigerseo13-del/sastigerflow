@@ -1769,7 +1769,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   #printall h3{font:800 1rem Sora,Inter,sans-serif;margin:0 0 8px}
   #printall .prwrap{position:relative;border:1px solid #ccc}
   #printall .prwrap img{display:block;width:100%;height:auto}
-  #printall .prdot{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;border:2px solid #fff;color:#fff;font:800 .62rem Inter,sans-serif;display:grid;place-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printall .prtab{width:100%;border-collapse:collapse;margin:8px 0 4px}
+  #printall .prtab th{font:800 8.5px Inter,sans-serif;text-transform:uppercase;letter-spacing:.04em;color:#666;text-align:left;padding:5px 7px;border-bottom:1.5px solid #bbb}
+  #printall .prtab td{font:600 9.5px Inter,sans-serif;padding:5px 7px;border-bottom:1px solid #ddd;vertical-align:top}
+  #printall .prsy{display:inline-block;min-width:40px;text-align:center;border-radius:6px;padding:2px 6px;font:800 8.5px Inter,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printall .prnum{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:6px;color:#fff;font:800 9px Inter,sans-serif;padding:0 3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printall .pracc{font:600 10px Inter,sans-serif;background:#f4f5f7;border:1px solid #ddd;border-radius:8px;padding:7px 10px;margin:0 0 10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printall .prfoot{font:600 8.5px Inter,sans-serif;color:#888;margin-top:12px}
+  #printall .prdot{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:8px;border:2px solid #fff;color:#fff;font:800 .62rem Inter,sans-serif;display:grid;place-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
 /* ═ 3e lot : historique replié + gestion des niveaux ═ */
@@ -2157,6 +2164,61 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
      TOUS les niveaux s'impriment (une page par plan) + le registre complet. ═ */
   var PRCOL = {ok: "#1B8A46", conso: "#E8930C", alerte: "#DC2626", div: "#2453C6"};
   var prEsc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+  var PRTYP = {pa: "Poste d'appâtage", eko: "Ekomille", div: "DEIV", mec: "Piège mécanique", mon: "Monitoring"};
+  var PRST = {ok: "RAS", conso: "Consommation", alerte: "À remplacer", div: "DEIV"};
+  var prSv = function(t, ty){
+    var m = /(?:Consommation|Grignotage) (\d+) ?%/.exec(t); if(m) return {v: +m[1], aff: m[1] + " %"};
+    m = /^(\d+) capture/.exec(t); if(m) return {v: Math.min(100, +m[1] * 10), aff: m[1] + " c."};
+    if(/^RAS/.test(t)) return {v: 0, aff: (ty === "div" || ty === "eko") ? "0 c." : "RAS"};
+    if(/Capture constat/.test(t)) return {v: 60, aff: "capt."};
+    return null;
+  };
+  var prRegistre = function(pl, act, titre){
+    var h = '<div class="prpage"><h3>Registre des postes — ' + prEsc(titre) + '</h3>';
+    if(pl.acces) h += '<div class="pracc"><b>Consignes d\'accès :</b> ' + prEsc(pl.acces) + '</div>';
+    h += '<table class="prtab"><thead><tr><th>N°</th><th>Emplacement</th><th>Type</th><th>Produit en place</th><th>Lot</th><th>Fixation</th><th>Statut</th><th>Dernière relève</th></tr></thead><tbody>';
+    h += act.map(function(x){
+      return '<tr><td><span class="prnum" style="background:' + (PRCOL[x.statut] || "#6C7285") + '">' + prEsc(x.nom || (x.id.split("-")[1] || "")) + '</span></td>'
+        + '<td>' + prEsc(x.zone || "\u2014") + '</td>'
+        + '<td>' + (PRTYP[x.type || "pa"] || "") + '</td>'
+        + '<td>' + prEsc(x.produit || "\u2014") + '</td>'
+        + '<td>' + prEsc(x.lot || "\u2014") + '</td>'
+        + '<td>' + prEsc(x.fix || "\u2014") + '</td>'
+        + '<td>' + (PRST[x.statut] || "") + '</td>'
+        + '<td>' + prEsc(x.releve || "\u2014") + '</td></tr>';
+    }).join("");
+    h += '</tbody></table>';
+    /* la synthèse des passages — le même tableau vert→rouge que l'écran */
+    var dset = {};
+    act.forEach(function(p){ (p.hist || []).forEach(function(hh){
+      if(/^(Photo|Poste retir|Poste remis)/.test(hh[1] || "")) return;
+      if(prSv(String(hh[1] || ""), p.type)) dset[hh[0]] = 1;
+    }); });
+    var dates = Object.keys(dset).sort(function(a, b){
+      return a.split("/").reverse().join("") < b.split("/").reverse().join("") ? -1 : 1;
+    }).slice(-6);
+    if(dates.length >= 2){
+      var CSY = [["#E8F6EE", "#1B8A46"], ["#FEF6E7", "#A16207"], ["#FDEBD7", "#C2410C"], ["#FBE5E3", "#C0362C"]];
+      h += '<h3 style="margin-top:14px">Synthèse des passages</h3><table class="prtab"><thead><tr><th>N°</th><th>Emplacement</th>'
+        + dates.map(function(d){ return "<th>" + prEsc(d.slice(0, 5)) + "</th>"; }).join("") + '</tr></thead><tbody>';
+      h += act.map(function(p){
+        var tds = dates.map(function(d){
+          var hh = (p.hist || []).find(function(z){ return z[0] === d && prSv(String(z[1] || ""), p.type); });
+          if(!hh) return '<td><span class="prsy" style="color:#bbb">\u2014</span></td>';
+          var sv = prSv(String(hh[1] || ""), p.type);
+          var c = sv.v === 0 ? CSY[0] : sv.v < 40 ? CSY[1] : sv.v < 70 ? CSY[2] : CSY[3];
+          return '<td><span class="prsy" style="background:' + c[0] + ';color:' + c[1] + '">' + prEsc(sv.aff) + '</span></td>';
+        }).join("");
+        return '<tr><td><b>' + prEsc(p.nom || (p.id.split("-")[1] || "")) + '</b></td><td>' + prEsc(p.zone || "") + '</td>' + tds + '</tr>';
+      }).join("");
+      h += '</tbody></table><div style="font:600 8.5px Inter;color:#888">Chaque colonne est un passage — la couleur doit redescendre vers le vert.</div>';
+    }
+    var dj = new Date();
+    h += '<div class="prfoot">Agence Antinuisible — 122 Rue Amelot, 75011 Paris · 01 89 72 43 96 · registre HACCP édité le '
+      + String(dj.getDate()).padStart(2, "0") + "/" + String(dj.getMonth() + 1).padStart(2, "0") + "/" + dj.getFullYear()
+      + ' · relevé prévu tous les ' + (pl.freq || 30) + ' jours</div></div>';
+    return h;
+  };
   window.plPdf = function(){
     if(!window.PLMODE){ window.print(); return; }   /* démo : la vitrine s'imprime telle quelle */
     if(window.plZ) plZ(0);                          /* vue entière — le zoom fausserait la page */
@@ -2172,7 +2234,7 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
         return '<span class="prdot" style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + (PRCOL[x.statut] || "#6C7285") + '">' + prEsc(x.nom || (x.id.split("-")[1] || "")) + '</span>';
       }).join("");
       return '<div class="prpage"><h3>Plan d\'appâtage — ' + prEsc(titre) + (nivx.length > 1 ? " · " + prEsc(nv.nom || ("Niveau " + (i + 1))) : "") + '</h3><div class="prwrap"><img src="' + nv.fond + '">' + dots + '</div></div>';
-    }).join("");
+    }).join("") + prRegistre(pl, act, titre);
     document.body.classList.add("prmode");
     var nettoie = function(){ document.body.classList.remove("prmode"); pa.innerHTML = ""; window.removeEventListener("afterprint", nettoie); };
     window.addEventListener("afterprint", nettoie);
