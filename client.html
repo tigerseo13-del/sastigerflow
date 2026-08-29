@@ -1058,19 +1058,17 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         <div id="adr-body"></div>
       </div>
       <div class="card eq">
-        <div class="card">
-        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M9 20l-6-2V4l6 2m0 14l6-2m-6 2V6m6 12l6 2V6l-6-2m0 14V4M9 6l6-2"/></svg></span>Plan d&rsquo;appâtage<a class="more" id="plango" href="plan-appatage.html">Ouvrir le plan →</a></div>
-        <div id="plansum" style="font-size:.82rem;color:var(--muted);font-weight:600;padding:4px 0 8px">Le plan du site : postes numérotés, relevés, zones actives.</div>
-      </div>
       <div class="card full" id="relcard">
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations — syndic, propriétaire, donneur d'ordre<a class="more" href="#" onclick="relForm(event)">+ Relier un client</a></div>
         <div id="rel-list" style="display:flex;flex-direction:column;gap:7px;padding:2px 0 6px"></div>
+        <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relchip{border:1.5px solid #E2E5EB;border-radius:7px;background:#fff;color:var(--ink-2);font:700 .74rem Inter,sans-serif;padding:8px 11px;cursor:pointer}.relchip.on{background:var(--orange);border-color:var(--orange);color:#fff}</style>
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:8px;padding:6px 0 8px;align-items:center">
-          <select id="rel-qui" onchange="relImm()" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:220px"></select>
-          <select id="rel-lien" onchange="relImm()" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:280px"></select>
+          <span style="position:relative;flex:1 1 190px;max-width:250px"><input id="rel-qui" placeholder="Tape le nom du client…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
+          <span id="rel-typ" style="display:flex;gap:6px;flex-wrap:wrap"></span>
           <span id="rel-immw" style="display:none"><select id="rel-imm" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:230px"></select></span>
           <button onclick="relSave()" style="border:0;border-radius:9px;background:var(--orange);color:#fff;font:800 .78rem Inter,sans-serif;padding:9px 14px;cursor:pointer">Relier</button>
           <button onclick="relStop()" style="border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;color:var(--ink-2);font:700 .78rem Inter,sans-serif;padding:8px 12px;cursor:pointer">Annuler</button>
+          <div id="rel-ph" style="display:none;flex:1 1 100%;font:600 .8rem Inter,sans-serif;color:var(--ink-2);background:#FFF8F3;border:1px solid #F3E3D3;border-radius:8px;padding:8px 11px"></div>
         </div>
       </div>
       <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
@@ -3171,53 +3169,6 @@ document.addEventListener("click", function(e){
 })();
 </script>
 <script>
-/* ═ 29/08 (patron : « le plan est rangé où ? je suis perdu ») : la fiche client
-   mène ENFIN au plan — aucun lien n'existait. ═ */
-(function(){
-  var nom = "";
-  try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
-  var go = document.getElementById("plango"), sum = document.getElementById("plansum");
-  if(!go || !sum) return;
-  /* 29/08 (patron) : EN BÊTA — la carte ne sort du rideau que si la bêta
-     sites est activée dans les Réglages. */
-  try{
-    if(localStorage.getItem("tigerflow-beta-sites") !== "1"){
-      var pc0 = sum.closest ? sum.closest(".card") : null;
-      if(pc0) pc0.style.display = "none"; else sum.style.display = "none";
-      return;
-    }
-  }catch(e0){}
-  var plans = {}; try{ plans = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}"); }catch(e){}
-  var k = null;
-  if(nom){
-    var ks = Object.keys(plans).filter(function(x){ return plans[x] && plans[x].fond; });
-    k = ks.find(function(x){ return x === nom + "|"; }) || ks.find(function(x){ return x.indexOf(nom + "|") === 0; }) || null;
-  }
-  if(k){
-    var pl = plans[k], act = (pl.postes || []).filter(function(p){ return !p.retire; });
-    var dern = "";
-    act.forEach(function(p){
-      if(p.releve && (!dern || p.releve.split("/").reverse().join("") > dern.split("/").reverse().join(""))) dern = p.releve;
-    });
-    var ret = 0;
-    if(dern){
-      var pd = dern.split("/"); var an = +pd[2]; if(an < 100) an += 2000;
-      var ech = new Date(new Date(an, +pd[1] - 1, +pd[0], 12).getTime() + (pl.freq || 30) * 864e5);
-      ret = Math.floor((Date.now() - ech.getTime()) / 864e5);
-      if(ret < 0) ret = 0;
-    }
-    sum.innerHTML = act.length + " poste" + (act.length > 1 ? "s" : "") + " en service"
-      + (dern ? " · dernière relève le " + dern : "")
-      + (ret ? ' · <b style="color:#C0362C">relève en retard de ' + ret + ' j</b>' : "")
-      + (pl.acces ? " · consignes d'accès notées" : "");
-    go.href = "plan-appatage.html?plan=" + encodeURIComponent(k);
-  } else if(nom){
-    sum.textContent = "Aucun plan posé pour ce client — pose-le : le technicien le verra sur ses missions.";
-    go.textContent = "Poser le plan →";
-  }
-})();
-</script>
-<script>
 /* ═ 29/08 (« FAUT FAIRE UN TRUC GLOBAL ») : les RELATIONS entre fiches —
    le standard Stann/InterFast. « FONCIA est le gestionnaire de M. Dupont » :
    visible sur les DEUX fiches, navigable, et le devis/la facture pourront
@@ -3225,8 +3176,8 @@ document.addEventListener("click", function(e){
 (function(){
   var nom = ""; try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
   var card = document.getElementById("relcard"); if(!card) return;
-  /* 29/08 (patron) : EN BÊTA — même rideau que la carte Plan d'appâtage. */
-  try{ if(localStorage.getItem("tigerflow-beta-sites") !== "1"){ card.style.display = "none"; return; } }catch(e0){}
+  /* 29/08 (GO patron) : HORS bêta — les Relations sont LA mécanique du produit :
+     « je crée la fiche, je la relie à celui qui paie ». Visible pour tous. */
   if(!nom){ card.style.display = "none"; return; }
   var K = "tigerflow-relations";
   var lire = function(){ try{ return JSON.parse(localStorage.getItem(K)) || []; }catch(e){ return []; } };
@@ -3265,46 +3216,85 @@ document.addEventListener("click", function(e){
   }
   window.relDel = function(i){ var R = lire(); R.splice(i, 1); localStorage.setItem(K, JSON.stringify(R)); paint(); };
   window.relStop = function(){ document.getElementById("rel-form").style.display = "none"; };
+  /* ── 29/08 (« SA FAUX PAS UNE BARRE DE RECHERCHE ? » + « TU PEUX SIMPLIFIER SA ???? »)
+     La nouvelle manière : une RECHERCHE qui filtre en tapant (comme la liste
+     produit), TROIS choix seulement — syndic / propriétaire / donneur d'ordre —
+     et la phrase écrite en clair avant d'enregistrer, inversable d'un clic. ── */
+  var QUIS = [], TSEL = "gere", SENS = "in";
+  var TYP = [["gere", "Syndic / gestionnaire"], ["possede", "Propriétaire"], ["ordonne", "Donneur d'ordre"]];
+  var MOT = {gere: "le syndic / gestionnaire", possede: "le propriétaire", ordonne: "le donneur d'ordre"};
+  function quiNorm(s){ try{ return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }catch(e){ return String(s || "").toLowerCase().trim(); } }
+  function quiRes(){
+    var v = quiNorm((document.getElementById("rel-qui") || {value: ""}).value);
+    if(!v) return "";
+    for(var i = 0; i < QUIS.length; i++){ if(quiNorm(QUIS[i]) === v) return QUIS[i]; }
+    return "";
+  }
+  function escA(v){ return esc(v).replace(/"/g, "&quot;"); }
+  function quiPanel(){
+    var pan = document.getElementById("rel-quip"), inp = document.getElementById("rel-qui");
+    if(!pan || !inp) return;
+    var v = quiNorm(inp.value);
+    var list = v ? QUIS.filter(function(q){ return quiNorm(q).indexOf(v) !== -1; }) : QUIS;
+    pan.innerHTML = list.length
+      ? list.map(function(q){ return '<div class="relqi" data-v="' + escA(q) + '">' + esc(q) + '</div>'; }).join("")
+      : '<div class="relqi" style="cursor:default;color:var(--muted)">Aucun client à ce nom</div>';
+    pan.hidden = false;
+  }
+  function relTypPaint(){
+    var w = document.getElementById("rel-typ"); if(!w) return;
+    w.innerHTML = TYP.map(function(x){ return '<button type="button" class="relchip' + (x[0] === TSEL ? " on" : "") + '" onclick="relTyp(\'' + x[0] + '\')">' + x[1] + '</button>'; }).join("");
+  }
+  function relPhrase(){
+    var ph = document.getElementById("rel-ph"); if(!ph) return;
+    var qui = quiRes();
+    if(!qui){ ph.style.display = "none"; return; }
+    var chef = SENS === "in" ? qui : nom, de = SENS === "in" ? nom : qui;
+    ph.innerHTML = '<b>' + esc(chef) + '</b> est ' + MOT[TSEL] + ' de <b>' + esc(de) + '</b>'
+      + ' <a href="#" onclick="relSens(event)" style="color:var(--orange);font-weight:800;text-decoration:none;margin-left:8px">⇄ Inverser</a>';
+    ph.style.display = "";
+  }
+  window.relTyp = function(t){ TSEL = t; relTypPaint(); relPhrase(); relImm(); };
+  window.relSens = function(e){ if(e) e.preventDefault(); SENS = SENS === "in" ? "out" : "in"; relPhrase(); relImm(); };
   window.relForm = function(e){
     if(e) e.preventDefault();
-    var quis = [], vus = {};
+    QUIS = []; var vus = {};
     try{
-      (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).forEach(function(c){ var n2 = c && c.nom; if(n2 && n2 !== nom && !vus[n2]){ vus[n2] = 1; quis.push(n2); } });
-      (JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).forEach(function(c){ var n2 = c && (c.nom || c.name); if(n2 && n2 !== nom && !vus[n2]){ vus[n2] = 1; quis.push(n2); } });
+      (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).forEach(function(c){ var n2 = c && c.nom; if(n2 && n2 !== nom && !vus[n2]){ vus[n2] = 1; QUIS.push(n2); } });
+      (JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).forEach(function(c){ var n2 = c && (c.nom || c.name); if(n2 && n2 !== nom && !vus[n2]){ vus[n2] = 1; QUIS.push(n2); } });
     }catch(e2){}
-    document.getElementById("rel-qui").innerHTML = '<option value="">\u2014 l\u2019autre client \u2014</option>' + quis.sort(function(a, b){ return a.localeCompare(b, "fr"); }).map(function(q){ return '<option>' + esc(q) + '</option>'; }).join("");
-    var L = [
-      ["in-gere", "est le gestionnaire / syndic de " + nom],
-      ["in-ordonne", "est le donneur d'ordre de " + nom],
-      ["in-possede", "est le propriétaire de " + nom],
-      ["out-gere", "est géré par " + nom],
-      ["out-ordonne", "reçoit ses ordres de " + nom],
-      ["out-possede", "appartient à " + nom]
-    ];
-    document.getElementById("rel-lien").innerHTML = L.map(function(x){ return '<option value="' + x[0] + '">' + esc(x[1]) + '</option>'; }).join("");
+    QUIS.sort(function(a, b){ return a.localeCompare(b, "fr"); });
+    TSEL = "gere";
+    /* le sens malin : une fiche déjà « chef » quelque part (syndic, siège…)
+       propose d'abord « CETTE fiche est le … de l'autre » ; sinon l'inverse. */
+    SENS = lire().some(function(z){ return z.a === nom; }) ? "out" : "in";
+    var inp = document.getElementById("rel-qui"); if(inp) inp.value = "";
+    relTypPaint(); relPhrase();
     document.getElementById("rel-form").style.display = "flex";
     relImm();
+    if(inp) inp.focus();
   };
   window.relImm = function(){
-    var lien = document.getElementById("rel-lien").value || "in-gere";
-    var qui = document.getElementById("rel-qui").value;
-    /* l'immeuble appartient toujours au GESTIONNAIRE de la formulation */
-    var gest = lien.indexOf("in-") === 0 ? qui : nom;
+    var qui = quiRes();
+    /* l'immeuble appartient toujours au CHEF de la phrase (le gestionnaire) */
+    var gest = SENS === "in" ? qui : nom;
     var wrap = document.getElementById("rel-immw"), sel = document.getElementById("rel-imm");
     var sites = [];
     try{ sites = (JSON.parse(localStorage.getItem("tigerflow-sites")) || {})[gest] || []; }catch(e2){}
     if(gest && sites.length){
-      sel.innerHTML = '<option value="">\u2014 immeuble / site (facultatif) \u2014</option>'
+      sel.innerHTML = '<option value="">— immeuble / site (facultatif) —</option>'
         + sites.map(function(z){ return '<option>' + esc(z.nom) + '</option>'; }).join("");
       wrap.style.display = "";
     } else { wrap.style.display = "none"; sel.innerHTML = ""; }
   };
   window.relSave = function(){
-    var qui = document.getElementById("rel-qui").value;
-    var lien = document.getElementById("rel-lien").value || "in-gere";
-    if(!qui) return;
-    var sens = lien.split("-")[0], t = lien.split("-")[1];
-    var r = sens === "in" ? {a: qui, t: t, b: nom} : {a: nom, t: t, b: qui};
+    var inp = document.getElementById("rel-qui");
+    var qui = quiRes();
+    if(!qui){
+      if(inp){ inp.style.borderColor = "#C0362C"; setTimeout(function(){ inp.style.borderColor = ""; }, 1500); quiPanel(); inp.focus(); }
+      return;
+    }
+    var r = SENS === "in" ? {a: qui, t: TSEL, b: nom} : {a: nom, t: TSEL, b: qui};
     var imm = (document.getElementById("rel-imm") || {value: ""}).value;
     if(imm) r.site = imm;
     var R = lire();
@@ -3312,6 +3302,27 @@ document.addEventListener("click", function(e){
     localStorage.setItem(K, JSON.stringify(R));
     relStop(); paint();
   };
+  /* les événements de la recherche — posés une fois */
+  (function(){
+    var inp = document.getElementById("rel-qui"), pan = document.getElementById("rel-quip");
+    if(!inp || !pan) return;
+    inp.addEventListener("focus", quiPanel);
+    inp.addEventListener("input", function(){ quiPanel(); relPhrase(); relImm(); });
+    inp.addEventListener("keydown", function(e){ if(e.key === "Escape") pan.hidden = true; });
+    pan.addEventListener("pointerdown", function(e){
+      var it = e.target && e.target.closest ? e.target.closest(".relqi") : null;
+      if(!it || !it.getAttribute("data-v")) return;
+      e.preventDefault();
+      inp.value = it.getAttribute("data-v");
+      pan.hidden = true;
+      relPhrase(); relImm();
+    });
+    document.addEventListener("pointerdown", function(e){
+      if(pan.hidden) return;
+      if(e.target === inp || pan.contains(e.target)) return;
+      pan.hidden = true;
+    }, true);
+  })();
   paint();
 })();
 </script>
