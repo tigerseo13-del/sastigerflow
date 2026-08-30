@@ -931,8 +931,6 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
                    rares de la carte Adresses vivent ici — « ce qu'on fait chaque
                    semaine est un bouton, le reste vit dans le ⋯ ». Masquées tant
                    que la bêta Sites & facturation n'est pas activée. -->
-              <button data-adr="1" hidden onclick="adrMenu('site')"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> Ajouter un site d'intervention</button>
-              <button data-adr="1" hidden onclick="adrMenu('fact')"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Adresse de facturation différente</button>
               <!-- 27/08 (patron, GO v315) : couper les notifications d'UN client —
                    l'exception vit ici, la règle reste dans Réglages. Masqué tant
                    que la bêta Notifications clients n'est pas activée. -->
@@ -1061,7 +1059,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       <div class="card full" id="relcard">
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations — syndic, propriétaire, donneur d'ordre<span class="more" id="rel-n"></span></div>
         <div id="rel-list" style="display:flex;flex-direction:column;gap:7px;padding:2px 0 6px"></div>
-        <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relchip{border:1.5px solid #E2E5EB;border-radius:7px;background:#fff;color:var(--ink-2);font:700 .74rem Inter,sans-serif;padding:8px 11px;cursor:pointer}.relchip.on{background:#0E9F6E;border-color:#0E9F6E;color:#fff}</style>
+        <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relqi.relqn{color:var(--orange);font-weight:800}.relchip{border:1.5px solid #E2E5EB;border-radius:7px;background:#fff;color:var(--ink-2);font:700 .74rem Inter,sans-serif;padding:8px 11px;cursor:pointer}.relchip.on{background:#0E9F6E;border-color:#0E9F6E;color:#fff}</style>
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:8px;padding:6px 0 8px;align-items:center">
           <span style="position:relative;flex:1 1 190px;max-width:250px"><input id="rel-qui" placeholder="Tape le nom du client…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
           <span id="rel-typ" style="display:flex;gap:6px;flex-wrap:wrap"></span>
@@ -3265,7 +3263,8 @@ document.addEventListener("click", function(e){
     var list = v ? QUIS.filter(function(q){ return quiNorm(q).indexOf(v) !== -1; }) : QUIS;
     pan.innerHTML = list.length
       ? list.map(function(q){ return '<div class="relqi" data-v="' + escA(q) + '">' + esc(q) + '</div>'; }).join("")
-      : '<div class="relqi" style="cursor:default;color:var(--muted)">Aucun client à ce nom</div>';
+      : (v ? '<div class="relqi relqn" data-new="' + escA(inp.value.trim()) + '">+ Créer « ' + esc(inp.value.trim()) + ' » et la relier</div>'
+           : '<div class="relqi" style="cursor:default;color:var(--muted)">Aucun client à ce nom</div>');
     pan.hidden = false;
   }
   function relTypPaint(){
@@ -3330,6 +3329,29 @@ document.addEventListener("click", function(e){
     localStorage.setItem(K, JSON.stringify(R));
     relStop(); paint();
   };
+  /* 30/08 (GO « facturez ma société ») : un nom inconnu se crée ET se relie
+     d'un geste — la fiche minimale part dans le fichier clients, l'adresse se
+     complète ensuite sur sa fiche. */
+  window.relNew = function(nv){
+    nv = String(nv || "").trim();
+    if(!nv) return;
+    var deja = "";
+    for(var i = 0; i < QUIS.length; i++){ if(quiNorm(QUIS[i]) === quiNorm(nv)){ deja = QUIS[i]; break; } }
+    if(!deja){
+      try{
+        var L = JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || [];
+        L.push({nom: nv, type: "pro"});
+        localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(L));
+      }catch(e2){}
+      QUIS.push(nv);
+      QUIS.sort(function(a, b){ return a.localeCompare(b, "fr"); });
+    }
+    var inp = document.getElementById("rel-qui"), pan = document.getElementById("rel-quip");
+    if(inp) inp.value = deja || nv;
+    if(pan) pan.hidden = true;
+    relPhrase(); relImm();
+    if(!deja && typeof toast === "function") toast("Fiche « " + nv + " » créée — complète son adresse sur sa fiche pour la facture");
+  };
   /* les événements de la recherche — posés une fois */
   (function(){
     var inp = document.getElementById("rel-qui"), pan = document.getElementById("rel-quip");
@@ -3339,7 +3361,10 @@ document.addEventListener("click", function(e){
     inp.addEventListener("keydown", function(e){ if(e.key === "Escape") pan.hidden = true; });
     pan.addEventListener("pointerdown", function(e){
       var it = e.target && e.target.closest ? e.target.closest(".relqi") : null;
-      if(!it || !it.getAttribute("data-v")) return;
+      if(!it) return;
+      var nv = it.getAttribute("data-new");
+      if(nv){ e.preventDefault(); relNew(nv); return; }
+      if(!it.getAttribute("data-v")) return;
       e.preventDefault();
       inp.value = it.getAttribute("data-v");
       pan.hidden = true;
