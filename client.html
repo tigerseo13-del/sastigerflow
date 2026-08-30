@@ -304,6 +304,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
    etirees a la meme hauteur (l'exception assumee au align-items:start) */
 .duo2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
 .duo2.trio{grid-template-columns:1fr 1fr 1fr}
+.duo2.tri3{grid-template-columns:1fr 1.45fr 1fr}
 .duo2 .card.eq{display:flex;flex-direction:column;margin:0}
 .duo2 .card.eq .nlist{flex:1}
 /* ===== 11/08 (visuels 135-138) puis 20/08 (visuel 310, patron : « c'est
@@ -364,7 +365,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .sform .sact a{font-size:.66rem;font-weight:700;color:#B3261E}
 .sform .save{margin-left:auto;background:var(--orange);color:#fff;border:0;font-weight:700;font-size:.72rem;padding:8px 12px;border-radius:9px;cursor:pointer;font-family:inherit}
 .alt{font-size:.66rem;font-weight:700;color:#8D93A8;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
-@media(max-width:900px){.duo2,.duo2.trio{grid-template-columns:1fr}}   /* 26/08 : .trio (2 classes) battait la media query — 3 colonnes sur téléphone dès que la carte Adresses existait */
+@media(max-width:900px){.duo2,.duo2.trio,.duo2.tri3{grid-template-columns:1fr}}   /* 26/08 : .trio (2 classes) battait la media query — 3 colonnes sur téléphone dès que la carte Adresses existait */
 .grid .wide{grid-column:span 2}
 .grid .full{grid-column:1/-1}
 .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:20px 22px;border:1px solid #F0F1F4}
@@ -1018,7 +1019,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       <!-- 29/07 (patron) : Contacts et Notes internes deviennent deux cartes
            JUMELLES — meme largeur, meme hauteur — au lieu d'un grand bloc et
            d'un petit. Le duo occupe toute la ligne. -->
-      <div class="duo2 full">
+      <div class="duo2 full tri3">
       <div class="card eq">
         <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>Contacts
           <button class="more" onclick="toggleAddContact()">+ Ajouter</button>
@@ -1051,12 +1052,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
 
       <!-- 11/08 (patron, visuels 135-138) : Adresses & Sites — le payeur, ses
            sites d'intervention, son adresse de facturation. Rendu par adrRender(). -->
-      <div class="card eq" id="adrcard">
-        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span id="adr-titre">Adresses</span><span class="more" id="adr-n"></span></div>
-        <div id="adr-body"></div>
-      </div>
-      <div class="card eq">
-      <div class="card full" id="relcard">
+      <div class="card eq" id="relcard">
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations — syndic, propriétaire, donneur d'ordre<span class="more" id="rel-n"></span></div>
         <div id="rel-list" style="display:flex;flex-direction:column;gap:7px;padding:2px 0 6px"></div>
         <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relqi.relqn{color:var(--orange);font-weight:800}.relchip{border:1.5px solid #E2E5EB;border-radius:7px;background:#fff;color:var(--ink-2);font:700 .74rem Inter,sans-serif;padding:8px 11px;cursor:pointer}.relchip.on{background:#0E9F6E;border-color:#0E9F6E;color:#fff}</style>
@@ -1065,6 +1061,9 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
           <span id="rel-typ" style="display:flex;gap:6px;flex-wrap:wrap"></span>
           <span id="rel-immw" style="display:none"><select id="rel-imm" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:230px"></select></span>
           <span id="rel-adrw" style="display:none;flex:1 1 100%;gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="rel-siret" placeholder="SIRET — remplit l'adresse tout seul" autocomplete="off" inputmode="numeric" style="flex:1 1 210px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
+            <input id="rel-tel" placeholder="Téléphone" autocomplete="off" inputmode="tel" style="flex:1 1 120px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
+            <input id="rel-mail" placeholder="E-mail" autocomplete="off" inputmode="email" style="flex:1 1 170px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
             <input id="rel-adr" placeholder="Son adresse (facultatif)" autocomplete="off" style="flex:2 1 200px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
             <input id="rel-cp" placeholder="CP" autocomplete="off" maxlength="5" style="flex:0 0 74px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
             <input id="rel-ville" placeholder="Ville" autocomplete="off" style="flex:1 1 120px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
@@ -1077,6 +1076,11 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         </div>
         <button id="rel-add" onclick="relForm(event)" style="width:100%;border:1.5px dashed #D7DBE2;border-radius:12px;background:transparent;color:var(--ink-2);font:700 .8rem Inter,sans-serif;padding:11px;cursor:pointer;margin:2px 0 4px">+ Relier un client</button>
       </div>
+      <div class="card eq" id="adrcard">
+        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span id="adr-titre">Adresses</span><span class="more" id="adr-n"></span></div>
+        <div id="adr-body"></div>
+      </div>
+      <div class="card eq">
       <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Notes internes</div>
         <div class="nlist" id="nlist"></div>
         <div class="naddrow">
@@ -3250,7 +3254,7 @@ document.addEventListener("click", function(e){
      La nouvelle manière : une RECHERCHE qui filtre en tapant (comme la liste
      produit), TROIS choix seulement — syndic / propriétaire / donneur d'ordre —
      et la phrase écrite en clair avant d'enregistrer, inversable d'un clic. ── */
-  var QUIS = [], TSEL = "gere", SENS = "in", NEWF = "";
+  var QUIS = [], TSEL = "gere", SENS = "in", NEWF = "", SLAST = "";
   var TYP = [["gere", "Syndic / gestionnaire"], ["possede", "Propriétaire"], ["ordonne", "Donneur d'ordre"]];
   var MOT = {gere: "le syndic / gestionnaire", possede: "le propriétaire", ordonne: "le donneur d'ordre"};
   function quiNorm(s){ try{ return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }catch(e){ return String(s || "").toLowerCase().trim(); } }
@@ -3266,10 +3270,13 @@ document.addEventListener("click", function(e){
     if(!pan || !inp) return;
     var v = quiNorm(inp.value);
     var list = v ? QUIS.filter(function(q){ return quiNorm(q).indexOf(v) !== -1; }) : QUIS;
-    pan.innerHTML = list.length
-      ? list.map(function(q){ return '<div class="relqi" data-v="' + escA(q) + '">' + esc(q) + '</div>'; }).join("")
-      : (v ? '<div class="relqi relqn" data-new="' + escA(inp.value.trim()) + '">+ Créer « ' + esc(inp.value.trim()) + ' » et la relier</div>'
-           : '<div class="relqi" style="cursor:default;color:var(--muted)">Aucun client à ce nom</div>');
+    /* 30/08 (patron : « CRÉER UN CLIENT EN PREMIER LIEU C PLUS INTUITIF ») :
+       l'entrée de création vit EN TÊTE du panneau, toujours. */
+    var q0 = inp.value.trim();
+    var head = q0
+      ? '<div class="relqi relqn" data-new="' + escA(q0) + '">+ Créer « ' + esc(q0) + ' » et la relier</div>'
+      : '<div class="relqi relqn" data-focus="1">+ Créer un nouveau client — tape son nom</div>';
+    pan.innerHTML = head + list.map(function(q){ return '<div class="relqi" data-v="' + escA(q) + '">' + esc(q) + '</div>'; }).join("");
     pan.hidden = false;
   }
   function relTypPaint(){
@@ -3337,12 +3344,15 @@ document.addEventListener("click", function(e){
     /* l'adresse dictée au téléphone part sur la fiche fraîchement créée */
     if(NEWF && NEWF === qui){
       try{
-        var adr2 = (document.getElementById("rel-adr") || {value: ""}).value.trim();
-        var cp2 = (document.getElementById("rel-cp") || {value: ""}).value.trim();
-        var vi2 = (document.getElementById("rel-ville") || {value: ""}).value.trim();
-        if(adr2 || cp2 || vi2){
+        var vl = function(id3){ return (document.getElementById(id3) || {value: ""}).value.trim(); };
+        var adr2 = vl("rel-adr"), cp2 = vl("rel-cp"), vi2 = vl("rel-ville");
+        var tel2 = vl("rel-tel"), mail2 = vl("rel-mail"), sir2 = vl("rel-siret");
+        if(adr2 || cp2 || vi2 || tel2 || mail2 || sir2){
           var L2 = JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || [];
-          L2.forEach(function(c2){ if(c2 && c2.nom === NEWF){ if(adr2) c2.adresse = adr2; if(cp2) c2.cp = cp2; if(vi2) c2.ville = vi2; } });
+          L2.forEach(function(c2){ if(c2 && c2.nom === NEWF){
+            if(adr2) c2.adresse = adr2; if(cp2) c2.cp = cp2; if(vi2) c2.ville = vi2;
+            if(tel2) c2.tel = tel2; if(mail2) c2.mail = mail2; if(sir2) c2.siret = sir2;
+          } });
           localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(L2));
         }
       }catch(e3){}
@@ -3377,13 +3387,42 @@ document.addEventListener("click", function(e){
     if(aw){
       aw.style.display = NEWF ? "flex" : "none";
       if(NEWF){
-        ["rel-adr", "rel-cp", "rel-ville"].forEach(function(id2){ var el2 = document.getElementById(id2); if(el2) el2.value = ""; });
-        var a0 = document.getElementById("rel-adr"); if(a0) a0.focus();
+        ["rel-siret", "rel-tel", "rel-mail", "rel-adr", "rel-cp", "rel-ville"].forEach(function(id2){ var el2 = document.getElementById(id2); if(el2) el2.value = ""; });
+        SLAST = "";
+        var a0 = document.getElementById("rel-siret"); if(a0) a0.focus();
       }
     }
     relPhrase(); relImm();
     if(!deja && typeof toast === "function") toast("Fiche « " + nv + " » créée — son adresse peut se taper juste là, ou plus tard sur sa fiche");
   };
+  /* 30/08 (« AVEC LA RECHERCHE PAR SIRET ») : 14 chiffres tapés → l'annuaire
+     officiel des entreprises remplit l'adresse tout seul. Hors ligne ou SIRET
+     inconnu : rien ne bouge, tout reste saisissable à la main. */
+  function relSiretGo(d){
+    try{
+      fetch("https://recherche-entreprises.api.gouv.fr/search?q=" + d + "&page=1&per_page=1")
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          var e = j && j.results && j.results[0]; if(!e) return;
+          var sg = e.siege || {};
+          var adr = [sg.numero_voie, sg.type_voie, sg.libelle_voie].filter(Boolean).join(" ") || sg.adresse || "";
+          var put2 = function(id2, v2){ var el2 = document.getElementById(id2); if(el2 && v2 && !el2.value.trim()) el2.value = v2; };
+          put2("rel-adr", adr);
+          put2("rel-cp", sg.code_postal);
+          put2("rel-ville", sg.libelle_commune);
+          if(typeof toast === "function") toast("Annuaire des entreprises : adresse trouvée — " + (e.nom_complet || d));
+        }).catch(function(){});
+    }catch(e0){}
+  }
+  (function(){
+    var s = document.getElementById("rel-siret");
+    if(!s) return;
+    s.addEventListener("input", function(){
+      var d = (s.value.match(/\d/g) || []).join("").slice(0, 14);
+      s.value = [d.slice(0, 3), d.slice(3, 6), d.slice(6, 9), d.slice(9, 14)].filter(Boolean).join(" ");
+      if(d.length === 14 && d !== SLAST){ SLAST = d; relSiretGo(d); }
+    });
+  })();
   /* les événements de la recherche — posés une fois */
   (function(){
     var inp = document.getElementById("rel-qui"), pan = document.getElementById("rel-quip");
@@ -3394,6 +3433,7 @@ document.addEventListener("click", function(e){
     pan.addEventListener("pointerdown", function(e){
       var it = e.target && e.target.closest ? e.target.closest(".relqi") : null;
       if(!it) return;
+      if(it.getAttribute("data-focus")){ e.preventDefault(); inp.focus(); if(typeof toast === "function") toast("Tape son nom — je crée la fiche direct"); return; }
       var nv = it.getAttribute("data-new");
       if(nv){ e.preventDefault(); relNew(nv); return; }
       if(!it.getAttribute("data-v")) return;
