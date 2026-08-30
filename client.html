@@ -1064,6 +1064,11 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
           <span style="position:relative;flex:1 1 190px;max-width:250px"><input id="rel-qui" placeholder="Tape le nom du client…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
           <span id="rel-typ" style="display:flex;gap:6px;flex-wrap:wrap"></span>
           <span id="rel-immw" style="display:none"><select id="rel-imm" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:230px"></select></span>
+          <span id="rel-adrw" style="display:none;flex:1 1 100%;gap:8px;flex-wrap:wrap;align-items:center">
+            <input id="rel-adr" placeholder="Son adresse (facultatif)" autocomplete="off" style="flex:2 1 200px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
+            <input id="rel-cp" placeholder="CP" autocomplete="off" maxlength="5" style="flex:0 0 74px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
+            <input id="rel-ville" placeholder="Ville" autocomplete="off" style="flex:1 1 120px;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
+          </span>
           <div id="rel-ph" style="display:none;flex:1 1 100%;font:600 .8rem Inter,sans-serif;color:var(--ink-2);background:#FFF8F3;border:1px solid #F3E3D3;border-radius:8px;padding:8px 11px"></div>
           <div style="flex:1 1 100%;display:flex;gap:8px;justify-content:flex-end">
             <button onclick="relStop()" style="border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;color:var(--ink-2);font:700 .78rem Inter,sans-serif;padding:8px 12px;cursor:pointer">Annuler</button>
@@ -3235,7 +3240,7 @@ document.addEventListener("click", function(e){
       });
     }
     document.getElementById("rel-list").innerHTML = h ||
-      '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5">Aucune relation. Relie un syndic, un propriétaire ou un donneur d\u2019ordre : tu pourras lui adresser les devis et factures de ce client.</div>';
+      '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5"><b style="color:var(--ink-2)">Qui paie pour ce client ?</b> Lui-même — rien à faire. Un syndic, un propriétaire, sa société ? Relie-le ici : le devis proposera « Facturer à » et la facture partira au bon nom, à la bonne adresse.</div>';
     var relN = document.getElementById("rel-n");
     if(relN){ var nb = entr.length + sort.length; relN.textContent = nb ? nb + " relation" + (nb > 1 ? "s" : "") : ""; }
   }
@@ -3245,7 +3250,7 @@ document.addEventListener("click", function(e){
      La nouvelle manière : une RECHERCHE qui filtre en tapant (comme la liste
      produit), TROIS choix seulement — syndic / propriétaire / donneur d'ordre —
      et la phrase écrite en clair avant d'enregistrer, inversable d'un clic. ── */
-  var QUIS = [], TSEL = "gere", SENS = "in";
+  var QUIS = [], TSEL = "gere", SENS = "in", NEWF = "";
   var TYP = [["gere", "Syndic / gestionnaire"], ["possede", "Propriétaire"], ["ordonne", "Donneur d'ordre"]];
   var MOT = {gere: "le syndic / gestionnaire", possede: "le propriétaire", ordonne: "le donneur d'ordre"};
   function quiNorm(s){ try{ return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }catch(e){ return String(s || "").toLowerCase().trim(); } }
@@ -3295,6 +3300,8 @@ document.addEventListener("click", function(e){
        propose d'abord « CETTE fiche est le … de l'autre » ; sinon l'inverse. */
     SENS = lire().some(function(z){ return z.a === nom; }) ? "out" : "in";
     var inp = document.getElementById("rel-qui"); if(inp) inp.value = "";
+    NEWF = "";
+    var aw0 = document.getElementById("rel-adrw"); if(aw0) aw0.style.display = "none";
     relTypPaint(); relPhrase();
     document.getElementById("rel-form").style.display = "flex";
     var ab = document.getElementById("rel-add"); if(ab) ab.hidden = true;
@@ -3327,6 +3334,20 @@ document.addEventListener("click", function(e){
     var R = lire();
     if(!R.some(function(z){ return z.a === r.a && z.t === r.t && z.b === r.b; })) R.push(r);
     localStorage.setItem(K, JSON.stringify(R));
+    /* l'adresse dictée au téléphone part sur la fiche fraîchement créée */
+    if(NEWF && NEWF === qui){
+      try{
+        var adr2 = (document.getElementById("rel-adr") || {value: ""}).value.trim();
+        var cp2 = (document.getElementById("rel-cp") || {value: ""}).value.trim();
+        var vi2 = (document.getElementById("rel-ville") || {value: ""}).value.trim();
+        if(adr2 || cp2 || vi2){
+          var L2 = JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || [];
+          L2.forEach(function(c2){ if(c2 && c2.nom === NEWF){ if(adr2) c2.adresse = adr2; if(cp2) c2.cp = cp2; if(vi2) c2.ville = vi2; } });
+          localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(L2));
+        }
+      }catch(e3){}
+      NEWF = "";
+    }
     relStop(); paint();
   };
   /* 30/08 (GO « facturez ma société ») : un nom inconnu se crée ET se relie
@@ -3349,8 +3370,19 @@ document.addEventListener("click", function(e){
     var inp = document.getElementById("rel-qui"), pan = document.getElementById("rel-quip");
     if(inp) inp.value = deja || nv;
     if(pan) pan.hidden = true;
+    /* 30/08 (GO « voici l'adresse ») : le client dicte l'adresse au téléphone —
+       la rangée s'ouvre dans le même geste, se range sur la fiche au Relier. */
+    NEWF = deja ? "" : nv;
+    var aw = document.getElementById("rel-adrw");
+    if(aw){
+      aw.style.display = NEWF ? "flex" : "none";
+      if(NEWF){
+        ["rel-adr", "rel-cp", "rel-ville"].forEach(function(id2){ var el2 = document.getElementById(id2); if(el2) el2.value = ""; });
+        var a0 = document.getElementById("rel-adr"); if(a0) a0.focus();
+      }
+    }
     relPhrase(); relImm();
-    if(!deja && typeof toast === "function") toast("Fiche « " + nv + " » créée — complète son adresse sur sa fiche pour la facture");
+    if(!deja && typeof toast === "function") toast("Fiche « " + nv + " » créée — son adresse peut se taper juste là, ou plus tard sur sa fiche");
   };
   /* les événements de la recherche — posés une fois */
   (function(){
