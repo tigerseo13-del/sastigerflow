@@ -199,7 +199,12 @@ ul{list-style:none}
 .lnh small{font-family:'Inter';font-weight:500;font-size:.72rem;color:var(--muted)}
 .lnh .gic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;flex:none}
 .lnh .gic svg{width:15px;height:15px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.lnh .cad{margin-left:auto;font-family:'Inter';font-size:.66rem;font-weight:800;letter-spacing:.02em;color:var(--ink-2);background:#fff;border:1px solid #ECEDF2;border-radius:99px;padding:5px 12px;white-space:nowrap;box-shadow:0 1px 3px rgba(23,26,32,.05)}
+.lnsw{display:inline-flex;align-items:center;gap:7px;margin-left:auto;background:#ECFDF5;border:1px solid #BFE5D8;border-radius:99px;padding:6px 13px;font-size:.72rem;font-weight:800;color:#0E7A4E;cursor:pointer;white-space:nowrap}
+.lnsw input{accent-color:#10B981;margin:0}
+.lnsw:not(.on){background:#F1F2F6;border-color:#E7E9EF;color:#6C7285}
+.lane.offrel .vwrap{opacity:.38;filter:grayscale(.55);pointer-events:none}
+.lnoff{font-size:.76rem;font-weight:700;color:#8A5A08;background:#FDF6E3;border:1px solid #F3E3B3;border-radius:10px;padding:9px 12px;margin:2px 0 10px}
+.lnh .cad{margin-left:12px;font-family:'Inter';font-size:.66rem;font-weight:800;letter-spacing:.02em;color:var(--ink-2);background:#fff;border:1px solid #ECEDF2;border-radius:99px;padding:5px 12px;white-space:nowrap;box-shadow:0 1px 3px rgba(23,26,32,.05)}
 /* ══ 31/08 (GO patron sur visuel beau-1) : LE STEPPER VERTICAL. La relance se
    lit comme une histoire, de haut en bas : le devis part, les jours passent,
    on relance. Chaque étape est une GRANDE carte reliée au fil orange ; l'écart
@@ -236,6 +241,9 @@ ul{list-style:none}
 .vrow:hover .jbx .jdel{opacity:1}
 .jbx .jdel:hover{color:var(--red);border-color:#F3C4C0}
 @media(max-width:760px){
+  .lnh{flex-wrap:wrap;row-gap:7px}
+  .lnsw{margin-left:0;order:5}
+  .lnh .cad{margin-left:auto;order:6}
   .vrow{gap:11px}
   .vj{width:54px;height:54px;font-size:.84rem}
   .vj input{width:26px;font-size:1rem}
@@ -609,6 +617,19 @@ function toast(m){
 }
 
 const RELKEY = "tigerflow-relance-devis-v2";
+/* 31/08 (patron : « si tu veux pas relancer les pro et syndics tu fais
+   comment ? ») : un interrupteur PAR PUBLIC. Coupé = ce public n'entre plus
+   dans la séquence, les deux autres continuent. Clé lue par le moteur d'envoi
+   (version connectée) comme le reste de la page. */
+const RELONK = "tigerflow-relance-on";
+let RELON = {part: true, pro: true, syn: true};
+try{ const _o = JSON.parse(localStorage.getItem(RELONK)); if(_o && typeof _o === "object") RELON = {part: _o.part !== false, pro: _o.pro !== false, syn: _o.syn !== false}; }catch(e){}
+function relOnSet(k, on){
+  RELON[k] = !!on;
+  try{ localStorage.setItem(RELONK, JSON.stringify(RELON)); }catch(e){}
+  relRender(); relPrev();
+  toast(on ? "▶ " + RELGRP[k] + " — la séquence reprend pour ce public" : "⏸ " + RELGRP[k] + " — plus aucune relance pour ce public, les autres continuent");
+}
 const RELSYNDEF = [{j:7, rem:0, mail:true, sms:false}, {j:15, rem:0, mail:true, sms:false}, {j:30, rem:5, mail:true, sms:false}];
 let REL = {
   on: true,
@@ -836,9 +857,23 @@ function relPrev(){
     + corps
     + `<div class="pacts">
          <button class="pbt k" onclick="PEDIT=true;relPrev();setTimeout(function(){var a=document.getElementById('pta');if(a){a.focus();a.selectionStart=a.value.length;}},0)">✎ Modifier ce texte</button>
+         <button class="pbt" onclick="relEssai()" title="Ouvre votre boîte mail avec ce message prérempli — vérifiez le rendu réel avant que ça parte aux clients">✉️ M'envoyer un essai</button>
          ${marque}
          ${surM ? `<button class="pbt gh" onclick="relTxtReset()">↺ Texte d'origine</button>` : ""}
        </div>`;
+}
+/* 31/08 (GO 3) : l'essai dans SA boîte — le message de l'étape affichée,
+   tel que le client le recevra, prérempli dans son logiciel de mail. */
+function relMailto(u){ location.href = u; }
+function relEssai(){
+  const cas = RELCAS[APC.g];
+  const txt = relTexte(APC.g, APC.i, APCH);
+  const suj = APCH === "sms"
+    ? "Essai SMS TigerFlow — " + RELGRP[APC.g] + " · étape " + (APC.i + 1) + " (J+" + REL[APC.g][APC.i].j + ")"
+    : "Essai TigerFlow — " + (cas.obj || "relance devis");
+  const corps = (APCH === "sms" ? "Le SMS tel que le client le recevra :\n\n" : "") + txt
+    + "\n\n— Essai envoyé depuis TigerFlow · Réglages → Relance devis automatique (étape " + (APC.i + 1) + "/" + REL[APC.g].length + ", " + RELGRP[APC.g] + ")";
+  relMailto("mailto:?subject=" + encodeURIComponent(suj) + "&body=" + encodeURIComponent(corps));
 }
 /* changer d'onglet — on quitte toujours la rédaction pour ne rien perdre en silence */
 function relChan(k){ if(APCH === k && !PEDIT) return; APCH = k; PEDIT = false; relPrev(); }
@@ -927,8 +962,9 @@ function relDuree(key){
   return "bouclé en " + l[l.length - 1].j + " jours";
 }
 function relGrpFrise(key){
-  return `<div class="lane g-${key}${APC.g === key ? " on" : ""}" data-g="${key}">
-      <div class="lnh"><span class="gic">${GICO[key]}</span>${RELGRP[key]} <small>— ${RELSOUS[key]}</small><span class="cad">${relDuree(key)}</span></div>
+  return `<div class="lane g-${key}${APC.g === key ? " on" : ""}${RELON[key] ? "" : " offrel"}" data-g="${key}">
+      <div class="lnh"><span class="gic">${GICO[key]}</span>${RELGRP[key]} <small>— ${RELSOUS[key]}</small><label class="lnsw${RELON[key] ? " on" : ""}" onclick="event.stopPropagation()" title="${RELON[key] ? "La séquence tourne pour ce public — décocher pour la couper" : "Séquence coupée pour ce public — cocher pour la relancer"}"><input type="checkbox" ${RELON[key] ? "checked" : ""} onchange="relOnSet('${key}', this.checked)">${RELON[key] ? "Relance active" : "Relance coupée"}</label><span class="cad">${relDuree(key)}</span></div>
+      ${RELON[key] ? "" : `<div class="lnoff">⏸ Ce public n'est plus relancé — ses devis n'entrent plus dans la séquence. Les deux autres publics continuent normalement.</div>`}
       <div class="vwrap">
         <div class="vrow"><span class="vj z">J 0</span><div class="vzc">Devis envoyé<small>— le départ de la séquence</small></div></div>
         ${relSteps(REL[key], key)}
