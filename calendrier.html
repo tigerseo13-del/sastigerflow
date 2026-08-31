@@ -1878,10 +1878,17 @@ function fileRender(){
     ...dvs.map(x => ({k: "d", o: x, d: x.relance || ""}))
   ];
   const horizon = (() => { const x = new Date(t + "T12:00:00"); x.setDate(x.getDate() + 6); return iso(x); })();
-  /* 30/08 : le chantier fraîchement accepté (sans date inventée) vit sous
-     AUJOURD'HUI — c'est là que le calage se fait, pendant que le client est
-     en ligne. */
-  const keyOf = r => (r.k === "p" && r.o && r.o._dvcal && !r.d) ? t : (!r.d ? "acaler" : (r.d < t ? "late" : (r.d <= horizon ? r.d : "apres")));
+  /* 30/08 (patron : « il va sur la colonne du jour, c'est relou ») : le
+     chantier fraîchement accepté reste DANS L'ONGLET où on a cliqué — le
+     calage s'ouvre sur place, rien ne saute. */
+  const keyOf = r => {
+    if(r.k === "p" && r.o && r.o._dvcal && !r.d){
+      if(r.o._dvtab === "avenir") return "acaler";
+      if(r.o._dvtab === "demain"){ const x9 = new Date(t + "T12:00:00"); x9.setDate(x9.getDate() + 1); return iso(x9); }
+      return t;
+    }
+    return !r.d ? "acaler" : (r.d < t ? "late" : (r.d <= horizon ? r.d : "apres"));
+  };
   const buckets = {};
   rows.forEach(r => { const k = keyOf(r); (buckets[k] = buckets[k] || []).push(r); });
   /* 18/08 (patron, GO) : dans un même groupe, l'ARGENT d'abord — à retard
@@ -2485,7 +2492,7 @@ function dvOui(ref){
     PENDING.push({pid, client: x.client, tel: x.tel || "", cp: _cp, ville: _vl, rue: _rue,
       type: (pdv && pdv.type) || "rongeur", dur: 2, mode: "encais", montant: x.montant || 0,
       note: "Chantier du devis " + ref + " accepté — à caler avec le client", standby: true,
-      rappel: (x.relance && x.relance <= t0dv) ? x.relance : null, tent: 0,
+      rappel: (x.relance && x.relance <= t0dv) ? x.relance : null, tent: 0, _dvtab: FAPTAB,
       _dvcal: true, _dvtask: tid});
   }
   CDPID = pid;
@@ -2495,7 +2502,6 @@ function dvOui(ref){
      où on a cliqué, rien ne saute. Seul un devis « à venir » (relance future)
      passe sur Aujourd'hui — sa ligne de calage y vit. */
   const tabAvant = FAPTAB;
-  if(!(x.relance && x.relance <= t0dv) && FAPTAB !== "today") FAPTAB = "today";
   render(); fileRender(); renderTray();
   setTimeout(() => { const e = document.getElementById("fcaled"); if(e) e.scrollIntoView({block: "center", behavior: "smooth"}); }, 120);
   toast("🎉 Devis accepté — cale le chantier pendant que " + x.client + " est en ligne 👇",
