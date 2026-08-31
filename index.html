@@ -622,10 +622,10 @@ table.novs th:last-child,table.novs td:last-child{display:none}   /* vs mois der
         <span class="go">Factures →</span>
       </a>
       <a class="kt red" href="facture-liste.html">
-        <span class="kl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Factures impayées</span>
-        <b>3</b>
-        <div class="ks">3 factures impayées ce mois-ci</div>
-        <span class="go">Encaisser →</span>
+        <span class="kl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Impayés</span>
+        <b id="kt-imp">3</b>
+        <div class="ks" id="kt-imp-s">3 factures impayées ce mois-ci</div>
+        <span class="go">Réclamer →</span>
       </a>
     </div>
 
@@ -1134,6 +1134,27 @@ document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s 
   window.appliqueCompte = appliqueCompte;
   if(document.readyState !== "loading") appliqueCompte();
   else document.addEventListener("DOMContentLoaded", appliqueCompte);
+})();
+(function(){
+  /* 31/08 (patron) — LA TUILE IMPAYÉS DIT ENFIN L'ARGENT. Elle affichait « 3 »
+     en dur, sans montant : le chiffre qui compte, c'est ce qu'on te doit. */
+  function majImp(){
+    const b = document.getElementById("kt-imp"), s = document.getElementById("kt-imp-s");
+    if(!b || !s) return;
+    let F = [];
+    try{ F = JSON.parse(localStorage.getItem("tigerflow-inbox-factures")) || []; }catch(e){}
+    if(!Array.isArray(F) || !F.length) return;   /* rien en base : on garde la démo */
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    const ech = f => { try{ return new Date((f.valid || f.echeance || f.date) + "T12:00:00"); }catch(e){ return null; } };
+    const imp = F.filter(f => f && (f.statut === "attente" || f.statut === "retard") && ech(f) && ech(f) < t);
+    if(!imp.length){ b.textContent = "0"; s.textContent = "Aucun impayé — tout est encaissé ✓"; return; }
+    const tot = imp.reduce((a, f) => a + (+f.montant || 0), 0);
+    const vieux = imp.reduce((m, f) => Math.max(m, Math.round((t - ech(f)) / 864e5)), 0);
+    b.textContent = tot.toLocaleString("fr-FR", {maximumFractionDigits: 0}) + " €";
+    s.textContent = imp.length + " facture" + (imp.length > 1 ? "s" : "") + " en retard · la plus vieille depuis " + vieux + " j";
+  }
+  if(document.readyState !== "loading") majImp();
+  else document.addEventListener("DOMContentLoaded", majImp);
 })();
 </script>
 <script>
