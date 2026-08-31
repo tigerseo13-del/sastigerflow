@@ -601,13 +601,53 @@ try{
 let PAUSED = new Set();
 try{ PAUSED = new Set(JSON.parse(localStorage.getItem(RELKEY + "-pause") || "[]")); }catch(e){}
 const RELSVG = `<svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg>`;
+/* 31/08 (patron : « faut brancher ») — LES TROIS PAGES LISENT LES MÊMES
+   RÈGLES. Avant : la cadence était lue, mais l'interrupteur par public, le
+   plancher de rentabilité et LA BANDE SYNDIC étaient ignorés — un syndic
+   passait pour une entreprise et un public coupé continuait d'afficher ses
+   relances. Un réglage qui ment est pire que pas de réglage. */
+let _RELON = {part: true, pro: true, syn: true};
+try{ const _o = JSON.parse(localStorage.getItem("tigerflow-relance-on")); if(_o && typeof _o === "object") _RELON = {part: _o.part !== false, pro: _o.pro !== false, syn: _o.syn !== false}; }catch(e){}
+let _RGARDE = {plancher: 100};
+try{ const _g = JSON.parse(localStorage.getItem("tigerflow-relance-garde-v1")); if(_g && typeof _g === "object" && _g.plancher !== undefined) _RGARDE.plancher = +_g.plancher || 0; }catch(e){}
+const _synRe = /syndic|copropri|conseil syndical|g[ée]rance|foncia|nexity|citya|immobili[eè]re|r[ée]sidence les/i;
+const _proRe2 = /sci\b|sarl|sas\b|h[oô]tel|restaurant|clinique|entrep[oô]t|soci[ée]t[ée]|agence|[ée]cole|mairie|pharmacie|boulangerie|tabac|cr[eè]che|garage|institut|comptoir|sup[ée]rette|pizzeria|v[ée]t[ée]rinaire|boutique|magasin|cabinet/i;
+/* le type de la FICHE fait foi ; sinon le nom parle */
+function relPublic(nom){
+  try{
+    const c = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]").find(z => z && z.nom === nom);
+    if(c && c.type){
+      const t = String(c.type).toLowerCase();
+      if(t === "syndic") return "syn";
+      if(t === "particulier") return _synRe.test(String(nom || "")) ? "syn" : "part";
+      return _synRe.test(String(nom || "")) ? "syn" : "pro";
+    }
+  }catch(e){}
+  if(_synRe.test(String(nom || ""))) return "syn";
+  return _proRe2.test(String(nom || "")) ? "pro" : "part";
+}
+/* un devis entre-t-il dans la séquence ? public allumé ET au-dessus du plancher */
+function relEligible(nom, montant){
+  if(!_RELON[relPublic(nom)]) return false;
+  if(_RGARDE.plancher > 0 && (+montant || 0) < _RGARDE.plancher) return false;
+  return true;
+}
+const RELPUB = {part: "Particuliers", pro: "Entreprises", syn: "Syndics"};
 function relBadge(d){
   /* 12/08 : le badge était défini mais jamais appelé dans le rendu — il est
      désormais affiché sous le statut, au format « Relance x/n ». */
   if(!REL.on || d.statut !== "envoye") return "";
   if(PAUSED.has(d.ref))
     return `<span class="relbadge pause" onclick="relTog(event,'${d.ref}')" title="Relances en pause pour ce devis — cliquer pour reprendre">⏸ en pause</span>`;
-  const seq = d.pro ? REL.pro : REL.part;
+  /* 31/08 : le badge dit LA VÉRITÉ — public coupé ou devis sous le plancher,
+     la séquence ne tourne pas, on l'annonce au lieu d'afficher une fausse
+     prochaine relance. */
+  const pub = relPublic(d.client);
+  if(!_RELON[pub])
+    return `<span class="relbadge pause" title="La relance automatique est coupée pour ce public (Réglages → Relance devis automatique → onglet ${RELPUB[pub]})">⏸ ${RELPUB[pub]} — relance coupée</span>`;
+  if(_RGARDE.plancher > 0 && (+d.montant || 0) < _RGARDE.plancher)
+    return `<span class="relbadge pause" title="Sous le plancher de rentabilité (${_RGARDE.plancher} € HT) — à relancer à la main si vous y tenez">⏸ sous le plancher · ${_RGARDE.plancher} €</span>`;
+  const seq = REL[pub] || REL.part;
   const age = Math.floor((new Date() - new Date(d.date)) / 864e5);
   const next = seq.find(st => st.j > age);
   if(!next) return `<span class="relbadge pause" onclick="relTog(event,'${d.ref}')">${RELSVG} séquence terminée</span>`;

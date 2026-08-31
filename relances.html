@@ -863,6 +863,7 @@ function relPrev(){
          <button class="pbt" onclick="relEssai()" title="Ouvre votre boîte mail avec ce message prérempli — vérifiez le rendu réel avant que ça parte aux clients">✉️ M'envoyer un essai</button>
          ${marque}
          ${surM ? `<button class="pbt gh" onclick="relTxtReset()">↺ Texte d'origine</button>` : ""}
+         ${Object.keys(RTXT).length ? `<button class="pbt gh" onclick="relTxtResetAll()" title="Efface TOUS vos textes sur mesure (les ${Object.keys(RTXT).length} étapes modifiées) et revient aux messages d'usine — annulable">↺↺ Tout remettre d'origine</button>` : ""}
        </div>`;
 }
 /* 31/08 (GO 3) : l'essai dans SA boîte — le message de l'étape affichée,
@@ -895,10 +896,35 @@ function relVar(v){
   a.focus(); a.selectionStart = a.selectionEnd = p0 + v.length;
   relCnt();
 }
+/* 31/08 (GO 2) — LES GARDE-FOUS DU TEXTE. Ce qu'on écrit ici part chez le
+   client : une variable mal tapée ({clientt}) partait telle quelle, et un SMS
+   de 3 segments se facturait sans que personne ne le dise. */
+const RELVARS = ["prénom", "prenom", "montant", "lien", "remise", "entreprise", "client", "date", "référence", "reference"];
+function relVarsKO(t){
+  const trouves = String(t || "").match(/\{[^{}]{1,30}\}/g) || [];
+  const norm = v => v.replace(/[{}]/g, "").trim().toLowerCase();
+  return trouves.filter(v => RELVARS.indexOf(norm(v)) < 0);
+}
 function relTxtSave(){
   const a = document.getElementById("pta"); if(!a) return;
   const t = a.value.trim();
   if(!t){ toast("Un message vide ne part pas — écrivez un texte ou revenez à l'original"); return; }
+  /* une variable inconnue partirait TELLE QUELLE chez le client */
+  const ko = relVarsKO(t);
+  if(ko.length && !a.dataset.forceko){
+    a.dataset.forceko = "1";
+    toast("⚠️ " + ko.join(" ") + " — cette variable n'existe pas, elle partirait telle quelle. Corrigez, ou re-cliquez « Enregistrer » pour la garder quand même.");
+    return;
+  }
+  /* au-delà d'un segment, le SMS est facturé plusieurs fois */
+  if(APCH === "sms" && !a.dataset.forceseg){
+    const c2 = smsCount(t);
+    if(c2 && c2.seg > 1){
+      a.dataset.forceseg = "1";
+      toast("⚠️ " + c2.n + " caractères = " + c2.seg + " SMS facturés (~" + (c2.seg * SMSPRIX).toFixed(2).replace(".", ",") + " € par client). Raccourcissez, ou re-cliquez « Enregistrer » pour accepter.");
+      return;
+    }
+  }
   RTXT[rtxtId(APC.g, APC.i, APCH)] = t; rtxtSave();
   PEDIT = false; relPrev(); relRender();
   toast("✓ Texte enregistré — il remplace l'original pour cette étape");
@@ -907,6 +933,19 @@ function relTxtReset(){
   delete RTXT[rtxtId(APC.g, APC.i, APCH)]; rtxtSave();
   PEDIT = false; relPrev(); relRender();
   toast("↺ Texte d'origine rétabli");
+}
+/* 31/08 : le grand retour en arrière — quand on a bidouillé partout et qu'on
+   veut repartir des textes d'usine. Annulable pendant 8 secondes. */
+function relTxtResetAll(){
+  const n = Object.keys(RTXT).length;
+  if(!n){ toast("Aucun texte sur mesure — tout est déjà d'origine"); return; }
+  const sauve = JSON.parse(JSON.stringify(RTXT));
+  Object.keys(RTXT).forEach(k => delete RTXT[k]);
+  rtxtSave(); PEDIT = false; relPrev(); relRender();
+  toast("↺ " + n + " texte" + (n > 1 ? "s" : "") + " remis d'origine", function(){
+    Object.assign(RTXT, sauve); rtxtSave(); relPrev(); relRender();
+    toast("Textes sur mesure rétablis");
+  });
 }
 /* 12/08 : plus de relRowSync — le jalon EST le champ, il n'y a plus de
    doublon à synchroniser. */

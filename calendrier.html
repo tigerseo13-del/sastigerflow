@@ -2428,16 +2428,45 @@ try{
     pro:  [{j:5}, {j:12}, {j:21}]};
   try{ const sv = JSON.parse(localStorage.getItem("tigerflow-relance-devis-v2")); if(sv && sv.part && sv.pro) _rel = sv; }catch(e){}
   if(_rel.on){
-    const _proRe = /syndic|sci\b|sarl|sas\b|hôtel|hotel|restaurant|clinique|entrepôt|société|agence|immobilier|école|ecole|mairie|pharmacie|boulangerie|tabac|crèche|creche/i;
-    const _estPro = nom => {
-      try{ const c = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]").find(z => z && z.nom === nom); if(c && c.type) return c.type !== "particulier"; }catch(e){}
-      return _proRe.test(String(nom || ""));
-    };
+  /* 31/08 (patron : « faut brancher ») — LES TROIS PAGES LISENT LES MÊMES
+     RÈGLES. Avant : la cadence était lue, mais l'interrupteur par public, le
+     plancher de rentabilité et LA BANDE SYNDIC étaient ignorés — un syndic
+     passait pour une entreprise et un public coupé continuait d'afficher ses
+     relances. Un réglage qui ment est pire que pas de réglage. */
+  let _RELON = {part: true, pro: true, syn: true};
+  try{ const _o = JSON.parse(localStorage.getItem("tigerflow-relance-on")); if(_o && typeof _o === "object") _RELON = {part: _o.part !== false, pro: _o.pro !== false, syn: _o.syn !== false}; }catch(e){}
+  let _RGARDE = {plancher: 100};
+  try{ const _g = JSON.parse(localStorage.getItem("tigerflow-relance-garde-v1")); if(_g && typeof _g === "object" && _g.plancher !== undefined) _RGARDE.plancher = +_g.plancher || 0; }catch(e){}
+  const _synRe = /syndic|copropri|conseil syndical|g[ée]rance|foncia|nexity|citya|immobili[eè]re|r[ée]sidence les/i;
+  const _proRe2 = /sci\b|sarl|sas\b|h[oô]tel|restaurant|clinique|entrep[oô]t|soci[ée]t[ée]|agence|[ée]cole|mairie|pharmacie|boulangerie|tabac|cr[eè]che|garage|institut|comptoir|sup[ée]rette|pizzeria|v[ée]t[ée]rinaire|boutique|magasin|cabinet/i;
+  /* le type de la FICHE fait foi ; sinon le nom parle */
+  function relPublic(nom){
+    try{
+      const c = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]").find(z => z && z.nom === nom);
+      if(c && c.type){
+        const t = String(c.type).toLowerCase();
+        if(t === "syndic") return "syn";
+        if(t === "particulier") return _synRe.test(String(nom || "")) ? "syn" : "part";
+        return _synRe.test(String(nom || "")) ? "syn" : "pro";
+      }
+    }catch(e){}
+    if(_synRe.test(String(nom || ""))) return "syn";
+    return _proRe2.test(String(nom || "")) ? "pro" : "part";
+  }
+  /* un devis entre-t-il dans la séquence ? public allumé ET au-dessus du plancher */
+  function relEligible(nom, montant){
+    if(!_RELON[relPublic(nom)]) return false;
+    if(_RGARDE.plancher > 0 && (+montant || 0) < _RGARDE.plancher) return false;
+    return true;
+  }
     const _t12 = d => new Date(d + "T12:00:00");
     let _chg2 = false;
     DEVAT.forEach(x => {
       if(!x || x.etat !== "attente" || !x.envoye) return;
-      const steps = (_estPro(x.client) ? _rel.pro : _rel.part) || [];
+      /* public coupé ou devis sous le plancher : aucun cycle auto, la relance
+         reste HUMAINE (la ligne garde sa date de rappel, pas de ✉️) */
+      if(!relEligible(x.client, x.montant)){ if(x.autoN){ x.autoN = 0; x.autoR = null; _chg2 = true; } return; }
+      const steps = _rel[relPublic(x.client)] || _rel.part || [];
       const jN = Math.round((_t12(iso(TODAYD)) - _t12(x.envoye)) / 86400000);
       const franchies = steps.filter(st => st && st.j <= jN).length;
       if(franchies > (x.autoN || 0)){
