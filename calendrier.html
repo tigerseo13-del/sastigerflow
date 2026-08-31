@@ -2122,6 +2122,7 @@ function calPickHTML(p){
     </div>
     <div class="cdlab">Quel technicien ? ${CDATE ? `<span style="letter-spacing:0;text-transform:none;font-weight:700">— dispos du ${jol(CDATE)}${CHEUR != null ? " à " + hstr(CHEUR) : ""}</span>` : ""}</div>
     <div class="cdrow">
+      <button type="button" class="cdc ${CTECH === -1 ? "on" : ""}" style="border-style:dashed" onclick="calSet('t',-1)">⏳ On décidera plus tard</button>
       ${techsOrdonnes().map(t => {
         if(!CDATE) return `<button type="button" class="cdc ${CTECH === t.id ? "on" : ""}" onclick="calSet('t',${t.id})"><i style="background:${t.c}"></i>${t.nom}</button>`;
         const d2 = calDispo(t, CDATE, CHEUR, p.dur);
@@ -2131,7 +2132,7 @@ function calPickHTML(p){
       }).join("")}
     </div>
     <div class="cdgo">
-      <button class="go" ${pretA ? "" : "disabled"} onclick="calGo()">${pretA ? `✓ Planifier — ${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)} · ${TECHS[CTECH].nom}` : "Choisis la date, l'heure et le technicien"}</button>
+      <button class="go" ${pretA ? "" : "disabled"} onclick="calGo()">${pretA ? (CTECH === -1 ? `✓ Promettre — ${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)} — technicien à décider` : `✓ Planifier — ${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)} · ${TECHS[CTECH].nom}`) : "Choisis la date, l'heure et le technicien"}</button>
       <button class="no" onclick="CDMANU=false;fileRender()">← Créneaux proposés</button>
       <button class="no" onclick="fileCaler('${p.pid}')">Annuler</button>
     </div>`;
@@ -2140,6 +2141,22 @@ function calGo(){
   const i = PENDING.findIndex(x => x.pid === CDPID);
   if(i < 0 || !CDATE || CHEUR == null || CTECH == null) return;
   const p = PENDING[i];
+  /* 30/08 (patron) : « on décidera le tec plus tard » — la date et l'heure sont
+     PROMISES au client, la carte reste au bac « À planifier », l'affectation se
+     fera au glisser, comme pour les créneaux proposés. */
+  if(CTECH === -1){
+    const av = {standby: p.standby, suivi: p.suivi, rappel: p.rappel};
+    const dd = CDATE, hh = CHEUR;
+    p.fixd = dd; p.fixh = hh; p.sugg = null;
+    p.standby = false; p.suivi = false; p.rappel = null;
+    if(p._dvtask){ try{ const tb = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]"); localStorage.setItem("tigerflow-inbox-taches", JSON.stringify(tb.filter(z => !z || z.iid !== p._dvtask))); }catch(e){} }
+    CDPID = null; CDMANU = false; CTECH = null;
+    const tr2 = document.getElementById("tray"); if(tr2) tr2.classList.remove("collapsed");
+    render(); renderTray(); fileRender();
+    toast("📅 RDV promis à " + p.client + " : " + dd.split("-").reverse().slice(0, 2).join("/") + " · " + hstr(hh) + "–" + hstr(hh + (p.dur || 2)) + " — au bac, technicien à affecter",
+      () => { p.fixd = null; p.fixh = null; p.standby = av.standby; p.suivi = av.suivi; p.rappel = av.rappel; render(); renderTray(); fileRender(); });
+    return;
+  }
   /* MÊME construction que le dépôt d'une carte glissée sur l'agenda (pdragEnd) */
   const nv = IV(CDATE, CHEUR, p.dur, CTECH, p.type, p.client, p.cp, p.ville);
   if(p.rue) nv.rue = p.rue;
