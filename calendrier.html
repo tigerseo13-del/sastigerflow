@@ -738,7 +738,6 @@ h1,.num{font-family:'Sora',sans-serif}
    plus. */
 .pcard .sbb{font-size:.62rem;font-weight:800;background:#F1F2F5;color:var(--muted);padding:2px 7px;border-radius:8px;white-space:nowrap}
 .pcard .fixb{font-size:.62rem;font-weight:800;background:#FFF8EF;color:#B45309;padding:2px 7px;border-radius:8px;white-space:nowrap;box-shadow:inset 0 0 0 1px #F0D9BF}
-.pcard .fixb.warn{background:#FDECEA;color:#C0362C;box-shadow:inset 0 0 0 1px #F2C4BF}
 .pcard .fixs{font-size:.62rem;font-weight:700;background:#F1F2F5;color:var(--muted);padding:2px 7px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
 .pcard .fixs i{width:7px;height:7px;border-radius:50%;display:inline-block}
 .pcard .svb{font-size:.62rem;font-weight:800;background:var(--blue-bg);color:var(--blue);padding:2px 7px;border-radius:8px;white-space:nowrap}
@@ -1698,32 +1697,23 @@ try{
 /* trayAge() retiree le 27/07 : le compteur « J+35 » sur les cartes du bac ne
    disait rien d'actionnable, il vieillissait tout seul et prenait la place
    d'informations utiles. Le rappel, lui, reste affiche. */
-/* 30/08 (le filet du « on décidera plus tard ») : un RDV promis pour
-   aujourd'hui ou demain SANS technicien affecté crie en rouge — sinon la
-   promesse devient un client qui attend devant sa porte. */
 function fixbHTML(p){
   if(!p.fixd) return "";
-  const d9 = new Date(TODAYD); d9.setDate(d9.getDate() + 1);
-  const urg9 = p.fixd <= iso(d9);
-  return `<span class="fixb${urg9 ? " warn" : ""}" title="Créneau promis au client — la carte se posera d'elle-même à ce créneau au glisser">📅 promis · ${p.fixd.split("-").reverse().slice(0,2).join("/")} ${hcourt(p.fixh)}–${hcourt(p.fixh+p.dur)}${urg9 ? ` · <b>⚠ personne d'affecté</b>` : ""}</span>`;
+  return `<span class="fixb" title="Créneau promis au client — la carte se posera d'elle-même à ce créneau au glisser">📅 promis · ${p.fixd.split("-").reverse().slice(0,2).join("/")} ${hcourt(p.fixh)}–${hcourt(p.fixh+p.dur)}</span>`;
 }
 function renderTray(){
   const isLate = p => p.rappel && p.rappel < iso(TODAYD);
   const nLate = PENDING.filter(isLate).length;
-  const dem9 = (() => { const x = new Date(TODAYD); x.setDate(x.getDate() + 1); return iso(x); })();
-  const promisUrg = p => p.fixd && p.fixd <= dem9;
-  const nProm = PENDING.filter(promisUrg).length;
-  const tc9 = document.getElementById('traycount');
-  if(tc9){ tc9.textContent = PENDING.length; tc9.style.background = nProm ? "#C0362C" : ""; tc9.style.color = nProm ? "#fff" : ""; }
+  document.getElementById('traycount').textContent = PENDING.length;
   const sub = document.getElementById('traysub');
   /* Replie, cette ligne est TOUT ce qu'on voit du bac : elle doit valoir la
-     peine d'etre lue. Un RDV promis sans technicien passe avant tout. */
+     peine d'etre lue. Le nombre de rappels depasses est la seule chose qui
+     demande une action tout de suite. */
   if(sub) sub.innerHTML = PENDING.length
-    ? (nProm ? '<b style="color:var(--red)">' + nProm + ' RDV promis sans technicien</b> · ' : '')
-      + (nLate ? '<b style="color:var(--red)">' + nLate + ' en retard</b> · ' : '')
+    ? (nLate ? '<b style="color:var(--red)">' + nLate + ' en retard</b> · ' : '')
       + 'clique pour ouvrir et glisser sur l’agenda'
     : '— rien a planifier';
-  const score = p => promisUrg(p) ? -1 : isLate(p) ? 0 : p.fixd ? 0.5 : p.standby ? 1 : p.urgent ? 2 : p.suivi ? 3 : 4;
+  const score = p => isLate(p) ? 0 : p.fixd ? 0.5 : p.standby ? 1 : p.urgent ? 2 : p.suivi ? 3 : 4;
   const list = [...PENDING].sort((a, b) => score(a) - score(b));
   document.getElementById('traycards').innerHTML = PENDING.length ? list.map(p=>{
     const T = typeDe(p);
