@@ -3457,6 +3457,22 @@ document.addEventListener("click", function(e){
       inp.value = it.getAttribute("data-v");
       pan.hidden = true;
       relPhrase(); relImm();
+      /* 30/08 : une fiche choisie SANS adresse se complète ici aussi — même
+         rangée que la création, préremplie de ce qu'on sait déjà. */
+      (function(){
+        var nom9 = it.getAttribute("data-v");
+        var f9 = null;
+        try{ (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).forEach(function(c9){ if(!f9 && c9 && c9.nom === nom9) f9 = c9; }); }catch(e9){}
+        var aw9 = document.getElementById("rel-adrw");
+        if(f9 && !((f9.adresse || "").trim()) && aw9){
+          NEWF = nom9;
+          var put9 = function(id9, v9){ var el9 = document.getElementById(id9); if(el9) el9.value = v9 || ""; };
+          put9("rel-siret", f9.siret); put9("rel-tel", f9.tel); put9("rel-mail", f9.mail);
+          put9("rel-adr", ""); put9("rel-cp", f9.cp); put9("rel-ville", f9.ville);
+          aw9.style.display = "flex";
+          if(typeof toast === "function") toast("Sa fiche n'a pas d'adresse — complète-la ici si tu l'as");
+        } else if(aw9 && NEWF !== nom9){ NEWF = ""; aw9.style.display = "none"; }
+      })();
     });
     document.addEventListener("pointerdown", function(e){
       if(pan.hidden) return;
