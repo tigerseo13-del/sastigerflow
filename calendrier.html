@@ -2123,7 +2123,14 @@ function calPickHTML(p){
     </div>`;
   }
   const customH = CHEUR != null && !heures.includes(CHEUR);
-  const pretA = CDATE && CHEUR != null && CTECH != null;
+  /* 01/09 — BUG TROUVE EN TESTANT LE NOUVEAU LIBELLE : le drapeau « pret »
+     etait fige AVANT la boucle des techniciens, or cette boucle remet CTECH a
+     null quand le technicien choisi devient en conflit (on change l'heure pour
+     une heure ou il est deja pris). Le bouton entrait quand meme dans la
+     branche « technicien » et lisait TECHS[null].nom -> plantage, et TOUT le
+     planificateur disparaissait de l'ecran, sans message. On evalue donc au
+     moment de peindre le bouton, pas avant. */
+  const pret = () => CDATE && CHEUR != null && CTECH != null;
   return `
     <div class="cmflex">
       <div style="flex:none">
@@ -2150,7 +2157,7 @@ function calPickHTML(p){
       }).join("")}
     </div>
     <div class="cdgo">
-      <button class="go" ${pretA ? "" : "disabled"} onclick="calGo()">${pretA ? (CTECH === -1 ? `✓ Promettre — ${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)} — technicien à décider` : `✓ Planifier — ${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)} · ${TECHS[CTECH].nom}`) : "Choisis la date, l'heure et le technicien"}</button>
+      <button class="go" ${pret() ? "" : "disabled"} onclick="calGo()">${pret() ? (CTECH === -1 ? `<b>✓ Bloquer le créneau</b><small>${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)}<br>technicien à affecter</small>` : `<b>✓ Planifier l'intervention</b><small>${jol(CDATE)} · ${hstr(CHEUR)} – ${hstr(CHEUR + p.dur)}<br>${TECHS[CTECH].nom}</small>`) : "Choisis la date, l'heure et le technicien"}</button>
       <button class="no" onclick="CDMANU=false;fileRender()">← Créneaux proposés</button>
       <button class="no" onclick="fileCaler('${p.pid}')">Annuler</button>
     </div>`;
@@ -6388,6 +6395,14 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .cdgo{display:flex;gap:9px;margin-top:12px}
 .cdgo .go{flex:1;border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.82rem;font-weight:800;font-family:inherit;border-radius:12px;padding:13px;box-shadow:0 10px 22px -10px rgba(240,78,10,.55);transition:.12s}
 .cdgo .go:hover{background:var(--orange-deep)}
+/* 01/09 (patron) : « enleve Promettre, reformule en plus propre ». Le libelle
+   tenait sur une seule ligne coupee par deux tirets longs et repassait a la
+   ligne n'importe ou. Deux etages : l'action seule en haut, la date/l'heure et
+   le technicien en petit dessous. */
+.cdgo .go b{display:block;font-size:.9rem;font-weight:800;letter-spacing:-.1px}
+.cdgo .go small{display:block;margin-top:5px;font-size:.74rem;font-weight:600;
+  opacity:.9;line-height:1.4}
+.cdgo .go:disabled b,.cdgo .go:disabled small{opacity:1}
 .cdgo .go:disabled{background:#E9EBF0;color:#A6ABBB;box-shadow:none;cursor:not-allowed}
 .cdgo .no{flex:none;background:#fff;border:1.5px solid #E2E5EB;color:var(--ink-2);font-size:.76rem;font-weight:800;font-family:inherit;border-radius:12px;padding:12px 16px;cursor:pointer}
 .cdsep{margin:13px 2px 3px;font:800 .68rem Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#6C7285);display:flex;align-items:center;gap:9px}

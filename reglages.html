@@ -47,6 +47,20 @@ html{background:#F7F8FA}
 .betarow .bb{font-size:.6rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#FEF3E2;color:#A16207;border:1px solid #F3D28B;border-radius:999px;padding:3px 9px;white-space:nowrap}
 .betaEtat{font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:#EEF0F3;color:var(--muted);border-radius:999px;padding:2px 8px}
 .betaEtat.on{background:var(--green-bg);color:var(--green-d)}
+/* 01/09 (patron) : « fonction beta le SMS on peut pas le desactiver ».
+   C'etait vrai DEPUIS CE BLOC : ce matin la ligne avait perdu son bascule pour
+   qu'un clic de curiosite ne coupe plus ses notifications par accident. Mais
+   couper est un geste legitime, et c'est ici qu'il vient le faire. Les deux
+   gestes coexistent maintenant, chacun sur sa zone : le texte emmene au
+   reglage, l'interrupteur allume ou coupe sur place.
+   (Regle posee dans les DEUX blocs <style> du fichier, comme le reste.) */
+.betasw{display:inline-flex;align-items:center;gap:9px;cursor:pointer;user-select:none;padding:3px;border-radius:999px}
+.betasw > i{width:34px;height:20px;border-radius:999px;background:#D6DAE2;flex:none;position:relative;transition:.16s}
+.betasw > i::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;
+  background:#fff;transition:.16s;box-shadow:0 1px 3px rgba(16,19,24,.28)}
+.betasw.on > i{background:#10B981}
+.betasw.on > i::after{transform:translateX(14px)}
+.betasw:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 /* 24/08 (patron : « SMS pour les clients, trouver solution ») — LE PANNEAU SMS.
    Il n'invente rien : les TEXTES existent déjà (page Relances, 18 textes
    rédigés les 18-19/08). Ce qui manquait, c'est QUAND on envoie et SOUS QUEL
@@ -897,8 +911,11 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
            croyait refermer un tiroir, on coupait ses notifications clients. -->
       <a class="betarow" href="#" id="beta-sms" onclick="event.preventDefault();ntfAller()">
         <span class="bn">Notifications clients (SMS &amp; e-mail)</span>
-        <span class="bd">La règle lit le type du client : SMS personnalisés aux particuliers, e-mail de rappel aux pros, récap aux syndics. Le réglage vit dans <b>Réglages › Notifications</b> — cliquez pour l'ouvrir</span>
-        <span class="betaEtat" id="beta-sms-etat">inactif</span>
+        <span class="bd">La règle lit le type du client : SMS personnalisés aux particuliers, e-mail de rappel aux pros, récap aux syndics. Le réglage vit dans <b>Réglages › Notifications</b> — cliquez le texte pour l'ouvrir, l'interrupteur pour couper</span>
+        <span class="betasw" id="beta-sms-sw" role="switch" aria-checked="false" tabindex="0"
+              title="Allumer ou couper les notifications clients — sans quitter cette page"
+              onclick="event.preventDefault();event.stopPropagation();ntfSet(!smsOn())"
+              onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();ntfSet(!smsOn())}"><i></i><span class="betaEtat" id="beta-sms-etat">inactif</span></span>
       </a>
             <div class="betasec"><b>Version 3</b><span>6 fonctions</span><small>après la V2</small></div>
       <a class="betarow" href="tournee.html">
@@ -2380,6 +2397,20 @@ label[for]{cursor:pointer}
 .docx:hover{background:var(--red-bg);color:var(--red)}
 .betaEtat{font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:#EEF0F3;color:var(--muted);border-radius:999px;padding:2px 8px}
 .betaEtat.on{background:var(--green-bg);color:var(--green-d)}
+/* 01/09 (patron) : « fonction beta le SMS on peut pas le desactiver ».
+   C'etait vrai DEPUIS CE BLOC : ce matin la ligne avait perdu son bascule pour
+   qu'un clic de curiosite ne coupe plus ses notifications par accident. Mais
+   couper est un geste legitime, et c'est ici qu'il vient le faire. Les deux
+   gestes coexistent maintenant, chacun sur sa zone : le texte emmene au
+   reglage, l'interrupteur allume ou coupe sur place.
+   (Regle posee dans les DEUX blocs <style> du fichier, comme le reste.) */
+.betasw{display:inline-flex;align-items:center;gap:9px;cursor:pointer;user-select:none;padding:3px;border-radius:999px}
+.betasw > i{width:34px;height:20px;border-radius:999px;background:#D6DAE2;flex:none;position:relative;transition:.16s}
+.betasw > i::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;
+  background:#fff;transition:.16s;box-shadow:0 1px 3px rgba(16,19,24,.28)}
+.betasw.on > i{background:#10B981}
+.betasw.on > i::after{transform:translateX(14px)}
+.betasw:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 /* 24/08 (patron : « SMS pour les clients, trouver solution ») — LE PANNEAU SMS.
    Il n'invente rien : les TEXTES existent déjà (page Relances, 18 textes
    rédigés les 18-19/08). Ce qui manquait, c'est QUAND on envoie et SOUS QUEL
@@ -2599,6 +2630,9 @@ function smsEtat(){
   const g = id => document.getElementById(id);
   const cfg = smsLire(), e = g("beta-sms-etat");
   if(e){ e.textContent = cfg ? "actif" : "inactif"; e.classList.toggle("on", !!cfg); }
+  /* l'interrupteur de la ligne bêta suit le même état que celui des Réglages */
+  const bsw = g("beta-sms-sw");
+  if(bsw){ bsw.classList.toggle("on", !!cfg); bsw.setAttribute("aria-checked", cfg ? "true" : "false"); }
   const sw = g("ntf-on"); if(sw) sw.checked = !!cfg;
   const off = g("ntfoff"); if(off) off.classList.toggle("on", !cfg);
   const et = g("ntf-etat"); if(et) et.textContent = cfg ? "Actives" : "Coupées";
