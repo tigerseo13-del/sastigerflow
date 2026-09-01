@@ -71,6 +71,25 @@ html{background:#F7F8FA}
 /* 01/09 : l'explication de l'expediteur ne sort QUE si la saisie coince */
 .sherr{display:none;margin-top:6px;border-left:3px solid #D63B33;padding-left:10px;font:600 .72rem Inter,sans-serif;color:#C0362C;line-height:1.5}
 .sherr.on{display:block}
+/* 01/09 : ce qu'on demande au client — trois modes, un seul actif */
+.rpz{display:flex;gap:7px;flex-wrap:wrap}
+.rpz button{border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:8px 13px;font:700 .77rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit;transition:.13s}
+.rpz button:hover{border-color:#D5D8DF}
+.rpz button.on{background:var(--orange-soft,#FFF1EA);border-color:var(--orange);color:var(--orange-deep,#C2410C)}
+/* le garde-fou */
+.gfw{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font:600 .8rem Inter,sans-serif;color:var(--ink-2)}
+.gfw input{width:82px;max-width:82px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font:700 .8rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;text-align:center}
+.gfw input:focus{border-color:var(--orange)}
+/* l'estimation : ce que ça aurait coûté le mois dernier, AVANT d'allumer */
+.ntfcout{display:none;margin-top:10px;border:1px solid #EAECF1;background:#FAFBFC;border-radius:11px;padding:10px 13px;font:600 .77rem Inter,sans-serif;color:var(--ink-2);line-height:1.55}
+.ntfcout.on{display:block}
+.ntfcout b{color:var(--ink)}
+/* la règle du remplissage à l'envoi */
+.ntfrule{margin-top:18px;border-left:3px solid var(--line);padding-left:11px;font:600 .74rem Inter,sans-serif;color:var(--muted);line-height:1.55}
+.ntfrule b{color:var(--ink-2)}
+/* insérer une variable sous un texte */
+.nrvar{border:0;background:none;padding:0;font:700 .68rem Inter,sans-serif;color:var(--orange-deep,#C2410C);cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:2px}
+.nrvar:hover{opacity:.75}
 /* la notice se replie : elle se lit une fois, elle ne doit pas s'imposer tous les jours */
 .ntfaide{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
 .ntfaide summary{display:flex;align-items:center;gap:7px;list-style:none;cursor:pointer;font:700 .77rem Inter,sans-serif;color:var(--muted);width:max-content}
@@ -887,35 +906,58 @@ R.notifs = () => `
       <span class="st"><b>Envoyer les notifications aux clients</b></span>
     </label>
     <div class="ntfoff" id="ntfoff">Coupé — rien ne part. Vos textes sont gardés, préparez-les tranquillement.</div>
+    <div class="ntfcout" id="ntfcout"></div>
     <div class="smspan pan" id="smspan">
         <label class="sl" for="sms-exp">Nom qui s'affiche sur le téléphone du client</label>
         <input type="text" id="sms-exp" maxlength="11" placeholder="AntiNuisibl (11 max)" oninput="smsExpSave()">
         <div class="shint">11 caractères, sans espace ni accent.</div>
         <div class="sherr" id="sms-err">Les opérateurs français bloquent les espaces, les accents et les caractères spéciaux. Évitez aussi les mots trop génériques (« SMS », « Info »), filtrés eux aussi.</div>
 
+        <!-- 01/09 (patron : « tu penses les SMS c'est comme ça qu'on doit faire ? ») :
+             le message partait DANS LE VIDE. On paie 0,08 € et on ne sait toujours
+             pas si la porte sera ouverte. Le vrai coût du métier n'est pas le SMS,
+             c'est le déplacement pour rien. -->
+        <label class="sl">Ce qu'on demande au client</label>
+        <div class="rpz" id="rpz">
+          <button type="button" data-r="rien" onclick="rpSet('rien')">Rien — on informe</button>
+          <button type="button" data-r="confirmer" onclick="rpSet('confirmer')">Confirmer</button>
+          <button type="button" data-r="reprog" onclick="rpSet('reprog')">Reprogrammer</button>
+        </div>
+        <div class="shint" id="rphint"></div>
+
+        <label class="sl">Garde-fou</label>
+        <div class="gfw">
+          <span>Ne jamais dépasser</span>
+          <input type="number" id="ntf-max" min="1" max="999" step="1" oninput="gfSave()" onblur="gfNorm()">
+          <span>messages par jour sans mon accord.</span>
+        </div>
+
+
         <!-- 27/08 (patron, GO v315) : la règle lit le TYPE du client — on règle
              UNE fois, les interventions suivent. La relance de facture impayée
              vit sur la page Relances (séquences par public), pas ici. -->
+        <div class="ntfrule">Le texte se remplit <b>à l'envoi</b>, avec le planning du moment.</div>
         <label class="sl">Particuliers</label>
         <label class="smsm"><input type="checkbox" id="nr-part-veille" onchange="nrSave()"><i></i><span class="st"><b>Rappel la veille, à 18 h</b></span><span class="sq qs">SMS</span></label>
-        <div class="nrtx"><textarea id="nrt-part-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span id="nrc-part-veille"></span><span class="nrori" onclick="nrReset('part','veille')">texte d'origine</span></div></div>
+        <div class="nrtx"><textarea id="nrt-part-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span id="nrc-part-veille"></span><button type="button" class="nrvar" hidden onclick="nrVar('nrt-part-veille')">+ {lien_rdv}</button><span class="nrori" onclick="nrReset('part','veille')">texte d'origine</span></div></div>
         <label class="smsm"><input type="checkbox" id="nr-part-jourj" onchange="nrSave()"><i></i><span class="st"><b>« Le technicien arrive » — jour J</b><small>Coupé par défaut : à allumer quand les techniciens auront le réflexe de l'appli.</small></span><span class="sq qs">SMS</span></label>
-        <div class="nrtx"><textarea id="nrt-part-jourj" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span id="nrc-part-jourj"></span><span class="nrori" onclick="nrReset('part','jourj')">texte d'origine</span></div></div>
+        <div class="nrtx"><textarea id="nrt-part-jourj" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span id="nrc-part-jourj"></span><button type="button" class="nrvar" hidden onclick="nrVar('nrt-part-jourj')">+ {lien_rdv}</button><span class="nrori" onclick="nrReset('part','jourj')">texte d'origine</span></div></div>
 
         <label class="sl">Professionnels</label>
         <label class="smsm"><input type="checkbox" id="nr-pro-veille" onchange="nrSave()"><i></i><span class="st"><b>E-mail de rappel, la veille à 18 h</b></span><span class="sq">E-mail</span></label>
-        <div class="nrtx"><input type="text" id="nro-pro-veille" placeholder="Objet" oninput="nrSave()"><textarea id="nrt-pro-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span class="nrori" onclick="nrReset('pro','veille')">texte d'origine</span></div></div>
+        <div class="nrtx"><input type="text" id="nro-pro-veille" placeholder="Objet" oninput="nrSave()"><textarea id="nrt-pro-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><button type="button" class="nrvar" hidden onclick="nrVar('nrt-pro-veille')">+ {lien_rdv}</button><span class="nrori" onclick="nrReset('pro','veille')">texte d'origine</span></div></div>
 
         <label class="sl">Syndics</label>
         <label class="smsm"><input type="checkbox" id="nr-syn-veille" onchange="nrSave()"><i></i><span class="st"><b>E-mail récap au gestionnaire, la veille à 18 h</b></span><span class="sq">E-mail</span></label>
-        <div class="nrtx"><input type="text" id="nro-syn-veille" placeholder="Objet" oninput="nrSave()"><textarea id="nrt-syn-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><span class="nrori" onclick="nrReset('syn','veille')">texte d'origine</span></div></div>
+        <div class="nrtx"><input type="text" id="nro-syn-veille" placeholder="Objet" oninput="nrSave()"><textarea id="nrt-syn-veille" rows="2" oninput="nrSave()"></textarea><div class="nrmeta"><button type="button" class="nrvar" hidden onclick="nrVar('nrt-syn-veille')">+ {lien_rdv}</button><span class="nrori" onclick="nrReset('syn','veille')">texte d'origine</span></div></div>
         <!-- 01/09 (patron : « YA TROP DE TEXTE NAN ») : ces trois pavés se lisent
              UNE fois. Ils restent, repliés — entre le patron et ses interrupteurs,
              une notice permanente n'est plus une aide, c'est du bruit. -->
         <details class="ntfaide">
           <summary>Comment ça marche<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
           <div class="ntfaidec">
-            <p><b>Les mots entre accolades</b> se remplissent tout seuls depuis chaque intervention : {client} {date} {heure} {technicien} {tel_technicien} {adresse} {site}.</p>
+            <p><b>Les mots entre accolades</b> se remplissent tout seuls depuis chaque intervention : {client} {date} {heure} {technicien} {tel_technicien} {adresse} {site}. Avec « Reprogrammer », {lien_rdv} devient le lien court vers son créneau.</p>
+            <p><b>Le texte se remplit à l'envoi</b>, jamais à la programmation : le message porte toujours le planning de la minute où il part.</p>
             <p><b>Les syndics ne reçoivent jamais de SMS</b> — un seul e-mail récapitulatif. Jamais de SMS non plus sur un fixe (01-09), et les messages sont regroupés par numéro et par jour.</p>
             <p><b>Annuler un message</b> : il apparaît sur l'intervention dans l'agenda, avec un ✕. Couper un client entier : sa fiche → ⋯ → « Couper les notifications ».</p>
             <p><b>Ce qui manque pour envoyer pour de vrai</b> : un relais côté serveur, que SMS et e-mails partagent. La clé d'API ne peut pas vivre dans cette page — elle serait lisible par n'importe qui ouvrant le code source. Ce réglage est la spécification que l'équipe branchera sur Twilio (ou OVH / Brevo).</p>
@@ -2346,6 +2388,9 @@ function smsEtat(){
   if(pan) pan.hidden = pan.classList.contains("pan") ? false : !cfg;   /* dans Réglages : toujours lisible */
   if(g("sms-exp")) g("sms-exp").value = (cfg && cfg.exp) || "";
   if(g("nr-part-veille")) nrEtat();
+  if(g("ntf-max")) g("ntf-max").value = gfLire();
+  if(g("rpz")) rpEtat();
+  ntfCout();
 }
 function smsSave(){
   try{ const e0 = document.getElementById("sms-exp"); if(e0) localStorage.setItem("tigerflow-beta-sms-exp", e0.value || ""); }catch(e){}
@@ -2400,6 +2445,109 @@ document.addEventListener("DOMContentLoaded", smsEtat);
    validé) : la veille partout, le jour J coupé tant que les techniciens n'ont
    pas le réflexe appli. calendrier.html lit la même clé pour dériver la file. */
 const NRKEY = "tigerflow-notif-regles";
+/* ══════════════════════════════════════════════════════════════════════
+   01/09 — TROIS MANQUES RÉELS, corrigés ensemble.
+   ① Le message partait dans le vide : « un empêchement ? appelez-nous » aux
+      heures de bureau. On choisit maintenant CE QU'ON DEMANDE au client.
+   ② Aucun plafond : 400 interventions importées = 400 SMS partis.
+   ③ Rien ne disait QUAND le texte se remplit — un changement de technicien
+      le matin même envoyait le mauvais numéro. C'est écrit, à l'envoi.
+   ══════════════════════════════════════════════════════════════════════ */
+const RPKEY = "tigerflow-notif-reponse", GFKEY = "tigerflow-notif-garde";
+const RPTXT = {
+  rien: "Vous ne saurez pas si la porte sera ouverte.",
+  confirmer: "Il répond <b>OUI</b> par SMS, ou clique <b>Confirmer</b> dans l'e-mail. Recevoir des SMS coûte plus cher et demande un traitement des réponses.",
+  reprog: "Le client déplace son créneau lui-même. Glissez <b>{lien_rdv}</b> dans vos textes."
+};
+function rpLire(){ try{ return localStorage.getItem(RPKEY) || "rien"; }catch(e){ return "rien"; } }
+function rpSet(v){
+  try{ localStorage.setItem(RPKEY, v); }catch(e){}
+  rpEtat();
+  if(typeof toast === "function" && v !== "rien") toast(v === "reprog" ? "Pensez à glisser {lien_rdv} dans vos textes" : "Le client pourra répondre OUI");
+}
+function rpEtat(){
+  var v = rpLire();
+  document.querySelectorAll("#rpz button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-r") === v); });
+  var h = document.getElementById("rphint");
+  if(h) h.innerHTML = RPTXT[v] || "";
+  /* le raccourci « + {lien_rdv} » n'a de sens qu'en mode Reprogrammer */
+  document.querySelectorAll(".nrvar").forEach(function(b){ b.hidden = v !== "reprog"; });
+}
+function gfLire(){
+  try{ var o = JSON.parse(localStorage.getItem(GFKEY)); if(o && +o.max > 0) return +o.max; }catch(e){}
+  return 40;
+}
+function gfSave(){
+  var e = document.getElementById("ntf-max"); if(!e) return;
+  var n = parseInt(e.value, 10);
+  if(!isFinite(n)) return;              /* champ vidé en cours de frappe : on ne touche à rien */
+  n = Math.max(1, Math.min(999, n));    /* « 0 » veut dire 1, pas « remets 40 » */
+  try{ localStorage.setItem(GFKEY, JSON.stringify({max: n})); }catch(e2){}
+}
+/* en sortant du champ, on réaffiche ce qui est VRAIMENT enregistré */
+function gfNorm(){
+  var e = document.getElementById("ntf-max"); if(e) e.value = gfLire();
+}
+/* insère {lien_rdv} à la fin du texte visé, sans rien écraser */
+function nrVar(id){
+  var t = document.getElementById(id); if(!t) return;
+  if(t.value.indexOf("{lien_rdv}") > -1){ if(typeof toast === "function") toast("Il y est déjà"); return; }
+  t.value = (t.value.replace(/\s+$/, "") + " {lien_rdv}").trim();
+  nrSave();
+  t.focus();
+}
+/* ══ CE QUE ÇA AURAIT COÛTÉ LE MOIS DERNIER ══
+   Calculé sur SES interventions et SES clients — on n'allume pas un envoi
+   payant sans savoir. Estimation HAUTE : le prix réel dépendra du relais. */
+var PXSMS = 0.08;
+function pubDe(nom){
+  try{
+    var l = (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || [])
+      .concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []);
+    for(var i = 0; i < l.length; i++) if(l[i] && l[i].nom === nom){
+      if(l[i].type === "syndic") return "syn";
+      if(l[i].type === "particulier") return "part";
+      return "pro";
+    }
+  }catch(e){}
+  return "part";
+}
+function ntfCout(){
+  var box = document.getElementById("ntfcout"); if(!box) return;
+  var ivs = [];
+  try{ ivs = (JSON.parse(localStorage.getItem("tigerflow-inbox-interventions")) || [])
+    .concat(JSON.parse(localStorage.getItem("tigerflow-added-interventions")) || []); }catch(e){}
+  ivs = ivs.filter(function(x){ return x && x.date; });
+  if(!ivs.length){ box.classList.remove("on"); return; }
+  var t = new Date(), y = t.getFullYear(), m = t.getMonth() - 1;
+  var d0 = new Date(y, m, 1), d1 = new Date(y, m + 1, 0);
+  d0.setHours(0, 0, 0, 0); d1.setHours(23, 59, 59, 0);
+  var lot = ivs.filter(function(x){ var d = new Date(x.date + "T12:00:00"); return d >= d0 && d <= d1; });
+  if(!lot.length){ box.classList.remove("on"); return; }
+  var r = nrLire();
+  var actif = function(p, mo){ var o = (r[p] && r[p][mo]) || (NRDEF[p] && NRDEF[p][mo]) || {}; return !!o.on; };
+  var nSms = 0, nMail = 0, jSyn = {};
+  lot.forEach(function(x){
+    var p = pubDe(x.client);
+    if(p === "part"){
+      if(actif("part", "veille")) nSms++;
+      if(actif("part", "jourj")) nSms++;
+    } else if(p === "pro"){
+      if(actif("pro", "veille")) nMail++;
+    } else {
+      /* un syndic reçoit UN récap par jour, pas un par intervention */
+      if(actif("syn", "veille")) jSyn[(x.client || "") + "|" + x.date] = 1;
+    }
+  });
+  nMail += Object.keys(jSyn).length;
+  var eur = (nSms * PXSMS).toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  var mois = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"][d0.getMonth()];
+  box.innerHTML = "Sur vos <b>" + lot.length + " intervention" + (lot.length > 1 ? "s" : "") + "</b> de " + mois + " " + d0.getFullYear()
+    + ", ces réglages auraient envoyé <b>" + nSms + " SMS</b> (~ <b>" + eur + " €</b>) et <b>" + nMail + " e-mail" + (nMail > 1 ? "s" : "") + "</b>"
+    + ". <span style=\"color:var(--muted);font-weight:600\">Estimation haute — le prix du SMS dépendra du relais qu'on branchera.</span>";
+  box.classList.add("on");
+}
+
 const NRDEF = {
   part: { veille: {on:1, t:"Bonjour {client}, Agence Antinuisible passe demain à {heure}. Votre technicien : {technicien} — {tel_technicien}. Un empêchement ? 01 89 72 43 96."},
           jourj:  {on:0, t:"{technicien} est en route pour {adresse}. Son numéro direct : {tel_technicien}."} },
