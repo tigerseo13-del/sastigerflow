@@ -180,6 +180,17 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
   background:linear-gradient(rgba(255,255,255,0),#fff 84%);
   opacity:0;transition:opacity .15s}
 .techwrap.fade::after{opacity:1}
+/* MESURE FAITE SUR SON PROPRE CHROME : offsetWidth - clientWidth = 0px. Son
+   systeme est en barres flottantes (le defaut macOS), donc la barre native
+   n'est peinte que pendant le defilement et ::-webkit-scrollbar est ignore.
+   On dessine donc la barre nous-memes : c'est le seul rendu identique partout. */
+.tsb{position:absolute;top:3px;bottom:3px;right:0;width:8px;border-radius:8px;
+  background:#F0F1F4;opacity:0;transition:opacity .15s;pointer-events:none}
+.techwrap.scrOn .tsb{opacity:1;pointer-events:auto}
+.tsbt{position:absolute;left:0;width:8px;border-radius:8px;background:#C3C8D2;
+  cursor:grab;transition:background .13s}
+.tsbt:hover{background:#A5ABB8}
+.tsbt.drag{background:#8E95A4;cursor:grabbing}
 .techs.scr::-webkit-scrollbar{width:10px}
 .techs.scr::-webkit-scrollbar-track{background:#F2F3F6;border-radius:10px}
 .techs.scr::-webkit-scrollbar-thumb{background:#C3C8D2;border-radius:10px;border:2px solid #F2F3F6}
@@ -664,7 +675,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <!-- ===== 6. TECHNICIEN ===== -->
     <div class="card">
       <div class="card-h"><span class="num">6</span>Technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— plusieurs choix possibles · facultatif : sans choix, elle part dans « À affecter »</span></div>
-      <div class="techwrap" id="techwrap"><div class="techs" id="techs"></div></div>
+      <div class="techwrap" id="techwrap"><div class="techs" id="techs"></div><i class="tsb"><i class="tsbt"></i></i></div>
         <button class="morelink" onclick="reveal('g-addtech', this)">+ Ajouter un technicien</button>
       <div id="g-addtech" style="display:none;margin-top:11px">
         <div style="display:flex;gap:9px">
@@ -1321,12 +1332,48 @@ function techScroll(){
   b.classList.add("scr");
   if(b.scrollHeight <= b.clientHeight + 2) b.classList.remove("scr");
   if(!w) return;
+  const on = b.classList.contains("scr");
+  w.classList.toggle("scrOn", on);
+  const rail = w.querySelector(".tsb"), pouce = w.querySelector(".tsbt");
   const maj = function(){
-    const reste = b.classList.contains("scr")
-              && (b.scrollHeight - b.scrollTop - b.clientHeight) > 6;
-    w.classList.toggle("fade", reste);
+    w.classList.toggle("fade", on && (b.scrollHeight - b.scrollTop - b.clientHeight) > 6);
+    if(!on || !rail || !pouce) return;
+    const H = rail.clientHeight;
+    const h = Math.max(38, Math.round(H * b.clientHeight / b.scrollHeight));
+    const course = b.scrollHeight - b.clientHeight;
+    pouce.style.height = h + "px";
+    pouce.style.top = (course > 0 ? Math.round((H - h) * b.scrollTop / course) : 0) + "px";
   };
-  if(!b.dataset.fadeOn){ b.addEventListener("scroll", maj); b.dataset.fadeOn = "1"; }
+  if(!b.dataset.fadeOn && rail && pouce){
+    b.addEventListener("scroll", maj);
+    window.addEventListener("resize", maj);
+    /* glisser le pouce */
+    let y0 = 0, s0 = 0;
+    const bouge = function(e){
+      const course = b.scrollHeight - b.clientHeight;
+      const libre = Math.max(1, rail.clientHeight - pouce.offsetHeight);
+      b.scrollTop = s0 + (e.clientY - y0) * course / libre;
+    };
+    const fin = function(){
+      pouce.classList.remove("drag");
+      document.removeEventListener("mousemove", bouge);
+      document.removeEventListener("mouseup", fin);
+    };
+    pouce.addEventListener("mousedown", function(e){
+      e.preventDefault(); y0 = e.clientY; s0 = b.scrollTop;
+      pouce.classList.add("drag");
+      document.addEventListener("mousemove", bouge);
+      document.addEventListener("mouseup", fin);
+    });
+    /* clic dans le rail : on saute a cet endroit */
+    rail.addEventListener("mousedown", function(e){
+      if(e.target === pouce) return;
+      const r = rail.getBoundingClientRect(), h = pouce.offsetHeight;
+      const p = (e.clientY - r.top - h / 2) / Math.max(1, r.height - h);
+      b.scrollTop = Math.max(0, Math.min(1, p)) * (b.scrollHeight - b.clientHeight);
+    });
+    b.dataset.fadeOn = "1";
+  }
   maj();
 }
 /* Un technicien coche peut se trouver hors du cadre apres reprise d'un
