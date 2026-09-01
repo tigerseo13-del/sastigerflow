@@ -77,6 +77,7 @@ html{background:#F7F8FA}
 .ntt em{display:block;font:700 .67rem Inter,sans-serif;color:var(--muted);font-style:normal}
 .ntt b{display:block;font:800 1.02rem 'Sora',sans-serif;color:var(--ink);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ntt b small{font:700 .72rem Inter,sans-serif;color:var(--muted)}
+.ntt b small.cmp{font-weight:600;color:#A6ABB8}
 .ntt input[type=text]{width:100%;max-width:none;margin-top:3px;border:1.5px solid var(--line);border-radius:9px;padding:6px 9px;font:700 .84rem Inter,sans-serif}
 .ntt input.err{border-color:#D63B33;background:#FFF6F6}
 .gfl{display:flex;align-items:center;gap:7px;margin-top:3px}
@@ -151,6 +152,19 @@ html{background:#F7F8FA}
 .modmenu button.sup:hover{background:#FDECEA}
 .modmenu button.arme{background:#FDECEA;color:#C0362C;font-weight:800}
 /* le repli des réglages d'envoi */
+/* les clients coupés : une ligne, et rien du tout s'il n'y en a pas */
+.exc{border:1px solid #F0E2D6;background:#FFFBF8;border-radius:12px;margin:0 0 12px}
+.exc summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:10px 13px;font:600 .77rem Inter,sans-serif;color:var(--ink-2);flex-wrap:wrap}
+.exc summary::-webkit-details-marker{display:none}
+.exc summary svg{width:14px;height:14px;flex:none;stroke:var(--orange-deep,#C2410C);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.exc summary b{color:var(--ink);font-weight:800}
+.exc summary span{color:var(--muted);font-weight:600}
+.exc summary::after{content:"›";margin-left:auto;color:var(--muted);font-weight:800;transition:transform .16s}
+.exc[open] summary::after{transform:rotate(90deg)}
+.excl{padding:2px 13px 11px;display:grid;gap:5px}
+.excr{display:flex;align-items:center;gap:12px;padding:7px 0;border-top:1px dashed #F0E2D6;font:700 .79rem Inter,sans-serif;color:var(--ink-2)}
+.excr button{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 11px;font:700 .72rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit}
+.excr button:hover{border-color:var(--orange);color:var(--orange-deep)}
 .envw{display:grid;gap:16px;max-width:420px}
 .shint2{font:600 .7rem Inter,sans-serif;color:var(--muted);margin-top:5px}
 .envw input[type=text]{width:100%;max-width:260px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font:700 .82rem Inter,sans-serif;color:var(--ink);background:#fff}
@@ -1029,8 +1043,9 @@ R.notifs = () => `
         <input type="checkbox" id="ntf-on" onchange="ntfSet(this.checked)"><i></i>
         <span><em>État</em><b id="ntf-etat">Coupées</b></span>
       </label>
-      <div class="ntt"><em>Le mois dernier</em><b id="ntf-cout">—</b></div>
+      <div class="ntt"><em>Ce mois-ci</em><b id="ntf-cout">—</b></div>
     </div>
+    <div id="ntfexc"></div>
 
     <div class="pubtabs" id="ntabs">
       <button type="button" class="pubt on" data-p="part" onclick="ntPub('part')">Particuliers <span class="n" id="nt-n-part"></span></button>
@@ -2499,6 +2514,7 @@ function smsEtat(){
   if(g("sms-exp")) g("sms-exp").value = (cfg && cfg.exp) || "";
   if(g("ntlane") && typeof modPaint === "function") modPaint();
   if(g("ntf-max")) g("ntf-max").value = gfLire();
+  ntfExcept();
   ntfCout();
   if(g("ntabs")) ntPub(window.NTPUB || "part");
 }
@@ -2601,41 +2617,80 @@ function pubDe(nom){
   }catch(e){}
   return "part";
 }
-function ntfCout(){
-  var box = document.getElementById("ntf-cout"); if(!box) return;
+/* ══ 01/09 (patron : « si sur une fiche client tu veux enlever tu fais
+   comment ? ») — la coupure par client vivait sur SA fiche, invisible d'ici.
+   Trois interrupteurs (général, par message, par client) dont un qu'on ne
+   voyait pas : c'est ça qui rendait le truc compliqué. ══ */
+function ntfCoupes(){
+  try{ var v = JSON.parse(localStorage.getItem("tigerflow-notif-off")); return (v && typeof v === "object") ? v : {}; }
+  catch(e){ return {}; }
+}
+function ntfReprend(nom){
+  var c = ntfCoupes(); delete c[nom];
+  try{ localStorage.setItem("tigerflow-notif-off", JSON.stringify(c)); }catch(e){}
+  ntfExcept(); ntfCout();
+  if(typeof toast === "function") toast("🔔 " + nom + " — les notifications reprennent selon la règle");
+}
+function ntfExcept(){
+  var box = document.getElementById("ntfexc"); if(!box) return;
+  var c = ntfCoupes(), noms = Object.keys(c).filter(function(n){ return c[n]; }).sort(function(a, b){ return a.localeCompare(b, "fr"); });
+  if(!noms.length){ box.innerHTML = ""; return; }   /* rien à dire ⇒ rien à l'écran */
+  var etait = (function(){ var d = box.querySelector("details.exc"); return d ? d.open : false; })();
+  var esc = function(v){ return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); };
+  box.innerHTML = '<details class="exc"><summary>'
+    + '<svg viewBox="0 0 24 24"><path d="M13.7 21a2 2 0 01-3.4 0"/><path d="M18.6 13c-.4-1.1-.6-2.4-.6-4a6 6 0 00-9.3-5M6.3 6.3C6.1 6.8 6 7.4 6 8c0 7-3 9-3 9h14"/><path d="M2 2l20 20"/></svg>'
+    + '<b>' + noms.length + " client" + (noms.length > 1 ? "s sont coupés" : " est coupé") + '</b>'
+    + '<span>rien ne ' + (noms.length > 1 ? "leur" : "lui") + ' part, quels que soient les messages ci-dessous</span></summary>'
+    + '<div class="excl">' + noms.map(function(n){
+        return '<div class="excr"><span>' + esc(n) + '</span><button type="button" onclick="ntfReprend(' + JSON.stringify(n).replace(/"/g, "&quot;") + ')">Réactiver</button></div>';
+      }).join("") + '</div></details>';
+  var d2 = box.querySelector("details.exc"); if(d2) d2.open = etait;
+}
+function ntfCompte(y, mo){
+  /* les messages que TES RÉGLAGES enverraient sur ce mois-là.
+     Les clients coupés depuis leur fiche sont exclus — sinon le chiffre ment. */
   var ivs = [];
   try{ ivs = (JSON.parse(localStorage.getItem("tigerflow-inbox-interventions")) || [])
     .concat(JSON.parse(localStorage.getItem("tigerflow-added-interventions")) || []); }catch(e){}
-  ivs = ivs.filter(function(x){ return x && x.date; });
-  if(!ivs.length){ box.innerHTML = "—"; return; }
-  var t = new Date(), y = t.getFullYear(), m = t.getMonth() - 1;
-  var d0 = new Date(y, m, 1), d1 = new Date(y, m + 1, 0);
+  var d0 = new Date(y, mo, 1), d1 = new Date(y, mo + 1, 0);
   d0.setHours(0, 0, 0, 0); d1.setHours(23, 59, 59, 0);
-  var lot = ivs.filter(function(x){ var d = new Date(x.date + "T12:00:00"); return d >= d0 && d <= d1; });
-  if(!lot.length){ box.innerHTML = "—"; return; }
-  var L = modLire().filter(function(m){ return m.on; });
-  var cnt = function(pu, ca){ return L.filter(function(m){ return m.pub === pu && m.canal === ca; }).length; };
+  var mute = ntfCoupes();
+  var lot = ivs.filter(function(x){
+    if(!x || !x.date || mute[x.client]) return false;
+    var d = new Date(x.date + "T12:00:00");
+    return d >= d0 && d <= d1;
+  });
+  var L = modLire().filter(function(m2){ return m2.on; });
+  var cnt = function(pu, ca){ return L.filter(function(m2){ return m2.pub === pu && m2.canal === ca; }).length; };
   var nSms = 0, nMail = 0, jSyn = {};
   lot.forEach(function(x){
     var p = pubDe(x.client);
     if(p === "syn"){
-      /* un syndic reçoit UN récap par jour, pas un par intervention */
       if(cnt("syn","mail")) jSyn[(x.client || "") + "|" + x.date] = 1;
       nSms += cnt("syn","sms");
-    } else {
-      nSms += cnt(p, "sms"); nMail += cnt(p, "mail");
-    }
-    /* les messages aux techniciens partent aussi, un par intervention */
+    } else { nSms += cnt(p, "sms"); nMail += cnt(p, "mail"); }
     nSms += cnt("tech","sms"); nMail += cnt("tech","mail");
   });
   nMail += Object.keys(jSyn).length;
-  var eur = (nSms * PXSMS).toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  var mois = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"][d0.getMonth()];
-  /* la tuile dit le chiffre, le titre complet dit d'où il vient */
-  box.innerHTML = nSms + " SMS <small>~ " + eur + " €</small>";
-  box.setAttribute("title", "Sur vos " + lot.length + " intervention" + (lot.length > 1 ? "s" : "") + " de " + mois + " " + d0.getFullYear()
-    + " : " + nSms + " SMS (~ " + eur + " €) et " + nMail + " e-mail" + (nMail > 1 ? "s" : "")
-    + ". Estimation haute — le prix du SMS dépendra du relais qu'on branchera.");
+  return {n: lot.length, sms: nSms, mail: nMail, eur: nSms * PXSMS};
+}
+/* ══ 01/09 (patron : « pourquoi tu mets le mois dernier ? ») — il veut savoir
+   où il en est MAINTENANT. Le mois en cours passe devant ; le mois dernier
+   reste à côté, en petit, pour comparer. Rien n'est encore envoyé pour de
+   vrai (pas de relais serveur) : on dit « prévus », pas « envoyés ». ══ */
+function ntfCout(){
+  var box = document.getElementById("ntf-cout"); if(!box) return;
+  var t = new Date();
+  var A = ntfCompte(t.getFullYear(), t.getMonth());
+  var pm = new Date(t.getFullYear(), t.getMonth() - 1, 1);
+  var B = ntfCompte(pm.getFullYear(), pm.getMonth());
+  var eur = function(v){ return v.toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2}); };
+  box.innerHTML = A.sms + " SMS <small>~ " + eur(A.eur) + " €</small>"
+    + (B.sms || B.mail ? '<small class="cmp"> · le mois dernier : ' + B.sms + "</small>" : "");
+  var mois = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+  box.setAttribute("title", "Sur vos " + A.n + " intervention" + (A.n > 1 ? "s" : "") + " de " + mois[t.getMonth()] + " " + t.getFullYear()
+    + " : " + A.sms + " SMS (~ " + eur(A.eur) + " €) et " + A.mail + " e-mail" + (A.mail > 1 ? "s" : "")
+    + " prévus par vos réglages. Les clients coupés depuis leur fiche ne sont pas comptés. Estimation haute — le prix du SMS dépendra du relais.");
 }
 
 /* ══════════ 01/09 (v319-B + aperçu de C) ══════════
@@ -2671,7 +2726,11 @@ function ntEx(pub){
   var ivs = [];
   try{ ivs = (JSON.parse(localStorage.getItem("tigerflow-inbox-interventions")) || [])
     .concat(JSON.parse(localStorage.getItem("tigerflow-added-interventions")) || []); }catch(e){}
-  ivs = ivs.filter(function(x){ return x && x.date && x.client && (typeof pubDe !== "function" || pubDe(x.client) === pub); });
+  var mute = (typeof ntfCoupes === "function") ? ntfCoupes() : {};
+  ivs = ivs.filter(function(x){
+    return x && x.date && x.client && !mute[x.client]
+      && (typeof pubDe !== "function" || pubDe(x.client) === pub);
+  });
   if(!ivs.length) return null;
   var au = new Date(); au.setHours(0,0,0,0);
   var futur = ivs.filter(function(x){ return new Date(x.date + "T12:00:00") >= au; })
