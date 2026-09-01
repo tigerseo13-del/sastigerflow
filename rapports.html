@@ -258,6 +258,46 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .ktab td.r,.ktab th.r{text-align:right;font-variant-numeric:tabular-nums}
 .ktab tbody tr:hover td{background:#FCFCFD}
 .kvide{font:600 .82rem Inter,sans-serif;color:var(--muted);padding:18px 2px}
+/* ── 01/09 (patron : « combien de visites de devis par mois, combien par type ») ──
+   LE TUNNEL. Trois etages et le taux entre chaque : c'est l'ECART entre deux
+   etages qui dit ou l'argent se perd, pas les trois chiffres pris a part. */
+.tunl{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+.tst{flex:1 1 150px;min-width:0;border:1px solid var(--line);border-radius:13px;padding:12px 14px 11px;background:#fff}
+.tst .tsl{font:700 .69rem Inter,sans-serif;color:#8A8F9E;line-height:1.35}
+.tst .tsv{font:800 1.55rem 'Sora',sans-serif;color:var(--ink);letter-spacing:-.5px;margin-top:3px;line-height:1.1}
+.tst .tsx{font:600 .7rem Inter,sans-serif;color:var(--muted);margin-top:1px}
+.tst.fin{background:#14161B;border-color:#14161B}
+.tst.fin .tsl{color:rgba(255,255,255,.6)}
+.tst.fin .tsv{color:#fff}
+.tst.fin .tsx{color:rgba(255,255,255,.62)}
+.tsa{flex:0 0 82px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px}
+.tsa b{font:800 .92rem 'Sora',sans-serif;color:var(--ink)}
+.tsa span{font:600 .62rem Inter,sans-serif;color:var(--muted);line-height:1.3}
+.tsa i{display:block;width:100%;height:1px;background:var(--line);margin:5px 0 3px}
+.tsa.bas b{color:#C0362C}
+@media(max-width:760px){.tst{flex:1 1 100%}.tsa{flex:1 1 100%;flex-direction:row;gap:6px;padding:2px 0}.tsa i{display:none}}
+/* les deux delais */
+.dlw{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px}
+.dlc{flex:1 1 200px;border:1px solid var(--line);border-radius:12px;padding:10px 13px;background:#FAFBFC}
+.dlc b{display:block;font:800 1.02rem 'Sora',sans-serif;color:var(--ink)}
+.dlc span{font:600 .71rem Inter,sans-serif;color:var(--muted);line-height:1.45;display:block;margin-top:2px}
+.dlc.vide b{color:#A6ABB8;font-size:.9rem}
+/* le tableau par nuisible */
+.dvtw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:14px}
+.dvt{width:100%;border-collapse:collapse;font-size:.82rem;min-width:530px}
+.dvt th{text-align:left;font:800 .66rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:0 8px 6px 0;white-space:nowrap}
+.dvt th.r{text-align:right;padding:0 0 6px 16px}
+.dvt td{padding:9px 8px 9px 0;border-bottom:1px dashed var(--line);font-weight:600;color:var(--ink-2);vertical-align:middle}
+.dvt td.r{text-align:right;padding:9px 0 9px 16px;font-variant-numeric:tabular-nums}
+.dvt tr:last-child td{border-bottom:0}
+.dvt td b{color:var(--ink)}
+.dvt tr,.dvt tbody tr:nth-child(even){background:transparent}
+.txw{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.txb{flex:0 0 54px;height:6px;border-radius:4px;background:#EFF0F4;overflow:hidden}
+.txb i{display:block;height:100%;border-radius:4px;background:#C8CCD4}
+.dvt tr.top .txb i{background:var(--green,#10B981)}
+.dvt tr.top .txv{color:#0E7A4E}
+.txv{font:800 .8rem Inter,sans-serif;color:var(--ink);min-width:38px;text-align:right}
 /* 01/09 : la base de comparaison. Pas d'orange ici — l'orange est deja pris par
    le choix de PERIODE juste au-dessus ; deux oranges dans un ecran, c'est un. */
 .cbase{margin-left:auto;display:inline-flex;background:#F1F2F6;border-radius:10px;padding:3px;gap:2px}
@@ -1813,8 +1853,138 @@ document.addEventListener("click", function(e){
     nuiCard.insertAdjacentHTML("beforeend", html + '<p style="font-size:.76rem;color:var(--muted);margin-top:13px">Compté sur vos ' + tot + ' intervention' + (tot > 1 ? 's' : '') + ' de la période' + (Object.keys(eurN).some(function(k){ return eurN[k]; }) ? ' — la barre suit l\'ARGENT : un nuisible peut faire peu de passages et beaucoup de chiffre' : '') + '.</p>');
   }
 
+  /* ══════════════════════════════════════════════════════════════════════
+     01/09 (patron : « COMBIEN DE VISITE DE DEVIS PAR MOIS COMBIEN EN FONCTION
+     DU TYPE INTER ??? ») — DEVIS : DE LA VISITE À LA SIGNATURE.
+     Une visite de devis = une intervention marquée « Visite devis » dans
+     l'agenda (mode "devis"). Un devis, lui, ne PORTE PAS de nuisible : on le
+     retrouve par la visite du même client, sinon en lisant son titre. On le
+     DIT dans la note du bas — un chiffre dont on ignore la source ne vaut rien.
+     ══════════════════════════════════════════════════════════════════════ */
+  var DVMOTS = [
+    [/d[ée]ratis|rongeur|souris|rat\b|mulot|surmulot/i, "rongeur"],
+    [/cafard|blatte|cancrelat/i, "cafard"],
+    [/punaise/i, "punaise"],
+    [/gu[êe]pe|frelon|nid\b/i, "guepe"],
+    [/pigeon|d[ée]pigeon|volatile|fiente/i, "pigeon"],
+    [/fourmi/i, "fourmi"],
+    [/chenille|processionn/i, "chenille"],
+    [/d[ée]sinfect|d[ée]sinsect|nettoyage|virucide/i, "desinf"]
+  ];
+  function dvVisites(a, b2){
+    return ivTous().filter(function(x){ return x.mode === "devis" && dans(x.date, a, b2); });
+  }
+  /* le nuisible d'un devis : la visite du client d'abord, son titre ensuite */
+  function dvTypeDe(d, visTous){
+    if(d && d.client && d.date){
+      var best = null;
+      visTous.forEach(function(v){
+        if(v.client !== d.client || !v.date || v.date > d.date) return;
+        if(!best || v.date > best.date) best = v;
+      });
+      if(best && best.type) return NUIL[best.type] || best.typeLibre || "Autres";
+    }
+    var t = (d && (d.titre || d.objet || "")) || "";
+    for(var i = 0; i < DVMOTS.length; i++) if(DVMOTS[i][0].test(t)) return NUIL[DVMOTS[i][1]];
+    return "Autres";
+  }
+  function dvSigneLe(ref){
+    try{ var m = JSON.parse(localStorage.getItem("tigerflow-devis-dates")) || {}; return (m[ref] || {}).gagne || null; }catch(e){ return null; }
+  }
+  function dvPaint(){
+    var box = document.getElementById("dvfun"); if(!box) return;
+    var lbl = document.getElementById("dvfunlbl"); if(lbl) lbl.textContent = PERLBL[PERG] || "";
+    var b = bornesCmp(), dvs = dvTous();
+    var visTous = ivTous().filter(function(x){ return x.mode === "devis"; });
+    var vis = dvVisites(b.d0, b.d1);
+    var env = dvs.filter(function(x){ return dans(x.date, b.d0, b.d1) && x.statut !== "brouillon"; });
+    var sig = env.filter(function(x){ return x.statut === "gagne"; });
+    var caS = sig.reduce(function(sm, x){ return sm + (+x.montant || 0); }, 0);
+    if(!vis.length && !env.length){
+      box.innerHTML = '<div class="kvide">Aucune visite ni devis sur la période choisie.</div>';
+      return;
+    }
+    var pc = function(n2, d2){ return d2 ? Math.round(n2 / d2 * 100) : 0; };
+    var t1 = pc(env.length, vis.length), t2 = pc(sig.length, env.length);
+    var etage = function(l, v, x, fin){
+      return '<div class="tst' + (fin ? " fin" : "") + '"><div class="tsl">' + l + '</div><div class="tsv">' + v + '</div>'
+        + (x ? '<div class="tsx">' + x + '</div>' : '') + '</div>';
+    };
+    var fleche = function(t, l, bas){
+      return '<div class="tsa' + (bas ? " bas" : "") + '"><b>' + t + ' %</b><i></i><span>' + l + '</span></div>';
+    };
+    var h = '<div class="tunl">'
+      + etage("Visites de devis", vis.length, vis.length ? "déplacements sur site" : "aucune marquée dans l\'agenda")
+      + (vis.length ? fleche(t1, "donnent un devis", t1 < 70) : '<div class="tsa"><b>›</b></div>')
+      + etage("Devis envoyés", env.length, env.length ? eur2(env.reduce(function(sm, x){ return sm + (+x.montant || 0); }, 0)) + " proposés" : "")
+      + fleche(t2, "sont signés", t2 < 30)
+      + etage("Devis signés", sig.length, caS ? eur2(caS) + " gagnés" : "", 1)
+      + '</div>';
+    /* ---- les deux délais ---- */
+    var dv1 = [], dv2 = [];
+    env.forEach(function(d){
+      var best = null;
+      visTous.forEach(function(v){
+        if(v.client !== d.client || !v.date || v.date > d.date) return;
+        if(!best || v.date > best.date) best = v;
+      });
+      if(best){
+        var j = Math.round((new Date(d.date + "T12:00:00") - new Date(best.date + "T12:00:00")) / 864e5);
+        if(j >= 0 && j <= 90) dv1.push(j);
+      }
+      var g = dvSigneLe(d.ref);
+      if(g && d.date){
+        var j2 = Math.round((new Date(g + "T12:00:00") - new Date(d.date + "T12:00:00")) / 864e5);
+        if(j2 >= 0 && j2 <= 365) dv2.push(j2);
+      }
+    });
+    var moy = function(t){ return t.length ? Math.round(t.reduce(function(a2, x){ return a2 + x; }, 0) / t.length) : null; };
+    var m1 = moy(dv1), m2 = moy(dv2);
+    h += '<div class="dlw">'
+      + (m1 === null
+        ? '<div class="dlc vide"><b>Visite → devis : pas encore mesurable</b><span>Il faut des visites marquées « Visite devis » dans l\'agenda, suivies d\'un devis.</span></div>'
+        : '<div class="dlc"><b>' + m1 + ' jour' + (m1 > 1 ? "s" : "") + ' entre la visite et le devis</b><span>sur ' + dv1.length + ' devis. Un devis parti le lendemain ne se signe pas comme un devis parti huit jours après — et c\'est le seul des deux délais que vous tenez.</span></div>')
+      + (m2 === null
+        ? '<div class="dlc vide"><b>Devis → signature : comptage démarré</b><span>La date de signature n\'était pas conservée jusqu\'ici. Elle l\'est à partir de maintenant : le chiffre apparaîtra dès les premiers devis signés.</span></div>'
+        : '<div class="dlc"><b>' + m2 + ' jour' + (m2 > 1 ? "s" : "") + ' entre l\'envoi et la signature</b><span>sur ' + dv2.length + ' devis signé' + (dv2.length > 1 ? "s" : "") + '.</span></div>')
+      + '</div>';
+    /* ---- par type d'intervention ---- */
+    var T = {};
+    var pose = function(k, ch, v){ if(!T[k]) T[k] = {vis: 0, env: 0, sig: 0, ca: 0}; T[k][ch] += v; };
+    vis.forEach(function(v){ pose(NUIL[v.type] || v.typeLibre || "Autres", "vis", 1); });
+    env.forEach(function(d){
+      var k = dvTypeDe(d, visTous);
+      pose(k, "env", 1);
+      if(d.statut === "gagne"){ pose(k, "sig", 1); pose(k, "ca", +d.montant || 0); }
+    });
+    var noms = Object.keys(T).sort(function(a2, b3){ return (T[b3].sig - T[a2].sig) || (T[b3].env - T[a2].env) || (T[b3].vis - T[a2].vis); });
+    if(noms.length){
+      var meilleur = null;
+      /* on ne met en vert que s'il y a vraiment quelque chose a saluer :
+         au moins 2 devis ET au moins un signe — sinon 0 % serait « le meilleur ». */
+      noms.forEach(function(k){ if(T[k].env >= 2 && T[k].sig){ var tx = T[k].sig / T[k].env; if(!meilleur || tx > meilleur.tx) meilleur = {k: k, tx: tx}; } });
+      h += '<div class="dvtw"><table class="dvt"><thead><tr><th></th><th class="r">Visites</th><th class="r">Devis</th><th class="r">Signés</th><th class="r">Taux</th><th class="r">Panier moyen</th></tr></thead><tbody>'
+        + noms.map(function(k){
+            var o = T[k], tx = o.env ? Math.round(o.sig / o.env * 100) : 0;
+            var pm = o.sig ? eur2(o.ca / o.sig) : "—";
+            return '<tr' + (meilleur && meilleur.k === k ? ' class="top"' : '') + '><td><b>' + esc2(k) + '</b></td>'
+              + '<td class="r">' + (o.vis || "—") + '</td><td class="r">' + (o.env || "—") + '</td><td class="r">' + (o.sig || "—") + '</td>'
+              + '<td class="r"><span class="txw">' + (o.env ? '<span class="txb"><i style="width:' + tx + '%"></i></span><span class="txv">' + tx + ' %</span>' : '<span class="txv">—</span>') + '</span></td>'
+              + '<td class="r">' + pm + '</td></tr>';
+          }).join("")
+        + '</tbody></table></div>'
+        + '<p style="font-size:.74rem;color:var(--muted);margin-top:11px;line-height:1.55">Le nuisible d\'un devis vient de la <b>visite du même client</b> ; à défaut, il est lu dans le titre du devis. Une visite non marquée « Visite devis » dans l\'agenda ne peut pas être comptée.</p>';
+    }
+    box.innerHTML = h;
+  }
+
   /* ---- LE BLOC RELANCES DE DEVIS + top clients & techniciens ---- */
   var grid2 = document.querySelector(".grid2");
+  if(grid2 && !document.getElementById("dvfunc")){
+    grid2.insertAdjacentHTML("afterend",
+      '<div class="card" id="dvfunc" style="margin-top:14px"><div class="card-h">Devis — de la visite à la signature<small id="dvfunlbl"></small></div><div id="dvfun"></div></div>');
+    grid2 = document.getElementById("dvfunc");
+  }
   if(grid2 && !document.getElementById("relgrid")){
     grid2.insertAdjacentHTML("afterend",
       '<div class="grid2" id="relgrid" style="margin-top:14px">' +
@@ -2035,7 +2205,7 @@ document.addEventListener("click", function(e){
     cmpPaint(rows);   /* 31/08 : le même rendu hero+tuiles que la démo */
     document.getElementById("pseg-tri").classList.toggle("on", PERG === "tri");
     document.getElementById("pseg-an").classList.toggle("on", PERG === "an");
-    nuiPaint(); relPaint(); topPaint(); synthPaint();
+    nuiPaint(); dvPaint(); relPaint(); topPaint(); synthPaint();
   };
 
   /* la note du bas devient honnête */

@@ -1918,11 +1918,22 @@ function pushClientInbox(cli){
     localStorage.setItem("tigerflow-inbox-clients", JSON.stringify(box.slice(0, 30)));
   }catch(e){}
 }
+/* ══ 01/09 : LE JOUR OU LE DEVIS A BASCULE (meme boite que les 3 autres ecrans) ══ */
+function dvStamp(ref, st){
+  try{
+    if(!ref || !st) return;
+    var k = "tigerflow-devis-dates", m = JSON.parse(localStorage.getItem(k)) || {};
+    var o = m[ref] || {};
+    if(!o[st]) o[st] = new Date().toISOString().slice(0, 10);
+    m[ref] = o; localStorage.setItem(k, JSON.stringify(m));
+  }catch(e){}
+}
 (function(){
   const _set = typeof setStat2 === "function" ? setStat2 : null;
   if(_set) setStat2 = function(st, el){ CURSTAT = st; _set(st, el); syncDel(); pushDevisInbox();
     /* le statut est TOUJOURS écrit dans le registre partagé, même sans client choisi */
-    try{ const m = JSON.parse(localStorage.getItem("tigerflow-devis-statuts")) || {}; m[DREF] = st; localStorage.setItem("tigerflow-devis-statuts", JSON.stringify(m)); }catch(e){} };
+    try{ const m = JSON.parse(localStorage.getItem("tigerflow-devis-statuts")) || {}; m[DREF] = st; localStorage.setItem("tigerflow-devis-statuts", JSON.stringify(m)); }catch(e){}
+    dvStamp(DREF, st); };
 })();
 /* ===== enregistrer SANS envoyer : le devis reste en brouillon et rejoint la liste ===== */
 /* garde-fou : du travail commencé sans client choisi ne part pas à la poubelle en silence */

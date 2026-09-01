@@ -2493,9 +2493,22 @@ const dvActifs = () => DEVAT.filter(x => x && x.etat === "attente");
 const dvDe = c => dvActifs().find(x => x.client === c);
 const dvLate = x => !!(x.relance && x.relance <= iso(TODAYD));
 const dvEur = n => (Number.isInteger(+n) ? String(+n) : (+n).toFixed(2).replace(".", ",")) + " €";
+/* ══ 01/09 : LE JOUR OU LE DEVIS A BASCULE ══ Le registre des statuts ne gardait
+   que l'etat final, pas sa date : impossible de dire « on signe en 4 jours ».
+   Une boite a cote, ecrite par les QUATRE endroits qui changent un statut. */
+function dvStamp(ref, st){
+  try{
+    if(!ref || !st) return;
+    var k = "tigerflow-devis-dates", m = JSON.parse(localStorage.getItem(k)) || {};
+    var o = m[ref] || {};
+    if(!o[st]) o[st] = new Date().toISOString().slice(0, 10);
+    m[ref] = o; localStorage.setItem(k, JSON.stringify(m));
+  }catch(e){}
+}
 function dvModuleSt(ref, st){
   /* le module Devis parle le même statut : devis-liste lit ce registre */
   try{ const k = "tigerflow-devis-statuts"; const m = JSON.parse(localStorage.getItem(k)) || {}; m[ref] = st; localStorage.setItem(k, JSON.stringify(m)); }catch(e){}
+  dvStamp(ref, st);
 }
 function dvOui(ref){
   const x = DEVAT.find(z => z.ref === ref); if(!x) return;

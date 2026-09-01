@@ -1125,7 +1125,19 @@ REF = REC.ref;
 /* statut : registre partagé avec la liste et l'atelier */
 const STK = "tigerflow-devis-statuts";
 function statutGet(){ try{ return (JSON.parse(localStorage.getItem(STK)) || {})[REF] || REC.statut || "attente"; }catch(e){ return "attente"; } }
-function statutSet(st){ try{ const m = JSON.parse(localStorage.getItem(STK)) || {}; m[REF] = st; localStorage.setItem(STK, JSON.stringify(m)); }catch(e){} }
+/* ══ 01/09 : LE JOUR OU LE DEVIS A BASCULE ══ Le registre des statuts ne gardait
+   que l'etat final, pas sa date : impossible de dire « on signe en 4 jours ».
+   Une boite a cote, ecrite par les QUATRE endroits qui changent un statut. */
+function dvStamp(ref, st){
+  try{
+    if(!ref || !st) return;
+    var k = "tigerflow-devis-dates", m = JSON.parse(localStorage.getItem(k)) || {};
+    var o = m[ref] || {};
+    if(!o[st]) o[st] = new Date().toISOString().slice(0, 10);
+    m[ref] = o; localStorage.setItem(k, JSON.stringify(m));
+  }catch(e){}
+}
+function statutSet(st){ try{ const m = JSON.parse(localStorage.getItem(STK)) || {}; m[REF] = st; localStorage.setItem(STK, JSON.stringify(m)); }catch(e){} dvStamp(REF, st); }
 /* 28/07 — cette table etait celle des FACTURES (brouillon / attente / payee /
    retard), venue du clonage de facture-detail.html. Or effStatut() rend des
    statuts de DEVIS : envoye, gagne, perdu, expire n'y figuraient pas, donc

@@ -718,7 +718,19 @@ try{
 /* ===== les statuts changés depuis la liste ou le tiroir SURVIVENT au rechargement ===== */
 const STKEY = "tigerflow-devis-statuts";
 function stSaved(){ try{ return JSON.parse(localStorage.getItem(STKEY)) || {}; }catch(e){ return {}; } }
-function stSave(ref, st){ try{ const m = stSaved(); m[ref] = st; localStorage.setItem(STKEY, JSON.stringify(m)); }catch(e){} }
+/* ══ 01/09 : LE JOUR OU LE DEVIS A BASCULE ══ Le registre des statuts ne gardait
+   que l'etat final, pas sa date : impossible de dire « on signe en 4 jours ».
+   Une boite a cote, ecrite par les QUATRE endroits qui changent un statut. */
+function dvStamp(ref, st){
+  try{
+    if(!ref || !st) return;
+    var k = "tigerflow-devis-dates", m = JSON.parse(localStorage.getItem(k)) || {};
+    var o = m[ref] || {};
+    if(!o[st]) o[st] = new Date().toISOString().slice(0, 10);
+    m[ref] = o; localStorage.setItem(k, JSON.stringify(m));
+  }catch(e){}
+}
+function stSave(ref, st){ try{ const m = stSaved(); m[ref] = st; localStorage.setItem(STKEY, JSON.stringify(m)); }catch(e){} dvStamp(ref, st); }
 try{ const m = stSaved(); DEVIS.forEach(d => { if(m[d.ref]) d.statut = m[d.ref]; }); }catch(e){}
 const eur = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u202f/g,"\u00a0") + " €";
 const fdate = iso => { if(!iso || String(iso).indexOf("-") < 0) return "\u2014"; const [y,m,d]=String(iso).split("-"); return d+"/"+m+"/"+y; };
