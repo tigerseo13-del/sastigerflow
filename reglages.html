@@ -1156,8 +1156,11 @@ R.notifs = () => `
       <button type="button" class="pubt on" data-p="part" onclick="ntPub('part')">Particuliers <span class="n" id="nt-n-part"></span></button>
       <button type="button" class="pubt" data-p="pro" onclick="ntPub('pro')">Professionnels <span class="n" id="nt-n-pro"></span></button>
       <button type="button" class="pubt" data-p="syn" onclick="ntPub('syn')">Syndics <span class="n" id="nt-n-syn"></span></button>
-      <!-- 01/09 : Stann notifie aussi l'INTERVENANT. On n'avait rien. -->
-      <button type="button" class="pubt" data-p="tech" onclick="ntPub('tech')">Mes techniciens <span class="n" id="nt-n-tech"></span></button>
+      <!-- 01/09 (patron) : « Mes techniciens, enlève-le ». L'onglet et son unique
+           modèle (« Ton planning de demain ») sortent. Les notifications ne
+           s'adressent plus qu'aux clients. modPurgeTech() nettoie aussi la liste
+           déjà enregistrée : sans ça le modèle serait resté dans ses données,
+           invisible mais compté dans le coût du mois. -->
     </div>
 
     <div class="ntw">
@@ -2855,7 +2858,8 @@ function ntfCompte(y, mo){
       if(cnt("syn","mail")) jSyn[(x.client || "") + "|" + x.date] = 1;
       nSms += cnt("syn","sms");
     } else { nSms += cnt(p, "sms"); nMail += cnt(p, "mail"); }
-    nSms += cnt("tech","sms"); nMail += cnt("tech","mail");
+    /* 01/09 : la ligne qui ajoutait le SMS au technicien est partie avec le
+       public « tech ». Le compteur ne parle plus que des messages aux clients. */
   });
   nMail += Object.keys(jSyn).length;
   return {n: lot.length, sms: nSms, mail: nMail, eur: nSms * PXSMS};
@@ -2881,7 +2885,7 @@ function ntfCout(){
 
 /* ══════════ 01/09 (v319-B + aperçu de C) ══════════
    Le public affiché, l'aperçu téléphone, et les compteurs des onglets. */
-window.NTPUB = window.NTPUB || "part";
+window.NTPUB = (window.NTPUB && window.NTPUB !== "tech") ? window.NTPUB : "part";
 function ntPub(p){
   window.NTPUB = p;
   document.querySelectorAll("#ntabs .pubt").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-p") === p); });
@@ -2892,7 +2896,7 @@ function ntPub(p){
 /* les compteurs des onglets : « SMS · 1 active » */
 function ntOnglets(){
   var L = modLire();
-  ["part","pro","syn","tech"].forEach(function(k){
+  ["part","pro","syn"].forEach(function(k){
     var e = document.getElementById("nt-n-" + k); if(!e) return;
     var mes = L.filter(function(m){ return m.pub === k; });
     var n = mes.filter(function(m){ return m.on; }).length;
@@ -3015,7 +3019,7 @@ function ntPrev(){
    ══════════════════════════════════════════════════════════════════════ */
 const MODKEY = "tigerflow-notif-modeles";
 const UNI = {min:"minutes", h:"heures", j:"jours", sem:"semaines"};
-const PUBL = {part:"Particuliers", pro:"Professionnels", syn:"Syndics", tech:"Mes techniciens"};
+const PUBL = {part:"Particuliers", pro:"Professionnels", syn:"Syndics"};
 const MODDEF = [
   {id:"m1", nom:"Rappel la veille", pub:"part", canal:"sms", on:1, n:1, u:"j", sens:"avant", h:18, def:1,
    t:"Bonjour {client}, Agence Antinuisible passe demain à {heure}. Votre technicien : {technicien} — {tel_technicien}. Un empêchement ? 01 89 72 43 96."},
@@ -3027,8 +3031,6 @@ const MODDEF = [
   {id:"m4", nom:"E-mail récap au gestionnaire", pub:"syn", canal:"mail", on:1, n:1, u:"j", sens:"avant", h:18, def:1,
    obj:"Vos interventions de demain {date}",
    t:"La liste des passages prévus dans vos immeubles, avec créneau, technicien et nature de l'intervention."},
-  {id:"m5", nom:"Ton planning de demain", pub:"tech", canal:"sms", on:0, n:1, u:"j", sens:"avant", h:18, def:1,
-   t:"Demain {date} : {client} à {heure}, {adresse}. Nuisible : {nuisible}."},
   {id:"m6", nom:"Enquête de satisfaction", pub:"part", canal:"sms", on:0, n:2, u:"j", sens:"apres", h:11, def:1,
    t:"Bonjour {client}, tout va bien depuis notre passage du {date} ? Répondez à ce message, on vous rappelle."},
   /* 01/09 : l'avis Google. Il part à TOUT LE MONDE ou il ne part pas — filtrer
@@ -3040,6 +3042,18 @@ const MODDEF = [
    t:"Merci {client} ! Votre avis nous aide beaucoup : {avis_google}"}
 ];
 function modEcrire(L){ try{ localStorage.setItem(MODKEY, JSON.stringify(L)); }catch(e){} }
+/* 01/09 : le public « tech » a ete retire. Une liste deja enregistree peut
+   encore contenir « Ton planning de demain » : il n'aurait plus d'onglet pour
+   s'afficher mais resterait dans les donnees — et s'il etait actif, il aurait
+   continue a peser dans le compteur du mois. On le sort une bonne fois. */
+function modPurgeTech(){
+  var brut = null;
+  try{ brut = JSON.parse(localStorage.getItem(MODKEY)); }catch(e){}
+  if(!Array.isArray(brut) || !brut.length) return;
+  var net = brut.filter(function(m){ return m && m.pub !== "tech"; });
+  if(net.length !== brut.length) modEcrire(net);
+}
+try{ modPurgeTech(); }catch(e){}
 function modLire(){
   try{ var v = JSON.parse(localStorage.getItem(MODKEY)); if(Array.isArray(v) && v.length) return v; }catch(e){}
   return modMigrer();
