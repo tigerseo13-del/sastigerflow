@@ -112,9 +112,11 @@ html{background:#F7F8FA}
 .pubt .n{font-weight:700;font-size:.76rem;opacity:.7}
 .pubt.on .n{opacity:.85}
 /* ══ 01/09 : LES MODÈLES — un bloc par message, en nombre libre ══ */
-.mod{border:1px solid var(--line);border-radius:13px;padding:12px 14px 11px;background:#fff;margin-bottom:10px;transition:.13s}
+.mod{border:1px solid var(--line);border-radius:13px;padding:13px 15px;background:#fff;margin-bottom:9px;transition:.13s}
+.mod:not(.open):not(.on){background:#FBFCFD}
+.mod:not(.open):hover{border-color:#D5D9E2}
 .mod.on{border-color:#D9DDE6;box-shadow:0 1px 2px rgba(23,26,32,.05)}
-.modh{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.modh{display:flex;align-items:center;gap:11px;margin-bottom:0}
 .modck{flex:none;display:inline-flex;cursor:pointer}
 .modck input{position:absolute;opacity:0;width:0;pointer-events:none}
 .modck i{width:19px;height:19px;border-radius:6px;border:1.5px solid #C9CDD8;background:#fff;display:grid;place-items:center;transition:.13s}
@@ -132,7 +134,7 @@ html{background:#F7F8FA}
 .modt input[disabled],.modt select[disabled]{opacity:.45;cursor:not-allowed}
 .modt .ah{font:700 .74rem Inter,sans-serif;color:var(--muted)}
 .modo{width:100%!important;max-width:none!important;margin-bottom:7px;font-size:.76rem!important}
-.modtx{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:9px 12px;font:600 .78rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;resize:vertical;min-height:56px;box-sizing:border-box;line-height:1.55;font-family:inherit}
+.modtx{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;font:450 .82rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;resize:vertical;min-height:56px;box-sizing:border-box;line-height:1.55;font-family:inherit}
 .modtx:focus{border-color:var(--orange)}
 .modm{display:flex;align-items:center;gap:14px;margin-top:6px;font:700 .68rem Inter,sans-serif;color:var(--muted);flex-wrap:wrap}
 .modm b{color:var(--ink-2)}
@@ -204,8 +206,51 @@ html{background:#F7F8FA}
 .modadd:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
 .lane[hidden]{display:none!important}
 /* la colonne de gauche + le téléphone */
-.ntw{display:grid;grid-template-columns:minmax(0,1fr) 316px;gap:18px;align-items:start}
-.ntp{position:sticky;top:14px}
+/* ══════════════════════════════════════════════════════════════════════
+   01/09 — v321-A (« GO sur A »). Le mur devient une LISTE.
+   Avant : 4 messages tous dépliés, 72 boutons visibles, 1 112 px de haut.
+   Maintenant : chaque message est UNE ligne (nom · canal · quand · coût) ;
+   on clique, il s'ouvre, les autres se referment. L'aperçu téléphone se cale
+   À CÔTÉ du texte du message ouvert — il ne rallonge plus la page.
+   ══════════════════════════════════════════════════════════════════════ */
+.ntw{display:block}
+.ntp{position:static}
+/* la LIGNE fermée */
+.mod .modh{cursor:pointer;user-select:none}
+.modnb{flex:1;min-width:0;font:600 .87rem Inter,sans-serif;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mod:not(.on) .modnb{color:#8A9099}
+.modwh{font:500 .78rem Inter,sans-serif;color:var(--muted);white-space:nowrap;flex:none}
+.modct{font:500 .78rem Inter,sans-serif;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;margin-left:auto;flex:none}
+.modct.cher{color:#C0362C;font-weight:600}
+.modcv{flex:none;color:#B6BBC4;font-size:1rem;line-height:1;width:14px;text-align:center}
+/* la CARTE ouverte */
+.mod.open{border-color:var(--orange);box-shadow:0 10px 26px -18px rgba(255,90,31,.5)}
+.mod.open .modh{margin-bottom:0;padding-bottom:11px;border-bottom:1px solid #F2F3F6}
+.modbd{padding-top:13px}
+.modtwo{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;align-items:start}
+/* l'aperçu téléphone fait 275 px : sans ça, 135 px de blanc à gauche.
+   On ne rétrécit pas le téléphone (il doit rester lisible), on donne
+   l'espace à ce qui sert — la zone où l'on écrit le message. */
+.modtwo .modtx{min-height:152px}
+.modprev{padding-top:2px}
+@media(max-width:1040px){.modtwo{grid-template-columns:1fr}.modprev{max-width:330px}}
+/* Sur téléphone la ligne fermée ne tient pas d'un trait (elle sortait de 70 px) :
+   le NOM et ses actions restent en haut, le QUAND et le COÛT passent dessous,
+   alignés sous le nom — on lit toujours les mêmes quatre informations. */
+@media(max-width:640px){
+  /* Le NOM ne se laisse plus rogner : il prend toute la 1re rangée à côté de
+     la coche (« Rappel la veille » se coupait en « Rappel la »). Canal, moment,
+     coût et actions descendent sur la 2e rangée. */
+  .mod .modh{flex-wrap:wrap;row-gap:9px}
+  .modck{order:0}
+  .modnb,.mod .modn{order:1;flex:1 1 calc(100% - 46px);min-width:0}
+  .mod .sq{order:5}
+  .modwh{order:6}
+  .modct{order:7;margin-left:auto}
+  .modplus{order:8}
+  .modcv{order:9}
+  .mod.open .modh{padding-bottom:12px}
+}
 .fone{background:#14161B;border-radius:28px;padding:11px;box-shadow:0 24px 54px -28px rgba(16,19,24,.55)}
 .fscr{background:#EDEEF2;border-radius:20px;overflow:hidden;min-height:210px}
 .fbar{background:#fff;padding:10px 13px;border-bottom:1px solid #E3E5EA;display:flex;align-items:center;gap:9px}
@@ -224,7 +269,7 @@ html{background:#F7F8FA}
 .mailb{padding:12px 13px;font:500 .77rem Inter,sans-serif;color:#2B2F38;line-height:1.6;word-break:break-word}
 .mailb .vide{color:#A6ABB8;font-style:italic}
 .pnote{font:600 .69rem Inter,sans-serif;color:var(--muted);text-align:center;margin-top:10px;line-height:1.5}
-@media(max-width:1120px){.ntw{grid-template-columns:1fr}.ntp{position:static;max-width:340px}}
+@media(max-width:1120px){.ntp{max-width:340px}}
 @media(max-width:760px){.ntg{grid-template-columns:1fr 1fr}}
 @media(max-width:460px){.ntg{grid-template-columns:1fr}}
 /* 01/09 : ce qu'on demande au client — trois modes, un seul actif */
@@ -2893,7 +2938,14 @@ function ntPrev(){
   var note = document.getElementById("ntpnote");
   var pub = window.NTPUB || "part";
   var mes = modLire().filter(function(m){ return m.pub === pub; });
-  var choisi = mes.filter(function(m){ return m.on; })[0] || mes[0];
+  /* 01/09 (v321-A) : le téléphone vit DANS la carte ouverte — il doit donc
+     montrer CE message-là. Avant il prenait toujours le premier actif : on
+     ouvrait « Avis Google » et le téléphone affichait « Rappel la veille ».
+     Un aperçu qui montre un autre message que celui qu'on lit, c'est mentir
+     en image. */
+  var choisi = (typeof MODOPEN !== "undefined" && MODOPEN)
+      ? (mes.filter(function(m){ return m.id === MODOPEN; })[0] || null) : null;
+  if(!choisi) choisi = mes.filter(function(m){ return m.on; })[0] || mes[0];
   if(!choisi){ box.innerHTML = ""; if(note) note.textContent = ""; ntOnglets(); return; }
   var ex = ntEx(pub === "tech" ? "part" : pub);
   var corps = ntRemplir(choisi.t || "", ex);
@@ -3014,61 +3066,104 @@ function modQuand(m){
   return n + " " + u + " " + (m.sens === "apres" ? "après" : "avant") + heure;
 }
 /* ── LE RENDU DES MODÈLES DU PUBLIC AFFICHÉ ── */
+/* ══ 01/09 — v321-A : UN SEUL MESSAGE OUVERT À LA FOIS ══
+   MODOPEN porte l'id ouvert. Ouvrir n'ALLUME PAS (la coche reste le seul
+   interrupteur — règle du 31/08) et allumer n'ouvre pas. Au changement de
+   public on ouvre d'office le premier message ACTIF : la page s'ouvre sur
+   ce qui part vraiment, et l'aperçu a toujours un sujet. */
+var MODOPEN = null;
+function modDefautOuvert(L){
+  if(!L.length) return null;
+  for(var i = 0; i < L.length; i++) if(L[i].on) return L[i].id;
+  return L[0].id;
+}
+function modToggle(id){
+  MODOPEN = (MODOPEN === id) ? null : id;
+  modPaint(); if(typeof ntPrev === "function") ntPrev();
+}
+/* ce que la ligne fermée annonce à droite : le prix du message, pas sa longueur */
+function modCout(m){
+  if(m.canal !== "sms") return {t: "E-mail", cher: 0};
+  var r = smsSeg(ntTexte(m.t || "", (typeof ntEx === "function") ? ntEx(m.pub === "tech" ? "part" : m.pub) : null));
+  return {t: r.sms + " SMS \u00b7 " + (r.sms * PXSMS).toFixed(2).replace(".", ",") + " \u20ac", cher: r.sms > 1};
+}
 function modPaint(){
   var box = document.getElementById("ntlane"); if(!box) return;
   var pub = window.NTPUB || "part";
   var L = modLire().filter(function(m){ return m.pub === pub; });
+  if(!L.some(function(m){ return m.id === MODOPEN; })) MODOPEN = modDefautOuvert(L);
+  /* ☠️ LA LEÇON DU PROJET : box.innerHTML= DÉTRUIT tout ce qui vit dedans.
+     L'aperçu téléphone est un nœud UNIQUE qu'on déplace de carte en carte —
+     il faut le SORTIR d'ici AVANT de réécrire, sinon il disparaît au 2e rendu
+     (et #ntprev n'existe plus : ntPrev() écrit dans le vide, en silence). */
+  var _ntp = document.querySelector(".ntp"), _ntw = document.querySelector(".ntw");
+  if(_ntp && box.contains(_ntp) && _ntw) _ntw.appendChild(_ntp);
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); };
   box.innerHTML = (L.length ? L.map(function(m){
-    var sms = m.canal === "sms";
-    return '<div class="mod' + (m.on ? " on" : "") + '" data-id="' + m.id + '">'
-      + '<div class="modh">'
-      +   '<label class="modck"><input type="checkbox" ' + (m.on ? "checked" : "") + ' onchange="modOn(\'' + m.id + '\',this.checked)"><i></i></label>'
-      +   '<input class="modn" type="text" value="' + esc(m.nom) + '" oninput="modMaj(\'' + m.id + '\',{nom:this.value})" placeholder="Nom du message">'
+    var sms = m.canal === "sms", ouv = (m.id === MODOPEN), c = modCout(m);
+    var tete = '<div class="modh" onclick="modToggle(\'' + m.id + '\')">'
+      +   '<label class="modck" onclick="event.stopPropagation()"><input type="checkbox" ' + (m.on ? "checked" : "") + ' onchange="modOn(\'' + m.id + '\',this.checked)"><i></i></label>'
+      +   (ouv
+          ? '<input class="modn" type="text" value="' + esc(m.nom) + '" onclick="event.stopPropagation()" oninput="modMaj(\'' + m.id + '\',{nom:this.value})" placeholder="Nom du message">'
+          : '<span class="modnb">' + esc(m.nom || "Message") + '</span>')
       +   '<span class="sq' + (sms ? " qs" : "") + '">' + (sms ? "SMS" : "E-mail") + '</span>'
-      +   '<details class="modplus"><summary title="Autres actions">⋯</summary><div class="modmenu">'
+      +   (ouv ? "" : '<span class="modwh">' + esc(modQuand(m)) + '</span>')
+      +   '<span class="modct' + (c.cher ? " cher" : "") + '">' + c.t + '</span>'
+      +   '<details class="modplus" onclick="event.stopPropagation()"><summary title="Autres actions">\u22ef</summary><div class="modmenu">'
       +     (m.def ? '<button type="button" onclick="modReset(\'' + m.id + '\')">Texte d\'origine</button>' : '')
       +     '<button type="button" onclick="modEssai(\'' + m.id + '\')">M\'envoyer un essai</button>'
       +     '<button type="button" class="sup" onclick="modDel(\'' + m.id + '\',this)">Supprimer ce message</button>'
       +   '</div></details>'
-      + '</div>'
-      + (function(){
-          var cur = m.libre ? "autre" : momentDe(m);
-          var lbl = modQuand(m);
-          var h = '<details class="momsel"><summary><span class="mv">' + lbl + '</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary><div class="mommenu">'
-                + MOMENTS.map(function(o){
-                    return '<button type="button" class="' + (cur === o.k ? "on" : "") + '" onclick="momentSet(\'' + m.id + '\',\'' + o.k + '\')">' + o.lbl + '</button>';
-                  }).join("")
-                + '<button type="button" class="' + (cur === "autre" ? "on" : "") + '" onclick="momentSet(\'' + m.id + '\',\'autre\')">Autre…</button>'
-                + '</div></details>';
-          if(cur !== "autre") return h;
-          return h + '<div class="modt">'
-            + '<span>Envoyer</span>'
-            + '<input type="number" min="0" max="99" value="' + (+m.n || 0) + '" onchange="modMaj(\'' + m.id + '\',{n:+this.value||0});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
-            + '<select onchange="modMaj(\'' + m.id + '\',{u:this.value});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
-            +   Object.keys(UNI).map(function(u){ return '<option value="' + u + '"' + (m.u === u ? " selected" : "") + '>' + UNI[u] + '</option>'; }).join("")
-            + '</select>'
-            + '<select onchange="modMaj(\'' + m.id + '\',{sens:this.value});modPaint();ntPrev()">'
-            +   '<option value="avant"' + (m.sens === "avant" ? " selected" : "") + '>avant l\'intervention</option>'
-            +   '<option value="apres"' + (m.sens === "apres" ? " selected" : "") + '>après l\'intervention</option>'
-            +   '<option value="depart"' + (m.sens === "depart" ? " selected" : "") + '>au départ du technicien</option>'
-            + '</select>'
-            + ((m.u === "j" || m.u === "sem") && m.sens !== "depart"
-              ? '<span class="ah">à</span><input type="number" min="0" max="23" value="' + (m.h == null ? 18 : m.h) + '" onchange="modMaj(\'' + m.id + '\',{h:Math.max(0,Math.min(23,+this.value||0))});modPaint()"><span class="ah">h</span>'
-              : '')
-            + '</div>';
-        })()
-      + (sms ? '' : '<input class="modo" type="text" placeholder="Objet de l\'e-mail" value="' + esc(m.obj || "") + '" oninput="modMaj(\'' + m.id + '\',{obj:this.value});ntPrev()">')
-      + '<textarea class="modtx" rows="2" oninput="modMaj(\'' + m.id + '\',{t:this.value});modCnt(\'' + m.id + '\');ntPrev()">' + esc(m.t || "") + '</textarea>'
-      + '<div class="modm"><span id="mc-' + m.id + '"></span>'
-      +   '<details class="varsel"><summary>+ variable</summary><div class="varmenu">'
-      +     '<button type="button" onclick="modVar(\'' + m.id + '\',\'{lien_rdv}\')">{lien_rdv} <i>le client déplace son créneau</i></button>'
-      +     '<button type="button" onclick="modVar(\'' + m.id + '\',\'{avis_google}\')">{avis_google} <i>votre fiche Google</i></button>'
-      +   '</div></details>'
-      + '</div></div>';
+      +   '<span class="modcv">' + (ouv ? "\u2303" : "\u203a") + '</span>'
+      + '</div>';
+    if(!ouv) return '<div class="mod' + (m.on ? " on" : "") + '" data-id="' + m.id + '">' + tete + '</div>';
+
+    var quand = (function(){
+      var cur = m.libre ? "autre" : momentDe(m), lbl = modQuand(m);
+      var h = '<details class="momsel"><summary><span class="mv">' + lbl + '</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary><div class="mommenu">'
+            + MOMENTS.map(function(o){ return '<button type="button" class="' + (cur === o.k ? "on" : "") + '" onclick="momentSet(\'' + m.id + '\',\'' + o.k + '\')">' + o.lbl + '</button>'; }).join("")
+            + '<button type="button" class="' + (cur === "autre" ? "on" : "") + '" onclick="momentSet(\'' + m.id + '\',\'autre\')">Autre\u2026</button>'
+            + '</div></details>';
+      if(cur !== "autre") return h;
+      return h + '<div class="modt"><span>Envoyer</span>'
+        + '<input type="number" min="0" max="99" value="' + (+m.n || 0) + '" onchange="modMaj(\'' + m.id + '\',{n:+this.value||0});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
+        + '<select onchange="modMaj(\'' + m.id + '\',{u:this.value});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
+        +   Object.keys(UNI).map(function(u){ return '<option value="' + u + '"' + (m.u === u ? " selected" : "") + '>' + UNI[u] + '</option>'; }).join("")
+        + '</select>'
+        + '<select onchange="modMaj(\'' + m.id + '\',{sens:this.value});modPaint();ntPrev()">'
+        +   '<option value="avant"' + (m.sens === "avant" ? " selected" : "") + '>avant l\'intervention</option>'
+        +   '<option value="apres"' + (m.sens === "apres" ? " selected" : "") + '>apr\u00e8s l\'intervention</option>'
+        +   '<option value="depart"' + (m.sens === "depart" ? " selected" : "") + '>au d\u00e9part du technicien</option>'
+        + '</select>'
+        + ((m.u === "j" || m.u === "sem") && m.sens !== "depart"
+          ? '<span class="ah">\u00e0</span><input type="number" min="0" max="23" value="' + (m.h == null ? 18 : m.h) + '" onchange="modMaj(\'' + m.id + '\',{h:Math.max(0,Math.min(23,+this.value||0))});modPaint()"><span class="ah">h</span>'
+          : '')
+        + '</div>';
+    })();
+
+    return '<div class="mod open' + (m.on ? " on" : "") + '" data-id="' + m.id + '">' + tete
+      + '<div class="modbd"><div class="modtwo"><div>'
+      +   quand
+      +   (sms ? '' : '<input class="modo" type="text" placeholder="Objet de l\'e-mail" value="' + esc(m.obj || "") + '" oninput="modMaj(\'' + m.id + '\',{obj:this.value});ntPrev()">')
+      +   '<textarea class="modtx" rows="3" oninput="modMaj(\'' + m.id + '\',{t:this.value});modCnt(\'' + m.id + '\');ntPrev()">' + esc(m.t || "") + '</textarea>'
+      +   '<div class="modm"><span id="mc-' + m.id + '"></span>'
+      +     '<details class="varsel"><summary>+ variable</summary><div class="varmenu">'
+      +       '<button type="button" onclick="modVar(\'' + m.id + '\',\'{lien_rdv}\')">{lien_rdv} <i>le client d\u00e9place son cr\u00e9neau</i></button>'
+      +       '<button type="button" onclick="modVar(\'' + m.id + '\',\'{avis_google}\')">{avis_google} <i>votre fiche Google</i></button>'
+      +     '</div></details>'
+      +   '</div>'
+      + '</div><div class="modprev" id="modprev-' + m.id + '"></div></div></div></div>';
   }).join("") : '<div class="modvide">Aucun message pour ce public. Ajoutez-en un.</div>')
   + '<button type="button" class="modadd" onclick="modAdd()">+ Ajouter un message</button>';
-  L.forEach(function(m){ modCnt(m.id); });
+  /* l'aperçu téléphone SUIT le message ouvert — un seul nœud, déplacé */
+  var ntp = document.querySelector(".ntp");
+  var cible = MODOPEN ? document.getElementById("modprev-" + MODOPEN) : null;
+  if(ntp){
+    if(cible) cible.appendChild(ntp);
+    else { var w = document.querySelector(".ntw"); if(w && ntp.parentNode !== w) w.appendChild(ntp); }
+    ntp.style.display = cible ? "" : "none";
+  }
+  if(MODOPEN) modCnt(MODOPEN);
 }
 /* ══ 01/09 : le même geste que sur la page Relances — on relit le message
    dans SA boîte mail avant de l'envoyer à soixante clients. ══ */
@@ -3164,7 +3259,7 @@ function modNettoie(id){
   var a = smsSeg(avant), b = smsSeg(apres);
   modMaj(id, {t: apres}); modPaint(); ntPrev();
   if(typeof toast === "function")
-    toast(a.sms + " SMS \u2192 " + b.sms + " SMS \u00b7 " + ((a.sms - b.sms) * 0.08).toFixed(2).replace(".", ",") + " \u20ac economises par envoi",
+    toast(a.sms + " SMS \u2192 " + b.sms + " SMS \u00b7 " + ((a.sms - b.sms) * 0.08).toFixed(2).replace(".", ",") + " \u20ac \u00e9conomis\u00e9s par envoi",
       function(){ modMaj(id, {t: avant}); modPaint(); ntPrev(); });
 }
 /* le compteur dit le VRAI coût, sur le message FINAL */
@@ -3177,10 +3272,18 @@ function modCnt(id){
   var fini = (typeof ntTexte === "function") ? ntTexte(m.t || "", ex) : (m.t || "");
   var r = smsSeg(fini);
   var lim = r.gsm ? 160 : 70;
-  e.innerHTML = "<b>" + r.n + (r.sms === 1 ? " / " + lim : " car.") + "</b> · " + r.sms + " SMS · "
-    + (r.sms * 0.08).toFixed(2).replace(".", ",") + " €"
-    + (r.gsm ? "" : ' <span class="smsko">caractères coûteux : ' + r.hors.slice(0, 6).join(" ")
-        + ' — 70 car. par SMS au lieu de 160 <button type="button" onclick="modNettoie(\'' + id + '\')">Nettoyer</button></span>');
+  /* 01/09 (v321-A) : la ligne disait « 144 car. · 3 SMS · 0,24 € caractères
+     coûteux : — ê — 70 car. par SMS au lieu de 160 » — une soupe de chiffres
+     sans verbe. Elle devient une PHRASE : ce que ça coûte, puis pourquoi. */
+  /* ce qu'on annonce quand ça coûte cher, c'est le NOMBRE DE SMS évité —
+     pas un nombre de caractères abstrait. On simule le nettoyage pour le dire. */
+  var propre = smsSeg(smsNettoie(fini));
+  var quoi = r.hors.slice(0, 4).map(function(c){ return "<b>" + c + "</b>"; }).join(" et ");
+  e.innerHTML = "<b>" + r.n + " caractère" + (r.n > 1 ? "s" : "") + "</b> · " + r.sms + " SMS · "
+    + (r.sms * PXSMS).toFixed(2).replace(".", ",") + " € par envoi"
+    + (r.gsm ? "" : ' <span class="smsko">\u00b7 ' + quoi + " " + (r.hors.length > 1 ? "font" : "fait")
+        + " " + r.sms + " SMS au lieu de " + propre.sms
+        + ' <button type="button" onclick="modNettoie(\'' + id + '\')">Nettoyer</button></span>');
 }
 </script>
 <script>
