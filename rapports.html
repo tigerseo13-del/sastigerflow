@@ -258,6 +258,28 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .ktab td.r,.ktab th.r{text-align:right;font-variant-numeric:tabular-nums}
 .ktab tbody tr:hover td{background:#FCFCFD}
 .kvide{font:600 .82rem Inter,sans-serif;color:var(--muted);padding:18px 2px}
+/* 01/09 : la base de comparaison. Pas d'orange ici — l'orange est deja pris par
+   le choix de PERIODE juste au-dessus ; deux oranges dans un ecran, c'est un. */
+.cbase{margin-left:auto;display:inline-flex;background:#F1F2F6;border-radius:10px;padding:3px;gap:2px}
+.cbase button{border:0;background:transparent;border-radius:8px;padding:5px 11px;font:700 .72rem Inter,sans-serif;color:var(--muted);cursor:pointer;font-family:inherit;white-space:nowrap}
+.cbase button:hover{color:var(--ink-2)}
+.cbase button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(16,19,24,.1)}
+.card-h .cbase + small{margin-left:10px}
+/* le bandeau « la periode n'est pas finie » */
+.pcur{display:flex;align-items:flex-start;gap:9px;background:#F7F8FA;border:1px solid #EAECF1;border-radius:12px;padding:10px 13px;margin:0 0 11px;font:600 .76rem Inter,sans-serif;color:var(--ink-2);line-height:1.5}
+.pcur b{color:var(--ink);font-weight:800}
+.pcur .pj{flex:none;display:inline-block;background:#E7E9EE;border-radius:7px;padding:2px 8px;font:800 .7rem Inter,sans-serif;color:var(--ink-2)}
+/* ── 01/09 : « CE QU'IL FAUT RETENIR » — la page AFFICHAIT, elle ne DISAIT rien */
+.syl{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px dashed var(--line)}
+.syl:last-child{border-bottom:0;padding-bottom:2px}
+.syl .sybar{flex:none;width:4px;align-self:stretch;min-height:24px;border-radius:3px;background:#C8CCD4}
+.syl.al .sybar{background:var(--red,#D63B33)}
+.syl.ok .sybar{background:var(--green,#10B981)}
+.syl .syt{flex:1;min-width:0;font:600 .86rem Inter,sans-serif;color:var(--ink-2);line-height:1.55}
+.syl .syt b{color:var(--ink);font-weight:800}
+.syl .syb{flex:none;align-self:center;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font:700 .74rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none}
+.syl .syb:hover{border-color:#D5D8DF;background:#F7F8FA;color:var(--ink)}
+@media(max-width:620px){.syl{flex-wrap:wrap}.syl .syb{margin-left:15px}}
 /* le tableau des techniciens : qui produit, et qui repasse */
 .tectab{width:100%;border-collapse:collapse;font-size:.82rem}
 .tectab th{text-align:left;font:800 .66rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:0 0 5px;white-space:nowrap}
@@ -528,7 +550,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 <div class="grid2">
       <!-- ===== COMPARAISON DE PÉRIODE ===== -->
       <div class="card">
-        <div class="card-h">Analyse comparée<small id="cmp-lbl">vs juillet 2026</small></div>
+        <div class="card-h">Analyse comparée<span class="cbase" id="cbase" hidden><button type="button" data-b="prec" class="on" onclick="cmpBase('prec')">Période précédente</button><button type="button" data-b="an1" onclick="cmpBase('an1')">L'an dernier</button></span><small id="cmp-lbl">vs juillet 2026</small></div>
         <div class="tscroll"><table class="cmp">
           <thead><tr><th></th><th class="r">Période</th><th class="r">Précédente</th><th class="r">Évolution</th></tr></thead>
           <tbody id="cmp"></tbody>
@@ -639,6 +661,12 @@ function cmpPaint(rows){
   }
   if(!rows || !rows.length){ wrap.innerHTML = ""; return; }
   var hero = rows[0], reste = rows.slice(1);
+  /* 01/09 : tant que la période court, on le DIT — sinon « −95 % » le 1er du mois */
+  var PA = window.PARTIEL, mot = PERG === "an" ? "Année en cours" : (PERG === "tri" ? "Trimestre en cours" : "Mois en cours");
+  var banniere = PA
+    ? '<div class="pcur"><span class="pj">' + PA.j + " / " + PA.tot + ' j</span><span><b>' + mot + '</b> — on compare avec '
+      + (PA.j > 1 ? "les " + PA.j + " premiers jours" : "le 1ᵉʳ jour") + ' de la période de référence. Sinon la baisse serait un mirage.</span></div>'
+    : "";
   /* 31/08 : trois etats, pas deux. Une fleche verte sur « +0 % » fait croire a
      une hausse qui n'existe pas — a l'identique, on ecrit « = stable », en gris. */
   /* 31/08 : la FLECHE dit le sens du chiffre (lu sur son signe), la COULEUR dit
@@ -655,7 +683,7 @@ function cmpPaint(rows){
   var alerte = function(lbl, r){ return r[5] === 1; };
   var ouvrable = function(lbl){ return !!(window.KDET && window.KDET[lbl] && window.KDET[lbl].rows); };
   var att = function(lbl){ return ouvrable(lbl) ? ' data-k="' + String(lbl).replace(/"/g, "&quot;") + '" tabindex="0" role="button"' : ''; };
-  wrap.innerHTML =
+  wrap.innerHTML = banniere +
     '<div class="heroK' + (ouvrable(hero[0]) ? " clic" : "") + '"' + att(hero[0]) + '><div class="l">' + hero[0] + '</div><div class="v">' + hero[1] + '</div>'
     + (hero[3] !== "—" ? '<div class="d ' + evCls(hero) + '">' + evTxt(hero) + ' ' + (document.getElementById("cmp-lbl") ? document.getElementById("cmp-lbl").textContent : "") + '</div>' : '')
     + '<div class="hspk">' + spark(hero, 1) + '</div>'
@@ -1390,6 +1418,34 @@ document.addEventListener("click", function(e){
   }
   var dans = function(iso, a, b){ if(!iso) return false; var t = new Date(iso + "T12:00:00"); return t >= a && t <= b; };
 
+  /* ══════════ 01/09 (audit : le 1er du mois la page criait « ▼ −95 % ») ══════════
+     Un mois EN COURS compare 1 jour a 31 : la baisse etait un mirage. Tant que la
+     periode n'est pas finie, on coupe a AUJOURD'HUI et on coupe la periode de
+     reference AU MEME NOMBRE DE JOURS. Et la base de comparaison est au choix :
+     periode precedente, ou LE MEME MOIS L'AN DERNIER (la saison decide de tout
+     en 3D : guepes en juillet, rongeurs quand il fait froid). */
+  window.CMPBASE = window.CMPBASE || "prec";
+  function bornesCmp(){
+    var b = bornes(), p0 = b.p0, p1 = b.p1;
+    if(window.CMPBASE === "an1"){
+      p0 = new Date(b.d0); p0.setFullYear(p0.getFullYear() - 1);
+      p1 = new Date(b.d1); p1.setFullYear(p1.getFullYear() - 1);
+      p0.setHours(12, 0, 0, 0); p1.setHours(12, 0, 0, 0);
+    }
+    var t = new Date(); t.setHours(12, 0, 0, 0);
+    if(t < b.d0 || t >= b.d1) return {d0: b.d0, d1: b.d1, p0: p0, p1: p1, part: 0};
+    var j = Math.round((t - b.d0) / 864e5) + 1;          /* jours ecoules */
+    var tot = Math.round((b.d1 - b.d0) / 864e5) + 1;     /* jours de la periode */
+    var q1 = new Date(p0); q1.setDate(q1.getDate() + j - 1); q1.setHours(12, 0, 0, 0);
+    if(q1 > p1) q1 = p1;                                  /* fevrier plus court */
+    return {d0: b.d0, d1: t, p0: p0, p1: q1, part: {j: j, tot: tot}};
+  }
+  window.cmpBase = function(v){
+    window.CMPBASE = v;
+    document.querySelectorAll(".cbase button").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-b") === v); });
+    perPaint();
+  };
+
   /* ---- collecteurs ---- */
   function paieTous(){
     var reg = JO("tigerflow-factures-paiements"), out = [];
@@ -1508,7 +1564,8 @@ document.addEventListener("click", function(e){
 
   /* ---- l'analyse comparée CALCULÉE (+ les lignes d'état) ---- */
   function realRows(){
-    var b = bornes(), pay = paieTous(), ivs = ivTous(), dvs = dvTous();
+    var b = bornesCmp(), pay = paieTous(), ivs = ivTous(), dvs = dvTous();
+    window.PARTIEL = b.part || 0;
     var caP = 0, caA = 0;
     pay.forEach(function(x){ if(dans(x.d, b.d0, b.d1)) caP += x.m; else if(dans(x.d, b.p0, b.p1)) caA += x.m; });
     var ivP = ivs.filter(function(x){ return dans(x.date, b.d0, b.d1); }).length;
@@ -1581,10 +1638,14 @@ document.addEventListener("click", function(e){
   }
   function hist6(){
     var pay = paieTous(), ivs = ivTous(), dvs = dvTous();
+    /* 01/09 : si la période courante n'est pas finie, on la SORT de la courbe et on
+       montre les 6 périodes COMPLÈTES qui précèdent. Clamper 6 mois à « 1 jour »
+       aurait tué la seule chose encore lisible le 1er du mois : la tendance. */
+    var DEC = window.PARTIEL ? 1 : 0;
     var M = {"CA encaissé": [], "Interventions": [], "Devis envoyés": [], "Devis signés": [],
              "Panier moyen": [], "Délai d'encaissement": [], "Part du CA sous contrat": [],
              "Chantiers repassés sous 30 j": []};
-    for(var k = 5; k >= 0; k--){
+    for(var k = 5 + DEC; k >= DEC; k--){
       var b = bornesK(k), ca = 0;
       pay.forEach(function(x){ if(dans(x.d, b.d0, b.d1)) ca += x.m; });
       var iv = ivs.filter(function(x){ return dans(x.date, b.d0, b.d1); }).length;
@@ -1600,14 +1661,15 @@ document.addEventListener("click", function(e){
       M["Chantiers repassés sous 30 j"].push(retours(b.d0, b.d1).pc);
     }
     Object.keys(M).forEach(function(k2){ if(!M[k2].some(function(v){ return v; })) delete M[k2]; });
-    window.SPARK6 = {map: M, lbl: PERG === "an" ? "6 dernières années" : (PERG === "tri" ? "6 derniers trimestres" : "6 derniers mois")};
+    var unite = PERG === "an" ? "années" : (PERG === "tri" ? "trimestres" : "mois");
+    window.SPARK6 = {map: M, lbl: DEC ? "les 6 " + unite + " complets" : "6 derniers " + unite};
   }
 
   /* ══════════ 31/08 — « D'OU SORT CE CHIFFRE ? » ══════════
      Chaque tuile s'ouvre sur les lignes qui la composent : un chiffre qu'on ne
      peut pas ouvrir, on ne le croit pas. */
   function majDetails(){
-    var b = bornes(), D = {}, E = function(v){ return esc2(v); };
+    var b = bornesCmp(), D = {}, E = function(v){ return esc2(v); };
     var pay = paieTous().filter(function(x){ return dans(x.d, b.d0, b.d1); });
     D["CA encaissé"] = {t: "CA encaissé — le détail", note: "Chaque règlement reçu sur la période, du plus récent au plus ancien.",
       cols: ["Date", "Facture", "Client", "Mode", {t: "Montant", r: 1}],
@@ -1681,10 +1743,17 @@ document.addEventListener("click", function(e){
     window.KDET = D;
   }
   function prevLbl(){
-    if(PERG === "an") return "vs " + (MPYSEL - 1);
-    if(PERG === "tri") return "vs trimestre précédent";
-    var i = PERM === 0 ? 11 : PERM - 1, y = PERM === 0 ? MPYSEL - 1 : MPYSEL;
-    return "vs " + MOISFULL[i].toLowerCase() + " " + y;
+    var base;
+    if(window.CMPBASE === "an1"){
+      base = PERG === "an" ? "vs " + (MPYSEL - 1)
+        : (PERG === "tri" ? "vs le même trimestre " + (MPYSEL - 1) : "vs " + MOISFULL[PERM].toLowerCase() + " " + (MPYSEL - 1));
+    } else if(PERG === "an") base = "vs " + (MPYSEL - 1);
+    else if(PERG === "tri") base = "vs trimestre précédent";
+    else {
+      var i = PERM === 0 ? 11 : PERM - 1, y = PERM === 0 ? MPYSEL - 1 : MPYSEL;
+      base = "vs " + MOISFULL[i].toLowerCase() + " " + y;
+    }
+    return base + (window.PARTIEL ? " · à jour égal" : "");
   }
 
   /* ---- la répartition par nuisible RÉELLE (repeinte à chaque période) ---- */
@@ -1861,6 +1930,68 @@ document.addEventListener("click", function(e){
     box.innerHTML = h;
   }
 
+  /* ══════════ 01/09 — « CE QU'IL FAUT RETENIR » ══════════
+     La page affichait 9 chiffres et ne DISAIT rien. Le patron ouvre Rapports
+     deux minutes entre deux chantiers : il lui faut des PHRASES, et le bouton
+     qui mene a l'endroit ou on repare. Une seule regle : on n'ecrit que ce qui
+     est VRAI a la seconde ou on l'ecrit, et rien s'il n'y a rien a dire. */
+  function synthCard(){
+    var c = document.getElementById("synthc");
+    if(c) return c;
+    var pg = document.querySelector(".page");
+    if(!pg) return null;
+    pg.insertAdjacentHTML("afterbegin",
+      '<div class="card" id="synthc" style="margin-bottom:14px"><div class="card-h">Ce qu\'il faut retenir<small id="synthlbl"></small></div><div id="synthb"></div></div>');
+    return document.getElementById("synthc");
+  }
+  function synthPaint(){
+    var box = synthCard(); if(!box) return;
+    var lbl = document.getElementById("synthlbl"); if(lbl) lbl.textContent = PERLBL[PERG] || "";
+    var b = bornesCmp(), L = [];
+    /* — la ligne d'argent, toujours en tête — */
+    var ca = 0; paieTous().forEach(function(x){ if(dans(x.d, b.d0, b.d1)) ca += x.m; });
+    var nIv = ivTous().filter(function(x){ return dans(x.date, b.d0, b.d1); }).length;
+    L.push({t: "info", txt: "<b>" + eur2(ca) + "</b> encaissés sur la période" + (nIv ? ", " + nIv + " intervention" + (nIv > 1 ? "s" : "") : "")
+      + (nIv && ca ? " — panier moyen " + eur2(ca / nIv) : "") + "."});
+    /* — ce qui coince, du plus cher au moins cher — */
+    var al = [];
+    var imps = fcTous().filter(function(f){ return f.st === "attente" || f.st === "retard"; });
+    if(imps.length){
+      var mt = imps.reduce(function(sm, f){ return sm + (+f.montant || 0); }, 0);
+      var t0 = new Date(); t0.setHours(12, 0, 0, 0);
+      var vieux = 0;
+      imps.forEach(function(f){ if(!f.date) return; var j = Math.round((t0 - new Date(f.date + "T12:00:00")) / 864e5); if(j > vieux) vieux = j; });
+      al.push({p: 1, t: "al", txt: "<b>" + eur2(mt) + "</b> dorment en impayés sur " + imps.length + " facture" + (imps.length > 1 ? "s" : "")
+        + (vieux > 0 ? " — la plus vieille a <b>" + vieux + " jours</b>" : "") + ".",
+        a: {l: "Les relancer", h: "facture-liste.html"}});
+    }
+    var dvAtt = dvTous().filter(function(x){ return x.statut === "envoye"; });
+    if(dvAtt.length){
+      var mtd = dvAtt.reduce(function(sm, x){ return sm + (+x.montant || 0); }, 0);
+      if(mtd) al.push({p: 2, t: "al", txt: "<b>" + eur2(mtd) + "</b> de devis attendent une réponse (" + dvAtt.length + ").",
+        a: {l: "Voir les devis", h: "devis-liste.html"}});
+    }
+    var rt = retours(b.d0, b.d1);
+    if(rt.tot && rt.pc > 10) al.push({p: 3, t: "al", txt: "<b>" + rt.n + " chantier" + (rt.n > 1 ? "s" : "") + " sur " + rt.tot + "</b> sont repassés sous 30 jours ("
+      + rt.pc + " %) — au-dessus de la barre des 10 %. Le traitement ne tient pas.",
+      a: {l: "Voir lesquels", k: "Chantiers repassés sous 30 j"}});
+    var pr = plansRetards();
+    if(pr) al.push({p: 4, t: "al", txt: "<b>" + pr + " plan" + (pr > 1 ? "s" : "") + " d'appâtage</b> attend" + (pr > 1 ? "ent" : "") + " un relevé.",
+      a: {l: "Voir lesquels", k: "Plans d'appâtage en retard de relevé"}});
+    var ds = delaiEnc(b.d0, b.d1);
+    if(ds.n && ds.j > 45) al.push({p: 5, t: "al", txt: "Tu es payé en <b>" + ds.j + " jours</b> en moyenne. Au-delà de 45, c'est ta trésorerie qui avance l'argent.",
+      a: {l: "Voir le détail", k: "Délai d'encaissement"}});
+    al.sort(function(x, y){ return x.p - y.p; });
+    if(!al.length) L.push({t: "ok", txt: "Rien ne traîne : pas d'impayé, pas de devis en attente, pas de plan en retard."});
+    else al.slice(0, 3).forEach(function(x){ L.push(x); });
+    document.getElementById("synthb").innerHTML = L.map(function(x){
+      var act = "";
+      if(x.a && x.a.h) act = '<a class="syb" href="' + x.a.h + '">' + x.a.l + ' →</a>';
+      else if(x.a && x.a.k) act = '<button type="button" class="syb" onclick="kOpen(' + JSON.stringify(x.a.k).replace(/"/g, "&quot;") + ')">' + x.a.l + ' →</button>';
+      return '<div class="syl ' + x.t + '"><span class="sybar"></span><span class="syt">' + x.txt + '</span>' + act + '</div>';
+    }).join("");
+  }
+
   /* ---- les registres PDF passent au réel ---- */
   function majDocs(){
     var b = bornes();
@@ -1898,12 +2029,13 @@ document.addEventListener("click", function(e){
     PERS[PERG].rows = rows;
     PERS[PERG].lbl = prevLbl();
     document.getElementById("cmp-lbl").textContent = PERS[PERG].lbl;
+    var cb = document.getElementById("cbase"); if(cb) cb.hidden = false;
     hist6();          /* 31/08 : les 6 vraies périodes derrière chaque courbe */
     majDetails();     /* 31/08 : les lignes derrière chaque chiffre */
     cmpPaint(rows);   /* 31/08 : le même rendu hero+tuiles que la démo */
     document.getElementById("pseg-tri").classList.toggle("on", PERG === "tri");
     document.getElementById("pseg-an").classList.toggle("on", PERG === "an");
-    nuiPaint(); relPaint(); topPaint();
+    nuiPaint(); relPaint(); topPaint(); synthPaint();
   };
 
   /* la note du bas devient honnête */
