@@ -119,6 +119,12 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .rep .gen:hover{background:var(--orange-deep)}
 /* 31/08 : le PDF sert au controle, le CSV sert au comptable. Deux boutons, un
    seul en orange : l'orange marque l'action principale, pas la deuxieme. */
+/* ── 01/09 (audit : le registre sortait TOUS les clients dans le MÊME PDF —
+   impossible à remettre à un client sans lui montrer les autres) ── */
+.cliw{display:flex;align-items:center;gap:7px;margin-top:9px}
+.cliw span{font:700 .68rem Inter,sans-serif;color:var(--muted);flex:none}
+.cliw select{flex:1;min-width:0;max-width:280px;height:32px;border:1px solid var(--line);border-radius:9px;background:#fff;padding:0 8px;font:600 .76rem Inter,sans-serif;color:var(--ink-2);font-family:inherit;cursor:pointer}
+.cliw select:focus{outline:2px solid var(--orange);outline-offset:1px}
 .rep .genw{margin-left:auto;flex:none;align-self:center;display:flex;flex-direction:column;gap:6px}
 .rep .genw .gen{margin-left:0;width:100%}
 .csvb{padding:6px 12px;border-radius:9px;background:#fff;border:1px solid var(--line);color:var(--ink-2);font-size:.72rem;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:.13s}
@@ -159,15 +165,49 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .pstable tr:nth-child(even) td{background:#FAFBFC}
 .pstable .tot td{border-top:2px solid var(--ink);border-bottom:0;font-weight:800;font-family:'Sora'}
 .ps-foot{margin-top:20px;padding-top:12px;border-top:1px solid #EEEFF3;font-size:8.5px;color:#A6ABBB;display:flex;justify-content:space-between;gap:14px}
+/* ══ 01/09 : Ctrl+P sur la PAGE sortait une feuille blanche — la seule règle
+   d'impression masquait tout le contenu, elle ne servait qu'aux PDF du modal.
+   Deux cas maintenant : modal ouvert ⇒ on imprime la feuille ; sinon ⇒ on
+   imprime le rapport, sans le menu ni la barre du haut. ══ */
 @media print{
-  body > .app, .bottomnav, .toast{display:none!important}
-  .pmodal{position:static}
-  .pmodal .veil, .pmodal .pbar2{display:none!important}
-  .pmodal .pwin{max-width:none;max-height:none;margin:0;box-shadow:none;border-radius:0;background:#fff}
-  .pscroll{padding:0;overflow:visible}
-  .psheet{box-shadow:none;border-radius:0;padding:10mm 12mm}
-  @page{size:A4 portrait;margin:8mm}
+  .toast, .bottomnav, .gsbtn, .bell, #gsov{display:none!important}
+  /* — cas 1 : un document est ouvert, lui seul s'imprime — */
+  body.pmon > .app{display:none!important}
+  body.pmon .pmodal{position:static}
+  body.pmon .pmodal .veil, body.pmon .pmodal .pbar2{display:none!important}
+  body.pmon .pmodal .pwin{max-width:none;max-height:none;margin:0;box-shadow:none;border-radius:0;background:#fff}
+  body.pmon .pscroll{padding:0;overflow:visible}
+  body.pmon .psheet{box-shadow:none;border-radius:0;padding:10mm 12mm}
+  /* — cas 2 : la page elle-même — */
+  body:not(.pmon) .pmodal{display:none!important}
+  body:not(.pmon) .sidebar{display:none!important}
+  body:not(.pmon) .main{margin-left:0!important}
+  body:not(.pmon) .topbar{position:static!important;border:0!important;padding:0!important;display:none!important}
+  body:not(.pmon) .page{padding:0!important}
+  body:not(.pmon) #prhead{display:block!important}
+  body:not(.pmon) body, body:not(.pmon) .main{background:#fff!important}
+  /* une CARTE a le droit d'etre coupee (sinon on laisse une demi-page blanche) ;
+     ce qui ne doit JAMAIS l'etre, c'est un bloc : une tuile, une ligne, un etage. */
+  body:not(.pmon) .card{break-inside:auto;box-shadow:none!important;border:1px solid #DCDFE6!important;margin-bottom:10px!important}
+  body:not(.pmon) .card-h{break-after:avoid;page-break-after:avoid}
+  body:not(.pmon) .ktile, body:not(.pmon) .nrow, body:not(.pmon) .syl, body:not(.pmon) .tst,
+  body:not(.pmon) .dlc, body:not(.pmon) .heroK, body:not(.pmon) .pcur, body:not(.pmon) tr{break-inside:avoid;page-break-inside:avoid}
+  body:not(.pmon) .grid2{display:block!important}
+  /* la largeur A4 declenche le point de rupture telephone : on remet 2 colonnes,
+     sinon un rapport de 9 indicateurs mange trois pages pour rien */
+  body:not(.pmon) .kgrid{grid-template-columns:1fr 1fr!important}
+  body:not(.pmon) .spk{height:22px}
+  body:not(.pmon) .heroK{background:#14161B!important}
+  /* ce qui ne sert a rien sur du papier */
+  body:not(.pmon) .cbase, body:not(.pmon) .csvb, body:not(.pmon) .gen, body:not(.pmon) .genw,
+  body:not(.pmon) .cliw, body:not(.pmon) .syb, body:not(.pmon) #docgen{display:none!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4 portrait;margin:10mm}
 }
+#prhead{display:none}
+#prhead .h1{font:800 1.15rem 'Sora',sans-serif;color:var(--ink)}
+#prhead .h2{font:600 .8rem Inter,sans-serif;color:var(--muted);margin-top:3px}
+#prhead hr{border:0;border-top:1px solid #DCDFE6;margin:9px 0 13px}
 .toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -555,9 +595,10 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
   </div>
 
   <div class="page">
+    <div id="prhead"><div class="h1" id="prh1">Rapport</div><div class="h2" id="prh2"></div><hr></div>
 
     <!-- ===== DOCUMENTS À GÉNÉRER ===== -->
-    <div class="card" style="margin-bottom:14px">
+    <div class="card" id="docgen" style="margin-bottom:14px">
       <div class="card-h">Documents à générer<small>PDF prêts à envoyer ou archiver</small></div>
       <div class="repgrid">
         <div class="rep">
@@ -569,7 +610,8 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <div class="rep">
           <span class="ric" style="background:var(--blue-bg)">📋</span>
           <div><b>Registre des interventions</b>
-          <small>Historique daté par site — le document que réclament vos clients <b>HACCP</b> (restaurants, agro).</small></div>
+          <small>Historique daté par site — le document que réclament vos clients <b>HACCP</b> (restaurants, agro).</small>
+          <label class="cliw" hidden id="ivcliw"><span>Pour</span><select id="ivcli" onchange="ivCliGo(this.value)"><option value="">Tous les clients</option></select></label></div>
           <span class="genw"><button class="gen" onclick="gen('interv')">Générer</button><button class="csvb" onclick="genCSV('interv')" title="Télécharger au format tableur (Excel, Numbers)">⬇ CSV</button></span>
         </div>
         <div class="rep">
@@ -906,7 +948,7 @@ function genCSV(type){
   if(!d) return;
   var per = PERG;
   var rows = d.rows;
-  if(d.dyn) rows = PERS[per].rows.map(function(r){ return [r[0], r[1], r[2], (r[4] ? "+" : "-") + " " + r[3]]; });
+  if(d.dyn) rows = PERS[per].rows.map(function(r){ return [r[0], r[1], r[2], r[3]]; });
   var lignes = [];
   lignes.push(d.cols.map(function(c){ return csvCell(csvTxt(c)); }).join(";"));
   rows.forEach(function(r){ lignes.push(r.map(function(c){ return csvCell(csvTxt(c)); }).join(";")); });
@@ -930,7 +972,15 @@ function gen(type){
   const ou = v => v || "<span style='color:#C0362C;font-weight:800'>____</span>";
   const per = PERG;
   let rows = d.rows;
-  if(d.dyn) rows = PERS[per].rows.map(r=>[r[0], {t:r[1],r:1}, {t:r[2],r:1}, {t:(r[4]?"▲ ":"▼ ") + r[3], r:1}]);
+  /* 01/09 : le document doit lire comme l'écran — la flèche suit le SIGNE du
+     chiffre, « stable » n'en porte pas, et « — » veut dire « rien à comparer ». */
+  var evDoc = function(r){
+    if(r[3] === "—") return "—";
+    if(r[4] === 2 || r[3] === "stable") return "= stable";
+    var c = String(r[3]).charAt(0);
+    return (c === "−" || c === "-" ? "▼ " : (c === "+" ? "▲ " : "")) + r[3];
+  };
+  if(d.dyn) rows = PERS[per].rows.map(function(r){ return [r[0], {t: r[1], r: 1}, {t: r[2], r: 1}, {t: evDoc(r), r: 1}]; });
   document.getElementById("pm-title").textContent = d.titre;
   var av = document.getElementById("pm-avert");
   if(!av){
@@ -964,15 +1014,18 @@ function gen(type){
         ${d.total ? `<tr class="tot">${d.total.map(cell).join("")}</tr>` : ""}
       </tbody>
     </table></div>
+    ${typeof d.extra === "function" ? d.extra() : ""}
     <div class="ps-foot">
       <span>${SOC.nom ? SOC.nom + " — " : ""}document généré par TigerFlow</span>
       <span>Signature du responsable : ______________________</span>
     </div>`;
   document.getElementById("pmodal").classList.add("open");
+  document.body.classList.add("pmon");
   document.body.style.overflow = "hidden";
 }
 function pClose(){
   document.getElementById("pmodal").classList.remove("open");
+  document.body.classList.remove("pmon");
   document.body.style.overflow = "";
 }
 document.addEventListener("keydown", e=>{ if(e.key === "Escape") pClose(); });
@@ -1849,6 +1902,7 @@ document.addEventListener("click", function(e){
         + (totE ? '<span><b>' + pe + ' %</b> du chiffre</span>' : '')
         + '<span style="margin-left:auto">' + cnt[k] + ' intervention' + (cnt[k] > 1 ? 's' : '') + '</span></div></div>';
     }).join("");
+    window.NUIT = tri.map(function(k){ return [k, cnt[k], Math.round(cnt[k] / tot * 100), Math.round(eurN[k] || 0), totE ? Math.round((eurN[k] || 0) / totE * 100) : 0]; });
     nuiCard.querySelectorAll(".hrow, .nrow, p, .nvide").forEach(function(e){ e.remove() });
     nuiCard.insertAdjacentHTML("beforeend", html + '<p style="font-size:.76rem;color:var(--muted);margin-top:13px">Compté sur vos ' + tot + ' intervention' + (tot > 1 ? 's' : '') + ' de la période' + (Object.keys(eurN).some(function(k){ return eurN[k]; }) ? ' — la barre suit l\'ARGENT : un nuisible peut faire peu de passages et beaucoup de chiffre' : '') + '.</p>');
   }
@@ -1901,6 +1955,7 @@ document.addEventListener("click", function(e){
     var sig = env.filter(function(x){ return x.statut === "gagne"; });
     var caS = sig.reduce(function(sm, x){ return sm + (+x.montant || 0); }, 0);
     if(!vis.length && !env.length){
+      window.DVFUN = null;
       box.innerHTML = '<div class="kvide">Aucune visite ni devis sur la période choisie.</div>';
       return;
     }
@@ -1975,6 +2030,9 @@ document.addEventListener("click", function(e){
         + '</tbody></table></div>'
         + '<p style="font-size:.74rem;color:var(--muted);margin-top:11px;line-height:1.55">Le nuisible d\'un devis vient de la <b>visite du même client</b> ; à défaut, il est lu dans le titre du devis. Une visite non marquée « Visite devis » dans l\'agenda ne peut pas être comptée.</p>';
     }
+    window.DVFUN = {vis: vis.length, env: env.length, sig: sig.length, ca: caS, t1: t1, t2: t2,
+                    types: noms.map(function(k){ var o = T[k]; return [k, o.vis, o.env, o.sig, o.env ? Math.round(o.sig / o.env * 100) : 0, o.sig ? o.ca / o.sig : 0]; }),
+                    d1: m1, d2: m2, n1: dv1.length, n2: dv2.length};
     box.innerHTML = h;
   }
 
@@ -2086,6 +2144,7 @@ document.addEventListener("click", function(e){
       h += '<div style="font-size:.78rem;color:var(--muted);font-weight:600;padding:5px 0">Aucune intervention sur la période.</div>';
     } else {
       var caTot = noms.reduce(function(sm, k){ return sm + st[k].ca; }, 0);
+      window.TECT = noms.map(function(k){ var re = reT[k] || 0; return [k, st[k].n, st[k].ca, re, st[k].n ? Math.round(re / st[k].n * 100) : 0]; });
       h += '<div style="overflow-x:auto"><table class="tectab"><thead><tr><th></th><th class="r">Interv.</th>'
         + (caTot ? '<th class="r">Montant</th>' : '') + '<th class="r">Repassés</th></tr></thead><tbody>'
         + noms.map(function(k){
@@ -2110,7 +2169,8 @@ document.addEventListener("click", function(e){
     if(c) return c;
     var pg = document.querySelector(".page");
     if(!pg) return null;
-    pg.insertAdjacentHTML("afterbegin",
+    var ph = document.getElementById("prhead");
+    (ph || pg).insertAdjacentHTML(ph ? "afterend" : "afterbegin",
       '<div class="card" id="synthc" style="margin-bottom:14px"><div class="card-h">Ce qu\'il faut retenir<small id="synthlbl"></small></div><div id="synthb"></div></div>');
     return document.getElementById("synthc");
   }
@@ -2154,12 +2214,90 @@ document.addEventListener("click", function(e){
     al.sort(function(x, y){ return x.p - y.p; });
     if(!al.length) L.push({t: "ok", txt: "Rien ne traîne : pas d'impayé, pas de devis en attente, pas de plan en retard."});
     else al.slice(0, 3).forEach(function(x){ L.push(x); });
+    window.SYNTHL = L;
     document.getElementById("synthb").innerHTML = L.map(function(x){
       var act = "";
       if(x.a && x.a.h) act = '<a class="syb" href="' + x.a.h + '">' + x.a.l + ' →</a>';
       else if(x.a && x.a.k) act = '<button type="button" class="syb" onclick="kOpen(' + JSON.stringify(x.a.k).replace(/"/g, "&quot;") + ')">' + x.a.l + ' →</button>';
       return '<div class="syl ' + x.t + '"><span class="sybar"></span><span class="syt">' + x.txt + '</span>' + act + '</div>';
     }).join("");
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     01/09 (audit) — LE REGISTRE DES INTERVENTIONS SE DONNE A UN CLIENT.
+     Il sortait TOUS les clients dans le meme PDF : impossible de le remettre
+     a un restaurant pour son audit HACCP sans lui montrer les autres. Un
+     choix de client, et le PDF comme le CSV le suivent. ══════════════════ */
+  window.IVCLI = "";
+  window.ivCliGo = function(v){ window.IVCLI = v || ""; };
+  function ivCliFill(){
+    var w = document.getElementById("ivcliw"), sel = document.getElementById("ivcli");
+    if(!w || !sel) return;
+    var b = bornes(), noms = {};
+    ivTous().forEach(function(x){ if(dans(x.date, b.d0, b.d1) && x.client) noms[x.client] = 1; });
+    var L = Object.keys(noms).sort(function(a, c){ return a.localeCompare(c, "fr"); });
+    if(!L.length){ w.hidden = true; return; }
+    w.hidden = false;
+    var cur = window.IVCLI;
+    if(cur && L.indexOf(cur) < 0){ cur = ""; window.IVCLI = ""; }
+    sel.innerHTML = '<option value="">Tous les clients (usage interne)</option>'
+      + L.map(function(n){ return '<option value="' + esc2(n).replace(/"/g, "&quot;") + '"' + (n === cur ? " selected" : "") + '>' + esc2(n) + '</option>'; }).join("");
+  }
+
+  /* ══ 01/09 : LE RAPPORT D'ACTIVITE PORTE CE QUE LA PAGE SAIT ══
+     Il ne contenait que le tableau de comparaison — 7 lignes — alors que la
+     page connait la synthese, le tunnel des devis, les nuisibles et les
+     techniciens. Le document qu'on envoie ressemble enfin a l'ecran. */
+  function sect(t){ return '<h3 style="font:800 .82rem Sora,sans-serif;color:#171A20;margin:16px 0 7px">' + t + '</h3>'; }
+  function ptab(cols, rows){
+    if(!rows || !rows.length) return '<p style="font-size:9.5px;color:#5B6170">Rien à signaler sur la période.</p>';
+    return '<table class="pstable"><thead><tr>' + cols.map(hcell).join("") + '</tr></thead><tbody>'
+      + rows.map(function(r){ return "<tr>" + r.map(cell).join("") + "</tr>"; }).join("") + '</tbody></table>';
+  }
+  function actExtra(){
+    var h = "";
+    var L = window.SYNTHL || [];
+    if(L.length){
+      h += sect("Ce qu'il faut retenir")
+        + '<ul style="margin:0;padding-left:17px;font-size:10.5px;color:#2B2F38;line-height:1.75">'
+        + L.map(function(x){ return "<li>" + String(x.txt).replace(/<b>/g, "<b>").replace(/<\/b>/g, "</b>") + "</li>"; }).join("")
+        + "</ul>";
+    }
+    var F = window.DVFUN;
+    if(F && (F.vis || F.env)){
+      h += sect("Devis — de la visite à la signature")
+        + ptab(["Étape", {t: "Nombre", r: 1}, {t: "Taux", r: 1}], [
+            ["Visites de devis", {t: "" + F.vis, r: 1}, {t: "—", r: 1}],
+            ["Devis envoyés", {t: "" + F.env, r: 1}, {t: F.vis ? F.t1 + " %" : "—", r: 1}],
+            ["Devis signés" + (F.ca ? " (" + eur2(F.ca) + ")" : ""), {t: "" + F.sig, r: 1}, {t: F.env ? F.t2 + " %" : "—", r: 1}]]);
+      if(F.d1 !== null || F.d2 !== null){
+        h += '<p style="font-size:9.5px;color:#5B6170;margin-top:6px">'
+          + (F.d1 !== null ? "Délai moyen entre la visite et le devis : <b>" + F.d1 + " j</b> (sur " + F.n1 + ")." : "")
+          + (F.d2 !== null ? " Entre l'envoi et la signature : <b>" + F.d2 + " j</b> (sur " + F.n2 + ")." : "") + "</p>";
+      }
+      if(F.types && F.types.length){
+        h += sect("Par type d'intervention")
+          + ptab(["Nuisible", {t: "Visites", r: 1}, {t: "Devis", r: 1}, {t: "Signés", r: 1}, {t: "Taux", r: 1}, {t: "Panier moyen", r: 1}],
+              F.types.map(function(r){
+                return [r[0], {t: r[1] || "—", r: 1}, {t: r[2] || "—", r: 1}, {t: r[3] || "—", r: 1},
+                        {t: r[2] ? r[4] + " %" : "—", r: 1}, {t: r[5] ? eur2(r[5]) : "—", r: 1}];
+              }));
+      }
+    }
+    var N = window.NUIT;
+    if(N && N.length){
+      h += sect("Répartition par nuisible")
+        + ptab(["Nuisible", {t: "Interventions", r: 1}, {t: "% des passages", r: 1}, {t: "Chiffre", r: 1}, {t: "% du chiffre", r: 1}],
+            N.map(function(r){ return [r[0], {t: "" + r[1], r: 1}, {t: r[2] + " %", r: 1}, {t: r[3] ? eur2(r[3]) : "—", r: 1}, {t: r[3] ? r[4] + " %" : "—", r: 1}]; }));
+    }
+    var T = window.TECT;
+    if(T && T.length){
+      h += sect("Techniciens")
+        + ptab(["Technicien", {t: "Interventions", r: 1}, {t: "Montant", r: 1}, {t: "Repassés sous 30 j", r: 1}],
+            T.map(function(r){ return [r[0], {t: "" + r[1], r: 1}, {t: r[2] ? eur2(r[2]) : "—", r: 1}, {t: r[3] + (r[1] ? " · " + r[4] + " %" : ""), r: 1}]; }))
+        + '<p style="font-size:9.5px;color:#5B6170;margin-top:6px">« Repassés » : même client, même nuisible, moins de 30 jours après. Au-dessus de 10 %, le traitement ne tient pas.</p>';
+    }
+    return h;
   }
 
   /* ---- les registres PDF passent au réel ---- */
@@ -2171,7 +2309,13 @@ document.addEventListener("click", function(e){
       : [["—", "Aucune pose ni remplacement sur la période choisie", "", "", "", ""]];
     DOCS.bio.note = "Registre tenu conformément à l'obligation de traçabilité Certibiocide (art. L522-2 CE) — alimenté automatiquement par les relevés des plans d'appâtage.";
     var t0 = new Date(); t0.setHours(0, 0, 0, 0);
-    var ivs = ivTous().filter(function(x){ return dans(x.date, b.d0, b.d1); }).sort(function(a, bb){ return a.date < bb.date ? 1 : -1; });
+    var CLI = window.IVCLI || "";
+    var ivs = ivTous().filter(function(x){ return dans(x.date, b.d0, b.d1) && (!CLI || x.client === CLI); }).sort(function(a, bb){ return a.date < bb.date ? 1 : -1; });
+    DOCS.interv.titre = "Registre des interventions" + (CLI ? " — " + CLI : "");
+    DOCS.interv.note = CLI
+      ? "Historique daté des passages réalisés chez " + CLI + " sur la période — document de suivi sanitaire à joindre à son audit HACCP."
+      : "Historique des passages par site — TOUS CLIENTS CONFONDUS : usage interne. Pour remettre ce document à un client, choisissez son nom sur la carte.";
+    DOCS.activite.extra = actExtra;
     DOCS.interv.rows = ivs.length ? ivs.map(function(x){
       var st = FAIT[(x.client || "") + "|" + (x.date || "")] ? "Terminée" : (new Date(x.date + "T12:00:00") < t0 ? "En retard" : "Planifiée");
       return [fdFR(x.date), esc2(x.client + (x.site ? " — " + x.site : "")), esc2(NUIL[x.type] || x.typeLibre || "—"), esc2(x.typeLibre || NUIL[x.type] || "Intervention"), esc2(x.tech || "—"), st];
@@ -2205,7 +2349,11 @@ document.addEventListener("click", function(e){
     cmpPaint(rows);   /* 31/08 : le même rendu hero+tuiles que la démo */
     document.getElementById("pseg-tri").classList.toggle("on", PERG === "tri");
     document.getElementById("pseg-an").classList.toggle("on", PERG === "an");
-    nuiPaint(); dvPaint(); relPaint(); topPaint(); synthPaint();
+    nuiPaint(); dvPaint(); relPaint(); topPaint(); synthPaint(); ivCliFill();
+    var S0 = (typeof socGet === "function") ? socGet() : {nom: ""};
+    var h1 = document.getElementById("prh1"), h2 = document.getElementById("prh2");
+    if(h1) h1.textContent = "Rapport d'activité" + (S0.nom ? " — " + S0.nom : "");
+    if(h2) h2.textContent = (PERLBL[PERG] || "") + " · " + (PERS[PERG] ? PERS[PERG].lbl : "") + " · édité le " + new Date().toLocaleDateString("fr-FR");
   };
 
   /* la note du bas devient honnête */
