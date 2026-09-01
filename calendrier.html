@@ -3280,12 +3280,31 @@ function pjFiles(v){
    les ✕ (annulations une par une) et les clients coupés depuis leur fiche.
    Les messages suivent l'intervention : déplacée, ils glissent ; annulée ou
    terminée, ils meurent. L'envoi réel = relais serveur (note des Réglages). */
-const NTFRK = "tigerflow-notif-regles", NTFXK = "tigerflow-notif-x", NTFOFFK = "tigerflow-notif-off";
-const NTFDEF = { part: {veille: {on:1}, jourj: {on:0}}, pro: {veille: {on:1}}, syn: {veille: {on:1}} };
+/* ══ 01/09 : Réglages est passé à des MODÈLES en nombre libre (timing libre,
+   avant/après, message au technicien). L'agenda lit la MÊME boîte — sinon il
+   annoncerait des envois qui n'existent plus. Une règle, un seul endroit. ══ */
+const NTFMK = "tigerflow-notif-modeles", NTFXK = "tigerflow-notif-x", NTFOFFK = "tigerflow-notif-off";
+const NTFMDEF = [
+  {id:"m1", nom:"Rappel la veille", pub:"part", canal:"sms", on:1, n:1, u:"j", sens:"avant", h:18},
+  {id:"m2", nom:"« Le technicien arrive »", pub:"part", canal:"sms", on:0, n:0, u:"j", sens:"depart", h:8},
+  {id:"m3", nom:"E-mail de rappel", pub:"pro", canal:"mail", on:1, n:1, u:"j", sens:"avant", h:18},
+  {id:"m4", nom:"E-mail récap au gestionnaire", pub:"syn", canal:"mail", on:1, n:1, u:"j", sens:"avant", h:18},
+  {id:"m5", nom:"Ton planning de demain", pub:"tech", canal:"sms", on:0, n:1, u:"j", sens:"avant", h:18},
+  {id:"m6", nom:"Enquête de satisfaction", pub:"part", canal:"sms", on:0, n:2, u:"j", sens:"apres", h:11}
+];
 function ntfOn(){ try{ return !!localStorage.getItem("tigerflow-beta-sms"); }catch(e){ return false; } }
-function ntfRegles(){
-  try{ const v = JSON.parse(localStorage.getItem(NTFRK)); if(v && typeof v === "object") return v; }catch(e){}
-  return NTFDEF;
+function ntfModeles(){
+  try{ const v = JSON.parse(localStorage.getItem(NTFMK)); if(Array.isArray(v) && v.length) return v; }catch(e){}
+  return NTFMDEF;
+}
+/* le moment exact où le message part, calculé sur la date de l'intervention */
+function ntfQuandD(m, iso){
+  const d = new Date(iso + "T12:00:00");
+  if(m.sens === "depart") return {jourJ: true, d: d};
+  const mult = {min: 60000, h: 3600000, j: 86400000, sem: 604800000}[m.u] || 86400000;
+  const t = new Date(d.getTime() + (m.sens === "apres" ? 1 : -1) * (+m.n || 0) * mult);
+  if(m.u === "j" || m.u === "sem") t.setHours(m.h == null ? 18 : m.h, 0, 0, 0);
+  return {jourJ: false, d: t};
 }
 /* le TYPE du client décide de la bande — même clé que la fiche client. */
 function ntfPubOf(client){
@@ -3316,25 +3335,35 @@ function notifBloc(v){
   let off = false;
   try{ const o = JSON.parse(localStorage.getItem(NTFOFFK)) || {}; off = !!o[v.client]; }catch(e){}
   if(off) return head + `<div class="ntfl gris">Notifications coupées pour ce client — depuis sa fiche.</div></div>`;
-  const pub = ntfPubOf(v.client), R = ntfRegles(), rp = R[pub] || {};
+  const pub = ntfPubOf(v.client);
   const tel = String(telOf(v) || ""), mob = /^0[67]/.test(tel.replace(/\s/g, ""));
   const x = ntfXmap(), tech = TECHS[v.tech] ? TECHS[v.tech].nom : "le technicien";
-  const veille = new Date(dv); veille.setDate(veille.getDate() - 1);
-  const fdj = d => (d.getTime() === t0.getTime()) ? "part ce soir à 18 h" : "part le " + String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + " à 18 h";
+  const maintenant = new Date();
+  const fdq = q => {
+    if(q.jourJ) return "jour J, au départ de " + tech;
+    const j = new Date(q.d); j.setHours(0, 0, 0, 0);
+    const hh = String(q.d.getHours()).padStart(2, "0") + " h" + (q.d.getMinutes() ? String(q.d.getMinutes()).padStart(2, "0") : "");
+    return (j.getTime() === t0.getTime() ? "part aujourd'hui à " : "part le " + String(q.d.getDate()).padStart(2, "0") + "/" + String(q.d.getMonth() + 1).padStart(2, "0") + " à ") + hh;
+  };
   const rows = [];
-  const sms = pub === "part";
-  if(rp.veille && rp.veille.on && veille >= t0){
-    const key = v.client + "|" + v.date + "|veille";
-    if(!x[key]){
-      if(sms && mob) rows.push({k: "s", lbl: "Rappel veille 18 h", cible: telFmt(tel), quand: fdj(veille), key: key});
-      else if(sms) rows.push({gris: 1, lbl: "Rappel veille : pas de mobile (fixe " + telFmt(tel) + ") — pas de SMS"});
-      else rows.push({k: "m", lbl: pub === "syn" ? "E-mail récap au gestionnaire" : "E-mail de rappel", cible: "e-mail du client", quand: fdj(veille), key: key});
+  ntfModeles().forEach(m => {
+    if(!m.on) return;
+    if(m.pub !== pub && m.pub !== "tech") return;
+    const q = ntfQuandD(m, v.date);
+    if(!q.jourJ && q.d < maintenant) return;            /* le moment est passé */
+    const key = v.client + "|" + v.date + "|" + m.id;
+    if(x[key]) return;
+    if(m.pub === "tech"){
+      rows.push({k: m.canal === "sms" ? "s" : "m", lbl: m.nom, cible: tech, quand: fdq(q), key: key});
+      return;
     }
-  }
-  if(sms && rp.jourj && rp.jourj.on && mob){
-    const key2 = v.client + "|" + v.date + "|jourj";
-    if(!x[key2]) rows.push({k: "s", lbl: "« " + tech + " arrive »", cible: telFmt(tel), quand: "jour J, au départ de " + tech, key: key2});
-  }
+    if(m.canal === "sms"){
+      if(mob) rows.push({k: "s", lbl: m.nom, cible: telFmt(tel), quand: fdq(q), key: key});
+      else rows.push({gris: 1, lbl: m.nom + " : pas de mobile (fixe " + telFmt(tel) + ") — pas de SMS"});
+    } else {
+      rows.push({k: "m", lbl: m.nom, cible: pub === "syn" ? "e-mail du gestionnaire" : "e-mail du client", quand: fdq(q), key: key});
+    }
+  });
   if(!rows.length) return head + `<div class="ntfvide">Rien à envoyer pour cette intervention.</div></div>`;
   return head + rows.map(r => r.gris
     ? `<div class="ntfl gris">${r.lbl}</div>`

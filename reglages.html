@@ -102,6 +102,34 @@ html{background:#F7F8FA}
 .pubt.on{background:var(--orange);border-color:var(--orange);color:#fff}
 .pubt .n{font-weight:700;font-size:.76rem;opacity:.7}
 .pubt.on .n{opacity:.85}
+/* ══ 01/09 : LES MODÈLES — un bloc par message, en nombre libre ══ */
+.mod{border:1px solid var(--line);border-radius:13px;padding:12px 14px 11px;background:#fff;margin-bottom:10px;transition:.13s}
+.mod.on{border-color:#D9DDE6;box-shadow:0 1px 2px rgba(23,26,32,.05)}
+.modh{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.modck{flex:none;display:inline-flex;cursor:pointer}
+.modck input{position:absolute;opacity:0;width:0;pointer-events:none}
+.modck i{width:19px;height:19px;border-radius:6px;border:1.5px solid #C9CDD8;background:#fff;display:grid;place-items:center;transition:.13s}
+.modck:has(input:checked) i{background:#10B981;border-color:#10B981}
+.modck:has(input:checked) i::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2.2px 2.2px 0;transform:rotate(45deg);margin-top:-2px}
+.modn{flex:1;min-width:0;border:0!important;background:transparent!important;padding:2px 0!important;font:800 .84rem Inter,sans-serif!important;color:var(--ink)!important;outline:none;max-width:none!important}
+.modn:focus{border-bottom:1.5px solid var(--orange)!important;border-radius:0!important}
+.modx{flex:none;border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 9px;font:700 .68rem Inter,sans-serif;color:var(--muted);cursor:pointer;font-family:inherit}
+.modx:hover{border-color:#F3C4C0;color:#C0362C}
+.modx.arme{background:#FDECEA;border-color:#F3C4C0;color:#C0362C}
+.modt{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:9px;font:600 .74rem Inter,sans-serif;color:var(--muted)}
+.modt input[type=number]{width:58px;border:1.5px solid var(--line);border-radius:9px;padding:6px 8px;font:700 .78rem Inter,sans-serif;color:var(--ink);text-align:center;background:#fff}
+.modt select{border:1.5px solid var(--line);border-radius:9px;padding:6px 9px;font:600 .78rem Inter,sans-serif;color:var(--ink-2);background:#fff;font-family:inherit;cursor:pointer;max-width:190px}
+.modt input:focus,.modt select:focus{border-color:var(--orange);outline:none}
+.modt input[disabled],.modt select[disabled]{opacity:.45;cursor:not-allowed}
+.modt .ah{font:700 .74rem Inter,sans-serif;color:var(--muted)}
+.modo{width:100%!important;max-width:none!important;margin-bottom:7px;font-size:.76rem!important}
+.modtx{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:9px 12px;font:600 .78rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;resize:vertical;min-height:56px;box-sizing:border-box;line-height:1.55;font-family:inherit}
+.modtx:focus{border-color:var(--orange)}
+.modm{display:flex;align-items:center;gap:14px;margin-top:6px;font:700 .68rem Inter,sans-serif;color:var(--muted);flex-wrap:wrap}
+.modm b{color:var(--ink-2)}
+.modvide{font:600 .8rem Inter,sans-serif;color:var(--muted);padding:14px 2px}
+.modadd{width:100%;border:1.5px dashed #D5D9E2;background:#fff;border-radius:12px;padding:11px;font:700 .8rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit;transition:.13s}
+.modadd:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
 .lane[hidden]{display:none!important}
 /* la colonne de gauche + le téléphone */
 .ntw{display:grid;grid-template-columns:minmax(0,1fr) 316px;gap:18px;align-items:start}
@@ -994,31 +1022,15 @@ R.notifs = () => `
       <button type="button" class="pubt on" data-p="part" onclick="ntPub('part')">Particuliers <span class="n" id="nt-n-part"></span></button>
       <button type="button" class="pubt" data-p="pro" onclick="ntPub('pro')">Professionnels <span class="n" id="nt-n-pro"></span></button>
       <button type="button" class="pubt" data-p="syn" onclick="ntPub('syn')">Syndics <span class="n" id="nt-n-syn"></span></button>
+      <!-- 01/09 : Stann notifie aussi l'INTERVENANT. On n'avait rien. -->
+      <button type="button" class="pubt" data-p="tech" onclick="ntPub('tech')">Mes techniciens <span class="n" id="nt-n-tech"></span></button>
     </div>
 
     <div class="ntw">
       <div class="ntl smspan pan" id="smspan">
-
-        <div class="lane" data-p="part">
-          <label class="smsm"><input type="checkbox" id="nr-part-veille" onchange="nrSave();ntPrev()"><i></i><span class="st"><b>Rappel la veille, à 18 h</b></span><span class="sq qs">SMS</span></label>
-          <div class="nrtx"><textarea id="nrt-part-veille" rows="2" oninput="nrSave();ntPrev()"></textarea><div class="nrmeta"><span id="nrc-part-veille"></span><button type="button" class="nrvar" hidden onclick="nrVar('nrt-part-veille')">+ {lien_rdv}</button><span class="nrori" onclick="nrReset('part','veille')">texte d'origine</span></div></div>
-          <label class="smsm"><input type="checkbox" id="nr-part-jourj" onchange="nrSave();ntPrev()"><i></i><span class="st"><b>« Le technicien arrive » — jour J</b><small>Coupé par défaut : à allumer quand les techniciens auront le réflexe de l'appli.</small></span><span class="sq qs">SMS</span></label>
-          <div class="nrtx"><textarea id="nrt-part-jourj" rows="2" oninput="nrSave();ntPrev()"></textarea><div class="nrmeta"><span id="nrc-part-jourj"></span><button type="button" class="nrvar" hidden onclick="nrVar('nrt-part-jourj')">+ {lien_rdv}</button><span class="nrori" onclick="nrReset('part','jourj')">texte d'origine</span></div></div>
-        </div>
-
-        <div class="lane" data-p="pro" hidden>
-          <label class="smsm"><input type="checkbox" id="nr-pro-veille" onchange="nrSave();ntPrev()"><i></i><span class="st"><b>E-mail de rappel, la veille à 18 h</b></span><span class="sq">E-mail</span></label>
-          <div class="nrtx"><input type="text" id="nro-pro-veille" placeholder="Objet" oninput="nrSave();ntPrev()"><textarea id="nrt-pro-veille" rows="2" oninput="nrSave();ntPrev()"></textarea><div class="nrmeta"><button type="button" class="nrvar" hidden onclick="nrVar('nrt-pro-veille')">+ {lien_rdv}</button><span class="nrori" onclick="nrReset('pro','veille')">texte d'origine</span></div></div>
-        </div>
-
-        <div class="lane" data-p="syn" hidden>
-          <label class="smsm"><input type="checkbox" id="nr-syn-veille" onchange="nrSave();ntPrev()"><i></i><span class="st"><b>E-mail récap au gestionnaire, la veille à 18 h</b></span><span class="sq">E-mail</span></label>
-          <div class="nrtx"><input type="text" id="nro-syn-veille" placeholder="Objet" oninput="nrSave();ntPrev()"><textarea id="nrt-syn-veille" rows="2" oninput="nrSave();ntPrev()"></textarea><div class="nrmeta"><button type="button" class="nrvar" hidden onclick="nrVar('nrt-syn-veille')">+ {lien_rdv}</button><span class="nrori" onclick="nrReset('syn','veille')">texte d'origine</span></div></div>
-        </div>
-
+        <div id="ntlane"></div>
         <div class="ntfrule">Le texte se remplit <b>à l'envoi</b>, avec le planning du moment.</div>
       </div>
-
       <div class="ntp">
         <div id="ntprev"></div>
         <div class="pnote" id="ntpnote"></div>
@@ -1028,7 +1040,7 @@ R.notifs = () => `
     <details class="ntfaide">
       <summary>Comment ça marche<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
       <div class="ntfaidec">
-        <p><b>Les mots entre accolades</b> se remplissent tout seuls depuis chaque intervention : {client} {date} {heure} {technicien} {tel_technicien} {adresse} {site}. Avec « Reprogrammer », {lien_rdv} devient le lien court vers son créneau.</p>
+        <p><b>Les mots entre accolades</b> se remplissent tout seuls depuis chaque intervention : {client} {date} {heure} {technicien} {tel_technicien} {adresse} {site} {nuisible}. Avec « Reprogrammer », {lien_rdv} devient le lien court vers son créneau.</p>
         <p><b>Le texte se remplit à l'envoi</b>, jamais à la programmation : le message porte toujours le planning de la minute où il part.</p>
         <p><b>Les syndics ne reçoivent jamais de SMS</b> — un seul e-mail récapitulatif. Jamais de SMS non plus sur un fixe (01-09), et les messages sont regroupés par numéro et par jour.</p>
         <p><b>Annuler un message</b> : il apparaît sur l'intervention dans l'agenda, avec un ✕. Couper un client entier : sa fiche → ⋯ → « Couper les notifications ».</p>
@@ -2459,7 +2471,7 @@ function smsEtat(){
   const pan = g("smspan");
   if(pan) pan.hidden = pan.classList.contains("pan") ? false : !cfg;   /* dans Réglages : toujours lisible */
   if(g("sms-exp")) g("sms-exp").value = (cfg && cfg.exp) || "";
-  if(g("nr-part-veille")) nrEtat();
+  if(g("ntlane") && typeof modPaint === "function") modPaint();
   if(g("ntf-max")) g("ntf-max").value = gfLire();
   if(g("rpz")) rpEtat();
   ntfCout();
@@ -2562,14 +2574,7 @@ function gfSave(){
 function gfNorm(){
   var e = document.getElementById("ntf-max"); if(e) e.value = gfLire();
 }
-/* insère {lien_rdv} à la fin du texte visé, sans rien écraser */
-function nrVar(id){
-  var t = document.getElementById(id); if(!t) return;
-  if(t.value.indexOf("{lien_rdv}") > -1){ if(typeof toast === "function") toast("Il y est déjà"); return; }
-  t.value = (t.value.replace(/\s+$/, "") + " {lien_rdv}").trim();
-  nrSave();
-  t.focus();
-}
+/* (nrVar remplacée par modVar : les textes vivent dans les modèles) */
 /* ══ CE QUE ÇA AURAIT COÛTÉ LE MOIS DERNIER ══
    Calculé sur SES interventions et SES clients — on n'allume pas un envoi
    payant sans savoir. Estimation HAUTE : le prix réel dépendra du relais. */
@@ -2598,20 +2603,20 @@ function ntfCout(){
   d0.setHours(0, 0, 0, 0); d1.setHours(23, 59, 59, 0);
   var lot = ivs.filter(function(x){ var d = new Date(x.date + "T12:00:00"); return d >= d0 && d <= d1; });
   if(!lot.length){ box.innerHTML = "—"; return; }
-  var r = nrLire();
-  var actif = function(p, mo){ var o = (r[p] && r[p][mo]) || (NRDEF[p] && NRDEF[p][mo]) || {}; return !!o.on; };
+  var L = modLire().filter(function(m){ return m.on; });
+  var cnt = function(pu, ca){ return L.filter(function(m){ return m.pub === pu && m.canal === ca; }).length; };
   var nSms = 0, nMail = 0, jSyn = {};
   lot.forEach(function(x){
     var p = pubDe(x.client);
-    if(p === "part"){
-      if(actif("part", "veille")) nSms++;
-      if(actif("part", "jourj")) nSms++;
-    } else if(p === "pro"){
-      if(actif("pro", "veille")) nMail++;
-    } else {
+    if(p === "syn"){
       /* un syndic reçoit UN récap par jour, pas un par intervention */
-      if(actif("syn", "veille")) jSyn[(x.client || "") + "|" + x.date] = 1;
+      if(cnt("syn","mail")) jSyn[(x.client || "") + "|" + x.date] = 1;
+      nSms += cnt("syn","sms");
+    } else {
+      nSms += cnt(p, "sms"); nMail += cnt(p, "mail");
     }
+    /* les messages aux techniciens partent aussi, un par intervention */
+    nSms += cnt("tech","sms"); nMail += cnt("tech","mail");
   });
   nMail += Object.keys(jSyn).length;
   var eur = (nSms * PXSMS).toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -2629,19 +2634,20 @@ window.NTPUB = window.NTPUB || "part";
 function ntPub(p){
   window.NTPUB = p;
   document.querySelectorAll("#ntabs .pubt").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-p") === p); });
-  document.querySelectorAll("#smspan .lane").forEach(function(l){ l.hidden = l.getAttribute("data-p") !== p; });
+  if(typeof modPaint === "function") modPaint();
   ntPrev();
 }
 /* les compteurs des onglets : « SMS · 1 active » */
 function ntOnglets(){
-  var r = nrLire();
-  var actif = function(pu, m){ var o = (r[pu] && r[pu][m]) || (NRDEF[pu] && NRDEF[pu][m]) || {}; return o.on ? 1 : 0; };
-  var d = {part: {c: "SMS", n: actif("part","veille") + actif("part","jourj"), t: 2},
-           pro:  {c: "E-mail", n: actif("pro","veille"), t: 1},
-           syn:  {c: "E-mail", n: actif("syn","veille"), t: 1}};
-  Object.keys(d).forEach(function(k){
-    var e = document.getElementById("nt-n-" + k);
-    if(e) e.textContent = d[k].c + " · " + (d[k].n ? d[k].n + " active" + (d[k].n > 1 ? "s" : "") : "aucune");
+  var L = modLire();
+  ["part","pro","syn","tech"].forEach(function(k){
+    var e = document.getElementById("nt-n-" + k); if(!e) return;
+    var mes = L.filter(function(m){ return m.pub === k; });
+    var n = mes.filter(function(m){ return m.on; }).length;
+    var sms = mes.some(function(m){ return m.canal === "sms"; });
+    var mail = mes.some(function(m){ return m.canal === "mail"; });
+    var can = sms && mail ? "SMS + e-mail" : (mail ? "E-mail" : "SMS");
+    e.textContent = can + " · " + (n ? n + " actif" + (n > 1 ? "s" : "") : "aucun");
   });
 }
 /* ══ L'APERÇU : le message tel que le client le reçoit ══
@@ -2649,6 +2655,8 @@ function ntOnglets(){
    public affiché, sinon la plus récente). Ce qui n'existe pas encore dans le
    logiciel — le numéro direct du technicien — reste écrit en clair et en gris :
    on ne remplace pas un trou par un chiffre inventé. */
+var NUIL2 = {rongeur:"Rongeurs", cafard:"Cafards", punaise:"Punaises de lit", guepe:"Guêpes / frelons",
+             chenille:"Chenilles", pigeon:"Pigeons", desinf:"Désinfection", fourmi:"Fourmis"};
 function ntEx(pub){
   var ivs = [];
   try{ ivs = (JSON.parse(localStorage.getItem("tigerflow-inbox-interventions")) || [])
@@ -2661,6 +2669,7 @@ function ntEx(pub){
   var x = futur[0] || ivs.sort(function(a,b){ return a.date < b.date ? 1 : -1; })[0];
   var t = x.date.split("-");
   return {client: x.client, date: t[2] + "/" + t[1], heure: x.h != null ? (x.h + " h") : (x.heure || ""),
+          nuisible: NUIL2[x.type] || x.typeLibre || "",
           tech: x.tech || "", adresse: [x.rue, x.cp, x.ville].filter(Boolean).join(" "),
           site: x.site || x.client, reel: true};
 }
@@ -2670,7 +2679,8 @@ function ntRemplir(txt, ex){
   var lien = (rpLire() === "reprog") ? '<span class="lnk">tgf.fr/r/' + (ex ? "8Kq2" : "····") + '</span>' : trou("lien_rdv");
   var V = {
     client: ex && ex.client, date: ex && ex.date, heure: ex && ex.heure,
-    technicien: ex && ex.tech, adresse: ex && ex.adresse, site: ex && ex.site
+    technicien: ex && ex.tech, adresse: ex && ex.adresse, site: ex && ex.site,
+    nuisible: ex && ex.nuisible
   };
   return esc(txt).replace(/\{(\w+)\}/g, function(m, k){
     if(k === "lien_rdv") return lien;
@@ -2688,87 +2698,181 @@ function ntSoc(){
 function ntPrev(){
   var box = document.getElementById("ntprev"); if(!box) return;
   var note = document.getElementById("ntpnote");
-  var pub = window.NTPUB || "part", r = nrLire();
-  var lignes = pub === "part" ? [["part","veille"],["part","jourj"]] : [[pub,"veille"]];
-  var choisie = null;
-  lignes.forEach(function(c){
-    if(choisie) return;
-    var o = (r[c[0]] && r[c[0]][c[1]]) || (NRDEF[c[0]] && NRDEF[c[0]][c[1]]) || {};
-    if(o.on) choisie = {p: c[0], m: c[1], o: o};
-  });
-  if(!choisie){ var c0 = lignes[0]; choisie = {p: c0[0], m: c0[1], o: (r[c0[0]] && r[c0[0]][c0[1]]) || {}}; }
-  var ex = ntEx(pub);
-  var corps = ntRemplir(choisie.o.t || "", ex);
-  if(pub === "part"){
+  var pub = window.NTPUB || "part";
+  var mes = modLire().filter(function(m){ return m.pub === pub; });
+  var choisi = mes.filter(function(m){ return m.on; })[0] || mes[0];
+  if(!choisi){ box.innerHTML = ""; if(note) note.textContent = ""; ntOnglets(); return; }
+  var ex = ntEx(pub === "tech" ? "part" : pub);
+  var corps = ntRemplir(choisi.t || "", ex);
+  if(choisi.canal === "sms"){
     var exp = "";
     try{ var e0 = document.getElementById("sms-exp"); exp = (e0 && e0.value) || (smsLire() || {}).exp || ""; }catch(e){}
     exp = exp || "AntiNuisibl";
     box.innerHTML = '<div class="fone"><div class="fscr">'
       + '<div class="fbar"><span class="av">' + exp.slice(0,2).toUpperCase() + '</span><b>' + exp.replace(/</g,"&lt;") + '</b></div>'
-      + '<div class="fmsg"><div class="fday">' + (choisie.m === "jourj" ? "Le jour même" : "La veille, 18:00") + '</div>'
+      + '<div class="fmsg"><div class="fday">' + modQuand(choisi) + '</div>'
       + '<div class="bulle">' + (corps || '<span class="vide">Votre texte apparaîtra ici.</span>') + '</div></div>'
       + '</div></div>';
   } else {
     box.innerHTML = '<div class="mail">'
       + '<div class="mailh"><div class="de">De : ' + ntSoc().replace(/</g,"&lt;") + '</div>'
-      + '<div class="ob">' + (ntRemplir(choisie.o.obj || "", ex) || '<span class="vide">Objet</span>') + '</div></div>'
+      + '<div class="ob">' + (ntRemplir(choisi.obj || "", ex) || '<span class="vide">Objet</span>') + '</div></div>'
       + '<div class="mailb">' + (corps || '<span class="vide">Votre texte apparaîtra ici.</span>') + '</div></div>';
   }
-  if(note) note.innerHTML = ex
-    ? "Aperçu sur une vraie intervention : <b>" + String(ex.client).replace(/</g,"&lt;") + "</b>."
-    : "Aucune intervention pour ce public — les mots entre accolades restent affichés.";
+  if(note) note.innerHTML = (ex ? "Aperçu sur une vraie intervention : <b>" + String(ex.client).replace(/</g,"&lt;") + "</b>. " : "Aucune intervention à montrer — les mots entre accolades restent affichés. ")
+    + "<b>« " + String(choisi.nom || "").replace(/</g,"&lt;") + " »</b> — " + modQuand(choisi) + ".";
   ntOnglets();
 }
 
-const NRDEF = {
-  part: { veille: {on:1, t:"Bonjour {client}, Agence Antinuisible passe demain à {heure}. Votre technicien : {technicien} — {tel_technicien}. Un empêchement ? 01 89 72 43 96."},
-          jourj:  {on:0, t:"{technicien} est en route pour {adresse}. Son numéro direct : {tel_technicien}."} },
-  pro:  { veille: {on:1, obj:"Passage Agence Antinuisible demain {date} à {heure} — {site}", t:"Le technicien {technicien} interviendra sur {site} ({adresse}). Contact direct : {tel_technicien}. Merci de prévoir l'accès aux locaux."} },
-  syn:  { veille: {on:1, obj:"Vos interventions de demain {date}", t:"La liste des passages prévus dans vos immeubles, avec créneau, technicien et nature de l'intervention."} }
-};
-const NRLIGNES = [["part","veille"],["part","jourj"],["pro","veille"],["syn","veille"]];
-function nrLire(){
-  try{ const v = JSON.parse(localStorage.getItem(NRKEY)); if(v && typeof v === "object") return v; }catch(e){}
-  return JSON.parse(JSON.stringify(NRDEF));
+/* ══════════════════════════════════════════════════════════════════════
+   01/09 — LE MOTEUR DE MESSAGES (le patron a montré comment Stann fait).
+   Ce qu'ils avaient et pas nous : un TIMING LIBRE (n minutes/heures/jours/
+   semaines, AVANT ou APRÈS), des MODÈLES en nombre libre qu'on nomme, et le
+   message à l'INTERVENANT. Ce qu'on garde et qu'ils n'ont pas : la règle
+   lit le TYPE du client — on ne coche pas contact par contact.
+   L'ancienne boîte `tigerflow-notif-regles` est MIGRÉE, pas jetée : ses
+   textes et ses cases cochées deviennent les quatre premiers modèles.
+   ══════════════════════════════════════════════════════════════════════ */
+const MODKEY = "tigerflow-notif-modeles";
+const UNI = {min:"minutes", h:"heures", j:"jours", sem:"semaines"};
+const PUBL = {part:"Particuliers", pro:"Professionnels", syn:"Syndics", tech:"Mes techniciens"};
+const MODDEF = [
+  {id:"m1", nom:"Rappel la veille", pub:"part", canal:"sms", on:1, n:1, u:"j", sens:"avant", h:18, def:1,
+   t:"Bonjour {client}, Agence Antinuisible passe demain à {heure}. Votre technicien : {technicien} — {tel_technicien}. Un empêchement ? 01 89 72 43 96."},
+  {id:"m2", nom:"« Le technicien arrive »", pub:"part", canal:"sms", on:0, n:0, u:"j", sens:"depart", h:8, def:1,
+   t:"{technicien} est en route pour {adresse}. Son numéro direct : {tel_technicien}."},
+  {id:"m3", nom:"E-mail de rappel", pub:"pro", canal:"mail", on:1, n:1, u:"j", sens:"avant", h:18, def:1,
+   obj:"Passage Agence Antinuisible demain {date} à {heure} — {site}",
+   t:"Le technicien {technicien} interviendra sur {site} ({adresse}). Contact direct : {tel_technicien}. Merci de prévoir l'accès aux locaux."},
+  {id:"m4", nom:"E-mail récap au gestionnaire", pub:"syn", canal:"mail", on:1, n:1, u:"j", sens:"avant", h:18, def:1,
+   obj:"Vos interventions de demain {date}",
+   t:"La liste des passages prévus dans vos immeubles, avec créneau, technicien et nature de l'intervention."},
+  {id:"m5", nom:"Ton planning de demain", pub:"tech", canal:"sms", on:0, n:1, u:"j", sens:"avant", h:18, def:1,
+   t:"Demain {date} : {client} à {heure}, {adresse}. Nuisible : {nuisible}."},
+  {id:"m6", nom:"Enquête de satisfaction", pub:"part", canal:"sms", on:0, n:2, u:"j", sens:"apres", h:11, def:1,
+   t:"Bonjour {client}, tout va bien depuis notre passage du {date} ? Répondez à ce message, on vous rappelle."}
+];
+function modEcrire(L){ try{ localStorage.setItem(MODKEY, JSON.stringify(L)); }catch(e){} }
+function modLire(){
+  try{ var v = JSON.parse(localStorage.getItem(MODKEY)); if(Array.isArray(v) && v.length) return v; }catch(e){}
+  return modMigrer();
 }
-function nrEtat(){
-  const r = nrLire(), g = id => document.getElementById(id);
-  NRLIGNES.forEach(([p, m]) => {
-    const row = (r[p] && r[p][m]) || (NRDEF[p] && NRDEF[p][m]) || {};
-    if(g("nr-" + p + "-" + m)) g("nr-" + p + "-" + m).checked = !!row.on;
-    if(g("nrt-" + p + "-" + m)) g("nrt-" + p + "-" + m).value = row.t != null ? row.t : "";
-    if(g("nro-" + p + "-" + m)) g("nro-" + p + "-" + m).value = row.obj != null ? row.obj : "";
+/* ── la migration : SES textes et SES cases survivent au changement de moteur ── */
+function modMigrer(){
+  var r = {};
+  try{ r = JSON.parse(localStorage.getItem("tigerflow-notif-regles")) || {}; }catch(e){}
+  var L = JSON.parse(JSON.stringify(MODDEF));
+  var carte = {m1:["part","veille"], m2:["part","jourj"], m3:["pro","veille"], m4:["syn","veille"]};
+  L.forEach(function(m){
+    var k = carte[m.id]; if(!k) return;
+    var o = r[k[0]] && r[k[0]][k[1]]; if(!o) return;
+    if(o.t != null && o.t !== "") m.t = o.t;
+    if(o.obj != null && o.obj !== "") m.obj = o.obj;
+    m.on = o.on ? 1 : 0;
   });
-  nrCnt();
+  modEcrire(L);
+  return L;
 }
-function nrSave(){
-  const r = nrLire(), g = id => document.getElementById(id);
-  NRLIGNES.forEach(([p, m]) => {
-    if(!r[p]) r[p] = {};
-    if(!r[p][m]) r[p][m] = {};
-    if(g("nr-" + p + "-" + m)) r[p][m].on = g("nr-" + p + "-" + m).checked ? 1 : 0;
-    if(g("nrt-" + p + "-" + m)) r[p][m].t = g("nrt-" + p + "-" + m).value;
-    if(g("nro-" + p + "-" + m)) r[p][m].obj = g("nro-" + p + "-" + m).value;
-  });
-  try{ localStorage.setItem(NRKEY, JSON.stringify(r)); }catch(e){}
-  nrCnt();
+function modDe(id){ var L = modLire(); for(var i=0;i<L.length;i++) if(L[i].id === id) return L[i]; return null; }
+function modMaj(id, ch){
+  var L = modLire();
+  for(var i=0;i<L.length;i++) if(L[i].id === id){ Object.keys(ch).forEach(function(k){ L[i][k] = ch[k]; }); }
+  modEcrire(L);
 }
-/* le compteur dit le VRAI coût : 160 caractères = 1 SMS, ensuite 153 par SMS. */
-function nrCnt(){
-  const g = id => document.getElementById(id);
-  ["part-veille", "part-jourj"].forEach(k => {
-    const ta = g("nrt-" + k), e = g("nrc-" + k);
-    if(!ta || !e) return;
-    const n = ta.value.length, seg = n <= 160 ? 1 : Math.ceil(n / 153);
-    e.innerHTML = "<b>" + n + " / " + (seg === 1 ? 160 : seg * 153) + "</b> · " + seg + " SMS · " + (seg * 0.08).toFixed(2).replace(".", ",") + " €";
-  });
+/* la phrase qui dit QUAND, en clair */
+function modQuand(m){
+  if(m.sens === "depart") return "au départ du technicien, le jour J";
+  var heure = (m.u === "j" || m.u === "sem") ? ", à " + (m.h == null ? 18 : m.h) + " h" : "";
+  if(!+m.n) return "le jour même" + heure;
+  var n = +m.n, u = UNI[m.u];
+  if(n === 1) u = {min:"minute", h:"heure", j:"jour", sem:"semaine"}[m.u] || u;
+  return n + " " + u + " " + (m.sens === "apres" ? "après" : "avant") + heure;
 }
-function nrReset(p, m){
-  const g = id => document.getElementById(id), d = (NRDEF[p] && NRDEF[p][m]) || {};
-  if(g("nrt-" + p + "-" + m)) g("nrt-" + p + "-" + m).value = d.t || "";
-  if(g("nro-" + p + "-" + m)) g("nro-" + p + "-" + m).value = d.obj || "";
-  nrSave();
+/* ── LE RENDU DES MODÈLES DU PUBLIC AFFICHÉ ── */
+function modPaint(){
+  var box = document.getElementById("ntlane"); if(!box) return;
+  var pub = window.NTPUB || "part";
+  var L = modLire().filter(function(m){ return m.pub === pub; });
+  var esc = function(v){ return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); };
+  box.innerHTML = (L.length ? L.map(function(m){
+    var sms = m.canal === "sms";
+    return '<div class="mod' + (m.on ? " on" : "") + '" data-id="' + m.id + '">'
+      + '<div class="modh">'
+      +   '<label class="modck"><input type="checkbox" ' + (m.on ? "checked" : "") + ' onchange="modOn(\'' + m.id + '\',this.checked)"><i></i></label>'
+      +   '<input class="modn" type="text" value="' + esc(m.nom) + '" oninput="modMaj(\'' + m.id + '\',{nom:this.value})" placeholder="Nom du message">'
+      +   '<span class="sq' + (sms ? " qs" : "") + '">' + (sms ? "SMS" : "E-mail") + '</span>'
+      +   (m.def ? '' : '<button type="button" class="modx" title="Supprimer ce message" onclick="modDel(\'' + m.id + '\',this)">✕</button>')
+      + '</div>'
+      + '<div class="modt">'
+      +   '<span>Envoyer</span>'
+      +   '<input type="number" min="0" max="99" value="' + (+m.n || 0) + '" onchange="modMaj(\'' + m.id + '\',{n:+this.value||0});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
+      +   '<select onchange="modMaj(\'' + m.id + '\',{u:this.value});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
+      +     Object.keys(UNI).map(function(u){ return '<option value="' + u + '"' + (m.u === u ? " selected" : "") + '>' + UNI[u] + '</option>'; }).join("")
+      +   '</select>'
+      +   '<select onchange="modMaj(\'' + m.id + '\',{sens:this.value});modPaint();ntPrev()">'
+      +     '<option value="avant"' + (m.sens === "avant" ? " selected" : "") + '>avant l\'intervention</option>'
+      +     '<option value="apres"' + (m.sens === "apres" ? " selected" : "") + '>après l\'intervention</option>'
+      +     '<option value="depart"' + (m.sens === "depart" ? " selected" : "") + '>au départ du technicien</option>'
+      +   '</select>'
+      +   ((m.u === "j" || m.u === "sem") && m.sens !== "depart"
+        ? '<span class="ah">à</span><input type="number" min="0" max="23" value="' + (m.h == null ? 18 : m.h) + '" onchange="modMaj(\'' + m.id + '\',{h:Math.max(0,Math.min(23,+this.value||0))});modPaint()"><span class="ah">h</span>'
+        : '')
+      + '</div>'
+      + (sms ? '' : '<input class="modo" type="text" placeholder="Objet de l\'e-mail" value="' + esc(m.obj || "") + '" oninput="modMaj(\'' + m.id + '\',{obj:this.value});ntPrev()">')
+      + '<textarea class="modtx" rows="2" oninput="modMaj(\'' + m.id + '\',{t:this.value});modCnt(\'' + m.id + '\');ntPrev()">' + esc(m.t || "") + '</textarea>'
+      + '<div class="modm"><span id="mc-' + m.id + '"></span>'
+      +   '<button type="button" class="nrvar" hidden onclick="modVar(\'' + m.id + '\')">+ {lien_rdv}</button>'
+      +   (m.def ? '<span class="nrori" onclick="modReset(\'' + m.id + '\')">texte d\'origine</span>' : '')
+      + '</div></div>';
+  }).join("") : '<div class="modvide">Aucun message pour ce public. Ajoutez-en un.</div>')
+  + '<button type="button" class="modadd" onclick="modAdd()">+ Ajouter un message</button>';
+  L.forEach(function(m){ modCnt(m.id); });
+  if(typeof rpEtat === "function") document.querySelectorAll("#ntlane .nrvar").forEach(function(b){ b.hidden = rpLire() !== "reprog"; });
+}
+function modOn(id, v){ modMaj(id, {on: v ? 1 : 0}); modPaint(); ntOnglets(); ntPrev(); }
+function modAdd(){
+  var pub = window.NTPUB || "part";
+  var L = modLire();
+  var id = "u" + Date.now().toString(36);
+  L.push({id: id, nom: "Nouveau message", pub: pub, canal: (pub === "part" || pub === "tech") ? "sms" : "mail",
+          on: 0, n: 1, u: "j", sens: "avant", h: 18, obj: "", t: ""});
+  modEcrire(L); modPaint(); ntOnglets();
+  var e = document.querySelector('#ntlane .mod[data-id="' + id + '"] .modn');
+  if(e){ e.focus(); e.select(); }
+  if(typeof toast === "function") toast("Message ajouté — il est coupé tant que vous ne l'allumez pas");
+}
+function modDel(id, btn){
+  if(btn && !btn.classList.contains("arme")){
+    btn.classList.add("arme"); btn.textContent = "Supprimer ?";
+    setTimeout(function(){ if(btn){ btn.classList.remove("arme"); btn.textContent = "✕"; } }, 2800);
+    return;
+  }
+  var L = modLire().filter(function(m){ return m.id !== id; });
+  modEcrire(L); modPaint(); ntOnglets(); ntPrev();
+  if(typeof toast === "function") toast("Message supprimé");
+}
+function modReset(id){
+  var d = null;
+  for(var i=0;i<MODDEF.length;i++) if(MODDEF[i].id === id) d = MODDEF[i];
+  if(!d) return;
+  modMaj(id, {t: d.t, obj: d.obj || "", nom: d.nom});
+  modPaint(); ntPrev();
   if(typeof toast === "function") toast("Texte d'origine restauré");
+}
+function modVar(id){
+  var m = modDe(id); if(!m) return;
+  if((m.t || "").indexOf("{lien_rdv}") > -1){ if(typeof toast === "function") toast("Il y est déjà"); return; }
+  modMaj(id, {t: ((m.t || "").replace(/\s+$/, "") + " {lien_rdv}").trim()});
+  modPaint(); ntPrev();
+}
+/* le compteur dit le VRAI coût : 160 caractères = 1 SMS, ensuite 153 par SMS */
+function modCnt(id){
+  var m = modDe(id), e = document.getElementById("mc-" + id);
+  if(!m || !e) return;
+  if(m.canal !== "sms"){ e.textContent = modQuand(m); return; }
+  var n = (m.t || "").length, seg = n <= 160 ? 1 : Math.ceil(n / 153);
+  e.innerHTML = "<b>" + n + " / " + (seg === 1 ? 160 : seg * 153) + "</b> · " + seg + " SMS · "
+    + (seg * 0.08).toFixed(2).replace(".", ",") + " € · " + modQuand(m);
 }
 </script>
 <script>
