@@ -161,6 +161,9 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .st-actif{background:var(--green-bg);color:var(--green-d)}
 .st-retard{background:var(--red-bg);color:var(--red)}
+/* 01/09 : « À jour » est la NORME — on colore l'exception, pas la règle.
+   Vert très pâle, encre sobre : il se lit, il ne tire pas l'œil. */
+.st-ok{background:#F2F4F7;color:#6B7280}
 .st-attente{background:var(--amber-bg);color:var(--amber)}
 .st-inactif{background:#F1F2F5;color:var(--muted)}
 .empty{padding:34px;text-align:center;color:var(--muted);font-size:.9rem}
@@ -538,6 +541,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
           <th class="num">Contrats</th>
           <th class="sort num" onclick="sortCA()">CA total <span class="arr" id="arr" title="Ordre d'ajout — les derniers créés en tête">↕</span></th>
           <th class="num">À encaisser</th>
+          <th title="Ce que le client doit — indépendant du fait qu'il soit actif ou non">Paiement</th>
           <th>Source</th>
           <th style="text-align:right;padding-right:18px">Actions</th>
         </tr></thead>
@@ -726,6 +730,20 @@ const CLIENTS = [
   {nom:"M. Diallo",            ville:"Saint-Ouen",   cp:"93400", type:"Particulier", nb:0, ca:390,   due:0,    st:"actif",   tel:"0661482935", mail:"m.diallo93@gmail.com", source:"Facebook Ads", cree:"2026-01-20"},
 ];
 const STL = {actif:["st-actif","Actif"], retard:["st-retard","En retard"], attente:["st-attente","En attente"], inactif:["st-inactif","Inactif"]};
+/* ══ 01/09 (patron, d'après la maquette Saigon : « ajoute le statut client là,
+   avant source ») — LA COLONNE STATUT MELANGEAIT DEUX CHOSES.
+   « Actif / Inactif » dit si la relation vit ; « En attente / En retard » dit
+   où en est l'ARGENT (le graphe de la page l'écrit noir sur blanc : "retard"
+   = « Retard de paiement »). Un client peut être ACTIF **et** en retard : chez
+   nous il ne pouvait afficher qu'un des deux, l'autre disparaissait.
+   Les deux colonnes se DERIVENT du même c.st : aucune donnée à migrer,
+   le filtre Statut existant continue de marcher tel quel. ══ */
+const REL = c => (c.st === "inactif") ? ["st-inactif","Inactif"] : ["st-actif","Actif"];
+const PAY = function(c){
+  if(c.st === "retard")  return ["st-retard","En retard"];
+  if(c.st === "attente" || (+c.dueV || +c.due || 0) > 0) return ["st-attente","En attente"];
+  return ["st-ok","À jour"];
+};
 /* 27/07 : la liste etait TOUJOURS triee par CA decroissant. Un client qu'on
    vient de creer a un CA nul : il partait donc systematiquement en derniere
    position, alors que le code prend bien soin de l'inserer en tete. Le tri est
@@ -842,10 +860,11 @@ function render(){
     return `<tr onclick="location.href='client.html?c='+encodeURIComponent('${c.nom.replace(/'/g,"\\'")}')" title="Ouvrir la fiche client">
       <td><span class="cl"><span><b>${c.nom}</b><small>${c.cp} · ${c.ville}</small></span></span></td>
       <td><span class="typ ${tk}">${c.type}</span></td>
-      <td><span class="st ${cls}">${lbl}</span></td>
+      <td><span class="st ${REL(c)[0]}">${REL(c)[1]}</span></td>
       <td class="num">${c.nb || "—"}</td>
       <td class="amt num">${euro(c.caV)}</td>
       <td class="num ${c.dueV ? "due" : "due zero"}">${c.dueV ? euro(c.dueV) : "—"}</td>
+      <td><span class="st ${PAY(c)[0]}">${PAY(c)[1]}</span></td>
       <td class="srcd" title="Source du client">${c.source || "—"}</td>
       <td class="acts" onclick="event.stopPropagation()">
         <span class="rowact">
@@ -863,8 +882,8 @@ function render(){
 function exportCSV(){
   const list = window._LIST || CLIENTS;
   const esc = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-  const rows = [["Nom","Type","Source","Code postal","Ville","Téléphone","E-mail","Contrats","CA total (€)","À encaisser (€)","Statut"]]
-    .concat(list.map(c => [c.nom, c.type, c.source || "", c.cp, c.ville, c.tel || "", c.mail || "", c.nb || 0, (c.caV != null ? c.caV : c.ca) || 0, (c.dueV != null ? c.dueV : c.due) || 0, (STL[c.st] || ["", c.st])[1]]));
+  const rows = [["Nom","Type","Source","Code postal","Ville","Téléphone","E-mail","Contrats","CA total (€)","À encaisser (€)","Statut","Paiement"]]
+    .concat(list.map(c => [c.nom, c.type, c.source || "", c.cp, c.ville, c.tel || "", c.mail || "", c.nb || 0, (c.caV != null ? c.caV : c.ca) || 0, (c.dueV != null ? c.dueV : c.due) || 0, REL(c)[1], PAY(c)[1]]));
   const csv = "\ufeff" + rows.map(r => r.map(esc).join(";")).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
