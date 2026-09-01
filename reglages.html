@@ -127,6 +127,35 @@ html{background:#F7F8FA}
 .modtx:focus{border-color:var(--orange)}
 .modm{display:flex;align-items:center;gap:14px;margin-top:6px;font:700 .68rem Inter,sans-serif;color:var(--muted);flex-wrap:wrap}
 .modm b{color:var(--ink-2)}
+/* le moment : UNE pastille qui dit quand, le choix s'ouvre au clic */
+.momsel{position:relative;display:inline-block;margin-bottom:9px}
+.momsel summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:6px 11px;font:700 .74rem Inter,sans-serif;color:var(--ink-2);transition:.12s}
+.momsel summary::-webkit-details-marker{display:none}
+.momsel summary:hover{border-color:#D5D8DF}
+.momsel[open] summary{border-color:var(--orange);color:var(--orange-deep)}
+.momsel summary svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .16s;opacity:.6}
+.momsel[open] summary svg{transform:rotate(180deg)}
+.mommenu{position:absolute;left:0;top:36px;z-index:40;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 14px 34px -14px rgba(16,19,24,.3);padding:5px;min-width:212px;display:grid;gap:2px}
+.mommenu button{border:0;background:none;text-align:left;padding:8px 10px;border-radius:8px;font:600 .78rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit}
+.mommenu button:hover{background:#F5F6F9}
+.mommenu button.on{background:var(--orange-soft);color:var(--orange-deep);font-weight:800}
+/* les actions rares vivent dans le ⋯ */
+.modplus{position:relative;flex:none}
+.modplus summary{list-style:none;cursor:pointer;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--muted);font:800 .9rem Inter,sans-serif;letter-spacing:1px}
+.modplus summary::-webkit-details-marker{display:none}
+.modplus summary:hover{background:#F3F4F8;color:var(--ink-2)}
+.modmenu{position:absolute;right:0;top:32px;z-index:40;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 14px 34px -14px rgba(16,19,24,.3);padding:5px;min-width:196px;display:grid;gap:2px}
+.modmenu button{border:0;background:none;text-align:left;padding:8px 10px;border-radius:8px;font:600 .78rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit}
+.modmenu button:hover{background:#F5F6F9}
+.modmenu button.sup{color:#C0362C}
+.modmenu button.sup:hover{background:#FDECEA}
+.modmenu button.arme{background:#FDECEA;color:#C0362C;font-weight:800}
+/* le repli des réglages d'envoi */
+.envw{display:grid;gap:16px;max-width:420px}
+.shint2{font:600 .7rem Inter,sans-serif;color:var(--muted);margin-top:5px}
+.envw input[type=text]{width:100%;max-width:260px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font:700 .82rem Inter,sans-serif;color:var(--ink);background:#fff}
+.envw input[type=text]:focus{border-color:var(--orange);outline:none}
+.envw input.err{border-color:#D63B33;background:#FFF6F6}
 .modvide{font:600 .8rem Inter,sans-serif;color:var(--muted);padding:14px 2px}
 .modadd{width:100%;border:1.5px dashed #D5D9E2;background:#fff;border-radius:12px;padding:11px;font:700 .8rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit;transition:.13s}
 .modadd:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
@@ -1001,21 +1030,6 @@ R.notifs = () => `
         <span><em>État</em><b id="ntf-etat">Coupées</b></span>
       </label>
       <div class="ntt"><em>Le mois dernier</em><b id="ntf-cout">—</b></div>
-      <div class="ntt"><em>Nom sur le téléphone</em>
-        <input type="text" id="sms-exp" maxlength="11" placeholder="AntiNuisibl" oninput="smsExpSave();ntPrev()"></div>
-      <div class="ntt"><em>Garde-fou</em>
-        <span class="gfl"><input type="number" id="ntf-max" min="1" max="999" step="1" oninput="gfSave()" onblur="gfNorm()"><i>msg / jour</i></span></div>
-    </div>
-    <div class="sherr" id="sms-err">Les opérateurs français bloquent les espaces, les accents et les caractères spéciaux. Évitez aussi les mots trop génériques (« SMS », « Info »), filtrés eux aussi.</div>
-
-    <div class="ntq">
-      <span class="lab2">Ce qu'on demande au client</span>
-      <div class="rpz" id="rpz">
-        <button type="button" data-r="rien" onclick="rpSet('rien')">Rien — on informe</button>
-        <button type="button" data-r="confirmer" onclick="rpSet('confirmer')">Confirmer</button>
-        <button type="button" data-r="reprog" onclick="rpSet('reprog')">Reprogrammer</button>
-      </div>
-      <div class="shint" id="rphint"></div>
     </div>
 
     <div class="pubtabs" id="ntabs">
@@ -1036,6 +1050,18 @@ R.notifs = () => `
         <div class="pnote" id="ntpnote"></div>
       </div>
     </div>
+
+    <details class="ntfaide">
+      <summary>Réglages d'envoi<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
+      <div class="ntfaidec envw">
+        <div><span class="lab2">Nom qui s'affiche sur le téléphone du client</span>
+          <input type="text" id="sms-exp" maxlength="11" placeholder="AntiNuisibl" oninput="smsExpSave();ntPrev()">
+          <div class="shint2">11 caractères, sans espace ni accent.</div>
+          <div class="sherr" id="sms-err">Les opérateurs français bloquent les espaces, les accents et les caractères spéciaux. Évitez aussi les mots trop génériques (« SMS », « Info »), filtrés eux aussi.</div></div>
+        <div><span class="lab2">Garde-fou</span>
+          <span class="gfl"><input type="number" id="ntf-max" min="1" max="999" step="1" oninput="gfSave()" onblur="gfNorm()"><i>messages par jour au maximum</i></span></div>
+      </div>
+    </details>
 
     <details class="ntfaide">
       <summary>Comment ça marche<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>
@@ -2473,7 +2499,6 @@ function smsEtat(){
   if(g("sms-exp")) g("sms-exp").value = (cfg && cfg.exp) || "";
   if(g("ntlane") && typeof modPaint === "function") modPaint();
   if(g("ntf-max")) g("ntf-max").value = gfLire();
-  if(g("rpz")) rpEtat();
   ntfCout();
   if(g("ntabs")) ntPub(window.NTPUB || "part");
 }
@@ -2538,27 +2563,12 @@ const NRKEY = "tigerflow-notif-regles";
    ③ Rien ne disait QUAND le texte se remplit — un changement de technicien
       le matin même envoyait le mauvais numéro. C'est écrit, à l'envoi.
    ══════════════════════════════════════════════════════════════════════ */
-const RPKEY = "tigerflow-notif-reponse", GFKEY = "tigerflow-notif-garde";
-const RPTXT = {
-  rien: "Vous ne saurez pas si la porte sera ouverte.",
-  confirmer: "Il répond <b>OUI</b> par SMS, ou clique <b>Confirmer</b> dans l'e-mail. Recevoir des SMS coûte plus cher et demande un traitement des réponses.",
-  reprog: "Le client déplace son créneau lui-même. Glissez <b>{lien_rdv}</b> dans vos textes."
-};
-function rpLire(){ try{ return localStorage.getItem(RPKEY) || "rien"; }catch(e){ return "rien"; } }
-function rpSet(v){
-  try{ localStorage.setItem(RPKEY, v); }catch(e){}
-  rpEtat();
-  if(typeof toast === "function" && v !== "rien") toast(v === "reprog" ? "Pensez à glisser {lien_rdv} dans vos textes" : "Le client pourra répondre OUI");
-}
-function rpEtat(){
-  var v = rpLire();
-  document.querySelectorAll("#rpz button").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-r") === v); });
-  var h = document.getElementById("rphint");
-  if(h) h.innerHTML = RPTXT[v] || "";
-  /* le raccourci « + {lien_rdv} » n'a de sens qu'en mode Reprogrammer */
-  document.querySelectorAll(".nrvar").forEach(function(b){ b.hidden = v !== "reprog"; });
-  if(typeof ntPrev === "function" && document.getElementById("ntprev")) ntPrev();
-}
+/* 01/09 : le réglage global « ce qu'on demande au client » a été RETIRÉ.
+   Il décidait pour tous les messages ce qui se décide message par message —
+   et on pouvait glisser {lien_rdv} dans un texte alors que le mode disait
+   « Rien ». Le bouton « + {lien_rdv} » sous chaque texte suffit et ne ment pas.
+   La clé tigerflow-notif-reponse n'est plus lue ni écrite. */
+const GFKEY = "tigerflow-notif-garde";
 function gfLire(){
   try{ var o = JSON.parse(localStorage.getItem(GFKEY)); if(o && +o.max > 0) return +o.max; }catch(e){}
   return 40;
@@ -2676,7 +2686,7 @@ function ntEx(pub){
 function ntRemplir(txt, ex){
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;"); };
   var trou = function(nom){ return '<span class="vide">{' + nom + '}</span>'; };
-  var lien = (rpLire() === "reprog") ? '<span class="lnk">tgf.fr/r/' + (ex ? "8Kq2" : "····") + '</span>' : trou("lien_rdv");
+  var lien = '<span class="lnk">tgf.fr/r/' + (ex ? "8Kq2" : "····") + '</span>';
   var V = {
     client: ex && ex.client, date: ex && ex.date, heure: ex && ex.heure,
     technicien: ex && ex.tech, adresse: ex && ex.adresse, site: ex && ex.site,
@@ -2779,6 +2789,31 @@ function modMaj(id, ch){
   for(var i=0;i<L.length;i++) if(L[i].id === id){ Object.keys(ch).forEach(function(k){ L[i][k] = ch[k]; }); }
   modEcrire(L);
 }
+/* ══ 01/09 (patron : « c'est trop compliqué ») : neuf fois sur dix il veut
+   « la veille ». Un bouton, pas quatre réglages. Le détail n'apparaît que
+   sur « Autre… ». ══ */
+const MOMENTS = [
+  {k:"veille", lbl:"La veille, 18 h",        v:{n:1, u:"j", sens:"avant", h:18}},
+  {k:"depart", lbl:"Au départ du technicien", v:{n:0, u:"j", sens:"depart", h:8}},
+  {k:"apres2", lbl:"2 jours après",           v:{n:2, u:"j", sens:"apres", h:11}}
+];
+function momentDe(m){
+  for(var i = 0; i < MOMENTS.length; i++){
+    var v = MOMENTS[i].v;
+    if(m.sens === "depart" && v.sens === "depart") return MOMENTS[i].k;
+    if(m.sens === v.sens && +m.n === v.n && m.u === v.u && (+m.h || 0) === v.h) return MOMENTS[i].k;
+  }
+  return "autre";
+}
+function momentSet(id, k){
+  if(k === "autre"){ modMaj(id, {libre: 1}); modPaint(); ntPrev(); return; }
+  for(var i = 0; i < MOMENTS.length; i++) if(MOMENTS[i].k === k){
+    var ch = {}; Object.keys(MOMENTS[i].v).forEach(function(p){ ch[p] = MOMENTS[i].v[p]; });
+    ch.libre = 0;
+    modMaj(id, ch);
+  }
+  modPaint(); ntPrev();
+}
 /* la phrase qui dit QUAND, en clair */
 function modQuand(m){
   if(m.sens === "depart") return "au départ du technicien, le jour J";
@@ -2801,33 +2836,45 @@ function modPaint(){
       +   '<label class="modck"><input type="checkbox" ' + (m.on ? "checked" : "") + ' onchange="modOn(\'' + m.id + '\',this.checked)"><i></i></label>'
       +   '<input class="modn" type="text" value="' + esc(m.nom) + '" oninput="modMaj(\'' + m.id + '\',{nom:this.value})" placeholder="Nom du message">'
       +   '<span class="sq' + (sms ? " qs" : "") + '">' + (sms ? "SMS" : "E-mail") + '</span>'
-      +   (m.def ? '' : '<button type="button" class="modx" title="Supprimer ce message" onclick="modDel(\'' + m.id + '\',this)">✕</button>')
+      +   '<details class="modplus"><summary title="Autres actions">⋯</summary><div class="modmenu">'
+      +     (m.def ? '<button type="button" onclick="modReset(\'' + m.id + '\')">Texte d\'origine</button>' : '')
+      +     '<button type="button" class="sup" onclick="modDel(\'' + m.id + '\',this)">Supprimer ce message</button>'
+      +   '</div></details>'
       + '</div>'
-      + '<div class="modt">'
-      +   '<span>Envoyer</span>'
-      +   '<input type="number" min="0" max="99" value="' + (+m.n || 0) + '" onchange="modMaj(\'' + m.id + '\',{n:+this.value||0});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
-      +   '<select onchange="modMaj(\'' + m.id + '\',{u:this.value});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
-      +     Object.keys(UNI).map(function(u){ return '<option value="' + u + '"' + (m.u === u ? " selected" : "") + '>' + UNI[u] + '</option>'; }).join("")
-      +   '</select>'
-      +   '<select onchange="modMaj(\'' + m.id + '\',{sens:this.value});modPaint();ntPrev()">'
-      +     '<option value="avant"' + (m.sens === "avant" ? " selected" : "") + '>avant l\'intervention</option>'
-      +     '<option value="apres"' + (m.sens === "apres" ? " selected" : "") + '>après l\'intervention</option>'
-      +     '<option value="depart"' + (m.sens === "depart" ? " selected" : "") + '>au départ du technicien</option>'
-      +   '</select>'
-      +   ((m.u === "j" || m.u === "sem") && m.sens !== "depart"
-        ? '<span class="ah">à</span><input type="number" min="0" max="23" value="' + (m.h == null ? 18 : m.h) + '" onchange="modMaj(\'' + m.id + '\',{h:Math.max(0,Math.min(23,+this.value||0))});modPaint()"><span class="ah">h</span>'
-        : '')
-      + '</div>'
+      + (function(){
+          var cur = m.libre ? "autre" : momentDe(m);
+          var lbl = modQuand(m);
+          var h = '<details class="momsel"><summary><span class="mv">' + lbl + '</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary><div class="mommenu">'
+                + MOMENTS.map(function(o){
+                    return '<button type="button" class="' + (cur === o.k ? "on" : "") + '" onclick="momentSet(\'' + m.id + '\',\'' + o.k + '\')">' + o.lbl + '</button>';
+                  }).join("")
+                + '<button type="button" class="' + (cur === "autre" ? "on" : "") + '" onclick="momentSet(\'' + m.id + '\',\'autre\')">Autre…</button>'
+                + '</div></details>';
+          if(cur !== "autre") return h;
+          return h + '<div class="modt">'
+            + '<span>Envoyer</span>'
+            + '<input type="number" min="0" max="99" value="' + (+m.n || 0) + '" onchange="modMaj(\'' + m.id + '\',{n:+this.value||0});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
+            + '<select onchange="modMaj(\'' + m.id + '\',{u:this.value});modPaint();ntPrev()"' + (m.sens === "depart" ? " disabled" : "") + '>'
+            +   Object.keys(UNI).map(function(u){ return '<option value="' + u + '"' + (m.u === u ? " selected" : "") + '>' + UNI[u] + '</option>'; }).join("")
+            + '</select>'
+            + '<select onchange="modMaj(\'' + m.id + '\',{sens:this.value});modPaint();ntPrev()">'
+            +   '<option value="avant"' + (m.sens === "avant" ? " selected" : "") + '>avant l\'intervention</option>'
+            +   '<option value="apres"' + (m.sens === "apres" ? " selected" : "") + '>après l\'intervention</option>'
+            +   '<option value="depart"' + (m.sens === "depart" ? " selected" : "") + '>au départ du technicien</option>'
+            + '</select>'
+            + ((m.u === "j" || m.u === "sem") && m.sens !== "depart"
+              ? '<span class="ah">à</span><input type="number" min="0" max="23" value="' + (m.h == null ? 18 : m.h) + '" onchange="modMaj(\'' + m.id + '\',{h:Math.max(0,Math.min(23,+this.value||0))});modPaint()"><span class="ah">h</span>'
+              : '')
+            + '</div>';
+        })()
       + (sms ? '' : '<input class="modo" type="text" placeholder="Objet de l\'e-mail" value="' + esc(m.obj || "") + '" oninput="modMaj(\'' + m.id + '\',{obj:this.value});ntPrev()">')
       + '<textarea class="modtx" rows="2" oninput="modMaj(\'' + m.id + '\',{t:this.value});modCnt(\'' + m.id + '\');ntPrev()">' + esc(m.t || "") + '</textarea>'
       + '<div class="modm"><span id="mc-' + m.id + '"></span>'
-      +   '<button type="button" class="nrvar" hidden onclick="modVar(\'' + m.id + '\')">+ {lien_rdv}</button>'
-      +   (m.def ? '<span class="nrori" onclick="modReset(\'' + m.id + '\')">texte d\'origine</span>' : '')
+      +   '<button type="button" class="nrvar" onclick="modVar(\'' + m.id + '\')">+ {lien_rdv}</button>'
       + '</div></div>';
   }).join("") : '<div class="modvide">Aucun message pour ce public. Ajoutez-en un.</div>')
   + '<button type="button" class="modadd" onclick="modAdd()">+ Ajouter un message</button>';
   L.forEach(function(m){ modCnt(m.id); });
-  if(typeof rpEtat === "function") document.querySelectorAll("#ntlane .nrvar").forEach(function(b){ b.hidden = rpLire() !== "reprog"; });
 }
 function modOn(id, v){ modMaj(id, {on: v ? 1 : 0}); modPaint(); ntOnglets(); ntPrev(); }
 function modAdd(){
@@ -2869,10 +2916,10 @@ function modVar(id){
 function modCnt(id){
   var m = modDe(id), e = document.getElementById("mc-" + id);
   if(!m || !e) return;
-  if(m.canal !== "sms"){ e.textContent = modQuand(m); return; }
+  if(m.canal !== "sms"){ e.textContent = ""; return; }
   var n = (m.t || "").length, seg = n <= 160 ? 1 : Math.ceil(n / 153);
   e.innerHTML = "<b>" + n + " / " + (seg === 1 ? 160 : seg * 153) + "</b> · " + seg + " SMS · "
-    + (seg * 0.08).toFixed(2).replace(".", ",") + " € · " + modQuand(m);
+    + (seg * 0.08).toFixed(2).replace(".", ",") + " €";
 }
 </script>
 <script>
