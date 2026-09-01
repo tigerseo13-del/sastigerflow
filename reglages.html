@@ -166,6 +166,13 @@ html{background:#F7F8FA}
 .excr button{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 11px;font:700 .72rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit}
 .excr button:hover{border-color:var(--orange);color:var(--orange-deep)}
 /* le lien d'avis manquant : même alerte que le « ____ » des mentions légales */
+/* le compteur qui dit pourquoi ça coûte cher */
+.smsko{color:#C0362C;font-weight:700}
+.smsko button{margin-left:7px;border:1px solid #E9B4AE;background:#fff;border-radius:8px;padding:3px 9px;font:800 .68rem Inter,sans-serif;color:#C0362C;cursor:pointer;font-family:inherit}
+.smsko button:hover{background:#FFF6F5}
+/* les clients sans mobile */
+.fixw{border:1px solid #EAECF1;background:#FAFBFC;border-radius:11px;padding:9px 13px;margin:0 0 11px;font:600 .76rem Inter,sans-serif;color:var(--ink-2);line-height:1.55}
+.fixw b{color:var(--ink);font-weight:800}
 .avwarn{border:1px solid #F3C4C0;background:#FDECEA;border-radius:12px;padding:10px 13px;margin:0 0 12px;font:600 .77rem Inter,sans-serif;color:#C0362C;line-height:1.55}
 .avwarn b{font-weight:800}
 .avwarn button{margin-left:8px;border:1px solid #E9B4AE;background:#fff;border-radius:9px;padding:4px 10px;font:700 .72rem Inter,sans-serif;color:#C0362C;cursor:pointer;font-family:inherit}
@@ -530,7 +537,10 @@ input[type=color]{padding:3px;height:42px;width:56px;cursor:pointer}
 .utools select{width:auto;min-width:130px}
 .utools .usrch{margin-left:auto;max-width:260px}
 .toast{position:fixed;left:50%;bottom:calc(30px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ☠️ 01/09 : `.toast{pointer-events:none}` et rien ne le rétablissait à
+   l'affichage — le bouton « Annuler » du toast était INCLIQUABLE. Toutes les
+   annulations de cette page étaient des boutons morts. */
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 
 @media(max-width:1000px){
   .lay{grid-template-columns:1fr}
@@ -1072,6 +1082,7 @@ R.notifs = () => `
 
     <div class="ntw">
       <div class="ntl smspan pan" id="smspan">
+        <div id="ntffixes"></div>
         <div id="ntlane"></div>
         <div class="ntfrule">Le texte se remplit <b>à l'envoi</b>, avec le planning du moment.</div>
       </div>
@@ -2631,8 +2642,12 @@ function pubDe(nom){
     var l = (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || [])
       .concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []);
     for(var i = 0; i < l.length; i++) if(l[i] && l[i].nom === nom){
-      if(l[i].type === "syndic") return "syn";
-      if(l[i].type === "particulier") return "part";
+      /* 01/09 : le type arrive sous trois orthographes selon la source —
+         « particulier » (formulaire), « Particulier » (liste clients),
+         « entreprise » (colonne Supabase). Comparer brut en ratait deux. */
+      var t = String(l[i].type || "").toLowerCase();
+      if(t.indexOf("synd") === 0) return "syn";
+      if(t.indexOf("part") === 0) return "part";
       return "pro";
     }
   }catch(e){}
@@ -2674,6 +2689,36 @@ function ntfReprend(nom){
   try{ localStorage.setItem("tigerflow-notif-off", JSON.stringify(c)); }catch(e){}
   ntfExcept(); ntfCout();
   if(typeof toast === "function") toast("🔔 " + nom + " — les notifications reprennent selon la règle");
+}
+/* ══ 01/09 : un SMS ne part JAMAIS sur un fixe. L'agenda le disait
+   intervention par intervention ; ici on le dit une fois pour toutes —
+   sinon on allume sans savoir qu'un tiers des rappels ne partira pas. ══ */
+function ntfMobiles(pub){
+  var l = [];
+  try{ l = (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || [])
+    .concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []); }catch(e){}
+  var vus = {}, tot = 0, sans = 0;
+  l.forEach(function(c){
+    if(!c || !c.nom || vus[c.nom]) return;
+    vus[c.nom] = 1;
+    if(typeof pubDe === "function" && pubDe(c.nom) !== pub) return;
+    tot++;
+    var t = String(c.tel || "").replace(/[^0-9+]/g, "").replace(/^\+33/, "0");
+    if(!/^0[67]/.test(t)) sans++;
+  });
+  return {tot: tot, sans: sans};
+}
+function ntfFixes(){
+  var box = document.getElementById("ntffixes"); if(!box) return;
+  var pub = window.NTPUB || "part";
+  /* seuls les publics qui reçoivent des SMS sont concernés */
+  var sms = modLire().some(function(m){ return m.pub === pub && m.on && m.canal === "sms"; });
+  if(!sms || pub === "tech"){ box.innerHTML = ""; return; }
+  var r = ntfMobiles(pub);
+  if(!r.tot || !r.sans){ box.innerHTML = ""; return; }
+  box.innerHTML = '<div class="fixw">Sur vos <b>' + r.tot + " " + (pub === "part" ? "particuliers" : (pub === "pro" ? "professionnels" : "syndics"))
+    + '</b>, <b>' + r.sans + " n'" + (r.sans > 1 ? "ont" : "a") + " pas de mobile</b> \u2014 "
+    + (r.sans > 1 ? "ils ne recevront" : "il ne recevra") + " aucun SMS. Un num\u00e9ro fixe ne re\u00e7oit pas de texto.</div>";
 }
 function ntfExcept(){
   var box = document.getElementById("ntfexc"); if(!box) return;
@@ -2744,6 +2789,7 @@ function ntPub(p){
   window.NTPUB = p;
   document.querySelectorAll("#ntabs .pubt").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-p") === p); });
   if(typeof modPaint === "function") modPaint();
+  if(typeof ntfFixes === "function") ntfFixes();
   ntPrev();
 }
 /* les compteurs des onglets : « SMS · 1 active » */
@@ -2811,6 +2857,19 @@ function ntRemplir(txt, ex){
 function ntSoc(){
   try{ var R0 = JSON.parse(localStorage.getItem("tigerflow-reglages")) || {}; return (R0.info && R0.info.nom) || "Votre société"; }
   catch(e){ return "Votre société"; }
+}
+/* la même substitution que l'aperçu, mais en TEXTE — c'est ce que le
+   client reçoit vraiment, donc c'est ça qu'il faut compter. */
+function ntTexte(txt, ex){
+  var av = (typeof avisLien === "function") ? avisLien() : "";
+  return String(txt || "").replace(/\{(\w+)\}/g, function(m, k){
+    if(k === "lien_rdv") return "tgf.fr/r/8Kq2";
+    if(k === "avis_google") return av || m;
+    if(k === "tel_technicien") return m;
+    var V = ex ? {client: ex.client, date: ex.date, heure: ex.heure, technicien: ex.tech,
+                  adresse: ex.adresse, site: ex.site, nuisible: ex.nuisible} : {};
+    return V[k] ? V[k] : m;
+  });
 }
 function ntPrev(){
   var box = document.getElementById("ntprev"); if(!box) return;
@@ -2952,6 +3011,7 @@ function modPaint(){
       +   '<span class="sq' + (sms ? " qs" : "") + '">' + (sms ? "SMS" : "E-mail") + '</span>'
       +   '<details class="modplus"><summary title="Autres actions">⋯</summary><div class="modmenu">'
       +     (m.def ? '<button type="button" onclick="modReset(\'' + m.id + '\')">Texte d\'origine</button>' : '')
+      +     '<button type="button" onclick="modEssai(\'' + m.id + '\')">M\'envoyer un essai</button>'
       +     '<button type="button" class="sup" onclick="modDel(\'' + m.id + '\',this)">Supprimer ce message</button>'
       +   '</div></details>'
       + '</div>'
@@ -2993,6 +3053,23 @@ function modPaint(){
   + '<button type="button" class="modadd" onclick="modAdd()">+ Ajouter un message</button>';
   L.forEach(function(m){ modCnt(m.id); });
 }
+/* ══ 01/09 : le même geste que sur la page Relances — on relit le message
+   dans SA boîte mail avant de l'envoyer à soixante clients. ══ */
+function modEssai(id){
+  var m = modDe(id); if(!m) return;
+  var ex = (typeof ntEx === "function") ? ntEx(m.pub === "tech" ? "part" : m.pub) : null;
+  var txt = ntTexte(m.t || "", ex);
+  var r = smsSeg(txt);
+  var suj = "Essai " + (m.canal === "sms" ? "SMS" : "e-mail") + " TigerFlow — " + (m.nom || "message") + " · " + (PUBL[m.pub] || m.pub);
+  var corps = (m.canal === "sms" ? "Le SMS tel que le client le recevra :\n\n" : (m.obj ? "Objet : " + ntTexte(m.obj, ex) + "\n\n" : ""))
+    + txt
+    + "\n\n---\n" + (m.canal === "sms" ? r.n + " caracteres, " + r.sms + " SMS, " + (r.sms * 0.08).toFixed(2).replace(".", ",") + " EUR par envoi.\n" : "")
+    + "Envoi : " + modQuand(m) + ".\n"
+    + (ex ? "Exemple base sur une vraie intervention (" + ex.client + ").\n" : "")
+    + "Essai envoye depuis TigerFlow - Reglages > Notifications clients.";
+  try{ window.location.href = "mailto:?subject=" + encodeURIComponent(suj) + "&body=" + encodeURIComponent(corps); }catch(e){}
+  if(typeof toast === "function") toast("Votre boite mail s'ouvre avec le message");
+}
 function modOn(id, v){ modMaj(id, {on: v ? 1 : 0}); modPaint(); ntOnglets(); ntPrev(); if(typeof avisAlerte === "function") avisAlerte(); }
 function modAdd(){
   var pub = window.NTPUB || "part";
@@ -3031,14 +3108,62 @@ function modVar(id, v){
   modPaint(); ntPrev();
   if(typeof avisAlerte === "function") avisAlerte();
 }
-/* le compteur dit le VRAI coût : 160 caractères = 1 SMS, ensuite 153 par SMS */
+/* ══════════════════════════════════════════════════════════════════════
+   01/09 — LE COMPTEUR MENTAIT ×3. Un SMS tient 160 caractères SEULEMENT si
+   tous les caractères sont dans la table GSM 03.38. Un seul en dehors — un
+   tiret cadratin « — », un « ê » — et TOUT le message bascule en UCS-2 :
+   70 caractères par SMS au lieu de 160. Le rappel par défaut affichait
+   « 1 SMS · 0,08 € » ; il en coûte 3 · 0,24 €.
+   Et on comptait le MODÈLE avec ses accolades, pas le message envoyé.
+   ══════════════════════════════════════════════════════════════════════ */
+var GSM7 = "@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\n\u00d8\u00f8\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\u00c6\u00e6\u00df\u00c9 !\"#\u00a4%&'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0";
+var GSMX = "^{}\\[~]|\u20ac";
+function smsSeg(t){
+  t = String(t == null ? "" : t);
+  var u = 0, gsm = true, hors = [];
+  for(var i = 0; i < t.length; i++){
+    var c = t[i];
+    if(GSM7.indexOf(c) > -1) u += 1;
+    else if(GSMX.indexOf(c) > -1) u += 2;
+    else { gsm = false; if(hors.indexOf(c) < 0 && c.trim()) hors.push(c); }
+  }
+  if(gsm) return {gsm: 1, n: u, sms: u <= 160 ? 1 : Math.ceil(u / 153), hors: []};
+  var n = t.length;
+  return {gsm: 0, n: n, sms: n <= 70 ? 1 : Math.ceil(n / 67), hors: hors};
+}
+/* les remplacements qui NE dénaturent pas : ponctuation d'abord, accents ensuite */
+var SMSFIX = [["\u2014","-"],["\u2013","-"],["\u00ab\u00a0","\""],["\u00a0\u00bb","\""],["\u00ab","\""],["\u00bb","\""],
+              ["\u2019","'"],["\u2018","'"],["\u201c","\""],["\u201d","\""],["\u2026","..."],["\u00a0"," "],["\u0153","oe"],["\u0152","OE"],
+              ["\u00ea","e"],["\u00e2","a"],["\u00ee","i"],["\u00f4","o"],["\u00fb","u"],["\u00eb","e"],["\u00ef","i"],
+              ["\u00ca","E"],["\u00c2","A"],["\u00ce","I"],["\u00d4","O"],["\u00db","U"]];
+function smsNettoie(t){
+  SMSFIX.forEach(function(p){ t = t.split(p[0]).join(p[1]); });
+  return t;
+}
+function modNettoie(id){
+  var m = modDe(id); if(!m) return;
+  var avant = m.t || "", apres = smsNettoie(avant);
+  if(apres === avant){ if(typeof toast === "function") toast("Rien à nettoyer"); return; }
+  var a = smsSeg(avant), b = smsSeg(apres);
+  modMaj(id, {t: apres}); modPaint(); ntPrev();
+  if(typeof toast === "function")
+    toast(a.sms + " SMS \u2192 " + b.sms + " SMS \u00b7 " + ((a.sms - b.sms) * 0.08).toFixed(2).replace(".", ",") + " \u20ac economises par envoi",
+      function(){ modMaj(id, {t: avant}); modPaint(); ntPrev(); });
+}
+/* le compteur dit le VRAI coût, sur le message FINAL */
 function modCnt(id){
   var m = modDe(id), e = document.getElementById("mc-" + id);
   if(!m || !e) return;
   if(m.canal !== "sms"){ e.textContent = ""; return; }
-  var n = (m.t || "").length, seg = n <= 160 ? 1 : Math.ceil(n / 153);
-  e.innerHTML = "<b>" + n + " / " + (seg === 1 ? 160 : seg * 153) + "</b> · " + seg + " SMS · "
-    + (seg * 0.08).toFixed(2).replace(".", ",") + " €";
+  /* on mesure le message TEL QU'IL PARTIRA : variables remplacées */
+  var ex = (typeof ntEx === "function") ? ntEx(m.pub === "tech" ? "part" : m.pub) : null;
+  var fini = (typeof ntTexte === "function") ? ntTexte(m.t || "", ex) : (m.t || "");
+  var r = smsSeg(fini);
+  var lim = r.gsm ? 160 : 70;
+  e.innerHTML = "<b>" + r.n + (r.sms === 1 ? " / " + lim : " car.") + "</b> · " + r.sms + " SMS · "
+    + (r.sms * 0.08).toFixed(2).replace(".", ",") + " €"
+    + (r.gsm ? "" : ' <span class="smsko">caractères coûteux : ' + r.hors.slice(0, 6).join(" ")
+        + ' — 70 car. par SMS au lieu de 160 <button type="button" onclick="modNettoie(\'' + id + '\')">Nettoyer</button></span>');
 }
 </script>
 <script>

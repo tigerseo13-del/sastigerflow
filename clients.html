@@ -628,7 +628,13 @@ async function sbLoad(silent){
     try{
       localStorage.setItem("tigerflow-clients-cache", JSON.stringify(
         (data || []).map(c => ({nom:c.nom, ville:c.ville || "", cp:c.cp || "",
-                                adresse:c.adresse || "", tel:c.tel || "", mail:c.mail || ""}))));
+                                adresse:c.adresse || "", tel:c.tel || "", mail:c.mail || "",
+                                /* 01/09 : le type ne partait PAS dans le cache. Reglages >
+                                   Notifications classe par public (particulier / pro / syndic)
+                                   en lisant ce cache : sans le type, TOUS les clients de la
+                                   base tombaient en « professionnel ». L'onglet Particuliers
+                                   restait vide et le cout du mois se trompait de colonne. */
+                                type:c.type || ""}))));
     }catch(e){}
     CLIENTS.length = 0;
     (data || []).forEach(c => CLIENTS.push({
@@ -644,7 +650,11 @@ async function sbLoad(silent){
     if(!data || !data.length){
       sbBanner("✅ Connecté à la base — aucun client pour l'instant : <a href='client-nouveau.html' style='color:var(--orange-deep);font-weight:800'>crée le premier</a> !");
     } else {
-      sbBanner("🟢 <b>Temps réel actif</b> — " + data.length + " client" + (data.length > 1 ? "s" : "") + " · toute création sur un autre appareil apparaît ici instantanément.");
+      /* 01/09 (patron) : « C KOI SA SUR LISTE CLIENT ENLEVE SA » — ce bandeau
+         se rallumait à chaque chargement pour annoncer que tout va bien.
+         Un signal qui ne demande RIEN n'a rien à faire en haut de la liste.
+         Les deux autres restent : liste vide, et base injoignable. */
+      var b0 = document.getElementById("sbb"); if(b0) b0.remove();
     }
     if(!silent && data && data.length) toastLive("🔄 Liste synchronisée");
   }catch(e){
