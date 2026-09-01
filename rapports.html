@@ -1652,8 +1652,58 @@ document.addEventListener("click", function(e){
     return {n: r.list.length, tot: r.tot, pc: r.tot ? Math.round(r.list.length / r.tot * 100) : 0};
   }
 
+  /* ══════════ 01/09 — LE RÉCURRENT QUI S'EN VA SANS BRUIT ══════════
+     4. LES CONTRATS QUI ARRIVENT À ÉCHÉANCE. Chaque contrat porte une date de
+     fin et un montant/an (l'en-tête de la liste dit « Montant / an »), et la
+     page ne les avait JAMAIS regardés : elle savait seulement « sous contrat
+     oui/non ». Un contrat qui s'éteint tout seul, c'est le CA le moins cher à
+     aller chercher qu'on laisse filer. */
+  var CTRJ = 60;   /* on regarde deux mois devant — le temps de relancer */
+  function ctrEch(){
+    var t0 = new Date(); t0.setHours(12, 0, 0, 0);
+    var out = [];
+    J("tigerflow-inbox-contrats").forEach(function(c){
+      if(!c || !c.fin || c.statut === "resilie" || c.statut === "brouillon") return;
+      var f = new Date(c.fin + "T12:00:00");
+      if(isNaN(f.getTime())) return;
+      var j = Math.round((f - t0) / 864e5);
+      if(j > CTRJ || j < -365) return;   /* trop loin devant, ou mort depuis un an */
+      out.push({c: c, j: j, an: +c.montant || 0});
+    });
+    return out.sort(function(a, b){ return a.j - b.j; });
+  }
+  /* 5. LES CLIENTS QUI DÉCROCHENT. Personne ne résilie : on arrête d'appeler.
+     On compare le temps écoulé depuis le dernier passage au RYTHME HABITUEL
+     du client (écart médian entre deux passages) — un client trimestriel muet
+     depuis 4 mois n'est pas dans la même situation qu'un mensuel muet depuis
+     4 mois. Un passage DÉJÀ PROGRAMMÉ dans le futur ⇒ il n'a pas décroché. */
+  function decroche(){
+    var t0 = new Date(); t0.setHours(12, 0, 0, 0);
+    var byC = {}, pay = {}, sous = {};
+    ivTous().forEach(function(x){ if(x.client && x.date) (byC[x.client] = byC[x.client] || []).push(x.date); });
+    paieTous().forEach(function(p){ if(p.client && p.client !== "—") pay[p.client] = (pay[p.client] || 0) + p.m; });
+    J("tigerflow-inbox-contrats").forEach(function(c){ if(c && c.client && c.statut !== "resilie" && c.statut !== "brouillon") sous[c.client] = 1; });
+    var out = [];
+    Object.keys(byC).forEach(function(k){
+      var ds = byC[k].slice().sort();
+      if(ds.length < 2) return;                       /* un seul passage ne fait pas un rythme */
+      var last = new Date(ds[ds.length - 1] + "T12:00:00");
+      if(last > t0) return;                            /* un passage est déjà au planning */
+      var depuis = Math.round((t0 - last) / 864e5);
+      var ecs = [];
+      for(var i = 1; i < ds.length; i++) ecs.push(Math.round((new Date(ds[i] + "T12:00:00") - new Date(ds[i - 1] + "T12:00:00")) / 864e5));
+      ecs.sort(function(a, b){ return a - b; });
+      var med = ecs[Math.floor(ecs.length / 2)] || 0;
+      if(med < 7) return;                              /* deux passages collés : pas un rythme */
+      if(depuis > Math.max(60, med * 2))
+        out.push({k: k, depuis: depuis, med: med, ca: pay[k] || 0, ctr: !!sous[k], dernier: ds[ds.length - 1], n: ds.length});
+    });
+    return out.sort(function(a, b){ return (b.ca - a.ca) || (b.depuis - a.depuis); });
+  }
+
   /* exposés pour la vérification (même pattern que les autres pages) */
   window.delaiEnc = delaiEnc; window.recurrent = recurrent; window.retours = retours;
+  window.ctrEch = ctrEch; window.decroche = decroche;
 
   /* ---- l'analyse comparée CALCULÉE (+ les lignes d'état) ---- */
   function realRows(){
@@ -1715,6 +1765,16 @@ document.addEventListener("click", function(e){
     rows.push(["Impayés en cours", eur2(imp), "—", "—", imp ? 0 : 1, imp ? 1 : 0]);
     var ret = plansRetards();
     rows.push(["Plans d'appâtage en retard de relevé", "" + ret, "—", "—", ret ? 0 : 1, ret ? 1 : 0]);
+    /* 01/09 : deux fuites silencieuses, en état du jour comme les impayés */
+    var ce = ctrEch();
+    if(ce.length || J("tigerflow-inbox-contrats").length){
+      var anT = ce.reduce(function(sm, x){ return sm + x.an; }, 0);
+      rows.push(["Contrats à renouveler", ce.length + " <small style='font-weight:600;color:var(--muted)'>· sous " + CTRJ + " jours" + (anT ? " · " + eur2(anT) + "/an" : "") + "</small>",
+                 "—", "—", ce.length ? 0 : 1, ce.length ? 1 : 0]);
+    }
+    var dc = decroche();
+    if(dc.length) rows.push(["Clients qui décrochent", dc.length + " <small style='font-weight:600;color:var(--muted)'>· " + eur2(dc.reduce(function(sm, x){ return sm + x.ca; }, 0)) + " déjà encaissés chez eux</small>",
+                             "—", "—", 0, 1]);
     return rows;
   }
   /* ══════════ 31/08 — LES 6 DERNIERES PERIODES, POUR DE VRAI ══════════
@@ -1833,6 +1893,23 @@ document.addEventListener("click", function(e){
     });
     D["Plans d'appâtage en retard de relevé"] = {t: "Plans d'appâtage en retard — le détail", note: "Le dernier relevé date de plus longtemps que la fréquence prévue au plan.",
       cols: ["Site", "Dernier relevé", {t: "Fréquence", r: 1}, {t: "Retard", r: 1}], rows: pr};
+    /* contrats a echeance */
+    var CST = {actif: "Actif", renouveler: "À renouveler", suspendu: "Suspendu"};
+    D["Contrats à renouveler"] = {t: "Contrats à renouveler — le détail",
+      note: "Les contrats qui se terminent dans les " + CTRJ + " prochains jours, et ceux déjà échus. C'est le chiffre d'affaires le moins cher à aller chercher.",
+      cols: ["Client", "Objet", {t: "Montant / an", r: 1}, "Fréquence", "Échéance", {t: "Dans", r: 1}, "État"],
+      rows: ctrEch().map(function(o){
+        return [E(o.c.client), E(o.c.titre || "—"), {t: o.an ? eur2(o.an) : "—", r: 1}, E(o.c.freq || "—"), fdFR(o.c.fin),
+                {t: o.j < 0 ? "échu depuis " + (-o.j) + " j" : o.j + " j", r: 1}, CST[o.c.statut] || E(o.c.statut || "—")];
+      })};
+    /* clients qui decrochent */
+    D["Clients qui décrochent"] = {t: "Clients qui décrochent — le détail",
+      note: "Comparé à LEUR rythme habituel, pas à un délai fixe : un client trimestriel muet depuis 4 mois n'est pas dans la même situation qu'un mensuel. Un passage déjà programmé les sort de la liste.",
+      cols: ["Client", "Dernier passage", {t: "Sans nouvelles depuis", r: 1}, {t: "Son rythme", r: 1}, {t: "Encaissé chez lui", r: 1}, "Contrat"],
+      rows: decroche().map(function(o){
+        return [E(o.k), fdFR(o.dernier), {t: o.depuis + " j", r: 1}, {t: "tous les " + o.med + " j", r: 1},
+                {t: o.ca ? eur2(o.ca) : "—", r: 1}, o.ctr ? "Oui" : "Non"];
+      })};
     window.KDET = D;
   }
   function prevLbl(){
@@ -2201,6 +2278,18 @@ document.addEventListener("click", function(e){
       if(mtd) al.push({p: 2, t: "al", txt: "<b>" + eur2(mtd) + "</b> de devis attendent une réponse (" + dvAtt.length + ").",
         a: {l: "Voir les devis", h: "devis-liste.html"}});
     }
+    var ce2 = ctrEch();
+    if(ce2.length){
+      var an2 = ce2.reduce(function(sm, x){ return sm + x.an; }, 0);
+      var ech = ce2.filter(function(x){ return x.j < 0; }).length;
+      al.push({p: 2, t: "al", txt: "<b>" + ce2.length + " contrat" + (ce2.length > 1 ? "s" : "") + "</b> arrive" + (ce2.length > 1 ? "nt" : "") + " à échéance sous " + CTRJ + " jours"
+        + (an2 ? " — <b>" + eur2(an2) + " par an</b>" : "") + (ech ? ", dont " + ech + " déjà échu" + (ech > 1 ? "s" : "") : "") + ".",
+        a: {l: "Les voir", k: "Contrats à renouveler"}});
+    }
+    var dc2 = decroche();
+    if(dc2.length) al.push({p: 4, t: "al", txt: "<b>" + dc2.length + " client" + (dc2.length > 1 ? "s" : "") + "</b> ne donne" + (dc2.length > 1 ? "nt" : "") + " plus de nouvelles alors qu'"
+      + (dc2.length > 1 ? "ils venaient" : "il venait") + " régulièrement" + (dc2[0].ca ? " — " + (dc2.length > 1 ? "le premier a" : "il a") + " déjà laissé " + eur2(dc2[0].ca) + " chez vous" : "") + ".",
+      a: {l: "Les rappeler", k: "Clients qui décrochent"}});
     var rt = retours(b.d0, b.d1);
     if(rt.tot && rt.pc > 10) al.push({p: 3, t: "al", txt: "<b>" + rt.n + " chantier" + (rt.n > 1 ? "s" : "") + " sur " + rt.tot + "</b> sont repassés sous 30 jours ("
       + rt.pc + " %) — au-dessus de la barre des 10 %. Le traitement ne tient pas.",
@@ -2350,6 +2439,7 @@ document.addEventListener("click", function(e){
     document.getElementById("pseg-tri").classList.toggle("on", PERG === "tri");
     document.getElementById("pseg-an").classList.toggle("on", PERG === "an");
     nuiPaint(); dvPaint(); relPaint(); topPaint(); synthPaint(); ivCliFill();
+    if(typeof perEcrire === "function") perEcrire();
     var S0 = (typeof socGet === "function") ? socGet() : {nom: ""};
     var h1 = document.getElementById("prh1"), h2 = document.getElementById("prh2");
     if(h1) h1.textContent = "Rapport d'activité" + (S0.nom ? " — " + S0.nom : "");
@@ -2360,14 +2450,51 @@ document.addEventListener("click", function(e){
   var note = document.querySelector(".page > .note");
   if(note) note.textContent = "Calculé en direct sur les données de ce navigateur — les registres PDF (biocides, interventions, encaissements) lisent vos vraies boîtes.";
 
-  /* on ouvre sur le MOIS EN COURS, pas sur le mois de démonstration */
+  /* ══════════ 01/09 : LA PÉRIODE SURVIT ══════════
+     On regardait juillet, on rafraîchissait, et on repartait sur le mois en
+     cours ; et il n'y avait aucun moyen d'envoyer un lien sur une période
+     précise. L'adresse porte maintenant ?p=2026-07 (ou 2026-T3, ou 2026) et
+     le dernier choix est retenu. L'adresse gagne sur la mémoire : un lien
+     reçu montre CE qu'il dit, pas ce que le navigateur avait gardé. */
+  function perLbls(){
+    PERLBL.mois = MOISFULL[PERM] + " " + MPYSEL;
+    PERLBL.tri = (Math.floor(PERM / 3) + 1) + "ᵉ trimestre " + MPYSEL;
+    PERLBL.an = "Année " + MPYSEL;
+    var cm2 = document.getElementById("c-mois"); if(cm2) cm2.textContent = PERLBL.mois;
+  }
+  function perLire(){
+    var v = null;
+    try{ v = new URLSearchParams(location.search).get("p"); }catch(e){}
+    if(!v){ try{ v = localStorage.getItem("tigerflow-rapports-periode"); }catch(e){} }
+    if(!v) return false;
+    var m;
+    if((m = /^(\d{4})-T([1-4])$/.exec(v))){ MPYSEL = +m[1]; PERM = (+m[2] - 1) * 3; PERG = "tri"; }
+    else if((m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(v))){ MPYSEL = +m[1]; PERM = +m[2] - 1; PERG = "mois"; }
+    else if((m = /^(\d{4})$/.exec(v))){ MPYSEL = +m[1]; PERG = "an"; }
+    else return false;
+    if(MPYSEL < 2000 || MPYSEL > 2100) return false;
+    MPY = MPYSEL;
+    return true;
+  }
+  function perEcrire(){
+    var v = PERG === "an" ? String(MPYSEL)
+      : (PERG === "tri" ? MPYSEL + "-T" + (Math.floor(PERM / 3) + 1)
+      : MPYSEL + "-" + ("0" + (PERM + 1)).slice(-2));
+    try{ localStorage.setItem("tigerflow-rapports-periode", v); }catch(e){}
+    try{
+      var u = new URL(location.href);
+      u.searchParams.set("p", v);
+      history.replaceState(null, "", u.pathname + u.search + u.hash);
+    }catch(e){}
+  }
+  window.perEcrire = perEcrire;
+
+  /* on ouvre sur le MOIS EN COURS, sauf si l'adresse ou la mémoire disent mieux */
   var t = new Date();
   MPY = t.getFullYear(); MPYSEL = t.getFullYear(); PERM = t.getMonth(); PERG = "mois";
-  var lbl0 = MOISFULL[PERM] + " " + MPYSEL;
-  PERLBL.mois = lbl0;
-  var cm = document.getElementById("c-mois"); if(cm) cm.textContent = lbl0;
-  PERLBL.tri = Math.floor(PERM / 3) + 1 + "ᵉ trimestre " + MPYSEL;
-  PERLBL.an = "Année " + MPYSEL;
+  perLire();
+  perLbls();
+  if(typeof moisDraw === "function") moisDraw();
   perPaint();
 })();
 </script>
