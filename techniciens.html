@@ -135,6 +135,38 @@ h1,.num{font-family:'Sora',sans-serif}
 .vtab:hover{color:var(--ink);background:var(--bg)}
 .vtab.on{background:var(--orange);color:#fff;font-weight:700;box-shadow:0 6px 14px -6px rgba(255,90,31,.55)}
 .toolrow2{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+/* ===== 01/09 (patron : « des numéros de sous-traitant en mode bloc-notes,
+   c'est pas des tec, c'est un mec à Nantes ») — LE CARNET.
+   Boîte de stockage SÉPARÉE : un sous-traitant ne compte JAMAIS dans l'équipe,
+   ni dans les cartouches, ni dans le choix du technicien d'une intervention. */
+.sthint{margin:0 0 14px;font-size:.83rem;color:var(--muted);line-height:1.55}
+.sthint b{color:var(--ink-2);font-weight:600}
+.stav{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:#fff;font-family:'Sora';font-weight:800;font-size:.72rem;background:linear-gradient(135deg,#8C93A1,#5C6270);flex:none}
+.stzone{white-space:nowrap}
+.stzone b{font-weight:600}
+.stzone small{display:block;color:var(--muted);font-size:.76rem;margin-top:2px}
+.stmat{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:.76rem;color:var(--muted);line-height:1.4}
+.stmat svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:1px}
+.stnote{max-width:340px;white-space:normal;line-height:1.55;color:var(--ink-2)}
+.stnote.vide{color:var(--muted);font-style:italic}
+#stview .tblcard table td{vertical-align:middle}
+.stmc{display:none}
+.stdel{color:var(--red,#D63B33);font-weight:700;font-size:.79rem;background:none;cursor:pointer}
+.stdel.arm{background:var(--red-bg,#FDE9E8);border-radius:9px;padding:7px 12px}
+/* l'aide sous un champ : elle explique le champ, elle ne crie pas */
+.stfh{font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.5}
+/* la page ne stylait QUE input,select — un textarea nu aurait tranché */
+#st-notes{font-family:inherit;font-size:.88rem;color:var(--ink);border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:#fff;width:100%;resize:vertical;line-height:1.55}
+#st-notes:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.13)}
+@media(max-width:900px){
+  #stview .tblcard{display:none}
+  .stmc{display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:start;background:var(--card);border:1px solid #F0F1F4;border-radius:15px;box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px}
+  .stmc .stmi b{display:block;font-size:.9rem;font-weight:600}
+  .stmc .stmi small{display:block;color:var(--muted);font-size:.77rem;margin-top:2px}
+  .stmc .stmi p{margin:7px 0 0;font-size:.8rem;line-height:1.5;color:var(--ink-2)}
+  .stmc .stmt{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--green-bg);color:var(--green-d)}
+  .stmc .stmt svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2}
+}
 .toolrow2 select{width:auto;min-width:150px;border:1.5px solid var(--line);border-radius:11px;padding:9.5px 12px;font-size:.84rem;font-weight:600;color:var(--ink-2);background:#fff;cursor:pointer}
 .toolrow2 select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
 .toolrow2 .spacer{flex:1}
@@ -273,7 +305,7 @@ label.lab{display:block;font-size:.76rem;font-weight:600;color:var(--ink-2);marg
 
 /* Toast */
 .toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:.85rem;font-weight:600;padding:12px 20px;border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 
 /* ============ MOBILE ============ */
 @media(max-width:1080px){ .kpis{grid-template-columns:1fr 1fr} }
@@ -610,8 +642,10 @@ tbody td small,tbody td .sub,tbody td em{font-weight:400}
     <div class="vtabs">
       <button class="vtab on" id="vt-list" onclick="setVT('list')">Techniciens</button>
       <button class="vtab" id="vt-dispo" onclick="setVT('dispo')">Disponibilité</button>
+      <button class="vtab" id="vt-st" onclick="setVT('st')">Sous-traitants</button>
     </div>
     <div class="toolrow2">
+      <select id="f-zonest" onchange="stPaint()" style="display:none"><option value="all">Zone : toutes</option></select>
       <select id="f-stat" onchange="render()">
         <option value="all">Statut : tous</option>
         <option value="actif">Actif</option>
@@ -637,6 +671,7 @@ tbody td small,tbody td .sub,tbody td em{font-weight:400}
     </div>
     <div style="display:none"><div class="chips" id="chips"></div></div>
     <div id="dispoview" style="display:none"></div>
+    <div id="stview" style="display:none"></div>
 
     <!-- Cartes -->
     <div class="grid" id="grid"></div>
@@ -2370,5 +2405,253 @@ try{
   }, true);
 })();
 </script>
+
+<!-- ============ 01/09 : FICHE SOUS-TRAITANT ============ -->
+<div class="modal" id="stm">
+  <div class="veil" onclick="stClose()"></div>
+  <div class="mpanel">
+    <div class="mhead"><b id="stm-t">Nouveau sous-traitant<span class="wsub" id="stm-sub">Un confrère hors de tes zones</span></b><button class="mclose" onclick="stClose()">&#10005;</button></div>
+    <div class="mbody">
+      <div class="fgrid">
+        <div><label class="lab" for="st-nom">Nom *</label><input id="st-nom" placeholder="Jérôme Piron"></div>
+        <div><label class="lab" for="st-tel">Téléphone *</label><input type="tel" id="st-tel" placeholder="06 24 51 09 77"></div>
+        <div><label class="lab" for="st-zone">Zone couverte *</label><input id="st-zone" placeholder="44 Loire-Atlantique"></div>
+        <div><label class="lab" for="st-villes">Villes</label><input id="st-villes" placeholder="Nantes, Saint-Nazaire"></div>
+        <div class="full"><label class="lab" for="st-fait">Ce qu'il fait</label><input id="st-fait" placeholder="Dératisation, désinsectisation"></div>
+        <div class="full"><label class="lab" for="st-mat">Matériel</label><input id="st-mat" placeholder="Nacelle, canon à chaleur, nébulisateur ULV">
+          <div class="stfh">Ce qu'il a sur son camion — pour savoir si tu peux lui passer le chantier.</div></div>
+        <div class="full"><label class="lab" for="st-notes">Notes — tout ce que tu veux te rappeler</label>
+          <textarea id="st-notes" rows="4" placeholder="280 € la demi-journée. Ne prend pas les punaises. Prévenir 48 h à l'avance."></textarea>
+          <div class="stfh">C'est ton bloc-notes : tarif, ce qu'il refuse, comment il facture, qui te l'a recommandé…</div></div>
+      </div>
+      <div id="stm-delzone" style="margin-top:22px;display:none"><button type="button" class="stdel" id="stm-del" onclick="stDel()">Supprimer du carnet</button></div>
+    </div>
+    <div class="macts">
+      <button class="btn outline" onclick="stClose()">Annuler</button>
+      <span style="flex:1"></span>
+      <button class="btn primary" id="stm-ok" onclick="stSave()">&#10003; Ajouter au carnet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   01/09 — LE CARNET DE SOUS-TRAITANTS (v320, GO patron)
+   « des numéros de sous-traitant en mode bloc-notes, c'est PAS des tec,
+     c'est d'un mec à Nantes que t'appelles quand t'as une inter là-bas »
+
+   RÈGLE FONDATRICE : boîte de stockage SÉPARÉE (tigerflow-soustraitants).
+   Un sous-traitant n'entre JAMAIS dans TECHS — donc jamais dans les
+   cartouches « Techniciens actifs », jamais dans le choix du technicien
+   d'intervention-nouvelle (qui lit tigerflow-techs-perso), jamais dans
+   les stats de CA ou de ponctualité. Les colonnes de son tableau sont
+   les SIENNES : zone, ce qu'il fait, matériel, notes.
+   ══════════════════════════════════════════════════════════════════════ */
+(function(){
+  var STKEY = "tigerflow-soustraitants";
+  var EDIT = null, DELARM2 = null;
+
+  function lire(){
+    try{ var l = JSON.parse(localStorage.getItem(STKEY)); return Array.isArray(l) ? l : []; }catch(e){ return []; }
+  }
+  function sauve(l){ try{ localStorage.setItem(STKEY, JSON.stringify(l)); }catch(e){} }
+  function esc(v){ return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function tel0(v){ return String(v || "").replace(/[^0-9+]/g, ""); }
+  function ini(n){
+    var p = String(n || "").trim().split(/\s+/);
+    return ((p[0] || " ")[0] + ((p[1] || "")[0] || "")).toUpperCase() || "?";
+  }
+  /* le SVG clé : jamais d'emoji dans l'interface */
+  var SVMAT = '<svg viewBox="0 0 24 24"><path d="M21.4 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.2-9.19a4 4 0 015.65 5.66l-9.2 9.19a2 2 0 01-2.82-2.83l8.49-8.48"/></svg>';
+  var SVTEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/></svg>';
+  var SVWA  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-3 .8.8-3-.2-.3A8 8 0 1112 20zm4.4-5.8c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1-.6.8-.7.9-.3.2-.5 0a6.5 6.5 0 01-1.9-1.2 7.3 7.3 0 01-1.4-1.7c-.1-.3 0-.4.1-.5l.4-.5.2-.4v-.4l-.7-1.7c-.2-.5-.4-.4-.5-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.9 11.9 0 004.6 4c.6.3 1.1.4 1.5.5a3.6 3.6 0 001.6.1 2.7 2.7 0 001.8-1.2 2.2 2.2 0 00.2-1.2c-.1-.1-.2-.2-.5-.3z"/></svg>';
+  var SVEYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+
+  /* ---------- le select des zones : construit sur ce qui EXISTE ---------- */
+  function zones(){
+    var v = {}, o = [];
+    lire().forEach(function(s){ var z = (s.zone || "").trim(); if(z && !v[z]){ v[z] = 1; o.push(z); } });
+    return o.sort(function(a, b){ return a.localeCompare(b, "fr"); });
+  }
+  function zonesMaj(){
+    var sel = document.getElementById("f-zonest"); if(!sel) return;
+    var av = sel.value;
+    sel.innerHTML = '<option value="all">Zone : toutes</option>'
+      + zones().map(function(z){ return '<option value="' + esc(z) + '">' + esc(z) + "</option>"; }).join("");
+    sel.value = zones().indexOf(av) >= 0 ? av : "all";
+  }
+
+  /* ---------- la liste ---------- */
+  function filtre(){
+    var q = ((document.getElementById("q") || {}).value || "").toLowerCase().trim();
+    var z = ((document.getElementById("f-zonest") || {}).value) || "all";
+    var qn = q.replace(/ /g, "");
+    return lire().filter(function(s){
+      if(z !== "all" && (s.zone || "") !== z) return false;
+      if(!q) return true;
+      var foin = [s.nom, s.zone, s.villes, s.fait, s.mat, s.notes].join(" ").toLowerCase();
+      return foin.indexOf(q) >= 0 || tel0(s.tel).indexOf(qn) >= 0;
+    });
+  }
+  function chips(v){
+    var l = String(v || "").split(/[,;·]/).map(function(x){ return x.trim(); }).filter(Boolean);
+    return l.length ? l.map(function(x){ return '<span class="skc">' + esc(x) + "</span>"; }).join("") : "&mdash;";
+  }
+  function paint(){
+    var box = document.getElementById("stview"); if(!box) return;
+    zonesMaj();
+    var tout = lire(), list = filtre();
+    if(!tout.length){
+      box.innerHTML = '<div class="sthint">Les confrères que tu appelles quand l\'intervention est hors de tes zones. '
+        + '<b>Ils ne comptent pas dans ton équipe</b> &mdash; ni dans les compteurs, ni dans le choix du technicien.</div>'
+        + '<div class="tblcard" style="text-align:center;color:var(--muted);padding:40px">Ton carnet est vide.'
+        + '<div class="emptyacts"><button type="button" class="ebtn primary" onclick="stOpen()">＋ Ajouter un sous-traitant</button></div></div>';
+      return;
+    }
+    var rows = list.map(function(s){
+      var t = tel0(s.tel);
+      return '<tr onclick="stOpen(' + JSON.stringify(s.id) + ')">'
+        + '<td><span class="tnm"><span class="stav">' + esc(ini(s.nom)) + '</span><b>' + esc(s.nom) + "</b></span></td>"
+        + '<td class="num">' + (esc(s.tel) || "&mdash;") + "</td>"
+        + '<td class="stzone"><b>' + (esc(s.zone) || "&mdash;") + "</b>"
+        +   (s.villes ? "<small>" + esc(s.villes) + "</small>" : "") + "</td>"
+        + "<td><div class=\"skwrap\">" + chips(s.fait) + "</div>"
+        +   (s.mat ? '<div class="stmat">' + SVMAT + "<span>" + esc(s.mat) + "</span></div>" : "") + "</td>"
+        + '<td class="stnote' + (s.notes ? "" : " vide") + '">' + (s.notes ? esc(s.notes) : "aucune note") + "</td>"
+        + '<td><span class="rowact" onclick="event.stopPropagation()">'
+        +   '<a class="call" href="tel:' + t + '" title="Appeler ' + esc(s.nom) + '">' + SVTEL + "</a>"
+        +   '<a class="wa" href="https://wa.me/33' + t.replace(/^0/, "") + '" target="_blank" rel="noopener" title="WhatsApp">' + SVWA + "</a>"
+        +   '<button onclick="stOpen(' + JSON.stringify(s.id).replace(/"/g, "&quot;") + ')" title="Voir la fiche">' + SVEYE + "</button>"
+        + "</span></td><td class=\"chv\">&rsaquo;</td></tr>";
+    }).join("");
+    var cards = list.map(function(s){
+      var t = tel0(s.tel);
+      return '<div class="stmc" onclick="stOpen(' + JSON.stringify(s.id).replace(/"/g, "&quot;") + ')">'
+        + '<span class="stav">' + esc(ini(s.nom)) + "</span>"
+        + '<span class="stmi"><b>' + esc(s.nom) + "</b><small>" + (esc(s.zone) || "&mdash;")
+        +   (s.villes ? " &middot; " + esc(s.villes) : "") + "</small>"
+        +   (s.fait ? "<small>" + esc(s.fait) + "</small>" : "")
+        +   (s.notes ? "<p>" + esc(s.notes) + "</p>" : "") + "</span>"
+        + '<a class="stmt" href="tel:' + t + '" onclick="event.stopPropagation()" title="Appeler">' + SVTEL + "</a></div>";
+    }).join("");
+    box.innerHTML = '<div class="sthint">Les confrères que tu appelles quand l\'intervention est hors de tes zones. '
+      + '<b>Ils ne comptent pas dans ton équipe</b> &mdash; ni dans les compteurs, ni dans le choix du technicien.</div>'
+      + (list.length
+        ? '<div class="tblcard"><div class="tblscroll"><table><thead><tr>'
+          + "<th>Sous-traitant</th><th>Téléphone</th><th>Zone couverte</th><th>Ce qu'il fait</th><th>Notes</th><th>Actions</th><th></th>"
+          + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+          + '<div class="tfootbar"><span>1&ndash;' + list.length + " sur " + tout.length + " affichés</span></div></div>"
+          + "<div>" + cards + "</div>"
+        : '<div class="tblcard" style="text-align:center;color:var(--muted);padding:40px">Aucun sous-traitant ne correspond.'
+          + '<div class="emptyacts"><button type="button" class="ebtn" onclick="stEfface()">Effacer les filtres</button></div></div>');
+  }
+
+  /* ---------- la fiche ---------- */
+  function open(id){
+    var l = lire(), s = id ? l.filter(function(x){ return x.id === id; })[0] : null;
+    EDIT = s ? s.id : null; DELARM2 = null;
+    var g = function(k){ return document.getElementById(k); };
+    g("st-nom").value = s ? (s.nom || "") : "";
+    g("st-tel").value = s ? (s.tel || "") : "";
+    g("st-zone").value = s ? (s.zone || "") : "";
+    g("st-villes").value = s ? (s.villes || "") : "";
+    g("st-fait").value = s ? (s.fait || "") : "";
+    g("st-mat").value = s ? (s.mat || "") : "";
+    g("st-notes").value = s ? (s.notes || "") : "";
+    g("stm-t").firstChild.nodeValue = s ? (s.nom || "Sous-traitant") : "Nouveau sous-traitant";
+    g("stm-sub").textContent = s ? "Fiche du carnet" : "Un confrère hors de tes zones";
+    g("stm-ok").innerHTML = s ? "&#10003; Enregistrer" : "&#10003; Ajouter au carnet";
+    g("stm-delzone").style.display = s ? "" : "none";
+    var d = g("stm-del"); d.textContent = "Supprimer du carnet"; d.classList.remove("arm");
+    ["st-nom","st-tel","st-zone"].forEach(function(k){ g(k).classList.remove("err"); });
+    document.getElementById("stm").classList.add("open");
+    setTimeout(function(){ g("st-nom").focus(); }, 60);
+  }
+  function close(){ document.getElementById("stm").classList.remove("open"); EDIT = null; DELARM2 = null; }
+
+  function save(){
+    var g = function(k){ return document.getElementById(k).value.trim(); };
+    var manque = [];
+    [["st-nom","nom"],["st-tel","tel"],["st-zone","zone"]].forEach(function(p){
+      var el = document.getElementById(p[0]);
+      if(!el.value.trim()){ el.classList.add("err"); manque.push(p[1]); } else el.classList.remove("err");
+    });
+    if(manque.length){ toast("Il manque le " + manque[0] + "."); document.getElementById("st-" + (manque[0] === "nom" ? "nom" : manque[0])).focus(); return; }
+    var l = lire();
+    var o = {id: EDIT || ("st" + Date.now().toString(36)),
+             nom: g("st-nom"), tel: g("st-tel"), zone: g("st-zone"), villes: g("st-villes"),
+             fait: g("st-fait"), mat: g("st-mat"), notes: g("st-notes")};
+    var i = -1;
+    for(var k = 0; k < l.length; k++) if(l[k].id === o.id) i = k;
+    if(i >= 0){ o.cree = l[i].cree; l[i] = o; } else { o.cree = new Date().toISOString().slice(0, 10); l.unshift(o); }
+    sauve(l); close(); paint();
+    toast(i >= 0 ? o.nom + " — fiche mise à jour" : o.nom + " ajouté au carnet");
+  }
+  function del(){
+    if(!EDIT) return;
+    var b = document.getElementById("stm-del");
+    if(DELARM2 !== EDIT){ DELARM2 = EDIT; b.textContent = "Confirmer la suppression ?"; b.classList.add("arm");
+      setTimeout(function(){ if(DELARM2 === EDIT){ DELARM2 = null; b.textContent = "Supprimer du carnet"; b.classList.remove("arm"); } }, 4500);
+      return; }
+    var l = lire(), o = l.filter(function(x){ return x.id === EDIT; })[0];
+    var reste = l.filter(function(x){ return x.id !== EDIT; });
+    sauve(reste); close(); paint();
+    /* on rend l'annulation possible : une suppression ne doit jamais être un cul-de-sac */
+    toast((o ? o.nom : "Sous-traitant") + " retiré du carnet", function(){ var c = lire(); c.unshift(o); sauve(c); paint(); });
+  }
+  function efface(){
+    var q = document.getElementById("q"); if(q) q.value = "";
+    var z = document.getElementById("f-zonest"); if(z) z.value = "all";
+    paint();
+  }
+
+  /* ---------- l'onglet : ce qui s'allume, ce qui s'éteint ---------- */
+  var _setVT = window.setVT;
+  window.setVT = function(v){
+    var st = (v === "st");
+    /* setVT d'origine masque grid ET dispoview dès que v n'est ni list ni dispo */
+    try{ _setVT(v); }catch(e){}
+    var q = function(sel){ return document.querySelector(sel); };
+    var b = document.getElementById("vt-st"); if(b) b.classList.toggle("on", st);
+    var box = document.getElementById("stview"); if(box) box.style.display = st ? "" : "none";
+    /* les 4 cartouches parlent de l'ÉQUIPE : elles n'ont rien à dire ici */
+    var k = q(".kpis"); if(k) k.style.display = st ? "none" : "";
+    /* les filtres de l'équipe cèdent la place à celui du carnet */
+    ["f-stat","f-comp"].forEach(function(id){ var e = document.getElementById(id); if(e) e.style.display = st ? "none" : ""; });
+    var fv = q(".fville"); if(fv) fv.style.display = st ? "none" : "";
+    var ex = q(".expbtn"); if(ex) ex.style.display = st ? "none" : "";
+    var fc = document.getElementById("fclear"); if(fc && st) fc.style.display = "none";
+    var zs = document.getElementById("f-zonest"); if(zs) zs.style.display = st ? "" : "none";
+    var qi = document.getElementById("q");
+    if(qi) qi.placeholder = st ? "Nom, ville, département…" : "Rechercher un technicien, un téléphone…";
+    /* le bouton d'en-tête nomme le geste de l'onglet où l'on est */
+    var ab = q(".phead .btn.primary") || q(".btn.primary");
+    if(ab && ab.lastChild) ab.lastChild.nodeValue = st ? "Ajouter un sous-traitant" : "Nouveau technicien";
+    if(st) paint();
+  };
+
+  /* la recherche #q appelle render() : on le prolonge au lieu de le doubler */
+  var _render = window.render;
+  if(typeof _render === "function") window.render = function(){
+    try{ _render.apply(this, arguments); }catch(e){}
+    if(document.getElementById("vt-st") && document.getElementById("vt-st").classList.contains("on")) paint();
+  };
+  /* le bouton d'en-tête ouvre la bonne modale */
+  var _openAdd = window.openAdd;
+  window.openAdd = function(){
+    var b = document.getElementById("vt-st");
+    if(b && b.classList.contains("on")) return open(null);
+    return _openAdd.apply(this, arguments);
+  };
+
+  window.stOpen = open; window.stClose = close; window.stSave = save; window.stDel = del;
+  window.stPaint = paint; window.stEfface = efface;
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && document.getElementById("stm").classList.contains("open")) close();
+  });
+})();
+</script>
+
 </body>
 </html>
