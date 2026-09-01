@@ -1323,14 +1323,23 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
    laissait une bande blanche à droite (« le design de Actions il est tout
    blanc, c'est bizarre »). RÈGLE : un <col> ajouté = tout le colgroup à
    recalculer, et le total revérifié. 21+9+9+7+13+12+10+10+9 = 100. */
-.clients-t .c-client{width:20%}
+.clients-t .c-client{width:18%}
 .clients-t .c-type{width:8%}
-.clients-t .c-source{width:9%}   /* 31/07 (patron) : colonne Source */
-.clients-t .c-contrats{width:6%}
+.clients-t .c-source{width:8%}   /* 31/07 (patron) : colonne Source */
+.clients-t .c-contrats{width:9%}
 .clients-t .c-ca{width:12%}
 .clients-t .c-enc{width:11%}
 .clients-t .c-statut{width:9%}
 .clients-t .c-paie{width:9%}
+/* 01/09 : « Contrats » et « À encaisser » se coupaient sous 1440 px. Un en-tête
+   de colonne a le droit de tenir sur deux lignes — c'est ce que fait n'importe
+   quel tableau dense. Le contenu, lui, reste sur une ligne. */
+.clients-t thead th{white-space:normal;line-height:1.25}
+/* « CONTRATS » est un mot d'un seul tenant : il ne se coupe pas en deux lignes,
+   et en capitales espacées il réclame 87 px — auxquels s'ajoutaient 36 px de
+   marge. Une colonne de NOMBRES n'a pas besoin de ce luxe : marge et espacement
+   réduits pour elle seule. Vérifié de 1120 à 1900 px, zéro coupure. */
+.clients-t thead th:nth-child(4),.clients-t tbody td:nth-child(4){padding-left:6px;padding-right:6px;letter-spacing:0}
 /* Actions en PIXELS, pas en % : son contenu est fixe (4 boutons de 30 px).
    En %, elle rétrécissait avec la fenêtre et son contenu sortait du cadre —
    c'est ce qui faisait la bande blanche à droite. Les 84 % restants se
@@ -1342,7 +1351,16 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .clients-t td.amt, .clients-t td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
 .clients-t th:last-child, .clients-t td.acts{text-align:right}
 .clients-t td.acts{white-space:nowrap}
-@media(max-width:1080px){ .clients-t{table-layout:auto} .clients-t col{width:auto!important} }
+/* 01/09 : le seuil passe de 1080 à 1300. Avec 9 colonnes, « CONTRATS » (87 px
+   en capitales) ne rentre plus dans sa part sous 1300 px — et un mot d'un seul
+   tenant ne se coupe pas en deux lignes. En dessous, la table reprend sa
+   largeur naturelle et DÉFILE dans son cadre : rien n'est tronqué, rien ne
+   sort de la carte. Au-dessus, tout tient sans une seule coupure. */
+/* 01/09 : seuil 1080 → 1260. En dessous, neuf colonnes ne tiennent plus sans
+   couper des mots d'un seul tenant (« Paiement », « Source ») : la table reprend
+   sa largeur naturelle et DÉFILE dans son cadre — rien n'est tronqué, rien ne
+   sort de la carte. Au-dessus, la grille fixe et zéro coupure. */
+@media(max-width:1260px){ .clients-t{table-layout:auto} .clients-t col{width:auto!important} }
 
 /* ===== l'icône e-mail est présente sur chaque ligne ; grisée si le client n'a pas d'e-mail (29/07) ===== */
 .ab.mail.nomail{color:#C4C8D2;cursor:pointer}
