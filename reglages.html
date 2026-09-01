@@ -165,6 +165,20 @@ html{background:#F7F8FA}
 .excr{display:flex;align-items:center;gap:12px;padding:7px 0;border-top:1px dashed #F0E2D6;font:700 .79rem Inter,sans-serif;color:var(--ink-2)}
 .excr button{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:9px;padding:5px 11px;font:700 .72rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit}
 .excr button:hover{border-color:var(--orange);color:var(--orange-deep)}
+/* le lien d'avis manquant : même alerte que le « ____ » des mentions légales */
+.avwarn{border:1px solid #F3C4C0;background:#FDECEA;border-radius:12px;padding:10px 13px;margin:0 0 12px;font:600 .77rem Inter,sans-serif;color:#C0362C;line-height:1.55}
+.avwarn b{font-weight:800}
+.avwarn button{margin-left:8px;border:1px solid #E9B4AE;background:#fff;border-radius:9px;padding:4px 10px;font:700 .72rem Inter,sans-serif;color:#C0362C;cursor:pointer;font-family:inherit}
+.avwarn button:hover{background:#FFF6F5}
+/* un seul contrôle pour insérer une variable, quelle qu'elle soit */
+.varsel{position:relative;display:inline-block}
+.varsel summary{list-style:none;cursor:pointer;font:700 .68rem Inter,sans-serif;color:var(--orange-deep,#C2410C);text-decoration:underline;text-underline-offset:2px}
+.varsel summary::-webkit-details-marker{display:none}
+.varsel summary:hover{opacity:.75}
+.varmenu{position:absolute;left:0;top:22px;z-index:40;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 14px 34px -14px rgba(16,19,24,.3);padding:5px;min-width:250px;display:grid;gap:2px}
+.varmenu button{border:0;background:none;text-align:left;padding:8px 10px;border-radius:8px;font:700 .76rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;font-family:inherit}
+.varmenu button i{display:block;font:600 .69rem Inter,sans-serif;color:var(--muted);font-style:normal;margin-top:2px}
+.varmenu button:hover{background:#F5F6F9}
 .envw{display:grid;gap:16px;max-width:420px}
 .shint2{font:600 .7rem Inter,sans-serif;color:var(--muted);margin-top:5px}
 .envw input[type=text]{width:100%;max-width:260px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font:700 .82rem Inter,sans-serif;color:var(--ink);background:#fff}
@@ -1046,6 +1060,7 @@ R.notifs = () => `
       <div class="ntt"><em>Ce mois-ci</em><b id="ntf-cout">—</b></div>
     </div>
     <div id="ntfexc"></div>
+    <div id="avisalerte"></div>
 
     <div class="pubtabs" id="ntabs">
       <button type="button" class="pubt on" data-p="part" onclick="ntPub('part')">Particuliers <span class="n" id="nt-n-part"></span></button>
@@ -1073,6 +1088,9 @@ R.notifs = () => `
           <input type="text" id="sms-exp" maxlength="11" placeholder="AntiNuisibl" oninput="smsExpSave();ntPrev()">
           <div class="shint2">11 caractères, sans espace ni accent.</div>
           <div class="sherr" id="sms-err">Les opérateurs français bloquent les espaces, les accents et les caractères spéciaux. Évitez aussi les mots trop génériques (« SMS », « Info »), filtrés eux aussi.</div></div>
+        <div><span class="lab2">Lien de votre fiche Google</span>
+          <input type="text" id="avis-lien" placeholder="https://g.page/r/…/review" oninput="avisSave();ntPrev()">
+          <div class="shint2">Dans votre profil Google Business, bouton « Demander des avis » — il donne un lien court prêt à partager. Il devient la variable <b>{avis_google}</b>.</div></div>
         <div><span class="lab2">Garde-fou</span>
           <span class="gfl"><input type="number" id="ntf-max" min="1" max="999" step="1" oninput="gfSave()" onblur="gfNorm()"><i>messages par jour au maximum</i></span></div>
       </div>
@@ -1085,6 +1103,7 @@ R.notifs = () => `
         <p><b>Le texte se remplit à l'envoi</b>, jamais à la programmation : le message porte toujours le planning de la minute où il part.</p>
         <p><b>Les syndics ne reçoivent jamais de SMS</b> — un seul e-mail récapitulatif. Jamais de SMS non plus sur un fixe (01-09), et les messages sont regroupés par numéro et par jour.</p>
         <p><b>Annuler un message</b> : il apparaît sur l'intervention dans l'agenda, avec un ✕. Couper un client entier : sa fiche → ⋯ → « Couper les notifications ».</p>
+        <p><b>L'avis Google part à TOUT LE MONDE.</b> Ne demandez jamais d'abord « tout va bien ? » pour n'envoyer le lien qu'aux clients contents : Google appelle ça le <i>review gating</i> et l'interdit — avertissement public sur votre fiche, blocage des avis, voire suppression de ceux déjà reçus. Même message, même lien, pour tous. L'exception reste manuelle et rare : fiche client → ⋯ → « Couper les notifications ».</p>
         <p><b>Ce qui manque pour envoyer pour de vrai</b> : un relais côté serveur, que SMS et e-mails partagent. La clé d'API ne peut pas vivre dans cette page — elle serait lisible par n'importe qui ouvrant le code source. Ce réglage est la spécification que l'équipe branchera sur Twilio (ou OVH / Brevo).</p>
       </div>
     </details>
@@ -2514,7 +2533,9 @@ function smsEtat(){
   if(g("sms-exp")) g("sms-exp").value = (cfg && cfg.exp) || "";
   if(g("ntlane") && typeof modPaint === "function") modPaint();
   if(g("ntf-max")) g("ntf-max").value = gfLire();
+  if(g("avis-lien")) g("avis-lien").value = avisLien();
   ntfExcept();
+  avisAlerte();
   ntfCout();
   if(g("ntabs")) ntPub(window.NTPUB || "part");
 }
@@ -2621,6 +2642,29 @@ function pubDe(nom){
    comment ? ») — la coupure par client vivait sur SA fiche, invisible d'ici.
    Trois interrupteurs (général, par message, par client) dont un qu'on ne
    voyait pas : c'est ça qui rendait le truc compliqué. ══ */
+/* ══ 01/09 : LE LIEN D'AVIS GOOGLE ══
+   Allumer « Demander un avis Google » sans avoir collé son lien, c'est envoyer
+   « {avis_google} » en toutes lettres à ses clients. Même principe que le
+   « ____ » des mentions légales : on ne laisse pas partir un message troué. */
+const AVKEY = "tigerflow-avis-google";
+function avisLien(){ try{ return (localStorage.getItem(AVKEY) || "").trim(); }catch(e){ return ""; } }
+function avisSave(){
+  var e = document.getElementById("avis-lien"); if(!e) return;
+  try{ localStorage.setItem(AVKEY, e.value.trim()); }catch(e2){}
+  avisAlerte();
+}
+function avisAlerte(){
+  var box = document.getElementById("avisalerte"); if(!box) return;
+  var utilise = modLire().some(function(m){ return m.on && (m.t || "").indexOf("{avis_google}") > -1; });
+  if(!utilise || avisLien()){ box.innerHTML = ""; return; }
+  box.innerHTML = '<div class="avwarn">⚠️ Un message actif demande un avis Google, mais <b>votre lien n\'est pas renseigné</b>'
+    + ' — vos clients recevraient « {avis_google} » écrit en toutes lettres.'
+    + ' <button type="button" onclick="avisAller()">Coller mon lien</button></div>';
+}
+function avisAller(){
+  var d = document.querySelector("#panel details.ntfaide");
+  if(d){ d.open = true; var e = document.getElementById("avis-lien"); if(e){ e.scrollIntoView({behavior:"smooth", block:"center"}); setTimeout(function(){ e.focus(); }, 260); } }
+}
 function ntfCoupes(){
   try{ var v = JSON.parse(localStorage.getItem("tigerflow-notif-off")); return (v && typeof v === "object") ? v : {}; }
   catch(e){ return {}; }
@@ -2711,6 +2755,7 @@ function ntOnglets(){
     var n = mes.filter(function(m){ return m.on; }).length;
     var sms = mes.some(function(m){ return m.canal === "sms"; });
     var mail = mes.some(function(m){ return m.canal === "mail"; });
+    if(!mes.length){ e.textContent = "aucun message"; return; }   /* pas de modèle ⇒ pas de canal à annoncer */
     var can = sms && mail ? "SMS + e-mail" : (mail ? "E-mail" : "SMS");
     e.textContent = can + " · " + (n ? n + " actif" + (n > 1 ? "s" : "") : "aucun");
   });
@@ -2746,6 +2791,8 @@ function ntRemplir(txt, ex){
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;"); };
   var trou = function(nom){ return '<span class="vide">{' + nom + '}</span>'; };
   var lien = '<span class="lnk">tgf.fr/r/' + (ex ? "8Kq2" : "····") + '</span>';
+  var av = (typeof avisLien === "function") ? avisLien() : "";
+  var avA = av ? '<span class="lnk">' + esc(av.replace(/^https?:\/\//, "")) + '</span>' : null;
   var V = {
     client: ex && ex.client, date: ex && ex.date, heure: ex && ex.heure,
     technicien: ex && ex.tech, adresse: ex && ex.adresse, site: ex && ex.site,
@@ -2753,6 +2800,7 @@ function ntRemplir(txt, ex){
   };
   return esc(txt).replace(/\{(\w+)\}/g, function(m, k){
     if(k === "lien_rdv") return lien;
+    if(k === "avis_google") return avA || trou(k);   /* rien d'inventé : s'il manque, il se voit */
     if(k === "tel_technicien") return trou(k);   /* pas encore dans le logiciel */
     return V[k] ? esc(V[k]) : trou(k);
   });
@@ -2819,7 +2867,14 @@ const MODDEF = [
   {id:"m5", nom:"Ton planning de demain", pub:"tech", canal:"sms", on:0, n:1, u:"j", sens:"avant", h:18, def:1,
    t:"Demain {date} : {client} à {heure}, {adresse}. Nuisible : {nuisible}."},
   {id:"m6", nom:"Enquête de satisfaction", pub:"part", canal:"sms", on:0, n:2, u:"j", sens:"apres", h:11, def:1,
-   t:"Bonjour {client}, tout va bien depuis notre passage du {date} ? Répondez à ce message, on vous rappelle."}
+   t:"Bonjour {client}, tout va bien depuis notre passage du {date} ? Répondez à ce message, on vous rappelle."},
+  /* 01/09 : l'avis Google. Il part à TOUT LE MONDE ou il ne part pas — filtrer
+     pour ne demander qu'aux clients contents (« review gating ») est interdit
+     par Google : avertissement public sur la fiche, blocage des avis, voire
+     suppression de ceux déjà reçus. Ce modèle n'est donc JAMAIS enchaîné sur
+     l'enquête de satisfaction. */
+  {id:"m7", nom:"Demander un avis Google", pub:"part", canal:"sms", on:0, n:2, u:"j", sens:"apres", h:11, def:1,
+   t:"Merci {client} ! Votre avis nous aide beaucoup : {avis_google}"}
 ];
 function modEcrire(L){ try{ localStorage.setItem(MODKEY, JSON.stringify(L)); }catch(e){} }
 function modLire(){
@@ -2929,13 +2984,16 @@ function modPaint(){
       + (sms ? '' : '<input class="modo" type="text" placeholder="Objet de l\'e-mail" value="' + esc(m.obj || "") + '" oninput="modMaj(\'' + m.id + '\',{obj:this.value});ntPrev()">')
       + '<textarea class="modtx" rows="2" oninput="modMaj(\'' + m.id + '\',{t:this.value});modCnt(\'' + m.id + '\');ntPrev()">' + esc(m.t || "") + '</textarea>'
       + '<div class="modm"><span id="mc-' + m.id + '"></span>'
-      +   '<button type="button" class="nrvar" onclick="modVar(\'' + m.id + '\')">+ {lien_rdv}</button>'
+      +   '<details class="varsel"><summary>+ variable</summary><div class="varmenu">'
+      +     '<button type="button" onclick="modVar(\'' + m.id + '\',\'{lien_rdv}\')">{lien_rdv} <i>le client déplace son créneau</i></button>'
+      +     '<button type="button" onclick="modVar(\'' + m.id + '\',\'{avis_google}\')">{avis_google} <i>votre fiche Google</i></button>'
+      +   '</div></details>'
       + '</div></div>';
   }).join("") : '<div class="modvide">Aucun message pour ce public. Ajoutez-en un.</div>')
   + '<button type="button" class="modadd" onclick="modAdd()">+ Ajouter un message</button>';
   L.forEach(function(m){ modCnt(m.id); });
 }
-function modOn(id, v){ modMaj(id, {on: v ? 1 : 0}); modPaint(); ntOnglets(); ntPrev(); }
+function modOn(id, v){ modMaj(id, {on: v ? 1 : 0}); modPaint(); ntOnglets(); ntPrev(); if(typeof avisAlerte === "function") avisAlerte(); }
 function modAdd(){
   var pub = window.NTPUB || "part";
   var L = modLire();
@@ -2965,11 +3023,13 @@ function modReset(id){
   modPaint(); ntPrev();
   if(typeof toast === "function") toast("Texte d'origine restauré");
 }
-function modVar(id){
+function modVar(id, v){
   var m = modDe(id); if(!m) return;
-  if((m.t || "").indexOf("{lien_rdv}") > -1){ if(typeof toast === "function") toast("Il y est déjà"); return; }
-  modMaj(id, {t: ((m.t || "").replace(/\s+$/, "") + " {lien_rdv}").trim()});
+  v = v || "{lien_rdv}";
+  if((m.t || "").indexOf(v) > -1){ if(typeof toast === "function") toast("Il y est déjà"); return; }
+  modMaj(id, {t: ((m.t || "").replace(/\s+$/, "") + " " + v).trim()});
   modPaint(); ntPrev();
+  if(typeof avisAlerte === "function") avisAlerte();
 }
 /* le compteur dit le VRAI coût : 160 caractères = 1 SMS, ensuite 153 par SMS */
 function modCnt(id){
