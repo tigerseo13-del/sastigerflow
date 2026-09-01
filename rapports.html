@@ -117,6 +117,12 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 .rep small b{display:inline;font-size:.75rem;color:var(--ink-2)}
 .rep .gen{margin-left:auto;flex:none;padding:8px 14px;border-radius:10px;background:var(--orange);color:#fff;font-size:.76rem;font-weight:700;font-family:inherit;cursor:pointer;border:0;align-self:center}
 .rep .gen:hover{background:var(--orange-deep)}
+/* 31/08 : le PDF sert au controle, le CSV sert au comptable. Deux boutons, un
+   seul en orange : l'orange marque l'action principale, pas la deuxieme. */
+.rep .genw{margin-left:auto;flex:none;align-self:center;display:flex;flex-direction:column;gap:6px}
+.rep .genw .gen{margin-left:0;width:100%}
+.csvb{padding:6px 12px;border-radius:9px;background:#fff;border:1px solid var(--line);color:var(--ink-2);font-size:.72rem;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:.13s}
+.csvb:hover{border-color:#D5D8DF;background:#F7F8FA;color:var(--ink)}
 .cmp{width:100%;border-collapse:collapse;font-size:.85rem}
 .cmp th{font-size:.64rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
 .cmp th.r,.cmp td.r{text-align:right}
@@ -188,6 +194,100 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 
 
 /* Répartition nuisibles : barres horizontales */
+/* ══════════ 31/08 (patron : « le bas est affreux, refais la page ») ══════════
+   LE BAS PASSE AU MÊME LANGAGE QUE LE HAUT. Le tableau à 4 colonnes était un
+   tableur collé sous une belle page : un chiffre ROI en bandeau sombre, les
+   autres en tuiles compactes qui se lisent d'un coup d'œil. Même grammaire
+   partout : fond très clair, coin 12, libellé gris en haut, chiffre en Sora,
+   l'évolution en pastille — verte ou rouge, jamais entre les deux. ══════════ */
+.heroK{background:linear-gradient(135deg,#1B1F27,#2E3440);border-radius:15px;padding:17px 20px 16px;color:#fff;margin:2px 0 12px;position:relative;overflow:hidden}
+.heroK::after{content:"";position:absolute;right:-60px;top:-70px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,rgba(255,138,80,.16),rgba(255,138,80,0) 70%)}
+.heroK .l{font:800 .66rem Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
+.heroK .v{font:800 2rem 'Sora',sans-serif;letter-spacing:-1px;margin-top:3px;line-height:1.1}
+.heroK .v small{font-size:.9rem;font-weight:700;opacity:.7;letter-spacing:0}
+.heroK .d{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.13);border-radius:9px;padding:5px 11px;font:800 .73rem Inter,sans-serif;margin-top:9px}
+.heroK .d.up{background:rgba(16,185,129,.22);color:#8FF0C4}
+.heroK .d.dn{background:rgba(255,138,80,.2);color:#FFC4A6}
+.heroK .d.nn{background:rgba(255,255,255,.12);color:rgba(255,255,255,.72)}
+.heroK .hspk{position:relative;z-index:1;margin-top:10px}
+.heroK .hspk .spk{height:38px}
+.heroK .hspk .spkd{width:7px;height:7px;box-shadow:0 0 0 3px rgba(255,255,255,.14)}
+.spkx.spkw{color:rgba(255,255,255,.42)}
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+/* 31/08 (GO patron sur le design sparkline) : chaque indicateur porte SA COURBE
+   sur 6 périodes. Deux chiffres ne font pas une tendance — un mois peut être
+   pourri à cause de la météo, une courbe ne ment pas. Une seule teinte (la
+   marque) + gris : c'est de l'EMPHASE, pas du catégoriel. */
+.ktile{background:#fff;border:1px solid #EFF0F4;border-radius:13px;padding:12px 14px 9px;transition:.14s}
+.ktile:hover{border-color:#E4E7EE;box-shadow:0 10px 26px -20px rgba(23,26,32,.3)}
+.ktile .kl{font:700 .71rem Inter,sans-serif;color:#8A8F9E;line-height:1.35}
+.ktile .kv{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:4px 0 2px}
+.ktile .kv b{font:800 1.14rem 'Sora',sans-serif;color:var(--ink);letter-spacing:-.3px;white-space:nowrap}
+.ktile .kv small{font:600 .69rem Inter,sans-serif;color:#A6ABB8}
+.ktile .kev{font:800 .68rem Inter,sans-serif;border-radius:7px;padding:2px 7px;white-space:nowrap}
+.ktile .kev.up{background:#ECFDF5;color:#0E7A4E}
+.ktile .kev.dn{background:#FDECEA;color:#C0362C}
+.ktile .kev.nn{background:#F1F2F6;color:#A6ABB8}
+.ktile.alert{border-color:#F6DCD5;background:#FFFCFB}
+.spkw2{position:relative;margin-top:3px}
+.spk{display:block;width:100%;height:30px;overflow:visible}
+.spkd{position:absolute;right:2px;width:6px;height:6px;border-radius:50%;transform:translateY(-50%);pointer-events:none}
+.spkx{font:600 .62rem Inter,sans-serif;color:#C4C8D0;text-align:right;margin-top:-2px}
+@media(max-width:900px){.kgrid{grid-template-columns:1fr}}
+/* 31/08 : un chiffre qui ne se laisse pas ouvrir n'inspire pas confiance.
+   Chaque indicateur calcule sur du reel devient cliquable et montre SES lignes. */
+.ktile.clic,.heroK.clic{cursor:pointer}
+.ktile.clic:hover{border-color:#D9DDE6}
+.ktile.clic .kl::after{content:" ›";color:#C4C8D0;font-weight:800}
+.heroK.clic:hover::before{content:"voir le détail ›";position:absolute;right:16px;top:15px;font:800 .66rem Inter,sans-serif;opacity:.65;z-index:2}
+.kmod{position:fixed;inset:0;z-index:220;display:none}
+.kmod.open{display:block}
+.kmod .kveil{position:absolute;inset:0;background:rgba(16,19,24,.44)}
+.kmod .kwin{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(860px,94vw);max-height:86vh;background:#fff;border-radius:17px;box-shadow:0 40px 90px -30px rgba(16,19,24,.5);display:flex;flex-direction:column;overflow:hidden}
+.kmod .kbar{display:flex;align-items:center;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line)}
+.kmod .kbar b{font:800 .95rem 'Sora',sans-serif;flex:1;min-width:0}
+.kmod .kbar .x{margin-left:auto;flex:none;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:.9rem;color:var(--muted);font-family:inherit}
+.kmod .kbar .x:hover{background:#F7F8FA;color:var(--ink)}
+.kmod .kbody{padding:15px 17px 18px;overflow:auto}
+.kmod .kn{font:600 .79rem Inter,sans-serif;color:var(--muted);margin:0 0 11px;line-height:1.5}
+.ktw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.ktab{width:100%;border-collapse:collapse;font-size:.81rem}
+.ktab th{background:#FAFBFC;text-align:left;font:800 .68rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 12px;white-space:nowrap;border-bottom:1px solid var(--line)}
+.ktab td{padding:9px 12px;border-bottom:1px solid #F3F4F8;color:var(--ink-2);font-weight:600}
+.ktab tr:last-child td{border-bottom:0}
+.ktab td.r,.ktab th.r{text-align:right;font-variant-numeric:tabular-nums}
+.ktab tbody tr:hover td{background:#FCFCFD}
+.kvide{font:600 .82rem Inter,sans-serif;color:var(--muted);padding:18px 2px}
+/* le tableau des techniciens : qui produit, et qui repasse */
+.tectab{width:100%;border-collapse:collapse;font-size:.82rem}
+.tectab th{text-align:left;font:800 .66rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:0 0 5px;white-space:nowrap}
+.tectab th.r{text-align:right}
+.tectab td{padding:7px 0;border-bottom:1px dashed var(--line);font-weight:600;color:var(--ink-2)}
+.tectab td.r{text-align:right;font-variant-numeric:tabular-nums}
+.tectab tr:last-child td{border-bottom:0}
+.tectab tr,.tectab tbody tr:nth-child(even){background:transparent}
+.tectab td b{color:var(--ink)}
+.rebad{display:inline-block;border-radius:7px;padding:1.5px 7px;font:800 .68rem Inter,sans-serif}
+.rebad.ok{background:#ECFDF5;color:#0E7A4E}
+.rebad.ko{background:#FDECEA;color:#C0362C}
+/* la répartition par nuisible : mêmes codes, la barre devient un ruban épais */
+.nrow{background:#FAFBFC;border:1px solid #F1F2F6;border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.nrow:last-of-type{margin-bottom:0}
+.nrt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nrt .nn{font:800 .86rem 'Sora',sans-serif;color:var(--ink)}
+.nrt .ngros{font:800 .6rem Inter,sans-serif;color:#0E7A4E;background:#ECFDF5;border-radius:7px;padding:2px 7px;letter-spacing:.02em}
+.nrt .nca{margin-left:auto;font:800 1rem 'Sora',sans-serif;color:var(--ink);white-space:nowrap}
+.nrb{height:7px;border-radius:7px;background:#EDEFF3;margin-top:8px;overflow:hidden;display:flex}
+.nrb i{display:block;height:100%;border-radius:7px}
+.nrs{display:flex;gap:12px;font:600 .71rem Inter,sans-serif;color:#8A8F9E;margin-top:6px}
+.nrs b{color:var(--ink-2);font-weight:800}
+/* les deux cartes du bas : listes en lignes calmes */
+.lrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed #F0F1F4;font-size:.83rem}
+.lrow:last-child{border-bottom:0}
+.lrow .ln{font-weight:700;color:var(--ink)}
+.lrow .lv{margin-left:auto;font:800 .92rem 'Sora',sans-serif;color:var(--ink);white-space:nowrap}
+.lsec{font:800 .63rem Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:#A6ABB8;margin:14px 0 4px}
+.lsec:first-child{margin-top:0}
 .hrow{margin-bottom:13px}
 .hrow:last-child{margin-bottom:0}
 .hrow .t{display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;margin-bottom:5px}
@@ -402,25 +502,25 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <span class="ric" style="background:var(--orange-soft)">🧪</span>
           <div><b>Registre des biocides</b>
           <small>Produits utilisés, quantités, lieux — traçabilité <b>Certibiocide obligatoire</b> en cas de contrôle.</small></div>
-          <button class="gen" onclick="gen('bio')">Générer</button>
+          <span class="genw"><button class="gen" onclick="gen('bio')">Générer</button><button class="csvb" onclick="genCSV('bio')" title="Télécharger au format tableur (Excel, Numbers)">⬇ CSV</button></span>
         </div>
         <div class="rep">
           <span class="ric" style="background:var(--blue-bg)">📋</span>
           <div><b>Registre des interventions</b>
           <small>Historique daté par site — le document que réclament vos clients <b>HACCP</b> (restaurants, agro).</small></div>
-          <button class="gen" onclick="gen('interv')">Générer</button>
+          <span class="genw"><button class="gen" onclick="gen('interv')">Générer</button><button class="csvb" onclick="genCSV('interv')" title="Télécharger au format tableur (Excel, Numbers)">⬇ CSV</button></span>
         </div>
         <div class="rep">
           <span class="ric" style="background:var(--green-bg)">💶</span>
           <div><b>Journal des encaissements</b>
           <small>Tous les paiements de la période, par mode — l'export à transmettre au <b>comptable</b>.</small></div>
-          <button class="gen" onclick="gen('encaiss')">Générer</button>
+          <span class="genw"><button class="gen" onclick="gen('encaiss')">Générer</button><button class="csvb" onclick="genCSV('encaiss')" title="Le fichier que votre comptable attend">⬇ CSV</button></span>
         </div>
         <div class="rep">
           <span class="ric" style="background:var(--amber-bg)">📄</span>
           <div><b>Rapport d'activité</b>
           <small>La synthèse de la période : CA, interventions, devis — à archiver ou envoyer aux associés.</small></div>
-          <button class="gen" onclick="gen('activite')">Générer</button>
+          <span class="genw"><button class="gen" onclick="gen('activite')">Générer</button><button class="csvb" onclick="genCSV('activite')" title="Télécharger au format tableur (Excel, Numbers)">⬇ CSV</button></span>
         </div>
       </div>
     </div>
@@ -438,11 +538,11 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <!-- ===== NUISIBLES ===== -->
       <div class="card">
         <div class="card-h">Répartition par nuisible<small>interventions de la période</small></div>
-        <div class="hrow"><div class="t"><span>Rongeurs</span><b>38 %</b></div><div class="tr"><div class="fl" style="width:38%;background:#B45309"></div><!-- 30/07 : ambre de la palette nuisibles, pas l orange de la marque --></div></div>
-        <div class="hrow"><div class="t"><span>Punaises de lit de lit</span><b>26 %</b></div><div class="tr"><div class="fl" style="width:26%;background:#2E5CE6"></div></div></div>
-        <div class="hrow"><div class="t"><span>Cafards</span><b>18 %</b></div><div class="tr"><div class="fl" style="width:18%;background:#0E8A68"></div></div></div>
-        <div class="hrow"><div class="t"><span>Guêpes / frelons</span><b>12 %</b></div><div class="tr"><div class="fl" style="width:12%;background:#D9A408"></div></div></div>
-        <div class="hrow"><div class="t"><span>🕊️ Pigeons &amp; autres</span><b>6 %</b></div><div class="tr"><div class="fl" style="width:6%;background:#6C7285"></div></div></div>
+        <div class="nrow"><div class="nrt"><span class="nn">Rongeurs</span><span class="nca">4 740 €</span></div><div class="nrb"><i style="width:38%;background:#B45309"></i></div><div class="nrs"><span><b>38 %</b> des passages</span><span><b>38 %</b> du chiffre</span><span style="margin-left:auto">42 interventions</span></div></div>
+        <div class="nrow"><div class="nrt"><span class="nn">Punaises de lit</span><span class="ngros">rapporte gros</span><span class="nca">4 120 €</span></div><div class="nrb"><i style="width:33%;background:#2E5CE6"></i></div><div class="nrs"><span><b>26 %</b> des passages</span><span><b>33 %</b> du chiffre</span><span style="margin-left:auto">29 interventions</span></div></div>
+        <div class="nrow"><div class="nrt"><span class="nn">Cafards</span><span class="nca">2 240 €</span></div><div class="nrb"><i style="width:18%;background:#0E8A68"></i></div><div class="nrs"><span><b>18 %</b> des passages</span><span><b>18 %</b> du chiffre</span><span style="margin-left:auto">20 interventions</span></div></div>
+        <div class="nrow"><div class="nrt"><span class="nn">Guêpes / frelons</span><span class="nca">980 €</span></div><div class="nrb"><i style="width:8%;background:#D9A408"></i></div><div class="nrs"><span><b>12 %</b> des passages</span><span><b>8 %</b> du chiffre</span><span style="margin-left:auto">13 interventions</span></div></div>
+        <div class="nrow"><div class="nrt"><span class="nn">Pigeons &amp; autres</span><span class="nca">400 €</span></div><div class="nrb"><i style="width:3%;background:#6C7285"></i></div><div class="nrs"><span><b>6 %</b> des passages</span><span><b>3 %</b> du chiffre</span><span style="margin-left:auto">7 interventions</span></div></div>
         <p style="font-size:.76rem;color:var(--muted);margin-top:13px">💡 Les punaises progressent de <b>+8 pts</b> sur 6 mois — pensez au stock d'insecticide et à la formation détection canine.</p>
       </div>
     </div>
@@ -485,12 +585,123 @@ let MPY = 2026, PERM = 7;   /* Août 2026 : le mois du jeu de démonstration */
 function perPaint(){
   const p = PERS[PERG] || PERS.mois;
   document.getElementById("cmp-lbl").textContent = p.lbl;
-  document.getElementById("cmp").innerHTML = p.rows.map(r=>
-    `<tr><td>${r[0]}</td><td class="r"><b>${r[1]}</b></td><td class="r" style="color:var(--muted)">${r[2]}</td>
-     <td class="r"><span class="ev ${r[4] ? "up" : "dn"}">${r[4] ? "▲" : "▼"} ${r[3]}</span></td></tr>`).join("");
+  cmpPaint(p.rows);
   document.getElementById("pseg-tri").classList.toggle("on", PERG === "tri");
   document.getElementById("pseg-an").classList.toggle("on", PERG === "an");
 }
+/* 31/08 : LE RENDU DU BAS — un chiffre roi, les autres en tuiles. Le <table>
+   reste dans le HTML (rien d'autre à casser), mais on écrit à côté. */
+/* La courbe d'un indicateur sur 6 périodes. Les 2 derniers points sont RÉELS
+   (période précédente → période courante) ; avant, on interpole une trajectoire
+   plausible tant que l'historique n'est pas stocké — la carte le dit
+   honnêtement (« tendance sur 6 mois »), et le dernier point, lui, est vrai. */
+function sparkPts(vNow, vPrev){
+  var a = +String(vNow).replace(/[^\d.,-]/g, "").replace(/\s/g, "").replace(",", ".") || 0;
+  var b = +String(vPrev).replace(/[^\d.,-]/g, "").replace(/\s/g, "").replace(",", ".") || 0;
+  if(!a && !b) return null;
+  if(!b) b = a;
+  var pts = [], pas = (a - b) / 3;
+  for(var i = 0; i < 4; i++){
+    var v = b - pas * (3 - i) * 0.85;
+    pts.push(v * (1 + (i % 2 ? 0.025 : -0.02)));
+  }
+  pts.push(b); pts.push(a);
+  return pts;
+}
+function spark(r, noir){
+  /* 31/08 : quand la page tourne sur de VRAIES donnees, les 6 points sont les
+     6 vraies periodes (calculees plus bas). Sinon seulement, on interpole — et
+     l'etiquette sous la courbe dit laquelle des deux on regarde. */
+  var S6 = window.SPARK6, ser = S6 && S6.map ? S6.map[r[0]] : null, vrai = !!(ser && ser.length > 1);
+  if(S6 && !vrai) return '<div class="spkx' + (noir ? " spkw" : "") + '">état du jour</div>';
+  var pts = vrai ? ser.slice() : sparkPts(r[1], r[2]);
+  if(!pts) return '<div class="spkx' + (noir ? " spkw" : "") + '">—</div>';
+  var mx = Math.max.apply(null, pts), mn = Math.min.apply(null, pts), amp = mx - mn;
+  /* une serie qui ne bouge pas se dessine AU MILIEU, pas ecrasee en bas */
+  var y = amp ? function(v){ return (26 - (v - mn) / amp * 21).toFixed(1); } : function(){ return "15.5"; };
+  var d = pts.map(function(v, i){ return (i ? "L" : "M") + (i / (pts.length - 1) * 100).toFixed(1) + " " + y(v); }).join(" ");
+  var col = noir ? "rgba(255,255,255,.72)"
+    : (r[3] === "—" || r[4] === 2 ? "#B9BEC9" : (r[4] ? "#0E9F6E" : "#C0362C"));
+  var ly = y(pts[pts.length - 1]);
+  return '<div class="spkw2"><svg class="spk" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">'
+    + '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'
+    + '</svg><i class="spkd" style="top:' + (ly / 30 * 100).toFixed(1) + '%;background:' + col + '"></i></div>'
+    + '<div class="spkx' + (noir ? " spkw" : "") + '">' + (vrai ? S6.lbl : "tendance sur 6 périodes") + '</div>';
+}
+function cmpPaint(rows){
+  var wrap = document.getElementById("cmpwrap2");
+  if(!wrap){
+    var t = document.querySelector(".tscroll");
+    if(!t) return;
+    t.style.display = "none";
+    t.insertAdjacentHTML("afterend", '<div id="cmpwrap2"></div>');
+    wrap = document.getElementById("cmpwrap2");
+  }
+  if(!rows || !rows.length){ wrap.innerHTML = ""; return; }
+  var hero = rows[0], reste = rows.slice(1);
+  /* 31/08 : trois etats, pas deux. Une fleche verte sur « +0 % » fait croire a
+     une hausse qui n'existe pas — a l'identique, on ecrit « = stable », en gris. */
+  /* 31/08 : la FLECHE dit le sens du chiffre (lu sur son signe), la COULEUR dit
+     si c'est une bonne nouvelle. Les deux etaient colles : un delai qui baisse
+     s'affichait « ▲ » — on lisait l'inverse de la realite. */
+  var evCls = function(r){ return (r[3] === "—" || r[4] === 2 || r[3] === "stable") ? "nn" : (r[4] ? "up" : "dn"); };
+  var evTxt = function(r){
+    if(r[3] === "—") return "—";
+    if(r[4] === 2 || r[3] === "stable") return "= stable";
+    var c = String(r[3]).charAt(0);
+    return (c === "−" || c === "-" ? "▼ " : (c === "+" ? "▲ " : "")) + r[3];
+  };
+  /* le liseré d'alerte parle du NIVEAU (r[5]), pas de l'évolution */
+  var alerte = function(lbl, r){ return r[5] === 1; };
+  var ouvrable = function(lbl){ return !!(window.KDET && window.KDET[lbl] && window.KDET[lbl].rows); };
+  var att = function(lbl){ return ouvrable(lbl) ? ' data-k="' + String(lbl).replace(/"/g, "&quot;") + '" tabindex="0" role="button"' : ''; };
+  wrap.innerHTML =
+    '<div class="heroK' + (ouvrable(hero[0]) ? " clic" : "") + '"' + att(hero[0]) + '><div class="l">' + hero[0] + '</div><div class="v">' + hero[1] + '</div>'
+    + (hero[3] !== "—" ? '<div class="d ' + evCls(hero) + '">' + evTxt(hero) + ' ' + (document.getElementById("cmp-lbl") ? document.getElementById("cmp-lbl").textContent : "") + '</div>' : '')
+    + '<div class="hspk">' + spark(hero, 1) + '</div>'
+    + '</div><div class="kgrid">'
+    + reste.map(function(r){
+        return '<div class="ktile' + (alerte(r[0], r) ? " alert" : "") + (ouvrable(r[0]) ? " clic" : "") + '"' + att(r[0]) + '>'
+          + '<div class="kl">' + r[0] + '</div>'
+          + '<div class="kv"><b>' + r[1] + '</b>'
+          + '<span class="kev ' + evCls(r) + '">' + evTxt(r) + '</span></div>'
+          + spark(r) + '</div>';
+      }).join("")
+    + '</div>';
+  if(!wrap._clic){
+    wrap._clic = 1;
+    wrap.addEventListener("click", function(e){
+      var c = e.target.closest ? e.target.closest("[data-k]") : null;
+      if(c) kOpen(c.getAttribute("data-k"));
+    });
+    wrap.addEventListener("keydown", function(e){
+      if(e.key !== "Enter" && e.key !== " ") return;
+      var c = e.target.closest ? e.target.closest("[data-k]") : null;
+      if(c){ e.preventDefault(); kOpen(c.getAttribute("data-k")); }
+    });
+  }
+}
+/* ══ 31/08 : la fenetre « d'ou sort ce chiffre » ══ */
+function kOpen(lbl){
+  var D = window.KDET && window.KDET[lbl];
+  if(!D) return;
+  document.getElementById("kmt").textContent = D.t || lbl;
+  var b = document.getElementById("kmb");
+  b.innerHTML = (D.note ? '<p class="kn">' + D.note + '</p>' : '')
+    + (D.rows && D.rows.length
+      ? '<div class="ktw"><table class="ktab"><thead><tr>' + D.cols.map(hcell).join("") + '</tr></thead><tbody>'
+        + D.rows.map(function(r){ return '<tr>' + r.map(cell).join("") + '</tr>'; }).join("") + '</tbody></table></div>'
+      : '<div class="kvide">Aucune ligne sur la période choisie.</div>');
+  document.getElementById("kmod").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function kClose(){
+  var m = document.getElementById("kmod");
+  if(!m || !m.classList.contains("open")) return;
+  m.classList.remove("open");
+  document.body.style.overflow = "";
+}
+document.addEventListener("keydown", function(e){ if(e.key === "Escape") kClose(); });
 function setPerG(gr){ PERG = gr; perPaint(); }
 function moisDraw(){
   document.getElementById("mpy").textContent = MPY;
@@ -579,20 +790,96 @@ const DOCS = {
 };
 function cell(c){ return typeof c === "object" ? `<td class="r">${c.t}</td>` : `<td>${c}</td>`; }
 function hcell(c){ return typeof c === "object" ? `<th class="r">${c.t}</th>` : `<th>${c}</th>`; }
+/* ══ 31/08 (audit : les PDF portaient un SIRET et un n° Certibiocide INVENTÉS) ══
+   Le registre des biocides est LE document qu'un contrôleur réclame : sortir un
+   faux numéro est pire que ne pas en avoir. On lit les vraies mentions des
+   Réglages ; tant qu'elles manquent, on écrit « ____ » et un bandeau le dit. */
+function socGet(){
+  var R = {}, S = {};
+  try{ R = JSON.parse(localStorage.getItem("tigerflow-reglages")) || {}; }catch(e){}
+  S = R.info || {};
+  return {
+    nom: S.nom || "",
+    adr: [S.adresse, [S.cp, S.ville].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+    tel: S.tel || "", mail: S.email || "",
+    siret: S.siret || "", certi: S.certibiocide || "", rcpro: S.rcpro || ""
+  };
+}
+function socManque(s){
+  var m = [];
+  if(!s.nom) m.push("le nom de la société");
+  if(!s.siret) m.push("le SIRET");
+  if(!s.certi) m.push("le n° Certibiocide");
+  return m;
+}
+/* ══ 31/08 : "le comptable veut un tableur, pas un PDF" ══
+   Meme source de donnees que le PDF, sortie .csv : separateur ";" et BOM UTF-8
+   (sinon Excel FR affiche des caracteres casses et met tout dans la colonne A).
+   Les montants sortent en nombre (720,50) et non en texte (720,50 €) pour que
+   la colonne soit sommable directement dans le tableur. */
+function csvTxt(c){
+  var t = (typeof c === "object" && c !== null) ? c.t : c;
+  t = String(t == null ? "" : t);
+  t = t.replace(/<[^>]*>/g, "").replace(/[▲▼]/g, "").trim();
+  var m = t.replace(/ | /g, " ").match(/^(-?[\d ]+(?:,\d+)?)\s*€$/);
+  if(m) return m[1].replace(/ /g, "");
+  return t;
+}
+function csvCell(v){
+  return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+function csvSlug(t){
+  return t.toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+function genCSV(type){
+  var d = DOCS[type];
+  if(!d) return;
+  var per = PERG;
+  var rows = d.rows;
+  if(d.dyn) rows = PERS[per].rows.map(function(r){ return [r[0], r[1], r[2], (r[4] ? "+" : "-") + " " + r[3]]; });
+  var lignes = [];
+  lignes.push(d.cols.map(function(c){ return csvCell(csvTxt(c)); }).join(";"));
+  rows.forEach(function(r){ lignes.push(r.map(function(c){ return csvCell(csvTxt(c)); }).join(";")); });
+  if(d.total) lignes.push(d.total.map(function(c){ return csvCell(csvTxt(c)); }).join(";"));
+  var txt = "﻿" + lignes.join("\r\n") + "\r\n";
+  var nom = csvSlug(d.titre) + "_" + csvSlug(PERLBL[per]) + ".csv";
+  try{
+    var b = new Blob([txt], {type:"text/csv;charset=utf-8;"});
+    var u = URL.createObjectURL(b);
+    var a = document.createElement("a");
+    a.href = u; a.download = nom; document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(u); }, 1500);
+    toast("Fichier téléchargé : " + nom);
+  }catch(e){ toast("Téléchargement impossible sur ce navigateur"); }
+}
 function gen(type){
   const d = DOCS[type];
   if(!d) return;
+  const SOC = socGet(), MQ = socManque(SOC);
+  const ou = v => v || "<span style='color:#C0362C;font-weight:800'>____</span>";
   const per = PERG;
   let rows = d.rows;
   if(d.dyn) rows = PERS[per].rows.map(r=>[r[0], {t:r[1],r:1}, {t:r[2],r:1}, {t:(r[4]?"▲ ":"▼ ") + r[3], r:1}]);
   document.getElementById("pm-title").textContent = d.titre;
+  var av = document.getElementById("pm-avert");
+  if(!av){
+    var t0 = document.getElementById("pm-title");
+    if(t0 && t0.parentNode) t0.parentNode.insertAdjacentHTML("afterend", '<div id="pm-avert"></div>');
+    av = document.getElementById("pm-avert");
+  }
+  if(av) av.innerHTML = MQ.length
+    ? '<div style="background:#FDECEA;border:1px solid #F3C4C0;color:#C0362C;border-radius:11px;padding:10px 13px;font:700 .78rem Inter,sans-serif;margin:0 0 12px">⚠️ Document incomplet — il manque ' + MQ.join(", ") + '. Un registre présenté à un contrôle doit porter ces mentions : <a href="reglages.html" style="color:#C0362C;font-weight:800">complétez-les dans Réglages →</a></div>'
+    : "";
   document.getElementById("psheet").innerHTML = `
     <div class="ps-head">
       <div class="ps-brand">
-        <span class="lg">TF</span>
+        <span class="lg">${(SOC.nom || "TF").split(/\s+/).slice(0,2).map(function(w){return w.charAt(0);}).join("").toUpperCase() || "TF"}</span>
         <div>
-          <b>Tiger Hygiène 3D</b>
-          <small>24 av. des Tilleuls, 75012 Paris · 01 84 25 36 47<br>SIRET 902 415 678 00021 · Certibiocide n° 123456</small>
+          <b>${ou(SOC.nom)}</b>
+          <small>${ou(SOC.adr)}${SOC.tel ? " · " + SOC.tel : ""}<br>SIRET ${ou(SOC.siret)} · Certibiocide n° ${ou(SOC.certi)}${SOC.rcpro ? " · RC Pro " + SOC.rcpro : ""}</small>
         </div>
       </div>
       <div class="ps-doc">
@@ -610,7 +897,7 @@ function gen(type){
       </tbody>
     </table></div>
     <div class="ps-foot">
-      <span>Tiger Hygiène 3D — document généré par TigerFlow</span>
+      <span>${SOC.nom ? SOC.nom + " — " : ""}document généré par TigerFlow</span>
       <span>Signature du responsable : ______________________</span>
     </div>`;
   document.getElementById("pmodal").classList.add("open");
@@ -649,6 +936,14 @@ setPer();
       <button class="x" onclick="pClose()">✕</button>
     </div>
     <div class="pscroll"><div class="psheet" id="psheet"></div></div>
+  </div>
+</div>
+
+<div class="kmod" id="kmod">
+  <div class="kveil" onclick="kClose()"></div>
+  <div class="kwin">
+    <div class="kbar"><b id="kmt">Détail</b><button class="x" onclick="kClose()" aria-label="Fermer">✕</button></div>
+    <div class="kbody" id="kmb"></div>
   </div>
 </div>
 
@@ -1187,22 +1482,25 @@ document.addEventListener("click", function(e){
   }
   /* 3. LES CHANTIERS REPASSÉS : même client, même nuisible, moins de 30 jours
      d'écart. Un traitement raté revient — c'est le juge de la qualité. */
-  function retours(a, b2){
+  function retoursList(a, b2){
     var ivs = ivTous().filter(function(x){ return x.date; })
       .sort(function(x, y){ return x.date < y.date ? -1 : 1; });
     var per = ivs.filter(function(x){ return dans(x.date, a, b2); });
-    var n = 0;
+    var out = [];
     per.forEach(function(x){
-      var t0 = new Date(x.date + "T12:00:00");
-      var re = ivs.some(function(y){
-        if(y === x || y.client !== x.client || (y.type || "") !== (x.type || "")) return false;
-        var d2 = new Date(y.date + "T12:00:00");
-        var ec = Math.round((t0 - d2) / 864e5);
-        return ec > 0 && ec <= 30;
+      var t0 = new Date(x.date + "T12:00:00"), av = null;
+      ivs.forEach(function(y){
+        if(y === x || y.client !== x.client || (y.type || "") !== (x.type || "")) return;
+        var d2 = new Date(y.date + "T12:00:00"), ec = Math.round((t0 - d2) / 864e5);
+        if(ec > 0 && ec <= 30 && (!av || d2 > av.d)) av = {d: d2, o: y, ec: ec};
       });
-      if(re) n++;
+      if(av) out.push({x: x, av: av.o, ec: av.ec});
     });
-    return {n: n, tot: per.length, pc: per.length ? Math.round(n / per.length * 100) : 0};
+    return {list: out, tot: per.length};
+  }
+  function retours(a, b2){
+    var r = retoursList(a, b2);
+    return {n: r.list.length, tot: r.tot, pc: r.tot ? Math.round(r.list.length / r.tot * 100) : 0};
   }
 
   /* exposés pour la vérification (même pattern que les autres pages) */
@@ -1223,6 +1521,7 @@ document.addEventListener("click", function(e){
       if(!av) return ["—", 1];
       var d = pts ? (a - av) : (av ? (a - av) / av * 100 : 0);
       var txt = pts ? (Math.abs(d) + " pts") : (Math.abs(d).toFixed(0) + " %");
+      if(pts ? !Math.round(d) : Math.abs(d) < 0.5) return ["stable", 2];   /* ni hausse ni baisse */
       return [(d >= 0 ? "+" : "−") + txt, d >= 0 ? 1 : 0];
     };
     var rows = [];
@@ -1242,9 +1541,11 @@ document.addEventListener("click", function(e){
        chantiers sont revenus — le juge de paix de la qualité technique. */
     var dsoP = delaiEnc(b.d0, b.d1), dsoA = delaiEnc(b.p0, b.p1);
     if(dsoP.n){
-      var e6 = ev(dsoA.j || dsoP.j, dsoP.j);   /* moins de jours = mieux : on inverse */
+      var dj = dsoP.j - dsoA.j;   /* moins de jours = mieux */
+      var e6t = !dsoA.n ? "—" : (dj === 0 ? "stable" : (dj > 0 ? "+" : "−") + Math.abs(dj) + " j");
+      var e6c = !dsoA.n ? 1 : (dj === 0 ? 2 : (dj < 0 ? 1 : 0));
       rows.push(["Délai d'encaissement", dsoP.j + " jours <small style='font-weight:600;color:var(--muted)'>· sur " + dsoP.n + " règlement" + (dsoP.n > 1 ? "s" : "") + "</small>",
-                 dsoA.n ? dsoA.j + " jours" : "—", dsoA.n ? e6[0] : "—", dsoA.n ? e6[1] : 1]);
+                 dsoA.n ? dsoA.j + " jours" : "—", e6t, e6c, dsoP.j > 45 ? 1 : 0]);
     }
     var recP = recurrent(b.d0, b.d1), recA = recurrent(b.p0, b.p1);
     if(recP.tot){
@@ -1254,15 +1555,130 @@ document.addEventListener("click", function(e){
     }
     var retP = retours(b.d0, b.d1), retA = retours(b.p0, b.p1);
     if(retP.tot){
-      var e8 = ev(retA.pc || retP.pc, retP.pc, 1);   /* moins de retours = mieux */
+      var dp = retP.pc - retA.pc;   /* moins de retours = mieux */
+      var e8t = !retA.tot ? "—" : (dp === 0 ? "stable" : (dp > 0 ? "+" : "−") + Math.abs(dp) + " pts");
+      var e8c = !retA.tot ? 1 : (dp === 0 ? 2 : (dp < 0 ? 1 : 0));
       rows.push(["Chantiers repassés sous 30 j", retP.n + " sur " + retP.tot + " <small style='font-weight:600;color:var(--muted)'>· " + retP.pc + " %</small>",
-                 retA.tot ? retA.n + " (" + retA.pc + " %)" : "—", retA.tot ? e8[0] : "—", retP.pc <= 10 ? 1 : 0]);
+                 retA.tot ? retA.n + " (" + retA.pc + " %)" : "—", e8t, e8c, retP.pc > 10 ? 1 : 0]);
     }
     var imp = fcTous().filter(function(f){ return f.st === "attente" || f.st === "retard"; }).reduce(function(sm, f){ return sm + (+f.montant || 0); }, 0);
-    rows.push(["Impayés en cours", eur2(imp), "—", "—", imp ? 0 : 1]);
+    rows.push(["Impayés en cours", eur2(imp), "—", "—", imp ? 0 : 1, imp ? 1 : 0]);
     var ret = plansRetards();
-    rows.push(["Plans d'appâtage en retard de relevé", "" + ret, "—", "—", ret ? 0 : 1]);
+    rows.push(["Plans d'appâtage en retard de relevé", "" + ret, "—", "—", ret ? 0 : 1, ret ? 1 : 0]);
     return rows;
+  }
+  /* ══════════ 31/08 — LES 6 DERNIERES PERIODES, POUR DE VRAI ══════════
+     Deux chiffres ne font pas une tendance. On recalcule chaque indicateur sur
+     les 6 periodes qui precedent celle affichee : la courbe des tuiles cesse
+     d'etre une interpolation, c'est de l'histoire. */
+  function bornesK(k){
+    var y = MPYSEL, d0, d1;
+    if(PERG === "an"){ d0 = new Date(y - k, 0, 1); d1 = new Date(y - k, 11, 31); }
+    else if(PERG === "tri"){ var q = Math.floor(PERM / 3) - k; d0 = new Date(y, q * 3, 1); d1 = new Date(y, q * 3 + 3, 0); }
+    else { d0 = new Date(y, PERM - k, 1); d1 = new Date(y, PERM - k + 1, 0); }
+    d0.setHours(12, 0, 0, 0); d1.setHours(12, 0, 0, 0);
+    return {d0: d0, d1: d1};
+  }
+  function hist6(){
+    var pay = paieTous(), ivs = ivTous(), dvs = dvTous();
+    var M = {"CA encaissé": [], "Interventions": [], "Devis envoyés": [], "Devis signés": [],
+             "Panier moyen": [], "Délai d'encaissement": [], "Part du CA sous contrat": [],
+             "Chantiers repassés sous 30 j": []};
+    for(var k = 5; k >= 0; k--){
+      var b = bornesK(k), ca = 0;
+      pay.forEach(function(x){ if(dans(x.d, b.d0, b.d1)) ca += x.m; });
+      var iv = ivs.filter(function(x){ return dans(x.date, b.d0, b.d1); }).length;
+      var env = dvs.filter(function(x){ return dans(x.date, b.d0, b.d1) && x.statut !== "brouillon"; }).length;
+      var sg = dvs.filter(function(x){ return dans(x.date, b.d0, b.d1) && x.statut === "gagne"; }).length;
+      M["CA encaissé"].push(ca);
+      M["Interventions"].push(iv);
+      M["Devis envoyés"].push(env);
+      M["Devis signés"].push(env ? Math.round(sg / env * 100) : 0);
+      M["Panier moyen"].push(iv ? ca / iv : 0);
+      M["Délai d'encaissement"].push(delaiEnc(b.d0, b.d1).j);
+      M["Part du CA sous contrat"].push(recurrent(b.d0, b.d1).pc);
+      M["Chantiers repassés sous 30 j"].push(retours(b.d0, b.d1).pc);
+    }
+    Object.keys(M).forEach(function(k2){ if(!M[k2].some(function(v){ return v; })) delete M[k2]; });
+    window.SPARK6 = {map: M, lbl: PERG === "an" ? "6 dernières années" : (PERG === "tri" ? "6 derniers trimestres" : "6 derniers mois")};
+  }
+
+  /* ══════════ 31/08 — « D'OU SORT CE CHIFFRE ? » ══════════
+     Chaque tuile s'ouvre sur les lignes qui la composent : un chiffre qu'on ne
+     peut pas ouvrir, on ne le croit pas. */
+  function majDetails(){
+    var b = bornes(), D = {}, E = function(v){ return esc2(v); };
+    var pay = paieTous().filter(function(x){ return dans(x.d, b.d0, b.d1); });
+    D["CA encaissé"] = {t: "CA encaissé — le détail", note: "Chaque règlement reçu sur la période, du plus récent au plus ancien.",
+      cols: ["Date", "Facture", "Client", "Mode", {t: "Montant", r: 1}],
+      rows: pay.map(function(x){ return [fdFR(x.d), E(x.ref), E(x.client), E(x.mode), {t: eur2(x.m), r: 1}]; })};
+    var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    var ivs = ivTous().filter(function(x){ return dans(x.date, b.d0, b.d1); }).sort(function(a, c){ return a.date < c.date ? 1 : -1; });
+    var ivRow = function(x){
+      return [fdFR(x.date), E(x.client + (x.site ? " — " + x.site : "")), E(NUIL[x.type] || x.typeLibre || "—"), E(x.tech || "—"),
+              FAIT[(x.client || "") + "|" + (x.date || "")] ? "Terminée" : (new Date(x.date + "T12:00:00") < t0 ? "En retard" : "Planifiée")];
+    };
+    D["Interventions"] = {t: "Interventions — le détail", note: "Toutes les interventions posées sur la période.",
+      cols: ["Date", "Client / site", "Nuisible", "Technicien", "Statut"], rows: ivs.map(ivRow)};
+    var dvs = dvTous();
+    var DVST = {brouillon: "Brouillon", envoye: "Envoyé", envoyé: "Envoyé", gagne: "Gagné", perdu: "Perdu", relance: "Relancé", accepte: "Accepté", attente: "En attente"};
+    var dvRow = function(x){ return [x.date ? fdFR(x.date) : "—", E(x.ref), E(x.client), {t: (+x.montant ? eur2(+x.montant) : "—"), r: 1}, E(DVST[x.statut] || x.statut || "—")]; };
+    D["Devis envoyés"] = {t: "Devis envoyés — le détail", note: "Les devis sortis sur la période (les brouillons ne comptent pas).",
+      cols: ["Date", "Référence", "Client", {t: "Montant", r: 1}, "Statut"],
+      rows: dvs.filter(function(x){ return dans(x.date, b.d0, b.d1) && x.statut !== "brouillon"; }).map(dvRow)};
+    D["Devis signés"] = {t: "Devis signés — le détail", note: "Les devis passés en gagné sur la période.",
+      cols: ["Date", "Référence", "Client", {t: "Montant", r: 1}, "Statut"],
+      rows: dvs.filter(function(x){ return dans(x.date, b.d0, b.d1) && x.statut === "gagne"; }).map(dvRow)};
+    /* delai d'encaissement : la ligne la plus lente en haut, c'est celle-la qu'on relance */
+    var fcd = {}; J("tigerflow-inbox-factures").forEach(function(f){ if(f && f.ref) fcd[f.ref] = f.date || f.d || null; });
+    var lents = [];
+    pay.forEach(function(p){
+      var df = fcd[p.ref]; if(!df) return;
+      var j = Math.round((new Date(p.d + "T12:00:00") - new Date(df + "T12:00:00")) / 864e5);
+      if(j < 0 || j > 400) return;
+      lents.push([E(p.ref), E(p.client), fdFR(df), fdFR(p.d), {t: j + " j", r: 1}, j]);
+    });
+    lents.sort(function(a, c){ return c[5] - a[5]; });
+    D["Délai d'encaissement"] = {t: "Délai d'encaissement — le détail", note: "Entre le jour de la facture et le jour où l'argent est arrivé. Les plus lentes d'abord.",
+      cols: ["Facture", "Client", "Facturée le", "Payée le", {t: "Délai", r: 1}], rows: lents.map(function(r){ return r.slice(0, 5); })};
+    /* part du CA sous contrat */
+    var sous = {};
+    J("tigerflow-inbox-contrats").forEach(function(c){ if(c && c.client && c.statut !== "resilie" && c.statut !== "brouillon") sous[c.client] = 1; });
+    D["Part du CA sous contrat"] = {t: "Part du CA sous contrat — le détail", note: "Les factures payées de la période, contrat ou non. C'est le récurrent qui donne sa valeur à la boîte.",
+      cols: ["Facture", "Client", {t: "Montant", r: 1}, "Sous contrat"],
+      rows: fcTous().filter(function(f){ return f.st === "payee" && dans(f.date || f.d, b.d0, b.d1); })
+        .map(function(f){ return [E(f.ref), E(f.client), {t: eur2(+f.montant || 0), r: 1}, sous[f.client] ? "Oui" : "Non"]; })};
+    /* chantiers repasses */
+    var rl = retoursList(b.d0, b.d1);
+    D["Chantiers repassés sous 30 j"] = {t: "Chantiers repassés sous 30 jours — le détail", note: "Même client, même nuisible, moins de 30 jours d'écart : le traitement n'a pas tenu.",
+      cols: ["Client", "Nuisible", "1ᵉʳ passage", "Repassage", {t: "Écart", r: 1}, "Technicien"],
+      rows: rl.list.map(function(o){ return [E(o.x.client), E(NUIL[o.x.type] || o.x.typeLibre || "—"), fdFR(o.av.date), fdFR(o.x.date), {t: o.ec + " j", r: 1}, E(o.x.tech || "—")]; })};
+    /* impayes en cours */
+    var NST = {attente: "En attente", retard: "En retard"};
+    D["Impayés en cours"] = {t: "Impayés en cours — le détail", note: "Toutes les factures émises et non réglées, quelle que soit la période.",
+      cols: ["Facture", "Client", "Date", {t: "Montant", r: 1}, "État"],
+      rows: fcTous().filter(function(f){ return f.st === "attente" || f.st === "retard"; })
+        .sort(function(a, c){ return (a.date || "") < (c.date || "") ? 1 : -1; })
+        .map(function(f){ return [E(f.ref), E(f.client), f.date ? fdFR(f.date) : "—", {t: eur2(+f.montant || 0), r: 1}, NST[f.st] || f.st]; })};
+    /* plans en retard de releve */
+    var PL = JO("tigerflow-plans"), pr = [], tj = new Date(); tj.setHours(0, 0, 0, 0);
+    Object.keys(PL).forEach(function(k){
+      var pl = PL[k], f = +pl.freq || 60, dern = null;
+      (pl.postes || []).filter(function(x){ return !x.retire; }).forEach(function(x){
+        var iso = frISO(x.releve); if(!iso) return;
+        var d = new Date(iso + "T12:00:00"); if(!dern || d > dern) dern = d;
+      });
+      if(!dern) return;
+      var ech = new Date(dern); ech.setDate(ech.getDate() + f);
+      if(tj > ech){
+        var n2 = k.indexOf("|");
+        pr.push([E(k.slice(0, n2) + (k.slice(n2 + 1) ? " — " + k.slice(n2 + 1) : "")),
+                 dern.toLocaleDateString("fr-FR"), {t: f + " j", r: 1}, {t: Math.round((tj - ech) / 864e5) + " j", r: 1}]);
+      }
+    });
+    D["Plans d'appâtage en retard de relevé"] = {t: "Plans d'appâtage en retard — le détail", note: "Le dernier relevé date de plus longtemps que la fréquence prévue au plan.",
+      cols: ["Site", "Dernier relevé", {t: "Fréquence", r: 1}, {t: "Retard", r: 1}], rows: pr};
+    window.KDET = D;
   }
   function prevLbl(){
     if(PERG === "an") return "vs " + (MPYSEL - 1);
@@ -1309,17 +1725,22 @@ document.addEventListener("click", function(e){
        voyait pas, la barre ne comptait que les interventions. */
     var totE = Object.keys(eurN).reduce(function(s, k){ return s + eurN[k]; }, 0);
     var tri = Object.keys(cnt).sort(function(a, bb){ return (totE ? (eurN[bb] || 0) - (eurN[a] || 0) : 0) || cnt[bb] - cnt[a]; }).slice(0, 6);
+    /* 31/08 : chaque nuisible dans sa tuile — le CA en gros à droite, la barre
+       suit l'argent, et la ligne du dessous dit les deux pourcentages. */
     var html = tri.map(function(k, i){
       var pc = Math.round(cnt[k] / tot * 100);
       var pe = totE ? Math.round((eurN[k] || 0) / totE * 100) : 0;
       var fort = totE && pe >= pc + 12;
-      return '<div class="hrow"><div class="t"><span>' + esc2(k)
-        + (fort ? ' <b style="font-size:.62rem;font-weight:800;color:#0E7A4E;background:#ECFDF5;border-radius:7px;padding:2px 7px;margin-left:5px">rapporte gros</b>' : '')
-        + '</span><b>' + pc + ' % des passages'
-        + (totE ? ' · <span style="color:var(--ink)">' + pe + ' % du CA</span> · ' + Math.round(eurN[k]).toLocaleString("fr-FR") + ' €' : '')
-        + '</b></div><div class="tr"><div class="fl" style="width:' + (totE ? pe : pc) + '%;background:' + NUIC[i % NUIC.length] + '"></div></div></div>';
+      return '<div class="nrow"><div class="nrt"><span class="nn">' + esc2(k) + '</span>'
+        + (fort ? '<span class="ngros">rapporte gros</span>' : '')
+        + (totE ? '<span class="nca">' + Math.round(eurN[k]).toLocaleString("fr-FR") + ' €</span>' : '<span class="nca">' + cnt[k] + '</span>')
+        + '</div>'
+        + '<div class="nrb"><i style="width:' + (totE ? pe : pc) + '%;background:' + NUIC[i % NUIC.length] + '"></i></div>'
+        + '<div class="nrs"><span><b>' + pc + ' %</b> des passages</span>'
+        + (totE ? '<span><b>' + pe + ' %</b> du chiffre</span>' : '')
+        + '<span style="margin-left:auto">' + cnt[k] + ' intervention' + (cnt[k] > 1 ? 's' : '') + '</span></div></div>';
     }).join("");
-    nuiCard.querySelectorAll(".hrow, p, .nvide").forEach(function(e){ e.remove() });
+    nuiCard.querySelectorAll(".hrow, .nrow, p, .nvide").forEach(function(e){ e.remove() });
     nuiCard.insertAdjacentHTML("beforeend", html + '<p style="font-size:.76rem;color:var(--muted);margin-top:13px">Compté sur vos ' + tot + ' intervention' + (tot > 1 ? 's' : '') + ' de la période' + (Object.keys(eurN).some(function(k){ return eurN[k]; }) ? ' — la barre suit l\'ARGENT : un nuisible peut faire peu de passages et beaucoup de chiffre' : '') + '.</p>');
   }
 
@@ -1409,8 +1830,34 @@ document.addEventListener("click", function(e){
     var li = function(t, v){ return '<div style="display:flex;justify-content:space-between;gap:10px;padding:6.5px 0;border-bottom:1px dashed var(--line);font-size:.83rem"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:var(--ink-2)">' + esc2(t) + '</span><b style="flex:none">' + v + '</b></div>'; };
     var h = '<div style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0 4px">Top clients (encaissé)</div>';
     h += topC.length ? topC.map(function(k){ return li(k, eur2(cli[k])); }).join("") : '<div style="font-size:.78rem;color:var(--muted);font-weight:600;padding:5px 0">Aucun encaissement sur la période.</div>';
-    h += '<div style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:13px 0 4px">Techniciens (interventions)</div>';
-    h += topT.length ? topT.map(function(k){ return li(k, tec[k] + " interv."); }).join("") : '<div style="font-size:.78rem;color:var(--muted);font-weight:600;padding:5px 0">Aucune intervention sur la période.</div>';
+    /* ══ 31/08 : « combien il rapporte » et « combien il repasse » — les deux
+       seules colonnes qui disent si un technicien va bien. Le montant vient des
+       interventions elles-memes ; vide tant que rien n'est saisi, jamais devine. */
+    var rl = retoursList(b.d0, b.d1), reT = {};
+    rl.list.forEach(function(o){ var t = o.x.tech || "—"; reT[t] = (reT[t] || 0) + 1; });
+    var st = {};
+    ivs.forEach(function(x){
+      var t = x.tech || "—";
+      if(!st[t]) st[t] = {n: 0, ca: 0};
+      st[t].n++; st[t].ca += (+x.montant || 0);
+    });
+    var noms = Object.keys(st).sort(function(a, bb){ return (st[bb].ca - st[a].ca) || (st[bb].n - st[a].n); });
+    h += '<div style="font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:15px 0 6px">Techniciens</div>';
+    if(!noms.length){
+      h += '<div style="font-size:.78rem;color:var(--muted);font-weight:600;padding:5px 0">Aucune intervention sur la période.</div>';
+    } else {
+      var caTot = noms.reduce(function(sm, k){ return sm + st[k].ca; }, 0);
+      h += '<div style="overflow-x:auto"><table class="tectab"><thead><tr><th></th><th class="r">Interv.</th>'
+        + (caTot ? '<th class="r">Montant</th>' : '') + '<th class="r">Repassés</th></tr></thead><tbody>'
+        + noms.map(function(k){
+            var re = reT[k] || 0, pc = st[k].n ? Math.round(re / st[k].n * 100) : 0;
+            return '<tr><td><b>' + esc2(k) + '</b></td><td class="r">' + st[k].n + '</td>'
+              + (caTot ? '<td class="r">' + (st[k].ca ? eur2(st[k].ca) : "—") + '</td>' : '')
+              + '<td class="r"><span class="rebad ' + (pc <= 10 ? "ok" : "ko") + '">' + re + (st[k].n ? " · " + pc + " %" : "") + '</span></td></tr>';
+          }).join("")
+        + '</tbody></table></div>'
+        + '<div style="font:600 .68rem Inter,sans-serif;color:var(--muted);margin-top:7px;line-height:1.5">« Repassés » = même client, même nuisible, moins de 30 jours après. Au-dessus de 10 %, le traitement ne tient pas.</div>';
+    }
     box.innerHTML = h;
   }
 
@@ -1434,19 +1881,14 @@ document.addEventListener("click", function(e){
       : [["—", "Aucun encaissement sur la période choisie", "", "", {t: "", r: 1}]];
     DOCS.encaiss.total = ["", "", "", "Total encaissé", {t: eur2(totP), r: 1}];
   }
+  /* ══ 31/08 : cet endroit REECRIVAIT par-dessus l'en-tete un nom et un SIRET
+     ecrits en dur — donc la correction des mentions legales ne servait a rien.
+     Supprime : gen() lit desormais les vraies mentions dans Reglages. ══ */
   var genOrig = window.gen;
-  window.gen = function(type){
-    majDocs();
-    genOrig(type);
-    /* l'en-tête du document porte la VRAIE société — le n° Certibiocide reste
-       à compléter par le patron : on n'invente JAMAIS un numéro d'agrément. */
-    var bd = document.querySelector("#psheet .ps-brand div");
-    if(bd) bd.innerHTML = "<b>Agence Antinuisible</b><small>122 Rue Amelot, 75011 Paris · 01 89 72 43 96<br>SIRET 103 920 542 00018 · Certibiocide n° ____________</small>";
-    var lg = document.querySelector("#psheet .ps-brand .lg");
-    if(lg) lg.textContent = "AA";
-    var ft = document.querySelector("#psheet .ps-foot span");
-    if(ft) ft.textContent = "Agence Antinuisible — document généré par TigerFlow";
-  };
+  window.gen = function(type){ majDocs(); genOrig(type); };
+  /* le CSV part des MEMES lignes reelles que le PDF (sinon il exportait la demo) */
+  var csvOrig = window.genCSV;
+  window.genCSV = function(type){ majDocs(); csvOrig(type); };
 
   /* ---- l'analyse comparée branchée + tout se repeint ensemble ---- */
   var perOrig = window.perPaint;
@@ -1456,11 +1898,9 @@ document.addEventListener("click", function(e){
     PERS[PERG].rows = rows;
     PERS[PERG].lbl = prevLbl();
     document.getElementById("cmp-lbl").textContent = PERS[PERG].lbl;
-    document.getElementById("cmp").innerHTML = rows.map(function(r){
-      var evH = r[3] === "—" ? '<span style="color:var(--muted);font-weight:700">—</span>'
-        : '<span class="ev ' + (r[4] ? "up" : "dn") + '">' + (r[4] ? "▲" : "▼") + ' ' + r[3] + '</span>';
-      return '<tr><td>' + r[0] + '</td><td class="r"><b>' + r[1] + '</b></td><td class="r" style="color:var(--muted)">' + r[2] + '</td><td class="r">' + evH + '</td></tr>';
-    }).join("");
+    hist6();          /* 31/08 : les 6 vraies périodes derrière chaque courbe */
+    majDetails();     /* 31/08 : les lignes derrière chaque chiffre */
+    cmpPaint(rows);   /* 31/08 : le même rendu hero+tuiles que la démo */
     document.getElementById("pseg-tri").classList.toggle("on", PERG === "tri");
     document.getElementById("pseg-an").classList.toggle("on", PERG === "an");
     nuiPaint(); relPaint(); topPaint();
