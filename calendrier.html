@@ -1781,7 +1781,23 @@ function fapSync(){
   if(document.getElementById("fap").classList.contains("open")) fileRender();
 }
 let FAPTAB = "";
+/* 02/09 (patron, GO) : interrupteur bêta « File d'appels » (Réglages ›
+   Fonctions bêta). Clé absente = ALLUMÉ. Coupée, le bouton disparaît de la
+   barre « À planifier » — RIEN n'est perdu : les interventions en attente
+   restent dans le bac et dans la liste des interventions. */
+function faBeta(){
+  try{ return localStorage.getItem("tigerflow-beta-file") !== "0"; }catch(e){ return true; }
+}
+(function(){
+  function faPaint(){
+    var b = document.getElementById("fapbtn");
+    if(b) b.hidden = !faBeta();
+  }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", faPaint);
+  else faPaint();
+})();
 function fileOpen(){
+  if(!faBeta()) return;
   FAPTAB = "";   /* le défaut se recalcule : des retards → En retard, sinon Aujourd'hui */
   fileRender();
   document.getElementById("fap").classList.add("open");

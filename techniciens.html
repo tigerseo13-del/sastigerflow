@@ -1191,6 +1191,9 @@ function fillSelects(){
 }
 let VT = "list";
 function setVT(v){
+  /* 02/09 : l'onglet Sous-traitants est coupé dans la bêta — on n'y va pas,
+     même par un vieux lien ou un raccourci clavier. */
+  if(v === "st" && typeof window.stBeta === "function" && !window.stBeta()) v = "list";
   VT = v;
   document.getElementById("vt-list").classList.toggle("on", v === "list");
   document.getElementById("vt-dispo").classList.toggle("on", v === "dispo");
@@ -2464,10 +2467,38 @@ try{
    ══════════════════════════════════════════════════════════════════════ */
 (function(){
   var STKEY = "tigerflow-soustraitants";
+  /* 02/09 (patron, GO) : interrupteur bêta « Sous-traitants » (Réglages ›
+     Fonctions bêta). Clé absente = ALLUMÉ — couper doit être un geste.
+     Coupé, l'onglet disparaît et setVT('st') refuse d'y aller ; le carnet
+     (STKEY) n'est PAS touché : on remet l'interrupteur, tout est là. */
+  window.stBeta = function(){
+    try{ return localStorage.getItem("tigerflow-beta-soustraitants") !== "0"; }catch(e){ return true; }
+  };
+  (function(){
+    function stPaintTab(){
+      var b = document.getElementById("vt-st");
+      if(b) b.hidden = !window.stBeta();
+    }
+    if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", stPaintTab);
+    else stPaintTab();
+  })();
   var EDIT = null, DELARM2 = null;
 
   function lire(){
-    try{ var l = JSON.parse(localStorage.getItem(STKEY)); return Array.isArray(l) ? l : []; }catch(e){ return []; }
+    try{
+      var l = JSON.parse(localStorage.getItem(STKEY));
+      if(!Array.isArray(l)) return [];
+      /* ☠️ 02/09 — TROUVE AU TEST : un enregistrement sans « id » faisait
+         disparaitre TOUTE la page Sous-traitants. JSON.stringify(undefined)
+         ne rend pas une chaine mais undefined, et le .replace qui suit levait
+         une TypeError : plus de tableau, plus de cartes, ecran vide. Meme
+         famille que le plantage du planificateur (CTECH = null). Le flux
+         normal genere toujours un id — mais une donnee importee, recopiee a
+         la main ou tronquee n'en a pas. On le garantit ici, au seul point de
+         lecture, plutot que de faire confiance a la donnee. */
+      return l.filter(function(x){ return x && typeof x === "object"; })
+              .map(function(x, i){ if(!x.id) x.id = "st" + i + Date.now().toString(36); return x; });
+    }catch(e){ return []; }
   }
   function sauve(l){ try{ localStorage.setItem(STKEY, JSON.stringify(l)); }catch(e){} }
   function esc(v){ return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }

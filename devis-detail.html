@@ -1259,8 +1259,23 @@ function acNbFactures(){
       .filter(function(x){ return x && x.depuis === REF; }).length;
   }catch(e){ return 0; }
 }
+/* 02/09 (patron, GO) : interrupteur bêta « Facture d'acompte » (Réglages ›
+   Fonctions bêta). Clé absente = ALLUMÉ — couper doit être un geste.
+   Coupée, la fonction redevient exactement ce qu'elle était avant : le bouton
+   écrit DIRECTEMENT la facture, sans le choix acompte/total.
+   ⚠️ La DÉDUCTION reste active même coupée. Si un acompte est déjà parti,
+   couper l'option ne doit surtout pas refacturer le client : on écrit le
+   SOLDE, acompte déduit, jamais le total. */
+function acBeta(){
+  try{ return localStorage.getItem("tigerflow-beta-acompte") !== "0"; }catch(e){ return true; }
+}
 function versFacture(){
   if(!REC){ toast("Devis introuvable"); return; }
+  if(!acBeta()){
+    var _tot = +REC.montant || 0, _deja = acDeja();
+    versFactureEcrire(Math.max(0, _tot - _deja), false, 100, _deja);
+    return;
+  }
   ACMODE = null;
   var g = function(id){ return document.getElementById(id); };
   if(g("ac-ref")) g("ac-ref").textContent = REF;
