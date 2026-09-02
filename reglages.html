@@ -494,6 +494,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .snav{display:none}   /* 30/07 (D, patron) : la colonne cede la place aux pilules — le nav caché reste le moteur de spGoTo */
 .lay{display:block}
 .sptabs{display:flex;gap:6px;background:#fff;border:1px solid #F0F1F4;border-radius:16px;padding:7px;margin-bottom:12px;box-shadow:var(--shadow);flex-wrap:wrap}
+/* 02/09 (patron) : « onglet Notifications, tu l'enlèves — si dans la bêta tu
+   coches oui, alors l'onglet s'affiche ». Le bouton se masque : il faut le
+   garde, un display de classe bat l'attribut hidden. */
+.spt[hidden],.sps[hidden]{display:none}
 .spt{border:0;background:none;font-weight:700;font-size:.98rem;padding:11px 21px;border-radius:12px;color:#565D6B;cursor:pointer;font-family:inherit;transition:.12s}   /* 30/07 patron : « affiche plus gros ca » */
 .spt:hover{background:#F6F7FA;color:var(--ink)}
 .spt.on{background:var(--orange);color:#fff;font-weight:800;box-shadow:0 4px 10px rgba(255,90,31,.3)}
@@ -2044,7 +2048,26 @@ function arm(btn, fn){
   setTimeout(() => btn.classList.remove("arm"), 2800);
 }
 
-function spGoTo(k){ const b = document.querySelector('#snav button[data-s="' + k + '"]'); if(b) b.click(); }
+/* ═══ 02/09 (patron) : l'onglet Notifications suit l'interrupteur bêta ═══
+   « SI DANS LA BÊTA TU COCHES OUI ALORS ONGLET RÉGLAGES NOTIFICATION S'AFFICHE ».
+   Coupé, l'onglet disparaît de la barre — et on ne peut plus y entrer, même par
+   un vieux lien ou l'onglet mémorisé. On rallume depuis le bloc Fonctions bêta,
+   qui est ailleurs dans Réglages : c'est la seule porte, et c'est voulu. */
+function ntfOngletVisible(){ try{ return typeof smsOn === "function" ? smsOn() : true; }catch(e){ return true; } }
+function ntfOnglet(){
+  var on = ntfOngletVisible();
+  var b = document.querySelector('#sptabs .spt[data-f="notifs"]');
+  if(b) b.hidden = !on;
+  /* on était dedans et on vient de couper : on ne laisse pas un écran orphelin */
+  if(!on && SPK === "notifs"){
+    try{ localStorage.removeItem("tigerflow-reglages-tab"); }catch(e){}
+    spGoTo("info");
+  }
+}
+function spGoTo(k){
+  if(k === "notifs" && !ntfOngletVisible()) k = "info";
+  const b = document.querySelector('#snav button[data-s="' + k + '"]'); if(b) b.click();
+}
 
 /* ---------- navigation des panneaux ---------- */
 let SPK = "info";
@@ -2167,6 +2190,9 @@ try{
   let k0 = null;
   try{ k0 = new URLSearchParams(location.search).get("s"); }catch(e){}
   if(!k0 || !R[k0]) k0 = localStorage.getItem("tigerflow-reglages-tab");
+  /* 02/09 : l'onglet mémorisé ne doit pas rouvrir Notifications si la bêta a
+     été coupée entre-temps. */
+  if(k0 === "notifs" && typeof ntfOngletVisible === "function" && !ntfOngletVisible()) k0 = null;
   if(k0 && R[k0]){ SPK = k0; document.querySelectorAll("#snav button[data-s]").forEach(x => x.classList.toggle("on", x.dataset.s === k0)); }
 }catch(e){}
 spRender();
@@ -2893,6 +2919,7 @@ function ensRetirer(i){
   if(typeof toast === "function") toast("« " + nom + " » retirée — les documents déjà émis ne changent pas");
 }
 document.addEventListener("DOMContentLoaded", ensPaint);
+document.addEventListener("DOMContentLoaded", function(){ if(typeof ntfOnglet === "function") ntfOnglet(); });
 ensPaint();
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -2964,6 +2991,7 @@ function smsEtat(){
      public, modèles, aperçu, exceptions. SEUL l'interrupteur reste, sinon on
      ne pourrait plus rallumer. Rien n'est effacé : les textes sont gardés. */
   ["ntabs", "ntfexc", "avisalerte"].forEach(function(id){ const e = g(id); if(e) e.hidden = !cfg; });
+  if(typeof ntfOnglet === "function") ntfOnglet();
   const w = document.querySelector(".ntcard .ntw"); if(w) w.hidden = !cfg;
   const cp = g("ntf-coupe"); if(cp) cp.hidden = !!cfg;
   if(g("sms-exp")) g("sms-exp").value = (cfg && cfg.exp) || "";
