@@ -616,6 +616,10 @@ function socLire(){
     /* le gabarit nu doit montrer la maquette : on ne pose la societe QUE si
        des Reglages existent vraiment */
     regl:  Object.keys(d).length > 0,
+    /* 02/09 (patron : « SASU ») : la forme juridique vient des Réglages. Elle
+       était écrite « SAS » en dur — une mention obligatoire fausse sur tous
+       les documents d'une société qui n'est pas une SAS. */
+    forme: v(25, ""),
     tva:   tvaIntra(v(6, "10392054200018"))
   };
 }
@@ -634,7 +638,7 @@ const SOC = socLire();
   T("rib-nom", SOC.nom);
   T("soc-siret", SOC.siret);
   T("soc-tva", SOC.tva ? "TVA Intracom. : " + SOC.tva : "");
-  T("pd-nom", SOC.nom + " — SAS");
+  T("pd-nom", SOC.nom + (SOC.forme ? " — " + SOC.forme : ""));
   T("pd-coord", SOC.adr + ", " + ville + " · " + SOC.tel + " · " + SOC.mail);
   T("pd-legal", "SIRET : " + SOC.siret);
   T("pd-tva", SOC.tva ? "TVA Intracom. : " + SOC.tva : "");
@@ -1076,7 +1080,7 @@ document.addEventListener("click", function(e){
 
     const REF  = (document.querySelector('[data-f="num"]') || {textContent:""}).textContent.replace(/^N°\s*/i, "").trim();
     const MOT  = (document.querySelector('[data-f="lbl-piece"]') || {textContent:"Devis"}).textContent.trim();
-    const NOM  = (document.getElementById("pd-nom") || {textContent:"TigerFlow Gestion"}).textContent.replace(/ — SAS$/, "");
+    const NOM  = (document.getElementById("pd-nom") || {textContent:"TigerFlow Gestion"}).textContent.replace(/ — [^—]+$/, "");
     const LOGO = (function(){ const im = document.querySelector("#soc-logo img"); return im ? im.src : ""; })();
     const INI  = NOM.split(/[\s-]+/).filter(Boolean).slice(0,2).map(m => m[0].toUpperCase()).join("");
 
