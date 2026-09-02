@@ -75,7 +75,31 @@ html{background:#F7F8FA}
 .ensadd{background:#fff;border:1.5px dashed var(--line);color:var(--ink-2);border-radius:12px;padding:11px 16px;font-weight:600;font-size:.86rem;cursor:pointer;font-family:inherit;width:100%}
 .ensadd:hover{border-color:var(--orange);color:var(--orange-deep)}
 .ensnote{margin-top:12px;font-size:.79rem;color:var(--muted);line-height:1.5}
-.ensed{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:13px 14px;border:1px solid var(--orange);border-radius:13px;margin-bottom:9px;background:#fff}
+/* 02/09 (patron) : « améliore le design ici + le bouton Enregistrer ça va pas ».
+   Les boutons portaient des classes qui n'existent pas dans cette page : ils
+   sortaient en TEXTE BRUT. On leur donne leur propre style, calé sur .dbig
+   mais sans son flex:1 qui les aurait étirés sur toute la largeur. */
+.ensed{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;padding:20px 22px;border:1.5px solid var(--orange);
+  border-radius:16px;margin-bottom:10px;background:#fff;box-shadow:0 0 0 4px rgba(255,90,31,.07)}
+.ensedh{grid-column:1/-1;font-weight:800;font-size:.98rem;color:var(--ink);padding-bottom:14px;
+  border-bottom:1px solid var(--line);margin-bottom:2px}
+.ensedh small{display:block;font-weight:500;font-size:.78rem;color:var(--muted);margin-top:5px;line-height:1.5}
+.ensed input[type=text],.ensed input:not([type]){width:100%}
+.ensed input{padding:11px 13px}
+.ensbas{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--line)}
+.enslogof{flex:1 1 320px;min-width:0}
+.enscoul{flex:0 0 auto}
+.enscw{display:flex;align-items:center;gap:11px}
+.enscw input[type=color]{width:52px;height:40px;padding:3px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.enscw small{color:var(--muted);font-size:.72rem;max-width:150px;line-height:1.4}
+.ensacts{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;padding-top:16px;border-top:1px solid var(--line)}
+.ensb{display:inline-flex;align-items:center;justify-content:center;padding:11px 20px;border-radius:11px;
+  font-size:.85rem;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid var(--line);
+  background:#fff;color:var(--ink-2);transition:.13s}
+.ensb:hover{border-color:#C9CDD6}
+.ensb.prim{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 6px 16px -6px rgba(255,90,31,.5)}
+.ensb.prim:hover{filter:brightness(.96)}
+@media(max-width:700px){ .ensbas{gap:16px} .ensacts .ensb{flex:1} }
 .ensed .full{grid-column:1/-1}
 .ensed input{width:100%}
 .ensacts{grid-column:1/-1;display:flex;gap:9px;justify-content:flex-end}
@@ -2933,16 +2957,22 @@ function ensForm(e, i){
   var f = function(k, lab, ph){ return '<div><label class="lab">' + lab + '</label>'
     + '<input id="ensf-' + k + '" value="' + ensEsc(e[k] || "") + '" placeholder="' + ensEsc(ph || "") + '"></div>'; };
   return '<div class="ensed">'
+    + '<div class="ensedh">' + (i >= 0 ? "Modifier l\u2019enseigne" : "Nouvelle enseigne")
+    +   '<small>Une enseigne change le nom, le logo et les coordonn\u00e9es en haut du document. '
+    +   'Le SIRET, la TVA et la num\u00e9rotation ne bougent pas.</small></div>'
     + '<div class="full"><label class="lab">Nom commercial *</label><input id="ensf-nom" value="' + ensEsc(e.nom || "") + '" placeholder="Ex. : Les Super Déboucheurs"></div>'
     + f("tel", "Téléphone", "laisser vide = celui de la société")
     + f("mail", "E-mail", "laisser vide = celui de la société")
     + f("site", "Site web", "facultatif")
     + f("certi", "N° Certibiocide", "seulement si cette activité en a un")
-    + '<div class="full"><label class="lab">Couleur de la pastille</label><input type="color" id="ensf-couleur" value="' + ensEsc(e.couleur || "#3F4654") + '" style="height:40px;padding:4px"></div>'
+    + '<div class="full ensbas">'
+    +   '<div class="enscoul"><label class="lab">Couleur de la pastille</label>'
+    +     '<div class="enscw"><input type="color" id="ensf-couleur" value="' + ensEsc(e.couleur || "#3F4654") + '">'
+    +       '<small>Sert d\u2019initiales quand il n\u2019y a pas de logo</small></div></div>'
     /* 02/09 (patron) : « dans Vos enseignes, Super Déboucheurs, ajoute le truc
        pour mettre le logo ». Sans logo propre, le document sort sans logo du
        tout — jamais avec celui de l'autre enseigne. */
-    + '<div class="full"><label class="lab">Logo de cette enseigne</label>'
+    +   '<div class="enslogof"><label class="lab">Logo de cette enseigne</label>'
     +   '<div class="enslogobox" id="enslogo-box">'
     +     '<div class="enslogoap' + (e.logo ? " has" : "") + '" id="enslogo-ap"'
     +       (e.logo ? ' style="background-image:url(' + ensEsc(e.logo) + ')"' : "") + '>'
@@ -2951,9 +2981,10 @@ function ensForm(e, i){
     +       '<label class="ensfile">Choisir une image<input type="file" accept="image/*" id="ensf-logofile" onchange="ensLogoPrend(this)" hidden></label>'
     +       '<button type="button" class="ensx" id="enslogo-del" onclick="ensLogoVide()"' + (e.logo ? "" : " hidden") + ' title="Retirer le logo">✕ retirer</button>'
     +       '<small>PNG ou JPG. Réduit à 320 px de large avant d\u2019être gardé — la transparence du PNG est conservée.</small>'
-    +     '</div></div></div>'
-    + '<div class="ensacts"><button type="button" class="btn2" onclick="ensAnnuler()">Annuler</button>'
-    + '<button type="button" class="btn primary" onclick="ensEnregistrer(' + i + ')">Enregistrer</button></div></div>';
+    +     '</div></div></div></div>'
+    + '<div class="ensacts"><button type="button" class="ensb" onclick="ensAnnuler()">Annuler</button>'
+    + '<button type="button" class="ensb prim" onclick="ensEnregistrer(' + i + ')">'
+    +   (i >= 0 ? "Enregistrer" : "Ajouter l\u2019enseigne") + '</button></div></div>';
 }
 function ensAjouter(){ ENSEDIT = -1; ENSLOGO = ""; ensPaint(); }
 function ensEditer(i){ ENSEDIT = i; ENSLOGO = (ensAutres()[i] || {}).logo || ""; ensPaint(); }
