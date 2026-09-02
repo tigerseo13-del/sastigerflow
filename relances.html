@@ -394,6 +394,17 @@ ul{list-style:none}
 .pcnt em{font-style:normal;margin-left:auto;font-weight:800;color:var(--ink)}
 .pcnt.over{color:#9A6B08;background:var(--amber-bg,#FDF3DF);border-color:#EEDFAE}
 .pcnt.over .bar{background:#F0E3BE}.pcnt.over .bar i{background:#C69A08}
+/* 01/09 : la ligne qui explique POURQUOI le message coûte deux SMS, et le
+   bouton qui le répare. Elle ne s'affiche que s'il y a vraiment un segment à
+   gagner — jamais pour un message déjà propre. */
+.pfix{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px;
+  font-size:.74rem;line-height:1.5;color:#9A6B08;background:#FDF8EC;
+  border:1px solid #EEDFAE;border-radius:10px;padding:10px 13px}
+.pfix span{flex:1;min-width:220px}
+.pfix b{font-weight:800;color:#7A5406}
+.pbt.fixb{flex:none;background:#C69A08;border-color:#C69A08;color:#fff;font-weight:800}
+.pbt.fixb:hover{background:#A98208;border-color:#A98208;color:#fff}
+@media (max-width:560px){ .pfix .pbt.fixb{width:100%;justify-content:center} }
 .pacts{display:flex;gap:10px;align-items:center;margin-top:20px;padding-top:18px;border-top:1px solid #F1F2F6;flex-wrap:wrap;row-gap:10px}
 .pbt{font-size:.76rem;font-weight:800;border-radius:10px;padding:9px 14px;border:1.5px solid #DFE2EC;background:#fff;color:var(--ink);cursor:pointer;font-family:inherit}
 .pbt:hover{border-color:#C9CDD8}
@@ -710,13 +721,86 @@ let RTXT = {};
 try{ const sv = JSON.parse(localStorage.getItem(TXTKEY)); if(sv && typeof sv === "object") RTXT = sv; }catch(e){}
 function rtxtSave(){ try{ localStorage.setItem(TXTKEY, JSON.stringify(RTXT)); }catch(e){} }
 const rtxtId = (g, i, ch) => g + ":" + i + ":" + ch;
-/* la limite d'un SMS : 160 caractères en alphabet simple (GSM-7). Au-delà,
-   l'opérateur découpe en segments de 153 et facture chaque segment. */
+/* ══ 01/09 (patron : « onglet SMS relance, tu peux améliorer quoi ») ══
+   ☠️ BUG MESURÉ, IL COÛTAIT DE L'ARGENT. Le compteur ne connaissait que
+   l'alphabet GSM-7 (160 / 153). Or les DEUX SMS actifs de la séquence
+   contiennent un tiret cadratin « — », qui n'existe pas dans cet alphabet :
+   un seul caractère hors table fait basculer TOUT le message en UCS-2, où la
+   limite tombe à 70 (puis 67 par segment).
+
+     J+3   88 caractères → la page disait 1 SMS · 0,07 €  → en vrai 2 · 0,14 €
+     J+7   94 caractères → la page disait 1 SMS · 0,07 €  → en vrai 2 · 0,14 €
+
+   La facture réelle était DOUBLE de celle annoncée, et la barre « / 160 »
+   mentait aussi. Même moteur que Réglages › Notifications désormais. */
 const SMSSEG = 160, SMSSEG2 = 153, SMSPRIX = 0.07;
+/* l'alphabet GSM 03.38 : chaque caractère compte 1 */
+const GSM7 = "@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\n\u00d8\u00f8\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\u00c6\u00e6\u00df\u00c9 !\"#\u00a4%&'()*+,-./0123456789:;<=>?"
+  + "\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0";
+/* la table d'extension : ceux-là comptent DOUBLE */
+const GSMX = "^{}\\[~]|\u20ac";
 function smsCount(t){
-  const n = (t || "").length;
-  const seg = n <= SMSSEG ? 1 : Math.ceil(n / SMSSEG2);
-  return {n: n, seg: seg, max: n <= SMSSEG ? SMSSEG : seg * SMSSEG2};
+  t = String(t == null ? "" : t);
+  let u = 0, gsm = true; const hors = [];
+  for(const c of t){
+    if(GSM7.indexOf(c) > -1) u += 1;
+    else if(GSMX.indexOf(c) > -1) u += 2;
+    else { gsm = false; if(hors.indexOf(c) < 0 && c.trim()) hors.push(c); }
+  }
+  if(gsm){
+    const seg = u <= SMSSEG ? 1 : Math.ceil(u / SMSSEG2);
+    return {n: u, seg: seg, max: u <= SMSSEG ? SMSSEG : seg * SMSSEG2, gsm: true, hors: []};
+  }
+  const n = [...t].length;                       /* en UCS-2 on compte les vrais caractères */
+  const seg = n <= 70 ? 1 : Math.ceil(n / 67);
+  return {n: n, seg: seg, max: n <= 70 ? 70 : seg * 67, gsm: false, hors: hors};
+}
+/* Les remplacements qui NE dénaturent pas : ponctuation d'abord, accents
+   ensuite. « — » devient « - », « ’ » devient « ' » : le client ne voit pas
+   la différence, la facture est divisée par deux. */
+const SMSFIX = [["\u2014","-"],["\u2013","-"],["\u00ab\u00a0","\""],["\u00a0\u00bb","\""],["\u00ab","\""],["\u00bb","\""],
+  ["\u2019","'"],["\u2018","'"],["\u201c","\""],["\u201d","\""],["\u2026","..."],["\u00a0"," "],
+  ["\u0153","oe"],["\u0152","OE"],["\u2022","-"],["\u00b7","."],
+  ["\u00ea","e"],["\u00e2","a"],["\u00ee","i"],["\u00f4","o"],["\u00fb","u"],["\u00eb","e"],["\u00ef","i"],["\u00ff","y"],
+  ["\u00ca","E"],["\u00c2","A"],["\u00ce","I"],["\u00d4","O"],["\u00db","U"],["\u00e7","c"]];
+function smsNettoie(t){
+  SMSFIX.forEach(p => { t = t.split(p[0]).join(p[1]); });
+  return t;
+}
+/* Y a-t-il quelque chose à gagner ? On ne propose « Corriger » que si le
+   nettoyage fait VRAIMENT baisser le nombre de segments. */
+function smsGain(t){
+  const av = smsCount(t), ap = smsCount(smsNettoie(t));
+  return (ap.seg < av.seg) ? {av: av, ap: ap} : null;
+}
+/* le bandeau du compteur — un seul endroit, utilisé en lecture ET en rédaction */
+function relCntHTML(txt, ids){
+  const c = smsCount(txt);
+  const pc = Math.min(100, Math.round(c.n / c.max * 100));
+  const g = smsGain(txt);
+  const quoi = c.hors.slice(0, 3).map(x => "« " + x + " »").join(" ");
+  return `<div class="pcnt${c.seg > 1 ? " over" : ""}"${ids ? ' id="pcnt"' : ""}>
+      <span${ids ? ' id="pcnt-n"' : ""}>${c.n} / ${c.max} caractères</span>
+      <span class="bar"><i${ids ? ' id="pcnt-b"' : ""} style="width:${pc}%"></i></span>
+      <em${ids ? ' id="pcnt-s"' : ""}>${c.seg} SMS · ~${(c.seg * SMSPRIX).toFixed(2).replace(".", ",")} €</em>
+    </div>`
+    + (g ? `<div class="pfix"${ids ? ' id="pfix"' : ""}>
+         <span>${quoi} ${c.hors.length > 1 ? "n'existent pas" : "n'existe pas"} dans l'alphabet des SMS :
+           tout le message passe à <b>${g.av.seg} SMS</b> au lieu de <b>${g.ap.seg}</b>.</span>
+         <button class="pbt fixb" onclick="relCorrige()">Corriger — ~${((g.av.seg - g.ap.seg) * SMSPRIX).toFixed(2).replace(".", ",")} € par client</button>
+       </div>` : "");
+}
+/* remplace les caractères coûteux dans le texte de l'étape affichée */
+function relCorrige(){
+  const a = document.getElementById("pta");
+  const src = a ? a.value : relTexte(APC.g, APC.i, APCH);
+  const net = smsNettoie(src);
+  if(net === src){ toast("Rien à corriger — ce message tient déjà dans l'alphabet des SMS"); return; }
+  const av = smsCount(src), ap = smsCount(net);
+  if(a){ a.value = net; relCnt(); }
+  else { RTXT[rtxtId(APC.g, APC.i, APCH)] = net; rtxtSave(); relPrev(); relRender(); }
+  toast("✓ " + av.seg + " SMS → " + ap.seg + " : ~" + ((av.seg - ap.seg) * SMSPRIX).toFixed(2).replace(".", ",")
+        + " € économisés par client. Le texte n'a pas changé de sens.");
 }
 
 const RELGRP = {part: "Particuliers", pro: "Entreprises", syn: "Syndics"};
@@ -780,7 +864,11 @@ function relSmsDef(g, i){
   const R = relRemiseAuto(g, i);
   const rem = (R > 0) ? " (-" + R + "%)" : "";
   const fin = (i === L - 1) ? " expire bientôt" : " attend votre signature";
-  return "Tiger Hygiène 3D — votre devis (" + relEur(cas.mnt) + cas.ht + ")" + rem + fin + " : tigerflow.fr/d/x7Kp2m";
+  /* 01/09 : tiret SIMPLE, pas de cadratin. Le « — » d'origine faisait basculer
+     tout le message en UCS-2 (limite 70 au lieu de 160) : chaque relance
+     coûtait 2 SMS au lieu d'1. Le texte d'usine ne doit plus produire le bug
+     qu'on vient de corriger — sinon « Tout remettre d'origine » le ramène. */
+  return "Tiger Hygiène 3D - votre devis (" + relEur(cas.mnt) + cas.ht + ")" + rem + fin + " : tigerflow.fr/d/x7Kp2m";
 }
 /* le texte affiché : celui de l'utilisateur s'il en a écrit un, sinon l'original */
 /* le plafond s'applique à l'aperçu : si le devis de démonstration dépasse le
@@ -832,10 +920,7 @@ function relPrev(){
            ${["{prénom}", "{montant}", "{lien}", "{remise}", "{entreprise}"].map(v =>
              `<button class="pvar" onclick="relVar('${v}')" title="Insérer dans le texte">＋ <b>${v}</b></button>`).join("")}
          </div>`
-      + (ch === "sms" ? `<div class="pcnt${c.seg > 1 ? " over" : ""}" id="pcnt">
-           <span id="pcnt-n">${c.n} / ${c.max} caractères</span>
-           <span class="bar"><i id="pcnt-b" style="width:${pc}%"></i></span>
-           <em id="pcnt-s">${c.seg} SMS · ~${(c.seg * SMSPRIX).toFixed(2).replace(".", ",")} €</em></div>` : "")
+      + (ch === "sms" ? relCntHTML(txt, true) : "")
       + `<div class="pacts">
            <button class="pbt k" onclick="relTxtSave()">✓ Enregistrer le texte</button>
            <button class="pbt" onclick="PEDIT=false;relPrev()">Annuler</button>
@@ -852,12 +937,9 @@ function relPrev(){
         <div class="ml"><span>Objet</span><b>${cas.obj}</b></div></div>
         <div class="mbody"><p>${txt}</p></div></div>`;
   } else {
-    const c = smsCount(txt.replace(/<[^>]+>/g, ""));
     corps = `<div class="smsbox" style="border-top:0;padding-top:16px">
-        <span class="stag">${ICO_SMS}SMS</span><span>${txt}</span></div>
-        <div class="pcnt${c.seg > 1 ? " over" : ""}" style="margin-top:12px"><span>${c.n} / ${c.max} caractères</span>
-        <span class="bar"><i style="width:${Math.min(100, Math.round(c.n / c.max * 100))}%"></i></span>
-        <em>${c.seg} SMS · ~${(c.seg * SMSPRIX).toFixed(2).replace(".", ",")} €</em></div>`;
+        <span class="stag">${ICO_SMS}SMS</span><span>${txt}</span></div>`
+      + relCntHTML(txt.replace(/<[^>]+>/g, ""), false);
   }
   pane.innerHTML = (actif ? "" :
       `<div class="pcut">Ce canal est <b>coupé à l'étape ${APC.i + 1}</b> — le message ci-dessous ne part pas.
@@ -888,11 +970,18 @@ function relEssai(){
 function relChan(k){ if(APCH === k && !PEDIT) return; APCH = k; PEDIT = false; relPrev(); }
 function relCnt(){
   const a = document.getElementById("pta"); if(!a || APCH !== "sms") return;
-  const c = smsCount(a.value), box = document.getElementById("pcnt");
-  document.getElementById("pcnt-n").textContent = c.n + " / " + c.max + " caractères";
-  document.getElementById("pcnt-b").style.width = Math.min(100, Math.round(c.n / c.max * 100)) + "%";
-  document.getElementById("pcnt-s").textContent = c.seg + " SMS · ~" + (c.seg * SMSPRIX).toFixed(2).replace(".", ",") + " €";
-  if(box) box.classList.toggle("over", c.seg > 1);
+  /* 01/09 : on redessine le bandeau ENTIER a chaque frappe — le bouton
+     « Corriger » doit apparaitre des qu'un caractere couteux est tape, et
+     disparaitre des qu'il est retire. Mettre a jour trois <span> ne suffisait
+     plus. La zone de saisie n'est pas touchee : le curseur ne bouge pas. */
+  const box = document.getElementById("pcnt");
+  if(!box) return;
+  const anc = document.getElementById("pfix");
+  const html = relCntHTML(a.value, true);
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  box.replaceWith(...tmp.childNodes);
+  if(anc) anc.remove();
 }
 function relVar(v){
   const a = document.getElementById("pta"); if(!a) return;
