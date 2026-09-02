@@ -630,6 +630,22 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
   .vcard{padding:14px 13px;border-radius:14px}
   .vh{font-size:.88rem}
 }
+.enswrap{position:relative;display:inline-flex}
+.ensbtn{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:11px;
+  padding:7px 11px;font-family:inherit;font-size:.84rem;font-weight:700;color:var(--ink-2);cursor:pointer;transition:.13s;max-width:260px}
+.ensbtn:hover{border-color:var(--orange);color:var(--orange-deep)}
+.ensbtn > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.enspast{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-size:.58rem;font-weight:800;color:#fff;font-style:normal;flex:none;background:var(--orange)}
+.ensbtn .caret{font-style:normal;color:var(--muted);font-size:.72rem;margin-left:2px}
+.ensmenu{position:absolute;top:calc(100% + 6px);left:0;min-width:250px;background:#fff;border:1px solid var(--line);
+  border-radius:13px;box-shadow:0 14px 34px -14px rgba(23,26,32,.32);padding:6px;z-index:60;display:none}
+.ensmenu.open{display:block}
+.ensmi{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:9px;padding:9px 10px;
+  font-family:inherit;font-size:.85rem;font-weight:600;color:var(--ink-2);cursor:pointer;text-align:left}
+.ensmi:hover{background:#F6F7F9}
+.ensmi.on{background:var(--orange-soft,#FFF1EC);color:var(--orange-deep,#D2450A)}
+.ensmi small{display:block;font-weight:400;font-size:.72rem;color:var(--muted)}
 </style>
 <style>
 /* ═══ 09/08 patron (choix final 111) : la validité EN HAUT, en pastille à
@@ -705,6 +721,14 @@ input.ltot:focus{border-color:var(--orange);background:#fff}
     <!-- ===== barre d'actions ===== -->
     <div class="abar">
       <b class="drefb" id="dref2">DEV-2026-•••••</b>
+      <!-- 02/09 (patron, GO) : sous quelle enseigne part ce devis. Caché tant
+           qu'un seul nom existe — rien ne bouge pour qui n'a qu'une enseigne. -->
+      <span class="enswrap" id="ens-wrap" hidden>
+        <button type="button" class="ensbtn" id="ensbtn" onclick="ensMenu(event)"
+                title="Sous quelle enseigne ce devis part au client">
+          <i class="enspast" id="enspast">—</i><span id="ensbtn-t">—</span><em class="caret">▾</em></button>
+        <div class="ensmenu" id="ensmenu"></div>
+      </span>
       <span class="stwrap">
         <button class="dstatb2" id="dstatb2" onclick="stMenu(event)" title="Changer le statut du devis"><i></i>Brouillon<em class="caret">▾</em></button>
         <div class="stmenu" id="stmenu">
@@ -987,7 +1011,18 @@ try{
     }
   }
 }catch(e){}
+/* 02/09 : changer de client repropose SON enseigne habituelle — tant que
+   l'utilisateur n'a pas choisi lui-même sur ce document. */
+var ENSFIGE = false;
+function ensSuivreClient(){
+  if(ENSFIGE) return;
+  var cs = document.getElementById("v-client");
+  var e = ensDuClient(cs && cs.value);
+  if(e){ ENSCUR = e; }
+  if(typeof ensBtn === "function") ensBtn();
+}
 function pickCli(){
+  setTimeout(ensSuivreClient, 0);
   const c = CLIENTS[g("v-client").value];
   g("cliadr").textContent = c ? "📍 " + c.adr + " · " + c.tel : "L'adresse du client s'affichera ici";
   /* 20/08 : les sites du client choisi remplissent « Site concerné » */
@@ -1869,6 +1904,111 @@ function sendConfirm(){
 <script>
 let CURSTAT = "brouillon";
 /* ===== le pont vers la liste des devis ===== */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENSEIGNES — 02/09 (patron, GO option 1 : « identité d'émission »)
+   « Agence Antinuisible » est la DÉNOMINATION SOCIALE du KBIS ; « Les Super
+   Déboucheurs » est un NOM COMMERCIAL. Une seule société derrière : un SIRET,
+   une TVA, un RCS, UNE SEULE série de numéros de facture.
+   La première enseigne n'est donc pas stockée : elle EST la société, lue dans
+   Réglages. Seuls les noms commerciaux vivent dans tigerflow-enseignes.
+   Sans aucun nom commercial déclaré, tout se comporte exactement comme avant.
+   ═══════════════════════════════════════════════════════════════════════════ */
+var ENSKEY = "tigerflow-enseignes";
+function ensReg(){
+  try{ return (JSON.parse(localStorage.getItem("tigerflow-reglages")) || {}).info || {}; }catch(e){ return {}; }
+}
+function ensSociete(){                       /* l'enseigne n°0 : la société elle-même */
+  var d = ensReg();
+  /* Dans Réglages, le champ AFFICHÉ fait foi : il peut être plus récent que ce
+     qui est enregistré (saisie en cours). Ailleurs, ce champ n'existe pas et on
+     retombe sur les réglages enregistrés — donc la même fonction sert partout. */
+  var v = function(k, def){
+    var el = document.getElementById("f-reglage-" + k);
+    var vu = (el && el.value != null) ? String(el.value).trim() : "";
+    return vu || (d["f-reglage-" + k] || "").trim() || def;
+  };
+  var logo = ""; try{ logo = localStorage.getItem("tigerflow-logo") || ""; }catch(e){}
+  return { id:"soc", legal:true, nom:v(1, "Votre société"),
+           adr:v(2, ""), cp:v("2b", ""), ville:v("2c", ""),
+           tel:v(3, ""), mail:v(4, ""), site:v(5, ""), certi:v(23, ""), logo:logo };
+}
+function ensAutres(){                        /* les noms commerciaux déclarés */
+  try{ var l = JSON.parse(localStorage.getItem(ENSKEY)); return Array.isArray(l) ? l.filter(function(x){ return x && x.nom; }) : []; }
+  catch(e){ return []; }
+}
+function ensToutes(){ return [ensSociete()].concat(ensAutres().map(function(x, i){
+  return { id: x.id || ("ens" + i), legal:false, nom:x.nom, adr:x.adr || "", cp:x.cp || "", ville:x.ville || "",
+           tel:x.tel || "", mail:x.mail || "", site:x.site || "", certi:x.certi || "", logo:x.logo || "" };
+})); }
+function ensPlusieurs(){ return ensAutres().length > 0; }
+/* une enseigne par son id — repli sur la société : un id inconnu (enseigne
+   supprimée après coup) ne doit JAMAIS sortir un document sans en-tête. */
+function ensDe(id){
+  var t = ensToutes();
+  for(var i = 0; i < t.length; i++) if(t[i].id === id) return t[i];
+  return t[0];
+}
+/* les champs vides d'un nom commercial retombent sur ceux de la société :
+   une enseigne qui partage l'adresse n'a pas à la ressaisir. */
+function ensPlein(id){
+  var e = ensDe(id), s = ensSociete(), o = {};
+  ["nom","adr","cp","ville","tel","mail","site","certi","logo"].forEach(function(k){ o[k] = e[k] || s[k] || ""; });
+  o.id = e.id; o.legal = !!e.legal; o.societe = s.nom;
+  /* le pied de page ne répète la raison sociale QUE si l'en-tête montre autre
+     chose — sinon le document écrirait deux fois le même nom. */
+  o.mentionLegale = e.legal ? "" : s.nom;
+  return o;
+}
+
+/* ── quelle enseigne pour CE devis ───────────────────────────────────────── */
+var ENSCUR = "soc";
+function ensMenu(e){ e.stopPropagation(); document.getElementById("ensmenu").classList.toggle("open"); }
+function ensMenuClose(){ var m = document.getElementById("ensmenu"); if(m) m.classList.remove("open"); }
+document.addEventListener("click", ensMenuClose);
+function ensBtn(){
+  var w = document.getElementById("ens-wrap"); if(!w) return;
+  /* une seule enseigne : le sélecteur n'a pas lieu d'être */
+  if(!ensPlusieurs()){ w.hidden = true; return; }
+  w.hidden = false;
+  var e = ensPlein(ENSCUR), t = ensToutes();
+  var p = document.getElementById("enspast"), n = document.getElementById("ensbtn-t");
+  if(p){ p.textContent = ensIni(e.nom); p.style.background = ensCouleur(ENSCUR); }
+  if(n) n.textContent = e.nom;
+  var m = document.getElementById("ensmenu");
+  if(m) m.innerHTML = t.map(function(x){
+    return '<button type="button" class="ensmi' + (x.id === ENSCUR ? " on" : "") + '" onclick="ensChoisir(\'' + x.id + '\')">'
+      + '<i class="enspast" style="background:' + ensCouleur(x.id) + '">' + ensEsc(ensIni(x.nom)) + '</i>'
+      + '<span>' + ensEsc(x.nom) + (x.legal ? '<small>Dénomination sociale</small>' : '<small>Nom commercial</small>') + '</span></button>';
+  }).join("");
+}
+function ensCouleur(id){
+  if(id === "soc") return "var(--orange)";
+  var l = ensAutres();
+  for(var i = 0; i < l.length; i++) if((l[i].id || ("ens" + i)) === id) return l[i].couleur || "#3F4654";
+  return "#3F4654";
+}
+function ensIni(n){
+  var stop = {le:1, la:1, les:1, l:1, du:1, de:1, des:1, d:1, un:1, une:1, et:1, aux:1, au:1};
+  var p = String(n || "").trim().split(/[\s\u2019']+/).filter(function(m){ return m && !stop[m.toLowerCase()]; });
+  if(!p.length) p = String(n || "?").trim().split(/\s+/);
+  return ((p[0] || " ")[0] + ((p[1] || "")[0] || "")).toUpperCase() || "?";
+}
+function ensEsc(t){ return String(t == null ? "" : t).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ensChoisir(id){
+  ENSCUR = id; ENSFIGE = true; ensMenuClose(); ensBtn();
+  if(typeof toast === "function") toast("Ce devis partira sous « " + ensPlein(id).nom + " »");
+  if(typeof saveDevis === "function") saveDevis(true);
+}
+/* l'enseigne habituelle du client — un simple défaut, jamais un verrou */
+function ensDuClient(nom){
+  if(!nom) return null;
+  try{
+    var l = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]");
+    for(var i = 0; i < l.length; i++) if(l[i] && l[i].nom === nom && l[i].emetteur) return l[i].emetteur;
+  }catch(e){}
+  return null;
+}
 let DREF = null, DRAFT = null;
 /* 28/07 : le technicien qui a fait le devis sur place. Vide quand c'est le
    bureau qui l'a redige — c'est une information, pas un trou a combler. */
@@ -1895,6 +2035,9 @@ function pushDevisInbox(){
     const d = new Date(); const iso = x => x.toISOString().slice(0, 10);
     const dv = new Date(); dv.setDate(dv.getDate() + vd);
     const rec = {ref:DREF, pro:false, client:cli, ct:"", tech:DTECH, inter:DINT, titre:(document.getElementById("v-objet") || {value:""}).value,
+      /* 02/09 : l'enseigne voyage AVEC le document. Sans ça, retirer une
+         enseigne plus tard changerait l'en-tête d'un devis déjà envoyé. */
+      emetteur: (typeof ENSCUR !== "undefined" && ENSCUR) || "soc",
       montant, statut:CURSTAT, date:iso(d), valid:iso(dv),
       lignes: LIGNES.map(l => ({designation:l.designation, desc:l.desc || "", qte:l.qte, pu:l.pu, tva:l.tva, emo:l.emo || "🧾", img:l.img || ""})),
       /* 04/08 (bug patron) : les FRAIS et la REMISE partent AVEC le devis —
@@ -2085,6 +2228,11 @@ syncDel();
 setInterval(pushDevisInbox, 4000);   /* l'autosave alimente aussi la liste */
 </script>
 <script>
+/* 02/09 : le sélecteur d'enseigne se peint au chargement (et reste caché
+   tant qu'aucun nom commercial n'est déclaré). */
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ ensSuivreClient(); });
+else ensSuivreClient();
+
 /* ===== reprise d'un brouillon (?draft=REF) : l'atelier se recharge tel quel ===== */
 (function(){
   if(typeof DRAFT === "undefined" || !DRAFT) return;
@@ -2102,6 +2250,9 @@ setInterval(pushDevisInbox, 4000);   /* l'autosave alimente aussi la liste */
          ré-enregistrement PERDAIT le « Facturer à » en silence. */
       if(rec.payeur){ const sp9 = document.getElementById("v-payeur"); if(sp9) sp9.value = rec.payeur; }
       if(rec.site){ const ss9 = document.getElementById("v-site"); if(ss9) ss9.value = rec.site; }
+      /* 02/09 : et son ENSEIGNE — sinon rouvrir un devis émis sous un nom
+         commercial le renvoyait au nom de la société sans prévenir. */
+      if(rec.emetteur){ ENSCUR = rec.emetteur; if(typeof ensBtn === "function") ensBtn(); }
     }
     const ob = document.getElementById("v-objet"); if(ob && rec.titre){ ob.value = rec.titre; try{ OBJEDIT = true; }catch(e){} }   /* objet du brouillon prioritaire sur l'objet auto */
     if(Array.isArray(rec.lignes) && rec.lignes.length && rec.lignes[0].designation){

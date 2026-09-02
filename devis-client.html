@@ -536,6 +536,62 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
    sa raison sociale, son telephone ou son logo la-bas, le devis suit. Les
    valeurs de repli sont celles de l'agence, pas des exemples. Ce bloc est au
    niveau global : il doit tourner AUSSI sur le gabarit, sans ?ref=. */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENSEIGNES — 02/09 (patron, GO option 1 : « identité d'émission »)
+   « Agence Antinuisible » est la DÉNOMINATION SOCIALE du KBIS ; « Les Super
+   Déboucheurs » est un NOM COMMERCIAL. Une seule société derrière : un SIRET,
+   une TVA, un RCS, UNE SEULE série de numéros de facture.
+   La première enseigne n'est donc pas stockée : elle EST la société, lue dans
+   Réglages. Seuls les noms commerciaux vivent dans tigerflow-enseignes.
+   Sans aucun nom commercial déclaré, tout se comporte exactement comme avant.
+   ═══════════════════════════════════════════════════════════════════════════ */
+var ENSKEY = "tigerflow-enseignes";
+function ensReg(){
+  try{ return (JSON.parse(localStorage.getItem("tigerflow-reglages")) || {}).info || {}; }catch(e){ return {}; }
+}
+function ensSociete(){                       /* l'enseigne n°0 : la société elle-même */
+  var d = ensReg();
+  /* Dans Réglages, le champ AFFICHÉ fait foi : il peut être plus récent que ce
+     qui est enregistré (saisie en cours). Ailleurs, ce champ n'existe pas et on
+     retombe sur les réglages enregistrés — donc la même fonction sert partout. */
+  var v = function(k, def){
+    var el = document.getElementById("f-reglage-" + k);
+    var vu = (el && el.value != null) ? String(el.value).trim() : "";
+    return vu || (d["f-reglage-" + k] || "").trim() || def;
+  };
+  var logo = ""; try{ logo = localStorage.getItem("tigerflow-logo") || ""; }catch(e){}
+  return { id:"soc", legal:true, nom:v(1, "Votre société"),
+           adr:v(2, ""), cp:v("2b", ""), ville:v("2c", ""),
+           tel:v(3, ""), mail:v(4, ""), site:v(5, ""), certi:v(23, ""), logo:logo };
+}
+function ensAutres(){                        /* les noms commerciaux déclarés */
+  try{ var l = JSON.parse(localStorage.getItem(ENSKEY)); return Array.isArray(l) ? l.filter(function(x){ return x && x.nom; }) : []; }
+  catch(e){ return []; }
+}
+function ensToutes(){ return [ensSociete()].concat(ensAutres().map(function(x, i){
+  return { id: x.id || ("ens" + i), legal:false, nom:x.nom, adr:x.adr || "", cp:x.cp || "", ville:x.ville || "",
+           tel:x.tel || "", mail:x.mail || "", site:x.site || "", certi:x.certi || "", logo:x.logo || "" };
+})); }
+function ensPlusieurs(){ return ensAutres().length > 0; }
+/* une enseigne par son id — repli sur la société : un id inconnu (enseigne
+   supprimée après coup) ne doit JAMAIS sortir un document sans en-tête. */
+function ensDe(id){
+  var t = ensToutes();
+  for(var i = 0; i < t.length; i++) if(t[i].id === id) return t[i];
+  return t[0];
+}
+/* les champs vides d'un nom commercial retombent sur ceux de la société :
+   une enseigne qui partage l'adresse n'a pas à la ressaisir. */
+function ensPlein(id){
+  var e = ensDe(id), s = ensSociete(), o = {};
+  ["nom","adr","cp","ville","tel","mail","site","certi","logo"].forEach(function(k){ o[k] = e[k] || s[k] || ""; });
+  o.id = e.id; o.legal = !!e.legal; o.societe = s.nom;
+  /* le pied de page ne répète la raison sociale QUE si l'en-tête montre autre
+     chose — sinon le document écrirait deux fois le même nom. */
+  o.mentionLegale = e.legal ? "" : s.nom;
+  return o;
+}
+
 function socLire(){
   let d = {}, logo = "";
   try{ d = (JSON.parse(localStorage.getItem("tigerflow-reglages")) || {}).info || {}; }catch(e){}
@@ -643,6 +699,41 @@ function pdfImprimer(nom){
   var F = function(n){ return document.querySelector('[data-f="' + n + '"]'); };
   var put = function(n, v){ var e = F(n); if(e && v != null) e.textContent = v; };
   var mot = estFacture ? "Facture" : "Devis";
+
+  /* ═══ 02/09 (patron, GO) : L'EN-TÊTE SUIT L'ENSEIGNE DU DOCUMENT ═══
+     « Agence Antinuisible » est la dénomination du KBIS, « Les Super
+     Déboucheurs » un nom commercial. Le document porte son émetteur : on
+     affiche ce nom-là en haut, et on ajoute la dénomination sociale en pied
+     — obligatoire dès que l'en-tête montre autre chose qu'elle.
+     Aucun émetteur (devis d'avant, ou une seule enseigne) : rien ne bouge. */
+  if(rec && rec.emetteur && rec.emetteur !== "soc" && typeof ensPlein === "function"){
+    var E = ensPlein(rec.emetteur);
+    if(E && E.nom){
+      var T2 = function(id, t){ var e = document.getElementById(id); if(e && t != null) e.textContent = t; };
+      var villeE = ((E.cp || "") + " " + (E.ville || "")).trim();
+      T2("soc-nom", E.nom);
+      var adrE = document.getElementById("soc-adr");
+      if(adrE && E.adr) adrE.innerHTML = E.adr.replace(/[&<>]/g, "") + "<br>" + villeE.replace(/[&<>]/g, "");
+      if(E.tel) T2("soc-tel", E.tel);
+      if(E.mail) T2("soc-mail", E.mail);
+      /* ☠️ VU AU TEST : le logo « Agence Anti Nuisible » restait affiché sur un
+         devis de DÉBOUCHAGE. Un mauvais logo est pire que pas de logo — le
+         client croit s'être trompé de devis. Tant qu'une enseigne n'a pas le
+         sien, on retire celui de la société ; le nom en gras suffit. */
+      var lg = document.getElementById("soc-logo");
+      if(lg){ if(E.logo){ var im = lg.querySelector("img");
+                          if(im){ im.src = E.logo; im.alt = E.nom; } }
+              else lg.hidden = true; }
+      /* le RIB reste au nom de la SOCIÉTÉ : le compte bancaire n'est pas
+         celui de l'enseigne, et un virement au mauvais nom est rejeté. */
+      /* pied de page : l'enseigne, puis la dénomination sociale qui la porte */
+      var _de = /^[aeiouyàâéèêëîïôöûü]/i.test(E.mentionLegale || "") ? " — enseigne d\u2019" : " — enseigne de ";
+      T2("pd-nom", E.nom + (E.mentionLegale ? _de + E.mentionLegale : ""));
+      T2("pd-coord", (E.adr ? E.adr + ", " : "") + villeE
+                     + (E.tel ? " · " + E.tel : "") + (E.mail ? " · " + E.mail : ""));
+      try{ document.title = (estFacture ? "Facture " : "Devis ") + ref + " — " + E.nom; }catch(e){}
+    }
+  }
 
   if(!rec){
     put("bar", mot + " " + ref + " — introuvable");

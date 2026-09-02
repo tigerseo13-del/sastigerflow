@@ -50,6 +50,24 @@ html{background:#F7F8FA}
    titre tient la gauche et le badge est poussé à droite, quel que soit le
    nombre d'éléments. Règle présente en double dans le fichier : les deux
    sont changées, sinon la seconde écrase la première. */
+.ensh{display:block;font-weight:500;font-size:.78rem;color:var(--muted);margin-top:3px}
+.ensrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:13px;margin-bottom:9px;background:#fff}
+.enslogo{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:.72rem;flex:none;background:var(--ink)}
+.ensinfo{min-width:0;flex:1}
+.ensnom{font-weight:700;font-size:.9rem}
+.enssub{color:var(--muted);font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.enstag{font-size:.6rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:3px 9px;white-space:nowrap;background:#EEF0F3;color:var(--muted)}
+.enstag.kbis{background:var(--orange-soft,#FFF1EC);color:var(--orange-deep,#D2450A);border:1px solid #FBD9C6}
+.ensx{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.05rem;padding:4px 7px;border-radius:8px;font-family:inherit}
+.ensx:hover{background:#FDECEA;color:#C0362C}
+.ensadd{background:#fff;border:1.5px dashed var(--line);color:var(--ink-2);border-radius:12px;padding:11px 16px;font-weight:600;font-size:.86rem;cursor:pointer;font-family:inherit;width:100%}
+.ensadd:hover{border-color:var(--orange);color:var(--orange-deep)}
+.ensnote{margin-top:12px;font-size:.79rem;color:var(--muted);line-height:1.5}
+.ensed{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:13px 14px;border:1px solid var(--orange);border-radius:13px;margin-bottom:9px;background:#fff}
+.ensed .full{grid-column:1/-1}
+.ensed input{width:100%}
+.ensacts{grid-column:1/-1;display:flex;gap:9px;justify-content:flex-end}
+@media(max-width:640px){ .ensed{grid-template-columns:1fr} }
 .betarow{display:flex;align-items:center;gap:10px;padding:13px 16px;text-decoration:none;color:inherit;transition:.12s}
 .betarow > .bb,.betarow > .betasw,.betarow > .betaEtat{margin-left:auto}
 .betarow + .betarow{border-top:1px solid #F1F2F5}
@@ -932,8 +950,8 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
            seul nom, un seul SIRET, une seule TVA, un seul IBAN, un seul
            Certibiocide. Rien n'est codé — la ligne annonce le chantier. -->
       <a class="betarow" href="reglages.html#info">
-        <span class="bn">Plusieurs entités</span>
-        <span class="bb soon">Bientôt</span>
+        <span class="bn">Plusieurs enseignes</span>
+        <span class="bb">Bêta</span>
       </a>
       <!-- 02/09 (patron, GO) : « le devis est validé, le client demande une
            facture d'acompte, on fait comment ? » puis « mets ça en bêta, tu
@@ -1282,6 +1300,20 @@ R.info = () => `
       <div><span class="lab">Couleur principale <b style="color:var(--red)">*</b></span><div style="display:flex;gap:10px"><input type="color" value="#FF5A1F" aria-label="Couleur principale"><input value="# FF5A1F" aria-label="Couleur principale (code hexadécimal)"></div></div>
       <div><span class="lab">Couleur secondaire <b style="color:var(--red)">*</b></span><div style="display:flex;gap:10px"><input type="color" value="#171A20" aria-label="Couleur secondaire"><input value="# 171A20" aria-label="Couleur secondaire (code hexadécimal)"></div></div>
     </div>
+  </div>
+  <!-- 02/09 (patron, GO) : « plusieurs entités » — option 1, l'identité
+       d'émission. « Agence Antinuisible » est la dénomination du KBIS,
+       « Les Super Déboucheurs » un nom commercial : UNE société, deux
+       en-têtes. La ligne du haut n'est donc pas saisissable, elle reflète
+       la carte « Mentions légales » juste en dessous. -->
+  <div class="card">
+    <div class="card-h">Vos enseignes
+      <span class="ensh">Le nom qui s'affiche en haut de vos devis, factures et rapports</span></div>
+    <div id="ens-liste"></div>
+    <button type="button" class="ensadd" onclick="ensAjouter()">＋ Ajouter une enseigne</button>
+    <div class="ensnote">Une seule société derrière : SIRET, TVA, RCS et numérotation des factures restent communs et
+      n'apparaissent qu'une fois. Sur un document émis sous un nom commercial, la dénomination sociale est ajoutée
+      automatiquement en pied de page — c'est obligatoire.</div>
   </div>
   <div class="card">
     <div class="card-h">Mentions légales et contact de la société</div>
@@ -2699,6 +2731,140 @@ function smsOn(){ return !!smsLire(); }
    Avant, le panneau n'apparaissait QUE si la fonction était active, et le seul
    moyen de le refermer était de la couper. On lit et on prépare ses textes
    maintenant sans rien envoyer ; l'interrupteur ne fait plus qu'une chose. */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENSEIGNES — 02/09 (patron, GO option 1 : « identité d'émission »)
+   « Agence Antinuisible » est la DÉNOMINATION SOCIALE du KBIS ; « Les Super
+   Déboucheurs » est un NOM COMMERCIAL. Une seule société derrière : un SIRET,
+   une TVA, un RCS, UNE SEULE série de numéros de facture.
+   La première enseigne n'est donc pas stockée : elle EST la société, lue dans
+   Réglages. Seuls les noms commerciaux vivent dans tigerflow-enseignes.
+   Sans aucun nom commercial déclaré, tout se comporte exactement comme avant.
+   ═══════════════════════════════════════════════════════════════════════════ */
+var ENSKEY = "tigerflow-enseignes";
+function ensReg(){
+  try{ return (JSON.parse(localStorage.getItem("tigerflow-reglages")) || {}).info || {}; }catch(e){ return {}; }
+}
+function ensSociete(){                       /* l'enseigne n°0 : la société elle-même */
+  var d = ensReg();
+  /* Dans Réglages, le champ AFFICHÉ fait foi : il peut être plus récent que ce
+     qui est enregistré (saisie en cours). Ailleurs, ce champ n'existe pas et on
+     retombe sur les réglages enregistrés — donc la même fonction sert partout. */
+  var v = function(k, def){
+    var el = document.getElementById("f-reglage-" + k);
+    var vu = (el && el.value != null) ? String(el.value).trim() : "";
+    return vu || (d["f-reglage-" + k] || "").trim() || def;
+  };
+  var logo = ""; try{ logo = localStorage.getItem("tigerflow-logo") || ""; }catch(e){}
+  return { id:"soc", legal:true, nom:v(1, "Votre société"),
+           adr:v(2, ""), cp:v("2b", ""), ville:v("2c", ""),
+           tel:v(3, ""), mail:v(4, ""), site:v(5, ""), certi:v(23, ""), logo:logo };
+}
+function ensAutres(){                        /* les noms commerciaux déclarés */
+  try{ var l = JSON.parse(localStorage.getItem(ENSKEY)); return Array.isArray(l) ? l.filter(function(x){ return x && x.nom; }) : []; }
+  catch(e){ return []; }
+}
+function ensToutes(){ return [ensSociete()].concat(ensAutres().map(function(x, i){
+  return { id: x.id || ("ens" + i), legal:false, nom:x.nom, adr:x.adr || "", cp:x.cp || "", ville:x.ville || "",
+           tel:x.tel || "", mail:x.mail || "", site:x.site || "", certi:x.certi || "", logo:x.logo || "" };
+})); }
+function ensPlusieurs(){ return ensAutres().length > 0; }
+/* une enseigne par son id — repli sur la société : un id inconnu (enseigne
+   supprimée après coup) ne doit JAMAIS sortir un document sans en-tête. */
+function ensDe(id){
+  var t = ensToutes();
+  for(var i = 0; i < t.length; i++) if(t[i].id === id) return t[i];
+  return t[0];
+}
+/* les champs vides d'un nom commercial retombent sur ceux de la société :
+   une enseigne qui partage l'adresse n'a pas à la ressaisir. */
+function ensPlein(id){
+  var e = ensDe(id), s = ensSociete(), o = {};
+  ["nom","adr","cp","ville","tel","mail","site","certi","logo"].forEach(function(k){ o[k] = e[k] || s[k] || ""; });
+  o.id = e.id; o.legal = !!e.legal; o.societe = s.nom;
+  /* le pied de page ne répète la raison sociale QUE si l'en-tête montre autre
+     chose — sinon le document écrirait deux fois le même nom. */
+  o.mentionLegale = e.legal ? "" : s.nom;
+  return o;
+}
+
+/* ── l'écran : la société en tête (non saisissable ici), puis les noms commerciaux ── */
+var ENSEDIT = null;                       /* index en cours d'édition, -1 = nouveau */
+function ensSauve(l){ try{ localStorage.setItem(ENSKEY, JSON.stringify(l)); }catch(e){} }
+/* les initiales sautent les articles : « Les Super Déboucheurs » doit donner
+   SD — ce que le patron lit —, pas LS. */
+function ensIni(n){
+  /* l et d isolés : le découpage casse « L'Atelier » en « L » + « Atelier ». */
+  var stop = {le:1, la:1, les:1, l:1, du:1, de:1, des:1, d:1, un:1, une:1, et:1, aux:1, au:1};
+  var p = String(n || "").trim().split(/[\s\u2019']+/).filter(function(m){ return m && !stop[m.toLowerCase()]; });
+  if(!p.length) p = String(n || "?").trim().split(/\s+/);
+  return ((p[0] || " ")[0] + ((p[1] || "")[0] || "")).toUpperCase() || "?";
+}
+function ensEsc(t){ return String(t == null ? "" : t).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function ensPaint(){
+  var box = document.getElementById("ens-liste"); if(!box) return;
+  var soc = ensSociete(), autres = ensAutres(), h = "";
+  h += '<div class="ensrow"><div class="enslogo" style="background:var(--orange)">' + ensEsc(ensIni(soc.nom)) + '</div>'
+     + '<div class="ensinfo"><div class="ensnom">' + ensEsc(soc.nom) + '</div>'
+     + '<div class="enssub">' + ensEsc([soc.tel, soc.mail].filter(Boolean).join(" · ") || "à compléter ci-dessous") + '</div></div>'
+     + '<span class="enstag kbis">Dénomination sociale</span></div>';
+  autres.forEach(function(e, i){
+    if(ENSEDIT === i){ h += ensForm(e, i); return; }
+    h += '<div class="ensrow"><div class="enslogo" style="background:' + ensEsc(e.couleur || "#3F4654") + '">'
+       + ensEsc(ensIni(e.nom)) + '</div><div class="ensinfo"><div class="ensnom">' + ensEsc(e.nom) + '</div>'
+       + '<div class="enssub">' + ensEsc([e.tel, e.mail].filter(Boolean).join(" · ") || "reprend les coordonnées de la société") + '</div></div>'
+       + '<span class="enstag">Nom commercial</span>'
+       + '<button type="button" class="ensx" title="Modifier" onclick="ensEditer(' + i + ')">✎</button>'
+       + '<button type="button" class="ensx" title="Retirer" onclick="ensRetirer(' + i + ')">✕</button></div>';
+  });
+  if(ENSEDIT === -1) h += ensForm({}, -1);
+  box.innerHTML = h;
+  var b = document.querySelector(".ensadd"); if(b) b.hidden = (ENSEDIT !== null);
+}
+function ensForm(e, i){
+  var f = function(k, lab, ph){ return '<div><label class="lab">' + lab + '</label>'
+    + '<input id="ensf-' + k + '" value="' + ensEsc(e[k] || "") + '" placeholder="' + ensEsc(ph || "") + '"></div>'; };
+  return '<div class="ensed">'
+    + '<div class="full"><label class="lab">Nom commercial *</label><input id="ensf-nom" value="' + ensEsc(e.nom || "") + '" placeholder="Ex. : Les Super Déboucheurs"></div>'
+    + f("tel", "Téléphone", "laisser vide = celui de la société")
+    + f("mail", "E-mail", "laisser vide = celui de la société")
+    + f("site", "Site web", "facultatif")
+    + f("certi", "N° Certibiocide", "seulement si cette activité en a un")
+    + '<div class="full"><label class="lab">Couleur de la pastille</label><input type="color" id="ensf-couleur" value="' + ensEsc(e.couleur || "#3F4654") + '" style="height:40px;padding:4px"></div>'
+    + '<div class="ensacts"><button type="button" class="btn2" onclick="ensAnnuler()">Annuler</button>'
+    + '<button type="button" class="btn primary" onclick="ensEnregistrer(' + i + ')">Enregistrer</button></div></div>';
+}
+function ensAjouter(){ ENSEDIT = -1; ensPaint(); }
+function ensEditer(i){ ENSEDIT = i; ensPaint(); }
+function ensAnnuler(){ ENSEDIT = null; ensPaint(); }
+function ensEnregistrer(i){
+  var g = function(k){ var e = document.getElementById("ensf-" + k); return e ? e.value.trim() : ""; };
+  var nom = g("nom");
+  if(!nom){ if(typeof toast === "function") toast("Il faut au moins un nom"); return; }
+  var soc = ensSociete();
+  if(nom.toLowerCase() === (soc.nom || "").toLowerCase()){
+    if(typeof toast === "function") toast("Ce nom est déjà celui de la société — inutile de le déclarer deux fois");
+    return;
+  }
+  var l = ensAutres();
+  var rec = {id:(i >= 0 && l[i] && l[i].id) || ("ens" + Date.now().toString(36)), nom:nom,
+             tel:g("tel"), mail:g("mail"), site:g("site"), certi:g("certi"), couleur:g("couleur")};
+  if(i >= 0) l[i] = rec; else l.push(rec);
+  ensSauve(l); ENSEDIT = null; ensPaint();
+  if(typeof bswPaint === "function") bswPaint();
+  if(typeof toast === "function") toast("Enseigne « " + nom + " » enregistrée");
+}
+function ensRetirer(i){
+  var l = ensAutres(), nom = (l[i] || {}).nom || "";
+  l.splice(i, 1); ensSauve(l); ENSEDIT = null; ensPaint();
+  if(typeof bswPaint === "function") bswPaint();
+  /* les documents déjà émis sous ce nom gardent leur en-tête : ensDe() retombe
+     sur la société, mais le document enregistré porte son propre en-tête. */
+  if(typeof toast === "function") toast("« " + nom + " » retirée — les documents déjà émis ne changent pas");
+}
+document.addEventListener("DOMContentLoaded", ensPaint);
+ensPaint();
 
 /* ═══════════════════════════════════════════════════════════════════════
    02/09 (patron, GO) : « interrupteur seulement sur ce qui tourne ».
