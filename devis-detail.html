@@ -299,21 +299,30 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .sfld{margin-bottom:11px}
 .sfld label{display:block;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
 /* 02/09 : la modale de facturation (acompte / total) */
+/* 02/09 : le nom du client, sous le titre. Sur dix devis d'affilee, c'est
+   ce qui evite d'envoyer l'acompte au mauvais client. */
+.acqui{font-size:.86rem;font-weight:700;color:var(--ink-2);margin:-8px 0 14px}
+.acqui small{display:block;font-weight:500;font-size:.78rem;color:var(--muted);margin-top:2px}
 .acchoix{display:grid;gap:10px;margin-bottom:6px}
 .acopt{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:14px;
   padding:14px 16px;cursor:pointer;font-family:inherit;transition:.13s}
 /* le display:block ci-dessus battait l'attribut hidden : l'option « acompte »
    restait visible apres qu'un acompte ait deja ete facture. */
 .acopt[hidden]{display:none}
-.acopt:hover{border-color:var(--orange);background:#FFFBF9}
-.acopt.on{border-color:var(--orange);background:var(--orange-soft)}
+/* 02/09 (patron) : « pas trop de orange ? ». Il y en avait QUATRE zones
+   empilees — l'option choisie, le raccourci, le bloc du montant, le bouton.
+   Un orange partout ne veut plus rien dire. Il n'en reste que deux : le
+   montant (le chiffre de l'ecran) et le bouton (l'action). L'option choisie
+   se signale par sa bordure, le raccourci par du gris fonce. */
+.acopt:hover{border-color:#D5D8DF;background:#FAFBFC}
+.acopt.on{border-color:var(--orange);background:#fff;box-shadow:0 0 0 3px rgba(255,90,31,.10)}
 .acopt b{display:block;font-family:'Sora';font-size:.95rem;font-weight:800;color:var(--ink)}
 .acopt small{display:block;font-size:.78rem;color:var(--muted);margin-top:3px;line-height:1.45}
 .acrac{display:flex;gap:7px;margin-bottom:8px}
 .acrac button{flex:1;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 0;
   font:800 .82rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;transition:.13s}
 .acrac button:hover{border-color:#D5D8DF}
-.acrac button.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.acrac button.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .acline{display:flex;gap:8px}
 .acline input{flex:1}
 .acline select{flex:none;width:110px}
@@ -929,6 +938,7 @@ a.hcli:hover{color:var(--orange-deep)}
 <div class="sendveil" id="acveil" onclick="if(event.target===this)acClose()">
   <div class="sendbox" style="width:min(560px,94vw)">
     <div class="sh">💶 Facturer le devis <span class="shsub" id="ac-ref"></span></div>
+    <div class="acqui" id="ac-qui"></div>
 
     <div class="acchoix" id="ac-choix">
       <button type="button" class="acopt" onclick="acMode('ac')">
@@ -1127,6 +1137,7 @@ var ACMODE = null;                       /* "ac" ou "tot" */
 
 /* Ce qui a DÉJÀ été facturé sur ce devis — c'est ce chiffre qui empêche de
    facturer deux fois. On lit les factures nées de CE devis (depuis === REF). */
+function esc2(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
 function acDeja(){
   try{
     return JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]")
@@ -1195,7 +1206,14 @@ function versFacture(){
   Array.prototype.forEach.call(document.querySelectorAll("#ac-choix .acopt"), function(b){ b.classList.remove("on"); });
   if(g("ac-val")) g("ac-val").value = 30;
   if(g("ac-uni")) g("ac-uni").value = "pc";
-  if(g("ac-ech")) g("ac-ech").value = new Date().toISOString().slice(0, 10);
+  /* 02/09 : +7 jours, pas aujourd'hui. Un acompte « a regler avant le 02/09 »
+     envoye le 02/09, c'est raide — et ca part en retard des le lendemain. */
+  if(g("ac-ech")){
+    var d7 = new Date(); d7.setDate(d7.getDate() + 7);
+    g("ac-ech").value = d7.toISOString().slice(0, 10);
+  }
+  if(g("ac-qui")) g("ac-qui").innerHTML = esc2(REC.client || "—")
+      + (REC.titre ? "<small>" + esc2(REC.titre) + "</small>" : "");
   /* deja un acompte ? on ouvre directement sur le solde, c'est la suite logique */
   var deja = acDeja();
   /* un acompte est deja parti : le 2e choix n'est plus « le total », c'est
