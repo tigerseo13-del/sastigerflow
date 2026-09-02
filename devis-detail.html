@@ -1328,6 +1328,32 @@ function acRefs(){
    sous-total HT donnait 375,20 € au lieu de 431,20 € — 56 € de trop factures
    au client. On deduit donc en HT, taux par taux, pour que le TTC retombe
    exactement sur le solde du. Dans 95 % des cas il n'y a qu'un seul taux. */
+/* ☠️ 02/09 — DEUXIEME PIEGE DE MEME NATURE, TROUVE EN VERIFIANT « on a fini ? ».
+   La facture d'acompte sortait avec UNE ligne a 184,80 € et TVA 0 % : donc
+   184,80 HT, 0,00 de TVA, 184,80 TTC. Une facture d'acompte SANS TVA est une
+   facture fausse — et la TVA collectee n'apparaissait nulle part, donc sa
+   declaration l'aurait ete aussi. Un acompte porte la TVA de la prestation.
+   On ventile donc le montant TTC en lignes HT, taux par taux, exactement
+   comme la deduction du solde. 184,80 TTC a 10 % = 168,00 HT + 16,80. */
+function acLignesAcompte(montantTTC, pc){
+  var L = REC.lignes || [], parTaux = {}, htTot = 0;
+  L.forEach(function(l){
+    var h = (+l.qte || 0) * (+l.pu || 0), t = +l.tva || 0;
+    parTaux[t] = (parTaux[t] || 0) + h; htTot += h;
+  });
+  var ttcTot = +REC.montant || 0;
+  var lbl = "Acompte " + pc + " % sur devis " + REF;
+  if(!htTot || !ttcTot) return [{designation:lbl, qte:1, pu:montantTTC, tva:0, emo:"💶"}];
+  var taux = Object.keys(parTaux), out = [];
+  taux.forEach(function(t){
+    var partTTC = parTaux[t] * (1 + (+t) / 100);
+    var ht = Math.round(montantTTC * (partTTC / ttcTot) / (1 + (+t) / 100) * 100) / 100;
+    if(ht > 0) out.push({
+      designation: lbl + (taux.length > 1 ? " — TVA " + t + " %" : ""),
+      qte: 1, pu: ht, tva: +t, emo: "💶" });
+  });
+  return out.length ? out : [{designation:lbl, qte:1, pu:montantTTC, tva:0, emo:"💶"}];
+}
 function acLignesDeduction(deja){
   var L = REC.lignes || [], parTaux = {}, htTot = 0;
   L.forEach(function(l){
@@ -1371,7 +1397,7 @@ function versFactureEcrire(montant, estAc, pc, deja){
        ⚠️ La TVA de cette ligne est a 0 : l'acompte a deja porte la sienne.
        A faire confirmer par son expert-comptable avant le premier envoi. */
     lignes: estAc
-        ? [{designation:"Acompte " + pc + " % sur devis " + REF, qte:1, pu:montant, tva:0, emo:"💶"}]
+        ? acLignesAcompte(montant, pc)
         : (deja > 0 ? (REC.lignes || []).concat(acLignesDeduction(deja)) : (REC.lignes || [])),
     frais: estAc ? [] : (REC.frais || []),
     remise: estAc ? 0 : (REC.remise || 0),
