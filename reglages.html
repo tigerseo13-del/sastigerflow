@@ -263,6 +263,12 @@ html{background:#F7F8FA}
    on clique, il s'ouvre, les autres se referment. L'aperçu téléphone se cale
    À CÔTÉ du texte du message ouvert — il ne rallonge plus la page.
    ══════════════════════════════════════════════════════════════════════ */
+.ntcoupe{background:#FAFBFC;border:1px dashed var(--line);border-radius:13px;padding:16px 18px;
+  color:var(--muted);font-size:.85rem;line-height:1.55}
+/* 02/09 : sans ces gardes, hidden ne masquerait rien — un display de classe
+   (0,1,0) bat le display:none de l'attribut (0,0,0). Même piège que la ligne
+   verte du devis. */
+.ntw[hidden],.pubtabs[hidden],.ntcoupe[hidden]{display:none}
 .ntw{display:block}
 .ntp{position:static}
 /* la LIGNE fermée */
@@ -1237,6 +1243,13 @@ R.notifs = () => `
     </div>
     <div id="ntfexc"></div>
     <div id="avisalerte"></div>
+    <!-- 02/09 (patron) : « le truc notifications SMS, il doit s'afficher QUE si
+         Notifications clients SMS est coché actif ». Coupé, tout le contenu
+         part — mais on dit pourquoi, sinon la carte a l'air cassée. -->
+    <div class="ntcoupe" id="ntf-coupe" hidden>
+      Les notifications clients sont coupées. Vos textes et vos réglages sont gardés —
+      remettez l'interrupteur ci-dessus pour les revoir.
+    </div>
 
     <div class="pubtabs" id="ntabs">
       <button type="button" class="pubt on" data-p="part" onclick="ntPub('part')">Particuliers <span class="n" id="nt-n-part"></span></button>
@@ -2947,6 +2960,12 @@ function smsEtat(){
   const et = g("ntf-etat"); if(et) et.textContent = cfg ? "Actives" : "Coupées";
   const pan = g("smspan");
   if(pan) pan.hidden = pan.classList.contains("pan") ? false : !cfg;   /* dans Réglages : toujours lisible */
+  /* 02/09 (patron) : coupé, le contenu de la carte disparaît — onglets de
+     public, modèles, aperçu, exceptions. SEUL l'interrupteur reste, sinon on
+     ne pourrait plus rallumer. Rien n'est effacé : les textes sont gardés. */
+  ["ntabs", "ntfexc", "avisalerte"].forEach(function(id){ const e = g(id); if(e) e.hidden = !cfg; });
+  const w = document.querySelector(".ntcard .ntw"); if(w) w.hidden = !cfg;
+  const cp = g("ntf-coupe"); if(cp) cp.hidden = !!cfg;
   if(g("sms-exp")) g("sms-exp").value = (cfg && cfg.exp) || "";
   if(g("ntlane") && typeof modPaint === "function") modPaint();
   if(g("ntf-max")) g("ntf-max").value = gfLire();
