@@ -179,7 +179,10 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
    (macOS par defaut) redonne une barre invisible au repos, exactement ce
    qu'on voulait eviter. Les pseudo-elements seuls forcent une barre
    classique, large et toujours peinte. Mesure : largeurBarre 0px -> 10px. */
-.techs.scr{max-height:384px;overflow-y:scroll;padding-right:9px}
+/* 02/09 (visuel B) : la fenêtre passe de 384 à 240 px. La liste DÉFILE déjà
+   (barre dessinée le 01/09) : aucun technicien n'est perdu, on en voit 3 au
+   lieu de 5 et la page gagne 144 px. */
+.techs.scr{max-height:240px;overflow-y:scroll;padding-right:9px}
 /* Le fondu du bas : c'est LUI le signal fiable qu'il reste des techniciens
    dessous. Il ne depend d'aucun reglage systeme, contrairement a la barre.
    Il ne peut pas etre peint par le fond de .techs (les fiches sont opaques
@@ -433,6 +436,18 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 
 /* ── AUDIT GRAS 28/08 : la règle des listes, suite du tour ── */
 .tst{font-weight:600!important}
+
+/* 02/09 (visuel B) : les sections facultatives, repliées. */
+.card.repli{padding:0;overflow:hidden}
+.replih{display:flex;align-items:center;gap:11px;width:100%;background:none;border:0;padding:16px 20px;
+  font-family:inherit;font-size:.95rem;font-weight:700;color:var(--ink,#171A20);cursor:pointer;text-align:left}
+.replih:hover{background:#FAFBFC}
+.replit{flex:none}
+.replir{flex:1;font-weight:500;font-size:.8rem;color:var(--muted,#7E8593);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.replic{flex:none;color:var(--muted,#7E8593);font-size:.8rem;transition:transform .16s}
+.replih[aria-expanded="true"] .replic{transform:rotate(180deg)}
+.replib{padding:0 20px 18px}
+.replib[hidden]{display:none}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20transform%3D%22translate%281.2%2C1.2%29%20scale%280.9%29%22%3E%3Cpath%20d%3D%22M7.4%206.5%20L5.4%203.6%20C7%202.9%208.4%202.8%209.6%203.4%22%2F%3E%3Cpath%20d%3D%22M16.6%206.5%20L18.6%203.6%20C17%202.9%2015.6%202.8%2014.4%203.4%22%2F%3E%3Cpath%20d%3D%22M12%2021.2%20C9.1%2021.2%206.5%2019.4%205.7%2016.6%20C5.1%2014.4%205.2%2011.9%206%209.8%20C6.5%208.4%207.5%207.1%208.9%206.3%20C9.9%205.8%2010.9%205.5%2012%205.5%20C13.1%205.5%2014.1%205.8%2015.1%206.3%20C16.5%207.1%2017.5%208.4%2018%209.8%20C18.8%2011.9%2018.9%2014.4%2018.3%2016.6%20C17.5%2019.4%2014.9%2021.2%2012%2021.2%20Z%22%2F%3E%3Cpath%20d%3D%22M12%205.7%20V8.1%22%2F%3E%3Cpath%20d%3D%22M10.1%206.2%20L10.5%208.2%22%2F%3E%3Cpath%20d%3D%22M13.9%206.2%20L13.5%208.2%22%2F%3E%3Cpath%20d%3D%22M8.1%2011.1%20L10.2%2011.9%22%2F%3E%3Cpath%20d%3D%22M15.9%2011.1%20L13.8%2011.9%22%2F%3E%3Cpath%20d%3D%22M5.8%2012.6%20L7.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M6%2014.7%20L7.6%2014.6%22%2F%3E%3Cpath%20d%3D%22M18.2%2012.6%20L16.5%2012.9%22%2F%3E%3Cpath%20d%3D%22M18%2014.7%20L16.4%2014.6%22%2F%3E%3Cpath%20d%3D%22M10.8%2014.5%20H13.2%20L12%2015.9%20Z%22%2F%3E%3Cpath%20d%3D%22M12%2015.9%20V17.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C11%2017.4%2010.1%2017%209.5%2016.3%22%2F%3E%3Cpath%20d%3D%22M12%2017.3%20C13%2017.4%2013.9%2017%2014.5%2016.3%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 </head>
@@ -652,7 +667,15 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     </div>
 
     <!-- ===== 4. TYPE D'INTERVENTION ===== -->
-    <div class="card">
+    <!-- 02/09 (patron, GO visuel B) : la page faisait 2 219 px pour 19 champs
+     dont 7 seulement sont obligatoires. Les sections entièrement facultatives
+     se replient : rien ne disparaît, rien ne change de place, un clic les
+     rouvre. Le parcours reste identique — c'est la hauteur qui tombe. -->
+<div class="card repli">
+      <button type="button" class="replih" onclick="repliTog(this)" aria-expanded="false">
+        <span class="num">4</span><span class="replit">Type d'intervention</span>
+        <span class="replir">Visite devis, ponctuel, contrat…</span><span class="replic">▾</span></button>
+      <div class="replib" hidden>
       <div class="card-h"><span class="num">4</span>Type d'intervention</div>
       <div class="pays" id="pays">
         <div class="pcard on" data-v="Devis sur place" onclick="pickPay(this)">
@@ -684,14 +707,20 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     </div>
 
     <!-- ===== 5. NOTE POUR LE TECHNICIEN ===== -->
-    <div class="card">
+    </div>
+<div class="card repli">
+      <button type="button" class="replih" onclick="repliTog(this)" aria-expanded="false">
+        <span class="num">5</span><span class="replit">Note pour le technicien</span>
+        <span class="replir">Consignes, accès, précautions…</span><span class="replic">▾</span></button>
+      <div class="replib" hidden>
       <div class="card-h"><span class="num">5</span>Note pour le technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— ce qu'il doit savoir avant d'y aller</span></div>
       <div class="fgroup">
         <textarea id="f-note" placeholder="Ex : bébé dans l'appartement — produits adaptés · client disponible après 18 h · portail bleu, sonner chez la gardienne"></textarea>
       </div>
     </div>
     <!-- ===== 6. TECHNICIEN ===== -->
-    <div class="card">
+    </div>
+<div class="card">
       <div class="card-h"><span class="num">6</span>Technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— plusieurs choix possibles · facultatif : sans choix, elle part dans « À affecter »</span></div>
       <div class="techwrap" id="techwrap"><div class="techs" id="techs"></div><i class="tsb"><i class="tsbt"></i></i></div>
         <button class="morelink" onclick="reveal('g-addtech', this)">+ Ajouter un technicien</button>
@@ -2125,6 +2154,15 @@ document.addEventListener("click", function(e){
     while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
   }, true);
 })();
+</script>
+<script>
+/* 02/09 (visuel B) : ouvrir / refermer une section facultative. */
+function repliTog(b){
+  var box = b.nextElementSibling;
+  var on = b.getAttribute("aria-expanded") === "true";
+  b.setAttribute("aria-expanded", on ? "false" : "true");
+  if(box) box.hidden = on;
+}
 </script>
 </body>
 </html>
