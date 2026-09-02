@@ -507,6 +507,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .snav button:focus{outline:none}
 .snav button.on{background:var(--orange-soft);color:var(--orange-deep);font-weight:800;box-shadow:inset 0 0 0 1.5px var(--orange)}
 
+/* 02/09 : sans ce garde, hidden ne masquerait pas la carte (display de classe). */
+.card[hidden]{display:none}
 .card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);border:1px solid #F0F1F4;padding:24px 26px;margin-bottom:18px}
 /* 27/07 : sept tableaux sur neuf n'avaient aucun conteneur defilant. Des que la
    fenetre retrecissait, le tableau debordait de sa carte et poussait la colonne
@@ -951,7 +953,10 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
            Certibiocide. Rien n'est codé — la ligne annonce le chantier. -->
       <a class="betarow" href="reglages.html#info">
         <span class="bn">Plusieurs enseignes</span>
-        <span class="bb">Bêta</span>
+        <span class="betasw" id="bsw-en" role="switch" aria-checked="true" tabindex="0"
+              title="Couper les enseignes — les documents déjà émis gardent leur en-tête"
+              onclick="event.preventDefault();event.stopPropagation();bswTog('en')"
+              onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();bswTog('en')}"><i></i><span class="betaEtat" id="bse-en">actif</span></span>
       </a>
       <!-- 02/09 (patron, GO) : « le devis est validé, le client demande une
            facture d'acompte, on fait comment ? » puis « mets ça en bêta, tu
@@ -2768,7 +2773,15 @@ function ensToutes(){ return [ensSociete()].concat(ensAutres().map(function(x, i
   return { id: x.id || ("ens" + i), legal:false, nom:x.nom, adr:x.adr || "", cp:x.cp || "", ville:x.ville || "",
            tel:x.tel || "", mail:x.mail || "", site:x.site || "", certi:x.certi || "", logo:x.logo || "" };
 })); }
-function ensPlusieurs(){ return ensAutres().length > 0; }
+function ensBeta(){
+  try{ return localStorage.getItem("tigerflow-beta-enseignes") !== "0"; }catch(e){ return true; }
+}
+/* 02/09 : POINT UNIQUE de la coupure. Tout ce qui propose de CHOISIR une
+   enseigne passe par ici. ensDe()/ensPlein() ne sont volontairement PAS
+   touchés : un devis déjà envoyé sous « Les Super Déboucheurs » doit garder
+   son en-tête même la bêta coupée — sinon le client rouvre son lien et voit
+   un autre nom. Même règle que la déduction d'acompte. */
+function ensPlusieurs(){ return ensBeta() && ensAutres().length > 0; }
 /* une enseigne par son id — repli sur la société : un id inconnu (enseigne
    supprimée après coup) ne doit JAMAIS sortir un document sans en-tête. */
 function ensDe(id){
@@ -2804,6 +2817,9 @@ function ensEsc(t){ return String(t == null ? "" : t).replace(/[&<>"]/g, functio
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function ensPaint(){
   var box = document.getElementById("ens-liste"); if(!box) return;
+  var carte = box.closest(".card");
+  if(carte) carte.hidden = !ensBeta();          /* bêta coupée : la carte disparaît */
+  if(!ensBeta()) return;
   var soc = ensSociete(), autres = ensAutres(), h = "";
   h += '<div class="ensrow"><div class="enslogo" style="background:var(--orange)">' + ensEsc(ensIni(soc.nom)) + '</div>'
      + '<div class="ensinfo"><div class="ensnom">' + ensEsc(soc.nom) + '</div>'
@@ -2890,6 +2906,9 @@ const BSW = {
   ac: {k:"tigerflow-beta-acompte",       nom:"Facture d'acompte",
        on:"Facture d'acompte remise — le choix revient sur les devis acceptés",
        off:"Facture d'acompte coupée — les factures déjà émises sont gardées"},
+  en: {k:"tigerflow-beta-enseignes",     nom:"Plusieurs enseignes",
+       on:"Enseignes remises — le sélecteur revient sur les devis",
+       off:"Enseignes coupées — les documents déjà émis gardent leur en-tête"},
   fa: {k:"tigerflow-beta-file",          nom:"File d'appels",
        on:"File d'appels remise — le bouton revient dans l'agenda",
        off:"File d'appels coupée — les interventions restent dans « À planifier »"}
@@ -2901,6 +2920,7 @@ function bswTog(id){
   const v = !bswOn(id);
   try{ v ? localStorage.removeItem(BSW[id].k) : localStorage.setItem(BSW[id].k, "0"); }catch(e){}
   bswPaint();
+  if(id === "en" && typeof ensPaint === "function") ensPaint();
   if(typeof toast === "function") toast(v ? BSW[id].on : BSW[id].off);
 }
 function bswPaint(){

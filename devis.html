@@ -1017,7 +1017,9 @@ var ENSFIGE = false;
 function ensSuivreClient(){
   if(ENSFIGE) return;
   var cs = document.getElementById("v-client");
-  var e = ensDuClient(cs && cs.value);
+  /* bêta coupée : un NOUVEAU devis part sous la société. Le devis REPRIS
+     garde le sien — c'est la reprise du brouillon qui le repose, plus bas. */
+  var e = ensBeta() ? ensDuClient(cs && cs.value) : null;
   if(e){ ENSCUR = e; }
   if(typeof ensBtn === "function") ensBtn();
 }
@@ -1940,7 +1942,12 @@ function ensToutes(){ return [ensSociete()].concat(ensAutres().map(function(x, i
   return { id: x.id || ("ens" + i), legal:false, nom:x.nom, adr:x.adr || "", cp:x.cp || "", ville:x.ville || "",
            tel:x.tel || "", mail:x.mail || "", site:x.site || "", certi:x.certi || "", logo:x.logo || "" };
 })); }
-function ensPlusieurs(){ return ensAutres().length > 0; }
+function ensBeta(){
+  try{ return localStorage.getItem("tigerflow-beta-enseignes") !== "0"; }catch(e){ return true; }
+}
+/* bêta coupée : plus de choix possible. Mais ensDe()/ensPlein() restent
+   intacts — un devis déjà émis sous un nom commercial garde son en-tête. */
+function ensPlusieurs(){ return ensBeta() && ensAutres().length > 0; }
 /* une enseigne par son id — repli sur la société : un id inconnu (enseigne
    supprimée après coup) ne doit JAMAIS sortir un document sans en-tête. */
 function ensDe(id){
