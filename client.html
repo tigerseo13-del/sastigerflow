@@ -1060,7 +1060,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       <div class="card eq" id="relcard">
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations<span class="rtitl"> — syndic, propriétaire, donneur d'ordre</span><span class="more" id="rel-n"></span></div>
         <div id="rel-list" style="display:flex;flex-direction:column;gap:7px;padding:2px 0 6px"></div>
-        <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relqi.relqn{color:var(--orange);font-weight:800}.relchip{border:1.5px solid #E2E5EB;border-radius:7px;background:#fff;color:var(--ink-2);font:700 .74rem Inter,sans-serif;padding:8px 11px;cursor:pointer}.relchip.on{background:var(--green,#10B981);border-color:var(--green,#10B981);color:#fff}.rcourt{display:none}#relcard.relmini .rlong{display:none}#relcard.relmini .rcourt{display:inline}#relcard.relmini .rtitl{display:none}#relcard.relmini #rel-list{padding:8px 0 12px}</style>
+        <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relqi.relqn{color:var(--orange);font-weight:800}.relchip{border:1.5px solid #E2E5EB;border-radius:7px;background:#fff;color:var(--ink-2);font:700 .74rem Inter,sans-serif;padding:8px 11px;cursor:pointer}.relchip.on{background:var(--green,#10B981);border-color:var(--green,#10B981);color:#fff}.rcourt{display:none}#relcard.relmini .rlong{display:none}#relcard.relmini .rcourt{display:inline}#relcard .rtitl{display:none}/* 02/09 : la carte vit maintenant TOUJOURS dans la colonne etroite (319px) — le sous-titre « syndic, proprietaire, donneur d'ordre » y passait sur 3 lignes et poussait le compteur. Il est explique dans le corps de la carte vide, il n'a plus a etre dans le titre. */#relcard.relmini #rel-list{padding:8px 0 12px}</style>
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:8px;padding:6px 0 8px;align-items:center">
           <span style="position:relative;flex:1 1 190px;max-width:250px"><input id="rel-qui" placeholder="Tape le nom du client…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:8px 10px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
           <span id="rel-typ" style="display:flex;gap:6px;flex-wrap:wrap"></span>
@@ -3228,10 +3228,17 @@ document.addEventListener("click", function(e){
       + '</span>'
       + '<span onclick="relDel(' + i + ')" style="flex:none;cursor:pointer;color:#C3C7D0;font-weight:800;padding:4px" title="Retirer ce lien">✕</span></div>';
   }
-  /* 30/08 (patron : « le client c'est souvent lui-même — ça s'affiche en gros
-     en plein milieu ? ») : la fiche s'ADAPTE — sans relation, les Notes prennent
-     le centre large et la carte Relations devient discrète à droite ; dès la
-     première relation, elle reprend le centre. */
+  /* 30/08 : la fiche s'adaptait — sans relation les Notes prenaient le centre
+     large, avec relation la carte Relations le reprenait.
+     ═ 02/09 (patron) : « quand tu cliques sur relation, pourquoi la fiche
+       Relation est au milieu ? laisse à droite, faut pas que ça bouge ». ═
+     MESURÉ AVANT CORRECTION : la carte sautait de x=1081 (colonne droite,
+     319 px) à x=601 (colonne du milieu, 460 px) dès la première relation, et
+     les Notes partaient à sa place. Un écran qui se réorganise sous les yeux
+     pendant qu'on travaille, c'est le contraire d'un outil sûr.
+     La carte ne DÉMÉNAGE plus : les Notes gardent le centre, Relations reste
+     en dernière colonne. Seul son CONTENU change — sans relation la phrase
+     courte (relmini), avec relation le détail complet. */
   function relLayout(){
     var duo = document.querySelector(".duo2.tri3");
     if(!duo || !card || card.parentNode !== duo) return;
@@ -3240,8 +3247,9 @@ document.addEventListener("click", function(e){
     var notes = null;
     Array.prototype.forEach.call(duo.children, function(x){ if(x !== card && x.textContent.indexOf("Notes internes") !== -1) notes = x; });
     if(!notes) return;
-    if(a){ duo.insertBefore(card, notes); card.classList.remove("relmini"); }
-    else { duo.insertBefore(notes, card); card.classList.add("relmini"); }
+    /* place fixe : Notes, puis Relations juste après — dans les deux cas */
+    if(card.previousElementSibling !== notes) duo.insertBefore(card, notes.nextSibling);
+    card.classList.toggle("relmini", !a);
   }
   function paint(){
     var R = lire(), h = "";
