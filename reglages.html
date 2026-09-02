@@ -60,6 +60,18 @@ html{background:#F7F8FA}
 .enstag.kbis{background:var(--orange-soft,#FFF1EC);color:var(--orange-deep,#D2450A);border:1px solid #FBD9C6}
 .ensx{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.05rem;padding:4px 7px;border-radius:8px;font-family:inherit}
 .ensx:hover{background:#FDECEA;color:#C0362C}
+.enslogo.img{background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;border:1px solid var(--line)}
+.enslogobox{display:flex;gap:14px;align-items:flex-start}
+.enslogoap{width:104px;height:56px;border:1px dashed var(--line);border-radius:10px;background:#FAFBFC;background-size:contain;
+  background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;
+  font-size:.68rem;color:var(--muted);flex:none}
+.enslogoap.has{border-style:solid;background-color:#fff}
+.enslogoacts{display:flex;flex-direction:column;gap:7px;align-items:flex-start;min-width:0}
+.enslogoacts small{color:var(--muted);font-size:.72rem;line-height:1.45}
+.ensfile{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 14px;
+  font-size:.83rem;font-weight:600;color:var(--ink-2);cursor:pointer}
+.ensfile:hover{border-color:var(--orange);color:var(--orange-deep)}
+.ensx[hidden]{display:none}
 .ensadd{background:#fff;border:1.5px dashed var(--line);color:var(--ink-2);border-radius:12px;padding:11px 16px;font-weight:600;font-size:.86rem;cursor:pointer;font-family:inherit;width:100%}
 .ensadd:hover{border-color:var(--orange);color:var(--orange-deep)}
 .ensnote{margin-top:12px;font-size:.79rem;color:var(--muted);line-height:1.5}
@@ -2842,6 +2854,44 @@ function ensPlein(id){
 
 /* ── l'écran : la société en tête (non saisissable ici), puis les noms commerciaux ── */
 var ENSEDIT = null;                       /* index en cours d'édition, -1 = nouveau */
+var ENSLOGO = "";                         /* le logo en cours de saisie (base64) */
+/* Le logo est réduit à 320 px de large, proportions gardées, et laissé en PNG
+   quand la source est un PNG : un logo recadré en carré ou aplati en JPEG sort
+   avec un fond blanc sur le document. */
+function ensLogoPrend(inp){
+  var f = inp.files && inp.files[0]; if(!f) return;
+  if(f.type === "image/svg+xml"){
+    var fr0 = new FileReader();
+    fr0.onload = function(){ ensLogoPose(fr0.result); };
+    fr0.readAsDataURL(f); inp.value = ""; return;
+  }
+  var rd = new FileReader();
+  rd.onload = function(){
+    var im = new Image();
+    im.onload = function(){
+      var L = 320, r = Math.min(1, L / im.width);
+      var c = document.createElement("canvas");
+      c.width = Math.round(im.width * r); c.height = Math.round(im.height * r);
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      var png = /png/i.test(f.type);
+      ensLogoPose(c.toDataURL(png ? "image/png" : "image/jpeg", png ? undefined : .88));
+    };
+    im.onerror = function(){ if(typeof toast === "function") toast("Image illisible"); };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f); inp.value = "";
+}
+function ensLogoPose(src){
+  /* localStorage tient ~5 Mo pour TOUT TigerFlow : on refuse un logo obèse
+     plutôt que de faire sauter l'enregistrement de ses devis. */
+  if(src && src.length > 600000){ if(typeof toast === "function") toast("Logo trop lourd — prends une image plus petite"); return; }
+  ENSLOGO = src || "";
+  var ap = document.getElementById("enslogo-ap");
+  if(ap){ ap.style.backgroundImage = ENSLOGO ? "url(" + ENSLOGO + ")" : ""; 
+          ap.classList.toggle("has", !!ENSLOGO); ap.textContent = ENSLOGO ? "" : "aucun logo"; }
+  var d = document.getElementById("enslogo-del"); if(d) d.hidden = !ENSLOGO;
+}
+function ensLogoVide(){ ensLogoPose(""); }
 function ensSauve(l){ try{ localStorage.setItem(ENSKEY, JSON.stringify(l)); }catch(e){} }
 /* les initiales sautent les articles : « Les Super Déboucheurs » doit donner
    SD — ce que le patron lit —, pas LS. */
@@ -2866,8 +2916,10 @@ function ensPaint(){
      + '<span class="enstag kbis">Dénomination sociale</span></div>';
   autres.forEach(function(e, i){
     if(ENSEDIT === i){ h += ensForm(e, i); return; }
-    h += '<div class="ensrow"><div class="enslogo" style="background:' + ensEsc(e.couleur || "#3F4654") + '">'
-       + ensEsc(ensIni(e.nom)) + '</div><div class="ensinfo"><div class="ensnom">' + ensEsc(e.nom) + '</div>'
+    h += '<div class="ensrow">'
+       + (e.logo ? '<div class="enslogo img" style="background-image:url(' + ensEsc(e.logo) + ')"></div>'
+                 : '<div class="enslogo" style="background:' + ensEsc(e.couleur || "#3F4654") + '">' + ensEsc(ensIni(e.nom)) + '</div>')
+       + '<div class="ensinfo"><div class="ensnom">' + ensEsc(e.nom) + '</div>'
        + '<div class="enssub">' + ensEsc([e.tel, e.mail].filter(Boolean).join(" · ") || "reprend les coordonnées de la société") + '</div></div>'
        + '<span class="enstag">Nom commercial</span>'
        + '<button type="button" class="ensx" title="Modifier" onclick="ensEditer(' + i + ')">✎</button>'
@@ -2887,12 +2939,25 @@ function ensForm(e, i){
     + f("site", "Site web", "facultatif")
     + f("certi", "N° Certibiocide", "seulement si cette activité en a un")
     + '<div class="full"><label class="lab">Couleur de la pastille</label><input type="color" id="ensf-couleur" value="' + ensEsc(e.couleur || "#3F4654") + '" style="height:40px;padding:4px"></div>'
+    /* 02/09 (patron) : « dans Vos enseignes, Super Déboucheurs, ajoute le truc
+       pour mettre le logo ». Sans logo propre, le document sort sans logo du
+       tout — jamais avec celui de l'autre enseigne. */
+    + '<div class="full"><label class="lab">Logo de cette enseigne</label>'
+    +   '<div class="enslogobox" id="enslogo-box">'
+    +     '<div class="enslogoap' + (e.logo ? " has" : "") + '" id="enslogo-ap"'
+    +       (e.logo ? ' style="background-image:url(' + ensEsc(e.logo) + ')"' : "") + '>'
+    +       (e.logo ? "" : "aucun logo") + '</div>'
+    +     '<div class="enslogoacts">'
+    +       '<label class="ensfile">Choisir une image<input type="file" accept="image/*" id="ensf-logofile" onchange="ensLogoPrend(this)" hidden></label>'
+    +       '<button type="button" class="ensx" id="enslogo-del" onclick="ensLogoVide()"' + (e.logo ? "" : " hidden") + ' title="Retirer le logo">✕ retirer</button>'
+    +       '<small>PNG ou JPG. Réduit à 320 px de large avant d\u2019être gardé — la transparence du PNG est conservée.</small>'
+    +     '</div></div></div>'
     + '<div class="ensacts"><button type="button" class="btn2" onclick="ensAnnuler()">Annuler</button>'
     + '<button type="button" class="btn primary" onclick="ensEnregistrer(' + i + ')">Enregistrer</button></div></div>';
 }
-function ensAjouter(){ ENSEDIT = -1; ensPaint(); }
-function ensEditer(i){ ENSEDIT = i; ensPaint(); }
-function ensAnnuler(){ ENSEDIT = null; ensPaint(); }
+function ensAjouter(){ ENSEDIT = -1; ENSLOGO = ""; ensPaint(); }
+function ensEditer(i){ ENSEDIT = i; ENSLOGO = (ensAutres()[i] || {}).logo || ""; ensPaint(); }
+function ensAnnuler(){ ENSEDIT = null; ENSLOGO = ""; ensPaint(); }
 function ensEnregistrer(i){
   var g = function(k){ var e = document.getElementById("ensf-" + k); return e ? e.value.trim() : ""; };
   var nom = g("nom");
@@ -2904,9 +2969,10 @@ function ensEnregistrer(i){
   }
   var l = ensAutres();
   var rec = {id:(i >= 0 && l[i] && l[i].id) || ("ens" + Date.now().toString(36)), nom:nom,
-             tel:g("tel"), mail:g("mail"), site:g("site"), certi:g("certi"), couleur:g("couleur")};
+             tel:g("tel"), mail:g("mail"), site:g("site"), certi:g("certi"), couleur:g("couleur"),
+             logo:ENSLOGO || ""};
   if(i >= 0) l[i] = rec; else l.push(rec);
-  ensSauve(l); ENSEDIT = null; ensPaint();
+  ensSauve(l); ENSEDIT = null; ENSLOGO = ""; ensPaint();
   if(typeof bswPaint === "function") bswPaint();
   if(typeof toast === "function") toast("Enseigne « " + nom + " » enregistrée");
 }

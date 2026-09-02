@@ -2005,7 +2005,15 @@ function ensEsc(t){ return String(t == null ? "" : t).replace(/[&<>"]/g, functio
 function ensChoisir(id){
   ENSCUR = id; ENSFIGE = true; ensMenuClose(); ensBtn();
   if(typeof toast === "function") toast("Ce devis partira sous « " + ensPlein(id).nom + " »");
-  if(typeof saveDevis === "function") saveDevis(true);
+  /* ☠️ 02/09 (patron : « je choisis Super Déboucheurs, je clique sur Catalogue,
+     ça bug, la page se ferme »). J'appelais saveDevis(true) ici, copié de
+     facture.html où l'argument veut dire « en silence ». Dans CETTE page,
+     saveDevis() ignore l'argument et se termine par un location.href vers la
+     fiche du devis : choisir une enseigne armait donc une redirection à retard.
+     Le temps d'ouvrir le Catalogue, la page partait — le devis en cours perdu.
+     On enregistre par pushDevisInbox(), qui écrit sans jamais naviguer (et qui
+     ne fait rien tant qu'aucun client n'est choisi). */
+  if(typeof pushDevisInbox === "function") pushDevisInbox();
 }
 /* l'enseigne habituelle du client — un simple défaut, jamais un verrou */
 function ensDuClient(nom){
