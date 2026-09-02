@@ -298,6 +298,31 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .srow.sttc b{color:var(--orange-deep);font-family:'Sora';font-size:1rem}
 .sfld{margin-bottom:11px}
 .sfld label{display:block;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:5px}
+/* 02/09 : la modale de facturation (acompte / total) */
+.acchoix{display:grid;gap:10px;margin-bottom:6px}
+.acopt{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:14px;
+  padding:14px 16px;cursor:pointer;font-family:inherit;transition:.13s}
+/* le display:block ci-dessus battait l'attribut hidden : l'option « acompte »
+   restait visible apres qu'un acompte ait deja ete facture. */
+.acopt[hidden]{display:none}
+.acopt:hover{border-color:var(--orange);background:#FFFBF9}
+.acopt.on{border-color:var(--orange);background:var(--orange-soft)}
+.acopt b{display:block;font-family:'Sora';font-size:.95rem;font-weight:800;color:var(--ink)}
+.acopt small{display:block;font-size:.78rem;color:var(--muted);margin-top:3px;line-height:1.45}
+.acrac{display:flex;gap:7px;margin-bottom:8px}
+.acrac button{flex:1;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 0;
+  font:800 .82rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;transition:.13s}
+.acrac button:hover{border-color:#D5D8DF}
+.acrac button.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.acline{display:flex;gap:8px}
+.acline input{flex:1}
+.acline select{flex:none;width:110px}
+.acgros{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:14px 0 12px;
+  background:var(--orange-soft);border:1px solid #FBD9C6;border-radius:13px;padding:13px 16px}
+.acgros span{font-size:.78rem;font-weight:700;color:var(--orange-deep)}
+.acgros b{font-family:'Sora';font-size:1.5rem;font-weight:800;color:var(--orange-deep);letter-spacing:-.5px}
+.acalerte{margin-top:10px;font-size:.8rem;line-height:1.5;color:#9A6B08;background:#FDF8EC;
+  border:1px solid #EEDFAE;border-radius:11px;padding:10px 13px}
 .sfld input,.sfld textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:10px 13px;font-size:.86rem;font-family:inherit;outline:none;line-height:1.6}
 .sfld input:focus,.sfld textarea:focus{border-color:var(--orange)}
 .tgl{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #F3F4F7;font-size:.83rem}
@@ -894,6 +919,57 @@ a.hcli:hover{color:var(--orange-deep)}
   </div>
 </div>
 
+<!-- ═══ 02/09 (patron, GO) : LA FACTURE D'ACOMPTE ═══
+     « le devis est validé, le client demande une facture d'acompte, on fait
+     comment ? ». Avant : le bouton « À facturer » creait UNE facture du
+     montant TOTAL, et l'acompte se bricolait a la main dans le titre — avec
+     le risque de facturer deux fois (l'acompte PUIS le total).
+     PAS de facture de situation : c'est un standard du BTP (InterFast et
+     Costructor viennent de la), pas de la 3D. Deux choix, pas trois. -->
+<div class="sendveil" id="acveil" onclick="if(event.target===this)acClose()">
+  <div class="sendbox" style="width:min(560px,94vw)">
+    <div class="sh">💶 Facturer le devis <span class="shsub" id="ac-ref"></span></div>
+
+    <div class="acchoix" id="ac-choix">
+      <button type="button" class="acopt" onclick="acMode('ac')">
+        <b>Facture d'acompte</b><small>Une partie maintenant, le solde plus tard</small></button>
+      <button type="button" class="acopt" onclick="acMode('tot')">
+        <b>Facture totale</b><small>Tout le devis en une seule facture</small></button>
+    </div>
+
+    <div id="ac-form" hidden>
+      <div class="sfld">
+        <label>Montant de l'acompte</label>
+        <div class="acrac" id="ac-rac">
+          <button type="button" onclick="acPct(30)">30 %</button>
+          <button type="button" onclick="acPct(40)">40 %</button>
+          <button type="button" onclick="acPct(50)">50 %</button>
+        </div>
+        <div class="acline">
+          <input id="ac-val" type="number" min="0" step="0.01" value="30" oninput="acCalc()" onfocus="this.select()">
+          <select id="ac-uni" onchange="acCalc()">
+            <option value="pc">%</option>
+            <option value="ttc">€ TTC</option>
+          </select>
+        </div>
+      </div>
+      <div class="sfld"><label for="ac-ech">À régler avant le</label><input id="ac-ech" type="date"></div>
+      <div class="acgros"><span>Vous facturez maintenant</span><b id="ac-gros">—</b></div>
+      <div class="srecap">
+        <div class="srow"><span>Total du devis</span><b id="ac-tot">—</b></div>
+        <div class="srow" id="ac-deja" hidden><span>Déjà facturé</span><b>—</b></div>
+        <div class="srow"><span>Restera à facturer</span><b id="ac-reste">—</b></div>
+      </div>
+      <div id="ac-alerte" class="acalerte" hidden></div>
+    </div>
+
+    <div class="sacts">
+      <button class="btn2" onclick="acClose()">Annuler</button>
+      <button class="btn2 primary" id="ac-go" onclick="acCreer()" hidden>Créer la facture</button>
+    </div>
+  </div>
+</div>
+
 <div class="paidstamp" id="paidstamp" aria-hidden="true">PAYÉE</div>
 
 <div id="recu" aria-hidden="true">
@@ -1044,28 +1120,188 @@ function modDevis2(){
   try{ sessionStorage.setItem("tigerflow-devis-ref", REF); }catch(e){}
   location.href = "devis.html?draft=" + encodeURIComponent(REF);
 }
+/* ═══ 02/09 : LA FACTURATION DU DEVIS — acompte ou total ═══
+   « À facturer » n'écrit plus directement : il ouvre le choix. Le calcul est
+   fait ici, une seule fois, et sert à l'affichage comme à la création. */
+var ACMODE = null;                       /* "ac" ou "tot" */
+
+/* Ce qui a DÉJÀ été facturé sur ce devis — c'est ce chiffre qui empêche de
+   facturer deux fois. On lit les factures nées de CE devis (depuis === REF). */
+function acDeja(){
+  try{
+    return JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]")
+      .filter(function(x){ return x && x.depuis === REF; })
+      .reduce(function(s, x){ return s + (+x.montant || 0); }, 0);
+  }catch(e){ return 0; }
+}
+function acMontant(){
+  var v = +(document.getElementById("ac-val") || {}).value || 0;
+  var u = (document.getElementById("ac-uni") || {}).value || "pc";
+  var tot = +REC.montant || 0;
+  var m = (u === "pc") ? tot * v / 100 : v;
+  return Math.max(0, Math.round(m * 100) / 100);
+}
+function acCalc(){
+  var tot = +REC.montant || 0, deja = acDeja();
+  var m = (ACMODE === "tot") ? Math.max(0, tot - deja) : acMontant();
+  var reste = Math.max(0, tot - deja - m);
+  var g = function(id){ return document.getElementById(id); };
+  if(g("ac-gros")) g("ac-gros").textContent = eur(m);
+  if(g("ac-tot"))  g("ac-tot").textContent  = eur(tot);
+  if(g("ac-reste"))g("ac-reste").textContent= eur(reste);
+  var dj = g("ac-deja");
+  if(dj){ dj.hidden = !(deja > 0); if(deja > 0) dj.querySelector("b").textContent = "− " + eur(deja); }
+  /* les raccourcis suivent la valeur tapée à la main */
+  var u = (g("ac-uni") || {}).value, v = +(g("ac-val") || {}).value;
+  var rac = g("ac-rac");
+  if(rac) Array.prototype.forEach.call(rac.children, function(b){
+    b.classList.toggle("on", u === "pc" && +b.textContent.replace(/\D/g, "") === v); });
+  /* les garde-fous : on ne facture pas plus que ce qui reste */
+  var al = g("ac-alerte");
+  if(al){
+    var msg = "";
+    if(m <= 0) msg = "Un acompte de 0 € ne sert à rien — mets un montant.";
+    else if(m > tot - deja + 0.005)
+      msg = "Cet acompte dépasse ce qui reste à facturer (" + eur(tot - deja)
+          + "). Baisse le montant, sinon tu factures plus que le devis.";
+    al.hidden = !msg; al.textContent = msg;
+    var go = g("ac-go"); if(go) go.disabled = !!msg;
+  }
+}
+function acPct(p){
+  var g = document.getElementById("ac-uni"); if(g) g.value = "pc";
+  var v = document.getElementById("ac-val"); if(v) v.value = p;
+  acCalc();
+}
+function acMode(m){
+  ACMODE = m;
+  var f = document.getElementById("ac-form"), go = document.getElementById("ac-go");
+  Array.prototype.forEach.call(document.querySelectorAll("#ac-choix .acopt"), function(b, i){
+    b.classList.toggle("on", (i === 0) === (m === "ac")); });
+  if(f)  f.hidden = (m !== "ac");
+  if(go){ go.hidden = false;
+    go.textContent = (m === "ac") ? "Créer la facture d'acompte"
+                   : (acDeja() > 0 ? "Créer la facture de solde" : "Créer la facture totale"); }
+  acCalc();
+}
+function acClose(){ var v = document.getElementById("acveil"); if(v) v.classList.remove("open"); }
 function versFacture(){
   if(!REC){ toast("Devis introuvable"); return; }
+  ACMODE = null;
+  var g = function(id){ return document.getElementById(id); };
+  if(g("ac-ref")) g("ac-ref").textContent = REF;
+  if(g("ac-form")) g("ac-form").hidden = true;
+  if(g("ac-go")) g("ac-go").hidden = true;
+  Array.prototype.forEach.call(document.querySelectorAll("#ac-choix .acopt"), function(b){ b.classList.remove("on"); });
+  if(g("ac-val")) g("ac-val").value = 30;
+  if(g("ac-uni")) g("ac-uni").value = "pc";
+  if(g("ac-ech")) g("ac-ech").value = new Date().toISOString().slice(0, 10);
+  /* deja un acompte ? on ouvre directement sur le solde, c'est la suite logique */
+  var deja = acDeja();
+  /* un acompte est deja parti : le 2e choix n'est plus « le total », c'est
+     « le solde ». Dire « total » a ce moment-la ferait croire qu'on refacture
+     tout — c'est exactement la peur qu'on veut lever. */
+  var opts = document.querySelectorAll("#ac-choix .acopt");
+  if(opts.length === 2){
+    opts[0].hidden = (deja > 0);
+    opts[1].querySelector("b").textContent = (deja > 0) ? "Facturer le solde" : "Facture totale";
+    opts[1].querySelector("small").textContent = (deja > 0)
+      ? "Le reste, une fois l'acompte de " + eur(deja) + " déduit"
+      : "Tout le devis en une seule facture";
+  }
+  var v = g("acveil"); if(v) v.classList.add("open");
+  if(deja > 0) acMode("tot");
+  else acCalc();
+}
+/* la création réelle — appelée par le bouton de la modale */
+function acCreer(){
+  if(!REC || !ACMODE){ toast("Choisis d'abord acompte ou total"); return; }
+  var tot = +REC.montant || 0, deja = acDeja();
+  var m = (ACMODE === "tot") ? Math.max(0, tot - deja) : acMontant();
+  if(m <= 0 || m > tot - deja + 0.005){ acCalc(); return; }
+  var estAc = (ACMODE === "ac");
+  var pc = Math.round(m / (tot || 1) * 1000) / 10;
+  acClose();
+  versFactureEcrire(m, estAc, pc, deja);
+}
+/* les references des factures d'acompte deja emises sur ce devis — elles sont
+   citees sur la facture de solde : une facture de solde doit dire de quel
+   acompte elle deduit, sinon le client ne peut pas rapprocher les deux. */
+function acRefs(){
+  try{
+    return JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]")
+      .filter(function(x){ return x && x.depuis === REF && x.acompte; })
+      .map(function(x){ return x.ref; }).join(", ");
+  }catch(e){ return ""; }
+}
+/* ☠️ PIEGE RATTRAPE AU TEST : les lignes d'un devis sont en HT, mais le
+   montant du devis (et donc l'acompte) est en TTC. Deduire 184,80 TTC d'un
+   sous-total HT donnait 375,20 € au lieu de 431,20 € — 56 € de trop factures
+   au client. On deduit donc en HT, taux par taux, pour que le TTC retombe
+   exactement sur le solde du. Dans 95 % des cas il n'y a qu'un seul taux. */
+function acLignesDeduction(deja){
+  var L = REC.lignes || [], parTaux = {}, htTot = 0;
+  L.forEach(function(l){
+    var h = (+l.qte || 0) * (+l.pu || 0), t = +l.tva || 0;
+    parTaux[t] = (parTaux[t] || 0) + h; htTot += h;
+  });
+  var ttcTot = +REC.montant || 0;
+  var refs = acRefs() ? " — " + acRefs() : "";
+  if(!htTot || !ttcTot) return [{designation:"Acompte déjà facturé" + refs, qte:1, pu:-deja, tva:0, emo:"↩️"}];
+  var taux = Object.keys(parTaux), out = [];
+  taux.forEach(function(t){
+    var partTTC = parTaux[t] * (1 + (+t) / 100);
+    var ded = Math.round(deja * (partTTC / ttcTot) / (1 + (+t) / 100) * 100) / 100;
+    if(ded > 0) out.push({
+      designation: "Acompte déjà facturé" + refs + (taux.length > 1 ? " (TVA " + t + " %)" : ""),
+      qte: 1, pu: -ded, tva: +t, emo: "↩️" });
+  });
+  return out;
+}
+function deduit_msg(deja, estAc){ return (!estAc && deja > 0) ? " (acompte de " + eur(deja) + " déduit)" : ""; }
+function versFactureEcrire(montant, estAc, pc, deja){
   const ref = "FAC-2026-" + String(10000 + Math.floor(Math.random() * 89999));
+  const ech = (document.getElementById("ac-ech") || {}).value || REC.valid || "";
+  /* le titre dit ce que c'est, sans qu'on ait à ouvrir la facture */
+  const titre = estAc
+      ? "Acompte " + pc + " % — " + (REC.titre || "")
+      : (deja > 0 ? "Solde — " + (REC.titre || "") : (REC.titre || ""));
   const rec = {
-    ref, client: REC.client, ct: REC.ct || "", titre: REC.titre,
-    montant: REC.montant, statut: "brouillon",
+    ref, client: REC.client, ct: REC.ct || "", titre: titre,
+    montant: montant, statut: "brouillon",
     date: new Date().toISOString().slice(0, 10),
-    ech: REC.valid || "", pro: false,
+    ech: ech, pro: false,
     tech: REC.tech || "", inter: REC.inter || "",
-    lignes: REC.lignes || [],
-    frais: REC.frais || [],
-    remise: REC.remise || 0,
+    /* une facture d'acompte ne reprend PAS les lignes du devis : elle porte une
+       seule ligne « acompte ». Le solde, lui, reprend tout et deduit. */
+    /* Le SOLDE reprend les lignes du devis PUIS une ligne de deduction en
+       negatif — c'est ce que fait le reste du metier, et surtout ca traverse
+       le calcul existant sans y toucher : calc() additionne qte x pu, un pu
+       negatif se soustrait tout seul. La facture montre donc au client le
+       detail complet, puis « Acompte facture le … − 184,80 € », puis le net.
+       ⚠️ La TVA de cette ligne est a 0 : l'acompte a deja porte la sienne.
+       A faire confirmer par son expert-comptable avant le premier envoi. */
+    lignes: estAc
+        ? [{designation:"Acompte " + pc + " % sur devis " + REF, qte:1, pu:montant, tva:0, emo:"💶"}]
+        : (deja > 0 ? (REC.lignes || []).concat(acLignesDeduction(deja)) : (REC.lignes || [])),
+    frais: estAc ? [] : (REC.frais || []),
+    remise: estAc ? 0 : (REC.remise || 0),
     /* d'ou elle vient : sans ca on ne saurait plus relier la facture au devis
        accepte, et le client aurait deux documents sans lien entre eux. */
-    depuis: REF
+    depuis: REF,
+    acompte: estAc ? {pc: pc, base: +REC.montant || 0} : null,
+    /* ce qui a deja ete facture AVANT celle-ci : c'est cette ligne que la
+       facture de solde affiche en deduction. Sans elle, le client paierait
+       deux fois — l'acompte, puis le total. */
+    deduit: (!estAc && deja > 0) ? deja : 0
   };
   try{
     const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").filter(x => x.ref !== ref);
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-factures", JSON.stringify(box.slice(0, 30)));
   }catch(e){ toast("⚠️ Impossible d'enregistrer la facture"); return; }
-  toast("💶 Facture " + ref + " créée depuis " + REF + " — ouverture…");
+  toast((estAc ? "💶 Acompte " + pc + " % — " : "💶 ") + eur(montant) + " · facture " + ref
+        + (deduit_msg(deja, estAc)) + " — ouverture…");
   setTimeout(() => { location.href = "facture.html?draft=" + encodeURIComponent(ref); }, 700);
 }
 function versContrat(){
