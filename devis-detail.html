@@ -303,6 +303,9 @@ a,button,input,select,textarea,label{touch-action:manipulation}
    ce qui evite d'envoyer l'acompte au mauvais client. */
 .acqui{font-size:.86rem;font-weight:700;color:var(--ink-2);margin:-8px 0 14px}
 .acqui small{display:block;font-weight:500;font-size:.78rem;color:var(--muted);margin-top:2px}
+.acpro{font-size:.79rem;line-height:1.5;color:var(--ink-2);background:var(--bg);border-radius:11px;
+  padding:9px 13px;margin:-6px 0 14px}
+.acpro[hidden]{display:none}
 .acchoix{display:grid;gap:10px;margin-bottom:6px}
 .acopt{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:14px;
   padding:14px 16px;cursor:pointer;font-family:inherit;transition:.13s}
@@ -332,6 +335,15 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .acgros b{font-family:'Sora';font-size:1.5rem;font-weight:800;color:var(--orange-deep);letter-spacing:-.5px}
 .acalerte{margin-top:10px;font-size:.8rem;line-height:1.5;color:#9A6B08;background:#FDF8EC;
   border:1px solid #EEDFAE;border-radius:11px;padding:10px 13px}
+/* 02/09 : la ligne d'etat de facturation, sur la fiche du devis */
+.acetat{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin:0 0 16px;
+  background:var(--green-bg,#ECFDF5);border:1px solid #BBEBD5;border-radius:14px;padding:12px 16px}
+.acetat b{font-family:'Sora';font-weight:800;font-size:.92rem;color:var(--green-d,#047857)}
+.acetat span{font-size:.84rem;color:var(--ink-2)}
+.acetat .acsolde{margin-left:auto;font-weight:800;color:var(--ink)}
+.acetat.fini{background:#F2F4F7;border-color:#E4E7EE}
+.acetat.fini b{color:var(--ink-2)}
+@media(max-width:640px){ .acetat .acsolde{margin-left:0;flex-basis:100%} }
 .sfld input,.sfld textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:10px 13px;font-size:.86rem;font-family:inherit;outline:none;line-height:1.6}
 .sfld input:focus,.sfld textarea:focus{border-color:var(--orange)}
 .tgl{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #F3F4F7;font-size:.83rem}
@@ -829,6 +841,11 @@ a.hcli:hover{color:var(--orange-deep)}
       </div>
     </div>
 
+    <!-- 02/09 (patron, GO point 2) : APRES un acompte, le devis ne disait RIEN.
+         Verifie : le mot « acompte » n'apparaissait nulle part sur la fiche, il
+         fallait rouvrir la modale de facturation pour savoir ou on en etait. -->
+    <div class="acetat" id="acetat" hidden></div>
+
     <!-- compteurs -->
     <div class="kpis">
       <div class="kpi k-cash"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div><span class="sub" id="k-total-sub"></span></div>
@@ -939,6 +956,7 @@ a.hcli:hover{color:var(--orange-deep)}
   <div class="sendbox" style="width:min(560px,94vw)">
     <div class="sh">💶 Facturer le devis <span class="shsub" id="ac-ref"></span></div>
     <div class="acqui" id="ac-qui"></div>
+    <div class="acpro" id="ac-pro" hidden></div>
 
     <div class="acchoix" id="ac-choix">
       <button type="button" class="acopt" onclick="acMode('ac')">
@@ -951,8 +969,11 @@ a.hcli:hover{color:var(--orange-deep)}
       <div class="sfld">
         <label>Montant de l'acompte</label>
         <div class="acrac" id="ac-rac">
+          <!-- 02/09 (patron) : « on fait acompte 20 30 et 50, pas 40 ». C'est son
+               metier : 20 % pour rassurer sans bloquer, 30 % le standard, 50 %
+               quand il avance du materiel (housses, filets, postes). -->
+          <button type="button" onclick="acPct(20)">20 %</button>
           <button type="button" onclick="acPct(30)">30 %</button>
-          <button type="button" onclick="acPct(40)">40 %</button>
           <button type="button" onclick="acPct(50)">50 %</button>
         </div>
         <div class="acline">
@@ -1196,6 +1217,48 @@ function acMode(m){
   acCalc();
 }
 function acClose(){ var v = document.getElementById("acveil"); if(v) v.classList.remove("open"); }
+/* ── 02/09 (GO point 3) : le client est-il un pro ? Un pro ou un syndic regle
+   a 30 jours et refuse souvent l'acompte par principe comptable. On ne lui
+   impose pas le meme premier reflexe qu'a un particulier. ── */
+function acEstPro(){
+  if(REC && typeof REC.pro === "boolean") return REC.pro;
+  try{
+    var nom = String((REC && REC.client) || "").trim().toLowerCase();
+    var trouve = null;
+    ["tigerflow-inbox-clients","tigerflow-clients-cache"].forEach(function(k){
+      (JSON.parse(localStorage.getItem(k) || "[]") || []).forEach(function(c){
+        if(c && String(c.nom || c.client || "").trim().toLowerCase() === nom) trouve = c; });
+    });
+    if(trouve){
+      var ty = String(trouve.type || "").toLowerCase();
+      if(ty) return ty.indexOf("particulier") < 0;
+    }
+  }catch(e){}
+  return null;   /* on ne sait pas : on ne suppose rien */
+}
+/* ── 02/09 (GO point 2) : l'etat de facturation, en clair sur la fiche ── */
+function acEtat(){
+  var box = document.getElementById("acetat");
+  if(!box || !REC) return;
+  var tot = +REC.montant || 0, deja = acDeja();
+  if(deja <= 0){ box.hidden = true; return; }
+  var reste = Math.max(0, tot - deja);
+  var solde = reste < 0.005;
+  box.hidden = false;
+  box.classList.toggle("fini", solde);
+  box.innerHTML = solde
+    ? "<b>✓ Entièrement facturé</b><span>" + eur(tot) + " en " + acNbFactures() + " facture"
+      + (acNbFactures() > 1 ? "s" : "") + "</span>"
+    : "<b>Acompte facturé " + eur(deja) + "</b>"
+      + "<span>" + (acRefs() || "—") + "</span>"
+      + "<span class='acsolde'>Solde à venir : " + eur(reste) + "</span>";
+}
+function acNbFactures(){
+  try{
+    return JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]")
+      .filter(function(x){ return x && x.depuis === REF; }).length;
+  }catch(e){ return 0; }
+}
 function versFacture(){
   if(!REC){ toast("Devis introuvable"); return; }
   ACMODE = null;
@@ -1215,7 +1278,7 @@ function versFacture(){
   if(g("ac-qui")) g("ac-qui").innerHTML = esc2(REC.client || "—")
       + (REC.titre ? "<small>" + esc2(REC.titre) + "</small>" : "");
   /* deja un acompte ? on ouvre directement sur le solde, c'est la suite logique */
-  var deja = acDeja();
+  var deja = acDeja(), estPro = acEstPro();
   /* un acompte est deja parti : le 2e choix n'est plus « le total », c'est
      « le solde ». Dire « total » a ce moment-la ferait croire qu'on refacture
      tout — c'est exactement la peur qu'on veut lever. */
@@ -1227,8 +1290,16 @@ function versFacture(){
       ? "Le reste, une fois l'acompte de " + eur(deja) + " déduit"
       : "Tout le devis en une seule facture";
   }
+  /* 02/09 (GO point 3) : un pro / syndic regle a 30 jours, sans acompte —
+     on lui ouvre le total en premier, et on le DIT au lieu de le supposer. */
+  var note = g("ac-pro");
+  if(note){
+    note.hidden = !(estPro === true && deja <= 0);
+    note.textContent = "Ce client est un professionnel — les pros règlent en général à 30 jours, sans acompte.";
+  }
   var v = g("acveil"); if(v) v.classList.add("open");
   if(deja > 0) acMode("tot");
+  else if(estPro === true) acMode("tot");
   else acCalc();
 }
 /* la création réelle — appelée par le bouton de la modale */
@@ -1318,6 +1389,7 @@ function versFactureEcrire(montant, estAc, pc, deja){
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-factures", JSON.stringify(box.slice(0, 30)));
   }catch(e){ toast("⚠️ Impossible d'enregistrer la facture"); return; }
+  if(typeof acEtat === "function") setTimeout(acEtat, 30);
   toast((estAc ? "💶 Acompte " + pc + " % — " : "💶 ") + eur(montant) + " · facture " + ref
         + (deduit_msg(deja, estAc)) + " — ouverture…");
   setTimeout(() => { location.href = "facture.html?draft=" + encodeURIComponent(ref); }, 700);
@@ -2196,6 +2268,16 @@ document.addEventListener("click", function(e){
     var el = e.target, n = 0;
     while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
   }, true);
+})();
+</script>
+<script>
+/* 02/09 : l'etat de facturation du devis (acompte parti, solde a venir) est
+   peint au chargement — c'est la premiere chose qu'on veut savoir en ouvrant
+   un devis accepte. */
+(function(){
+  function go(){ try{ if(typeof acEtat === "function") acEtat(); }catch(e){} }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", go);
+  else go();
 })();
 </script>
 </body>
