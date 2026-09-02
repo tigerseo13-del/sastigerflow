@@ -1500,6 +1500,42 @@ const CLIENT_MODE = {
 let NID = 0;
 const PRIOS_I = {Urgente:"#D63B33", Haute:"#D9A408", Normale:"#2E5CE6", Basse:"#A6ABBB"};
 const TELS = {};
+
+/* ═══ 02/09 (patron) : LES COORDONNÉES DU CLIENT, LES VRAIES ═══
+   Avant : telOf() FABRIQUAIT un numéro à partir des lettres du nom, et l'e-mail
+   était « contact@exemple.fr » écrit en dur. Le technicien appelait donc un
+   numéro qui n'était celui de personne. On lit maintenant la fiche client ; si
+   on n'a rien, on affiche « — » et on ne rend pas la ligne cliquable : un vide
+   honnête vaut mieux qu'un faux numéro.
+   Le nom devient un lien vers sa fiche — le geste qu'on attend en le voyant. */
+function cliFiche(nom){
+  var n = String(nom || "");
+  if(!n) return null;
+  try{
+    var l = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]");
+    for(var i = 0; i < l.length; i++) if(l[i] && l[i].nom === n) return l[i];
+    var c = JSON.parse(localStorage.getItem("tigerflow-clients-cache") || "[]");
+    for(var k = 0; k < c.length; k++) if(c[k] && c[k].nom === n) return c[k];
+  }catch(e){}
+  return null;
+}
+function cliLien(nom){
+  var n = String(nom || "");
+  if(!n) return "—";
+  return '<a href="client.html?c=' + encodeURIComponent(n) + '" style="color:var(--orange-deep);text-decoration:none;font-weight:700">'
+       + n.replace(/[&<>]/g, "") + '</a>';
+}
+function cliTel(nom){
+  var f = cliFiche(nom), t = f && (f.tel || f.telephone) ? String(f.tel || f.telephone) : "";
+  if(!t) return "—";
+  var brut = t.replace(/[^0-9+]/g, "");
+  return '<a href="tel:' + brut + '" style="color:var(--orange-deep)">' + (typeof telFmt === "function" ? telFmt(brut) : t) + '</a>';
+}
+function cliMail(nom){
+  var f = cliFiche(nom), m = f && (f.mail || f.email) ? String(f.mail || f.email) : "";
+  if(!m) return "—";
+  return '<a href="mailto:' + m.replace(/[&<>"]/g, "") + '" style="color:var(--orange-deep)">' + m.replace(/[&<>]/g, "") + '</a>';
+}
 function telOf(v){
   const k = v && v.client ? v.client : "";
   if(!TELS[k]){
@@ -3597,13 +3633,13 @@ function renderDetail(){
   else if(DTAB === "cli"){
     body = `<div class="dcard">
       <div class="dh">Client</div>
-      <div class="dkv"><span class="k">Nom</span><span class="v">${v.client}</span></div>
-      <div class="dkv"><span class="k">Téléphone</span><span class="v"><a href="tel:+33${telOf(v).slice(1)}" style="color:var(--orange-deep)">${telFmt(telOf(v))}</a></span></div>
-      <div class="dkv"><span class="k">Email</span><span class="v"><a href="mailto:contact@exemple.fr" style="color:var(--orange-deep)">contact@exemple.fr</a></span></div>
+      <div class="dkv"><span class="k">Nom</span><span class="v">${cliLien(v.client)}</span></div>
+      <div class="dkv"><span class="k">Téléphone</span><span class="v">${cliTel(v.client)}</span></div>
+      <div class="dkv"><span class="k">Email</span><span class="v">${cliMail(v.client)}</span></div>
       <div class="dkv"><span class="k">Adresse</span><span class="v"><svg class="pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ${v.rue ? v.rue + ", " : ""}${v.cp} ${v.ville}</span></div>
       <div class="dkv"><span class="k">Type</span><span class="v">${M.ic} ${M.lbl}</span></div>
       <div class="dkv"><span class="k">Référence</span><span class="v" style="cursor:copy" title="Cliquer pour copier" onclick="navigator.clipboard && navigator.clipboard.writeText('${refInt(v.id)}').then(()=>toast('📋 Référence ${refInt(v.id)} copiée'))"><span class="ref">${refInt(v.id)}</span> 📋</span></div>
-      <a class="dbig sec" style="margin-top:13px;text-decoration:none" href="${isIron ? "client.html" : "clients.html"}">👤 Voir la fiche client</a>
+      <a class="dbig sec" style="margin-top:13px;text-decoration:none" href="client.html?c=${encodeURIComponent(v.client || "")}">👤 Voir la fiche client</a>
     </div>`;
   }
   else if(DTAB === "not"){
@@ -5184,12 +5220,12 @@ function openPending(pid){
   else if(PDTAB === "cli"){
     body = `<div class="dcard">
       <div class="dh">Client</div>
-      ${kv("Nom", p.client)}
-      ${kv("Téléphone", `<a href="tel:+33${tel.slice(1)}" style="color:var(--orange-deep)">${telFmt(tel)}</a>`)}
-      ${kv("Email", `<a href="mailto:contact@exemple.fr" style="color:var(--orange-deep)">contact@exemple.fr</a>`)}
+      ${kv("Nom", cliLien(p.client))}
+      ${kv("Téléphone", cliTel(p.client))}
+      ${kv("Email", cliMail(p.client))}
       ${kv("Adresse", adr)}
       ${kv("Type", M.ic + " " + M.lbl)}
-      <a class="dbig sec" style="margin-top:13px;text-decoration:none" href="clients.html">👤 Voir la fiche client</a>
+      <a class="dbig sec" style="margin-top:13px;text-decoration:none" href="client.html?c=${encodeURIComponent(p.client || "")}">👤 Voir la fiche client</a>
     </div>`;
   }
   else if(PDTAB === "not"){
