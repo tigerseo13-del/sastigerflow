@@ -994,7 +994,13 @@ a.hcli:hover{color:var(--orange-deep)}
           </select>
         </div>
       </div>
-      <div class="sfld"><label for="ac-ech">À régler avant le</label><input id="ac-ech" type="date"></div>
+      <!-- 02/09 (patron, GO option 2) : le champ « À régler avant le » est RETIRÉ.
+           MESURÉ avant de trancher : la date était bien enregistrée sur la facture
+           (ech), mais l'atelier s'ouvrait quand même sur « 30 jours » — personne
+           ne la lisait. Un champ qu'on remplit pour rien vaut moins que pas de
+           champ du tout. L'échéance se règle dans l'atelier, comme pour toute
+           facture. ⚠️ Le défaut y reste 30 jours : à surveiller sur un acompte,
+           qui se paie normalement AVANT l'intervention. -->
       <div class="acgros"><span>Vous facturez maintenant</span><b id="ac-gros">—</b></div>
       <div class="srecap">
         <div class="srow"><span>Total du devis</span><b id="ac-tot">—</b></div>
@@ -1303,12 +1309,6 @@ function versFacture(){
     b.classList.remove("on"); b.hidden = false; });   /* 02/09 : on rend les deux choix */
   if(g("ac-val")) g("ac-val").value = 30;
   if(g("ac-uni")) g("ac-uni").value = "pc";
-  /* 02/09 : +7 jours, pas aujourd'hui. Un acompte « a regler avant le 02/09 »
-     envoye le 02/09, c'est raide — et ca part en retard des le lendemain. */
-  if(g("ac-ech")){
-    var d7 = new Date(); d7.setDate(d7.getDate() + 7);
-    g("ac-ech").value = d7.toISOString().slice(0, 10);
-  }
   if(g("ac-qui")) g("ac-qui").innerHTML = esc2(REC.client || "—")
       + (REC.titre ? "<small>" + esc2(REC.titre) + "</small>" : "");
   /* deja un acompte ? on ouvre directement sur le solde, c'est la suite logique */
@@ -1410,7 +1410,10 @@ function acLignesDeduction(deja){
 function deduit_msg(deja, estAc){ return (!estAc && deja > 0) ? " (acompte de " + eur(deja) + " déduit)" : ""; }
 function versFactureEcrire(montant, estAc, pc, deja){
   const ref = "FAC-2026-" + String(10000 + Math.floor(Math.random() * 89999));
-  const ech = (document.getElementById("ac-ech") || {}).value || REC.valid || "";
+  /* 02/09 : le champ ayant été retiré, l'échéance retombe sur la validité du
+     devis. Elle voyage toujours avec la facture ; c'est l'atelier qui décide
+     ce qu'il en affiche. */
+  const ech = REC.valid || "";
   /* le titre dit ce que c'est, sans qu'on ait à ouvrir la facture */
   const titre = estAc
       ? "Acompte " + pc + " % — " + (REC.titre || "")
