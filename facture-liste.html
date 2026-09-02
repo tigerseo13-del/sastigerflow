@@ -490,6 +490,7 @@ tbody td small,tbody td .sub,tbody td em{font-weight:400}
    factures dont l'échéance est passée, triées par gravité, avec le geste à
    faire et sa trace. Trois tons selon l'ancienneté — on ne parle pas pareil
    à 5 jours et à 45. ══ */
+.impbtn[hidden]{display:none!important}
 .impbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 15px;border-radius:12px;background:#fff;border:1.5px solid #F3C4C0;color:#C0362C;font:800 .82rem inherit;cursor:pointer;white-space:nowrap}
 .impbtn:hover{background:#FCECEA}
 .impbtn b{background:#C0362C;color:#fff;border-radius:99px;padding:2px 8px;font-size:.74rem}
@@ -1427,7 +1428,19 @@ function impSync(){
   const pan = document.getElementById("imp");
   if(pan && pan.classList.contains("on")) impRender();
 }
-function impOpen(){ document.getElementById("imp").classList.add("on"); document.getElementById("impveil").classList.add("on"); impRender(); }
+/* 02/09 (patron) : « le panneau de contrôle des impayés c'est bien mais dégage-le,
+   mets-le en bêta V3 ». Le code reste ENTIER — seul l'accès est retiré. Ici la
+   convention est inversée par rapport aux autres bêtas : absent = ÉTEINT, parce
+   que le patron a demandé à le retirer. On le rallume dans Réglages › Bêta. */
+function impBeta(){
+  try{ return localStorage.getItem("tigerflow-beta-impayes") === "1"; }catch(e){ return false; }
+}
+(function(){
+  function impPaint(){ var b = document.getElementById("impbtn"); if(b && !impBeta()) b.hidden = true; }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", impPaint);
+  else impPaint();
+})();
+function impOpen(){ if(!impBeta()) return; document.getElementById("imp").classList.add("on"); document.getElementById("impveil").classList.add("on"); impRender(); }
 function impClose(){ document.getElementById("imp").classList.remove("on"); document.getElementById("impveil").classList.remove("on"); }
 function impTab(k){ IMPTAB = k; impRender(); }
 function impMailto(u){ location.href = u; }

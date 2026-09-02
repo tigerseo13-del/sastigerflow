@@ -969,7 +969,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <b>Fonctions bêta</b>
           <small>Masquées du menu principal jusqu'à leur sortie officielle</small>
         </span>
-        <span class="bcount">14 fonctions</span>
+        <span class="bcount">15 fonctions</span>
         <svg class="bchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </summary>
       <div class="betasec"><b>Version 2</b><span>7 fonctions</span><small>la prochaine livraison</small></div>
@@ -1045,7 +1045,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
               onclick="event.preventDefault();event.stopPropagation();ntfSet(!smsOn())"
               onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();ntfSet(!smsOn())}"><i></i><span class="betaEtat" id="beta-sms-etat">inactif</span></span>
       </a>
-            <div class="betasec"><b>Version 3</b><span>7 fonctions</span><small>après la V2</small></div>
+            <div class="betasec"><b>Version 3</b><span>8 fonctions</span><small>après la V2</small></div>
       <a class="betarow" href="tournee.html">
         <span class="bn">Carte</span>
         <span class="bb">Bêta</span>
@@ -1074,6 +1074,17 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
       <a class="betarow" href="index.html?notif=1">
         <span class="bn">Notifications (la cloche)</span>
         <span class="bb">Bêta</span>
+      </a>
+      <!-- 02/09 (patron) : « le panneau de contrôle des impayés c'est bien mais
+           dégage-le, garde l'idée, tu l'appelles Panneau de contrôle impayés
+           dans la V3 ». Retiré de la liste des factures, gardé entier dans le
+           code : l'interrupteur le remet. Éteint par défaut. -->
+      <a class="betarow" href="facture-liste.html">
+        <span class="bn">Panneau de contrôle impayés</span>
+        <span class="betasw" id="bsw-im" role="switch" aria-checked="false" tabindex="0"
+              title="Remettre le panneau des impayés dans la liste des factures"
+              onclick="event.preventDefault();event.stopPropagation();bswTog('im')"
+              onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();bswTog('im')}"><i></i><span class="betaEtat" id="bse-im">inactif</span></span>
       </a>
       <a class="betarow" href="abonnement.html">
         <span class="bn">Abonnement</span>
@@ -3046,16 +3057,29 @@ const BSW = {
   en: {k:"tigerflow-beta-enseignes",     nom:"Plusieurs enseignes",
        on:"Enseignes remises — le sélecteur revient sur les devis",
        off:"Enseignes coupées — les documents déjà émis gardent leur en-tête"},
+  /* ⚠️ celle-ci est INVERSÉE : absent = ÉTEINT. Le patron a demandé à retirer
+     le panneau des impayés — il ne doit pas revenir tout seul. */
+  im: {k:"tigerflow-beta-impayes", nom:"Panneau de contrôle impayés", inv:true,
+       on:"Panneau des impayés remis dans la liste des factures",
+       off:"Panneau des impayés retiré"},
   fa: {k:"tigerflow-beta-file",          nom:"File d'appels",
        on:"File d'appels remise — le bouton revient dans l'agenda",
        off:"File d'appels coupée — les interventions restent dans « À planifier »"}
 };
 function bswOn(id){
-  try{ return localStorage.getItem(BSW[id].k) !== "0"; }catch(e){ return true; }
+  const d = BSW[id];
+  try{
+    /* deux conventions : par défaut ALLUMÉ (clé "0" pour couper), et INVERSÉE
+       pour ce que le patron a demandé à retirer (clé "1" pour rallumer). */
+    return d.inv ? localStorage.getItem(d.k) === "1" : localStorage.getItem(d.k) !== "0";
+  }catch(e){ return !d.inv; }
 }
 function bswTog(id){
-  const v = !bswOn(id);
-  try{ v ? localStorage.removeItem(BSW[id].k) : localStorage.setItem(BSW[id].k, "0"); }catch(e){}
+  const d = BSW[id], v = !bswOn(id);
+  try{
+    if(d.inv) v ? localStorage.setItem(d.k, "1") : localStorage.removeItem(d.k);
+    else      v ? localStorage.removeItem(d.k)  : localStorage.setItem(d.k, "0");
+  }catch(e){}
   bswPaint();
   if(id === "en" && typeof ensPaint === "function") ensPaint();
   if(typeof toast === "function") toast(v ? BSW[id].on : BSW[id].off);
