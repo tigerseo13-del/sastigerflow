@@ -1933,7 +1933,21 @@ function pushDevisInbox(){
       /* 29/08 : le payeur voyage avec le document — le client verra
          « Facturé à : <payeur> » et « Intervention chez : <client> ». */
       payeur: (document.getElementById("v-payeur") || {value:""}).value || undefined};
-    const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").filter(x => x.ref !== DREF);
+    /* ☠️ 02/09 — MESURÉ : ce ré-enregistrement EFFAÇAIT le lien au devis.
+       « depuis », « acompte » et « deduit » ne sont pas produits par l'atelier,
+       donc à chaque enregistrement du brouillon ils disparaissaient — et
+       facture.html s'enregistre tout seul à l'ouverture d'un brouillon.
+       Conséquence sur un devis de 1 140 € : le devis oubliait l'acompte de
+       342 € déjà facturé, le bandeau d'état disparaissait, et la facture de
+       SOLDE ne déduisait plus rien — 1 140 € refacturés à un client qui avait
+       déjà payé 342 €. On reporte donc les champs que l'atelier ne connaît pas. */
+    const tout = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]");
+    const anc  = tout.find(x => x && x.ref === DREF);
+    if(anc) ["depuis", "acompte", "deduit", "ech", "tech", "inter", "ct"].forEach(k => {
+      const a = anc[k], r = rec[k];
+      if(a !== undefined && a !== null && a !== "" && (r === undefined || r === null || r === "")) rec[k] = a;
+    });
+    const box = tout.filter(x => x.ref !== DREF);
     box.unshift(rec);
     localStorage.setItem("tigerflow-inbox-factures", JSON.stringify(box.slice(0, 30)));
     pushClientInbox(cli);                       /* ← le client du devis rejoint la liste clients */
