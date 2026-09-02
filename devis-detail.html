@@ -325,7 +325,11 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .acrac button{flex:1;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:8px 0;
   font:800 .82rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;transition:.13s}
 .acrac button:hover{border-color:#D5D8DF}
-.acrac button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+/* 02/09 (patron) : « montant acompte, mets-le en vert émeraude, pas en noir
+   quand on clique ». Même #10B981 que les interrupteurs — petite surface,
+   donc le plein tient ici. */
+.acrac button.on{background:var(--green,#10B981);border-color:var(--green,#10B981);color:#fff;
+  box-shadow:0 4px 12px -4px rgba(16,185,129,.45)}
 .acline{display:flex;gap:8px}
 .acline input{flex:1}
 .acline select{flex:none;width:110px}
@@ -1214,8 +1218,16 @@ function acPct(p){
 function acMode(m){
   ACMODE = m;
   var f = document.getElementById("ac-form"), go = document.getElementById("ac-go");
+  /* 02/09 (patron) : « enlève Facture totale ici, ça n'a pas lieu d'être ».
+     Une fois le choix fait, l'autre option n'est plus qu'un encombrement au-
+     dessus du formulaire. On garde CELLE QU'ON A CHOISIE affichée — sinon on
+     ne sait plus ce qu'on est en train de créer — et on masque l'autre.
+     « Annuler » referme et rend les deux choix. */
   Array.prototype.forEach.call(document.querySelectorAll("#ac-choix .acopt"), function(b, i){
-    b.classList.toggle("on", (i === 0) === (m === "ac")); });
+    var actif = (i === 0) === (m === "ac");
+    b.classList.toggle("on", actif);
+    if(!b.hasAttribute("data-solo")) b.hidden = !actif;   /* l'autre sort de l'écran */
+  });
   if(f)  f.hidden = (m !== "ac");
   if(go){ go.hidden = false;
     go.textContent = (m === "ac") ? "Créer la facture d'acompte"
@@ -1287,7 +1299,8 @@ function versFacture(){
   if(g("ac-ref")) g("ac-ref").textContent = REF;
   if(g("ac-form")) g("ac-form").hidden = true;
   if(g("ac-go")) g("ac-go").hidden = true;
-  Array.prototype.forEach.call(document.querySelectorAll("#ac-choix .acopt"), function(b){ b.classList.remove("on"); });
+  Array.prototype.forEach.call(document.querySelectorAll("#ac-choix .acopt"), function(b){
+    b.classList.remove("on"); b.hidden = false; });   /* 02/09 : on rend les deux choix */
   if(g("ac-val")) g("ac-val").value = 30;
   if(g("ac-uni")) g("ac-uni").value = "pc";
   /* 02/09 : +7 jours, pas aujourd'hui. Un acompte « a regler avant le 02/09 »

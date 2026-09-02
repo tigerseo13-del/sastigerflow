@@ -634,6 +634,21 @@ tbody td small,tbody td .sub,tbody td em{font-weight:400}
         <option value="attente">En attente</option>
         <option value="payee">Payée</option>
         <option value="retard">En retard</option>
+        <!-- 02/09 (patron, photo) : ces trois-là étaient DÉJÀ dans LBL et
+             passeFiltre les gère (il finit par d.statut === FILTRE) — ils
+             manquaient seulement au menu. Rien d'inventé : « Pro Forma Sent »
+             et « Validated » de la photo n'existent pas ici, je ne les ajoute
+             pas pour ne pas mettre un filtre qui ne filtrerait rien. -->
+        <option value="partiel">Partiellement payée</option>
+        <option value="proforma">Pro forma</option>
+        <option value="annulee">Annulée par un avoir</option>
+      </select></div>
+      <!-- 02/09 (patron, photo) : le deuxième filtre — Type de client. -->
+      <div class="fsel"><select id="f-type-sel" onchange="ftypeGo(this.value)" aria-label="Type de client">
+        <option value="all">Type de client</option>
+        <option value="Particulier">Particulier</option>
+        <option value="Pro">Professionnel</option>
+        <option value="Syndic">Syndic</option>
       </select></div>
       <select class="sortsel" id="sort" onchange="PAGE=1;render()">
         <option value="recent">Plus récentes</option>
@@ -809,7 +824,32 @@ function palier(d){
 /* Le filtre des chips, écrit UNE fois : le tableau et son pied de page
    doivent lire exactement la même liste, sinon les deux divergent (c'est
    arrivé : pied « 3 factures », tableau 2 lignes). */
+
+/* ═══ 02/09 (patron, photo) : filtre TYPE DE CLIENT ═══
+   Le type n'est pas porté par la facture : il vit sur la fiche client. On le
+   retrouve par le nom, avec deux replis pour ne pas vider la liste quand le
+   client n'est pas encore dans la boîte : le champ « ct » de la facture dit
+   souvent « Particulier » ou « Syndic … », et à défaut le drapeau pro. */
+var FTYPE = "all";
+function ftypeDe(d){
+  var nom = d && d.client ? d.client : "";
+  try{
+    var l = JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]");
+    for(var i = 0; i < l.length; i++) if(l[i] && l[i].nom === nom && l[i].type) return l[i].type;
+    var c = JSON.parse(localStorage.getItem("tigerflow-clients-cache") || "[]");
+    for(var k = 0; k < c.length; k++) if(c[k] && c[k].nom === nom && c[k].type) return c[k].type;
+  }catch(e){}
+  var ct = String((d && d.ct) || "");
+  if(/syndic/i.test(ct) || /syndic|copropri/i.test(nom)) return "Syndic";
+  if(/particulier/i.test(ct)) return "Particulier";
+  if(d && d.pro === true) return "Pro";
+  if(/^(m\.|mme|mr|monsieur|madame)/i.test(nom.trim())) return "Particulier";
+  return "";
+}
+function ftypeGo(v){ FTYPE = v; PAGE = 1; render(); }
 function passeFiltre(d){
+  /* le type de client filtre EN PLUS du statut */
+  if(typeof FTYPE !== "undefined" && FTYPE !== "all" && ftypeDe(d) !== FTYPE) return false;
   if(FILTRE === "all")     return true;
   if(FILTRE === "retard")  return enRetard(d);
   if(FILTRE === "attente") return d.statut === "attente" && !enRetard(d);
