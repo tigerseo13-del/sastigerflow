@@ -1805,6 +1805,22 @@ let SBTASK = false;
           o.sb = t.id;
           TASKS.push(o);
         });
+        /* ☠️ 02/09 (patron : « onglet Tâches marche plus ») — MESURÉ SUR SON
+           COMPTE : 14 rappels dans tigerflow-inbox-taches, ZÉRO affiché.
+           Le « TASKS.length = 0 » ci-dessus vide la liste pour la remplir avec
+           la base — et emporte au passage les rappels reçus de l'agenda, qui
+           ne sont PAS en base : ils vivent en local jusqu'à ce qu'on les
+           traite. Chaque rappel envoyé depuis l'agenda disparaissait donc en
+           silence dès qu'il était connecté. On les remet après le chargement. */
+        try{
+          const _inb = JSON.parse(localStorage.getItem("tigerflow-inbox-taches") || "[]");
+          _inb.forEach(x => {
+            const r = TK(x.titre, x.desc, "Jo Jo", "todo", "Haute", x.due, "Intervention", x.lien, "calendrier.html");
+            r.created = "2026-08-25";
+            r.iid = x.iid;
+            TASKS.unshift(r);
+          });
+        }catch(e){}
         if(typeof stats === "function") stats(); if(typeof statsC === "function") statsC(); if(typeof bulkSync === "function") bulkSync(); if(typeof render === "function") render();
       }
     }catch(e){}
