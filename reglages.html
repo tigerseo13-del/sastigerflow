@@ -593,6 +593,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .apfoot label{font-size:.78rem;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:8px}
 .apfoot select{font-family:inherit;font-size:.78rem;font-weight:600;padding:7px 10px;border-radius:9px;border:1px solid var(--line,#EBECF1);background:#fff;color:var(--ink)}
 .apoff{font-size:.76rem;color:var(--muted,#8A90A0);flex:1;min-width:240px}
+.apsw{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--ink-2)}
+.apsw input{width:16px;height:16px;accent-color:var(--orange,#FF5A1F);cursor:pointer}
 @media(max-width:760px){.apl{max-width:none}.apfoot{gap:10px}}
 .card-h::before{content:"";width:4px;height:16px;border-radius:3px;background:var(--orange)}
 /* 27/07 : le bouton d'en-tete est un element flex — il RETRECISSAIT quand la
@@ -961,7 +963,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
         <button data-s="users"><span class="sic"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87"/></svg></span>Utilisateurs</button>
         <!-- 07/09 (patron) : « pour pas que les clients prennent un compte bureau
              et ils sont 10 au bureau à utiliser le même compte ». -->
-        <button data-s="appareils"><span class="sic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="14" height="10" rx="2"/><path d="M2 18h14"/><rect x="17" y="9" width="5" height="11" rx="1.5"/></svg></span>Appareils &amp; partage</button>
+        <button data-s="appareils" hidden><span class="sic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="14" height="10" rx="2"/><path d="M2 18h14"/><rect x="17" y="9" width="5" height="11" rx="1.5"/></svg></span>Appareils &amp; partage</button>
         <!-- 01/09 (patron) : « faut le mettre dans Réglages Notifications ça nan » —
              un réglage vit dans Réglages ; la bêta DIT qu'il existe, elle ne le loge pas. -->
         <div class="sl">Notifications</div>
@@ -993,7 +995,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
           <b>Fonctions bêta</b>
           <small>Masquées du menu principal jusqu'à leur sortie officielle</small>
         </span>
-        <span class="bcount">15 fonctions</span>
+        <span class="bcount">16 fonctions</span>
         <svg class="bchev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </summary>
       <div class="betasec"><b>Version 2</b><span>7 fonctions</span><small>la prochaine livraison</small></div>
@@ -1069,7 +1071,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
               onclick="event.preventDefault();event.stopPropagation();ntfSet(!smsOn())"
               onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();ntfSet(!smsOn())}"><i></i><span class="betaEtat" id="beta-sms-etat">inactif</span></span>
       </a>
-            <div class="betasec"><b>Version 3</b><span>8 fonctions</span><small>après la V2</small></div>
+            <div class="betasec"><b>Version 3</b><span>9 fonctions</span><small>après la V2</small></div>
       <a class="betarow" href="tournee.html">
         <span class="bn">Carte</span>
         <span class="bb">Bêta</span>
@@ -1111,14 +1113,15 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
               onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();bswTog('im')}"><i></i><span class="betaEtat" id="bse-im">inactif</span></span>
       </a>
       <!-- 07/09 (patron) : « pour pas que les clients prennent un compte bureau
-           et ils sont 10 au bureau à utiliser le même compte ». Le comptage
-           tourne DÉJÀ (Réglages > Appareils & partage) ; cet interrupteur
-           n'allume que le BLOCAGE. Éteint par défaut : on mesure d'abord,
-           on bloque ensuite — un faux positif coûte un client. -->
+           et ils sont 10 au bureau à utiliser le même compte » puis « met ça en
+           bêta V3 ». Comme le panneau des impayés : l'écran est retiré du menu,
+           le code reste entier, l'interrupteur le remet. Le COMPTAGE, lui, ne
+           s'arrête jamais — il tourne en silence pour qu'il y ait déjà 14 jours
+           d'historique le jour où le patron allume. -->
       <a class="betarow" href="reglages.html">
-        <span class="bn">Limite d'appareils par compte</span>
+        <span class="bn">Appareils &amp; partage de compte</span>
         <span class="betasw" id="bsw-ap" role="switch" aria-checked="false" tabindex="0"
-              title="Au-delà de la limite, proposer de déconnecter un appareil"
+              title="Remettre l'écran « Appareils &amp; partage » dans Réglages"
               onclick="event.preventDefault();event.stopPropagation();bswTog('ap')"
               onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();bswTog('ap')}"><i></i><span class="betaEtat" id="bse-ap">inactif</span></span>
       </a>
@@ -1685,16 +1688,30 @@ function apDel(u, id){
   var b = document.getElementById("aptbody"); if(b) b.innerHTML = apLignes();
   toast("Appareil oublié — il repartira de zéro à sa prochaine visite");
 }
+/* ☠️ Le blocage est SEPARE de la bêta V3, exprès. Allumer la bêta pour
+   REGARDER les chiffres ne doit bloquer personne : le bon ordre est de
+   mesurer 4 à 6 semaines, puis de cocher en connaissance de cause. */
+function apBlocTog(v){
+  if(typeof apBlocSet === "function") apBlocSet(v);
+  var b = document.querySelector(".apbeta");
+  if(b) b.textContent = v ? "Blocage ACTIF" : "Comptage seul";
+  var o = document.querySelector(".apoff");
+  if(o) o.textContent = v
+    ? "Actif : au-delà de la limite, on propose de déconnecter un appareil. Jamais de cul-de-sac."
+    : "Décoché : on ne fait que compter, personne n'est bloqué. Laissez tourner 4 à 6 semaines avant de cocher.";
+  toast(v ? "Blocage activé — au-delà de la limite, on demande de libérer une place"
+          : "Blocage coupé — les appareils sont comptés, personne n'est bloqué");
+}
 function apMaxSet(v){
   try{ localStorage.setItem("tigerflow-appareils-max", String(Math.max(1, Math.min(9, parseInt(v, 10) || 2)))); }catch(e){}
   toast("Limite réglée sur " + v + " appareil(s) par compte");
 }
 R.appareils = () => {
-  var lim = (typeof apLimiteOn === "function") && apLimiteOn();
+  var lim = (typeof apBlocOn === "function") && apBlocOn();
   var mx  = (typeof apMax === "function") ? apMax() : 2;
   return `
   <div class="card">
-    <div class="card-h">Appareils par compte<span class="apbeta">${lim ? "Limite ACTIVE" : "Comptage seul"}</span></div>
+    <div class="card-h">Appareils par compte<span class="apbeta">${lim ? "Blocage ACTIF" : "Comptage seul"}</span></div>
     <p class="aphint">TigerFlow est facturé par utilisateur. Cet écran montre, sur les <b>14 derniers jours</b>, combien d'appareils distincts se connectent sur chaque compte — et surtout combien tournent <b>le même jour ouvré</b>. Une personne avec un PC et un téléphone, c'est normal. Cinq appareils actifs le même jour entre 8 h et 18 h, c'est un compte partagé.</p>
     <div class="tscroll"><table class="dt aptab">
       <thead><tr>
@@ -1708,14 +1725,18 @@ R.appareils = () => {
       <tbody id="aptbody">${apLignes()}</tbody>
     </table></div>
     <div class="apfoot">
-      <label>Limite quand elle est active
+      <label>Limite
         <select onchange="apMaxSet(this.value)">
           ${[1,2,3,4,5].map(n => '<option value="' + n + '"' + (n === mx ? " selected" : "") + '>' + n + ' appareil' + (n > 1 ? "s" : "") + '</option>').join("")}
         </select>
       </label>
+      <label class="apsw">
+        <input type="checkbox" ${lim ? "checked" : ""} onchange="apBlocTog(this.checked)">
+        <span>Bloquer au-delà de la limite</span>
+      </label>
       <span class="apoff">${lim
-        ? "La limite est active : au-delà, on propose de déconnecter un appareil. Personne n'est jamais bloqué sans issue."
-        : "Rien n'est bloqué aujourd'hui — on ne fait que compter. La limite s'allume dans l'onglet Bêta."}</span>
+        ? "Actif : au-delà de ${mx} appareil(s), on propose d'en déconnecter un. Jamais de cul-de-sac."
+        : "Décoché : on ne fait que compter, personne n'est bloqué. Laissez tourner 4 à 6 semaines avant de cocher."}</span>
     </div>
   </div>`;
 };
@@ -2222,6 +2243,23 @@ function arm(btn, fn){
    un vieux lien ou l'onglet mémorisé. On rallume depuis le bloc Fonctions bêta,
    qui est ailleurs dans Réglages : c'est la seule porte, et c'est voulu. */
 function ntfOngletVisible(){ try{ return typeof smsOn === "function" ? smsOn() : true; }catch(e){ return true; } }
+/* 07/09 (patron : « met ça en bêta V3 ») — même règle que Notifications :
+   coupé, l'onglet « Appareils & partage » sort de la barre et on ne peut plus
+   y entrer, même par un vieux lien ou l'onglet mémorisé. La seule porte est le
+   bloc Fonctions bêta. Le comptage, lui, continue toujours. */
+function apOngletVisible(){ try{ return typeof apLimiteOn === "function" ? apLimiteOn() : false; }catch(e){ return false; } }
+function apOnglet(){
+  var on = apOngletVisible();
+  var b = document.querySelector('#snav button[data-s="appareils"]');
+  if(b) b.hidden = !on;
+  var p = document.querySelector('#spsub .sps[data-k="appareils"]');
+  if(p) p.hidden = !on;
+  if(!on && SPK === "appareils"){
+    try{ localStorage.removeItem("tigerflow-reglages-tab"); }catch(e){}
+    spGoTo("info");
+  }
+  if(typeof spBarsMaj === "function") spBarsMaj();
+}
 function ntfOnglet(){
   var on = ntfOngletVisible();
   var b = document.querySelector('#sptabs .spt[data-f="notifs"]');
@@ -2234,6 +2272,7 @@ function ntfOnglet(){
 }
 function spGoTo(k){
   if(k === "notifs" && !ntfOngletVisible()) k = "info";
+  if(k === "appareils" && !apOngletVisible()) k = "info";
   const b = document.querySelector('#snav button[data-s="' + k + '"]'); if(b) b.click();
 }
 
@@ -2289,7 +2328,7 @@ function spRender(){
    Le nav vertical est cache mais reste le moteur : les pilules cliquent ses
    boutons via spGoTo, et spBarsMaj() recale les etats a chaque navigation. */
 const SPFAM = {
-  societe: ["info", "users", "appareils"],
+  societe: ["info", "users"],   /* « appareils » s'ajoute plus bas quand la bêta V3 est allumée */
   notifs: ["notifs"],
   calendrier: ["jours", "feries"],
   prestations: ["cats", "prest", "tva"],
@@ -2298,6 +2337,11 @@ const SPFAM = {
 };
 function spFam(f){ spGoTo(SPFAM[f][0]); }
 function spBarsMaj(){
+  /* la pilule n'apparaît que si la bêta V3 est allumée */
+  const vu = (typeof apOngletVisible === "function") && apOngletVisible();
+  const i = SPFAM.societe.indexOf("appareils");
+  if(vu && i < 0) SPFAM.societe.push("appareils");
+  if(!vu && i > -1) SPFAM.societe.splice(i, 1);
   const fam = Object.keys(SPFAM).find(f => SPFAM[f].includes(SPK)) || "societe";
   document.querySelectorAll("#sptabs .spt").forEach(b => b.classList.toggle("on", b.dataset.f === fam));
   const sub = document.getElementById("spsub");
@@ -3276,6 +3320,9 @@ function bswTog(id){
   bswPaint();
   if(id === "en" && typeof ensPaint === "function") ensPaint();
   if(typeof toast === "function") toast(v ? BSW[id].on : BSW[id].off);
+  /* 07/09 : l'onglet « Appareils & partage » apparaît/disparaît tout de suite,
+     sans recharger la page — sinon le patron clique et croit que ça n'a rien fait. */
+  if(id === "ap" && typeof apOnglet === "function") apOnglet();
 }
 function bswPaint(){
   Object.keys(BSW).forEach(function(id){
@@ -3288,6 +3335,8 @@ function bswPaint(){
 }
 document.addEventListener("DOMContentLoaded", bswPaint);
 bswPaint();
+document.addEventListener("DOMContentLoaded", function(){ if(typeof apOnglet === "function") apOnglet(); });
+try{ if(typeof apOnglet === "function") apOnglet(); }catch(e){}
 
 function smsEtat(){
   const g = id => document.getElementById(id);
@@ -4251,11 +4300,23 @@ setTimeout(logoPeint, 300);
             verdict: score >= 3 ? "partage probable" : score === 2 ? "à surveiller" : score === 1 ? "leger doute" : "normal"};
   };
 
-  /* ⚠️ INVERSEE : absent = ETEINT. On mesure d'abord, on bloque ensuite —
-     bloquer avant d'avoir vu a quoi ressemble un usage normal chez un
-     dératiseur, c'est perdre son premier client sur un faux positif. */
+  /* ⚠️ DEUX interrupteurs, et c'est voulu :
+     - apLimiteOn()  = la fonction EXISTE (bêta V3). Elle montre l'ecran de
+       suivi dans Reglages. Absent = eteint.
+     - apBlocOn()    = on BLOQUE vraiment au-dela de la limite. Exige que la
+       beta soit allumee, et se regle dans l'ecran lui-meme.
+     Sans cette separation, allumer la beta V3 pour REGARDER les chiffres
+     aurait bloque les gens dans la seconde — alors que le bon ordre est :
+     on mesure 4 a 6 semaines, PUIS on bloque en connaissance de cause. */
   window.apLimiteOn = function(){
     try{ return localStorage.getItem("tigerflow-beta-appareils") === "1"; }catch(e){ return false; }
+  };
+  window.apBlocOn = function(){
+    try{ return window.apLimiteOn() && localStorage.getItem("tigerflow-appareils-bloque") === "1"; }
+    catch(e){ return false; }
+  };
+  window.apBlocSet = function(v){
+    try{ localStorage.setItem("tigerflow-appareils-bloque", v ? "1" : "0"); }catch(e){}
   };
   window.apMax = function(){
     var v = 2; try{ v = parseInt(localStorage.getItem("tigerflow-appareils-max"), 10) || 2; }catch(e){}
@@ -4275,7 +4336,7 @@ setTimeout(logoPeint, 300);
    de libérer une place. Un technicien coincé sur le terrain, c'est un
    rapport d'intervention non signé chez le client. =================== */
 (function(){
-  if(typeof apLimiteOn !== "function" || !apLimiteOn()) return;
+  if(typeof apBlocOn !== "function" || !apBlocOn()) return;
   var u = apQui(), moi = apEmpreinte(), l = apListe(u), max = apMax();
   if(l.length <= max) return;
   /* ☠️ TESTE : je gardais les « max » appareils vus le plus RECEMMENT.

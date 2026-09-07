@@ -3720,11 +3720,23 @@ document.addEventListener("click", function(e){
             verdict: score >= 3 ? "partage probable" : score === 2 ? "à surveiller" : score === 1 ? "leger doute" : "normal"};
   };
 
-  /* ⚠️ INVERSEE : absent = ETEINT. On mesure d'abord, on bloque ensuite —
-     bloquer avant d'avoir vu a quoi ressemble un usage normal chez un
-     dératiseur, c'est perdre son premier client sur un faux positif. */
+  /* ⚠️ DEUX interrupteurs, et c'est voulu :
+     - apLimiteOn()  = la fonction EXISTE (bêta V3). Elle montre l'ecran de
+       suivi dans Reglages. Absent = eteint.
+     - apBlocOn()    = on BLOQUE vraiment au-dela de la limite. Exige que la
+       beta soit allumee, et se regle dans l'ecran lui-meme.
+     Sans cette separation, allumer la beta V3 pour REGARDER les chiffres
+     aurait bloque les gens dans la seconde — alors que le bon ordre est :
+     on mesure 4 a 6 semaines, PUIS on bloque en connaissance de cause. */
   window.apLimiteOn = function(){
     try{ return localStorage.getItem("tigerflow-beta-appareils") === "1"; }catch(e){ return false; }
+  };
+  window.apBlocOn = function(){
+    try{ return window.apLimiteOn() && localStorage.getItem("tigerflow-appareils-bloque") === "1"; }
+    catch(e){ return false; }
+  };
+  window.apBlocSet = function(v){
+    try{ localStorage.setItem("tigerflow-appareils-bloque", v ? "1" : "0"); }catch(e){}
   };
   window.apMax = function(){
     var v = 2; try{ v = parseInt(localStorage.getItem("tigerflow-appareils-max"), 10) || 2; }catch(e){}
@@ -3744,7 +3756,7 @@ document.addEventListener("click", function(e){
    de libérer une place. Un technicien coincé sur le terrain, c'est un
    rapport d'intervention non signé chez le client. =================== */
 (function(){
-  if(typeof apLimiteOn !== "function" || !apLimiteOn()) return;
+  if(typeof apBlocOn !== "function" || !apBlocOn()) return;
   var u = apQui(), moi = apEmpreinte(), l = apListe(u), max = apMax();
   if(l.length <= max) return;
   /* ☠️ TESTE : je gardais les « max » appareils vus le plus RECEMMENT.
