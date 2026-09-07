@@ -560,7 +560,7 @@ table.novs th:last-child,table.novs td:last-child{display:none}   /* vs mois der
     </div>
     <div class="mwrap">
       <button class="mchip" id="c-moisbtn" onclick="moisTog(event)" aria-haspopup="dialog" aria-expanded="false" title="Choisir un mois — ouvre l'agenda sur ce mois">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="c-mois">juil. 2026</span>
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="c-mois">juil 2026</span>
         <svg class="mcar" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="mpop" id="mpop" role="dialog" aria-label="Choisir un mois">
@@ -742,7 +742,10 @@ const g = id => document.getElementById(id);
   g("c-date").textContent = s.charAt(0).toUpperCase() + s.slice(1);
   /* le mois de la barre du haut etait ecrit en dur ("juil. 2026") : il serait
      reste sur juillet en aout. Il suit maintenant la date reelle. */
-  g("c-mois").textContent = d.toLocaleDateString("fr-FR", {month:"short", year:"numeric"});
+  /* 07/09 (patron) : « enleve les points ». Attention, changer le texte ecrit
+     dans le HTML ne suffit pas — cette ligne le REECRIT a chaque chargement, et
+     toLocaleDateString rend « sept. 2026 » avec le point. On le retire ici. */
+  g("c-mois").textContent = d.toLocaleDateString("fr-FR", {month:"short", year:"numeric"}).replace(/\./g, "");
 })();
 
 /* ===== interventions sur 7 jours (18 → 24 juil.) ===== */
