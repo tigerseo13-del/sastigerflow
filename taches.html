@@ -1450,6 +1450,21 @@ render();
                k:[c.nom, _adr, c.cp, c.ville, c.tel, c.mail, c.email].filter(Boolean).join(" "),
                h:"client.html?c=" + encodeURIComponent(c.nom)});
     });
+    /* ☠️ 07/09 (patron, EN NAVIGATION PRIVEE) : « ça marche pas les adresses ».
+       MESURE : en navigation privee le stockage local est VIDE, donc les deux
+       boucles ci-dessus ne poussent RIEN et l'index n'a aucun client — il n'y
+       avait donc rien que ADRM puisse completer. Les listes, elles, affichent
+       les clients modeles ecrits en dur dans les pages : la recherche etait le
+       seul endroit du SaaS a ne pas les voir. Meme effet le tout premier jour,
+       ou apres un vidage du cache, ou sur un poste neuf.
+       On les ajoute ici. « vu » garde la main : un client REEL portant le meme
+       nom a deja ete pousse et n'est jamais double ni ecrase. */
+    Object.keys(ADRM).forEach(function(nom){
+      if(vu[nom]) return;
+      vu[nom] = 1;
+      CL.push({n:nom, s:ADRM[nom], k:nom + " " + ADRM[nom],
+               h:"client.html?c=" + encodeURIComponent(nom)});
+    });
     var piece = function(cle, mot, page, param){
       J(cle).forEach(function(x){
         if(!x || !x.ref) return;
