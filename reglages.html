@@ -916,7 +916,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <div><b>Jo Jo</b><span>Administrateur</span></div>
     <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
     <div class="umenu" id="umenu">
-      <button type="button" onclick="event.stopPropagation();location.href='reglages.html'">
+      <button type="button" onclick="event.stopPropagation();location.href='reglages.html?moi=1'">
         <span class="uic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg></span>Mon compte</button>
       <button type="button" class="udanger" onclick="event.stopPropagation();logout()">
         <span class="uic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Déconnexion</button>
@@ -1556,7 +1556,7 @@ function uAdd(i){
   const u = edit ? USERS[i] : {p:"", n:"", mail:"", role:"", fonc:"", actif:true};
   const esc = v => String(v || "").replace(/"/g, "&quot;");
   $id("dbody").innerHTML = `
-    <div class="dcard dhead"><div class="drow1"><h2>${edit ? "Modifier cet utilisateur" : "Ajouter un utilisateur"}</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
+    <div class="dcard dhead"><div class="drow1"><h2>${edit ? (u && u.me ? "Mon compte" : "Modifier cet utilisateur") : "Ajouter un utilisateur"}</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
     <div class="dcard">
       <span class="rlab">Avatar</span>
       <div style="display:flex;align-items:center;gap:10px"><span class="uavprev" id="uavprev">?</span><label class="addrowbtn" style="cursor:pointer;margin:0"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>Choisir une photo<input type="file" accept="image/*" style="display:none" onchange="uPhotoAdd(this)"></label><button type="button" class="uavdel" id="uavdel" onclick="uPhotoDel()" style="display:none">✕ Retirer</button></div>
@@ -3347,6 +3347,24 @@ function bswPaint(){
 document.addEventListener("DOMContentLoaded", bswPaint);
 bswPaint();
 document.addEventListener("DOMContentLoaded", function(){ if(typeof apOnglet === "function") apOnglet(); });
+/* ☠️ 07/09 (patron) : « quand tu cliques sur Mon compte ça doit t'afficher quoi »
+   puis « t'as pas un écran qu'on a déjà ??? fais au plus simple ».
+   Il avait raison : la fiche existe depuis toujours dans Réglages > Utilisateurs,
+   uAdd(i) l'ouvre avec tous ses champs. Le bouton « Mon compte » envoyait sur
+   reglages.html tout court — donc sur « Identité et mentions légales », le SIRET
+   de la SOCIÉTÉ. Or « Paramètres » vaut 0 (Aucun accès) dans PERMDEF : la
+   majorité des utilisateurs atterrissait sur une page qui ne les regarde pas.
+   Il ouvre maintenant SA fiche. Aucune page nouvelle, on réutilise l'existant. */
+document.addEventListener("DOMContentLoaded", function(){
+  try{
+    if(new URLSearchParams(location.search).get("moi") !== "1") return;
+    var i = USERS.findIndex(function(u){ return u && u.me; });
+    if(i < 0) i = 0;
+    spGoTo("users");
+    /* le tableau est reconstruit par la navigation : on ouvre le tiroir apres */
+    setTimeout(function(){ if(typeof uAdd === "function") uAdd(i); }, 260);
+  }catch(e){}
+});
 try{ if(typeof apOnglet === "function") apOnglet(); }catch(e){}
 
 function smsEtat(){
