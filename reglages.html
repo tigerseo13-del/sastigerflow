@@ -1663,7 +1663,7 @@ function apLbl(t){
 function apLignes(){
   if(typeof apRegistre !== "function") return '<tr><td colspan="6" class="apvide">Le comptage démarre au prochain chargement des pages.</td></tr>';
   var reg = apRegistre(), noms = Object.keys(reg);
-  if(!noms.length) return '<tr><td colspan="6" class="apvide">Aucun appareil enregistré pour l\'instant.</td></tr>';
+  if(!noms.length) return '<tr><td colspan="6" class="apvide">Le comptage vient de démarrer.<br>Les appareils apparaîtront ici au fil des connexions — comptez quelques jours pour une lecture fiable, 14 pour la plus juste.</td></tr>';
   var CL = {3:"ap-r", 2:"ap-a", 1:"ap-j", 0:"ap-v"};
   return noms.map(function(u){
     var l = apListe(u), ind = apIndice(u);
@@ -3299,9 +3299,9 @@ const BSW = {
   /* ⚠️ INVERSÉE : absent = ÉTEINT. On compte les appareils dès maintenant,
      mais on ne BLOQUE qu'après avoir vu à quoi ressemble un usage normal
      chez un dératiseur — sinon le premier faux positif coûte un client. */
-  ap: {k:"tigerflow-beta-appareils", nom:"Limite d'appareils par compte", inv:true,
-       on:"Limite activée — au-delà de 2 appareils, on demande d'en déconnecter un",
-       off:"Limite coupée — les appareils sont comptés mais personne n'est bloqué"}
+  ap: {k:"tigerflow-beta-appareils", nom:"Appareils & partage de compte", inv:true,
+       on:"Appareils & partage activé — l'écran revient dans Réglages et le comptage démarre",
+       off:"Appareils & partage coupé — plus rien n'est compté, l'historique déjà là est gardé"}
 };
 function bswOn(id){
   const d = BSW[id];
@@ -3320,9 +3320,20 @@ function bswTog(id){
   bswPaint();
   if(id === "en" && typeof ensPaint === "function") ensPaint();
   if(typeof toast === "function") toast(v ? BSW[id].on : BSW[id].off);
-  /* 07/09 : l'onglet « Appareils & partage » apparaît/disparaît tout de suite,
-     sans recharger la page — sinon le patron clique et croit que ça n'a rien fait. */
-  if(id === "ap" && typeof apOnglet === "function") apOnglet();
+  /* ☠️ 07/09 (patron : « quand je clique sur actif sur appareil et partage de
+     compte y a rien qui s'affiche »). MESURE : l'interrupteur basculait bien et
+     la pilule apparaissait — mais TOUT EN HAUT de la page, alors qu'il clique
+     TOUT EN BAS dans la boîte bêta. Rien ne bougeait dans son champ de vision.
+     Les autres lignes bêta sont des liens vers une AUTRE page, donc le
+     changement se voit ; celle-ci reste sur Réglages. On l'emmène. */
+  if(id === "ap" && typeof apOnglet === "function"){
+    apOnglet();
+    if(v){
+      try{ spGoTo("appareils"); }catch(e){}
+      var bx = document.getElementById("beta"); if(bx) bx.open = false;
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+  }
 }
 function bswPaint(){
   Object.keys(BSW).forEach(function(id){
@@ -4326,7 +4337,14 @@ setTimeout(logoPeint, 300);
     var reg = lire(); if(reg[u] && reg[u][id]){ delete reg[u][id]; ecrire(reg); }
   };
 
-  vu();
+  /* ☠️ 07/09 (patron) : « en bêta par défaut mais TOUT en inactif ».
+     Le comptage tournait sans condition — il ne demarre plus tant que la
+     bêta V3 « Appareils & partage de compte » n'est pas allumee dans
+     Reglages. Contrepartie assumee et dite au patron : le jour de
+     l'allumage le tableau part de zero, il faut 14 jours pour qu'il ait
+     quelque chose a raconter. Rien ne tourne dans son dos, c'est ce
+     qu'il a demande. */
+  if(window.apLimiteOn && window.apLimiteOn()) vu();
 })();
 </script>
 <script>
