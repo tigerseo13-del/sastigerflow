@@ -1888,5 +1888,206 @@ accResume();
   }, true);
 })();
 </script>
+<script>
+/* ===================================================================
+   APPAREILS & PARTAGE DE COMPTE  —  07/09/2026 (demande du patron)
+   TigerFlow est facture PAR UTILISATEUR (69 €/mois, 49 € en annuel).
+   Dix personnes au bureau sur un seul compte = 690 €/mois qui ne
+   rentrent pas. Ce socle COMPTE les appareils ; il ne bloque rien tant
+   que l'interrupteur « Limite d'appareils » n'est pas allume dans
+   Reglages > Bêta.
+
+   ☠️ POURQUOI PAS « UNE SEULE CONNEXION A LA FOIS » : au bureau les
+   collegues se RELAIENT (l'un a 9 h, l'autre a 10 h). Il n'y a jamais
+   deux sessions simultanees : le partage passe inapercu. Et ca
+   couperait le technicien qui a le mobile ET le poste.
+   On compte donc les appareils DISTINCTS sur 14 jours.
+
+   Ce qui sert d'empreinte : famille de navigateur, systeme, taille
+   d'ecran, fuseau, langue. Volontairement PAS de canvas ni de WebGL :
+   c'est explicable au client et proportionne (a mettre dans les CGU).
+   =================================================================== */
+(function(){
+  var KEY = "tigerflow-appareils", FEN = 14 * 864e5;   /* 14 jours */
+
+  function lire(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
+  function ecrire(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} }
+
+  /* nom lisible : « Chrome sur Windows », pas une chaine technique */
+  function nav(){
+    var u = navigator.userAgent;
+    if(/Edg\//.test(u))        return "Edge";
+    if(/OPR\/|Opera/.test(u))  return "Opera";
+    if(/Firefox\//.test(u))    return "Firefox";
+    if(/Chrome\//.test(u))     return "Chrome";
+    if(/Safari\//.test(u))     return "Safari";
+    return "Navigateur";
+  }
+  function sys(){
+    var u = navigator.userAgent;
+    if(/iPhone|iPad|iPod/.test(u)) return /iPad/.test(u) ? "iPad" : "iPhone";
+    if(/Android/.test(u))          return "Android";
+    if(/Windows/.test(u))          return "Windows";
+    if(/Mac OS X|Macintosh/.test(u)) return "Mac";
+    if(/Linux/.test(u))            return "Linux";
+    return "Ordinateur";
+  }
+  function mobile(){ return /iPhone|iPad|iPod|Android|Mobile/.test(navigator.userAgent); }
+
+  /* empreinte : courte, stable, et qui ne survit PAS a un changement de
+     machine. Deux collegues sur deux postes = deux empreintes. */
+  function empreinte(){
+    var brut = [nav(), sys(),
+                (screen.width || 0) + "x" + (screen.height || 0),
+                (window.devicePixelRatio || 1),
+                (navigator.language || ""),
+                (function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){ return ""; } })(),
+                (navigator.hardwareConcurrency || 0)].join("|");
+    var h = 5381;
+    for(var i = 0; i < brut.length; i++){ h = ((h << 5) + h + brut.charCodeAt(i)) >>> 0; }
+    return "a" + h.toString(36);
+  }
+
+  function qui(){
+    /* l'utilisateur connecte, tel que Reglages l'a enregistre */
+    try{
+      var c = JSON.parse(localStorage.getItem("tigerflow-compte") || "null");
+      if(c && c.nom) return c.nom;
+    }catch(e){}
+    return "Compte principal";
+  }
+
+  /* enregistre le passage. On garde les HORAIRES (pas le detail des pages) :
+     c'est ce qui distingue « une personne, trois appareils » de
+     « cinq collegues, un compte ». */
+  function vu(){
+    var reg = lire(), u = qui(), id = empreinte(), t = Date.now(), lim = t - FEN;
+    if(!reg[u]) reg[u] = {};
+    var a = reg[u][id] || {nom: nav() + " sur " + sys(), mob: mobile(), premier: t, vus: []};
+    a.dernier = t;
+    /* un passage par tranche de 30 min : sinon la liste explose */
+    if(!a.vus.length || t - a.vus[a.vus.length - 1] > 18e5) a.vus.push(t);
+    a.vus = a.vus.filter(function(x){ return x > lim; });
+    reg[u][id] = a;
+    /* purge : un appareil qui n'a rien fait depuis 14 jours sort du calcul */
+    Object.keys(reg[u]).forEach(function(k){
+      if(reg[u][k].dernier < lim && k !== id) delete reg[u][k];
+    });
+    ecrire(reg);
+    return {reg: reg, id: id, u: u};
+  }
+
+  /* --------- ce que Reglages consomme --------- */
+  window.apEmpreinte = empreinte;
+  window.apRegistre  = lire;
+  window.apQui       = qui;
+
+  window.apListe = function(u){
+    var reg = lire()[u] || {}, lim = Date.now() - FEN;
+    return Object.keys(reg).map(function(k){
+      var a = reg[k];
+      return {id:k, nom:a.nom, mob:!!a.mob, premier:a.premier, dernier:a.dernier,
+              passages:(a.vus || []).filter(function(x){ return x > lim; }).length};
+    }).filter(function(a){ return a.dernier > lim; })
+      .sort(function(x, y){ return y.dernier - x.dernier; });
+  };
+
+  /* Indice de partage. Ce n'est PAS le nombre d'appareils : une personne
+     avec PC + telephone + tablette en a trois et ne partage rien.
+     Ce qui trahit le partage, c'est le CHEVAUCHEMENT : plusieurs appareils
+     actifs le MEME jour, aux heures de bureau. */
+  window.apIndice = function(u){
+    var reg = lire()[u] || {}, lim = Date.now() - FEN;
+    var ids = Object.keys(reg).filter(function(k){ return reg[k].dernier > lim; });
+    if(ids.length <= 1) return {n:ids.length, jours:0, max:ids.length, score:0, verdict:"normal"};
+    var parJour = {};
+    ids.forEach(function(k){
+      (reg[k].vus || []).forEach(function(t){
+        if(t <= lim) return;
+        var d = new Date(t);
+        if(d.getHours() < 7 || d.getHours() > 20) return;      /* heures de bureau */
+        var j = d.toISOString().slice(0, 10);
+        (parJour[j] = parJour[j] || {})[k] = 1;
+      });
+    });
+    var jours = 0, max = 1;
+    Object.keys(parJour).forEach(function(j){
+      var n = Object.keys(parJour[j]).length;
+      /* ☠️ TESTE : le seuil etait a 2 et classait « leger doute » le cas le
+         plus HONNETE qui soit — une personne avec son PC le matin et son
+         telephone le soir, 10 jours d'affilee. Deux appareils, c'est la
+         normale ; le croisement commence a TROIS. */
+      if(n >= 3) jours++;
+      if(n > max) max = n;
+    });
+    /* max = le plus grand nombre d'appareils vus le meme jour ouvre */
+    var score = max >= 5 ? 3 : (max >= 4 || (max >= 3 && jours >= 3)) ? 2 : (max >= 3) ? 1 : 0;
+    return {n:ids.length, jours:jours, max:max, score:score,
+            verdict: score >= 3 ? "partage probable" : score === 2 ? "à surveiller" : score === 1 ? "leger doute" : "normal"};
+  };
+
+  /* ⚠️ INVERSEE : absent = ETEINT. On mesure d'abord, on bloque ensuite —
+     bloquer avant d'avoir vu a quoi ressemble un usage normal chez un
+     dératiseur, c'est perdre son premier client sur un faux positif. */
+  window.apLimiteOn = function(){
+    try{ return localStorage.getItem("tigerflow-beta-appareils") === "1"; }catch(e){ return false; }
+  };
+  window.apMax = function(){
+    var v = 2; try{ v = parseInt(localStorage.getItem("tigerflow-appareils-max"), 10) || 2; }catch(e){}
+    return Math.max(1, Math.min(9, v));
+  };
+  window.apOublier = function(u, id){
+    var reg = lire(); if(reg[u] && reg[u][id]){ delete reg[u][id]; ecrire(reg); }
+  };
+
+  vu();
+})();
+</script>
+<script>
+/* ===== Limite d'appareils : l'écran de choix ==========================
+   Ne s'affiche QUE si l'interrupteur « Limite d'appareils » est allumé
+   dans Réglages > Bêta. Et jamais de cul-de-sac : on propose toujours
+   de libérer une place. Un technicien coincé sur le terrain, c'est un
+   rapport d'intervention non signé chez le client. =================== */
+(function(){
+  if(typeof apLimiteOn !== "function" || !apLimiteOn()) return;
+  var u = apQui(), moi = apEmpreinte(), l = apListe(u), max = apMax();
+  if(l.length <= max) return;
+  /* ☠️ TESTE : je gardais les « max » appareils vus le plus RECEMMENT.
+     Or l'appareil courant vient, par definition, de se connecter — il etait
+     donc toujours dans les gardes et l'ecran ne s'affichait jamais.
+     Ce sont les appareils les plus ANCIENNEMENT connus qui gardent leur
+     place ; c'est au nouveau venu de demander la sienne. */
+  var gardes = l.slice().sort(function(x, y){ return x.premier - y.premier; })
+                .slice(0, max).map(function(a){ return a.id; });
+  if(gardes.indexOf(moi) > -1) return;
+
+  var v = document.createElement("div");
+  v.id = "apveil";
+  v.innerHTML = '<div class="apbox">'
+    + '<div class="aptit">Trop d’appareils sur ce compte</div>'
+    + '<p class="apsub">Un compte TigerFlow vaut <b>' + max + ' appareil' + (max > 1 ? "s" : "") + '</b>. '
+    + 'Pour continuer ici, libérez une place — ou ajoutez un utilisateur dans Réglages.</p>'
+    + '<div class="aplst">' + l.slice(0, max).map(function(a){
+        return '<button class="apone" onclick="apLiberer(\'' + a.id + '\')">'
+             + '<span>' + (a.mob ? "📱" : "💻") + ' ' + a.nom + '</span>'
+             + '<em>Déconnecter</em></button>';
+      }).join("") + '</div>'
+    + '<a class="apadd" href="reglages.html">Ajouter un utilisateur →</a></div>';
+  var st = document.createElement("style");
+  st.textContent = '#apveil{position:fixed;inset:0;z-index:9999;background:rgba(16,18,22,.62);display:grid;place-items:center;padding:20px}'
+    + '#apveil .apbox{background:#fff;border-radius:18px;padding:26px 26px 22px;max-width:440px;width:100%;box-shadow:0 24px 60px rgba(16,18,22,.3);font-family:Inter,system-ui,sans-serif}'
+    + '#apveil .aptit{font-family:Sora,sans-serif;font-weight:800;font-size:1.12rem;color:#171A20;margin-bottom:7px}'
+    + '#apveil .apsub{font-size:.84rem;color:#3D434E;line-height:1.55;margin:0 0 16px}'
+    + '#apveil .aplst{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}'
+    + '#apveil .apone{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;border-radius:11px;border:1px solid #EBECF1;background:#F7F8FA;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;color:#171A20;text-align:left}'
+    + '#apveil .apone:hover{border-color:#FF5A1F;background:#FFF1EA}'
+    + '#apveil .apone em{font-style:normal;font-size:.74rem;font-weight:700;color:#FF5A1F;flex:none}'
+    + '#apveil .apadd{display:block;text-align:center;font-size:.78rem;font-weight:700;color:#3D434E;text-decoration:none;padding:9px}';
+  document.head.appendChild(st);
+  document.body.appendChild(v);
+  window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
+})();
+</script>
 </body>
 </html>
