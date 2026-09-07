@@ -2055,6 +2055,22 @@ function logout(){
   /* 28/07 — lit les vraies donnees, plus une liste de demonstration en dur.
      Bloc recopie sur 23 pages : garder ce commentaire court, chaque octet y
      compte 23 fois. Detail dans le commit. PG (navigation) reste en dur. */
+  /* adresses des clients modeles — repli de l'index de recherche (voir plus bas) */
+  var ADRM = {
+    "Boulangerie Dupont":"4 rue de la Mairie, 92600 Asnières",
+    "Pharmacie Centrale":"88 rue du Commerce, 75015 Paris",
+    "Hôtel du Parc":"2 avenue du Château, 94300 Vincennes",
+    "Restaurant Le Baobab":"27 rue Ordener, 75018 Paris",
+    "M. Diallo":"15 rue des Rosiers, 93400 Saint-Ouen",
+    "Mme Perrin":"9 place d’Italie, 75013 Paris",
+    "Mme Ferreira":"31 rue Molière, 94200 Ivry-sur-Seine",
+    "Syndic Foncia Lilas":"60 rue des Lilas, 75020 Paris",
+    "Entrepôt Central":"7 rue Cartier-Bresson, 93500 Pantin",
+    "Camping Val de Seine":"Chemin des Mousseaux, 91210 Draveil",
+    "Restaurant Chez Marcel":"52 avenue Jean Jaurès, 75019 Paris",
+    "Crèche Les Lutins":"18 rue de la Révolution, 93100 Montreuil",
+    "Tabac de la Mairie":"1 place de la Mairie, 92600 Asnières"
+  };
   var CL = [], DOC = [];
   (function(){
     var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
@@ -2063,15 +2079,19 @@ function logout(){
       if(!c || !c.nom || vu[c.nom]) return;   /* un client est dans les deux stocks */
       vu[c.nom] = 1;
       /* 07/09 (patron) : « la barre marche pas si tu cherches par adresse ».
-         MESURE AVANT : « rue de la Paix » -> 0 resultat, « 95100 » -> 0,
-         « david@exemple.fr » -> 0. Ces champs sont pourtant DEJA enregistres
-         (inbox-clients : adresse/cp/email · clients-cache : adresse/cp/mail) ;
-         ils n'entraient simplement pas dans l'index.
          « k » = ce qu'on CHERCHE (tout) · « s » = ce qu'on AFFICHE (court).
-         Sans cette separation la ligne de resultat devenait un pave illisible. */
+         Sans cette separation la ligne de resultat devenait un pave illisible.
+         ☠️ MESURE DANS SON NAVIGATEUR : « 52 avenue » ne trouvait toujours pas
+         Restaurant Chez Marcel. Son entree locale est {nom,type,cp,ville,tel,
+         mail} — SANS adresse — et il n'y a AUCUNE session Supabase ouverte.
+         L'adresse vue sur la fiche vient d'une table ecrite en dur dans
+         client.html. Elle n'etait donc dans aucun des deux stocks lus ici.
+         ADRM comble ce trou. Il ne REMPLACE jamais une adresse saisie :
+         c.adresse passe toujours en premier. */
+      var _adr = c.adresse || ADRM[c.nom] || "";
       CL.push({n:c.nom,
-               s:[c.ville, c.adresse].filter(Boolean).join(" \u00b7 "),
-               k:[c.nom, c.adresse, c.cp, c.ville, c.tel, c.mail, c.email].filter(Boolean).join(" "),
+               s:[c.ville, (_adr.split(",")[0] || "").trim()].filter(Boolean).join(" \u00b7 "),
+               k:[c.nom, _adr, c.cp, c.ville, c.tel, c.mail, c.email].filter(Boolean).join(" "),
                h:"client.html?c=" + encodeURIComponent(c.nom)});
     });
     var piece = function(cle, mot, page, param){
