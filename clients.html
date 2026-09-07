@@ -485,7 +485,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     <div class="spacer"></div>
     <div class="gsbtn" onclick="gsTap()" role="search">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input class="gsq" id="gs-top" type="text" autocomplete="off" placeholder="Rechercher clients, pages, actions…" aria-label="Recherche globale">
+      <input class="gsq" id="gs-top" type="text" autocomplete="off" placeholder="Rechercher un client, une adresse, un devis…" aria-label="Recherche globale">
       <kbd class="slash">/</kbd><kbd>⌘K</kbd>
       <div class="gsdrop" id="gs-drop"></div>
     </div>
@@ -1029,7 +1029,16 @@ render();
     J("tigerflow-inbox-clients").concat(J("tigerflow-clients-cache")).forEach(function(c){
       if(!c || !c.nom || vu[c.nom]) return;   /* un client est dans les deux stocks */
       vu[c.nom] = 1;
-      CL.push({n:c.nom, s:[c.ville, c.tel].filter(Boolean).join(" - "),
+      /* 07/09 (patron) : « la barre marche pas si tu cherches par adresse ».
+         MESURE AVANT : « rue de la Paix » -> 0 resultat, « 95100 » -> 0,
+         « david@exemple.fr » -> 0. Ces champs sont pourtant DEJA enregistres
+         (inbox-clients : adresse/cp/email · clients-cache : adresse/cp/mail) ;
+         ils n'entraient simplement pas dans l'index.
+         « k » = ce qu'on CHERCHE (tout) · « s » = ce qu'on AFFICHE (court).
+         Sans cette separation la ligne de resultat devenait un pave illisible. */
+      CL.push({n:c.nom,
+               s:[c.ville, c.adresse].filter(Boolean).join(" \u00b7 "),
+               k:[c.nom, c.adresse, c.cp, c.ville, c.tel, c.mail, c.email].filter(Boolean).join(" "),
                h:"client.html?c=" + encodeURIComponent(c.nom)});
     });
     var piece = function(cle, mot, page, param){
@@ -1062,7 +1071,9 @@ render();
     var nq = norm(q);
     if(!nq) return [];
     var out = [];
-    CL.forEach(function(c){ if(norm(c.n).indexOf(nq) > -1 || norm(c.s).indexOf(nq) > -1) out.push({g:"Clients", i:"👤", n:c.n, s:c.s, h:c.h}); });
+    /* on cherche dans « k » (nom + adresse + CP + ville + tel + mail).
+       Repli sur n + s pour une entree ecrite par une version anterieure. */
+    CL.forEach(function(c){ if(norm(c.k || (c.n + " " + c.s)).indexOf(nq) > -1) out.push({g:"Clients", i:"👤", n:c.n, s:c.s, h:c.h}); });
     DOC.forEach(function(d){ if(norm(d.n).indexOf(nq) > -1 || norm(d.s).indexOf(nq) > -1) out.push({g:"Documents", i:"📄", n:d.n, s:d.s, h:d.h}); });
     PG.forEach(function(p){ if(norm(p.n).indexOf(nq) > -1) out.push({g:"Pages", i:p.i, n:p.n, s:"", h:p.h}); });
     return out.slice(0, 9);
