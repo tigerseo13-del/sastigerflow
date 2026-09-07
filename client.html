@@ -1888,8 +1888,15 @@ function toast(msg, undoFn){
          ADRM comble ce trou. Il ne REMPLACE jamais une adresse saisie :
          c.adresse passe toujours en premier. */
       var _adr = c.adresse || ADRM[c.nom] || "";
+      var _lieu = [c.cp, c.ville].filter(Boolean).join(" ");
+      /* 07/09 (patron) : « fait afficher l'adresse complete, on voit que la rue ».
+         La table modele porte DEJA le code postal et la ville
+         (« 52 avenue Jean Jaures, 75019 Paris ») alors qu'une adresse saisie a
+         la main ne porte que la rue (« 12 RUE DES DAMES »). Sans ce test on
+         obtenait « ... 75019 Paris, 75019 Paris ». */
+      var _plein = _adr ? (/\d{5}/.test(_adr) ? _adr : [_adr, _lieu].filter(Boolean).join(", ")) : _lieu;
       CL.push({n:c.nom,
-               s:[c.ville, (_adr.split(",")[0] || "").trim()].filter(Boolean).join(" \u00b7 "),
+               s:_plein,
                k:[c.nom, _adr, c.cp, c.ville, c.tel, c.mail, c.email].filter(Boolean).join(" "),
                h:"client.html?c=" + encodeURIComponent(c.nom)});
     });
