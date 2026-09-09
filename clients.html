@@ -16,7 +16,7 @@ html{background:#F7F8FA}
 :root{
   --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
   --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
-  --line:#EBECF1; --bg:#F4F5F8; --card:#FFFFFF;
+  --line:#EBECF1; --bg:#EAECF2; --card:#FFFFFF;
   --green:#10B981; --green-d:#047857; --green-bg:#ECFDF5;
   --amber:#A16207; --amber-bg:#FBF3D9;
   --red:#D63B33; --red-bg:#FCECEA;
@@ -434,6 +434,14 @@ tbody td small,tbody td .sub,tbody td em{font-weight:400}
    porteuse, donc le tiroir affiche toujours la derniere version publiee. */
 const PANELV = "&v=" + Math.floor(Date.now() / 1000);
 </script>
+<!-- ☠️ 09/09 : finition du passage au champ gris. Ces champs-la n'avaient
+     AUCUNE regle de fond : ils etaient blancs par DEFAUT du navigateur, pas
+     par choix. Detectes en mesurant le calcule sur les 28 pages, pas en
+     lisant le source — c'est la seule facon de les voir. -->
+<style>
+#f-du,#f-au{background:#F5F6FA;border-color:transparent}
+#f-du:focus,#f-au:focus{background:#FFFFFF;border-color:var(--orange,#FF5A1F)}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1485,7 +1493,7 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 /* ===== l'icône e-mail est présente sur chaque ligne ; grisée si le client n'a pas d'e-mail (29/07) ===== */
 .ab.mail.nomail{color:#C4C8D2;cursor:pointer}
 .ab.mail.nomail:hover{color:var(--orange-deep);background:var(--orange-soft)}
-.fsel{font-size:.79rem;font-weight:600;padding:9px 12px;border-radius:11px;background:#fff;border:1px solid var(--line);color:var(--ink-2);cursor:pointer;font-family:inherit}
+.fsel{font-size:.79rem;font-weight:600;padding:9px 12px;border-radius:11px;background:#F5F6FA;border:1px solid transparent;color:var(--ink-2);cursor:pointer;font-family:inherit}
 .fsel:focus{outline:none;border-color:var(--orange)}
 .fdate{position:relative;display:inline-block}
 .fdatepop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;box-shadow:0 16px 36px -18px rgba(23,26,32,.5);display:none;min-width:200px}
@@ -1904,5 +1912,17 @@ document.addEventListener("click", function(e){
   window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
 })();
 </script>
+<!-- ☠️☠️ 09/09 : REGRESSION RATTRAPEE. En passant la bordure des champs en
+     transparent (le look Saigon : champ gris, pas de trait), le :focus de ces
+     pages ne repeignait plus RIEN — ni fond, ni bordure. MESURE au navigateur
+     sur les 28 pages : l'utilisateur ne voyait plus OU il tape.
+     ☠️ PLACE AVANT </body> ET PAS DANS LE <head> : ces pages ont des blocs
+     <style> APRES la fermeture du head (calendrier en a 2, client 3). A
+     specificite egale c'est le DERNIER qui gagne — le bloc mis dans le head
+     n'avait aucun effet, mesure a l'appui. -->
+<style>
+body input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):not([type=range]):not([type=submit]):not([type=button]):focus,
+body select:focus,body textarea:focus{border-color:var(--orange,#FF5A1F)!important}
+</style>
 </body>
 </html>
