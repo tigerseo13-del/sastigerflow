@@ -17,7 +17,7 @@ html{background:#F7F8FA}
 :root{
   --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
   --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
-  --line:#EBECF1; --bg:#F4F5F8; --card:#fff;
+  --line:#EBECF1; --bg:#EAECF2; --card:#fff;
   --green:#10B981; --green-d:#047857; --green-bg:#ECFDF5;
   --blue:#2E5CE6; --blue-bg:#EBF1FE; --amber:#A16207; --amber-bg:#FBF3D9;
   --red:#D63B33; --red-bg:#FDE9E8;
@@ -29,7 +29,17 @@ html{font-size:15px}
 button{background:none;border:0;font-family:inherit;cursor:pointer}
 a{text-decoration:none;color:inherit}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
-input,select,textarea{font-family:inherit;font-size:.88rem;color:var(--ink);border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff;width:100%;transition:.13s}
+/* ☠️ 09/09 (patron : « vazi fais le boss »). PASSAGE AU CHAMP GRIS.
+   Saigon avait la bonne idee — champ gris, pas de bordure — mais ils ont
+   donne au champ la couleur EXACTE du fond de page (#F4F5F8 des deux cotes,
+   ecart 0,00) : le champ disparaissait des qu'il sortait d'une carte.
+   MESURE : on garde LEUR champ (#F5F6FA, a 0,37 du leur = invisible) et on
+   descend le FOND d'un cran (#F4F5F8 -> #EAECF2). Le champ passe alors a
+   3,51 d'ecart avec le fond et 3,09 avec la carte : il se voit des deux
+   cotes. C'est la seule des quatre versions testees sans zone morte.
+   La bordure devient TRANSPARENTE et non supprimee : le :focus la repeint
+   en orange sans decaler la mise en page d'un pixel. */
+input,select,textarea{font-family:inherit;font-size:.88rem;color:var(--ink);border:1.5px solid transparent;border-radius:11px;padding:10px 12px;background:#F5F6FA;width:100%;transition:.13s}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,90,31,.12)}
 input.err,select.err{border-color:var(--red)!important;background:var(--red-bg)}
 textarea{resize:vertical;min-height:64px}
@@ -486,8 +496,8 @@ label[for]{cursor:pointer}
 .bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
 
 /* menu de tri, même recette que les autres listes (26/07) */
-.filters select, select.sortsel{font-family:inherit;font-size:.88rem;color:var(--ink);border:1px solid var(--line);
-  border-radius:11px;padding:10px 13px;background:#fff;cursor:pointer}
+.filters select, select.sortsel{font-family:inherit;font-size:.88rem;color:var(--ink);border:1px solid transparent;
+  border-radius:11px;padding:10px 13px;background:#F5F6FA;cursor:pointer}
 .sortsel{margin-left:auto}
 @media(max-width:760px){ .sortsel{margin-left:0;width:100%} }
 
@@ -1932,5 +1942,16 @@ document.addEventListener("click", function(e){
   window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
 })();
 </script>
+<!-- ☠️☠️ 09/09 : REGRESSION RATTRAPEE. En passant la bordure des champs en
+     transparent (le look Saigon : champ gris, pas de trait), le :focus de ces
+     pages ne repeignait plus RIEN — ni fond, ni bordure. MESURE au navigateur
+     sur les 28 pages : l'utilisateur ne voyait plus OU il tape.
+     ☠️ PLACE AVANT LE DERNIER </body> : ces pages ont des blocs <style> apres
+     la fermeture du head, et plusieurs </body> (des gabarits HTML ecrits dans
+     le JS). A specificite egale c'est le DERNIER qui gagne. -->
+<style>
+body input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):not([type=range]):not([type=submit]):not([type=button]):focus,
+body select:focus,body textarea:focus{border-color:var(--orange,#FF5A1F)!important}
+</style>
 </body>
 </html>
