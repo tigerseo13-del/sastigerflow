@@ -2449,16 +2449,22 @@ function apOnglet(){
 }
 function ntfOnglet(){
   var on = ntfOngletVisible();
+  /* ☠️ 09/09 (patron : « réglages je trouve pas notification ») — MESURÉ :
+     la famille entière était masquée avec le SMS. Or depuis aujourd'hui elle
+     contient AUSSI « Préférences de notification », qui n'a rien à voir avec
+     le SMS client : c'est un réglage par utilisateur, il doit rester
+     atteignable en permanence. La FAMILLE ne se masque donc plus ; seule la
+     pilule « Notifications clients » suit l'interrupteur SMS. */
   var b = document.querySelector('#sptabs .spt[data-f="notifs"]');
-  if(b) b.hidden = !on;
-  /* on était dedans et on vient de couper : on ne laisse pas un écran orphelin */
+  if(b) b.hidden = false;
   if(!on && SPK === "notifs"){
     try{ localStorage.removeItem("tigerflow-reglages-tab"); }catch(e){}
-    spGoTo("info");
+    spGoTo("npref");
   }
+  if(typeof spBarsMaj === "function") spBarsMaj();
 }
 function spGoTo(k){
-  if(k === "notifs" && !ntfOngletVisible()) k = "info";
+  if(k === "notifs" && !ntfOngletVisible()) k = "npref";
   if(k === "appareils" && !apOngletVisible()) k = "info";
   const b = document.querySelector('#snav button[data-s="' + k + '"]'); if(b) b.click();
 }
@@ -2532,6 +2538,10 @@ function spBarsMaj(){
   const i = SPFAM.societe.indexOf("appareils");
   if(vu && i < 0) SPFAM.societe.push("appareils");
   if(!vu && i > -1) SPFAM.societe.splice(i, 1);
+  /* 09/09 : « Notifications clients » (SMS) suit son interrupteur ;
+     « Préférences de notification » reste toujours là. */
+  const sms = (typeof ntfOngletVisible === "function") ? ntfOngletVisible() : true;
+  SPFAM.notifs = sms ? ["notifs", "npref"] : ["npref"];
   const fam = Object.keys(SPFAM).find(f => SPFAM[f].includes(SPK)) || "societe";
   document.querySelectorAll("#sptabs .spt").forEach(b => b.classList.toggle("on", b.dataset.f === fam));
   const sub = document.getElementById("spsub");
