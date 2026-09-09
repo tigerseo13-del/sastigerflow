@@ -1824,7 +1824,15 @@ var NPEV = [
   ]}
 ];
 
-var NPVUE = "moi";   /* "moi" = mes préférences · "def" = valeurs par défaut de la société */
+/* ☠️ 09/09 (patron : « enlève, garde les valeurs de la société par défaut »).
+   La spec Saigon prévoyait DEUX niveaux — préférences par utilisateur plus des
+   valeurs par défaut posées par l'administrateur. Le patron tranche pour UN
+   seul niveau : le réglage vaut pour toute la société. Pour un dératiseur de
+   cinq personnes, le réglage par utilisateur était de la complexité sans usage
+   — et ça retire une ligne du chiffrage Saigon.
+   NPVUE reste dans le code (toujours "def") : si le per-user revient un jour,
+   il suffira de remettre le sélecteur, le moteur sait déjà le faire. */
+var NPVUE = "def";
 
 function npLire(cle){ try{ return JSON.parse(localStorage.getItem(cle)) || {}; }catch(e){ return {}; } }
 function npEcrire(cle, o){ try{ localStorage.setItem(cle, JSON.stringify(o)); }catch(e){} }
@@ -1855,17 +1863,12 @@ function npTog(k){
   if(sw){ sw.classList.toggle("on", on); sw.setAttribute("aria-checked", on ? "true" : "false");
           var et = sw.querySelector(".betaEtat"); if(et){ et.textContent = on ? "activé" : "coupé"; } }
   npCompte();
-  toast((on ? "Activé : " : "Coupé : ") + (e ? e.n : k)
-        + (NPVUE === "def" ? " — pour les nouveaux comptes" : ""));
+  toast((on ? "Activé : " : "Coupé : ") + (e ? e.n : k) + " — pour toute la société");
 }
+/* gardée pour le jour où le réglage par utilisateur reviendrait */
 function npVue(v){
   NPVUE = v;
   var b = document.getElementById("npbody"); if(b) b.innerHTML = npGroupes();
-  document.querySelectorAll(".npseg button").forEach(function(x){ x.classList.toggle("on", x.dataset.v === v); });
-  var a = document.getElementById("npavis");
-  if(a) a.textContent = v === "def"
-    ? "Vous réglez les valeurs par défaut de la société. Elles s'appliquent aux comptes créés à partir de maintenant — les préférences déjà personnalisées ne sont pas écrasées."
-    : "Vos préférences personnelles. Elles ne concernent que vous et priment sur les valeurs par défaut de la société.";
   npCompte();
 }
 function npTout(on){
@@ -1874,8 +1877,8 @@ function npTout(on){
   npEcrire(cle, v);
   var b = document.getElementById("npbody"); if(b) b.innerHTML = npGroupes();
   npCompte();
-  toast(on ? "Tout activé — sauf les événements obligatoires"
-           : "Tout coupé — les événements obligatoires restent actifs");
+  toast(on ? "Tout activé pour la société — sauf les événements obligatoires"
+           : "Tout coupé pour la société — les événements obligatoires restent actifs");
 }
 function npCompte(){
   var n = 0, t = 0;
@@ -1904,23 +1907,18 @@ function npGroupes(){
   }).join("");
 }
 R.npref = () => {
-  var adm = npAdmin();
   return `
   <div class="card">
     <div class="card-h">Préférences de notification<span class="npcanal">📧 E-mail — Phase 1</span></div>
     <p class="nphint">Choisissez, événement par événement, ce qui déclenche l'envoi d'une notification. <b>Couper un événement n'arrête que l'envoi</b> : le devis, la facture ou l'intervention sont enregistrés normalement et gardent tout leur historique.</p>
     <div class="nptools">
-      ${adm ? `<div class="npseg">
-        <button class="on" data-v="moi" onclick="npVue('moi')">Mes préférences</button>
-        <button data-v="def" onclick="npVue('def')">Valeurs par défaut société</button>
-      </div>` : ``}
       <span class="npcnt" id="npcount">—</span>
       <div class="npall">
         <button onclick="npTout(true)">Tout activer</button>
         <button onclick="npTout(false)">Tout couper</button>
       </div>
     </div>
-    <p class="npavis" id="npavis">Vos préférences personnelles. Elles ne concernent que vous et priment sur les valeurs par défaut de la société.</p>
+    <p class="npavis" id="npavis">Ces réglages valent pour <b>toute la société</b> : ils s'appliquent à tous les comptes, y compris ceux qui seront créés plus tard.</p>
     <div id="npbody">${npGroupes()}</div>
     <div class="nppied">
       <span><b>Phase 1 : e-mail uniquement.</b> Les colonnes « dans l'appli » et « push » sont prévues et arriveront en Phase 2 — sans avoir à refaire ces réglages.</span>
