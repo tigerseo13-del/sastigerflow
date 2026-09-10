@@ -1082,7 +1082,17 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
       <div class="card eq" id="relcard">
         <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>Relations<span class="rtitl"> — syndic, propriétaire, donneur d'ordre</span><span class="more" id="rel-n"></span></div>
         <div id="rel-list" style="display:flex;flex-direction:column;gap:9px;padding:2px 0 10px"></div>
-        <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relqi.relqn{color:var(--orange);font-weight:800}/* 02/09 (patron) : « aère un peu pour que ça respire ». */
+        <style>#rel-quip{position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;box-shadow:0 12px 30px rgba(15,23,42,.16);max-height:250px;overflow:auto;z-index:70;padding:4px}#rel-quip[hidden]{display:none!important}
+/* ☠️☠️ 10/09 (patron : « le truc relation enlève-le et mets-le en V2 bêta »).
+   MESURÉ : poser hidden sur #relcard ne masque RIEN — le display calculé reste
+   « flex », largeur 307 px. La règle qui gagne est « .duo2 .card.eq{display:flex} »
+   (spécificité 0,3,0), et le seul garde [hidden] du fichier est « #rel-quip[hidden] »,
+   qui ne vise que le panneau d'autocomplétion. Il fallait donc le nôtre.
+   ☠️ 2e mesure : avec le garde seul, la grille garde ses TROIS colonnes
+   (347 / 446 / 307 px) et laisse un trou de 307 px à droite. « relhs » sur la
+   grille la repasse à deux colonnes — c'est ce que fait relBeta() au chargement. */
+#relcard[hidden]{display:none!important}
+.duo2.tri3.relhs{grid-template-columns:1fr 1fr}.relqi{padding:8px 10px;border-radius:6px;font:600 .8rem Inter,sans-serif;color:var(--ink);cursor:pointer}.relqi:hover{background:#FFF4ED}.relqi.relqn{color:var(--orange);font-weight:800}/* 02/09 (patron) : « aère un peu pour que ça respire ». */
 .relchip{border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;color:var(--ink-2);font:700 .76rem Inter,sans-serif;padding:10px 15px;cursor:pointer;transition:.13s}/* 02/09 (patron) : « le vert, c'est le même vert émeraude que le SaaS ? on
    dirait pas ». MESURÉ : c'était bien #10B981, le même qu'ailleurs. Ce qui
    clochait, c'est l'USAGE — dans TigerFlow un choix actif se peint en fond
@@ -3810,6 +3820,37 @@ document.addEventListener("click", function(e){
   document.head.appendChild(st);
   document.body.appendChild(v);
   window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
+})();
+</script>
+<!-- ☠️ 10/09 (patron) : la carte « Relations » passe en bêta V2. Réglages >
+     Bêta > Relation la remet. Convention INVERSÉE comme le panneau des impayés :
+     la clé absente = coupé, il faut « 1 » pour allumer. Rien n'est effacé — les
+     relations déjà saisies dorment dans tigerflow-relations et reviennent
+     telles quelles le jour où le patron rallume.
+     ☠️ PLACÉ AVANT LE DERNIER </body> : ce fichier a plusieurs </body> (des
+     gabarits HTML écrits dans le JS) et des blocs <style> après la fermeture
+     du <head>. -->
+<script>
+(function(){
+  function relBetaOn(){
+    try{ return localStorage.getItem("tigerflow-beta-relations") === "1"; }catch(e){ return false; }
+  }
+  window.relBetaOn = relBetaOn;
+  function appliquer(){
+    var c = document.getElementById("relcard");
+    var duo = document.querySelector(".duo2.tri3");
+    var on = relBetaOn();
+    if(c) c.hidden = !on;
+    if(duo) duo.classList.toggle("relhs", !on);
+  }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", appliquer);
+  else appliquer();
+  /* ☠️ relLayout() re-range la carte dans la grille a chaque peinture des
+     relations (insertBefore + toggle relmini). Il ne remet pas hidden a false,
+     mais on repasse derriere par securite : une relation ajoutee ne doit pas
+     faire reapparaitre une carte que le patron a coupee. */
+  setTimeout(appliquer, 400);
+  window.addEventListener("focus", appliquer);
 })();
 </script>
 </body>
