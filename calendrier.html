@@ -783,6 +783,48 @@ h1,.num{font-family:'Sora',sans-serif}
   border:1px dashed rgba(23,26,32,.22);opacity:0;transition:opacity .12s}
 body.dragging .busyzone{opacity:1}
 .outbar{position:sticky;top:0;left:0;z-index:6;background:var(--amber-bg);border-bottom:1px solid #F0E2B8;color:var(--amber);font-size:.78rem;font-weight:700;padding:8px 14px}
+/* ☠️☠️ 15/09 (patron) : « quand un tec est en congé tu peux afficher comment
+   sur agenda ». MESURE AVANT DE CODER : le congé EXISTAIT déjà — la fiche
+   technicien a « Poser un congé » avec deux dates, stockées dans
+   tigerflow-techs-statut sous {du, au}. Mais cette page n'a JAMAIS lu cette
+   clé (zéro occurrence mesurée), et intervention-nouvelle.html non plus : on
+   pouvait affecter une intervention à un homme en congé sans aucun signal.
+   ═ Les 3 maquettes ont été jugées sur photo. Retenu : le VOILE (option A) +
+     le BANDEAU (option B) ensemble, parce qu'ils ne répondent pas à la même
+     question — le voile dit « cette colonne est fermée », le bandeau dit
+     « 3 interventions sont encore dessus, va les replacer ».
+   ☠️ L'option C (un gros bloc « CONGÉ » posé dans la colonne) a été ÉCARTÉE
+     après mesure : elle MASQUAIT les interventions du technicien. Elles
+     existaient encore, plus personne ne les voyait.
+   ☠️ L'étiquette « EN CONGÉ » flottante au milieu de la colonne a aussi été
+     retirée : mesurée, elle recouvrait l'en-tête (on ne lisait plus le nom)
+     et elle répétait la pastille posée juste au-dessus.
+   ═ La pastille annonce le RETOUR (« retour le 21/09 »), pas la fin du congé :
+     quand on cherche qui envoyer, la question est « il revient quand ». */
+.tcol.cg .tcol-head{background:#F3F4F7!important;box-shadow:0 1px 0 var(--line), inset 0 -3px 0 #C2C7D2!important}
+.tcol.cg .tcol-head b{color:#8A90A0!important}
+.tcol.cg .tdot2{background:#C2C7D2!important}
+.tcol.cg .thacts{opacity:.35}
+.cgpill{display:inline-flex;align-items:center;gap:4px;font-size:.655rem;font-weight:800;
+  background:#FFF6E6;color:#96620C;border:1px solid #F6E0B4;border-radius:7px;padding:3px 7px;white-space:nowrap}
+/* ☠️ pointer-events:none — le voile ne doit PAS manger le clic : on veut
+   pouvoir attraper une intervention restée dessous pour la déplacer. */
+.cgveil{position:absolute;left:0;right:0;top:0;bottom:0;z-index:7;pointer-events:none;
+  background:repeating-linear-gradient(45deg,rgba(138,144,160,.14) 0 7px,rgba(138,144,160,.035) 7px 14px)}
+/* ☠☠ 15/09, VU SUR CAPTURE : ce bandeau etait « sticky top:0 z-index:6 »,
+   copie sur .outbar. Resultat mesure : il se collait par-dessus .tcol-head
+   (lui aussi sticky top:0, mais z-index:5) et MASQUAIT la ligne des noms de
+   techniciens — on ne lisait plus « Pablo », « Otman », « Fredo ». Il reste
+   donc dans le flux : il se voit en haut, il defile avec le contenu, et
+   c'est la pastille de l'en-tete (elle, sticky) qui tient le relais quand on
+   descend dans la journee. */
+.cgband{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--amber-bg);
+  border:1px solid #F0E2B8;border-radius:12px;padding:8px 14px;margin-bottom:9px}
+.cgband .ci{flex:none;width:20px;height:20px;border-radius:50%;background:#96620C;color:#fff;display:grid;place-items:center;font-size:.68rem;font-weight:800}
+.cgband b{font-size:.8rem;color:#7A4E08;font-weight:800}
+.cgband em{font-size:.76rem;color:#96620C;font-weight:600;font-style:normal}
+.cgband .cgfix{margin-left:auto;font-size:.73rem;font-weight:800;color:#fff;background:#96620C;border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.cgband .cgfix:hover{background:#7A4E08}
 .outbar a{color:var(--amber);text-decoration:underline;cursor:pointer}
 /* ===== Modale PDF du rapport ===== */
 .rpmodal{display:none;position:fixed;inset:0;z-index:98}
@@ -1347,6 +1389,13 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
   </div>
 
   <div class="calzone">
+    <!-- ☠☠ 15/09 : le bandeau des congés vit ICI, HORS de #calscroll. MESURE :
+         posé dedans, il partait hors vue dès l'ouverture — le calendrier se
+         positionne tout seul sur l'heure courante (scrollTop mesuré à 60 px),
+         donc le patron ne l'aurait jamais vu. En sticky il passait DERRIÈRE
+         l'en-tête des colonnes (elle aussi sticky, z-index 5). Hors du cadre
+         qui défile : toujours visible, ne masque rien. -->
+    <div id="cgzone"></div>
     <div class="calcard">
       <div class="calscroll" id="calscroll"></div>
     </div>
@@ -2868,7 +2917,33 @@ function renderDay(){
   document.getElementById('datetitle').textContent =
     JOURS[CUR.getDay()] + " " + CUR.getDate() + " " + MOIS[CUR.getMonth()] + " " + CUR.getFullYear();
 
-  const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
+  /* ☠️☠️ 15/09 : LES CONGÉS. Source unique : tigerflow-techs-statut, la clé
+   qu'écrit « Poser un congé » sur la fiche technicien. On ne duplique rien.
+   ☠️ Cette clé est indexée par le NOM COMPLET (« Pablo », ou « Jean Dupont »
+   pour un technicien ajouté à la main), alors que la colonne de l'agenda
+   porte TECHS[].nom. On compare donc le nom entier ET son premier mot, sinon
+   le congé de « Jean Dupont » ne serait jamais retrouvé.
+   ☠️ Comparaison de dates en ISO (AAAA-MM-JJ) : en chaîne, l'ordre
+   alphabétique EST l'ordre chronologique. Aucun objet Date créé, donc aucun
+   décalage de fuseau — le piège classique du 1er du mois à minuit. */
+const CGMAP = () => { try{ return JSON.parse(localStorage.getItem("tigerflow-techs-statut")) || {}; }catch(e){ return {}; } };
+function cgDe(nomTech, dISO){
+  const m = CGMAP(), n = String(nomTech || "").trim();
+  if(!n) return null;
+  let c = m[n];
+  if(!c) { const k = Object.keys(m).find(x => String(x).trim().split(/\s+/)[0] === n.split(/\s+/)[0]); if(k) c = m[k]; }
+  if(!c || !c.du || !c.au) return null;
+  return (dISO >= c.du && dISO <= c.au) ? c : null;
+}
+/* « du 15/09 au 20/09 » et la date de RETOUR (le lendemain du dernier jour) */
+const cgFr = x => { const p = String(x || "").split("-"); return p.length === 3 ? p[2] + "/" + p[1] : "?"; };
+function cgRetour(au){
+  const p = String(au || "").split("-"); if(p.length !== 3) return "?";
+  /* +1 jour en UTC pour ne pas dépendre du fuseau du navigateur */
+  const d2 = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + 1));
+  return String(d2.getUTCDate()).padStart(2, "0") + "/" + String(d2.getUTCMonth() + 1).padStart(2, "0");
+}
+const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
   const evs = filtered().filter(v=>v.date===d);
 
   /* 29/07 : la pastille de l'heure courante vit UNE fois, dans la gouttiere
@@ -2912,6 +2987,7 @@ function renderDay(){
 
   const cols = techs.map(t=>{
     const mine = evs.filter(v=>v.tech===t.id);
+    const CG = cgDe(t.nom, d);   /* ☠️ 15/09 : ce technicien est-il en congé CE jour-là ? */
     const actifs = mine.filter(v=>!v.cancelled);
     const totH = mine.reduce((sum,v)=>sum+v.dur,0);
     /* 29/07 (patron) — chevauchements COTE A COTE, fini le cache-cache.
@@ -2999,7 +3075,7 @@ function renderDay(){
     }).join("");
     /* le trait « maintenant » sans pastille : elle est dans la gouttiere */
     const now = showNow ? `<div class="nowline" style="top:${(NOWH-DAYSTART)*64}px"></div>` : "";
-    return `<div class="tcol">
+    return `<div class="tcol${CG ? ' cg' : ''}">
       <div class="tcol-head ${mine.length ? '' : 'freehead'}" style="box-shadow:0 1px 0 var(--line), inset 0 -3px 0 ${t.c}" draggable="true" title="Glisser pour déplacer la colonne de ${t.nom}" ondragstart="TDRAG=${t.id}" ondragover="event.preventDefault();this.classList.add('dgo')" ondragleave="this.classList.remove('dgo')" ondrop="event.preventDefault();this.classList.remove('dgo');ordDrop(${t.id})">
         <div style="min-width:0;flex:1">
           <span class="tnrow">
@@ -3011,10 +3087,11 @@ function renderDay(){
               <a class="tca mp" href="#" title="Itinéraire de la tournée de ${t.nom} (Google Maps)" onclick="event.stopPropagation();event.preventDefault();tournee(${t.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-5.5-2.2V4l5.5 2.2L15 4l5.5 2.2V20L15 17.8zM9 6.2v13.8M15 4v13.8"/></svg></a>
             </span>
           </span>
-          <small>${mine.filter(v=>!v.cancelled).length ? mine.filter(v=>!v.cancelled).length + ' interv.' : '<span class="freelbl">Libre aujourd\'hui</span>'}</small>
+          <small>${CG ? '<span class="cgpill" title="En cong\u00e9 du ' + cgFr(CG.du) + ' au ' + cgFr(CG.au) + '">\u2600 Cong\u00e9 \u2014 retour le ' + cgRetour(CG.au) + '</span>'
+            : (mine.filter(v=>!v.cancelled).length ? mine.filter(v=>!v.cancelled).length + ' interv.' : '<span class="freelbl">Libre aujourd\'hui</span>')}</small>
         </div>
       </div>
-      <div class="tcol-body" data-tech="${t.id}" style="--tint:${t.c}0D">${nightZones}${now}${cards}</div>
+      <div class="tcol-body" data-tech="${t.id}" style="--tint:${t.c}0D">${nightZones}${now}${cards}${CG ? '<div class="cgveil"></div>' : ''}</div>
     </div>`;
   }).join("");
 
@@ -3023,6 +3100,26 @@ function renderDay(){
     ? `<div class="outbar">🌙 ${outs.length} intervention${outs.length>1?'s':''} hors plage 6 h – 22 h —
         <a onclick="openDetail(${outs[0].id})">voir la première</a></div>`
     : "";
+  /* ☠️☠️ 15/09 : le BANDEAU des congés. Il ne dit pas seulement « il est
+     absent » — il compte ce qui reste SUR SON AGENDA ce jour-là, parce que
+     c'est ça qui demande une action. Un congé posé après coup laisse des
+     interventions derrière lui, et sans ce compte personne ne le voit.
+     ☠️ Le bouton n'apparaît QUE s'il y a quelque chose à réaffecter : un
+     bouton qui ne sert à rien apprend à ne plus lire le bandeau. */
+  const cgList = techs.map(t => {
+    const c = cgDe(t.nom, d); if(!c) return null;
+    return {nom: t.nom, id: t.id, du: c.du, au: c.au,
+            reste: evs.filter(v => v.tech === t.id && !v.cancelled && !v.done).length};
+  }).filter(Boolean);
+  const cgbar = cgList.map(c =>
+    '<div class="cgband"><span class="ci">\u2600</span>'
+    + '<b>' + c.nom + ' en cong\u00e9 du ' + cgFr(c.du) + ' au ' + cgFr(c.au) + '</b>'
+    + '<em>\u2014 ' + (c.reste
+        ? c.reste + ' intervention' + (c.reste > 1 ? 's' : '') + ' encore sur son agenda'
+        : 'son agenda est vide sur cette journ\u00e9e') + '</em>'
+    + (c.reste ? '<span class="cgfix" onclick="soloTech(' + c.id + ')">Voir son agenda \u2192</span>' : '')
+    + '</div>').join("");
+  const _cgz = document.getElementById('cgzone'); if(_cgz) _cgz.innerHTML = cgbar;
   document.getElementById('calscroll').innerHTML = outbar + `<div class="daygrid ${techs.length <= 4 ? 'wide' : ''}">${gut}${cols}</div>`;
 }
 

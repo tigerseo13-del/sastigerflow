@@ -230,6 +230,12 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
 .tst{font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:11px;white-space:nowrap}
 .tst.dispo{background:var(--green-bg);color:var(--green-d)}
 .tst.tournee{background:var(--amber-bg);color:var(--amber)}
+/* ☠ 15/09 : la carte d'un technicien en congé A LA DATE CHOISIE. Ambre, pas
+   rouge : ce n'est pas une erreur de saisie, c'est un choix a reconsiderer. */
+.tech.cgko{border-color:#F6E0B4;background:#FFFBF2}
+.tech.cgko .tav{filter:grayscale(.55);opacity:.8}
+.tst.cgko{background:#FFF6E6;color:#96620C}
+.tech.cgko.on{border-color:#E8951B;box-shadow:0 0 0 2px rgba(232,149,27,.16)}
 .tech .km{margin-left:auto;font-size:.75rem;font-weight:600;color:var(--muted);white-space:nowrap}
 .tech .chk{width:20px;height:20px;border-radius:7px;border:2px solid #D5D8DF;flex:none;display:grid;place-items:center;transition:.13s}
 .tech.on .chk{background:var(--green);border-color:var(--green)}
@@ -999,6 +1005,13 @@ function addTech(){
 function togTech(el){
   el.classList.toggle("on");
   el.classList.contains("on") ? TECHS.add(el.dataset.v) : TECHS.delete(el.dataset.v);
+  /* ☠ 15/09 : on AVERTIT, on ne bloque pas. Le patron doit pouvoir passer
+     outre (un technicien rentre plus tôt, un congé saisi de travers) — mais
+     il ne doit pas pouvoir le faire SANS LE SAVOIR. */
+  if(el.classList.contains("on") && el.classList.contains("cgko")){
+    const t = techsReels().find(x => x.p === el.dataset.v);
+    if(t && t.cg) toast("\u2600 " + t.p + " est en cong\u00e9 du " + cgFr2(t.cg.du) + " au " + cgFr2(t.cg.au) + " \u2014 change la date ou choisis quelqu'un d'autre");
+  }
   resume();
 }
 function pickPay(el){
@@ -1354,15 +1367,65 @@ function techsReels(){
     const del = JSON.parse(localStorage.getItem("tigerflow-techs-del") || "[]");
     list = list.filter(t => !del.includes(t.p));
     const st = JSON.parse(localStorage.getItem("tigerflow-techs-statut") || "{}");
-    list.forEach(t => { if(st[t.p] && st[t.p].dispo) t.d = st[t.p].dispo; });
+    /* ☠☠ 15/09 : cette boucle ne gardait que « dispo » et JETAIT les dates du
+       congé, alors qu'elles sont dans la même entrée. Résultat : la liste disait
+       « En congé » sans dire quand, et surtout on pouvait affecter une
+       intervention DU 16 à un homme en congé du 15 au 20 sans aucun signal.
+       On emporte maintenant du/au pour pouvoir comparer à la date choisie. */
+    list.forEach(t => {
+      const e = st[t.p]; if(!e) return;
+      if(e.dispo) t.d = e.dispo;
+      if(e.du && e.au) t.cg = {du:e.du, au:e.au};
+    });
   }catch(e){}
   return list;
 }
+/* ☠☠ 15/09 (patron) : « quand un tec est en congé » — l'agenda le montre
+   désormais, mais l'empêcher de partir de cet écran-ci vaut mieux que de
+   l'afficher joliment après coup. Ces deux fonctions sont recopiées de
+   calendrier.html à l'identique : les 31 pages sont autonomes, il n'y a pas
+   de module partagé — si l'une change, changer l'autre.
+   ☠ Comparaison en ISO (AAAA-MM-JJ) : l'ordre alphabétique est l'ordre
+   chronologique, et aucun objet Date n'est créé, donc aucun décalage de
+   fuseau au changement de mois. Bornes INCLUSES des deux côtés. */
+const cgFr2 = x => { const p = String(x || "").split("-"); return p.length === 3 ? p[2] + "/" + p[1] : "?"; };
+function cgConflit(t){
+  if(!t || !t.cg) return false;
+  const el = document.getElementById("f-date");
+  const d = el ? el.value : "";
+  if(!d) return false;
+  return d >= t.cg.du && d <= t.cg.au;
+}
+/* ☠☠ 15/09 : sans ce ré-affichage, on choisissait un technicien libre le 14,
+   on déplaçait la date au 16, et la carte restait verte alors qu'il était en
+   congé. Le conflit dépend de DEUX champs : il doit être recalculé quand l'un
+   OU l'autre bouge. */
+document.addEventListener("DOMContentLoaded", function(){
+  var dd = document.getElementById("f-date");
+  if(dd) dd.addEventListener("change", function(){
+    var gardes = new Set(TECHS);
+    if(typeof renderTechs === "function") renderTechs();
+    document.querySelectorAll("#techs .tech").forEach(function(c){
+      if(gardes.has(c.dataset.v)){
+        c.classList.add("on");
+        if(c.classList.contains("cgko")){
+          var t = techsReels().find(function(x){ return x.p === c.dataset.v; });
+          if(t && t.cg) toast("\u2600 " + t.p + " est en cong\u00e9 le " + (dd.value.split("-").reverse().join("/")) + " \u2014 il faut le remplacer");
+        }
+      }
+    });
+  });
+});
 function renderTechs(){
   const LBL = {dispo:["dispo","Disponible"], interv:["tournee","En tournée"], conge:["tournee","En congé"]};
   document.getElementById("techs").innerHTML = techsReels().map(t => {
-    const [cls, lbl] = LBL[t.d] || LBL.dispo;
-    return '<div class="tech" data-v="' + t.p + '" onclick="togTech(this)">'
+    let [cls, lbl] = LBL[t.d] || LBL.dispo;
+    /* le congé dit QUAND : « En congé » tout seul ne permet pas de décider */
+    if(t.cg) lbl = "En cong\u00e9 \u00b7 " + cgFr2(t.cg.du) + " \u2192 " + cgFr2(t.cg.au);
+    const ko = cgConflit(t);
+    if(ko){ cls = "cgko"; lbl = "En cong\u00e9 ce jour-l\u00e0"; }
+    return '<div class="tech' + (ko ? ' cgko' : '') + '" data-v="' + t.p + '" onclick="togTech(this)"'
+      + (ko ? ' title="' + t.p + ' est en cong\u00e9 du ' + cgFr2(t.cg.du) + ' au ' + cgFr2(t.cg.au) + '"' : '') + '>'
       + '<span class="tav">' + t.i + '</span>'
       + '<span><b>' + t.p + '</b><small>' + (t.c || "—") + '</small></span>'
       + '<span class="tst ' + cls + '">' + lbl + '</span>'
