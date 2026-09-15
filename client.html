@@ -515,17 +515,115 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
   .fz .fgrid > span:nth-child(5){grid-column:2 / 3;grid-row:3;justify-self:start;margin-top:5px}
   .fz .fgo{grid-column:3 / -1;grid-row:3;justify-self:end;align-self:center;text-align:right;margin-top:5px}
 }
-}
-.ivd{width:47px;height:47px;border-radius:12px;background:#F6F7F9;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
-.ivd b{font-family:'Sora';font-weight:800;font-size:1.02rem;line-height:1;color:var(--ink)}
-.ivd span{font-size:.55rem;font-weight:800;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin-top:3px}
-.ivd.today{background:var(--orange-soft,#FFF1EA);border-color:#FFD9C4}
-.ivd.today b,.ivd.today span{color:var(--orange-deep,#EA4A10)}
+/* ☠☠ 15/09 : ICI VIVAIT UN « } » EN TROP — depuis la mise en ligne. Au top-level, un
+   « } » isole n'est pas ignore : le parseur CSS le prend pour le debut du
+   SELECTEUR de la regle suivante, donc il AVALE cette regle. Mesure : la regle
+   « .ivd » n'existait pas dans le CSSOM (« .ivd b » et « .ivd span » si). La
+   pastille de date de l'historique n'a donc JAMAIS eu son style : 38×20 px au
+   lieu de 47×47. Un seul caractere, invisible a la lecture, trouve en listant
+   document.styleSheets. Les 31 pages ont ete scannees : c'etait la seule. */
+/* ☠️☠️ 15/09 (patron) : « GO B ». La ligne d'historique passe au design 3B —
+   la DATE ENTRE DANS LE BANDEAU DE COULEUR, et le TECHNICIEN PASSE A DROITE.
+   Sa demande exacte : « met le tec a droite / type de nuisible client code
+   postal colle a gauche ».
+   ═ POURQUOI la date dans le bandeau : teste sur 20 lignes. Un bandeau de
+     4 px se voyait a peine ; a 62 px il porte la date EN BLANC et la couleur
+     du statut devient impossible a rater. Un seul bloc fait deux metiers.
+     Et comme un historique est a ~80 % « Terminee », le vert devient le fond
+     normal : les rouges et les jaunes ressortent au lieu de faire sapin.
+   ═ POURQUOI le technicien avec son PRENOM et pas juste l'avatar : a deux
+     techniciens « PF » et « EM » suffisent, a six on ne sait plus si « MM »
+     est Marvin McKinney ou Michel Martin. Le prenom coute 112 px de colonne
+     FIXE — donc tous les techniciens s'alignent l'un sous l'autre.
+   ═ « a affecter » porte DEUX signaux : le rond en pointilles gris ET le mot
+     en italique. Un seul ne se voit pas dans une liste longue.
+   ☠️ la colonne .ivtec est en largeur FIXE, pas en flex : c'est tout
+     l'interet, sinon elle bouge a chaque ligne selon la longueur du prenom. */
+      .ivd{width:62px;border-radius:0;background:#8E949F;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;align-self:stretch;color:#fff}
+.ivd b{font-family:'Sora';font-weight:800;font-size:1.28rem;line-height:1;color:#fff}
+.ivd span{font-size:.565rem;font-weight:800;letter-spacing:.07em;color:#fff;opacity:.88;text-transform:uppercase;margin-top:3px}
+.ivd.today{background:var(--orange)!important}
+.ivd.today b,.ivd.today span{color:#fff}
+      /* ☠️ la ligne doit rogner le bandeau : sans overflow:hidden les coins
+         arrondis de .ivrow laissent depasser les angles carres du bandeau. */
+      .ivrow{overflow:hidden;padding:0!important;gap:0!important}
+      .ivbody{flex:1;min-width:0;display:flex;align-items:center;gap:13px;padding:9px 14px}
+      /* le technicien : colonne FIXE a droite */
+      .ivtec{flex:none;width:120px;display:flex;align-items:center;gap:7px}
+      /* ☠ 15/09, MESURE : la colonne du technicien ne suffisait pas a aligner
+         quoi que ce soit — c'est la PASTILLE DE STATUT qui la poussait, parce que
+         « En retard · 40 j » fait 123 px et « A venir » 76. Mesure avant : la
+         colonne demarrait a x=1061, 1068 ou 1107 selon la ligne (46 px d'ecart).
+         Donc les DEUX colonnes de droite sont fixes : 120 px pour le technicien
+         (« Mahamadou » mesure 79 px + 30 d'avatar + 7 de gap = 116) et 138 px
+         pour le statut (« En retard · 1234 j », le pire cas, mesure 138). */
+      .ivst{flex:none;width:138px;display:flex;align-items:center}
+      /* ☠☠ 15/09 (patron : « ou et le code postal et ville stp et adresse,
+         ajoute une colonne je pense adresse » — version 2 retenue sur maquette).
+         MESURE AVANT DE CODER : rien a inventer, le formulaire d'intervention
+         enregistre deja « rue », « cp » et « ville » (voir
+         intervention-nouvelle.html). On n'affichait que le site + cp + ville :
+         LA RUE ETAIT PERDUE a l'ecran alors qu'elle etait en base.
+         ☠ Pourquoi une colonne FIXE et pas du texte en plus dans la ligne du
+         bas (version 1) : une liste se balaye en colonne. A 200 px l'adresse
+         tombe toujours a la meme abscisse et le code postal toujours au meme
+         endroit — c'est exactement ce qui manquait quand il a dit « le code
+         postal c'est pas super lisible ».
+         ☠ La rue en gras fonce, le cp + ville en gris dessous : deux lignes
+         valent mieux qu'une ligne de 40 caracteres tronquee. tabular-nums pour
+         que les chiffres des codes postaux s'alignent entre eux. */
+      .ivadc{flex:none;width:200px;display:flex;flex-direction:column;min-width:0;gap:1px}
+      .ivadr{font-size:.745rem;font-weight:700;color:var(--ink-2,#3D434E);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .ivadv{font-size:.7rem;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+      .ivav{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;
+        font-size:.665rem;font-weight:800;letter-spacing:.02em}
+      .ivav.vide{background:#fff;border:1.5px dashed #C9CDD6;color:#A6ABBB}
+      .ivtn{font-size:.76rem;font-weight:700;color:var(--ink-2,#3D434E);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .ivtn.vide{color:#A6ABBB;font-weight:600;font-style:italic}
+      .ivcl{color:var(--ink);font-weight:700;white-space:nowrap}
+      .ivcp{font-weight:800;color:var(--ink-2,#3D434E);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ivmain{flex:1;min-width:0}
 .ivmain b{font-family:'Sora';font-weight:800;font-size:.88rem;display:block;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ivmain small{font-size:.74rem;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:7px;margin-top:3px}
+.ivmain small{min-width:0;overflow:hidden}
 .ivtd{width:7px;height:7px;border-radius:50%;flex:none}
 .ivh{font-family:'Sora';font-weight:800;font-size:.78rem;background:#F1F2F6;border-radius:9px;padding:6px 11px;color:var(--ink-2);flex:none}
+/* ☠☠☠ 15/09 — DEUX PIEGES DANS LA MEME REGLE, trouves en regardant la capture
+   a 420 px, pas en lisant le code.
+   1) PLACE : cette media query etait ecrite AVANT « .ivmain{flex:1} ». Meme
+      specificite (0,1,0) → c'est la DERNIERE DU DOCUMENT qui gagne, et une
+      media query ne prime PAS sur une regle posee plus bas. Mon
+      « flex:1 0 100% » ne s'appliquait donc jamais. Elle vit desormais APRES
+      toutes les regles .iv*.
+   2) TEXTE : « .ivcl » et « .ivcp » sont en white-space:nowrap dans un flex ;
+      la boite « .ivmain » ne grandit pas, c'est le TEXTE qui sort et qui
+      passait SOUS l'avatar et la pastille. Mon test ne voyait rien : il
+      comparait les BOITES, qui ne se chevauchaient pas. Il compare maintenant
+      scrollWidth et clientWidth. Correctif : le sous-titre a le droit de
+      passer a la ligne sous 880 px.
+   3) SEUIL : 880 px etait trop bas. MESURE a 1024 px — sidebar 292 px, colonnes
+      fixes 120 + 138 + le lien — il ne restait que 240 px a « .ivmain » pour
+      272 px de texte. Le seuil passe a 1180 px, celui que la page utilise
+      deja pour resserrer la frise « .fz ». Et « overflow:hidden » sur le
+      sous-titre sert de filet AU-DESSUS du seuil : si un nom de site tres
+      long arrive, il se coupe au lieu de passer sous l'avatar.
+   La ligne se lit alors en DEUX rangees : titre + adresse sur toute la
+   largeur, puis technicien / statut / lien en dessous. */
+@media(max-width:1180px){
+  .ivbody{flex-wrap:wrap;gap:8px;padding:10px 12px}
+  .ivmain{flex:1 0 100%;min-width:0}
+  .ivmain small{flex-wrap:wrap;row-gap:2px}
+  .ivcl,.ivcp{white-space:normal}
+  .ivtec{width:auto;max-width:52%}
+  .ivst{width:auto}
+  /* ☠ sous 1180 px la ligne est deja en deux rangees : la colonne adresse
+     reprend sa largeur naturelle au lieu d'imposer 200 px a une rangee etroite. */
+  .ivadc{width:auto;max-width:60%}
+}
+@media(max-width:430px){
+  .ivtec{max-width:none;flex:1 1 auto;min-width:0}
+  .ivbody .rlink{margin-left:auto}
+}
 .st.staff{background:#FBF3D9;color:#A16207}
 .st.stoff{background:#EEF0F3;color:#6C7285}
 /* 20/08 (visuel 304) — UNE INTERVENTION EN RETARD DOIT SE VOIR.
@@ -1256,56 +1354,80 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         <!-- 05/08 (patron, visuel 29) : une carte par passage, sur toute la
              largeur, colonnes alignées comme les autres onglets de la fiche. -->
         <div class="fzalert"><span class="ai">!</span><b>1 intervention en retard</b><span>datée du 14 août et toujours pas terminée — soit elle n'a pas eu lieu, soit personne ne l'a clôturée</span></div>
-        <div class="fz" id="hist-tb">
-          <div class="fhh fgrid"><span>Date</span><span>Intervention</span><span>Technicien</span>
-            <span class="h-cr">Créneau</span><span>Statut</span><span></span></div>
-          <div class="fit fgrid flate" data-st="retard">
-            <span class="fcal"><b>14</b><small>Août</small></span>
-            <span class="fnat"><b>Contrôle ponctuel</b><small>demandé par le syndic</small></span>
-            <span class="ftq non">Personne</span>
-            <span class="fcr">14:00 – 16:00</span>
-            <span><span class="st stlate">En retard · 7 j</span></span>
-            <a class="fgo" href="calendrier.html">Voir →</a>
+        <!-- ☠☠ 15/09 (patron : « GO B ») — CE BLOC ETAIT LE DERNIER ENDROIT
+             AVEC L'ANCIEN DESIGN. Decouvert en testant la 3B : le gabarit
+             « .ivrow » que je venais de refaire ne tourne QUE dans « if(NEUF) »,
+             c'est-a-dire pour un client cree a la main. Les 13 clients du modele
+             (Boulangerie Dupont, Pharmacie Centrale…) lisent CE markup ecrit en
+             dur — donc deux designs coexistaient sur le meme ecran selon le
+             client sur lequel on cliquait. Converti ligne pour ligne.
+             ☠ Les DONNEES sont inchangees (memes dates, memes titres, memes
+             techniciens, memes statuts) : pas de code postal invente ici, la
+             demo n'en a pas, et une valeur en dur serait fausse pour 12 des
+             13 fiches. Le CP vient des vraies interventions.
+             ☠ L'en-tete de colonnes (« Date | Intervention | Technicien |
+             Creneau | Statut ») disparait : la 3B n'en a pas, chaque ligne se
+             lit seule. Le creneau rejoint le sous-titre, comme dans la 3B. -->
+        <div class="ivwrap" id="hist-tb">
+          <div class="ivrow" data-st="retard">
+            <div class="ivd" style="background:#D9463A"><b>14</b><span>AOÛT 26</span></div>
+            <div class="ivbody">
+              <div class="ivmain"><b>Contrôle ponctuel</b><small><span class="ivcl">demandé par le syndic</span><span style="color:#C9CDD6">·</span><span>14:00 – 16:00</span></small></div>
+              <span class="ivadc"><span class="ivadr">12 rue de la République</span><span class="ivadv">75011 Paris</span></span>
+              <span class="ivtec"><span class="ivav vide" title="Personne assignée">?</span><span class="ivtn vide">à affecter</span></span>
+              <span class="ivst"><span class="st stlate">En retard · 7 j</span></span>
+              <a class="rlink" href="calendrier.html">Voir →</a>
+            </div>
           </div>
-          <div class="fit fgrid fnext" data-st="avenir">
-            <span class="fcal"><b>29</b><small>Août</small></span>
-            <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 8</small></span>
-            <span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span>
-            <span class="fcr">08:00 – 10:00</span>
-            <span><span class="st st-envoye">À venir</span></span>
-            <a class="fgo" href="calendrier.html">Voir →</a>
+          <div class="ivrow" data-st="avenir">
+            <div class="ivd" style="background:#4A5FD0"><b>29</b><span>AOÛT 26</span></div>
+            <div class="ivbody">
+              <div class="ivmain"><b>Contrôle mensuel</b><small><span class="ivcl">intervention n° 8</span><span style="color:#C9CDD6">·</span><span>08:00 – 10:00</span></small></div>
+              <span class="ivadc"><span class="ivadr">12 rue de la République</span><span class="ivadv">75011 Paris</span></span>
+              <span class="ivtec"><span class="ivav" style="background:#2E5CE6" title="Pablo">PA</span><span class="ivtn">Pablo</span></span>
+              <span class="ivst"><span class="st st-envoye">À venir</span></span>
+              <a class="rlink" href="calendrier.html">Voir →</a>
+            </div>
           </div>
-          <div class="fit fgrid" data-st="done">
-            <span class="fcal"><b>12</b><small>Juil.</small></span>
-            <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 7</small></span>
-            <span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span>
-            <span class="fcr vide">—</span>
-            <span><span class="st st-payee">Terminée</span></span>
-            <a class="fgo" href="calendrier.html">Voir →</a>
+          <div class="ivrow off" data-st="done">
+            <div class="ivd" style="background:#12875A"><b>12</b><span>JUIL 26</span></div>
+            <div class="ivbody">
+              <div class="ivmain"><b>Contrôle mensuel</b><small><span class="ivcl">intervention n° 7</span></small></div>
+              <span class="ivadc"><span class="ivadr">12 rue de la République</span><span class="ivadv">75011 Paris</span></span>
+              <span class="ivtec"><span class="ivav" style="background:#2E5CE6" title="Pablo">PA</span><span class="ivtn">Pablo</span></span>
+              <span class="ivst"><span class="st st-payee">Terminée</span></span>
+              <a class="rlink" href="calendrier.html">Voir →</a>
+            </div>
           </div>
-          <div class="fit fgrid" data-st="done">
-            <span class="fcal"><b>14</b><small>Juin</small></span>
-            <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 6</small></span>
-            <span class="ftq"><i style="background:#2E5CE6"></i>Pablo</span>
-            <span class="fcr vide">—</span>
-            <span><span class="st st-payee">Terminée</span></span>
-            <a class="fgo" href="calendrier.html">Voir →</a>
+          <div class="ivrow off" data-st="done">
+            <div class="ivd" style="background:#12875A"><b>14</b><span>JUIN 26</span></div>
+            <div class="ivbody">
+              <div class="ivmain"><b>Contrôle mensuel</b><small><span class="ivcl">intervention n° 6</span></small></div>
+              <span class="ivadc"><span class="ivadr">12 rue de la République</span><span class="ivadv">75011 Paris</span></span>
+              <span class="ivtec"><span class="ivav" style="background:#2E5CE6" title="Pablo">PA</span><span class="ivtn">Pablo</span></span>
+              <span class="ivst"><span class="st st-payee">Terminée</span></span>
+              <a class="rlink" href="calendrier.html">Voir →</a>
+            </div>
           </div>
-          <div class="fit fgrid" data-st="done">
-            <span class="fcal"><b>10</b><small>Mai</small></span>
-            <span class="fnat"><b>Contrôle mensuel</b><small>intervention n° 5</small></span>
-            <span class="ftq"><i style="background:#0E8A7A"></i>Otman</span>
-            <span class="fcr vide">—</span>
-            <span><span class="st st-payee">Terminée</span></span>
-            <a class="fgo" href="calendrier.html">Voir →</a>
+          <div class="ivrow off" data-st="done">
+            <div class="ivd" style="background:#12875A"><b>10</b><span>MAI 26</span></div>
+            <div class="ivbody">
+              <div class="ivmain"><b>Contrôle mensuel</b><small><span class="ivcl">intervention n° 5</span></small></div>
+              <span class="ivadc"><span class="ivadr">12 rue de la République</span><span class="ivadv">75011 Paris</span></span>
+              <span class="ivtec"><span class="ivav" style="background:#0E8A7A" title="Otman">OT</span><span class="ivtn">Otman</span></span>
+              <span class="ivst"><span class="st st-payee">Terminée</span></span>
+              <a class="rlink" href="calendrier.html">Voir →</a>
+            </div>
           </div>
-          <div class="fit fgrid" data-st="done">
-            <span class="fcal"><b>08</b><small>Mars</small></span>
-            <span class="fnat"><b>Traitement punaises</b><small>intervention n° 3</small></span>
-            <span class="ftq"><i style="background:#7B3BEA"></i>Fredo</span>
-            <span class="fcr vide">—</span>
-            <span><span class="st st-payee">Terminée</span></span>
-            <a class="fgo" href="calendrier.html">Voir →</a>
+          <div class="ivrow off" data-st="done">
+            <div class="ivd" style="background:#12875A"><b>08</b><span>MARS 26</span></div>
+            <div class="ivbody">
+              <div class="ivmain"><b>Traitement punaises</b><small><span class="ivcl">intervention n° 3</span></small></div>
+              <span class="ivadc"><span class="ivadr">12 rue de la République</span><span class="ivadv">75011 Paris</span></span>
+              <span class="ivtec"><span class="ivav" style="background:#7B3BEA" title="Fredo">FR</span><span class="ivtn">Fredo</span></span>
+              <span class="ivst"><span class="st st-payee">Terminée</span></span>
+              <a class="rlink" href="calendrier.html">Voir →</a>
+            </div>
           </div>
         </div>
         <div class="tfoot"><span id="hist-count">1-5 sur 5 affichés</span>
@@ -2170,6 +2292,29 @@ function toast(msg, undoFn){
   if(h1 && h1.childNodes.length) h1.childNodes[0].nodeValue = qb + " ";
   var _adr = document.getElementById("h-adr");
   if(_adr) _adr.innerHTML = f.adr;
+  /* ☠☠ 15/09 — la colonne Adresse des lignes ECRITES EN DUR (les 13 clients du
+     modele) se remplit ICI, depuis la MEME source que l'en-tete de la fiche :
+     f.adr. Pas de deuxieme logique d'adresse a maintenir, et surtout pas
+     d'adresse en dur par client — elle serait fausse pour les 12 autres.
+     ☠ On coupe sur la DERNIERE virgule : « 4 rue de la Mairie, 92600 Asnieres »
+     → rue = « 4 rue de la Mairie », cp+ville = « 92600 Asnieres ». Une adresse
+     sans virgule part entiere dans la rue, et sans adresse du tout la colonne
+     reste VIDE : jamais de tiret ni de valeur inventee.
+     ☠ Place volontairement juste apres l'ecriture de #h-adr : a cet endroit le
+     markup statique existe deja (le script est apres le HTML) et aucun timer
+     n'est necessaire. Sur un client cree a la main, tabsLive() reecrit ensuite
+     tout le bloc avec les vraies adresses des interventions. */
+  (function adrCol(){
+    var A = String(f.adr || "").trim();
+    var k = A.lastIndexOf(",");
+    var rue = k > 0 ? A.slice(0, k).trim() : A;
+    var cpv = k > 0 ? A.slice(k + 1).trim() : "";
+    document.querySelectorAll('[data-tab="histint"] .ivadc').forEach(function(c){
+      var a = c.querySelector(".ivadr"), b = c.querySelector(".ivadv");
+      if(a){ a.textContent = rue; a.title = rue; }
+      if(b){ b.textContent = cpv; b.title = cpv; }
+    });
+  })();
   var _ref = document.getElementById("h-ref");
   if(_ref){
     if(f.ref === "Nouveau client"){
@@ -2477,17 +2622,54 @@ function toast(msg, undoFn){
                    : retard ? '<span class="st stlate">En retard \u00b7 ' + jours + '\u00a0j</span>'
                    : tech ? '<span class="st st-envoye">\u00c0 venir</span>'
                    : '<span class="st staff">\u00c0 affecter</span>';
+          /* ☠️ 15/09 : le bandeau porte la COULEUR DU STATUT, pas un gris.
+             Sans ca la date serait blanche sur gris et le statut invisible. */
+          var bcol = today ? "" : (retard ? "#D9463A" : fait ? "#12875A" : (tech ? "#4A5FD0" : "#C4880F"));
+          /* initiales du technicien pour l'avatar : « Pablo Flocarri » -> PF,
+             un prenom seul -> ses deux premieres lettres. */
+          /* ☠ ces valeurs sortent de la saisie : elles passent dans un attribut
+             title=, donc guillemets et chevrons doivent etre neutralises. */
+          var esc2 = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); };
+          var _ini = tech ? (tech.trim().split(/\s+/).length > 1
+                       ? tech.trim().split(/\s+/).slice(0,2).map(function(w){return w[0]}).join("")
+                       : tech.trim().slice(0,2)).toUpperCase() : "";
           return '<div class="ivrow' + (passee && fait ? ' off' : '') + '" data-st="' + (fait ? "done" : retard ? "retard" : "avenir") + '" data-site="' + String(x.site || "").replace(/"/g, "&quot;") + '">'
-            + '<div class="ivd' + (today ? ' today' : '') + '"><b>' + (dt ? dt.getDate() : "\u2014") + '</b><span>' + (today ? "AUJ." : (dt ? MOISC[dt.getMonth()] : "")) + '</span></div>'
+            + '<div class="ivd' + (today ? ' today' : '') + '"' + (bcol ? ' style="background:' + bcol + '"' : '') + '><b>' + (dt ? dt.getDate() : "\u2014") + '</b><span>' + (today ? "AUJ." : (dt ? MOISC[dt.getMonth()] + " " + String(dt.getFullYear()).slice(-2) : "")) + '</span></div>'
+            + '<div class="ivbody">'
             + '<div class="ivmain"><b>' + (x.typeLibre || LBL[x.type] || "Intervention") + '</b>'
-            + '<small><i class="ivtd" style="background:' + (TCOL[tech] || "#9CA1AD") + '"></i>' + (tech || "Personne")
+            + '<small>'
             /* 26/08 (patron, suivi Nicolas) : le NOM du site plutôt que la
                ville — cinq boutiques dans la même ville, le CP ne dit rien. */
-            + (x.site ? ' \u00b7 <b class="ivsite">' + x.site + '</b>'
-               : ((x.cp || x.ville) ? ' \u00b7 ' + [x.cp, x.ville].filter(Boolean).join(" ") : '')) + '</small></div>'
-            + '<span class="ivh">' + cren + '</span>' + chip
+            /* ☠️ l'ordre demande le 15/09 : CLIENT (le nom du site) d'abord,
+               puis le CP. La decision du 26/08 tient — « cinq boutiques dans
+               la meme ville, le CP ne dit rien » — mais maintenant on a LES
+               DEUX au lieu de choisir. */
+            + (x.site ? '<span class="ivcl">' + x.site + '</span>' : '')
+            /* ☠☠ 15/09 : le code postal QUITTE le sous-titre — il vit maintenant dans
+               la colonne Adresse, ou il tombe toujours a la meme abscisse. Le laisser
+               ici EN PLUS l'aurait ecrit deux fois sur la meme ligne. */
+            + (cren ? (x.site ? '<span style="color:#C9CDD6">\u00b7</span>' : '') + '<span>' + cren + '</span>' : '')
+            + '</small></div>'
+            /* la colonne Adresse : la rue de l'intervention, sinon celle du client.
+               ☠ Une intervention enregistree avant l'ajout du champ n'a pas de rue :
+               on retombe sur l'adresse de la fiche plutot que d'afficher du vide.
+               Si on n'a rien, la colonne reste vide — pas de tiret invente. */
+            + (function(){
+                var rue = String(x.rue || (r && r.adresse) || "").trim();
+                var cpv = [x.cp || (r && r.cp), x.ville || (r && r.ville)].filter(Boolean).join(" ").trim();
+                if(!rue && !cpv) return '<span class="ivadc"></span>';
+                return '<span class="ivadc">'
+                  + '<span class="ivadr" title="' + esc2(rue) + '">' + esc2(rue) + '</span>'
+                  + '<span class="ivadv" title="' + esc2(cpv) + '">' + esc2(cpv) + '</span></span>';
+              })()
+            /* le technicien, colonne FIXE de 112 px, a DROITE */
+            + '<span class="ivtec">'
+              + (tech ? '<span class="ivav" style="background:' + (TCOL[tech] || "#9CA1AD") + '" title="' + tech + '">' + _ini + '</span><span class="ivtn">' + tech + '</span>'
+                      : '<span class="ivav vide" title="Personne assign\u00e9e">?</span><span class="ivtn vide">\u00e0 affecter</span>')
+            + '</span>'
+            + '<span class="ivst">' + chip + '</span>'
             + '<a class="rlink" href="calendrier.html">Voir \u2192</a>'
-            + '</div>';
+            + '</div></div>';
         }).join("");
         /* le signal appelle une reponse : on annonce le retard AU-DESSUS de la
            liste, avec le nombre et l'anciennete du plus vieux. */
