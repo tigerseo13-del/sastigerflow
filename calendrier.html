@@ -807,6 +807,11 @@ body.dragging .busyzone{opacity:1}
 .tcol.cg .thacts{opacity:.35}
 .cgpill{display:inline-flex;align-items:center;gap:4px;font-size:.655rem;font-weight:800;
   background:#FFF6E6;color:#96620C;border:1px solid #F6E0B4;border-radius:7px;padding:3px 7px;white-space:nowrap}
+/* ☠ le nombre d'interventions à replacer, collé à la pastille de congé.
+   Rouge et non ambre : le congé est un fait, ces interventions sont un
+   problème. Le détail est dans l'infobulle pour ne pas allonger la ligne. */
+.cgres{display:inline-flex;align-items:center;gap:3px;font-size:.655rem;font-weight:800;margin-left:4px;
+  background:var(--red-bg,#FDECEA);color:#C0362C;border:1px solid #F2C4BF;border-radius:7px;padding:3px 6px;white-space:nowrap;cursor:help}
 /* ☠☠☠ 15/09, DEUX RETOURS DU PATRON DE SUITE, ET UNE ERREUR DE MA PART.
    1) « c'est étouffant sur l'agenda le fond gris rayé ». Les hachures
       couvraient une colonne entière sur toute la hauteur de la journée : sur
@@ -3097,7 +3102,9 @@ const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
               <a class="tca mp" href="#" title="Itinéraire de la tournée de ${t.nom} (Google Maps)" onclick="event.stopPropagation();event.preventDefault();tournee(${t.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-5.5-2.2V4l5.5 2.2L15 4l5.5 2.2V20L15 17.8zM9 6.2v13.8M15 4v13.8"/></svg></a>
             </span>
           </span>
-          <small>${CG ? '<span class="cgpill" title="En cong\u00e9 du ' + cgFr(CG.du) + ' au ' + cgFr(CG.au) + '">\u2600 Cong\u00e9 \u2014 retour le ' + cgRetour(CG.au) + '</span>'
+          <small>${CG ? '<span class="cgpill" title="En cong\u00e9 du ' + cgFr(CG.du) + ' au ' + cgFr(CG.au) + '">\u2600 Cong\u00e9 \u00b7 retour ' + cgRetour(CG.au) + '</span>'
+            + (function(){ var r = mine.filter(function(v){ return !v.cancelled && !v.done; }).length;
+                return r ? '<span class="cgres" title="' + r + ' intervention' + (r > 1 ? 's' : '') + ' encore sur son agenda ce jour-l\u00e0 \u2014 \u00e0 replacer">\u26a0 ' + r + '</span>' : ''; })()
             : (mine.filter(v=>!v.cancelled).length ? mine.filter(v=>!v.cancelled).length + ' interv.' : '<span class="freelbl">Libre aujourd\'hui</span>')}</small>
         </div>
       </div>
@@ -3129,7 +3136,13 @@ const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
         : 'son agenda est vide sur cette journ\u00e9e') + '</em>'
     + (c.reste ? '<span class="cgfix" onclick="soloTech(' + c.id + ')">Voir son agenda \u2192</span>' : '')
     + '</div>').join("");
-  const _cgz = document.getElementById('cgzone'); if(_cgz) _cgz.innerHTML = cgbar;
+  /* ☠☠ 15/09 (patron) : « enleve la grosse barre jaune, laisse juste sur la
+     colonne du tec ». Le bandeau est retiré. MAIS il portait la seule
+     information qui demandait une action — le nombre d'interventions restées
+     sur l'agenda de l'absent. Sans elle on affiche une absence et on laisse
+     le problème. Ce compte remonte donc DANS l'en-tête de la colonne, à côté
+     de la pastille : même endroit, deux fois moins de place. */
+  const _cgz = document.getElementById('cgzone'); if(_cgz) _cgz.innerHTML = "";
   document.getElementById('calscroll').innerHTML = outbar + `<div class="daygrid ${techs.length <= 4 ? 'wide' : ''}">${gut}${cols}</div>`;
 }
 
