@@ -807,11 +807,9 @@ body.dragging .busyzone{opacity:1}
 .tcol.cg .thacts{opacity:.35}
 .cgpill{display:inline-flex;align-items:center;gap:4px;font-size:.655rem;font-weight:800;
   background:#FFF6E6;color:#96620C;border:1px solid #F6E0B4;border-radius:7px;padding:3px 7px;white-space:nowrap}
-/* ☠ le nombre d'interventions à replacer, collé à la pastille de congé.
-   Rouge et non ambre : le congé est un fait, ces interventions sont un
-   problème. Le détail est dans l'infobulle pour ne pas allonger la ligne. */
-.cgres{display:inline-flex;align-items:center;gap:3px;font-size:.655rem;font-weight:800;margin-left:4px;
-  background:var(--red-bg,#FDECEA);color:#C0362C;border:1px solid #F2C4BF;border-radius:7px;padding:3px 6px;white-space:nowrap;cursor:help}
+/* ☠ 15/09 : la pastille « .cgres » (le « ⚠ 6 » rouge) a vecu une heure.
+   Retiree sur demande du patron. Le compte vit desormais dans le title de
+   .cgpill — zero pixel, information conservee. */
 /* ☠☠☠ 15/09, DEUX RETOURS DU PATRON DE SUITE, ET UNE ERREUR DE MA PART.
    1) « c'est étouffant sur l'agenda le fond gris rayé ». Les hachures
       couvraient une colonne entière sur toute la hauteur de la journée : sur
@@ -3102,9 +3100,19 @@ const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
               <a class="tca mp" href="#" title="Itinéraire de la tournée de ${t.nom} (Google Maps)" onclick="event.stopPropagation();event.preventDefault();tournee(${t.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20l-5.5-2.2V4l5.5 2.2L15 4l5.5 2.2V20L15 17.8zM9 6.2v13.8M15 4v13.8"/></svg></a>
             </span>
           </span>
-          <small>${CG ? '<span class="cgpill" title="En cong\u00e9 du ' + cgFr(CG.du) + ' au ' + cgFr(CG.au) + '">\u2600 Cong\u00e9 \u00b7 retour ' + cgRetour(CG.au) + '</span>'
-            + (function(){ var r = mine.filter(function(v){ return !v.cancelled && !v.done; }).length;
-                return r ? '<span class="cgres" title="' + r + ' intervention' + (r > 1 ? 's' : '') + ' encore sur son agenda ce jour-l\u00e0 \u2014 \u00e0 replacer">\u26a0 ' + r + '</span>' : ''; })()
+          <small>${CG ? (function(){
+              /* ☠☠ 15/09 (patron) : « enleve le truc rouge 6, laisse juste congé
+                 avec la date ». Le badge rouge est retiré — troisième allègement
+                 de suite sur ce signal (hachures, puis bandeau, puis compteur).
+                 Le compte NE DISPARAÎT PAS pour autant : il se replie dans
+                 l'infobulle de la pastille, où il ne coûte aucun pixel. Sans ça
+                 on afficherait une absence en laissant son travail orphelin,
+                 et plus rien ne le dirait nulle part. */
+              var r = mine.filter(function(v){ return !v.cancelled && !v.done; }).length;
+              var t = "En cong\u00e9 du " + cgFr(CG.du) + " au " + cgFr(CG.au)
+                    + (r ? " \u2014 " + r + " intervention" + (r > 1 ? "s" : "") + " encore sur son agenda ce jour-l\u00e0" : "");
+              return '<span class="cgpill" title="' + t + '">\u2600 Cong\u00e9 \u00b7 retour ' + cgRetour(CG.au) + '</span>';
+            })()
             : (mine.filter(v=>!v.cancelled).length ? mine.filter(v=>!v.cancelled).length + ' interv.' : '<span class="freelbl">Libre aujourd\'hui</span>')}</small>
         </div>
       </div>
