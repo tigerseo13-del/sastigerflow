@@ -807,10 +807,20 @@ body.dragging .busyzone{opacity:1}
 .tcol.cg .thacts{opacity:.35}
 .cgpill{display:inline-flex;align-items:center;gap:4px;font-size:.655rem;font-weight:800;
   background:#FFF6E6;color:#96620C;border:1px solid #F6E0B4;border-radius:7px;padding:3px 7px;white-space:nowrap}
-/* ☠️ pointer-events:none — le voile ne doit PAS manger le clic : on veut
-   pouvoir attraper une intervention restée dessous pour la déplacer. */
-.cgveil{position:absolute;left:0;right:0;top:0;bottom:0;z-index:7;pointer-events:none;
-  background:repeating-linear-gradient(45deg,rgba(138,144,160,.14) 0 7px,rgba(138,144,160,.035) 7px 14px)}
+/* ☠☠☠ 15/09, DEUX RETOURS DU PATRON DE SUITE, ET UNE ERREUR DE MA PART.
+   1) « c'est étouffant sur l'agenda le fond gris rayé ». Les hachures
+      couvraient une colonne entière sur toute la hauteur de la journée : sur
+      une maquette de 4 lignes ça tenait, sur l'écran réel ça pesait. Même
+      leçon que le fond de page #EAECF2 rejeté le 12/09 — une texture jugée
+      sur un extrait n'a pas le même poids sur la surface entière.
+   2) « ta reco à toi c'était pas le fond gris rayé nan » — IL A RAISON. Sur
+      les trois maquettes ma recommandation écrite était B (le bandeau), et
+      j'ai ensuite ajouté le voile de A par-dessus en décidant « les deux ».
+      J'ai dérivé de ma propre reco sans le dire.
+   Le voile est SUPPRIMÉ : plus aucune peinture sur le corps de la colonne.
+   Ce qui signale le congé, et qui suffit : l'EN-TÊTE grise + la PASTILLE
+   « retour le 22/09 » (sticky, donc visible même en descendant dans la
+   journée) + le BANDEAU qui compte ce qui reste à réaffecter. */
 /* ☠☠ 15/09, VU SUR CAPTURE : ce bandeau etait « sticky top:0 z-index:6 »,
    copie sur .outbar. Resultat mesure : il se collait par-dessus .tcol-head
    (lui aussi sticky top:0, mais z-index:5) et MASQUAIT la ligne des noms de
@@ -3091,7 +3101,7 @@ const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
             : (mine.filter(v=>!v.cancelled).length ? mine.filter(v=>!v.cancelled).length + ' interv.' : '<span class="freelbl">Libre aujourd\'hui</span>')}</small>
         </div>
       </div>
-      <div class="tcol-body" data-tech="${t.id}" style="--tint:${t.c}0D">${nightZones}${now}${cards}${CG ? '<div class="cgveil"></div>' : ''}</div>
+      <div class="tcol-body" data-tech="${t.id}" style="--tint:${t.c}0D">${nightZones}${now}${cards}</div>
     </div>`;
   }).join("");
 
