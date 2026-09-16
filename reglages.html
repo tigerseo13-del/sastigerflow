@@ -761,6 +761,13 @@ input[type=color]{padding:3px;height:42px;width:56px;cursor:pointer}
 .dayr.off input,.dayr.off .sep,.dayr.off .hrs{display:none}
 .dayr.off .rest{display:inline-block;margin-left:auto}
 .togr{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px dashed #F0F1F4;font-size:.85rem;font-weight:600}
+/* ☠️ 16/09 : les cibles d'un document joint. .rchip existait déjà (même objet
+   visuel que les autres puces des Réglages) — il n'avait pas d'état « choisi »,
+   parce qu'aucun écran ne s'en servait comme d'une case à cocher. */
+.pjcib{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.pjcib .rchip.on{border-color:var(--orange);background:#FFF3EC;color:var(--orange-deep,#C2410C)}
+.pjvide{font-size:.82rem;color:var(--muted);background:#F7F8FA;border:1px dashed #E3E6EC;border-radius:12px;padding:12px 14px;line-height:1.5}
+.dsub{font-size:.8rem;color:var(--muted);font-weight:500;margin:7px 0 0;line-height:1.5}
 .togr:last-child{border-bottom:0}
 .logobox{width:74px;height:74px;border-radius:14px;border:1.5px dashed #D5D8DF;display:grid;place-items:center;background:#FBFBFC}
 /* 30/07 (patron) : une photo posee = un cadre NET — plein, fin, ombre douce,
@@ -2338,7 +2345,26 @@ function docrOuvrir(i){
     (/^image\//.test(d.mime) ? '<img src="' + d.src + '" style="max-width:100%;display:block;margin:auto">'
                              : '<iframe src="' + d.src + '" style="border:0;width:100%;height:100vh"></iframe>') + '</body>');
 }
-let RULES = [ {n:"CGV sur devis", j:"Devis", doc:"Terms and Condition", on:true} ];
+/* ☠☠ 16/09 : les pièces jointes automatiques étaient un simple « let » en
+   mémoire — tout ce que le patron aurait ajouté repartait au rechargement,
+   exactement le bug corrigé le 12/08 pour le reste des Réglages. Elles vivent
+   maintenant dans tigerflow-reglages, sous la clé « pj ».
+   ☠ MERGE, pas écrasement : si la clé existe on la prend TELLE QUELLE, la
+   valeur ci-dessous ne sert que de premier remplissage. */
+let RULES = (function(){
+  try{
+    const v = (JSON.parse(localStorage.getItem("tigerflow-reglages")) || {}).pj;
+    if(Array.isArray(v)) return v;
+  }catch(e){}
+  return [ {j:"Devis", doc:"Terms and Condition", on:true} ];
+})();
+function pjPersist(){
+  try{
+    const all = JSON.parse(localStorage.getItem("tigerflow-reglages")) || {};
+    all.pj = RULES;
+    localStorage.setItem("tigerflow-reglages", JSON.stringify(all));
+  }catch(e){}
+}
 R.docs = () => `
   <div class="card">
     <div class="card-h">Documents réutilisables<button class="addbtn" onclick="document.getElementById('docr-in').click()" title="PDF, DOCX ou image">+ Importer</button></div>
@@ -2366,7 +2392,7 @@ R.docs = () => `
          « automatiquement » — ça part tout seul, il n'y pense plus. Et
          « à l'envoi de » dit le MOMENT : c'est à l'envoi que ça se produit, pas
          à la création du devis. -->
-    <div class="card-h" style="margin-top:2px">Documents joints automatiquement<button class="addbtn" onclick="toast('Le document part tout seul avec chaque envoi du type choisi')">+ Joindre un document</button></div>
+    <div class="card-h" style="margin-top:2px">Documents joints automatiquement<button class="addbtn" onclick="pjAdd()">+ Joindre un document</button></div>
     <!-- ☠️ 16/09 : la colonne « Nom de la règle » est SUPPRIMÉE. Elle demandait
          d'inventer un nom pour quelque chose qui se lit déjà tout seul :
          « Terms and Condition → Devis ». Un champ de saisie de plus, pour rien.
@@ -2378,8 +2404,8 @@ R.docs = () => `
       <td><b>${r.doc}</b></td><td>${r.j}</td>
       <td><span class="bdg ${r.on ? "b-on" : "b-off"}">${r.on ? "Actif" : "Inactif"}</span></td>
       <td><span class="acti">
-        <button class="aic" title="Modifier" onclick="toast('Modification du document joint')">${ic.pen}</button>
-        <button class="aic del" title="Supprimer" onclick="arm(this,()=>{RULES.splice(${i},1);spRender();toast('Document joint retiré \u2014 il ne partira plus avec les envois')})">${ic.del}</button>
+        <button class="aic" title="Modifier" onclick="pjAdd(${i})">${ic.pen}</button>
+        <button class="aic del" title="Supprimer" onclick="arm(this,()=>{RULES.splice(${i},1);pjPersist();spRender();toast('Document joint retiré \u2014 il ne partira plus avec les envois')})">${ic.del}</button>
       </span></td></tr>`).join("")}</tbody></table></div>
     <div class="tfoot"><span>1-${RULES.length} sur ${RULES.length} affichés</span></div>
   </div>`;
@@ -2406,6 +2432,75 @@ function tplPanel(key){
   </div>`;
 }
 ["mdevis","mfacture","mavoir","mcontrat","mrapport"].forEach(k => { R[k] = () => tplPanel(k); });
+/* ═══ ☠️☠️ 16/09 (patron : « crée le panneau comme ça quand on clique sur
+   joindre un document ») : LE PANNEAU DES PIÈCES JOINTES AUTOMATIQUES.
+   Calqué sur le panneau de la plateforme Saigon, avec trois écarts assumés :
+   ═ PAS de champ « Nom ». Décidé ce matin : « Terms and Condition → Devis »
+     se lit tout seul, le nom n'apportait rien. Preuve mesurée sur leur écran :
+     la ligne enregistrée avait ce nom VIDE alors qu'il est marqué obligatoire.
+   ═ « Joindre à » est en CHOIX MULTIPLE, pas unique. Des CGV se joignent au
+     devis ET au contrat ; en choix unique il faudrait créer deux entrées pour
+     le même PDF, et les modifier deux fois le jour où il change.
+   ═ QUATRE cibles au lieu de trois : nos envois sont Devis, Factures, Contrats
+     et Rapports d'intervention. On n'invente pas de cible qui n'existe pas.
+   ☠️ Le sélecteur lit DOCSR À L'OUVERTURE, pas au chargement de la page : un
+     PDF importé juste avant doit apparaître. Et si la bibliothèque est vide on
+     ne montre pas un menu vide — on dit d'importer d'abord. ═══ */
+const PJ_CIBLES = ["Devis", "Factures", "Contrats", "Rapports d'intervention"];
+let PJI = -1, PJSEL = [];
+function pjTog(el){
+  const v = el.dataset.v, i = PJSEL.indexOf(v);
+  if(i < 0) PJSEL.push(v); else PJSEL.splice(i, 1);
+  el.classList.toggle("on");
+}
+function pjAdd(i){
+  const edit = (typeof i === "number");
+  const r = edit ? RULES[i] : {j:"", doc:"", on:true};
+  PJI = edit ? i : -1;
+  /* une entrée d'avant le choix multiple porte « Devis » ; on la relit en liste */
+  PJSEL = String(r.j || "").split(/\s*,\s*/).filter(Boolean);
+  const esc = v => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  const dispo = (typeof DOCSR !== "undefined" ? DOCSR : []).filter(d => d && d.n);
+  const nomCourt = x => String(x || "").replace(/\.(pdf|png|jpe?g|docx?)$/i, "");
+  const sel = dispo.length
+    ? '<select id="pj-doc"><option value="">— Choisir un document —</option>'
+      + dispo.map(d => { const v = nomCourt(d.n);
+          return '<option value="' + esc(v) + '"' + (v === r.doc ? " selected" : "") + '>' + esc(v)
+               + (d.t && d.t !== "Autre" ? " · " + esc(d.t) : "") + '</option>'; }).join("")
+      + '</select>'
+    : '<div class="pjvide">Votre bibliothèque est vide — importez d’abord un PDF avec le bouton <b>+ Importer</b> juste au-dessus.</div>';
+  $id("dbody").innerHTML = `
+    <div class="dcard dhead"><div class="drow1"><h2>${edit ? "Modifier ce document joint" : "Joindre un document à vos envois"}</h2><button class="dclose" onclick="closeDrawer()">✕</button></div>
+      <p class="dsub">Le document part tout seul avec chaque envoi du type choisi. Vous n’avez plus à y penser.</p></div>
+    <div class="dcard">
+      <span class="rlab">Joindre à l’envoi de <b style="color:var(--red)">*</b></span>
+      <div class="pjcib">${PJ_CIBLES.map(c => '<button type="button" class="rchip' + (PJSEL.indexOf(c) > -1 ? " on" : "") + '" data-v="' + c + '" onclick="pjTog(this)">' + c + '</button>').join("")}</div>
+      <span class="rlab" style="margin-top:14px">Document à joindre <b style="color:var(--red)">*</b></span>
+      ${sel}
+      <div class="togr" style="margin-top:4px"><span>Actif<small style="display:block;font-weight:500;color:var(--muted);font-size:.76rem">Coupé, le document reste dans la bibliothèque mais ne part plus</small></span><span class="tgl${r.on ? " on" : ""}" id="pj-on" onclick="this.classList.toggle('on')"></span></div>
+    </div>
+    <div class="dmain"><button class="dbig sec" onclick="closeDrawer()">Annuler</button><button class="dbig" onclick="pjSave()">Enregistrer</button></div>`;
+  openDrawer();
+}
+function pjSave(){
+  const dsel = $id("pj-doc");
+  const doc = dsel ? dsel.value : "";
+  if(!PJSEL.length){ toast("Choisissez au moins un type d’envoi"); return; }
+  if(!doc){ toast("Choisissez le document à joindre"); return; }
+  /* ☠️ sans champ « Nom », c'est le couple document + cible qui identifie la
+     ligne : on refuse le doublon, sinon le même PDF partirait deux fois dans
+     le même e-mail. */
+  const j = PJSEL.join(", ");
+  const dbl = RULES.some((x, k) => k !== PJI && x.doc === doc && String(x.j) === j);
+  if(dbl){ toast("Ce document est déjà joint à ces envois"); return; }
+  const on = $id("pj-on").classList.contains("on");
+  if(PJI > -1) RULES[PJI] = {j:j, doc:doc, on:on};
+  else RULES.unshift({j:j, doc:doc, on:on});
+  pjPersist();
+  closeDrawer();
+  spRender();
+  toast(on ? "✓ " + doc + " partira avec : " + j : doc + " enregistré — mais coupé, il ne part pas");
+}
 function tplAdd(key){
   TPLK = key;
   $id("dbody").innerHTML = `
