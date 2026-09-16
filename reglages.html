@@ -72,6 +72,9 @@ html{background:#F7F8FA}
   font-size:.83rem;font-weight:600;color:var(--ink-2);cursor:pointer}
 .ensfile:hover{border-color:var(--orange);color:var(--orange-deep)}
 .ensx[hidden]{display:none}
+/* ☠️ 16/09 : la carte Enseignes se cache par l'attribut hidden ; sans cette garde
+   un display: posé par une classe l'emporterait (piège mesuré le 10/09 sur #relcard). */
+#enscard[hidden]{display:none!important}
 .ensadd{background:#fff;border:1.5px dashed var(--line);color:var(--ink-2);border-radius:12px;padding:11px 16px;font-weight:600;font-size:.86rem;cursor:pointer;font-family:inherit;width:100%}
 .ensadd:hover{border-color:var(--orange);color:var(--orange-deep)}
 .ensnote{margin-top:12px;font-size:.79rem;color:var(--muted);line-height:1.5}
@@ -1090,10 +1093,10 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
            Certibiocide. Rien n'est codé — la ligne annonce le chantier. -->
       <a class="betarow" href="reglages.html#info">
         <span class="bn">Plusieurs enseignes</span>
-        <span class="betasw" id="bsw-en" role="switch" aria-checked="true" tabindex="0"
-              title="Couper les enseignes — les documents déjà émis gardent leur en-tête"
+        <span class="betasw" id="bsw-en" role="switch" aria-checked="false" tabindex="0"
+              title="Activer les enseignes — la carte « Vos enseignes » revient dans Société"
               onclick="event.preventDefault();event.stopPropagation();bswTog('en')"
-              onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();bswTog('en')}"><i></i><span class="betaEtat" id="bse-en">actif</span></span>
+              onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();event.stopPropagation();bswTog('en')}"><i></i><span class="betaEtat" id="bse-en">inactif</span></span>
       </a>
       <!-- 02/09 (patron, GO) : « le devis est validé, le client demande une
            facture d'acompte, on fait comment ? » puis « mets ça en bêta, tu
@@ -1490,7 +1493,7 @@ R.info = () => `
        « Les Super Déboucheurs » un nom commercial : UNE société, deux
        en-têtes. La ligne du haut n'est donc pas saisissable, elle reflète
        la carte « Mentions légales » juste en dessous. -->
-  <div class="card">
+  <div class="card" id="enscard">
     <div class="card-h">Vos enseignes
       <span class="ensh">Le nom qui s'affiche en haut de vos devis, factures et rapports</span></div>
     <div id="ens-liste"></div>
@@ -2671,6 +2674,11 @@ function spRender(){
   $id("panel").innerHTML = html;
   regFill();
   bankFill();
+  /* ☠️ 16/09, TROUVÉ EN BRANCHANT LA BÊTA : l'onglet Société est un gabarit
+     reconstruit à chaque navigation, et personne ne rappelait ensPaint() —
+     donc au RETOUR sur Société la liste des enseignes était vide et la carte
+     réapparaissait même bêta coupée. */
+  if(SPK === "info" && typeof ensPaint === "function") ensPaint();
   /* le panneau Notifications est reconstruit à chaque navigation : on y remet
      les valeurs enregistrées (la fonction vit dans un script plus bas). */
   if(SPK === "notifs" && typeof smsEtat === "function") smsEtat();
@@ -3449,7 +3457,8 @@ function ensToutes(){ return [ensSociete()].concat(ensAutres().map(function(x, i
            tel:x.tel || "", mail:x.mail || "", site:x.site || "", certi:x.certi || "", logo:x.logo || "" };
 })); }
 function ensBeta(){
-  try{ return localStorage.getItem("tigerflow-beta-enseignes") !== "0"; }catch(e){ return true; }
+  /* ☠️ 16/09 : inversée — absente = ÉTEINTE. Voir la note de BSW.en. */
+  try{ return localStorage.getItem("tigerflow-beta-enseignes") === "1"; }catch(e){ return false; }
 }
 /* 02/09 : POINT UNIQUE de la coupure. Tout ce qui propose de CHOISIR une
    enseigne passe par ici. ensDe()/ensPlein() ne sont volontairement PAS
@@ -3643,9 +3652,18 @@ const BSW = {
   ac: {k:"tigerflow-beta-acompte",       nom:"Facture d'acompte",
        on:"Facture d'acompte remise — le choix revient sur les devis acceptés",
        off:"Facture d'acompte coupée — les factures déjà émises sont gardées"},
-  en: {k:"tigerflow-beta-enseignes",     nom:"Plusieurs enseignes",
-       on:"Enseignes remises — le sélecteur revient sur les devis",
-       off:"Enseignes coupées — les documents déjà émis gardent leur en-tête"},
+  /* ☠️☠️ 16/09 (patron) : « Vos enseignes, enlève-le, mets ça dans Réglages bêta,
+     faut que ça s'affiche quand on le coche ». MESURE avant de coder : la bêta
+     existait déjà, mais ALLUMÉE PAR DÉFAUT (absent = actif) et elle ne coupait
+     que le sélecteur d'enseigne sur les devis — la carte restait dans Société.
+     Elle devient INVERSÉE (absent = éteint, comme Relation) et pilote AUSSI la
+     carte : cochée → la carte revient dans Société et on y emmène le patron.
+     ☠️ Les enseignes déjà saisies ne sont pas touchées : seule la visibilité
+     change. Un devis déjà émis sous « Les Super Déboucheurs » garde son
+     en-tête (ensDe/ensPlein ne lisent pas la bêta). */
+  en: {k:"tigerflow-beta-enseignes",     nom:"Plusieurs enseignes", inv:true,
+       on:"Enseignes activées — la carte revient dans Société, le sélecteur sur les devis",
+       off:"Enseignes coupées — la carte est retirée de Société, vos enseignes sont gardées"},
   /* ⚠️ celle-ci est INVERSÉE : absent = ÉTEINT. Le patron a demandé à retirer
      le panneau des impayés — il ne doit pas revenir tout seul. */
   im: {k:"tigerflow-beta-impayes", nom:"Panneau de contrôle impayés", inv:true,
@@ -3685,7 +3703,17 @@ function bswTog(id){
     else      v ? localStorage.removeItem(d.k)  : localStorage.setItem(d.k, "0");
   }catch(e){}
   bswPaint();
-  if(id === "en" && typeof ensPaint === "function") ensPaint();
+  if(id === "en" && typeof ensPaint === "function"){
+    ensPaint();
+    /* ☠️ 16/09 (patron : « faut que ça s'affiche quand on le coche ») : la boîte
+       bêta est tout en bas, la carte tout en haut de Société. Même leçon que
+       « ap » le 07/09 : sans l'emmener, il coche et ne voit rien bouger. */
+    if(v){
+      try{ spGoTo("info"); }catch(e){}
+      var bx2 = document.getElementById("beta"); if(bx2) bx2.open = false;
+      setTimeout(function(){ var c = document.getElementById("enscard"); if(c) c.scrollIntoView({behavior:"smooth", block:"start"}); }, 80);
+    }
+  }
   if(typeof toast === "function") toast(v ? BSW[id].on : BSW[id].off);
   /* ☠️ 07/09 (patron : « quand je clique sur actif sur appareil et partage de
      compte y a rien qui s'affiche »). MESURE : l'interrupteur basculait bien et
