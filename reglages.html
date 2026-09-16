@@ -2359,14 +2359,27 @@ R.docs = () => `
     }).join("") || '<div class="emptybox" style="grid-column:1/-1">Aucun document réutilisable.<br><small style="font-size:.75rem">Contrat type, CGV, attestation — ils deviennent joignables aux devis et factures.</small></div>'}</div>
   </div>
   <div class="card">
-    <div class="card-h" style="margin-top:2px">Règles de pièces jointes<button class="addbtn" onclick="toast('Une règle joint automatiquement un document à un type d\\'envoi')">+ Ajouter une règle</button></div>
-    <div class="tscroll"><table class="dt"><thead><tr><th>Nom de la règle</th><th>Joindre à</th><th>Document</th><th>Statut</th><th style="text-align:right">Actions</th></tr></thead>
+    <!-- ☠️☠️ 16/09 (patron) : « c'est pour joindre des documents à devis, contrat
+         etc. lors de l'envoi des PDF, c'est pas des règles ». Il avait raison :
+         « règle » est un mot de développeur. L'utilisateur ne crée pas une règle,
+         il DIT QUOI PARTIR AVEC QUOI. Le mot qui porte le sens est
+         « automatiquement » — ça part tout seul, il n'y pense plus. Et
+         « à l'envoi de » dit le MOMENT : c'est à l'envoi que ça se produit, pas
+         à la création du devis. -->
+    <div class="card-h" style="margin-top:2px">Documents joints automatiquement<button class="addbtn" onclick="toast('Le document part tout seul avec chaque envoi du type choisi')">+ Joindre un document</button></div>
+    <!-- ☠️ 16/09 : la colonne « Nom de la règle » est SUPPRIMÉE. Elle demandait
+         d'inventer un nom pour quelque chose qui se lit déjà tout seul :
+         « Terms and Condition → Devis ». Un champ de saisie de plus, pour rien.
+         MESURE qui l'a confirmé : sur la capture du patron, la ligne enregistrée
+         avait ce nom VIDE alors que le champ est marqué obligatoire. Personne ne
+         le remplit parce qu'il n'apporte rien. -->
+    <div class="tscroll"><table class="dt"><thead><tr><th>Document joint</th><th>Joint à l'envoi de</th><th>Statut</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${RULES.map((r, i) => `<tr>
-      <td><b>${r.n}</b></td><td>${r.j}</td><td>${r.doc}</td>
+      <td><b>${r.doc}</b></td><td>${r.j}</td>
       <td><span class="bdg ${r.on ? "b-on" : "b-off"}">${r.on ? "Actif" : "Inactif"}</span></td>
       <td><span class="acti">
-        <button class="aic" title="Modifier" onclick="toast('Modification de la règle')">${ic.pen}</button>
-        <button class="aic del" title="Supprimer" onclick="arm(this,()=>{RULES.splice(${i},1);spRender();toast('Règle supprimée')})">${ic.del}</button>
+        <button class="aic" title="Modifier" onclick="toast('Modification du document joint')">${ic.pen}</button>
+        <button class="aic del" title="Supprimer" onclick="arm(this,()=>{RULES.splice(${i},1);spRender();toast('Document joint retiré \u2014 il ne partira plus avec les envois')})">${ic.del}</button>
       </span></td></tr>`).join("")}</tbody></table></div>
     <div class="tfoot"><span>1-${RULES.length} sur ${RULES.length} affichés</span></div>
   </div>`;
