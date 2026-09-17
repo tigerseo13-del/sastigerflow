@@ -1281,7 +1281,10 @@ let CATS = [
   {n:"Punaises de lit", nb:4, d:"14/07/2026", on:true},
   {n:"Termites & Insectes xylophages", nb:3, d:"14/07/2026", on:true}
 ];
-let FERIES = [ {n:"Jour de l'an", d:"1 janvier", on:true, maj:"16/07/2026"} ];
+/* 17/09 (patron : « GO fériés ») : plus de saisie à la main — les 11 jours
+   fériés légaux sont préchargés (voir FLEGAL plus bas), Pâques calculé.
+   La liste vit dans tigerflow-feries ; FERIES est rempli par fLoad(). */
+let FERIES = [];
 let PREST = [
   {n:"Traitement punaises de lit — 2 passages", cat:"Punaises de lit", p:"480,00 €", tva:"20 %", maj:"17/07/2026"},
   {n:"Dératisation locaux professionnels", cat:"Dératisation (Rats / Souris)", p:"160,00 €", tva:"20 %", maj:"17/07/2026"},
@@ -2006,50 +2009,146 @@ R.jours = () => `
     <div style="margin-top:10px"><label class="lab" for="f-reglage-16">Heure de rappel de tâche par défaut</label><input id="f-reglage-16" type="time" value="09:00" style="max-width:220px"></div>
   </div>`;
 
-/* ----- jours fériés ----- */
+/* ----- jours fériés -----
+   17/09 (patron : « GO fériés ») — refait en entier :
+   · les 11 jours fériés légaux français sont PRÉCHARGÉS, plus rien à taper ;
+     8 à date fixe (chaque année) + 3 mobiles calculés depuis Pâques
+     (lundi de Pâques, Ascension = +39 j, lundi de Pentecôte = +50 j) ;
+   · « 1er » s'écrit 1er (exposant), plus « 1 » ;
+   · le crayon modifie vraiment (même panneau que l'ajout, prérempli) ;
+   · la liste est sauvegardée dans tigerflow-feries. FUSION, jamais d'écrasement :
+     la liste de l'utilisateur fait foi ; « Remettre les jours légaux » ne fait
+     que rajouter ceux qui manquent.
+   Forme d'une ligne : {k?, n, mm?, dd?, iso?, auto?, on, rec, maj}
+     k    : clé d'un jour légal (permet de le remettre s'il a été supprimé)
+     rec  : revient chaque année → mm/dd ; sinon date unique → iso
+     auto : décalage en jours depuis le dimanche de Pâques (0 = Pâques)
+     maj  : ISO du dernier changement ("" = jamais touché → « — ») */
+const FKEY = "tigerflow-feries";
+const esc2 = v => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+const MOISF = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const FLEGAL = [
+  {k:"an",        n:"Jour de l'an",        mm:1,  dd:1},
+  {k:"paques",    n:"Lundi de Pâques",     auto:1},
+  {k:"travail",   n:"Fête du Travail",     mm:5,  dd:1},
+  {k:"victoire",  n:"Victoire 1945",       mm:5,  dd:8},
+  {k:"ascension", n:"Ascension",           auto:39},
+  {k:"pentecote", n:"Lundi de Pentecôte",  auto:50},
+  {k:"nationale", n:"Fête nationale",      mm:7,  dd:14},
+  {k:"assomption",n:"Assomption",          mm:8,  dd:15},
+  {k:"toussaint", n:"Toussaint",           mm:11, dd:1},
+  {k:"armistice", n:"Armistice 1918",      mm:11, dd:11},
+  {k:"noel",      n:"Noël",                mm:12, dd:25}
+];
+/* dimanche de Pâques (algorithme de Meeus/Jones/Butcher), en UTC pour ne pas
+   glisser d'un jour avec le fuseau */
+function paques(y){
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4,
+        f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30,
+        i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7,
+        m = Math.floor((a + 11 * h + 22 * l) / 451), mo = Math.floor((h + l - 7 * m + 114) / 31),
+        da = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(Date.UTC(y, mo - 1, da));
+}
+const isoUTC = dt => dt.toISOString().slice(0, 10);
+const todayISO = () => { const t = new Date(); return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0"); };
+/* prochaine occurrence d'un jour (ISO) : cette année, ou l'an prochain si déjà passée */
+function fNext(f){
+  const T = todayISO(), y = +T.slice(0, 4);
+  if(f.auto !== undefined){
+    for(const Y of [y, y + 1]){ const d = paques(Y); d.setUTCDate(d.getUTCDate() + f.auto); const iso = isoUTC(d); if(iso >= T) return iso; }
+  }
+  if(f.rec && f.mm){
+    for(const Y of [y, y + 1]){ const iso = Y + "-" + String(f.mm).padStart(2, "0") + "-" + String(f.dd).padStart(2, "0"); if(iso >= T) return iso; }
+  }
+  return f.iso || "";
+}
+const jourFr = d => (+d === 1) ? "1<sup>er</sup>" : String(+d);
+/* libellé de la date : « 1er mai » (chaque année), « 14 mai 2027 » (mobile ou date unique) */
+function fLabel(f){
+  if(f.auto !== undefined){ const iso = fNext(f); return iso ? jourFr(iso.slice(8)) + " " + MOISF[+iso.slice(5, 7) - 1] + " " + iso.slice(0, 4) : "—"; }
+  if(f.rec && f.mm) return jourFr(f.dd) + " " + MOISF[f.mm - 1];
+  if(f.iso) return jourFr(f.iso.slice(8)) + " " + MOISF[+f.iso.slice(5, 7) - 1] + " " + f.iso.slice(0, 4);
+  return "—";
+}
+const frDate = iso => iso ? iso.slice(8) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4) : "—";
+function fLoad(){
+  let L = null;
+  try{ L = JSON.parse(localStorage.getItem(FKEY)); }catch(e){}
+  if(!Array.isArray(L)) L = FLEGAL.map(x => Object.assign({}, x, {on:true, rec:true, maj:""}));
+  FERIES = L;
+}
+function fPersist(){ try{ localStorage.setItem(FKEY, JSON.stringify(FERIES)); }catch(e){} }
+/* tri : ordre du calendrier (mois/jour de la prochaine occurrence) */
+const fKeyTri = f => { const iso = fNext(f); return iso ? iso.slice(5) : "99-99"; };
+function fLegauxManquants(){ const ks = new Set(FERIES.map(f => f.k).filter(Boolean)); return FLEGAL.filter(x => !ks.has(x.k)); }
+function fRemettre(){
+  const manq = fLegauxManquants();
+  manq.forEach(x => FERIES.push(Object.assign({}, x, {on:true, rec:true, maj:todayISO()})));
+  fPersist(); spRender();
+  toast(manq.length + " jour" + (manq.length > 1 ? "s" : "") + " férié" + (manq.length > 1 ? "s" : "") + " remis — vos autres jours n'ont pas bougé");
+}
+fLoad();
 function frows(){
-  return FERIES.map((f, i) => `<tr>
-    <td><b>${f.n}</b>${f.rec ? ' <span class="bdg" style="background:var(--green-bg);color:var(--green-d);margin-left:4px">Annuel</span>' : ""}</td><td>${f.d}</td>
+  const ordre = FERIES.map((f, i) => ({f, i})).sort((a, b) => fKeyTri(a.f) < fKeyTri(b.f) ? -1 : 1);
+  return ordre.map(({f, i}) => `<tr>
+    <td><b>${esc2(f.n)}</b>${f.rec ? ' <span class="bdg" style="background:var(--green-bg);color:var(--green-d);margin-left:4px">Annuel</span>' : ""}</td>
+    <td>${fLabel(f)}${f.auto !== undefined ? ' <small class="fcalc">calculé</small>' : ""}</td>
     <td><span class="bdg ${f.on ? "b-on" : "b-off"}">${f.on ? "Actif" : "Inactif"}</span></td>
-    <td>${f.maj}</td>
+    <td>${frDate(f.maj)}</td>
     <td><span class="acti">
-      <button class="aic" title="${f.on ? "Désactiver" : "Activer"}" onclick="FERIES[${i}].on=!FERIES[${i}].on;spRender()">${ic.pow}</button>
-      <button class="aic" title="Modifier" onclick="toast('Modification de « ${f.n} »')">${ic.pen}</button>
-      <button class="aic del" title="Supprimer" onclick="arm(this,()=>{FERIES.splice(${i},1);spRender();toast('Jour férié supprimé')})">${ic.del}</button>
+      <button class="aic" title="${f.on ? "Désactiver" : "Activer"}" onclick="FERIES[${i}].on=!FERIES[${i}].on;FERIES[${i}].maj=todayISO();fPersist();spRender()">${ic.pow}</button>
+      <button class="aic" title="Modifier" onclick="fAdd(${i})">${ic.pen}</button>
+      <button class="aic del" title="Supprimer" onclick="arm(this,()=>{FERIES.splice(${i},1);fPersist();spRender();toast('Jour férié supprimé')})">${ic.del}</button>
     </span></td></tr>`).join("");
 }
-function fAdd(){
+/* panneau d'ajout ET de modification (i = index dans FERIES, absent = ajout) */
+let FI = null;
+function fAdd(i){
+  FI = (i === undefined || i === null) ? null : i;
+  const f = FI === null ? {n:"", on:true, rec:false} : FERIES[FI];
+  const auto = f.auto !== undefined;
+  const dISO = auto ? fNext(f) : (f.rec && f.mm ? fNext(f) : (f.iso || ""));
   $id("dbody").innerHTML = `
-    <div class="dcard dhead"><div class="drow1"><h2>Ajouter un jour férié</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
+    <div class="dcard dhead"><div class="drow1"><h2>${FI === null ? "Ajouter un jour férié" : "Modifier « " + esc2(f.n) + " »"}</h2><button class="dclose" onclick="closeDrawer()">✕</button></div></div>
     <div class="dcard">
-      <span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="nf-n" placeholder="Ex. : Fête nationale">
-      <span class="rlab">Date <b style="color:var(--red)">*</b></span><input id="nf-d" type="date">
-      <div class="togr feriegr" style="margin-top:14px"><span>Récurrent (annuel)</span><span class="tgl" id="nf-rec" onclick="this.classList.toggle('on')"></span></div>
-      <div class="togr feriegr"><span>Actif</span><span class="tgl on" id="nf-on" onclick="this.classList.toggle('on')"></span></div>
+      <span class="rlab">Nom <b style="color:var(--red)">*</b></span><input id="nf-n" placeholder="Ex. : Fermeture annuelle" value="${esc2(f.n)}">
+      <span class="rlab">Date <b style="color:var(--red)">*</b></span><input id="nf-d" type="date" value="${dISO}"${auto ? " disabled" : ""}>
+      ${auto ? '<div class="hint">Date calculée chaque année à partir de Pâques' + (f.auto === 1 ? "" : " (+ " + f.auto + " jours)") + ' — rien à saisir.</div>' : ""}
+      <div class="togr feriegr" style="margin-top:14px"><span>Chaque année</span><span class="tgl${f.rec ? " on" : ""}${auto ? " dis" : ""}" id="nf-rec" onclick="${auto ? "" : "this.classList.toggle('on')"}"></span></div>
+      <div class="togr feriegr"><span>Actif</span><span class="tgl${f.on ? " on" : ""}" id="nf-on" onclick="this.classList.toggle('on')"></span></div>
     </div>
     <div class="dmain"><button class="dbig sec" onclick="closeDrawer()">Annuler</button><button class="dbig" onclick="fSave()">Enregistrer</button></div>`;
   openDrawer();
 }
 function fSave(){
   const n = $id("nf-n").value.trim(), dRaw = $id("nf-d").value.trim();
-  if(!n || !dRaw){ toast("Nom et date obligatoires"); return; }
-  const rec = $id("nf-rec").classList.contains("on");
+  const base = FI === null ? {} : FERIES[FI];
+  const auto = base.auto !== undefined;
+  if(!n || (!auto && !dRaw)){ toast("Nom et date obligatoires"); return; }
+  const rec = auto ? true : $id("nf-rec").classList.contains("on");
   const on = $id("nf-on").classList.contains("on");
-  const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
-  let d = dRaw;
   const m = dRaw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if(m){ d = (+m[3]) + " " + MOIS[(+m[2]) - 1] + (rec ? "" : " " + m[1]); }
-  FERIES.push({n, d, on, rec, maj:"aujourd'hui"});
-  closeDrawer(); spRender();
-  toast("« " + n + " » ajouté" + (rec ? " — chaque année" : "") + (on ? " — le calendrier bloquera ce jour" : " (inactif)"));
+  const f = Object.assign({}, base, {n, on, rec, maj:todayISO()});
+  if(!auto){
+    if(rec){ f.mm = +m[2]; f.dd = +m[3]; delete f.iso; }
+    else { f.iso = dRaw; delete f.mm; delete f.dd; }
+  }
+  if(FI === null) FERIES.push(f); else FERIES[FI] = f;
+  fPersist(); closeDrawer(); spRender();
+  toast("« " + n + " » " + (FI === null ? "ajouté" : "modifié") + (rec ? " — chaque année" : "") + (on ? "" : " (inactif)"));
 }
-R.feries = () => `
+R.feries = () => {
+  const manq = fLegauxManquants();
+  return `
   <div class="card">
     <div class="card-h">Jours fériés<button class="addbtn" onclick="fAdd()">+ Ajouter</button></div>
+    <div class="hint" style="margin:-10px 0 16px">Les 11 jours fériés légaux sont déjà là. Désactive ceux où vous travaillez, ajoute vos fermetures (pont, congés annuels).</div>
     <div class="tscroll"><table class="dt"><thead><tr><th>Nom</th><th>Date</th><th>Statut</th><th>Dernière mise à jour</th><th style="text-align:right">Actions</th></tr></thead>
     <tbody>${frows()}</tbody></table></div>
-    <div class="tfoot"><span>1-${FERIES.length} sur ${FERIES.length} affichés</span></div>
+    <div class="tfoot"><span>${FERIES.length ? "1-" + FERIES.length : "0"} sur ${FERIES.length} affiché${FERIES.length > 1 ? "s" : ""}</span>${manq.length ? `<button class="flink" onclick="fRemettre()">↻ Remettre les jours fériés légaux manquants (${manq.length})</button>` : ""}</div>
   </div>`;
+};
 
 /* ----- catégories de services ----- */
 function catAdd(i){
@@ -3162,6 +3261,12 @@ label[for]{cursor:pointer}
 .fic svg{width:18px;height:18px;stroke:var(--orange-deep);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* ===== jour férié : toggles Récurrent/Actif au vert (refait 29/07) ===== */
+/* 17/09 — jours fériés préchargés : mention « calculé », lien « Remettre », interrupteur figé (Pâques) */
+.fcalc{font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.03em;text-transform:uppercase;margin-left:6px}
+.flink{background:none;border:0;padding:0;font:inherit;font-size:.76rem;font-weight:700;color:var(--orange-deep);cursor:pointer}
+.flink:hover{text-decoration:underline}
+.tgl.dis{opacity:.45;cursor:not-allowed}
+.dt td sup{font-size:.68em;line-height:0}
 
 /* ===== cartouches compteurs prestations (refait 29/07) ===== */
 .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
