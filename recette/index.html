@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>html{color-scheme:light dark}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Recette TigerFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --surface-2:#F8F9FB; --ink:#161A20; --muted:#606875; --line:#DFE3E9;
+  --accent:#EE5F2A; --accent-soft:#FDEDE5;
+  --bad:#D2463C; --bad-soft:#FBE7E4; --bad-ink:#8E2B24;
+  --good:#1D8A57; --good-soft:#E1F4E9; --good-ink:#145F3D;
+  --warn-soft:#FFF4D6; --warn-ink:#7A5A00;
+  --shadow:0 1px 2px rgba(20,24,30,.06),0 8px 24px rgba(20,24,30,.06);
+  --display:"Manrope",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111418; --surface:#1A1E25; --surface-2:#20252D; --ink:#EDEFF3; --muted:#9AA3B1; --line:#2B313B;
+    --accent:#F4703E; --accent-soft:#3A2419;
+    --bad:#F0736A; --bad-soft:#3B211F; --bad-ink:#FFB4AD;
+    --good:#4CC489; --good-soft:#173328; --good-ink:#9FE3C0;
+    --warn-soft:#3A3117; --warn-ink:#F1D287;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111418; --surface:#1A1E25; --surface-2:#20252D; --ink:#EDEFF3; --muted:#9AA3B1; --line:#2B313B;
+  --accent:#F4703E; --accent-soft:#3A2419;
+  --bad:#F0736A; --bad-soft:#3B211F; --bad-ink:#FFB4AD;
+  --good:#4CC489; --good-soft:#173328; --good-ink:#9FE3C0;
+  --warn-soft:#3A3117; --warn-ink:#F1D287;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:0 64px}
+a{color:var(--accent)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,3.2vw,38px);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+h2{font-size:clamp(20px,2.2vw,26px);font-weight:800;letter-spacing:-.015em}
+h3{font-size:15px;font-weight:700}
+.eyebrow{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .in{max-width:1320px;margin:0 auto;padding:10px clamp(16px,3vw,32px);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:-.01em;margin-right:auto}
+.brand .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:13px;font-family:var(--mono)}
+.brand span b{color:var(--accent)}
+nav.pages{display:flex;gap:6px;flex-wrap:wrap}
+nav.pages a{font-size:13px;font-weight:500;color:var(--ink);text-decoration:none;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+nav.pages a:hover{border-color:var(--accent);color:var(--accent)}
+
+/* hero */
+.hero{padding-block:36px 24px;display:grid;gap:18px}
+.hero p.lead{max-width:68ch;margin:0;font-size:16px}
+.rule{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:14px 16px;max-width:820px}
+.rule .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);padding-top:3px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;align-items:center}
+.legend .pin{position:static;transform:none}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;min-width:120px}
+.stat b{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+
+/* sections */
+section.page{padding-block:34px 8px;scroll-margin-top:72px;border-top:1px solid var(--line)}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.sec-head .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media (max-width:900px){.compare{grid-template-columns:1fr}}
+.shot{display:flex;flex-direction:column;gap:8px}
+.shot .cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.shot .cap i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.shot .cap.bad i{background:var(--bad)} .shot .cap.good i{background:var(--good)}
+.shot .cap small{font-weight:400;color:var(--muted)}
+.frame{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.frame img{display:block;width:100%;height:auto}
+.frame.small{max-width:520px}
+.pin{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;border:2px solid #fff;color:#fff;font-family:var(--mono);font-size:11.5px;font-weight:600;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35);padding:0;line-height:1;transition:transform .12s ease}
+.pin.bad{background:var(--bad)} .pin.good{background:var(--good)} .pin.add{background:var(--good);border-style:dashed}
+.pin:hover,.pin.on{transform:translate(-50%,-50%) scale(1.3);z-index:3;outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.pin:focus-visible{outline:3px solid var(--accent)}
+.stack{display:grid;gap:14px}
+
+/* list of items */
+.items{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.item{display:grid;grid-template-columns:34px 220px 1fr;gap:14px;padding:11px 14px;border-top:1px solid var(--line);align-items:start;cursor:pointer}
+.item:first-child{border-top:0}
+.item:hover,.item.on{background:var(--surface-2)}
+.item .num{width:24px;height:24px;border-radius:50%;color:#fff;font-family:var(--mono);font-size:11.5px;font-weight:600;display:grid;place-items:center;background:var(--bad)}
+.item.add .num{background:var(--good);border:2px dashed #fff;box-sizing:border-box}
+.item .what{font-weight:600;font-size:14px}
+.item .do{font-size:14px;color:var(--ink)}
+.item .do b{font-weight:600;color:var(--bad-ink)}
+.item.add .do b{color:var(--good-ink)}
+.item .do .flag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn-ink);margin-left:6px;vertical-align:middle}
+.item .do .bug{background:var(--bad-soft);color:var(--bad-ink)}
+@media (max-width:700px){.item{grid-template-columns:34px 1fr}.item .do{grid-column:2}}
+
+/* global rules */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:8px;align-content:start}
+.card h3{display:flex;align-items:center;gap:8px}
+.card ul{margin:0;padding-left:18px;display:grid;gap:5px;font-size:14px}
+.card.decide{grid-column:1/-1;border-color:color-mix(in srgb,var(--warn-ink) 40%,var(--line));background:color-mix(in srgb,var(--warn-soft) 55%,var(--surface))}
+@media (min-width:760px){.card.decide ul{display:block;columns:2;column-gap:32px}.card.decide ul li{break-inside:avoid;margin-bottom:5px}}
+.card.decide h3 .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn-ink)}
+.card.product{border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+code{font-family:var(--mono);font-size:.92em;background:var(--surface-2);padding:1px 5px;border-radius:5px;border:1px solid var(--line)}
+/* rendered TigerFlow modal (proposed version) */
+.tf-backdrop{background:#B9BEC7;border-radius:10px;padding:28px 18px;display:grid;place-items:center;min-height:100%;border:1px solid var(--line)}
+.tf-modal{background:#fff;color:#1A1D24;width:100%;max-width:520px;border-radius:16px;padding:26px 28px 24px;box-shadow:0 20px 50px rgba(20,24,30,.25);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14.5px;line-height:1.45}
+.tf-modal h4{font-family:var(--display);font-size:21px;font-weight:800;letter-spacing:-.01em;margin:0 0 4px;color:#1A1D24}
+.tf-modal .tf-sub{font-size:13.5px;color:#5F6672;margin-bottom:14px;font-variant-numeric:tabular-nums}
+.tf-modal .tf-sub b{color:#1A1D24;font-weight:600}
+.tf-modal p{margin:0 0 14px}
+.tf-modal .tf-info{background:#EEF2FF;border:1px solid #4C6EF5;border-radius:10px;padding:12px 14px;margin-bottom:20px}
+.tf-modal .tf-info .t{color:#2F54EB;font-weight:500;margin-bottom:3px}
+.tf-modal .tf-actions{display:flex;justify-content:flex-end;gap:10px}
+.tf-modal button{font:inherit;font-weight:600;font-size:14px;border-radius:10px;padding:10px 16px;cursor:default}
+.tf-modal button.ghost{background:#fff;color:#1A1D24;border:1px solid #D0D5DD}
+.tf-modal button.primary{background:#F0662D;color:#fff;border:1px solid #F0662D}
+.tf-modal .chg{background:#E1F4E9;border-radius:3px;padding:0 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.tf-note{font-size:12.5px;color:var(--muted);margin-top:8px}
+footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px}
+@media print{
+  .top{position:static;backdrop-filter:none}
+  section.page{break-before:page;border-top:0}
+  .frame{box-shadow:none}
+  .pin,.item .num{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){.pin{transition:none}}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <div class="brand"><span class="dot">R</span><span>Recette Tiger<b>Flow</b> · Saigon vs maquette</span></div>
+  <nav class="pages" id="nav"></nav>
+</div></div>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Recette front · 22 septembre 2026</div>
+      <h1>Ce que Saigon doit changer pour coller à la maquette</h1>
+    </div>
+    <p class="lead">Chaque écran ci-dessous met côte à côte le staging Saigon (<code>stg.tigerflow.io</code>) et la maquette de référence (<code>sastigerflow</code>). Les pastilles rouges marquent ce qui est à corriger sur le staging ; la pastille verte de même numéro montre l'endroit correspondant dans la maquette, c'est-à-dire le résultat attendu. On ne compare pas les données ni les tailles absolues (certaines captures Saigon sont à 67 % de zoom), seulement la structure, les libellés, les alignements et les composants. L'écran 6 rassemble les propositions validées pour la fiche facture (avoir dans la ligne de vie, menu d'actions par statut), à reporter d'abord dans la maquette.</p>
+    <div class="rule"><span class="k">Règle</span><span>La maquette est la référence. Quand le staging propose autre chose, on aligne sur la maquette. Les ajouts de Saigon absents de la maquette ne sont pas acquis : ils sont listés en bas, <b>à trancher</b> par Jo.</span></div>
+    <div class="legend">
+      <span class="pin bad">1</span><span>À corriger sur le staging Saigon</span>
+      <span class="pin good">1</span><span>Résultat attendu (maquette)</span>
+      <span class="pin add">+</span><span>À ajouter, y compris dans la maquette</span>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div id="pages"></div>
+
+  <section class="page" id="fiche-facture">
+    <div class="sec-head"><div><div class="eyebrow">Écran 6</div><h2>Fiche facture : ligne de vie, avoirs et menu d'actions</h2></div><div class="n">propositions validées le 22/09 · à intégrer dans la maquette puis chez Saigon</div></div>
+
+    <div class="shot"><div class="cap good"><i></i>Ligne de vie avec un avoir <small>cas 1 avoir partiel, cas 2 avoir total</small></div>
+      <div class="frame" style="aspect-ratio:2360/1064"><img src="img/vie-facture-avoir.png" width="2360" height="1064" alt="Ligne de vie de la facture avec un avoir partiel puis un avoir total"></div></div>
+    <div class="items">
+      <div class="item add"><span class="num">1</span><span class="what">Avoir partiel</span><span class="do"><b>Faire :</b> nœud <b style="color:#B45309">ambre</b> « Avoir émis » inséré à sa date, avec « AVO-2026-xxxxx · motif · date » et le montant de l'avoir en pill « – 176,00 € ». La facture continue de vivre : « Payée » reste la dernière étape et porte le montant réellement encaissé (« 176,00 € · Virement »). Pas de croix rouge.</span></div>
+      <div class="item add"><span class="num">2</span><span class="what">Avoir total</span><span class="do"><b>Faire :</b> dernière étape <b style="color:#B42318">rouge</b> « Annulée par avoir · – 352,00 € » avec la croix ; l'étape « Payée » disparaît ; le statut de la facture passe à « Annulée ». C'est le seul cas où le rouge est justifié.</span></div>
+      <div class="item add"><span class="num">3</span><span class="what">Plusieurs avoirs</span><span class="do"><b>Faire :</b> un nœud par avoir jusqu'à 2 ; au-delà un nœud groupé « 3 avoirs émis · – 220,00 € », détail dans l'onglet Avoirs.</span></div>
+      <div class="item add"><span class="num">4</span><span class="what">Cartes KPI de la fiche</span><span class="do"><b>Faire :</b> Total TTC − avoirs = <b>net à payer</b> ; « Montant payé » et « Solde dû » se calculent sur le net ; « 100 % encaissé · 176,00 € sur 176,00 € » compare au net. Un paiement supérieur au net s'affiche « Trop-perçu + 220,00 € » en ambre, jamais « 100 % encaissé ». <span class="flag bug">maquette</span> les données de démo actuelles (396 € payés sur 352 € avec 176 € d'avoir) sont incohérentes, à corriger avant envoi.</span></div>
+    </div>
+
+    <div class="shot" style="margin-top:28px"><div class="cap good"><i></i>Menu « ··· » selon le statut <small>« Modifier la facture » ajouté en première position tant que la facture n'est pas validée</small></div>
+      <div class="frame" style="aspect-ratio:2552/880"><img src="img/menu-facture-par-statut.png" width="2552" height="880" alt="Menu d'actions de la fiche facture pour les statuts Pro forma, Pro forma envoyée et Validée"></div></div>
+    <div class="items">
+      <div class="item add"><span class="num">5</span><span class="what">Pro forma</span><span class="do"><b>Menu :</b> Modifier la facture · Envoyer la facture · Dupliquer la facture · — · Supprimer la facture (rouge). Bouton principal du header : « Valider la facture ».</span></div>
+      <div class="item add"><span class="num">6</span><span class="what">Pro forma envoyée</span><span class="do"><b>Menu :</b> Modifier la facture, avec la ligne « Le client a reçu la version du JJ/MM · une nouvelle version sera à renvoyer » · Renvoyer la facture · Dupliquer la facture · — · Supprimer la facture (rouge, confirmation qui rappelle que le client a une copie). Bouton principal : « Valider la facture ».</span></div>
+      <div class="item add"><span class="num">7</span><span class="what">Validée</span><span class="do"><b>Menu :</b> Enregistrer un paiement · Créer un avoir · Dupliquer la facture. Ni « Modifier » ni « Supprimer » : une facture émise se corrige par un avoir. Bouton principal : « Envoyer au client », puis « Enregistrer un paiement » une fois envoyée.</span></div>
+      <div class="item add"><span class="num">8</span><span class="what">Payée / Annulée</span><span class="do"><b>Menu :</b> Payée → Renvoyer la facture · Créer un avoir · Dupliquer. Annulée (avoir total) → Voir l'avoir · Dupliquer.</span></div>
+      <div class="item add"><span class="num">9</span><span class="what">Option</span><span class="do"><b>À trancher :</b> sortir « Modifier » du menu pour en faire un bouton secondaire du header (crayon à gauche de « Voir le PDF ») sur les deux statuts pro forma, puisque c'est l'action la plus fréquente sur un brouillon. <span class="flag">à trancher</span></span></div>
+    </div>
+  </section>
+
+  <section class="page" id="global">
+    <div class="sec-head"><div><div class="eyebrow">Transversal</div><h2>Règles valables sur tous les écrans</h2></div><div class="n">à appliquer partout, pas écran par écran</div></div>
+    <div class="rules">
+      <div class="card"><h3>Coquille de page</h3><ul>
+        <li>Header : bande teintée pêche + fine ligne orange en haut ; recherche « Client, adresse, devis... » avec raccourcis <code>/</code> et <code>⌘K</code> dans le champ ; cloche de notifications avec badge.</li>
+        <li>Sidebar ≈ 250 px : gros logo rond + wordmark TIGER<b>FLOW</b> (FLOW orange), dernier item « Réglages », avatar en pastille orange avec initiales.</li>
+        <li>Barre du bas (sticky) ≈ 64 px : label « Total TTC » petit et gris, montant ≈ 20 px gras, bouton 40–44 px, centrés verticalement.</li>
+      </ul></div>
+      <div class="card"><h3>Composants</h3><ul>
+        <li>Titres de sections : barre verticale orange + Title Case. Ni pastilles numérotées, ni majuscules.</li>
+        <li>Champs : blancs avec bordure (pas gris pleins). Labels en majuscules espacées (« CLIENT * »). Astérisque uniquement sur le vrai obligatoire.</li>
+        <li>Boutons secondaires « ajouter » en pointillés (« + Ligne libre », « + Nouveau client », « + Ajouter un frais », remise).</li>
+        <li>Icônes de cartes KPI dans des carrés arrondis, jamais un mélange cercles / carrés.</li>
+        <li>Police des titres et des gros chiffres : celle de la maquette (Saigon utilise une police plus géométrique).</li>
+      </ul></div>
+      <div class="card"><h3>Typographie française</h3><ul>
+        <li>Espace avant le % : « 10 % », « 67 % » (jamais « 10% »).</li>
+        <li>Tiret cadratin « — » pour les incises et les valeurs vides (jamais « -- »).</li>
+        <li>Montants négatifs « – 180,00 € » (tiret + espace, jamais « -180,00 € »).</li>
+        <li>Symbole après le nombre avec espace : « 20 € », jamais « €20 ».</li>
+        <li>« Pro forma » sur la pill de statut, « pro forma » dans une phrase (jamais « Pro Forma »).</li>
+      </ul></div>
+      <div class="card product"><h3>Règles produit à intégrer</h3><ul>
+        <li>Horodater chaque statut de devis : envoyé le, vu le, signé le, refusé le, expiré le. Chip sous la date dans la liste, rappel dans le bandeau de statut de la fiche.</li>
+        <li>Au passage en « Perdu » : motif obligatoire (trop cher, concurrent, plus besoin, sans réponse, autre) + commentaire facultatif.</li>
+        <li>« Transformer en facture / contrat » réservé aux devis gagnés. Depuis « Envoyé », les boutons restent visibles et ouvrent une confirmation « Le marquer comme gagné aujourd'hui et créer la facture ? » qui fait les deux d'un coup.</li>
+        <li>« Marquer comme perdu » accessible depuis « Envoyé », dans le menu « ··· ».</li>
+        <li>Frais prédéfinis gérés dans Réglages (les frais de test « XXXXX », « aaaa » du staging montrent qu'il manque cet écran).</li>
+      </ul></div>
+      <div class="card decide"><h3>À trancher par Jo <span class="tag">décisions</span></h3><ul>
+        <li>Tu ou vous (ou neutre) pour toute l'appli. Saigon vouvoie, la maquette tutoie sur une modale et reste neutre ailleurs.</li>
+        <li>Onglet « Bibliothèque de documents » dans les pièces jointes (ajout Saigon).</li>
+        <li>Champ « Intervention liée » sur la facture (ajout Saigon, plutôt utile).</li>
+        <li>Recherche client en champ texte (Saigon) plutôt que select (maquette) : la recherche est préférable avec 500 clients.</li>
+        <li>Crayon désactivé sur les devis Gagné / Perdu dans la liste (ajout Saigon).</li>
+        <li>Sélecteur « carré orange + — » à côté du numéro de devis dans la maquette : à expliquer à Saigon (technicien ? catégorie ?).</li>
+        <li>Bloc bas de la sidebar « Appli mobile / Connexion / Bêta » : maquette seulement ou à livrer ?</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <footer><span>Référence : maquette sastigerflow · Staging : stg.tigerflow.io</span><span>Cliquer une pastille ou une ligne met en évidence l'écart des deux côtés.</span></footer>
+</div>
+
+<script>
+const PAGES = [
+{
+  id:'liste', label:'Liste des devis', eyebrow:'Écran 1', title:'Liste des devis',
+  saigon:{src:'img/liste-saigon.jpg', w:1600,h:880, pins:[[1,85,7.3],[2,4.3,7.1],[3,66.5,13.6],[4,20,22.7],[5,30.1,27.4],[6,16.5,31.8],[7,35,43.3],[8,47.5,31.8],[9,72.5,31.8],[10,96.5,31.8]]},
+  maquette:{src:'img/liste-maquette.jpg', w:1600,h:861, pins:[[1,85,7],[2,5.5,8.4],[3,66.5,17.2],[4,30,26.1],[5,30,32.1],[6,17,37.5],[7,35,55.6],[8,53,37.5],[9,75,37.5],[10,93,37.5]]},
+  items:[
+    [1,'Header','Bande pêche + ligne orange, recherche « Client, adresse, devis... » avec raccourcis <code>/</code> <code>⌘K</code>, cloche de notifications avec badge.'],
+    [2,'Sidebar','Largeur ≈ 250 px, gros logo TIGERFLOW, « Réglages » à la place de « Paramètres », avatar initiales orange.'],
+    [3,'Cartes KPI','3e carte « Devis signés » avec trophée ; icônes en carrés arrondis partout (Saigon mélange cercles et carrés) ; « 67 % » avec espace ; montant sous le chiffre en semi-gras.'],
+    [4,'Filtres','Champ de recherche large « Client, titre, n° de devis » (placeholder coupé chez Saigon) ; select « Tous les statuts ».'],
+    [5,'En-têtes de colonnes','CLIENT / OBJET / MONTANT TTC / STATUT / DATE / TECHNICIEN / RÉF. / INTERVENTION ASSOCIÉE / ACTIONS ; ligne d\'en-tête sur bande gris clair ; colonne client ramenée à ≈ 25 % de la largeur.'],
+    [6,'Cellule client','Nom en gras Title Case + sous-ligne contact + pill « Particulier » / « Entreprise ». Supprimer la lettre « P » orange collée au nom.'],
+    [7,'Objet','Une seule ligne tronquée « … », pas de majuscules forcées (Saigon passe sur 2 lignes).'],
+    [8,'Montant et statut','Montant en gras aligné à droite ; statut en pill avec point coloré.'],
+    [9,'Date, technicien, réf, intervention','Chip « Expire dans X j » sous la date (et à venir « Refusé le … », « Signé le … ») ; « — » au lieu de « -- » ; réf en monospace gris ; lien orange « Voir l\'intervention ».'],
+    [10,'Actions','4 icônes grises identiques dans des carrés arrondis ; supprimer le trait vertical avant la colonne et la corbeille rouge. Crayon grisé sur Gagné/Perdu <span class="flag">à trancher</span>'],
+  ]
+},
+{
+  id:'devis', label:'Création devis', eyebrow:'Écran 2', title:'Création d\'un devis',
+  saigon:{src:'img/devis-saigon.jpg', w:1600,h:890, pins:[[1,10,7.4],[2,86,7.4],[3,7.5,14],[4,93,19],[5,15,24.4],[6,30,34.7],[7,22.5,50.9],[8,88,58.5],[9,20,73.3],[10,26,84.3],[11,73.5,85.4],[12,4,95.8]]},
+  maquette:{src:'img/devis-maquette.jpg', w:1600,h:932, pins:[[1,20,9.5],[2,82.5,9.5],[3,7,15.3],[4,28.5,20.9],[5,15,26.4],[6,30,40.5],[7,22.5,56.7],[8,88,65.2],[9,21,81.9],[10,30,90.6],[11,79.5,91.2],[12,3,97]]},
+  items:[
+    [1,'Barre d\'actions (gauche)','Numéro « DEV-2026-xxxxx » dès la création ; « Brouillon ▾ » en menu déroulant ; « Valable jusqu\'au » pré-rempli à +30 j, sans deux-points ; indicateur « ✓ enregistré il y a … » (autosave). Sélecteur carré orange + « — » <span class="flag">à préciser</span>'],
+    [2,'Barre d\'actions (droite)','« Aperçu client / PDF / Enregistrer / Envoyer au client / ··· ». Supprimer « Annuler ». Barre posée sur le fond gris, pas un bandeau blanc.'],
+    [3,'Titres et champs','Barre orange + Title Case (plus de pastilles numérotées ni de majuscules) ; inputs blancs bordés ; labels « CLIENT * ».'],
+    [4,'Nouveau client','Bouton en pointillés collé au champ client (pas rejeté à droite) ; ajouter « L\'adresse du client s\'affichera ici » sous le champ.'],
+    [5,'Objet du devis','Renommer « Titre * » en « Objet du devis », non obligatoire, auto-rempli d\'après la prestation principale, avec tooltip « Se remplit tout seul d\'après la prestation principale — modifiable ».'],
+    [6,'Lignes','Résumé « N prestation · X € » à côté du titre ; en-tête sans bandeau gris ni astérisques ; crayon ✏️ sur TOTAL TTC ; « + Ligne libre » en pointillés ; largeurs de colonnes fixes (plus de scroll horizontal).'],
+    [7,'Frais optionnels','Sous-titre « déplacement, urgence, week-end... » ; emojis 🚚 ⚡ 📅 à la place des pictos.'],
+    [8,'Totaux','« Frais optionnels — » quand vide (sans « HT ») ; « TVA totale » seule ; bouton remise en pointillés.'],
+    [9,'Mentions légales','Ajouter la ligne « ⚖️ Les mentions légales (SIRET, Certibiocide, validité 30 j, pénalités...) figurent automatiquement sur le devis reçu par le client — voir l\'aperçu ».'],
+    [10,'Notes pour le client','Texte par défaut pré-rempli (« Devis gratuit valable 30 jours. Règlement à la fin de l\'intervention… ») ; répartition Notes / Pièces jointes ≈ 60 / 40.'],
+    [11,'Pièces jointes','Une ligne compacte en pointillés « 📎 Ajouter · PDF, JPG, PNG · aperçu gardé jusqu\'à 1,5 Mo » + compteur « 0 fichier ». Jamais obligatoire (retirer « Téléverser * »). Onglet « Bibliothèque de documents » <span class="flag">à trancher</span>'],
+    [12,'Barre du bas','Hauteur ≈ 64 px, label petit, montant ≈ 20 px, bouton 40–44 px, comme la maquette.'],
+  ]
+},
+{
+  id:'remise', label:'Remise & lignes', eyebrow:'Écran 3', title:'Remise commerciale et tableau des lignes',
+  saigonStack:[
+    {src:'img/remise-saigon-totaux.jpg', w:1026,h:852, small:true, pins:[[1,22.6,25.8],[2,29.2,36.9],[3,92.6,36.9],[4,23.4,49.1],[5,96,60.7],[6,23.4,68.2]]},
+    {src:'img/remise-saigon-lignes.jpg', w:1600,h:572, pins:[[7,28,74.8],[8,34,89.6],[9,54.7,40.5]]},
+    {src:'img/stepper-saigon.jpg', w:619,h:255, small:true, pins:[[10,12.6,37.7]]},
+  ],
+  maquetteStack:[
+    {src:'img/remise-maquette-bloc.jpg', w:930,h:472, small:true, pins:[[1,25.3,35],[2,17.2,55.7],[3,69.8,55.7],[4,46.7,74.4],[5,84,91.9],[6,21.7,19.7]]},
+    {src:'img/remise-maquette-lignes.jpg', w:1600,h:367, pins:[[7,90.5,71.4],[8,50,13.5],[9,12,57.7],[10,72.8,40.5]]},
+  ],
+  items:[
+    [1,'Titre du bloc remise','« Remise commerciale » petit, gras, avec 🏷️. Pas de majuscules ni de gros picto dans un carré.'],
+    [2,'Toggle % / €','Bouton actif noir plein (pas orange).'],
+    [3,'Raccourcis de montant','« 20 € / 50 € / 100 € » en mode € (jamais « €20 ») et « 5 % / 10 % / 15 % » en mode %.'],
+    [4,'Message de confirmation','Une ligne courte en gras avec le montant calculé : « – 180,00 € déduits du total — la TVA est recalculée automatiquement. »'],
+    [5,'Ligne récap','« – 180,00 € » avec tiret et espace (Saigon : « -100,00 € »).'],
+    [6,'TVA','Une seule ligne « TVA totale ». Supprimer la ligne « TVA 10% » en doublon ; « 10 % » avec espace.'],
+    [7,'Bandeau remise dans les lignes','Montant en vert gras à droite « − 180,00 € » + lien « Modifier » ; sous-texte dynamique « geste commercial de 50 % sur l\'ensemble du devis » ; titre à taille normale.'],
+    [8,'Débordement du tableau','<span class="flag bug">bug</span> Barre de défilement horizontale : le tableau déborde. Largeurs fixes : PRESTATION flexible, QTÉ ≈ 90, PU HT ≈ 110, TVA ≈ 95, TOTAL ≈ 110, croix ≈ 32.'],
+    [9,'Descriptions de prestation','Passer à la ligne ou tronquer « … » ; pas de majuscules forcées.'],
+    [10,'Stepper quantité','Même hauteur que les inputs (ne pas réduire), largeur ≈ 85–90 px, glyphes − + plus fins ; « 20 % » avec espace.'],
+  ]
+},
+{
+  id:'facture', label:'Création facture', eyebrow:'Écran 4', title:'Création d\'une facture',
+  saigon:{src:'img/facture-saigon.jpg', w:1600,h:877, pins:[[1,5.3,10.7],[2,82.6,10.7],[3,91.2,26.5],[4,17.7,33.8],[5,38.2,40.9],[6,81.8,60.5],[7,50.6,84.2],[8,23.6,89.3],[9,5,94.2]]},
+  maquette:{src:'img/facture-maquette.jpg', w:1600,h:896, pins:[[1,11.8,10.3],[2,82.6,10.3],[3,28.3,22.2],[4,17.7,31.3],[5,22.5,38.3],[6,49.6,49.3],[7,17.7,66.1],[8,23.6,92.3],[9,2.4,96.3]]},
+  items:[
+    [1,'Barre d\'actions','Numéro « FAC-2026-xxxxx » ; « Pro forma ▾ » (un seul P majuscule) en menu déroulant ; « ✓ enregistré il y a … ».'],
+    [2,'Boutons','« Aperçu client / PDF / Enregistrer / Envoyer au client / ··· ». Supprimer « Annuler ».'],
+    [3,'Nouveau client','« + Nouveau client » (Saigon écrit « Créer un client » ici et « Nouveau client » sur le devis), collé au champ, ligne adresse dessous.'],
+    [4,'Objet de la facture','Renommer « Titre * » en « Objet de la facture », non obligatoire.'],
+    [5,'Champs complémentaires','3 champs compacts alignés à gauche : Bon de commande « N° BC du client (facultatif) », N° de contrat (garder le select), « Échéance de paiement » (pas « Délai »). Placeholders utiles plutôt que « Saisir ici ». « Intervention liée » <span class="flag">à trancher</span>'],
+    [6,'Lignes','Pas de ligne vide pré-ajoutée ; TVA par défaut identique au devis (10 %) et paramétrable ; « 20 % » avec espace ; résumé + crayon comme sur le devis.'],
+    [7,'Frais optionnels','Sous-titre + emojis ; retirer les frais de test « XXXXX 10 € », « aaaa 650 € » ; gestion des frais prédéfinis dans Réglages.'],
+    [8,'Mentions légales','Ajouter « ⚖️ Les mentions légales (SIRET, Certibiocide, échéance 30 j, pénalités de retard, indemnité 40 €...) figurent automatiquement sur la facture reçue par le client ».'],
+    [9,'Barre du bas','≈ 64 px comme la maquette.'],
+  ]
+},
+{
+  id:'modales', label:'Modales', eyebrow:'Écran 5', title:'Modales de validation et d\'envoi',
+  saigon:{src:'img/modale-proforma-saigon.jpg', w:739,h:483, small:true, pins:[[1,23,17.8],[2,23,31.5],[3,27.7,48.9],[4,27.7,60.7],[5,89.3,72.7]]},
+  maquette:{src:'img/modale-proforma-maquette.jpg', w:688,h:426, small:true, pins:[[1,20.3,25.1],[2,20.3,39.4],[3,24,54.9],[4,24,65.3],[5,81.4,75.6]]},
+  items:[
+    [1,'Titre','« ⚠️ Cette facture n\'est pas encore validée » : garder le picto et la phrase courte.'],
+    [2,'Texte','« Une facture non validée s\'envoie en PRO FORMA (document provisoire, non valable pour paiement). Pour facturer réellement le client, valide-la d\'abord. » Tu / vous <span class="flag">à trancher</span>'],
+    [3,'Bouton principal','« ✓ Valider la facture puis l\'envoyer » (« puis », pas « et »).'],
+    [4,'Bouton secondaire','« Envoyer en pro forma (assumé) » : garder « (assumé) », « pro forma » en minuscules.'],
+    [5,'Dimensions','≈ 460 px de large, boutons 40–44 px, 8 px d\'écart, padding de la maquette.'],
+  ],
+  extra:{
+    title:'Modale « Valider la facture » : version proposée',
+    src:'img/modale-valider-maquette.jpg', w:809,h:533,
+    pins:[['A',22.5,22.9],['B',81.6,26.6],['C',22,45],['D',58,19.9]],
+    render:`<div class="tf-backdrop"><div class="tf-modal" role="dialog" aria-label="Valider la facture">
+      <h4>Valider la facture <span class="chg">FAC</span>-2026-00031 ?</h4>
+      <div class="tf-sub chg"><b>Entrepôt Central</b> · 198,00 € TTC · datée du 22/09/2026</div>
+      <p>Une fois validée, la facture est <b>émise</b> : elle est <span class="chg">enregistrée en comptabilité</span> et ne peut plus être modifiée ni supprimée.</p>
+      <div class="tf-info"><div class="t">Besoin de la corriger ensuite ?</div><div>Il faudra créer un avoir <span class="chg">—</span> c'est la règle en comptabilité, un document émis ne peut pas être réécrit.</div></div>
+      <div class="tf-actions"><button class="ghost" type="button">Annuler</button><button class="primary" type="button">Valider la facture</button></div>
+    </div></div><div class="tf-note">En vert : ce qui change par rapport à la version actuelle. Le reste (structure, couleurs, boutons, bloc bleu) est conservé tel quel.</div>`,
+    items:[
+      ['A','Rappel de l\'objet','Ajouter sous le titre « Entrepôt Central · 198,00 € TTC · datée du 22/09/2026 » : un dialogue irréversible redit ce qu\'on valide, et la date d\'émission se fige à ce moment-là.'],
+      ['B','Comptabilité','« elle part en comptabilité » seulement s\'il y a un export réel vers un logiciel de compta ; sinon « elle est enregistrée en comptabilité ».'],
+      ['C','Tiret long','Remplacer le petit trait « - » par le tiret long « — ».<br><b style="color:var(--muted)">Avant :</b> « Il faudra créer un avoir <mark style="background:var(--bad-soft);color:inherit;padding:0 3px;border-radius:3px">-</mark> c\'est la règle en comptabilité… »<br><b style="color:var(--muted)">Après :</b> « Il faudra créer un avoir <mark style="background:var(--good-soft);color:inherit;padding:0 3px;border-radius:3px">—</mark> c\'est la règle en comptabilité… »<br><span class="muted">Mac : Alt + Maj + « - » · Windows : Alt + 0151. Autre option, aussi correcte : « …créer un avoir : c\'est la règle… » avec deux-points.</span>'],
+      ['D','Numéro de facture','Saigon affiche « INV-2026-00031 » : préfixe anglais. Utiliser le préfixe de la maquette « FAC-2026-… » partout (barre d\'actions, liste, modale, PDF). La maquette elle-même hésite entre « FAC- » et « FA- » : on tranche pour « FAC- ».'],
+    ]
+  }
+}
+];
+
+function pinsHtml(pins, cls){
+  return pins.map(([n,x,y])=>`<button class="pin ${cls}" data-n="${n}" style="left:${x}%;top:${y}%" aria-label="Écart ${n}">${n}</button>`).join('');
+}
+function frame(img, cls, alt){
+  return `<div class="frame${img.small?' small':''}" style="aspect-ratio:${img.w}/${img.h}"><img src="${img.src}" width="${img.w}" height="${img.h}" alt="${alt}">${pinsHtml(img.pins,cls)}</div>`;
+}
+function itemsHtml(items, add){
+  return `<div class="items">${items.map(([n,what,doTxt])=>`<div class="item${add?' add':''}" data-n="${n}" tabindex="0"><span class="num">${n}</span><span class="what">${what}</span><span class="do"><b>Faire :</b> ${doTxt}</span></div>`).join('')}</div>`;
+}
+const pagesEl=document.getElementById('pages');
+let total=0, bugs=0, decisions=0;
+PAGES.forEach(p=>{
+  total+=p.items.length; if(p.extra) total+=p.extra.items.length;
+  p.items.forEach(i=>{ if(i[2].includes('class="flag bug"')) bugs++; if(i[2].includes('à trancher')||i[2].includes('à préciser')) decisions++; });
+  const left = p.saigonStack
+    ? `<div class="stack">${p.saigonStack.map(im=>frame(im,'bad','Staging Saigon')).join('')}</div>`
+    : frame(p.saigon,'bad','Staging Saigon');
+  const sec=document.createElement('section');
+  sec.className='page'; sec.id=p.id;
+  sec.innerHTML=`
+    <div class="sec-head"><div><div class="eyebrow">${p.eyebrow}</div><h2>${p.title}</h2></div><div class="n">${p.items.length} écarts${p.extra?` + ${p.extra.items.length} ajouts`:''}</div></div>
+    <div class="compare">
+      <div class="shot"><div class="cap bad"><i></i>Saigon · staging <small>à corriger</small></div>${left}</div>
+      <div class="shot"><div class="cap good"><i></i>Maquette · référence <small>résultat attendu</small></div>${p.maquetteStack ? `<div class="stack">${p.maquetteStack.map(im=>frame(im,'good','Maquette de référence')).join('')}</div>` : frame(p.maquette,'good','Maquette de référence')}</div>
+    </div>
+    ${itemsHtml(p.items)}
+    ${p.extra?`
+    <div class="sec-head" style="margin-top:28px"><div><h3>${p.extra.title}</h3></div></div>
+    <div class="compare"><div class="shot"><div class="cap bad"><i></i>Aujourd\'hui <small>maquette et staging, texte identique</small></div>${frame({src:p.extra.src,w:p.extra.w,h:p.extra.h,small:true,pins:p.extra.pins},'add','Modale Valider la facture')}</div><div class="shot"><div class="cap good"><i></i>Version proposée <small>rendu réel, même design</small></div>${p.extra.render}</div></div>
+    ${itemsHtml(p.extra.items,true)}`:''}
+  `;
+  pagesEl.appendChild(sec);
+  const a=document.createElement('a'); a.href='#'+p.id; a.textContent=p.label; document.getElementById('nav').appendChild(a);
+});
+const f=document.createElement('a'); f.href='#fiche-facture'; f.textContent='Fiche facture'; document.getElementById('nav').appendChild(f);
+const g=document.createElement('a'); g.href='#global'; g.textContent='Règles globales'; document.getElementById('nav').appendChild(g);
+document.getElementById('stats').innerHTML=`
+  <div class="stat"><b>${PAGES.length+1}</b><span>écrans passés en revue</span></div>
+  <div class="stat"><b>${total}</b><span>écarts pointés</span></div>
+  <div class="stat"><b>9</b><span>propositions fiche facture</span></div>
+  <div class="stat"><b>${bugs}</b><span>bug bloquant</span></div>
+  <div class="stat"><b>7</b><span>décisions à prendre</span></div>`;
+
+// highlight: pin <-> row, both sides
+document.querySelectorAll('section.page').forEach(sec=>{
+  const set=(n,on)=>{ sec.querySelectorAll(`[data-n="${n}"]`).forEach(el=>el.classList.toggle('on',on)); };
+  let current=null;
+  sec.addEventListener('mouseover',e=>{ const t=e.target.closest('[data-n]'); if(t) set(t.dataset.n,true); });
+  sec.addEventListener('mouseout',e=>{ const t=e.target.closest('[data-n]'); if(t && t.dataset.n!==current) set(t.dataset.n,false); });
+  sec.addEventListener('click',e=>{
+    const t=e.target.closest('[data-n]'); if(!t) return;
+    if(current) set(current,false);
+    current = current===t.dataset.n ? null : t.dataset.n;
+    if(current){ set(current,true); if(t.classList.contains('pin')){ const row=sec.querySelector(`.item[data-n="${current}"]`); row&&row.scrollIntoView({block:'nearest',behavior:'smooth'}); } }
+  });
+  sec.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ const t=e.target.closest('.item'); if(t){ e.preventDefault(); t.click(); } } });
+});
+</script>
+</body>
+</html>
