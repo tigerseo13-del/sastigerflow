@@ -125,6 +125,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .fmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 13px;border-radius:10px;font-size:.85rem;font-weight:600;color:var(--ink-2);font-family:inherit;background:none;border:0;cursor:pointer}
 .fmenu button:hover{background:var(--bg)}
 .fmenu .sep{height:1px;background:var(--line);margin:6px 4px}
+.fmenu .hint{font-size:.72rem;color:var(--muted);padding:0 13px 8px;line-height:1.35}
 .fmenu .danger{color:var(--red)}
 .fmenu .danger:hover{background:var(--red-bg)}
 
@@ -811,6 +812,13 @@ a.hcli:hover{color:var(--orange-deep)}
           <!-- 28/07 : l'envoi reste atteignable EN PERMANENCE. Un client qui
                rappelle six mois plus tard pour reclamer sa facture est un cas
                courant, pas une exception. -->
+          <!-- 22/09 : tant que la facture n'est pas validee, elle se corrige
+               directement — « Modifier » rouvre l'atelier sur la meme reference.
+               L'entree disparait a la validation : une facture emise se corrige
+               par un avoir, jamais en la reecrivant. -->
+          <button id="fedit" onclick="editFacture2()"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Modifier la facture</button>
+          <div class="hint" id="fedit-hint" style="display:none"></div>
+          <div class="sep" id="fedit-sep"></div>
           <button onclick="envoyer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> <span id="fsend-lbl">Envoyer la facture</span></button>
           <div class="sep"></div>
           <button onclick="dupFacture2()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Dupliquer la facture</button>
@@ -1031,6 +1039,19 @@ document.addEventListener("click", e => {
     const b = g("fdel"); if(b && b.dataset.armed){ b.dataset.armed = ""; const l = g("fdel-lbl"); if(l) l.textContent = "Supprimer la facture"; }
   }
 });
+/* 22/09 : « Modifier la facture » (pro forma et pro forma envoyee seulement).
+   On depose la fiche telle quelle dans la boite des brouillons puis l'atelier
+   se rouvre dessus (?draft=REF) : meme reference, pas de doublon. */
+function editFacture2(){
+  try{
+    const rec = JSON.parse(JSON.stringify(REC)); rec.ref = REF;
+    const box = JSON.parse(localStorage.getItem("tigerflow-inbox-factures") || "[]").filter(x => x && x.ref !== REF);
+    box.unshift(rec);
+    localStorage.setItem("tigerflow-inbox-factures", JSON.stringify(box.slice(0, 30)));
+  }catch(e){}
+  const m = g("fmenu"); if(m) m.classList.remove("open");
+  location.href = "facture.html?draft=" + REF;
+}
 function dupFacture2(){
   const nref = "FAC-2026-" + String(10000 + Math.floor(Math.random() * 89999));
   const rec = JSON.parse(JSON.stringify(REC));
@@ -1460,6 +1481,20 @@ function modeProForma(){
      VALIDÉE a une existence fiscale — elle ne se supprime pas, elle s'annule
      par un AVOIR. Le bouton du ⋯ disparaît dès que le statut quitte
      brouillon / pro forma. */
+  /* 22/09 : « Modifier la facture » suit la meme regle que « Supprimer » :
+     visible tant que la facture n'est pas validee, puis disparait. Si une
+     pro forma a deja ete envoyee, on le dit sous l'entree. */
+  const feditB = g("fedit"), feditS = g("fedit-sep"), feditH = g("fedit-hint");
+  if(feditB) feditB.style.display = pf ? "" : "none";
+  if(feditS) feditS.style.display = pf ? "" : "none";
+  if(feditH){
+    let env9 = null;
+    try{ env9 = (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[REF] || null; }catch(e){}
+    if(pf && env9){
+      feditH.textContent = "Le client a reçu la version du " + String(env9.date || "").slice(0, 10) + " · une nouvelle version sera à renvoyer";
+      feditH.style.display = "";
+    } else feditH.style.display = "none";
+  }
   const fdelB = g("fdel");
   if(fdelB){
     fdelB.style.display = pf ? "" : "none";
