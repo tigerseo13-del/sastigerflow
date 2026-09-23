@@ -145,6 +145,13 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .kpi.k-blue .num{color:var(--blue-d)}
 .kpi.k-red{background:var(--red-bg);border-color:#F3C1BD}
 .kpi.k-red .num{color:var(--red)}
+/* 23/09 (visuel A) : la tuile Solde du devient « Trop-percu » quand le client a paye trop */
+.kpi.k-amber{background:var(--amber-bg);border-color:#EBD79A}
+.kpi.k-amber .num{color:var(--amber)}
+.tropacts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.tbtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;height:28px;padding:0 10px;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;transition:.13s}
+.tbtn:hover{border-color:var(--amber);color:var(--amber)}
+.tsel{height:28px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.78rem;font-weight:700;padding:0 6px;background:#fff;color:var(--ink);max-width:150px}
 .kpi .sub{font-size:.72rem;font-weight:700;margin-top:4px;display:block}
 .paywrap{display:flex;align-items:center;gap:12px;margin:-4px 0 16px}
 .paybar{flex:1;height:10px;border-radius:6px;background:#E8EAEF;overflow:hidden}
@@ -270,6 +277,10 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .paytag.ok{background:var(--green-bg);color:var(--green-d)}
 .payrecu{border:1px solid var(--green);background:#fff;color:var(--green-d);border-radius:8px;height:28px;padding:0 10px;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap}
 .payrecu:hover{background:var(--green-bg)}
+/* 23/09 (Jo) : la date de reception se choisit sur la ligne — le patron pointe ses virements une fois par semaine */
+.prd{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--muted)}
+.prdin{height:28px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.78rem;font-weight:700;padding:0 6px;background:#fff;color:var(--ink)}
+.pay.flash{box-shadow:0 0 0 3px #F1DDA3;transition:box-shadow .3s}
 @media(max-width:640px){.prq .opts{grid-template-columns:1fr}}
 .paydel{border:1px solid var(--line);background:#fff;border-radius:8px;min-width:28px;height:28px;padding:0 8px;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer;transition:.13s;font-family:inherit}
 .paydel:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
@@ -305,6 +316,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .avimpact{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:12px;padding:0 2px}
 .avimpact.on{font-weight:700;color:var(--green-d)}
 .avimpact.ko{font-weight:700;color:var(--red)}
+.avimpact.warn{font-weight:700;color:var(--amber)}   /* 23/09 : trop-percu = avertissement, pas un blocage */
 .empty2{text-align:center;color:var(--muted);font-size:.85rem;padding:26px 10px}
 
 /* historique */
@@ -869,7 +881,7 @@ a.hcli:hover{color:var(--orange-deep)}
     <div class="kpis">
       <div class="kpi k-cash"><div class="lbl">Montant total</div><div class="num" id="k-total">—</div><span class="sub" id="k-total-sub"></span></div>
       <div class="kpi k-green" id="k-paye-tile" onclick="goEncaisser()" style="cursor:pointer" title="Voir les paiements"><div class="lbl">Montant payé</div><div class="num" id="k-paye">—</div></div>
-      <div class="kpi k-blue" id="k-solde-tile" style="cursor:pointer" title="Encaisser — ouvre les paiements"><div class="lbl">Solde dû</div><div class="num" id="k-solde">—</div><span class="sub" id="k-solde-sub"></span></div>
+      <div class="kpi k-blue" id="k-solde-tile" style="cursor:pointer" title="Encaisser — ouvre les paiements"><div class="lbl" id="k-solde-lbl">Solde dû</div><div class="num" id="k-solde">—</div><span class="sub" id="k-solde-sub"></span></div>
     </div>
     <div class="paywrap" id="paywrap"><div class="paybar"><i id="paybarfill"></i></div><span id="paybartxt">—</span></div>
 
@@ -1023,19 +1035,15 @@ a.hcli:hover{color:var(--orange-deep)}
     <!-- 22/09 : quand l'avoir depasse le solde, le client a paye plus que ce
          qu'il doit — l'excedent lui revient. On dit COMMENT (mode) et SI c'est
          deja fait ; sinon la facture porte « a rembourser » jusqu'a confirmation. -->
-    <div class="prq" id="av-remb" style="display:none">
-      <div class="q">Le client a déjà payé : <b id="av-remb-m">0,00 €</b> lui reviennent. Comment le rembourser ?</div>
-      <div class="pfgrid">
-        <div><label class="plab" for="av-remb-mode">Mode de remboursement <b class="req">*</b></label><select id="av-remb-mode" onchange="avRembUI()">
-          <option>Virement</option><option>Chèque</option><option>Espèces</option><option>Stripe (remboursement sur la carte)</option><option value="avaloir">Avoir à valoir sur une prochaine facture</option>
-        </select></div>
-        <div id="av-remb-refw"><label class="plab" for="av-remb-ref">Référence <span style="font-weight:400;text-transform:none;letter-spacing:0">— facultatif</span></label><input id="av-remb-ref" placeholder="IBAN du client, n° de chèque…"></div>
-      </div>
-      <div class="opts" id="av-remb-opts">
-        <label class="opt"><input type="radio" name="av-remb-fait" value="non" checked onchange="avRembUI()"><span><b>À faire</b><small>La facture affichera « à rembourser » jusqu'à ce que vous confirmiez que c'est parti.</small></span></label>
-        <label class="opt"><input type="radio" name="av-remb-fait" value="oui" onchange="avRembUI()"><span><b>Déjà remboursé</b><small>Virement parti, chèque envoyé ou espèces rendues : c'est réglé.</small></span></label>
-      </div>
-      <div class="avimpact" id="av-remb-note" style="display:none;margin-top:8px">Le montant reste au crédit du client : il sera déduit de sa prochaine facture. Rien à verser.</div>
+    <!-- 23/09 (trop-percu, visuel A valide par Jo) : voir tropCalc() / tropLigne() dans le script -->
+    <!-- 23/09 (option 1, validee par Jo) : quand l'avoir depasse le solde, le client a
+         paye plus que ce qu'il doit — on dit seulement COMMENT on lui rend. « C'est fait »
+         se coche plus tard, en un clic, dans l'onglet Avoirs. -->
+    <div id="av-remb" style="display:none;margin-bottom:12px">
+      <label class="plab" for="av-remb-mode">Remboursement <b class="req">*</b> <span id="av-remb-m" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--orange-deep)"></span></label>
+      <select id="av-remb-mode">
+        <option>Virement</option><option>Chèque</option><option>Espèces</option><option>Stripe (remboursement sur la carte)</option><option value="avaloir">Avoir à valoir sur une prochaine facture</option>
+      </select>
     </div>
     <div class="sfld"><label for="av-desc">Description <span style="font-weight:400;text-transform:none;letter-spacing:0">— facultatif</span></label><textarea id="av-desc" rows="3" placeholder="Précision pour le client et la compta…"></textarea></div>
     <div class="sacts">
@@ -1367,13 +1375,27 @@ function payModeUI(){
 function isoJour(){ const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
 function payRecu(i){
   const arr = paysAll(); const p = arr[i]; if(!p || p.etat !== "annonce") return;
-  p.etat = "recu"; p.d = isoJour(); p.t = stamp();
+  p.trop = tropCalc(p.m); p.tropSort = null;   /* 23/09 : trop-percu calcule a la reception */
+  /* 23/09 (Jo) : la date de reception est CHOISIE (defaut : aujourd'hui) — celle du releve, pas celle du clic */
+  const di = g('prd-' + i); const dv = (di && di.value) ? di.value : isoJour();
+  p.etat = "recu"; p.d = dv; p.t = stamp();
   paysSave(arr);
-  payApres("✅ " + p.mode + " de " + eur(p.m) + " reçu");
+  payApres("✅ " + p.mode + " de " + eur(p.m) + " reçu le " + fdate(dv));
+}
+/* 23/09 (Jo) : « Paiement reçu » depuis l'en-tete ou la ligne de vie n'encaisse
+   plus « aujourd'hui » a l'aveugle : il amene a la ligne du paiement, ou l'on
+   choisit la date de reception (defaut aujourd'hui) avant de confirmer. */
+function goRecu(){
+  goEncaisser();
+  setTimeout(() => {
+    const d = document.querySelector('.prdin'); if(!d) return;
+    d.focus();
+    const row = d.closest('.pay'); if(row){ row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1800); }
+  }, 130);
 }
 function payRecuTous(){
-  const arr = paysAll(); let tot = 0;
-  arr.forEach(p => { if(p.etat === "annonce"){ p.etat = "recu"; p.d = isoJour(); p.t = stamp(); tot += p.m; } });
+  const arr = paysAll(); let tot = 0, s9 = avSolde();
+  arr.forEach((p, i) => { if(p.etat === "annonce"){ const di = g('prd-' + i); p.trop = p.m > s9 + 0.005 ? Math.round((p.m - s9) * 100) / 100 : 0; p.tropSort = null; s9 = Math.max(0, s9 - p.m); p.etat = "recu"; p.d = (di && di.value) ? di.value : isoJour(); p.t = stamp(); tot += p.m; } });
   if(!tot){ goEncaisser(); return; }
   paysSave(arr);
   payApres("✅ Paiement de " + eur(tot) + " reçu");
@@ -1382,7 +1404,11 @@ function payRecuTous(){
 function payApres(msg){
   const paye = pays().reduce((a,p) => a + p.m, 0);
   const avT = avoirs().reduce((a,x) => a + x.m, 0);
-  if(paye + avT >= REC.montant - 0.005){ statutSet("payee"); toast("🎉 Facture soldée — statut Payée !"); }
+  if(paye + avT >= REC.montant - 0.005){
+    statutSet("payee");
+    const tp0 = tropTot(tropPend());   /* 23/09 */
+    toast(tp0 > 0.005 ? "🎉 Facture soldée — " + eur(tp0) + " de trop-perçu : rembourser ou garder en crédit" : "🎉 Facture soldée — statut Payée !");
+  }
   else { if(paye + avT > 0.005 && statutGet() !== "brouillon") statutSet("partiel"); toast(msg + " — reste " + eur(REC.montant - paye - avT)); }
   renderAll();
 }
@@ -1466,10 +1492,37 @@ function kpis(){
     sub.textContent = "⏳ " + eur(annT9) + " annoncé" + (paysAnn().length > 1 ? "s" : "") + " par " + a9.mode.toLowerCase() + (a9.da ? " le " + fdate(a9.da) : "") + " · à confirmer à réception";
     sub.style.color = "var(--amber)";
   }
+  /* 23/09 (visuel A) : trop-percu — la tuile change de nom et propose les deux gestes */
+  const lblS = g('k-solde-lbl');
+  let acts = g('k-trop-acts');
+  if(!acts){ acts = document.createElement('div'); acts.id = 'k-trop-acts'; acts.className = 'tropacts'; tile.appendChild(acts); }
+  const tpP = tropPend(), tpR = tropRembPend(), tpPT = tropTot(tpP), tpRT = tropTot(tpR);
+  if(lblS) lblS.textContent = (tpPT > 0.005 || tpRT > 0.005) ? "Trop-perçu" : "Solde dû";
+  if(tpPT > 0.005){
+    tile.className = "kpi k-amber";
+    g('k-solde').textContent = eur(tpPT);
+    sub.textContent = "le client a versé " + eur(tpPT) + " de trop";
+    sub.style.color = "var(--amber)";
+    acts.style.display = "";
+    acts.innerHTML = '<button class="tbtn" onclick="tropRemb()" title="Rendre l\'argent au client">↩ Rembourser</button><button class="tbtn" onclick="tropCredit()" title="Le garder au crédit du client, déduit de sa prochaine facture">Garder en crédit</button>';
+  } else if(tpRT > 0.005){
+    tile.className = "kpi k-amber";
+    g('k-solde').textContent = eur(tpRT);
+    sub.textContent = "↩ à rembourser au client";
+    sub.style.color = "var(--amber)";
+    acts.style.display = "";
+    acts.innerHTML = tropModeSel(tpR[0].p.tropSort.mode) + '<button class="payrecu" onclick="tropRembFait()" title="Le remboursement est parti : le marquer fait">✓ Fait</button>';
+  } else {
+    acts.style.display = "none"; acts.innerHTML = "";
+    const tpC = tropPays().filter(x => x.p.tropSort && x.p.tropSort.sort === "credit");
+    const tpD = tropPays().filter(x => x.p.tropSort && x.p.tropSort.sort === "remb" && x.p.tropSort.fait);
+    if(solde <= 0 && tpC.length){ sub.textContent = eur(tropTot(tpC)) + " gardés en crédit client · à déduire de sa prochaine facture"; sub.style.color = "var(--green-d)"; }
+    else if(solde <= 0 && tpD.length){ sub.textContent = "✓ facture soldée · " + eur(tropTot(tpD)) + " remboursés" + (tpD[0].p.tropSort.d ? " le " + fdate(tpD[0].p.tropSort.d) : "") + " par " + tpD[0].p.tropSort.mode.toLowerCase(); sub.style.color = "var(--green-d)"; }
+  }
   /* jauge de paiement */
   const pct = REC.montant > 0 ? Math.min(100, Math.round(paye / REC.montant * 100)) : 0;
   g('paybarfill').style.width = pct + "%";
-  g('paybartxt').textContent = pct + " % encaissé · " + eur(paye) + " sur " + eur(REC.montant);
+  g('paybartxt').textContent = pct + " % encaissé · " + eur(paye) + (paye > REC.montant + 0.005 ? " reçus pour " + eur(REC.montant) + " facturés" : " sur " + eur(REC.montant));   /* 23/09 : trop-percu */
   /* mu2 (valide 30/07) : la jauge vit DANS la tuile Solde du — elle flottait orpheline sous les tuiles */
   const pw = g('paywrap');
   if(pw && pw.parentElement !== tile) tile.appendChild(pw);
@@ -1532,17 +1585,17 @@ function kpis(){
   let envoye = null;
   try{ envoye = (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[REF] || null; }catch(e){}
   const annP = paysAnn().reduce((x,p) => x + p.m, 0);
-  const rpP = avRembPend();
-  if(solde <= 0 && rpP.length){
+  const rpP = avRembPend(), tpRP = tropRembPend();   /* 23/09 : avoir OU trop-percu a rembourser */
+  if(solde <= 0 && (rpP.length || tpRP.length)){
     /* 22/09 : on doit de l'argent au client — le geste n°1 est de le rembourser */
     a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Remboursement effectué';
-    a.setAttribute("onclick", "avRembTous()");
-    a.title = eur(rpP.reduce((x,y) => x + y.remb.m, 0)) + " à rembourser — confirmer quand c'est parti";
+    a.setAttribute("onclick", "rembTous()");
+    a.title = eur(rpP.reduce((x,y) => x + y.remb.m, 0) + tropTot(tpRP)) + " à rembourser — confirmer quand c'est parti";
   } else if(annP > 0 && solde > 0){
     /* 22/09 : l'argent est annonce — le geste n°1 devient CONFIRMER LA RECEPTION */
     a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Paiement reçu';
-    a.setAttribute("onclick", "payRecuTous()");
-    a.title = eur(annP) + " annoncé" + (paysAnn().length > 1 ? "s" : "") + " — confirmer que l'argent est arrivé";
+    a.setAttribute("onclick", "goRecu()");
+    a.title = eur(annP) + " annoncé" + (paysAnn().length > 1 ? "s" : "") + " — confirmer que l'argent est arrivé, et à quelle date";
   } else if(!envoye){
     a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Envoyer au client';
     a.setAttribute("onclick", "envoyer()");
@@ -1846,11 +1899,12 @@ function paylist(){
     ? P.map((p, i) => p.etat === "annonce"
         ? '<div class="pay annonce"><span>' + p.mode + '<small style="color:var(--muted)"> · annoncé le ' + (p.da ? fdate(p.da) : p.t) + (p.note ? ' · <em>' + p.note + '</em>' : '') + '</small></span>' +
           '<span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end"><span class="paytag att">En attente de réception</span><b>' + eur(p.m) + '</b>' +
-          '<button class="payrecu" onclick="payRecu(' + i + ')" title="L\'argent est arrivé : confirmer la réception">✓ Paiement reçu</button>' +
+          '<span class="prd"><label for="prd-' + i + '">reçu le</label><input type="date" id="prd-' + i + '" class="prdin" value="' + isoJour() + '" max="' + isoJour() + '"' + (p.da ? ' min="' + p.da + '"' : '') + ' title="Date à laquelle l\'argent est arrivé sur le compte (celle du relevé)"></span>' +
+          '<button class="payrecu" onclick="payRecu(' + i + ')" title="L\'argent est arrivé : confirmer la réception à cette date">✓ Paiement reçu</button>' +
           '<button class="paydel" tabindex="-1" onclick="payDel(event, ' + i + ')" title="Annuler ce paiement annoncé">✕</button></span>' + payPjHtml(p, i) + '</div>'
         : '<div class="pay"><span>' + p.mode + '<small style="color:var(--muted)">' + (p.da ? ' · annoncé le ' + fdate(p.da) : '') + ' · ' + (p.da ? 'reçu' : 'encaissé') + ' le ' + (p.d ? fdate(p.d) : p.t) + (p.note ? ' · <em>' + p.note + '</em>' : '') + '</small></span>' +
           '<span style="display:flex;align-items:center;gap:10px"><span class="paytag ok">Reçu</span><b>' + eur(p.m) + '</b>' +
-          '<button class="paydel" tabindex="-1" onclick="payDel(event, ' + i + ')" title="Annuler ce paiement">✕</button></span>' + payPjHtml(p, i) + '</div>').join('')
+          '<button class="paydel" tabindex="-1" onclick="payDel(event, ' + i + ')" title="Annuler ce paiement">✕</button></span>' + payPjHtml(p, i) + tropLigne(p, i) + '</div>').join('')
     : '<div class="empty2">Aucun paiement reçu pour l\'instant.</div>';
 }
 function payDel(e, i){
@@ -1889,7 +1943,12 @@ function histo(){
     s: env.date + (env.to ? " · " + env.to : "") + (env.proforma ? " — la facture n'est pas encore émise" : "")});
   if(env && env.relance) items.push({ic:HI.mail, bg:"var(--amber-bg)", b:"Relance de paiement envoyée", s:env.relance + (env.to ? " · " + env.to : "")});
   avoirs().forEach(a => items.push({ic:HI.doc, bg:"var(--red-bg)", b:"Avoir " + a.num + " émis — − " + eur(a.m), s:a.motif + " · " + a.t + (a.desc ? " · " + a.desc : "")}));
-  pays().forEach(p => items.push({ic:HI.euro, bg:"var(--green-bg)", b:"Paiement reçu — " + eur(p.m), s:p.mode + " · " + (p.d ? "encaissé le " + fdate(p.d) : p.t) + (p.note ? " · " + p.note : "")}));
+  pays().forEach(p => items.push({ic:HI.euro, bg:"var(--green-bg)", b:"Paiement reçu — " + eur(p.m), s:p.mode + " · " + (p.d ? "encaissé le " + fdate(p.d) : p.t) + (p.trop > 0.005 ? " · dont " + eur(p.trop) + " de trop-perçu" : "") + (p.note ? " · " + p.note : "")}));
+  /* 23/09 : ce qu'on a fait du trop-percu */
+  tropPays().forEach(x => { const s = x.p.tropSort; if(!s) return;
+    if(s.sort === "credit") items.push({ic:HI.ok, bg:"var(--amber-bg)", b:"Trop-perçu gardé en crédit client — " + eur(x.p.trop), s:(s.d ? "le " + fdate(s.d) + " · " : "") + "à déduire de sa prochaine facture"});
+    else if(s.fait) items.push({ic:HI.euro, bg:"var(--amber-bg)", b:"Trop-perçu remboursé — " + eur(x.p.trop), s:s.mode + (s.d ? " · le " + fdate(s.d) : "")});
+  });
   if(statutGet() === "payee") items.push({ic:HI.ok, bg:"var(--green-bg)", b:"Facture soldée", s:"le solde est à zéro — rien à relancer"});
   items.reverse();   /* le dernier événement d'abord */
   g('histlist').innerHTML = items.map(i => '<li><span class="hic" style="background:' + i.bg + '">' + i.ic + '</span><div><b>' + i.b + '</b><small>' + i.s + '</small></div></li>').join('');
@@ -1928,7 +1987,7 @@ function vieDraw(){
     const annV = paysAnn(), annT = annV.reduce((a2,p) => a2 + p.m, 0);
     if(solde > 0 && annT > 0){
       /* 22/09 : l'annonce est une etape, la reception en est une autre */
-      S.push({t:(annV[0].mode === "Chèque" ? "Chèque" : "Virement") + " annoncé", d: annV[0].da ? fdate(annV[0].da) : "", s: eur(annT) + " · à confirmer à réception", k:"now", fn:"payRecuTous()", h:"Confirmer que le paiement est arrivé"});
+      S.push({t:(annV[0].mode === "Chèque" ? "Chèque" : "Virement") + " annoncé", d: annV[0].da ? fdate(annV[0].da) : "", s: eur(annT) + " · à confirmer à réception", k:"now", fn:"goRecu()", h:"Confirmer que le paiement est arrivé, et à quelle date"});
       S.push({t:"Payée", k:"todo"});
     } else if(solde <= 0){
       const last = P.length ? P[P.length - 1] : null;
@@ -1943,6 +2002,14 @@ function vieDraw(){
       }
       const rpV = avRembPend();
       if(rpV.length) S.push({t:"À rembourser", s: eur(rpV.reduce((a2,x) => a2 + x.remb.m, 0)) + " · " + rpV[0].remb.mode.toLowerCase(), k:"now", fn:"avRembTous()", h:"Confirmer que le remboursement est parti"});
+      /* 23/09 (visuel A) : le trop-percu est une etape aussi */
+      const tpV = tropPend(), tpRV = tropRembPend();
+      const tpCV = tropPays().filter(x => x.p.tropSort && x.p.tropSort.sort === "credit");
+      const tpDV = tropPays().filter(x => x.p.tropSort && x.p.tropSort.sort === "remb" && x.p.tropSort.fait);
+      if(tpV.length) S.push({t:"Trop-perçu", s: eur(tropTot(tpV)) + " · à rembourser ou à garder en crédit", k:"now", fn:"goEncaisser()", h:"Décider quoi faire du trop-perçu"});
+      else if(tpRV.length) S.push({t:"À rembourser", s: eur(tropTot(tpRV)) + " · trop-perçu · " + tpRV[0].p.tropSort.mode.toLowerCase(), k:"now", fn:"tropRembFait()", h:"Confirmer que le remboursement est parti"});
+      else if(tpCV.length) S.push({t:"Crédit client", d: tpCV[0].p.tropSort.d ? fdate(tpCV[0].p.tropSort.d) : "", s: eur(tropTot(tpCV)) + " · trop-perçu à déduire de sa prochaine facture", k:"done"});
+      else if(tpDV.length) S.push({t:"Remboursé", d: tpDV[0].p.tropSort.d ? fdate(tpDV[0].p.tropSort.d) : "", s: eur(tropTot(tpDV)) + " · trop-perçu · " + tpDV[0].p.tropSort.mode.toLowerCase(), k:"done"});
     } else if(envFac){
       if(j !== null && j < 0) S.push({t:"En retard · " + (-j) + " j", s:"relancer le paiement", k:"now", late:true, fn:"relancer()", h:"Envoyer une relance au client"});
       else S.push({t:"À encaisser", k:"now", fn:"goEncaisser()", h:"Saisir un paiement reçu"});
@@ -1991,19 +2058,10 @@ function annBan(){
 /* ===== actions ===== */
 /* ===== 22/09 — remboursement lie a un avoir ===== */
 function avRembPend(){ return avoirs().filter(a => a.remb && !a.remb.fait && a.remb.mode !== "avaloir"); }
-function avRembUI(){
-  const box = g('av-remb'); if(!box) return;
-  const mode = g('av-remb-mode').value;
-  const aval = (mode === "avaloir");
-  const opts = g('av-remb-opts'), note = g('av-remb-note'), refw = g('av-remb-refw');
-  if(opts) opts.style.display = aval ? "none" : "";
-  if(note) note.style.display = aval ? "" : "none";
-  if(refw) refw.style.display = aval ? "none" : "";
-}
+function avRembUI(){ /* option 1 : plus rien a montrer/masquer */ }
 function avRembChoisi(){
   const mode = g('av-remb-mode').value;
-  const r = document.querySelector('input[name="av-remb-fait"]:checked');
-  return {mode, ref:(g('av-remb-ref').value || "").trim(), fait: mode === "avaloir" ? true : !!(r && r.value === "oui")};
+  return {mode, ref:"", fait: mode === "avaloir"};
 }
 function avRembFait(i){
   const arr = avoirs(); const a = arr[i]; if(!a || !a.remb) return;
@@ -2025,7 +2083,72 @@ function avRembLigne(a, i){
   if(r.mode === "avaloir") return '<span class="avremb"><span class="paytag ok">Avoir à valoir</span><span>' + eur(r.m) + ' au crédit du client, à déduire de sa prochaine facture</span></span>';
   if(r.fait) return '<span class="avremb"><span class="paytag ok">Remboursé</span><span>' + eur(r.m) + ' par <b>' + r.mode.toLowerCase() + '</b>' + (r.d ? ' le ' + fdate(r.d) : '') + (r.ref ? ' · ' + r.ref : '') + '</span></span>';
   return '<span class="avremb"><span class="paytag att">À rembourser</span><span>' + eur(r.m) + ' par <b>' + r.mode.toLowerCase() + '</b>' + (r.ref ? ' · ' + r.ref : '') + '</span>' +
-    '<button class="payrecu" style="margin-left:auto" onclick="avRembFait(' + i + ')" title="Le remboursement est parti : confirmer">✓ Remboursement effectué</button></span>';
+    '<button class="payrecu" style="margin-left:auto" onclick="avRembFait(' + i + ')" title="Le remboursement est parti : le marquer fait">✓ Fait</button></span>';
+}
+/* ===== 23/09 (visuel A, valide par Jo) — LE TROP-PERCU ==================
+   Le client paie PLUS que le solde (virement arrondi, double paiement…).
+   On n'empeche pas : le paiement s'enregistre tel quel, et l'excedent est un
+   TROP-PERCU porte par ce paiement — jamais un avoir. Un avoir dit « la
+   facture etait trop elevee » et baisse le CA et la TVA ; ici la facture est
+   juste, c'est le client qui s'est trompe. Deux gestes, dans la tuile :
+   rembourser (mode + « ✓ Fait », comme l'avoir option 1) ou garder en credit
+   (deduit de sa prochaine facture). */
+function tropCalc(m){ const s = avSolde(); return m > s + 0.005 ? Math.round((m - s) * 100) / 100 : 0; }
+function tropPays(){ return paysAll().map((p, i) => ({p, i})).filter(x => x.p.etat !== "annonce" && x.p.trop > 0.005); }
+function tropPend(){ return tropPays().filter(x => !x.p.tropSort); }
+function tropRembPend(){ return tropPays().filter(x => x.p.tropSort && x.p.tropSort.sort === "remb" && !x.p.tropSort.fait); }
+function tropTot(list){ return list.reduce((a, x) => a + x.p.trop, 0); }
+function tropRemb(){
+  const arr = paysAll(); let tot = 0;
+  arr.forEach(p => { if(p.etat !== "annonce" && p.trop > 0.005 && !p.tropSort){ p.tropSort = {sort:"remb", mode:"Virement", fait:false, d:""}; tot += p.trop; } });
+  if(!tot) return;
+  paysSave(arr);
+  toast("↩ " + eur(tot) + " à rembourser au client — choisis le mode, puis « ✓ Fait » quand c'est parti");
+  renderAll();
+}
+function tropRembMode(v){
+  const arr = paysAll();
+  arr.forEach(p => { if(p.tropSort && p.tropSort.sort === "remb" && !p.tropSort.fait) p.tropSort.mode = v; });
+  paysSave(arr); renderAll();
+}
+function tropRembFait(){
+  const arr = paysAll(); let tot = 0, mode = "virement";
+  arr.forEach(p => { if(p.tropSort && p.tropSort.sort === "remb" && !p.tropSort.fait){ p.tropSort.fait = true; p.tropSort.d = isoJour(); tot += p.trop; mode = p.tropSort.mode; } });
+  if(!tot) return;
+  paysSave(arr);
+  toast("✅ Trop-perçu de " + eur(tot) + " remboursé (" + mode.toLowerCase() + ")");
+  renderAll();
+}
+function tropCredit(){
+  const arr = paysAll(); let tot = 0;
+  arr.forEach(p => { if(p.etat !== "annonce" && p.trop > 0.005 && !p.tropSort){ p.tropSort = {sort:"credit", d:isoJour()}; tot += p.trop; } });
+  if(!tot) return;
+  paysSave(arr);
+  toast("💳 " + eur(tot) + " gardés en crédit client — déduits de sa prochaine facture");
+  renderAll();
+}
+function tropAnnuler(){
+  /* on revient a « a regler » (sauf si le remboursement est deja parti) */
+  const arr = paysAll();
+  arr.forEach(p => { if(p.tropSort && !(p.tropSort.sort === "remb" && p.tropSort.fait)) p.tropSort = null; });
+  paysSave(arr); renderAll();
+}
+function rembTous(){ avRembTous(); tropRembFait(); }
+function tropModeSel(cur){
+  return '<select class="tsel" onchange="tropRembMode(this.value)" title="Mode de remboursement">' +
+    ["Virement", "Chèque", "Espèces", "Stripe (remboursement sur la carte)"].map(m => '<option' + (m === cur ? ' selected' : '') + '>' + m + '</option>').join('') + '</select>';
+}
+/* la ligne sous le paiement, dans l'onglet Paiements — meme langage que l'avoir */
+function tropLigne(p, i){
+  if(!(p.trop > 0.005) || p.etat === "annonce") return "";
+  const s = p.tropSort;
+  if(!s) return '<span class="avremb"><span class="paytag att">Trop-perçu</span><span><b>' + eur(p.trop) + '</b> de plus que le solde dû</span>' +
+    '<span style="margin-left:auto;display:flex;gap:6px"><button class="tbtn" onclick="tropRemb()" title="Rendre l\'argent au client">↩ Rembourser</button><button class="tbtn" onclick="tropCredit()" title="Le garder au crédit du client, déduit de sa prochaine facture">Garder en crédit</button></span></span>';
+  if(s.sort === "credit") return '<span class="avremb"><span class="paytag ok">Crédit client</span><span>' + eur(p.trop) + ' gardés au crédit du client' + (s.d ? ' le ' + fdate(s.d) : '') + ' · à déduire de sa prochaine facture</span>' +
+    '<button class="tbtn" style="margin-left:auto" onclick="tropAnnuler()" title="Changer d\'avis">↶ Changer</button></span>';
+  if(s.fait) return '<span class="avremb"><span class="paytag ok">Remboursé</span><span>' + eur(p.trop) + ' par <b>' + s.mode.toLowerCase() + '</b>' + (s.d ? ' le ' + fdate(s.d) : '') + '</span></span>';
+  return '<span class="avremb"><span class="paytag att">À rembourser</span><span>' + eur(p.trop) + ' par</span>' + tropModeSel(s.mode) +
+    '<button class="payrecu" style="margin-left:auto" onclick="tropRembFait()" title="Le remboursement est parti : le marquer fait">✓ Fait</button></span>';
 }
 function avSolde(){ return Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0)); }
 /* le plafond d'un avoir : ce qui a ete FACTURE moins les avoirs deja emis.
@@ -2045,8 +2168,6 @@ function avOpen(){
   if(p1) p1.textContent = avSolde() > 0.005 ? "Tout le solde" : "Tout le montant";
   g('av-desc').value = "";
   const rm0 = g('av-remb-mode'); if(rm0) rm0.value = "Virement";
-  const rr0 = g('av-remb-ref'); if(rr0) rr0.value = "";
-  const rn0 = document.querySelector('input[name="av-remb-fait"][value="non"]'); if(rn0) rn0.checked = true;
   avImpact();
   /* les avoirs deja emis sur cette facture, sous la main */
   const dj = g('av-deja'), arr0 = avoirs();
@@ -2085,7 +2206,7 @@ function avImpact(){
   /* 22/09 : l'excedent revient au client — on demande comment */
   const trop9 = (m <= max + 0.005) ? Math.max(0, m - solde) : 0;
   const rb = g('av-remb');
-  if(rb){ rb.style.display = trop9 > 0.005 ? "" : "none"; const rm = g('av-remb-m'); if(rm) rm.textContent = eur(trop9); if(trop9 > 0.005) avRembUI(); }
+  if(rb){ rb.style.display = trop9 > 0.005 ? "" : "none"; const rm = g('av-remb-m'); if(rm) rm.textContent = "— " + eur(trop9) + " reviennent au client"; }
   if(m > max + 0.005){
     /* on ne crediten jamais plus que ce qui a ete facture */
     h2c.classList.add('ko');
@@ -2196,7 +2317,9 @@ function payImpact(){
   const solde = Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0));
   const m = parseFloat(String(g('p-montant').value).replace(",", ".")) || 0;
   if(m <= 0){ el.className = "avimpact"; el.textContent = "Solde dû : " + eur(solde) + " — le reste s'affiche pendant la saisie."; return; }
-  if(m > solde + 0.005){ el.className = "avimpact ko"; el.textContent = "⚠️ " + eur(m) + " dépasse le solde dû (" + eur(solde) + ")"; return; }
+  /* 23/09 (visuel A) : on n'empeche plus de depasser le solde — l'excedent
+     est annonce comme trop-percu, et se regle ensuite dans la tuile */
+  if(m > solde + 0.005){ el.className = "avimpact warn"; el.textContent = "⚠ " + eur(Math.round((m - solde) * 100) / 100) + " de plus que le solde dû" + (solde > 0.005 ? " (" + eur(solde) + ")" : "") + " — enregistré comme trop-perçu, à rembourser ou à garder en crédit"; return; }
   if(payAnnChoisi()){ el.className = "avimpact"; el.textContent = "→ Enregistré comme annoncé : le solde dû reste " + eur(solde) + " jusqu'à confirmation de la réception."; return; }
   el.className = "avimpact on";
   const reste = solde - m;
@@ -2211,7 +2334,8 @@ function payAdd(montant){
   const arr = paysAll();
   /* le justificatif choisi juste au-dessus part AVEC le paiement — sinon on
      l'aurait joint pour rien, sans jamais s'en apercevoir. */
-  arr.push({m, mode:g('p-mode').value, t:stamp(), d: ann ? "" : dval, da: ann ? (dval || isoJour()) : "", etat: ann ? "annonce" : "recu", note, pj: PPJ ? {...PPJ} : null});
+  const trop = ann ? 0 : tropCalc(m);   /* 23/09 : l'excedent est un trop-percu (pour un paiement annonce, il se calcule a la reception) */
+  arr.push({m, mode:g('p-mode').value, t:stamp(), d: ann ? "" : dval, da: ann ? (dval || isoJour()) : "", etat: ann ? "annonce" : "recu", note, pj: PPJ ? {...PPJ} : null, trop, tropSort: null});
   paysSave(arr);
   PPJ = null; ppjRender();
   g('p-montant').value = ""; if(g('p-note')) g('p-note').value = "";

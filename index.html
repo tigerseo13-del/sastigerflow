@@ -1,1500 +1,440 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<link rel="preload" as="image" href="logo-tigre.png">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="color-scheme" content="light only">
-<title>TigerFlow — Tableau de bord</title>
-<meta name="theme-color" content="#FF5A1F">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>html{color-scheme:light dark}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Recette TigerFlow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22%23FF5A1F%22%2F%3E%3C%2Fsvg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-:root{color-scheme:light only}
-html{background:#F7F8FA}
-
 :root{
-  --orange:#FF5A1F; --orange-deep:#EA4A10; --orange-soft:#FFF1EA;
-  --ink:#171A20; --ink-2:#3D434E; --muted:#6C7285;
-  --line:#EBECF1; --bg:#F4F5F8; --card:#fff;
-  --green:#10B981; --green-d:#047857; --green-bg:#ECFDF5;
-  --blue:#2E5CE6; --blue-bg:#EBF1FE; --amber:#A16207; --amber-bg:#FBF3D9;
-  --red:#D63B33; --red-bg:#FDE9E8;
-  /* ===== ÉCHELLE GRAPHIQUE (26/07) — 4 arrondis, 3 ombres, 7 tailles =====
-     Avant : 13 arrondis, 9 ombres et 24 tailles sur cette seule page. */
-  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px;
-  --sh-1:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
-  --sh-2:0 12px 28px -12px rgba(23,26,32,.22);
-  --sh-3:0 26px 64px -16px rgba(23,26,32,.38);
-  --shadow:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12);
-  --safe-b:env(safe-area-inset-bottom,0px);
+  --bg:#F2F4F7; --surface:#FFFFFF; --surface-2:#F8F9FB; --ink:#161A20; --muted:#606875; --line:#DFE3E9;
+  --accent:#EE5F2A; --accent-soft:#FDEDE5;
+  --bad:#D2463C; --bad-soft:#FBE7E4; --bad-ink:#8E2B24;
+  --good:#1D8A57; --good-soft:#E1F4E9; --good-ink:#145F3D;
+  --warn-soft:#FFF4D6; --warn-ink:#7A5A00;
+  --shadow:0 1px 2px rgba(20,24,30,.06),0 8px 24px rgba(20,24,30,.06);
+  --display:"Manrope",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-html{font-size:15px}
-button{background:none;border:0;font-family:inherit;cursor:pointer}
-a{text-decoration:none;color:inherit}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
-
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:238px;background:#14161B;color:#B9BEC9;display:flex;flex-direction:column;z-index:50}
-.brand{display:flex;align-items:center;gap:10px;padding:20px 18px 18px}
-.brand .logo{width:46px;height:46px;border-radius:50%;background:#0A0B0E;border:1.5px solid #262A32;display:grid;place-items:center}
-.brand .logo svg{width:22px;height:22px}
-.brand .name{font-family:'Sora';font-weight:800;font-size:1.35rem;color:#fff;letter-spacing:.4px}
-.brand .name em{font-style:normal;color:var(--orange)}
-/* 31/08 (patron : « enlève le mot Général, ça sert à rien ») : la puce de
-   section a disparu du menu — une seule section, un mot inutile. La règle
-   reste pour l'espace qu'elle donnait au premier lien. */
-.nav-label{display:none}
-.nav a:first-of-type{margin-top:12px}
-.nav{display:flex;flex-direction:column;gap:4px;padding:0 10px}
-.nav a{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:var(--r-md);font-size:0.86rem;font-weight:500;color:#B9BEC9;transition:.13s}
-/* 02/09 : le raccourci vers les fonctions en beta, sous Connexion. Volontairement
-   plus petit et plus gris que les vraies rubriques : c'est un atelier, pas une
-   page du produit. */
-.nav a.nbeta{font-size:.78rem;padding:8px 13px;color:#7E8593;gap:10px}
-.nav a.nbeta svg{width:15px;height:15px;opacity:.85}
-.nav a.nbeta:hover{color:#FFB68F;background:#1D2027}
-.nav a.nbeta .nbt{margin-left:auto;font-size:.6rem;font-weight:800;letter-spacing:.06em;
-  background:#2A2E38;color:#FF8A5B;border-radius:6px;padding:2px 7px}
-.nav a svg{width:17px;height:17px;flex:none}
-.nav a:hover{background:#1D2027;color:#fff}
-.nav a.active{background:var(--orange);color:#fff;font-weight:600;box-shadow:0 8px 20px -6px rgba(255,90,31,.55)}
-.nav.navbot{margin-top:auto;padding-bottom:10px}
-.side-user{display:flex;align-items:center;gap:10px;margin:8px 14px 16px;padding:10px 12px;background:#1D2027;border-radius:var(--r-md)}
-.side-user .ph{width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-size:0.74rem;font-weight:700;font-family:'Sora'}
-.side-user b{display:block;font-size:0.8rem;color:#fff;font-weight:600}
-.side-user span{font-size:0.68rem;color:#7A8091}
-
-.main{margin-left:238px;min-height:100vh}
-.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:12px 26px;
-  /* 05/08 (patron) : « trop blanche — un petit peu plus, pas comme avant ». Le
-     voile revient a un tiers de son ancienne force, halos compris. Le filet
-     orange de 3 px reste : c'est lui qui signe la page.
-     01/09 : essai « barre blanche » (commit 0170744) ANNULE le meme jour —
-     « c'etait pas plus joli avant ? remets comme avant ». On revient au voile
-     exactement comme il etait. */
-  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.07) 0, transparent 45%),
-  radial-gradient(circle at 92% -60%, rgba(255,90,31,.05) 0, transparent 45%),
-  linear-gradient(115deg,#FFFCFB,#FFF9F6 55%,#FFFBF8);
-  border-bottom:1px solid #F7EDE6;
-  box-shadow:inset 0 3px 0 -1px var(--orange);backdrop-filter:blur(12px)}
-/* 05/08 : le quadrillage orange partait avec le voile — il n'a plus de sens
-   sur un fond blanc. */
-.topbar::before{display:none}
-.topbar>*{position:relative}
-
-.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
-.title-m{display:none;font-family:'Sora';font-weight:700;font-size:1.1rem}
-.spacer{flex:1}
-.mchip{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:#fff;border-radius:var(--r-md);padding:9px 14px;font-size:0.8rem;font-weight:700;color:var(--ink-2)}
-.mchip svg{width:14px;height:14px;stroke:var(--orange-deep);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.mchip{cursor:pointer}
-.mchip:hover{border-color:#D5D8DF}
-.mchip .mcar{width:13px;height:13px;stroke:var(--muted);margin-left:1px;transition:transform .16s}
-.mchip[aria-expanded="true"] .mcar{transform:rotate(180deg)}
-.mwrap{position:relative;display:inline-flex}
-.mpop{position:absolute;top:calc(100% + 8px);right:0;z-index:60;width:252px;background:#fff;border:1px solid var(--line);
-  border-radius:var(--r-lg);box-shadow:var(--sh-3);padding:12px;display:none}
-.mpop.open{display:block}
-.mph{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.mph b{font-family:'Sora';font-size:0.95rem}
-.mph button{width:30px;height:30px;border-radius:var(--r-sm);border:1px solid var(--line);background:#fff;display:grid;place-items:center;cursor:pointer}
-.mph button:hover{border-color:var(--orange);background:var(--orange-soft)}
-.mph button svg{width:15px;height:15px;stroke:var(--ink-2);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.mpg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.mpg button{padding:9px 0;border-radius:var(--r-sm);border:1px solid var(--line);background:#fff;font-family:inherit;
-  font-size:0.78rem;font-weight:700;color:var(--ink-2);cursor:pointer}
-.mpg button:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
-.mpg button.on{background:var(--orange);border-color:var(--orange);color:#fff}
-.mpf{margin-top:10px;font-size:0.68rem;color:var(--muted);text-align:center}
-
-.page{width:100%;padding:24px 30px calc(60px + var(--safe-b))}
-
-/* ===== bandeau halo orange clair ===== */
-/* 27/07 : meme raison que la barre d'outils de l'agenda. Le bandeau d'accueil
-   passe en clair, l'orange reste dans la barre du haut. Le prenom garde son
-   degrade : l'accent chaud demeure, la bande orange en double disparait. */
-/* 29/07 (choix patron, piste A) : le damier disparait. Le bandeau porte un
-   voile chaleureux — un blanc qui se rechauffe vers la droite jusqu'a un
-   orange a peine perceptible — le meme principe que le bouton de recherche
-   du calendrier (.gsbtn). Il fait la poignee de main avec la barre du haut
-   sans ajouter de couleur franche. */
-.cover{position:relative;border-radius:var(--r-xl);overflow:hidden;border:1px solid var(--line,#E7E9EF);
-  padding:22px 26px;margin-bottom:22px;
-  background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 30%,#FFF8F4 65%,#FFF3EC 100%)}
-.cover h1{font-family:'Sora';font-size:1.35rem;letter-spacing:-.4px;position:relative}
-.cover .sub{font-size:0.86rem;color:var(--ink-2);margin-top:4px;position:relative}
-
-/* ===== tuiles KPI teintées ===== */
-.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
-.kt{display:block;border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--shadow);transition:.15s;position:relative}
-.kt:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
-.kt .kl{display:flex;align-items:center;gap:9px;font-size:0.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px}
-.kt .kl svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.kt b{font-family:'Sora';font-size:1.7rem;letter-spacing:-.6px;display:block;font-variant-numeric:tabular-nums}
-.kt .ks{font-size:0.74rem;font-weight:700;margin-top:5px}
-.kt .go{position:absolute;right:14px;top:15px;font-size:0.74rem;font-weight:700;opacity:.6}
-.kt{color:var(--ink)}
-.kt .kl{color:var(--ink-2)}
-.kt .ks{color:var(--ink-2)}
-.kt .go{color:var(--ink-2)}
-.kt.blue{background:var(--blue-bg)}
-.kt.orange{background:var(--orange-soft)}
-.kt.green{background:var(--green-bg)}
-.kt.red{background:var(--red-bg)}
-.kt.blue .kl svg{stroke:var(--blue)}
-.kt.orange .kl svg{stroke:var(--orange-deep)}
-.kt.green .kl svg{stroke:var(--green-d)}
-.kt.red .kl svg{stroke:var(--red)}
-.kt.green .trend{color:var(--green-d)}
-.kt .obar{height:8px;border-radius:var(--r-sm);background:rgba(255,255,255,.75);overflow:hidden;margin-top:9px}
-.kt .obar i{display:block;height:100%;background:var(--orange);border-radius:var(--r-sm)}
-.trend{display:inline-flex;align-items:center;gap:4px;font-size:0.68rem;font-weight:800;background:#fff;border-radius:var(--r-sm);padding:3px 9px;margin-top:8px}
-.trend svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-
-/* ===== cartes ===== */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:22px;align-items:stretch}
-.card{background:var(--card);border:1px solid #F0F1F4;border-radius:var(--r-lg);box-shadow:var(--shadow);padding:24px 26px}
-.card-h{font-family:'Sora';font-weight:800;font-size:0.95rem;display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.card-h small{font-family:'Inter';font-weight:600;font-size:0.74rem;color:var(--muted);margin-left:auto}
-.card-h a{font-family:'Inter';font-weight:700;font-size:0.74rem;color:var(--orange-deep);margin-left:auto;white-space:nowrap}
-.card-h a:hover{text-decoration:underline}
-.chsq{width:30px;height:30px;border-radius:var(--r-sm);display:grid;place-items:center;flex:none}
-.chsq svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.chsq.o{background:var(--orange-soft);color:var(--orange-deep)}
-.chsq.g{background:var(--green-bg);color:var(--green-d)}
-.chsq.b{background:var(--blue-bg);color:var(--blue)}
-.chsq.a{background:var(--amber-bg);color:var(--amber)}
-
-/* ===== barres 7 jours ===== */
-/* 27/07 : le graphique avait une hauteur fixe de 172px. Sa carte, elle, s'étire
-   sur la hauteur de « Répartition par nuisible » à côté — d'où un grand vide
-   sous les barres. Il occupe maintenant la place disponible : plus de vide, et
-   des barres nettement plus hautes. Le plancher de 200px vaut pour le cas où
-   la carte voisine serait plus courte. */
-.c7j{display:flex;flex-direction:column}
-.b7{display:flex;align-items:flex-end;gap:12px;flex:1;min-height:200px;padding-top:12px}
-.bcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
-.bcol .bv{font-size:0.74rem;font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums}
-.bcol .br{width:70%;max-width:52px;border-radius:var(--r-sm) 9px 4px 4px;background:#DCE3EF;min-height:3px}   /* 30/07 (patron) : les jours passes en gris froid — l orange n appartient qu a AUJOURD HUI (.hot) */
-.bcol.hot .br{background:linear-gradient(180deg,var(--orange),var(--orange-deep));box-shadow:0 8px 20px -6px rgba(255,90,31,.55)}
-.bcol .bd{font-size:0.68rem;color:var(--muted);font-weight:600;text-align:center;line-height:1.3}
-.bcol.hot .bd{color:var(--orange-deep);font-weight:800}
-
-/* ===== barres répartition ===== */
-.cbar{display:grid;grid-template-columns:225px 1fr 34px;gap:12px;align-items:center;padding:9px 0;font-size:0.8rem}
-.cbar .cl{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
-.cbar .dot{width:8px;height:8px;border-radius:50%;flex:none}
-.cbar .ct{height:10px;border-radius:var(--r-sm);background:#F1F2F5;overflow:hidden}
-.cbar .ct i{display:block;height:100%;border-radius:var(--r-sm)}
-.cbar .cv{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
-@media(max-width:1250px){.cbar{grid-template-columns:172px 1fr 30px}}
-
-/* ===== jauges ===== */
-.gwrap{display:flex;align-items:center;gap:22px}
-.gauge{width:132px;height:132px;border-radius:50%;display:grid;place-items:center;flex:none;background:conic-gradient(#10B981 calc(var(--p)*1%), #EEF0F4 0)}   /* 30/07 : un taux de reussite est VERT, pas orange */
-.gauge .gc{width:100px;height:100px;border-radius:50%;background:#fff;display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:1.35rem;letter-spacing:-.5px}
-.ginfo b{font-family:'Sora';font-size:0.95rem;display:block}
-.ginfo p{font-size:0.8rem;color:var(--muted);margin-top:5px;line-height:1.5}
-.ginfo a{display:inline-flex;margin-top:10px;font-size:0.74rem;font-weight:700;color:var(--orange-deep)}
-.ginfo a:hover{text-decoration:underline}
-.gnote{font-size:0.68rem;font-weight:700;background:#F1F2F5;color:var(--muted);border-radius:var(--r-sm);padding:3px 9px;display:inline-flex;margin-top:8px}
-
-/* ===== tâches ===== */
-.task{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:var(--r-md);padding:11px 14px;margin-bottom:9px;transition:.13s}
-.task:hover{border-color:#D8DAE1;background:#FAFBFC}
-.task:last-of-type{margin-bottom:0}
-.task .tic{width:36px;height:36px;border-radius:var(--r-md);background:#F1F2F6;display:grid;place-items:center;flex:none}   /* 30/07 : le carre orange repete a chaque rangee criait — neutre */
-.task .tic svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.task b{font-size:0.86rem;display:block}
-.task small{color:var(--muted);font-size:0.74rem}
-.task .pr{margin-left:auto;font-size:0.68rem;font-weight:800;border-radius:var(--r-sm);padding:4px 11px;flex:none}
-.pr.moy{background:var(--amber-bg);color:var(--amber)}
-.pr.hau{background:var(--red-bg);color:var(--red)}
-.pr.bas{background:var(--blue-bg);color:var(--blue)}
-.pr.loin{background:#EEF0F3;color:#6C7285}   /* echeance lointaine : pas une alerte */
-
-/* ===== table techniciens ===== */
-table{width:100%;border-collapse:collapse;font-size:0.86rem}
-thead th{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:left;padding:13px 15px;border-bottom:1px solid var(--line);background:#FAFBFC;white-space:nowrap}
-tbody td{padding:14px 15px;border-bottom:1px solid #F3F4F7;white-space:nowrap}
-tbody tr:last-child td{border-bottom:0}
-tbody tr:nth-child(even) td{background:#FAFBFC}
-tbody tr:hover td{background:#F6F7FA}
-td,.num{font-variant-numeric:tabular-nums}
-.tnom{display:flex;align-items:center;gap:10px;font-weight:700}
-.tav{width:30px;height:30px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:0.68rem;font-weight:800;font-family:'Sora';flex:none}
-.tb{display:inline-flex;min-width:26px;justify-content:center;font-size:0.74rem;font-weight:800;border-radius:var(--r-sm);padding:3px 8px}
-.tb.g{background:var(--green-bg);color:var(--green-d)}
-.tb.b{background:var(--blue-bg);color:var(--blue)}
-.tb.n{background:#F1F2F5;color:var(--muted)}
-.tbar{display:inline-flex;align-items:center;gap:8px}
-.tbar .tt{width:110px;height:8px;border-radius:var(--r-sm);background:#F1F2F5;overflow:hidden;display:inline-block}
-.tbar .tt i{display:block;height:100%;border-radius:var(--r-sm);background:linear-gradient(90deg,var(--green),#34D399)}
-.tbar b{font-family:'Sora';font-size:0.8rem;min-width:38px}
-.vsm{font-size:0.68rem;color:var(--muted);font-weight:600}
-
-.toast{position:fixed;left:50%;bottom:calc(30px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:0.86rem;font-weight:600;padding:12px 20px;border-radius:var(--r-md);box-shadow:var(--sh-2);opacity:0;pointer-events:none;transition:.25s;z-index:99;white-space:nowrap}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-@media(max-width:1250px){.kgrid{grid-template-columns:1fr 1fr}}
-@media(max-width:1080px){.grid2{grid-template-columns:1fr}}
-/* Ces deux regles etaient enfermees dans @media(max-width:760px) (sequelle du @media
-   non referme du 26/07). L'icone du titre de page n'etait donc dimensionnee
-   que d'un cote du point de rupture : ailleurs, le SVG s'affichait en grand. */
-.pgico{display:inline-grid;place-items:center;vertical-align:middle;width:26px;height:26px;border-radius:8px;background:var(--orange-soft);color:var(--orange-deep);margin-right:9px;flex:none}
-.pgico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
-@media(max-width:760px){
-  html{font-size:15.5px}
-  .sidebar{display:none}
-  .main{margin-left:0}
-  .topbar{padding:10px 14px}
-  .crumbs{display:none}
-/* icone de page dans la barre du haut (27/07) : inline-grid + vertical-align
-   pour ne pas casser l'ellipse du titre ni son alignement. */
-
-  .title-m{display:block}
-  .page{padding:14px 13px calc(80px + var(--safe-b))}
-  .kgrid{grid-template-columns:1fr}
-  .b7{gap:6px;min-height:170px}
-  .gwrap{flex-direction:column;text-align:center}
-  .tbar .tt{width:70px}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111418; --surface:#1A1E25; --surface-2:#20252D; --ink:#EDEFF3; --muted:#9AA3B1; --line:#2B313B;
+    --accent:#F4703E; --accent-soft:#3A2419;
+    --bad:#F0736A; --bad-soft:#3B211F; --bad-ink:#FFB4AD;
+    --good:#4CC489; --good-soft:#173328; --good-ink:#9FE3C0;
+    --warn-soft:#3A3117; --warn-ink:#F1D287;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
 }
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-:focus-visible{outline:2.5px solid var(--orange);outline-offset:2px;border-radius:var(--r-sm)}
-button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
-::selection{background:#FFD9C4;color:var(--ink)}
-*{scrollbar-width:thin;scrollbar-color:#D8DAE1 transparent}
-.kt{transition:.13s}.kt:hover{transform:translateY(-2px);box-shadow:var(--sh-2)}
-
-/* ===== UX : retour tactile + focus clavier (25/07) ===== */
-tr:active,.row:active,.card:active,.line:active,.itm:active,.tdrow:active{background:#F5F6F9}
-button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:var(--r-sm)}
-
-/* ===== menu du compte (bas du menu latéral) ===== */
-.side-user{position:relative;cursor:pointer;transition:background .12s}
-.side-user:hover{background:#1B1E25}
-.side-user .uchev{width:15px;height:15px;stroke:#7E838F;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;margin-left:auto;flex:none;transition:transform .18s}
-.side-user.open .uchev{transform:rotate(180deg)}
-.umenu{display:none;position:absolute;left:12px;right:12px;bottom:calc(100% + 6px);background:#fff;border-radius:var(--r-lg);padding:6px;box-shadow:var(--sh-3);z-index:80}
-.side-user.open .umenu{display:block}
-.umenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;font-family:inherit;font-size:0.86rem;font-weight:700;color:var(--ink);padding:10px 11px;border-radius:var(--r-md);cursor:pointer;transition:background .1s}
-.umenu button:hover{background:var(--bg)}
-.umenu .uic{width:28px;height:28px;border-radius:var(--r-sm);background:#F3F4F7;display:grid;place-items:center;flex:none}
-.umenu .uic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.umenu .udanger{color:#B3261E}
-.umenu .udanger:hover{background:#FCECEA}
-.umenu .udanger .uic{background:#FCECEA}
-
-/* ===== recherche globale ===== */
-.gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line,var(--line));color:var(--muted,var(--muted));font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit}
-.gsbtn:hover{border-color:#D5D8DF;color:var(--ink-2,var(--ink-2))}
-.gsbtn svg{width:15px;height:15px;flex:none}
-.gsbtn kbd{font-family:inherit;font-size:0.68rem;font-weight:700;background:#F1F2F5;border-radius:var(--r-sm);padding:2px 6px;color:var(--muted,var(--muted))}
-/* ===== recherche directe dans la barre (27/07) =====
-   On ecrit dans la barre du haut, les resultats tombent dessous. La fenetre
-   centrale ne sert plus que sur telephone, ou la barre se reduit a une icone
-   de 40px : il n'y a pas la place d'un champ de saisie. C'est la regle
-   .gsbtn > :not(svg){display:none} du bloc telephone qui masque le champ,
-   la liste et les raccourcis en dessous de 760px. */
-.gsbtn{position:relative;cursor:text;z-index:130}
-.gsbtn:focus-within{border-color:var(--orange,#FF5A1F)}
-.gsbtn .gsq{flex:1;min-width:0;border:0;background:none;padding:0;font-family:inherit;font-size:.8rem;font-weight:600;color:var(--ink,#171A20)}
-.gsbtn .gsq:focus{outline:none;box-shadow:none}
-.gsbtn .gsq::placeholder{color:var(--muted,#8A90A0);font-weight:500}
-.gsdrop{position:absolute;top:calc(100% + 7px);left:0;right:0;background:#fff;border:1px solid var(--line,#E7E9EF);
-  border-radius:14px;box-shadow:0 18px 44px rgba(16,18,22,.16);max-height:52vh;overflow-y:auto;padding:8px;
-  display:none;z-index:130;text-align:left;cursor:default}
-.gsdrop.open{display:block}
-/* ☠️ 07/09 (patron) : « c'est coupé, on voit rien » sur l'adresse d'un resultat.
-   MESURE a 1440 px : les TROIS elements d'une ligne faisaient 121 px CHACUN —
-   y compris l'icone censee faire 32 px — et l'adresse avait besoin de 175 px.
-   CAUSE : « .topbar .gsbtn span{flex:1} » (specificite 0,2,1) vise la barre de
-   recherche elle-meme, mais le panneau de resultats vit DANS .gsbtn : la regle
-   attrape donc aussi les span des lignes et ecrase le « flex:none » de
-   .gs-r .gi et .gs-r .go (0,2,0). Les trois se partageaient la largeur.
-   Ces quatre lignes rendent sa place a chacun. Elles doivent rester APRES la
-   regle coupable et hors de toute media query. */
-.gsdrop .gs-r > *{flex:0 0 auto}
-.gsdrop .gs-r > span:not(.gi):not(.go){flex:1 1 auto;min-width:0;overflow:hidden;text-align:left}
-.gsdrop .gs-r b,.gsdrop .gs-r small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
-.gsdrop .gs-r .go{margin-left:auto;padding-left:8px}
-.gs-veil{display:none;position:fixed;inset:0;background:rgba(16,18,22,.45);z-index:120;backdrop-filter:blur(2px)}
-.gs-veil.open{display:block}
-.gs-pal{position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 26px));background:#fff;border-radius:var(--r-xl);box-shadow:var(--sh-3);z-index:121;overflow:hidden;display:none}
-.gs-pal.open{display:block}
-.gs-in{display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid var(--line)}
-.gs-in svg{width:18px;height:18px;stroke:var(--muted);flex:none}
-.gs-in input{flex:1;border:0;font-family:inherit;font-size:0.95rem;color:var(--ink);background:none;padding:0}
-.gs-in input:focus{outline:none;box-shadow:none}
-.gs-res{max-height:52vh;overflow-y:auto;padding:8px}
-/* Styles des resultats de recherche. Ils avaient disparu de 5 pages lors de la
-   reparation du @media non referme du 26/07 : la liste s'affichait sans mise
-   en forme (lignes nues, groupes invisibles). Repris a l'identique de
-   devis-liste.html, qui les avait conserves. */
-.gs-g{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:9px 12px 4px}
-.gs-r{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;cursor:pointer;font-size:.88rem}
-.gs-r:hover,.gs-r.sel{background:var(--orange-soft)}
-.gs-r .gi{width:32px;height:32px;border-radius:10px;background:#F1F2F5;display:grid;place-items:center;font-size:.95rem;flex:none}
-.gs-r b{display:block;font-weight:600;color:var(--ink)}
-.gs-r small{display:block;font-size:.73rem;color:var(--muted)}
-.gs-r .go{margin-left:auto;font-size:.68rem;color:#C4C8D2;flex:none}
-.gs-r.sel .go{color:var(--orange-deep);font-weight:700}
-.gs-empty{padding:26px;text-align:center;color:var(--muted);font-size:.86rem}
-
-/* Ces 7 regles avaient perdu leur media query sur cette page : la version
-   telephone de la recherche fuyait sur ordinateur (placeholder et ⌘K masques,
-   loupe centree dans une boite vide). Contexte remis comme sur les 21 autres. */
-@media(max-width:760px){.gsbtn{width:40px;padding:0;justify-content:center}.gsbtn > :not(svg){display:none}.gsbtn span,.gsbtn kbd{display:none}.gsbtn{width:40px;justify-content:center;padding:0}}
-@media(min-width:980px){.gsbtn{min-width:250px;justify-content:flex-start;background:#fff}.gsbtn span{flex:1;text-align:left}.gsbtn kbd.slash{margin-left:0}}
-
-/* ===== recherche globale : POSITION FIXE, identique sur toutes les pages =====
-   la barre du haut n'a pas la même hauteur partout (6 paddings différents),
-   donc on ne se cale plus dessus : la barre est ancrée à l'écran. */
-.topbar{position:relative;min-height:64px}
-@media(min-width:761px){
-  /* La recherche n'est plus centrée : elle se range à droite, juste avant les boutons.
-     Le padding vertical de la barre est neutralisé ici (il valait de 6 à 15 px selon
-     les pages) pour qu'elle reste à la même hauteur à l'écran partout, ce que la
-     position fixe assurait avant. */
-  .topbar{padding-top:0;padding-bottom:0}
-  .topbar .gsbtn{width:min(430px, calc(100vw - 660px));margin-left:auto}
-  .topbar .gsbtn span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .topbar .title-d,.topbar .title-m,.topbar .crumbs{max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root[data-theme="dark"]{
+  --bg:#111418; --surface:#1A1E25; --surface-2:#20252D; --ink:#EDEFF3; --muted:#9AA3B1; --line:#2B313B;
+  --accent:#F4703E; --accent-soft:#3A2419;
+  --bad:#F0736A; --bad-soft:#3B211F; --bad-ink:#FFB4AD;
+  --good:#4CC489; --good-soft:#173328; --good-ink:#9FE3C0;
+  --warn-soft:#3A3117; --warn-ink:#F1D287;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
 }
-@media(min-width:761px) and (max-width:1180px){
-  .topbar .gsbtn{width:min(320px, calc(100vw - 580px))}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:0 64px}
+a{color:var(--accent)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,3.2vw,38px);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+h2{font-size:clamp(20px,2.2vw,26px);font-weight:800;letter-spacing:-.015em}
+h3{font-size:15px;font-weight:700}
+.eyebrow{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .in{max-width:1320px;margin:0 auto;padding:10px clamp(16px,3vw,32px);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:-.01em;margin-right:auto}
+.brand .dot{width:26px;height:26px;border-radius:8px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:13px;font-family:var(--mono)}
+.brand span b{color:var(--accent)}
+nav.pages{display:flex;gap:6px;flex-wrap:wrap}
+nav.pages a{font-size:13px;font-weight:500;color:var(--ink);text-decoration:none;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+nav.pages a:hover{border-color:var(--accent);color:var(--accent)}
+
+/* hero */
+.hero{padding-block:36px 24px;display:grid;gap:18px}
+.hero p.lead{max-width:68ch;margin:0;font-size:16px}
+.rule{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:14px 16px;max-width:820px}
+.rule .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);padding-top:3px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;align-items:center}
+.legend .pin{position:static;transform:none}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px;min-width:120px}
+.stat b{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+
+/* sections */
+section.page{padding-block:34px 8px;scroll-margin-top:72px;border-top:1px solid var(--line)}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.sec-head .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media (max-width:900px){.compare{grid-template-columns:1fr}}
+.shot{display:flex;flex-direction:column;gap:8px}
+.shot .cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.shot .cap i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.shot .cap.bad i{background:var(--bad)} .shot .cap.good i{background:var(--good)}
+.shot .cap small{font-weight:400;color:var(--muted)}
+.frame{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
+.frame img{display:block;width:100%;height:auto}
+.frame.small{max-width:520px}
+.pin{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;border:2px solid #fff;color:#fff;font-family:var(--mono);font-size:11.5px;font-weight:600;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.35);padding:0;line-height:1;transition:transform .12s ease}
+.pin.bad{background:var(--bad)} .pin.good{background:var(--good)} .pin.add{background:var(--good);border-style:dashed}
+.pin:hover,.pin.on{transform:translate(-50%,-50%) scale(1.3);z-index:3;outline:3px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.pin:focus-visible{outline:3px solid var(--accent)}
+.stack{display:grid;gap:14px}
+
+/* list of items */
+.items{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.item{display:grid;grid-template-columns:34px 220px 1fr;gap:14px;padding:11px 14px;border-top:1px solid var(--line);align-items:start;cursor:pointer}
+.item:first-child{border-top:0}
+.item:hover,.item.on{background:var(--surface-2)}
+.item .num{width:24px;height:24px;border-radius:50%;color:#fff;font-family:var(--mono);font-size:11.5px;font-weight:600;display:grid;place-items:center;background:var(--bad)}
+.item.add .num{background:var(--good);border:2px dashed #fff;box-sizing:border-box}
+.item .what{font-weight:600;font-size:14px}
+.item .do{font-size:14px;color:var(--ink)}
+.item .do b{font-weight:600;color:var(--bad-ink)}
+.item.add .do b{color:var(--good-ink)}
+.item .do .flag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn-ink);margin-left:6px;vertical-align:middle}
+.item .do .bug{background:var(--bad-soft);color:var(--bad-ink)}
+@media (max-width:700px){.item{grid-template-columns:34px 1fr}.item .do{grid-column:2}}
+
+/* global rules */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:8px;align-content:start}
+.card h3{display:flex;align-items:center;gap:8px}
+.card ul{margin:0;padding-left:18px;display:grid;gap:5px;font-size:14px}
+.card.decide{grid-column:1/-1;border-color:color-mix(in srgb,var(--warn-ink) 40%,var(--line));background:color-mix(in srgb,var(--warn-soft) 55%,var(--surface))}
+@media (min-width:760px){.card.decide ul{display:block;columns:2;column-gap:32px}.card.decide ul li{break-inside:avoid;margin-bottom:5px}}
+.card.decide h3 .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn-ink)}
+.card.product{border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+code{font-family:var(--mono);font-size:.92em;background:var(--surface-2);padding:1px 5px;border-radius:5px;border:1px solid var(--line)}
+/* rendered TigerFlow modal (proposed version) */
+.tf-backdrop{background:#B9BEC7;border-radius:10px;padding:28px 18px;display:grid;place-items:center;min-height:100%;border:1px solid var(--line)}
+.tf-modal{background:#fff;color:#1A1D24;width:100%;max-width:520px;border-radius:16px;padding:26px 28px 24px;box-shadow:0 20px 50px rgba(20,24,30,.25);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14.5px;line-height:1.45}
+.tf-modal h4{font-family:var(--display);font-size:21px;font-weight:800;letter-spacing:-.01em;margin:0 0 4px;color:#1A1D24}
+.tf-modal .tf-sub{font-size:13.5px;color:#5F6672;margin-bottom:14px;font-variant-numeric:tabular-nums}
+.tf-modal .tf-sub b{color:#1A1D24;font-weight:600}
+.tf-modal p{margin:0 0 14px}
+.tf-modal .tf-info{background:#EEF2FF;border:1px solid #4C6EF5;border-radius:10px;padding:12px 14px;margin-bottom:20px}
+.tf-modal .tf-info .t{color:#2F54EB;font-weight:500;margin-bottom:3px}
+.tf-modal .tf-actions{display:flex;justify-content:flex-end;gap:10px}
+.tf-modal button{font:inherit;font-weight:600;font-size:14px;border-radius:10px;padding:10px 16px;cursor:default}
+.tf-modal button.ghost{background:#fff;color:#1A1D24;border:1px solid #D0D5DD}
+.tf-modal button.primary{background:#F0662D;color:#fff;border:1px solid #F0662D}
+.tf-modal .chg{background:#E1F4E9;border-radius:3px;padding:0 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.tf-note{font-size:12.5px;color:var(--muted);margin-top:8px}
+footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px}
+@media print{
+  .top{position:static;backdrop-filter:none}
+  section.page{break-before:page;border-top:0}
+  .frame{box-shadow:none}
+  .pin,.item .num{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
-.bnv{display:none}
-@media(max-width:760px){
-  .bnv{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;align-items:stretch;
-    background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line,var(--line));
-    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
-  .bnv a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;
-    font-size:0.68rem;font-weight:700;color:#8A8F9C;border-radius:var(--r-md);text-decoration:none;min-height:48px;justify-content:center}
-  .bnv a svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .bnv a.on{color:var(--orange-deep,var(--orange-deep))}
-  .bnv a.ctr{margin-top:-24px;color:var(--orange-deep,var(--orange-deep))}
-  .bnv a.ctr .dsc{width:52px;height:52px;border-radius:50%;background:var(--orange,var(--orange));display:grid;place-items:center;
-    box-shadow:0 8px 20px -6px rgba(255,90,31,.55);border:4px solid var(--bg,var(--bg))}
-  .bnv a.ctr .dsc svg{width:22px;height:22px;stroke:#fff;stroke-width:2.2}
-  .main{padding-bottom:86px}
-}
-.bnvsheet{position:fixed;inset:0;background:rgba(16,18,22,.55);z-index:80;display:none;align-items:flex-end}
-.bnvsheet.open{display:flex}
-.bnvcard{background:#fff;border-radius:22px 22px 0 0;width:100%;padding:18px 16px calc(20px + env(safe-area-inset-bottom,0px));animation:bnvup .22s ease}
-@keyframes bnvup{from{transform:translateY(40px);opacity:.4}to{transform:translateY(0);opacity:1}}
-.bnvcard h3{font-family:'Sora',sans-serif;font-size:0.95rem;margin:0 0 13px;padding-left:4px}
-.bnvgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.bnvgrid a{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 6px;border-radius:14px;background:var(--bg,var(--bg));
-  font-size:.68rem;font-weight:700;color:var(--ink-2,var(--ink-2));text-decoration:none;text-align:center}
-.bnvgrid a span.i{font-size:1.35rem}
-@media(prefers-reduced-motion:reduce){.bnvcard{animation:none}}
-.bnv a:active{transform:scale(.93);transition:transform .08s}
-.bnv a.ctr:active .dsc{transform:scale(.93);transition:transform .08s}
-.bnvgrid a:active{transform:scale(.95);transition:transform .08s}
-.bnvgrid a.here{background:var(--orange-soft,var(--orange-soft));color:var(--orange-deep,var(--orange-deep))}
-
-/* ===== confort mobile (aligné sur le reste du SaaS) ===== */
-@media(max-width:760px){ input,select,textarea{font-size:16px} }
-@media(pointer:coarse){
-  button,.btn,.btn2,a.btn,a.btn2,.aic,.act,.chip{min-height:44px}
-}
-
-/* ===== grilles repliées sur téléphone ===== */
-@media(max-width:760px){
-  .grid2{grid-template-columns:1fr}
-}
-@media(max-width:420px){
-}
-
-/* ===== la barre du bas n'existe QUE sur téléphone ===== */
-.bnv,.bnvsheet{display:none}
-@media(max-width:760px){
-  .bnv{display:flex}
-  .bnvsheet.open{display:block}
-}
-
-/* ===== barre du bas : téléphone uniquement ===== */
-.bnv,.bnvsheet{display:none}
-@media(max-width:760px){
-
-
-/* ===== navigation mobile (portée) ===== */
-.bnv, .bcat, .st{-webkit-user-select:none;user-select:none}
-
-.bnv{position:fixed;left:0;right:0;bottom:0;z-index:70;display:flex;align-items:stretch;
-    background:rgba(255,255,255,.96);backdrop-filter:blur(14px);border-top:1px solid var(--line,var(--line));
-    padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
-  .bnv{display:flex}
-  .bnvsheet.open{display:block}
-}
-
-/* ===== cloche de notifications (portée) ===== */
-.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
-.bell svg{width:18px;height:18px}
-.bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:0.68rem;font-weight:700;min-width:17px;height:17px;border-radius:var(--r-sm);display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
-.bell:hover{border-color:var(--orange);color:var(--orange-deep)}
-/* ===== 12/08 : le panneau de la cloche — elle sonne quand TOI tu dois agir ===== */
-.bpop{position:absolute;top:calc(100% + 8px);right:0;z-index:60;width:392px;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-3);padding:8px;display:none}
-.bpop.open{display:block}
-.bph{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 10px}
-.bph b{font-family:'Sora';font-size:0.92rem}
-.bph button{background:none;border:0;color:var(--orange-deep);font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;padding:0}
-.bph button:hover{text-decoration:underline}
-.brow{display:flex;gap:11px;align-items:flex-start;padding:11px 10px;border-radius:12px;text-decoration:none;color:inherit}
-.brow:hover{background:#F7F8FA}
-.brow.nu{background:#FFF9F5}
-.brow.nu:hover{background:#FFF3EC}
-.brow+.brow{margin-top:2px}
-.bic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}
-.bic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.brow .bb{flex:1;min-width:0}
-.brow .bb b{display:block;font-size:0.8rem;line-height:1.35}
-.brow .bb small{display:block;font-size:0.72rem;color:var(--ink-2);line-height:1.45;margin-top:1px}
-.btime{font-size:0.66rem;color:var(--muted);font-weight:700;white-space:nowrap;margin-top:2px}
-.brow.nu .btime::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--orange);margin-right:5px}
-.bfoot{border-top:1px solid var(--line);margin-top:6px;padding:10px 10px 6px;text-align:center}
-.bfoot a{font-size:0.73rem;font-weight:700;color:var(--ink-2);text-decoration:none}
-.bfoot a:hover{color:var(--orange-deep)}
-/* Fond de la barre de recherche (charte TigerFlow, 28/07) : un degrade qui
-   part du blanc et se rechauffe vers la droite, pour s'accorder au fond
-   orange de la barre du haut sans devenir orange lui-meme. */
-.gsbtn{background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 25%,#FFF8F4 55%,#FFF5EF 100%);
-  border:1px solid #E8EDF2;border-radius:14px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
-.gsbtn:hover{border-color:#DCE3EB}
-.gsbtn:focus-within{border-color:var(--orange,#FF5A1F);box-shadow:0 0 0 3px rgba(255,90,31,.10)}
-
-html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran ») : la place de l'ascenseur est reservee, plus de saut de 15px entre pages courtes et longues */
-
-.hiname{color:var(--orange-deep,#E84D0E)}
-table.novs th:last-child,table.novs td:last-child{display:none}   /* vs mois dernier : cachee tant que sans historique */
-
-/* ============================================================
-   TÉLÉPHONE (≤ 640 px) — 15/08. Même règle que sur les autres écrans :
-   les chiffres et les pastilles de filtre défilent du doigt au lieu de
-   s'empiler. Rien ne disparaît, tout reste atteignable.
-   ============================================================ */
-@media(max-width:640px){
-  /* les 4 tuiles du tableau de bord : une bande qui défile, pas une pile.
-     Empilées, elles faisaient 1 100 px pour quatre chiffres. */
-  .kgrid{display:flex!important;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;
-    scroll-snap-type:x proximity;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
-  .kgrid::-webkit-scrollbar{display:none}
-  .kgrid > *{flex:0 0 74%;scroll-snap-align:start;min-width:0}
-  .kt{padding:13px 15px}
-  .kt b{font-size:1.45rem}
-  /* la tuile entière est déjà un lien : le petit « Agenda → » posé en absolu
-     chevauchait le titre une fois la tuile rétrécie. */
-  .kt .go{display:none}
-  .kt .kl{margin-bottom:7px}
-  /* le titre de page se cassait sur deux lignes et chevauchait la barre */
-  .topbar .title-m,.topbar h1{white-space:nowrap;font-size:1rem;min-width:0;
-    overflow:hidden;text-overflow:ellipsis}
-  /* « Bonjour » + la date tenaient sur 180 px */
-  .cover{padding:14px 16px}
-  .cover .sub{font-size:.82rem}
-  .kpis{display:flex!important;gap:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;
-    scroll-snap-type:x proximity;padding-bottom:3px;scrollbar-width:none}
-  .kpis::-webkit-scrollbar{display:none}
-  .kpis > *{flex:0 0 62%;scroll-snap-align:start;min-width:0}
-  .kpi{padding:12px 13px}
-  .chips{display:flex;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
-    gap:7px;padding-bottom:3px;scrollbar-width:none}
-  .chips::-webkit-scrollbar{display:none}
-  .chips > *{flex:none;white-space:nowrap}
-  .topbar .btn.primary,.abar .btn2.primary,.abar .newbtn,.topbar .newbtn{display:none}
-}
-
-/* ═ v316 (patron, maquette validée) : le bas du tableau de bord en cartouches —
-   du français au lieu de « J-3 », et le geste au bout de chaque ligne. ═ */
-.ktc{display:block;border:1px solid var(--line);border-radius:12px;background:#FAFBFC;padding:11px 13px;margin-bottom:9px;transition:.12s}
-.ktc:hover{border-color:#D8DAE1;background:#fff}
-.ktc:last-child{margin-bottom:0}
-.ktc .k1{display:flex;align-items:baseline;gap:10px}
-.ktc .k1 b{font-weight:600;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ktc .kex{margin-left:auto;flex:none;font-size:.74rem;font-weight:700;font-variant-numeric:tabular-nums}
-.ktc .kex.rouge{color:var(--red)} .ktc .kex.ambre{color:var(--amber)} .ktc .kex.gris{color:var(--muted)}
-.ktc .k2{display:flex;align-items:baseline;gap:10px;font-size:.74rem;color:var(--muted);font-weight:600;margin-top:4px}
-.ktc .kgo{margin-left:auto;flex:none;font-size:.75rem;font-weight:800;color:var(--orange-deep)}
+@media (prefers-reduced-motion:reduce){.pin{transition:none}}
 </style>
 </head>
 <body>
+<div class="top"><div class="in">
+  <div class="brand"><span class="dot">R</span><span>Recette Tiger<b>Flow</b> · Saigon vs maquette</span></div>
+  <nav class="pages" id="nav"></nav>
+</div></div>
 
-<aside class="sidebar">
-  <div class="brand">
-    <span class="logo" style="position:relative;overflow:hidden"><img src="logo-tigre.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5A1F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 6.5 L5.4 3.6 C7 2.9 8.4 2.8 9.6 3.4"/><path d="M16.6 6.5 L18.6 3.6 C17 2.9 15.6 2.8 14.4 3.4"/><path d="M12 21.2 C9.1 21.2 6.5 19.4 5.7 16.6 C5.1 14.4 5.2 11.9 6 9.8 C6.5 8.4 7.5 7.1 8.9 6.3 C9.9 5.8 10.9 5.5 12 5.5 C13.1 5.5 14.1 5.8 15.1 6.3 C16.5 7.1 17.5 8.4 18 9.8 C18.8 11.9 18.9 14.4 18.3 16.6 C17.5 19.4 14.9 21.2 12 21.2 Z"/><path d="M12 5.7 V8.1"/><path d="M10.1 6.2 L10.5 8.2"/><path d="M13.9 6.2 L13.5 8.2"/><path d="M8.1 11.1 L10.2 11.9"/><path d="M15.9 11.1 L13.8 11.9"/><path d="M5.8 12.6 L7.5 12.9"/><path d="M6 14.7 L7.6 14.6"/><path d="M18.2 12.6 L16.5 12.9"/><path d="M18 14.7 L16.4 14.6"/><path d="M10.8 14.5 H13.2 L12 15.9 Z"/><path d="M12 15.9 V17.3"/><path d="M12 17.3 C11 17.4 10.1 17 9.5 16.3"/><path d="M12 17.3 C13 17.4 13.9 17 14.5 16.3"/></svg></span>
-    <span class="name">TIGER<em>FLOW</em></span>
-  </div>
-  <nav class="nav">
-    <a href="index.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
-    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
-    <a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
-    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
-    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
-    <a href="paiements.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Paiements</a>
-    <a href="contrats-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
-    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
-    <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
-    <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
-  </nav>
-  <nav class="nav navbot">
-    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.62rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
-    <a href="connexion.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg>Connexion</a>
-    <!-- 02/09 (patron) : « marre d'aller chercher la bêta dans Réglages a chaque
-         fois » — un raccourci sous Connexion. Discret : petit, gris, il ouvre
-         directement la boite « Fonctions en beta » (reglages.html#beta). -->
-    <a href="reglages.html#beta" class="nbeta" title="Les fonctions en bêta — Version 2 et Version 3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6M10 2v6.5L5.2 18a2 2 0 001.8 3h10a2 2 0 001.8-3L14 8.5V2"/><path d="M7.5 14h9"/></svg>Bêta<span class="nbt">V2</span></a>
-  </nav>
-  <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
-    <span class="ph">JJ</span>
-    <div><b>Jo Jo</b><span>Administrateur</span></div>
-    <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
-    <div class="umenu" id="umenu">
-      <button type="button" onclick="event.stopPropagation();location.href='reglages.html?moi=1'">
-        <span class="uic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg></span>Mon compte</button>
-      <button type="button" class="udanger" onclick="event.stopPropagation();logout()">
-        <span class="uic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Déconnexion</button>
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Recette front · 22 septembre 2026</div>
+      <h1>Ce que Saigon doit changer pour coller à la maquette</h1>
     </div>
-  </div>
-</aside>
-
-<div class="main">
-  <div class="topbar">
-    <div class="crumbs"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg></span><span class="cur">Tableau de bord</span></div>
-    <div class="title-m"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg></span>Tableau de bord</div>
-    <div class="spacer"></div>
-    <div class="gsbtn" onclick="gsTap()" role="search">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input class="gsq" id="gs-top" type="text" autocomplete="off" placeholder="Client, adresse, devis…" aria-label="Recherche globale">
-      <kbd class="slash">/</kbd><kbd>⌘K</kbd>
-      <div class="gsdrop" id="gs-drop"></div>
+    <p class="lead">Chaque écran ci-dessous met côte à côte le staging Saigon (<code>stg.tigerflow.io</code>) et la maquette de référence (<code>sastigerflow</code>). Les pastilles rouges marquent ce qui est à corriger sur le staging ; la pastille verte de même numéro montre l'endroit correspondant dans la maquette, c'est-à-dire le résultat attendu. On ne compare pas les données ni les tailles absolues (certaines captures Saigon sont à 67 % de zoom), seulement la structure, les libellés, les alignements et les composants. L'écran 6 rassemble les propositions validées pour la fiche facture (avoir dans la ligne de vie, menu d'actions par statut, paiement annoncé puis reçu, date de réception, avoir avec remboursement, trop-perçu) ; elles sont déjà dans la maquette <code>facture-detail.html</code>.</p>
+    <div class="rule"><span class="k">Règle</span><span>La maquette est la référence. Quand le staging propose autre chose, on aligne sur la maquette. Les ajouts de Saigon absents de la maquette ne sont pas acquis : ils sont listés en bas, <b>à trancher</b> par Jo.</span></div>
+    <div class="legend">
+      <span class="pin bad">1</span><span>À corriger sur le staging Saigon</span>
+      <span class="pin good">1</span><span>Résultat attendu (maquette)</span>
+      <span class="pin add">+</span><span>À ajouter, y compris dans la maquette</span>
     </div>
-    <div class="mwrap">
-      <button class="mchip" id="c-moisbtn" onclick="moisTog(event)" aria-haspopup="dialog" aria-expanded="false" title="Choisir un mois — ouvre l'agenda sur ce mois">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="c-mois">juil 2026</span>
-        <svg class="mcar" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-      <div class="mpop" id="mpop" role="dialog" aria-label="Choisir un mois">
-        <div class="mph">
-          <button type="button" onclick="moisAn(-1)" aria-label="Année précédente"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <b id="mpy">2026</b>
-          <button type="button" onclick="moisAn(1)" aria-label="Année suivante"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
-        </div>
-        <div class="mpg" id="mpg"></div>
-        <div class="mpf">Ouvre l'agenda sur le mois choisi</div>
-      </div>
-    </div>
-    <div class="mwrap">
-      <button class="bell" id="bellbtn" onclick="bellTog(event)" aria-label="Notifications" aria-haspopup="dialog" aria-expanded="false">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
-        <span class="dot" id="bell-dot">3</span>
-      </button>
-      <!-- 12/08 : la cloche notifie l'EXTERNE qui demande une action — devis lu/signé,
-           imprévu terrain, relance en échec, devis qui expire. Jamais le fonctionnement
-           normal (« relance J+3 envoyée » se lit dans la liste, pas ici). -->
-      <div class="bpop" id="bpop" onclick="event.stopPropagation()">
-        <div class="bph"><b id="bph-n">Notifications · 3 nouvelles</b><button onclick="bellLu()">Tout marquer lu</button></div>
-        <a class="brow nu" href="calendrier.html">
-          <span class="bic" style="background:var(--amber-bg);color:var(--amber)"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/></svg></span>
-          <span class="bb"><b>Imprévu — client absent</b><small>Pablo chez Raymond Berger (11 h, Paris 11ᵉ). Rappeler le client ou replanifier.</small></span>
-          <span class="btime">il y a 5 min</span>
-        </a>
-        <a class="brow nu" href="devis-liste.html">
-          <span class="bic" style="background:var(--green-bg);color:var(--green-d)"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <span class="bb"><b>Devis signé</b><small>M. Garnier — 1 240 € HT. À planifier en intervention.</small></span>
-          <span class="btime">il y a 32 min</span>
-        </a>
-        <a class="brow nu" href="devis-liste.html">
-          <span class="bic" style="background:var(--blue-bg);color:var(--blue)"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
-          <span class="bb"><b>Devis ouvert par le client</b><small>M. Thompson vient de lire son devis (536,80 €).</small></span>
-          <span class="btime">il y a 1 h</span>
-        </a>
-        <a class="brow" href="devis-liste.html">
-          <span class="bic" style="background:var(--orange-soft);color:var(--orange-deep)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-          <span class="bb"><b>Devis bientôt expiré</b><small>Les Glycines — 2 180 € HT, expire dans 3 jours.</small></span>
-          <span class="btime">hier</span>
-        </a>
-        <div class="bfoot"><a href="reglages.html">Choisir ce qui te prévient — Réglages →</a></div>
-      </div>
-    </div>
-  </div>
+    <div class="stats" id="stats"></div>
+  </header>
 
-  <div class="page">
+  <div id="pages"></div>
 
-    <!-- ===== BANDEAU ===== -->
-    <section class="cover">
-      <!-- 29/07 : fini le Thomas en dur — le prenom vient du compte connecte
-           (Reglages), et le bonjour devient bonsoir apres 18 h. -->
-      <h1 id="c-hello">Bonjour</h1>
-      <div class="sub" id="c-date">—</div>
-    </section>
+  <section class="page" id="fiche-facture">
+    <div class="sec-head"><div><div class="eyebrow">Écran 6</div><h2>Fiche facture : ligne de vie, avoirs, menu d'actions, paiements</h2></div><div class="n">propositions validées les 22 et 23/09 · déjà dans la maquette (facture-detail.html), à intégrer chez Saigon</div></div>
 
-    <!-- ===== 4 TUILES KPI ===== -->
-    <div class="kgrid">
-      <a class="kt blue" href="calendrier.html">
-        <span class="kl"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Interventions du jour</span>
-        <b>0</b>
-        <div class="ks">0 en cours · 0 à venir · 0 terminées</div>
-        <span class="go">Agenda →</span>
-      </a>
-      <a class="kt orange" href="facture-liste.html">
-        <span class="kl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>CA du jour</span>
-        <b>0 €</b>
-        <div class="ks">Objectif journalier : 5 000 €</div>
-        <div class="obar"><i style="width:0%"></i></div>
-        <span class="go">Factures →</span>
-      </a>
-      <a class="kt green" href="facture-liste.html">
-        <span class="kl"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>CA mensuel</span>
-        <b>5 591 €</b>
-        <span class="trend"><svg viewBox="0 0 24 24"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>+100 % vs juin 2026</span>
-        <span class="go">Factures →</span>
-      </a>
-      <a class="kt red" href="facture-liste.html">
-        <span class="kl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Impayés</span>
-        <b id="kt-imp">3</b>
-        <div class="ks" id="kt-imp-s">3 factures impayées ce mois-ci</div>
-        <span class="go">Réclamer →</span>
-      </a>
+    <div class="shot"><div class="cap good"><i></i>Ligne de vie avec un avoir <small>cas 1 avoir partiel, cas 2 avoir total</small></div>
+      <div class="frame" style="aspect-ratio:2360/1064"><img src="img/vie-facture-avoir.png" width="2360" height="1064" alt="Ligne de vie de la facture avec un avoir partiel puis un avoir total"></div></div>
+    <div class="items">
+      <div class="item add"><span class="num">1</span><span class="what">Avoir partiel</span><span class="do"><b>Faire :</b> nœud <b style="color:#B45309">ambre</b> « Avoir émis » inséré à sa date, avec « AVO-2026-xxxxx · motif · date » et le montant de l'avoir en pill « – 176,00 € ». La facture continue de vivre : « Payée » reste la dernière étape et porte le montant réellement encaissé (« 176,00 € · Virement »). Pas de croix rouge.</span></div>
+      <div class="item add"><span class="num">2</span><span class="what">Avoir total</span><span class="do"><b>Faire :</b> dernière étape <b style="color:#B42318">rouge</b> « Annulée par avoir · – 352,00 € » avec la croix ; l'étape « Payée » disparaît ; le statut de la facture passe à « Annulée ». C'est le seul cas où le rouge est justifié.</span></div>
+      <div class="item add"><span class="num">3</span><span class="what">Plusieurs avoirs</span><span class="do"><b>Faire :</b> un nœud par avoir jusqu'à 2 ; au-delà un nœud groupé « 3 avoirs émis · – 220,00 € », détail dans l'onglet Avoirs.</span></div>
+      <div class="item add"><span class="num">4</span><span class="what">Cartes KPI de la fiche</span><span class="do"><b>Faire :</b> Total TTC − avoirs = <b>net à payer</b> ; « Montant payé » et « Solde dû » se calculent sur le net ; « 100 % encaissé · 176,00 € sur 176,00 € » compare au net. Un paiement supérieur au net s'affiche en tuile « Trop-perçu » ambre (voir points 21–23), jamais « 100 % encaissé ». <span class="flag bug">maquette</span> les données de démo actuelles (396 € payés sur 352 € avec 176 € d'avoir) sont incohérentes, à corriger avant envoi.</span></div>
     </div>
 
-    <!-- ===== 7 JOURS + RÉPARTITION ===== -->
-    <div class="grid2">
-      <div class="card c7j">
-        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>Interventions sur 7 jours<small>18 → 24 juil</small></div>
-        <div class="b7" id="b7"></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.5 4"/></svg></span>Répartition par nuisible<small id="cat-tot">—</small></div>
-        <div id="catbars"></div>
-      </div>
+    <div class="shot" style="margin-top:28px"><div class="cap good"><i></i>Menu « ··· » selon le statut <small>« Modifier la facture » ajouté en première position tant que la facture n'est pas validée</small></div>
+      <div class="frame" style="aspect-ratio:2552/880"><img src="img/menu-facture-par-statut.png" width="2552" height="880" alt="Menu d'actions de la fiche facture pour les statuts Pro forma, Pro forma envoyée et Validée"></div></div>
+    <div class="items">
+      <div class="item add"><span class="num">5</span><span class="what">Pro forma</span><span class="do"><b>Menu :</b> Modifier la facture · Envoyer la facture · Dupliquer la facture · — · Supprimer la facture (rouge). Bouton principal du header : « Valider la facture ».</span></div>
+      <div class="item add"><span class="num">6</span><span class="what">Pro forma envoyée</span><span class="do"><b>Menu :</b> Modifier la facture, avec la ligne « Le client a reçu la version du JJ/MM · une nouvelle version sera à renvoyer » · Renvoyer la facture · Dupliquer la facture · — · Supprimer la facture (rouge, confirmation qui rappelle que le client a une copie). Bouton principal : « Valider la facture ».</span></div>
+      <div class="item add"><span class="num">7</span><span class="what">Validée</span><span class="do"><b>Menu :</b> Enregistrer un paiement · Créer un avoir · Dupliquer la facture. Ni « Modifier » ni « Supprimer » : une facture émise se corrige par un avoir. Bouton principal : « Envoyer au client », puis « Enregistrer un paiement » une fois envoyée.</span></div>
+      <div class="item add"><span class="num">8</span><span class="what">Payée / Annulée</span><span class="do"><b>Menu :</b> Payée → Renvoyer la facture · Créer un avoir · Dupliquer. Annulée (avoir total) → Voir l'avoir · Dupliquer.</span></div>
+      <div class="item add"><span class="num">9</span><span class="what">Option</span><span class="do"><b>À trancher :</b> sortir « Modifier » du menu pour en faire un bouton secondaire du header (crayon à gauche de « Voir le PDF ») sur les deux statuts pro forma, puisque c'est l'action la plus fréquente sur un brouillon. <span class="flag">à trancher</span></span></div>
     </div>
 
-    <!-- ===== 2 JAUGES ===== -->
-    <div class="grid2">
-      <div class="card">
-        <div class="card-h"><span class="chsq g"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>Taux de signature des devis</div>
-        <div class="gwrap">
-          <div class="gauge" style="--p:25"><span class="gc">25 %</span></div>
-          <div class="ginfo">
-            <b>1 devis signé sur 4 envoyés</b>
-            <p>C'est le nerf de la guerre : chaque point gagné ici, c'est du CA direct.</p>
-            <span class="gnote">Aucune donnée antérieure</span><br>
-            <a href="devis-liste.html">Voir les devis signés →</a>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-h"><span class="chsq b"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>Taux d'interventions terminées</div>
-        <div class="gwrap">
-          <div class="gauge" style="--p:66"><span class="gc">66 %</span></div>
-          <div class="ginfo">
-            <b>2 interventions sur 3 sont soldées</b>
-            <p>Le reste est en cours ou planifié — à surveiller en fin de semaine.</p>
-            <span class="gnote">Aucune donnée antérieure</span><br>
-            <a href="calendrier.html">Voir les interventions terminées →</a>
-          </div>
-        </div>
-      </div>
+    <div class="shot" style="margin-top:28px"><div class="cap good"><i></i>Paiement par virement ou chèque : annoncé, puis reçu <small>règle décidée le 22/09 · aujourd'hui Saigon oblige à passer par l'onglet Paiements pour « encaisser »</small></div>
+      <div class="frame" style="aspect-ratio:2880/1734"><img src="img/paiement-annonce-recu.png" width="2880" height="1734" alt="Flux de paiement annoncé puis reçu : formulaire, ligne de paiement, en-tête de facture, ligne de vie"></div></div>
+    <div class="items">
+      <div class="item add"><span class="num">10</span><span class="what">Deux états pour un paiement</span><span class="do"><b>Règle :</b> un paiement est <b style="color:#B45309">annoncé</b> (le client a dit qu'il payait) ou <b style="color:#145F3D">reçu</b> (l'argent est sur le compte, ou le chèque est en main). Seul un paiement <b>reçu</b> fait passer la facture en Payée. Espèces, carte bancaire et Stripe sont reçus immédiatement, sans question.</span></div>
+      <div class="item add"><span class="num">11</span><span class="what">Formulaire</span><span class="do"><b>Faire :</b> quand le mode est Virement ou Chèque, une question apparaît : « Le virement est-il déjà arrivé sur votre compte ? » avec deux choix, « Non, pas encore » (par défaut) et « Oui, il est reçu » + date de réception. Le bouton dit ce qu'il fait : « Enregistrer le paiement annoncé » ou « Enregistrer le paiement reçu ».</span></div>
+      <div class="item add"><span class="num">12</span><span class="what">Onglet Paiements</span><span class="do"><b>Faire :</b> la ligne d'un paiement annoncé porte la pill ambre « En attente de réception » et un bouton « ✓ Paiement reçu ». Au clic, on saisit (ou confirme) la date de réception ; la ligne devient « annoncé le 22/09 · reçu le 25/09 » en vert et la facture passe en Payée si le solde est couvert.</span></div>
+      <div class="item add"><span class="num">13</span><span class="what">En-tête et cartes</span><span class="do"><b>Faire :</b> tant qu'un paiement est annoncé, le badge affiche « Virement annoncé · 12,00 € » en ambre, le bouton principal devient « ✓ Paiement reçu » (à la place d'« Encaisser la facture »), et la carte Solde dû précise « 12,00 € annoncés par virement le 22/09 · à confirmer ». Le solde dû ne bouge pas tant que rien n'est reçu.</span></div>
+      <div class="item add"><span class="num">14</span><span class="what">Ligne de vie et relance</span><span class="do"><b>Faire :</b> étape ambre « Virement annoncé · 22/09 · 12,00 € » avant « Payée ». Si rien n'est reçu 7 jours après l'annonce, la facture remonte dans les relances avec le motif « virement annoncé le 22/09, non reçu ».</span></div>
+      <div class="item add"><span class="num">15</span><span class="what">Liste des factures</span><span class="do"><b>Faire :</b> un filtre / statut visuel « Paiement annoncé » (ambre) distinct de « En attente », pour voir d'un coup d'œil l'argent promis mais pas encore arrivé.</span></div>
+      <div class="item add"><span class="num">16</span><span class="what">À corriger sur le staging au passage</span><span class="do"><b>Faire :</b> placeholder « Optional notes for the client... » en anglais → « Notes internes (facultatif) » ; « 1 service » → « 1 prestation » ; « hors TVA » → « HT » ; préfixe « INV- » → « FAC- ».</span></div>
     </div>
 
-    <!-- ===== TÂCHES + CONTRATS À RENOUVELER ===== -->
-    <div class="grid2">
-      <div class="card">
-        <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>Tâches en attente<a href="taches.html">Voir tout →</a></div>
-        <!-- 04/08 (ménage) : la tâche démo « AAAAA » dégageait — la carte lit
-             maintenant les VRAIES tâches (tigerflow-inbox-taches : celles créées
-             par « A dit OUI », les rappels…), avec un repli démo propre. -->
-        <div id="hometasks"></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg></span>Contrats à renouveler<a href="contrats-liste.html">Voir tout →</a></div>
-        <div id="crenew"></div>
-      </div>
+    <div class="shot" style="margin-top:28px"><div class="cap good"><i></i>Date de réception choisie, pas « aujourd'hui » <small>validé le 23/09 · Saigon : bouton « Marquer comme encaissé aujourd'hui » et ligne « Paiement non encore reçu »</small></div>
+      <div class="frame" style="aspect-ratio:1538/169"><img src="img/paiement-date-reception.png" width="1538" height="169" alt="Ligne d'un virement annoncé avec un champ « reçu le » et le bouton Paiement reçu, puis la ligne une fois reçue"></div></div>
+    <div class="items">
+      <div class="item add"><span class="num">17</span><span class="what">Confirmer la réception à sa vraie date</span><span class="do"><b>Faire :</b> le patron pointe ses virements une fois par semaine, la date de réception doit être celle du relevé, pas celle du clic. Sur la ligne du paiement annoncé : un champ date « reçu le » (défaut : aujourd'hui, bornée entre la date d'annonce et aujourd'hui) puis le bouton « ✓ Paiement reçu ». Le bouton d'en-tête et l'étape de la ligne de vie amènent à cette ligne au lieu d'encaisser à l'aveugle. Chez Saigon : « Marquer comme encaissé aujourd'hui » → « ✓ Paiement reçu le [date] ».</span></div>
+      <div class="item add"><span class="num">18</span><span class="what">Wording</span><span class="do"><b>Faire :</b> « Paiement non encore reçu » (Saigon) → pill « En attente de réception » ; le titre du bloc dit « Paiement annoncé » tant que rien n'est encaissé, « Paiement reçu » ensuite (aujourd'hui le titre dit « reçu » et la ligne dit « non reçu »). Variante longue possible : « Annoncé le 22/09 · à confirmer à réception ».</span></div>
     </div>
 
-    <!-- ===== ACTIVITÉ DES TECHNICIENS ===== -->
-    <div class="card">
-      <div class="card-h"><span class="chsq o"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span>Activité des techniciens<small>juillet 2026</small></div>
-      <div style="overflow-x:auto">
-      <table>
-        <thead><tr><th>Technicien</th><th>Terminées</th><th>En cours</th><th>Planifiées</th><th>Taux de réalisation</th><th>CA / intervention</th><th>CA du mois</th><th>vs mois dernier</th></tr></thead>
-        <tbody id="ttecs"></tbody>
-      </table>
-      </div>
+    <div class="shot" style="margin-top:28px"><div class="cap good"><i></i>Avoir avec mode de remboursement — option 1 <small>validée le 23/09 · dans la maquette : panneau « Créer un avoir » puis onglet Avoirs</small></div>
+      <div class="frame" style="aspect-ratio:1401/470"><img src="img/avoir-remboursement-option1.png" width="1401" height="470" alt="Panneau Créer un avoir avec le champ Remboursement, puis la fiche annulée par avoir avec la ligne À rembourser et le bouton Fait"></div></div>
+    <div class="items">
+      <div class="item add"><span class="num">19</span><span class="what">Quand l'avoir dépasse le solde</span><span class="do"><b>Faire :</b> la carte du panneau passe de « Après avoir » à « À rembourser au client · 286,80 € » et un champ obligatoire <b>Remboursement</b> apparaît : Virement · Chèque · Espèces · Stripe (remboursement sur la carte) · Avoir à valoir sur une prochaine facture. Rien d'autre : pas de case « déjà remboursé », pas de référence.</span></div>
+      <div class="item add"><span class="num">20</span><span class="what">Après émission</span><span class="do"><b>Faire :</b> dans l'onglet Avoirs, sous la ligne de l'avoir : pill ambre « À rembourser » + « 286,80 € par virement » + bouton « ✓ Fait ». Le bouton principal de l'en-tête devient « ✓ Remboursement effectué », la carte Solde dû dit « ↩ 286,80 € à rembourser au client par virement (avoir AVO-…) », la ligne de vie ajoute l'étape « À rembourser ». Une fois fait : pill verte « Remboursé le 23/09 par virement », tout redevient calme. « Avoir à valoir » : pill verte « Avoir à valoir · 286,80 € au crédit du client » sans rien à faire.</span></div>
     </div>
 
-  </div>
+    <div class="shot" style="margin-top:28px"><div class="cap good"><i></i>Trop-perçu — visuel A <small>validé le 23/09 · le client paie plus que le solde : ce n'est jamais un avoir</small></div>
+      <div class="frame" style="aspect-ratio:1601/1289"><img src="img/trop-percu-maquette.png" width="1601" height="1289" alt="Avertissement de trop-perçu dans le formulaire, tuile Trop-perçu avec Rembourser et Garder en crédit, tuile en cours de remboursement, tuile crédit client, et lignes de paiement"></div></div>
+    <div class="items">
+      <div class="item add"><span class="num">21</span><span class="what">On n'empêche plus de dépasser le solde</span><span class="do"><b>Faire :</b> le message rouge bloquant « Le montant ne peut pas dépasser le solde dû » (Saigon) devient un avertissement ambre « ⚠ 20,00 € de plus que le solde dû (30,00 €) — enregistré comme trop-perçu, à rembourser ou à garder en crédit ». Le paiement s'enregistre tel quel, la facture passe en Payée, et l'excédent est porté par ce paiement.</span></div>
+      <div class="item add"><span class="num">22</span><span class="what">La tuile propose les deux gestes</span><span class="do"><b>Faire :</b> la 3<sup>e</sup> tuile « Solde dû » devient « <b style="color:#B45309">Trop-perçu · 20,00 €</b> » (ambre) avec deux boutons dedans : « ↩ Rembourser » et « Garder en crédit ». Rembourser → la tuile montre le mode (Virement · Chèque · Espèces · Stripe) et « ✓ Fait », le bouton d'en-tête devient « Remboursement effectué », la ligne de vie ajoute « À rembourser » ; une fois fait : « Solde dû 0,00 € · ✓ facture soldée · 20,00 € remboursés le 23/09 par chèque ». Garder en crédit → « Solde dû 0,00 € · 20,00 € gardés en crédit client · à déduire de sa prochaine facture », étape « Crédit client » dans la ligne de vie. Dans l'onglet Paiements, la ligne du paiement porte la même sous-ligne (« Trop-perçu · 20,00 € de plus que le solde dû » + les boutons, puis « Crédit client » ou « Remboursé »). L'historique trace « dont 20,00 € de trop-perçu » et ce qu'on en a fait.</span></div>
+      <div class="item add"><span class="num">23</span><span class="what">Pourquoi pas un avoir</span><span class="do"><b>Règle :</b> un avoir dit « la facture était trop élevée » et baisse le CA et la TVA. Ici la facture est juste, c'est le client qui s'est trompé : on rend l'argent (ou on le garde en crédit), la facture ne bouge pas. Un paiement annoncé (virement, chèque) calcule son trop-perçu au moment de la réception, pas de l'annonce.</span></div>
+    </div>
+  </section>
+
+  <section class="page" id="global">
+    <div class="sec-head"><div><div class="eyebrow">Transversal</div><h2>Règles valables sur tous les écrans</h2></div><div class="n">à appliquer partout, pas écran par écran</div></div>
+    <div class="rules">
+      <div class="card"><h3>Coquille de page</h3><ul>
+        <li>Header : bande teintée pêche + fine ligne orange en haut ; recherche « Client, adresse, devis... » avec raccourcis <code>/</code> et <code>⌘K</code> dans le champ ; cloche de notifications avec badge.</li>
+        <li>Sidebar ≈ 250 px : gros logo rond + wordmark TIGER<b>FLOW</b> (FLOW orange), dernier item « Réglages », avatar en pastille orange avec initiales.</li>
+        <li>Barre du bas (sticky) ≈ 64 px : label « Total TTC » petit et gris, montant ≈ 20 px gras, bouton 40–44 px, centrés verticalement.</li>
+      </ul></div>
+      <div class="card"><h3>Composants</h3><ul>
+        <li>Titres de sections : barre verticale orange + Title Case. Ni pastilles numérotées, ni majuscules.</li>
+        <li>Champs : blancs avec bordure (pas gris pleins). Labels en majuscules espacées (« CLIENT * »). Astérisque uniquement sur le vrai obligatoire.</li>
+        <li>Boutons secondaires « ajouter » en pointillés (« + Ligne libre », « + Nouveau client », « + Ajouter un frais », remise).</li>
+        <li>Icônes de cartes KPI dans des carrés arrondis, jamais un mélange cercles / carrés.</li>
+        <li>Police des titres et des gros chiffres : celle de la maquette (Saigon utilise une police plus géométrique).</li>
+      </ul></div>
+      <div class="card"><h3>Typographie française</h3><ul>
+        <li>Espace avant le % : « 10 % », « 67 % » (jamais « 10% »).</li>
+        <li>Tiret cadratin « — » pour les incises et les valeurs vides (jamais « -- »).</li>
+        <li>Montants négatifs « – 180,00 € » (tiret + espace, jamais « -180,00 € »).</li>
+        <li>Symbole après le nombre avec espace : « 20 € », jamais « €20 ».</li>
+        <li>« Pro forma » sur la pill de statut, « pro forma » dans une phrase (jamais « Pro Forma »).</li>
+      </ul></div>
+      <div class="card product"><h3>Règles produit à intégrer</h3><ul>
+        <li>Horodater chaque statut de devis : envoyé le, vu le, signé le, refusé le, expiré le. Chip sous la date dans la liste, rappel dans le bandeau de statut de la fiche.</li>
+        <li>Au passage en « Perdu » : motif obligatoire (trop cher, concurrent, plus besoin, sans réponse, autre) + commentaire facultatif.</li>
+        <li>« Transformer en facture / contrat » réservé aux devis gagnés. Depuis « Envoyé », les boutons restent visibles et ouvrent une confirmation « Le marquer comme gagné aujourd'hui et créer la facture ? » qui fait les deux d'un coup.</li>
+        <li>« Marquer comme perdu » accessible depuis « Envoyé », dans le menu « ··· ».</li>
+        <li>Frais prédéfinis gérés dans Réglages (les frais de test « XXXXX », « aaaa » du staging montrent qu'il manque cet écran).</li>
+        <li>Paiement par virement ou chèque : <b>annoncé</b> puis <b>reçu</b>, avec une date de réception choisie (celle du relevé). Seul un paiement reçu passe la facture en Payée.</li>
+        <li>Avoir supérieur au solde : champ « Remboursement » obligatoire (option 1), puis « ✓ Fait » dans l'onglet Avoirs. Jamais de case ni de référence en plus.</li>
+        <li>Trop-perçu : on ne bloque pas un paiement supérieur au solde ; l'excédent se rembourse ou se garde en crédit client depuis la tuile. Jamais d'avoir automatique.</li>
+        <li>Un devis Gagné ne se modifie plus (comme une facture validée) ; Brouillon et Envoyé restent modifiables, un devis envoyé modifié est à renvoyer.</li>
+      </ul></div>
+      <div class="card decide"><h3>À trancher par Jo <span class="tag">décisions</span></h3><ul>
+        <li>Tu ou vous (ou neutre) pour toute l'appli. Saigon vouvoie, la maquette tutoie sur une modale et reste neutre ailleurs.</li>
+        <li>Onglet « Bibliothèque de documents » dans les pièces jointes (ajout Saigon).</li>
+        <li>Champ « Intervention liée » sur la facture (ajout Saigon, plutôt utile).</li>
+        <li>Recherche client en champ texte (Saigon) plutôt que select (maquette) : la recherche est préférable avec 500 clients.</li>
+        <li>Crayon désactivé sur les devis Gagné / Perdu dans la liste (ajout Saigon).</li>
+        <li>Sélecteur « carré orange + — » à côté du numéro de devis dans la maquette : à expliquer à Saigon (technicien ? catégorie ?).</li>
+        <li>Bloc bas de la sidebar « Appli mobile / Connexion / Bêta » : maquette seulement ou à livrer ?</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <footer><span>Référence : maquette sastigerflow · Staging : stg.tigerflow.io</span><span>Cliquer une pastille ou une ligne met en évidence l'écart des deux côtés.</span></footer>
 </div>
 
-<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-
 <script>
-const g = id => document.getElementById(id);
-
-/* ===== tâches en attente : les VRAIES (inbox partagée), repli démo sinon ===== */
-(function(){
-  let bx = [];
-  try{ const v = JSON.parse(localStorage.getItem("tigerflow-inbox-taches")); if(Array.isArray(v)) bx = v.filter(t => t && t.titre); }catch(e){}
-  const fd = d => { const p = String(d || "").split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : (d || ""); };
-  const rows = bx.length
-    ? bx.slice(0, 3).map(t => ({titre: t.titre, sub: t.due ? "Échéance " + fd(t.due) : (t.desc || "").slice(0, 60)}))
-    : [{titre: "Rappeler M. Lopez — devis 340 €", sub: "Cycle de relances épuisé — au téléphone de jouer"},
-       {titre: "Commander les pièges à phéromones", sub: "Stock bas signalé par Babacar"}];
-  const ic = '<span class="tic"><svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span>';
-  const el = g("hometasks");
-  if(el) el.innerHTML = rows.map(r => '<a class="ktc" href="taches.html"><div class="k1"><b>' + r.titre + '</b><span class="kgo">Ouvrir →</span></div><div class="k2">' + r.sub + '</div></a>').join("");
-})();
-
-/* ===== date du jour ===== */
-(function(){
-  const d = new Date();
-  const s = d.toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long", year:"numeric"});
-  g("c-date").textContent = s.charAt(0).toUpperCase() + s.slice(1);
-  /* le mois de la barre du haut etait ecrit en dur ("juil. 2026") : il serait
-     reste sur juillet en aout. Il suit maintenant la date reelle. */
-  /* 07/09 (patron) : « enleve les points ». Attention, changer le texte ecrit
-     dans le HTML ne suffit pas — cette ligne le REECRIT a chaque chargement, et
-     toLocaleDateString rend « sept. 2026 » avec le point. On le retire ici. */
-  g("c-mois").textContent = d.toLocaleDateString("fr-FR", {month:"short", year:"numeric"}).replace(/\./g, "");
-})();
-
-/* ===== interventions sur 7 jours (18 → 24 juil.) ===== */
-(function(){
-  const J = [["18 juil","sam",0],["19 juil","dim",0],["20 juil","lun",1],["21 juil","mar",1],["22 juil","mer",1],["23 juil","jeu",4],["24 juil","ven",0]];
-  const mx = Math.max.apply(null, J.map(x => x[2])) || 1;
-  g("b7").innerHTML = J.map(x =>
-    '<div class="bcol' + (x[2] === mx && mx > 0 ? " hot" : "") + '"><span class="bv">' + x[2] + '</span><span class="br" style="height:' + Math.max(2, Math.round(x[2] / mx * 78)) + '%"></span><span class="bd">' + x[1] + '<br>' + x[0] + '</span></div>'
-  ).join("");
-})();
-
-/* ===== répartition par catégorie (le camembert devient des barres lisibles) ===== */
-(function(){
-  const C = [
-    ["Cafards", 13, "#0E8A68"],
-    ["Termites & Insectes xylophages", 6, "#2E5CE6"],
-    ["Guêpes / Frelons", 2, "#D6453E"],
-    ["Chenilles processionnaires", 2, "#2FC9B9"],
-    ["Pigeons", 2, "#9C63F2"],
-    ["Désinsectisation", 2, "#D9A62A"],
-    ["Dératisation (Rats / Souris)", 0, "#E1518B"],
-    ["Punaises de lit", 0, "#A3C11A"]
-  ];
-  const tot = C.reduce((a, x) => a + x[1], 0);
-  const mx = C[0][1] || 1;
-  g("cat-tot").textContent = tot + " interventions ce mois";
-  g("catbars").innerHTML = C.map(x =>
-    '<div class="cbar"><span class="cl" title="' + x[0] + '"><span class="dot" style="background:' + x[2] + '"></span>' + x[0] + '</span><span class="ct"><i style="width:' + Math.max(x[1] ? 6 : 0, Math.round(x[1] / mx * 100)) + '%;background:' + x[2] + '"></i></span><span class="cv">' + x[1] + '</span></div>'
-  ).join("");
-})();
-
-/* ===== activité des techniciens ===== */
-(function(){
-  const T = [
-    ["OtHman Derouich", 3, 0, 2, 60, "286,67 €", "860,00 €", "#2FC9B9"],
-    ["Van Pham Pham", 8, 3, 0, 73, "73,75 €", "590,00 €", "#5B82F0"],
-    ["PABLO FLOCARRI", 2, 0, 2, 50, "100,00 €", "200,00 €", "#FF5A1F"],
-    ["VP Testing Tech 1", 5, 0, 2, 71, "32,00 €", "160,00 €", "#9C63F2"],
-    ["Technician Do", 1, 0, 0, 100, "0,00 €", "0,00 €", "#E8951B"]
-  ];
-  const ini = n => n.split(" ").map(x => x[0] || "").join("").slice(0, 2).toUpperCase();
-  g("ttecs").innerHTML = T.map(t =>
-    '<tr>' +
-    '<td><span class="tnom"><span class="tav" style="background:' + t[7] + '">' + ini(t[0]) + '</span>' + t[0] + '</span></td>' +
-    '<td><span class="tb g">' + t[1] + '</span></td>' +
-    '<td><span class="tb ' + (t[2] ? "b" : "n") + '">' + t[2] + '</span></td>' +
-    '<td><span class="tb ' + (t[3] ? "b" : "n") + '">' + t[3] + '</span></td>' +
-    '<td><span class="tbar"><span class="tt"><i style="width:' + t[4] + '%"></i></span><b>' + t[4] + ' %</b></span></td>' +
-    '<td>' + t[5] + '</td>' +
-    '<td><b>' + t[6] + '</b></td>' +
-    '<td><span class="vsm">1ᵉʳ mois — pas d&#39;historique</span></td>' +
-    '</tr>'
-  ).join("");
-  /* mu-dash valide : la colonne « vs mois dernier » se masque tant qu'elle n'a rien a dire */
-  (function(){
-    var rws = g("ttecs").querySelectorAll("tr");
-    var vide = rws.length && [].every.call(rws, function(r){ return r.lastElementChild && r.lastElementChild.querySelector(".vsm"); });
-    if(vide){ var tb = g("ttecs"); while(tb && tb.tagName !== "TABLE") tb = tb.parentElement; if(tb) tb.classList.add("novs"); }
-  })();
-})();
-
-/* ===== contrats à renouveler (échéances les plus proches) ===== */
-(function(){
-  const C = [
-    ["Restaurant Le Baobab", "CTR-2026-04644", "2026-08-31", "1 980,00 €"],
-    ["Hôtel du Parc", "CTR-2026-04683", "2026-09-05", "4 560,00 €"],
-    ["Syndic Foncia Lilas", "CTR-2026-04698", "2026-09-30", "2 340,00 €"]
-  ];
-  const REF = new Date();
-  const fdz = iso => { const p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; };
-  g("crenew").innerHTML = C.map(c => {
-    const j = Math.round((new Date(c[2]) - REF) / 864e5);
-    /* v316 : du FRANÇAIS — rouge = urgent (≤ 7 j), ambre = ça arrive (≤ 30 j), gris = loin */
-    const cls = j <= 7 ? "rouge" : j <= 30 ? "ambre" : "gris";
-    const lib = j < 0 ? "expiré depuis " + (-j) + " j" : j === 0 ? "expire aujourd'hui" : j <= 30 ? "expire dans " + j + " j" : "dans " + j + " j";
-    return '<a class="ktc" href="contrats-liste.html">' +
-      '<div class="k1"><b>' + c[0] + '</b><span class="kex ' + cls + '">' + lib + '</span></div>' +
-      '<div class="k2">' + c[3] + ' / an · échéance ' + fdz(c[2]) + '<span class="kgo">Renouveler →</span></div></a>';
-  }).join("");
-})();
-
-function toast(m){
-  const t = g("toast");
-  t.textContent = m;
-  t.classList.add("show");
-  clearTimeout(t._h);
-  t._h = setTimeout(() => t.classList.remove("show"), 2600);
-}
-
-/* ===== compte : ouvrir le menu, se déconnecter ===== */
-function userMenu(e){
-  if(e) e.stopPropagation();
-  const u = document.getElementById("side-user");
-  if(!u) return;
-  const ouvert = u.classList.toggle("open");
-  u.setAttribute("aria-expanded", ouvert ? "true" : "false");
-}
-/* ===== choix du mois : envoie sur l'agenda, positionne dessus =====
-   Le tableau de bord n'a aucun chiffre qui depende d'un mois : le choix ne
-   filtre donc rien ici, il emmene la ou le mois veut dire quelque chose. */
-const MOIS12 = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
-let MPY = new Date().getFullYear();
-function moisDraw(){
-  const now = new Date();
-  g("mpy").textContent = MPY;
-  g("mpg").innerHTML = MOIS12.map(function(m, i){
-    const cur = (MPY === now.getFullYear() && i === now.getMonth());
-    return '<button type="button" class="' + (cur ? "on" : "") + '" onclick="moisGo(' + i + ')">' + m + '</button>';
-  }).join("");
-}
-function bellTog(e){
-  e.stopPropagation();
-  moisFerme();
-  const p = g("bpop"), b = g("bellbtn");
-  const ouvert = p.classList.toggle("open");
-  b.setAttribute("aria-expanded", ouvert ? "true" : "false");
-}
-function bellFerme(){
-  const p = g("bpop"); if(!p || !p.classList.contains("open")) return;
-  p.classList.remove("open"); g("bellbtn").setAttribute("aria-expanded", "false");
-}
-/* 12/08 (patron) : depuis la liste beta — index.html?notif=1 ouvre le panneau.
-   Un lien beta doit MONTRER la fonction, pas juste mener a sa page. */
-try{
-  if(new URLSearchParams(location.search).get("notif")){
-    setTimeout(function(){
-      var p = g("bpop"), b = g("bellbtn");
-      if(p && b){ p.classList.add("open"); b.setAttribute("aria-expanded", "true"); }
-    }, 220);
+const PAGES = [
+{
+  id:'liste', label:'Liste des devis', eyebrow:'Écran 1', title:'Liste des devis',
+  saigon:{src:'img/liste-saigon.jpg', w:1600,h:880, pins:[[1,85,7.3],[2,4.3,7.1],[3,66.5,13.6],[4,20,22.7],[5,30.1,27.4],[6,16.5,31.8],[7,35,43.3],[8,47.5,31.8],[9,72.5,31.8],[10,96.5,31.8]]},
+  maquette:{src:'img/liste-maquette.jpg', w:1600,h:861, pins:[[1,85,7],[2,5.5,8.4],[3,66.5,17.2],[4,30,26.1],[5,30,32.1],[6,17,37.5],[7,35,55.6],[8,53,37.5],[9,75,37.5],[10,93,37.5]]},
+  items:[
+    [1,'Header','Bande pêche + ligne orange, recherche « Client, adresse, devis... » avec raccourcis <code>/</code> <code>⌘K</code>, cloche de notifications avec badge.'],
+    [2,'Sidebar','Largeur ≈ 250 px, gros logo TIGERFLOW, « Réglages » à la place de « Paramètres », avatar initiales orange.'],
+    [3,'Cartes KPI','3e carte « Devis signés » avec trophée ; icônes en carrés arrondis partout (Saigon mélange cercles et carrés) ; « 67 % » avec espace ; montant sous le chiffre en semi-gras.'],
+    [4,'Filtres','Champ de recherche large « Client, titre, n° de devis » (placeholder coupé chez Saigon) ; select « Tous les statuts ».'],
+    [5,'En-têtes de colonnes','CLIENT / OBJET / MONTANT TTC / STATUT / DATE / TECHNICIEN / RÉF. / INTERVENTION ASSOCIÉE / ACTIONS ; ligne d\'en-tête sur bande gris clair ; colonne client ramenée à ≈ 25 % de la largeur.'],
+    [6,'Cellule client','Nom en gras Title Case + sous-ligne contact + pill « Particulier » / « Entreprise ». Supprimer la lettre « P » orange collée au nom.'],
+    [7,'Objet','Une seule ligne tronquée « … », pas de majuscules forcées (Saigon passe sur 2 lignes).'],
+    [8,'Montant et statut','Montant en gras aligné à droite ; statut en pill avec point coloré.'],
+    [9,'Date, technicien, réf, intervention','Chip « Expire dans X j » sous la date (et à venir « Refusé le … », « Signé le … ») ; « — » au lieu de « -- » ; réf en monospace gris ; lien orange « Voir l\'intervention ».'],
+    [10,'Actions','4 icônes grises identiques dans des carrés arrondis ; supprimer le trait vertical avant la colonne et la corbeille rouge. Crayon grisé sur Gagné/Perdu <span class="flag">à trancher</span>'],
+  ]
+},
+{
+  id:'devis', label:'Création devis', eyebrow:'Écran 2', title:'Création d\'un devis',
+  saigon:{src:'img/devis-saigon.jpg', w:1600,h:890, pins:[[1,10,7.4],[2,86,7.4],[3,7.5,14],[4,93,19],[5,15,24.4],[6,30,34.7],[7,22.5,50.9],[8,88,58.5],[9,20,73.3],[10,26,84.3],[11,73.5,85.4],[12,4,95.8]]},
+  maquette:{src:'img/devis-maquette.jpg', w:1600,h:932, pins:[[1,20,9.5],[2,82.5,9.5],[3,7,15.3],[4,28.5,20.9],[5,15,26.4],[6,30,40.5],[7,22.5,56.7],[8,88,65.2],[9,21,81.9],[10,30,90.6],[11,79.5,91.2],[12,3,97]]},
+  items:[
+    [1,'Barre d\'actions (gauche)','Numéro « DEV-2026-xxxxx » dès la création ; « Brouillon ▾ » en menu déroulant ; « Valable jusqu\'au » pré-rempli à +30 j, sans deux-points ; indicateur « ✓ enregistré il y a … » (autosave). Sélecteur carré orange + « — » <span class="flag">à préciser</span>'],
+    [2,'Barre d\'actions (droite)','« Aperçu client / PDF / Enregistrer / Envoyer au client / ··· ». Supprimer « Annuler ». Barre posée sur le fond gris, pas un bandeau blanc.'],
+    [3,'Titres et champs','Barre orange + Title Case (plus de pastilles numérotées ni de majuscules) ; inputs blancs bordés ; labels « CLIENT * ».'],
+    [4,'Nouveau client','Bouton en pointillés collé au champ client (pas rejeté à droite) ; ajouter « L\'adresse du client s\'affichera ici » sous le champ.'],
+    [5,'Objet du devis','Renommer « Titre * » en « Objet du devis », non obligatoire, auto-rempli d\'après la prestation principale, avec tooltip « Se remplit tout seul d\'après la prestation principale — modifiable ».'],
+    [6,'Lignes','Résumé « N prestation · X € » à côté du titre ; en-tête sans bandeau gris ni astérisques ; crayon ✏️ sur TOTAL TTC ; « + Ligne libre » en pointillés ; largeurs de colonnes fixes (plus de scroll horizontal).'],
+    [7,'Frais optionnels','Sous-titre « déplacement, urgence, week-end... » ; emojis 🚚 ⚡ 📅 à la place des pictos.'],
+    [8,'Totaux','« Frais optionnels — » quand vide (sans « HT ») ; « TVA totale » seule ; bouton remise en pointillés.'],
+    [9,'Mentions légales','Ajouter la ligne « ⚖️ Les mentions légales (SIRET, Certibiocide, validité 30 j, pénalités...) figurent automatiquement sur le devis reçu par le client — voir l\'aperçu ».'],
+    [10,'Notes pour le client','Texte par défaut pré-rempli (« Devis gratuit valable 30 jours. Règlement à la fin de l\'intervention… ») ; répartition Notes / Pièces jointes ≈ 60 / 40.'],
+    [11,'Pièces jointes','Une ligne compacte en pointillés « 📎 Ajouter · PDF, JPG, PNG · aperçu gardé jusqu\'à 1,5 Mo » + compteur « 0 fichier ». Jamais obligatoire (retirer « Téléverser * »). Onglet « Bibliothèque de documents » <span class="flag">à trancher</span>'],
+    [12,'Barre du bas','Hauteur ≈ 64 px, label petit, montant ≈ 20 px, bouton 40–44 px, comme la maquette.'],
+  ]
+},
+{
+  id:'remise', label:'Remise & lignes', eyebrow:'Écran 3', title:'Remise commerciale et tableau des lignes',
+  saigonStack:[
+    {src:'img/remise-saigon-totaux.jpg', w:1026,h:852, small:true, pins:[[1,22.6,25.8],[2,29.2,36.9],[3,92.6,36.9],[4,23.4,49.1],[5,96,60.7],[6,23.4,68.2]]},
+    {src:'img/remise-saigon-lignes.jpg', w:1600,h:572, pins:[[7,28,74.8],[8,34,89.6],[9,54.7,40.5]]},
+    {src:'img/stepper-saigon.jpg', w:619,h:255, small:true, pins:[[10,12.6,37.7]]},
+  ],
+  maquetteStack:[
+    {src:'img/remise-maquette-bloc.jpg', w:930,h:472, small:true, pins:[[1,25.3,35],[2,17.2,55.7],[3,69.8,55.7],[4,46.7,74.4],[5,84,91.9],[6,21.7,19.7]]},
+    {src:'img/remise-maquette-lignes.jpg', w:1600,h:367, pins:[[7,90.5,71.4],[8,50,13.5],[9,12,57.7],[10,72.8,40.5]]},
+  ],
+  items:[
+    [1,'Titre du bloc remise','« Remise commerciale » petit, gras, avec 🏷️. Pas de majuscules ni de gros picto dans un carré.'],
+    [2,'Toggle % / €','Bouton actif noir plein (pas orange).'],
+    [3,'Raccourcis de montant','« 20 € / 50 € / 100 € » en mode € (jamais « €20 ») et « 5 % / 10 % / 15 % » en mode %.'],
+    [4,'Message de confirmation','Une ligne courte en gras avec le montant calculé : « – 180,00 € déduits du total — la TVA est recalculée automatiquement. »'],
+    [5,'Ligne récap','« – 180,00 € » avec tiret et espace (Saigon : « -100,00 € »).'],
+    [6,'TVA','Une seule ligne « TVA totale ». Supprimer la ligne « TVA 10% » en doublon ; « 10 % » avec espace.'],
+    [7,'Bandeau remise dans les lignes','Montant en vert gras à droite « − 180,00 € » + lien « Modifier » ; sous-texte dynamique « geste commercial de 50 % sur l\'ensemble du devis » ; titre à taille normale.'],
+    [8,'Débordement du tableau','<span class="flag bug">bug</span> Barre de défilement horizontale : le tableau déborde. Largeurs fixes : PRESTATION flexible, QTÉ ≈ 90, PU HT ≈ 110, TVA ≈ 95, TOTAL ≈ 110, croix ≈ 32.'],
+    [9,'Descriptions de prestation','Passer à la ligne ou tronquer « … » ; pas de majuscules forcées.'],
+    [10,'Stepper quantité','Même hauteur que les inputs (ne pas réduire), largeur ≈ 85–90 px, glyphes − + plus fins ; « 20 % » avec espace.'],
+  ]
+},
+{
+  id:'facture', label:'Création facture', eyebrow:'Écran 4', title:'Création d\'une facture',
+  saigon:{src:'img/facture-saigon.jpg', w:1600,h:877, pins:[[1,5.3,10.7],[2,82.6,10.7],[3,91.2,26.5],[4,17.7,33.8],[5,38.2,40.9],[6,81.8,60.5],[7,50.6,84.2],[8,23.6,89.3],[9,5,94.2]]},
+  maquette:{src:'img/facture-maquette.jpg', w:1600,h:896, pins:[[1,11.8,10.3],[2,82.6,10.3],[3,28.3,22.2],[4,17.7,31.3],[5,22.5,38.3],[6,49.6,49.3],[7,17.7,66.1],[8,23.6,92.3],[9,2.4,96.3]]},
+  items:[
+    [1,'Barre d\'actions','Numéro « FAC-2026-xxxxx » ; « Pro forma ▾ » (un seul P majuscule) en menu déroulant ; « ✓ enregistré il y a … ».'],
+    [2,'Boutons','« Aperçu client / PDF / Enregistrer / Envoyer au client / ··· ». Supprimer « Annuler ».'],
+    [3,'Nouveau client','« + Nouveau client » (Saigon écrit « Créer un client » ici et « Nouveau client » sur le devis), collé au champ, ligne adresse dessous.'],
+    [4,'Objet de la facture','Renommer « Titre * » en « Objet de la facture », non obligatoire.'],
+    [5,'Champs complémentaires','3 champs compacts alignés à gauche : Bon de commande « N° BC du client (facultatif) », N° de contrat (garder le select), « Échéance de paiement » (pas « Délai »). Placeholders utiles plutôt que « Saisir ici ». « Intervention liée » <span class="flag">à trancher</span>'],
+    [6,'Lignes','Pas de ligne vide pré-ajoutée ; TVA par défaut identique au devis (10 %) et paramétrable ; « 20 % » avec espace ; résumé + crayon comme sur le devis.'],
+    [7,'Frais optionnels','Sous-titre + emojis ; retirer les frais de test « XXXXX 10 € », « aaaa 650 € » ; gestion des frais prédéfinis dans Réglages.'],
+    [8,'Mentions légales','Ajouter « ⚖️ Les mentions légales (SIRET, Certibiocide, échéance 30 j, pénalités de retard, indemnité 40 €...) figurent automatiquement sur la facture reçue par le client ».'],
+    [9,'Barre du bas','≈ 64 px comme la maquette.'],
+  ]
+},
+{
+  id:'modales', label:'Modales', eyebrow:'Écran 5', title:'Modales de validation et d\'envoi',
+  saigon:{src:'img/modale-proforma-saigon.jpg', w:739,h:483, small:true, pins:[[1,23,17.8],[2,23,31.5],[3,27.7,48.9],[4,27.7,60.7],[5,89.3,72.7]]},
+  maquette:{src:'img/modale-proforma-maquette.jpg', w:688,h:426, small:true, pins:[[1,20.3,25.1],[2,20.3,39.4],[3,24,54.9],[4,24,65.3],[5,81.4,75.6]]},
+  items:[
+    [1,'Titre','« ⚠️ Cette facture n\'est pas encore validée » : garder le picto et la phrase courte.'],
+    [2,'Texte','« Une facture non validée s\'envoie en PRO FORMA (document provisoire, non valable pour paiement). Pour facturer réellement le client, valide-la d\'abord. » Tu / vous <span class="flag">à trancher</span>'],
+    [3,'Bouton principal','« ✓ Valider la facture puis l\'envoyer » (« puis », pas « et »).'],
+    [4,'Bouton secondaire','« Envoyer en pro forma (assumé) » : garder « (assumé) », « pro forma » en minuscules.'],
+    [5,'Dimensions','≈ 460 px de large, boutons 40–44 px, 8 px d\'écart, padding de la maquette.'],
+  ],
+  extra:{
+    title:'Modale « Valider la facture » : version proposée',
+    src:'img/modale-valider-maquette.jpg', w:809,h:533,
+    pins:[['A',22.5,22.9],['B',81.6,26.6],['C',22,45],['D',58,19.9]],
+    render:`<div class="tf-backdrop"><div class="tf-modal" role="dialog" aria-label="Valider la facture">
+      <h4>Valider la facture <span class="chg">FAC</span>-2026-00031 ?</h4>
+      <div class="tf-sub chg"><b>Entrepôt Central</b> · 198,00 € TTC · datée du 22/09/2026</div>
+      <p>Une fois validée, la facture est <b>émise</b> : elle est <span class="chg">enregistrée en comptabilité</span> et ne peut plus être modifiée ni supprimée.</p>
+      <div class="tf-info"><div class="t">Besoin de la corriger ensuite ?</div><div>Il faudra créer un avoir <span class="chg">—</span> c'est la règle en comptabilité, un document émis ne peut pas être réécrit.</div></div>
+      <div class="tf-actions"><button class="ghost" type="button">Annuler</button><button class="primary" type="button">Valider la facture</button></div>
+    </div></div><div class="tf-note">En vert : ce qui change par rapport à la version actuelle. Le reste (structure, couleurs, boutons, bloc bleu) est conservé tel quel.</div>`,
+    items:[
+      ['A','Rappel de l\'objet','Ajouter sous le titre « Entrepôt Central · 198,00 € TTC · datée du 22/09/2026 » : un dialogue irréversible redit ce qu\'on valide, et la date d\'émission se fige à ce moment-là.'],
+      ['B','Comptabilité','« elle part en comptabilité » seulement s\'il y a un export réel vers un logiciel de compta ; sinon « elle est enregistrée en comptabilité ».'],
+      ['C','Tiret long','Remplacer le petit trait « - » par le tiret long « — ».<br><b style="color:var(--muted)">Avant :</b> « Il faudra créer un avoir <mark style="background:var(--bad-soft);color:inherit;padding:0 3px;border-radius:3px">-</mark> c\'est la règle en comptabilité… »<br><b style="color:var(--muted)">Après :</b> « Il faudra créer un avoir <mark style="background:var(--good-soft);color:inherit;padding:0 3px;border-radius:3px">—</mark> c\'est la règle en comptabilité… »<br><span class="muted">Mac : Alt + Maj + « - » · Windows : Alt + 0151. Autre option, aussi correcte : « …créer un avoir : c\'est la règle… » avec deux-points.</span>'],
+      ['D','Numéro de facture','Saigon affiche « INV-2026-00031 » : préfixe anglais. Utiliser le préfixe de la maquette « FAC-2026-… » partout (barre d\'actions, liste, modale, PDF). La maquette elle-même hésite entre « FAC- » et « FA- » : on tranche pour « FAC- ».'],
+    ]
   }
-}catch(e){}
-function bellLu(){
-  document.querySelectorAll("#bpop .brow.nu").forEach(x => x.classList.remove("nu"));
-  const d = g("bell-dot"); if(d) d.remove();
-  g("bph-n").textContent = "Notifications";
 }
-function moisTog(e){
-  e.stopPropagation();
-  bellFerme();
-  const p = g("mpop"), b = g("c-moisbtn");
-  const ouvert = p.classList.toggle("open");
-  b.setAttribute("aria-expanded", ouvert ? "true" : "false");
-  if(ouvert){ MPY = new Date().getFullYear(); moisDraw(); }
-}
-function moisFerme(){
-  const p = g("mpop"); if(!p || !p.classList.contains("open")) return;
-  p.classList.remove("open"); g("c-moisbtn").setAttribute("aria-expanded", "false");
-}
-function moisAn(k){ MPY += k; moisDraw(); }
-function moisGo(i){
-  location.href = "calendrier.html?m=" + MPY + "-" + String(i + 1).padStart(2, "0");
-}
-moisDraw();
+];
 
-document.addEventListener("click", function(){
-  moisFerme(); bellFerme();
-  const u = document.getElementById("side-user");
-  if(u && u.classList.contains("open")){ u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
-});
-document.addEventListener("keydown", function(e){
-  const u = document.getElementById("side-user");
-  if(e.key === "Escape"){ moisFerme(); bellFerme(); }
-  if(e.key === "Escape" && u) { u.classList.remove("open"); u.setAttribute("aria-expanded","false"); }
-  if((e.key === "Enter" || e.key === " ") && document.activeElement === u){ e.preventDefault(); userMenu(); }
-});
-function logout(){
-  try{ if(typeof toast === "function") toast("Déconnexion…"); }catch(err){}
-  setTimeout(function(){ location.href = "connexion.html"; }, 350);
+function pinsHtml(pins, cls){
+  return pins.map(([n,x,y])=>`<button class="pin ${cls}" data-n="${n}" style="left:${x}%;top:${y}%" aria-label="Écart ${n}">${n}</button>`).join('');
 }
-</script>
-<div class="gs-veil" id="gs-veil" onclick="gsClose()"></div>
-<div class="gs-pal" id="gs-pal">
-  <div class="gs-in">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-    <input id="gs-q" placeholder="Client, téléphone, devis, facture, page…" autocomplete="off">
-  </div>
-  <div class="gs-res" id="gs-res"></div>
-</div>
-<script>
-(function(){
-  /* 28/07 — lit les vraies donnees, plus une liste de demonstration en dur.
-     Bloc recopie sur 23 pages : garder ce commentaire court, chaque octet y
-     compte 23 fois. Detail dans le commit. PG (navigation) reste en dur. */
-  /* adresses des clients modeles — repli de l'index de recherche (voir plus bas) */
-  var ADRM = {
-    "Boulangerie Dupont":"4 rue de la Mairie, 92600 Asnières",
-    "Pharmacie Centrale":"88 rue du Commerce, 75015 Paris",
-    "Hôtel du Parc":"2 avenue du Château, 94300 Vincennes",
-    "Restaurant Le Baobab":"27 rue Ordener, 75018 Paris",
-    "M. Diallo":"15 rue des Rosiers, 93400 Saint-Ouen",
-    "Mme Perrin":"9 place d’Italie, 75013 Paris",
-    "Mme Ferreira":"31 rue Molière, 94200 Ivry-sur-Seine",
-    "Syndic Foncia Lilas":"60 rue des Lilas, 75020 Paris",
-    "Entrepôt Central":"7 rue Cartier-Bresson, 93500 Pantin",
-    "Camping Val de Seine":"Chemin des Mousseaux, 91210 Draveil",
-    "Restaurant Chez Marcel":"52 avenue Jean Jaurès, 75019 Paris",
-    "Crèche Les Lutins":"18 rue de la Révolution, 93100 Montreuil",
-    "Tabac de la Mairie":"1 place de la Mairie, 92600 Asnières"
-  };
-  var CL = [], DOC = [];
-  (function(){
-    var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
-    var vu = {};
-    J("tigerflow-inbox-clients").concat(J("tigerflow-clients-cache")).forEach(function(c){
-      if(!c || !c.nom || vu[c.nom]) return;   /* un client est dans les deux stocks */
-      vu[c.nom] = 1;
-      /* 07/09 (patron) : « la barre marche pas si tu cherches par adresse ».
-         « k » = ce qu'on CHERCHE (tout) · « s » = ce qu'on AFFICHE (court).
-         Sans cette separation la ligne de resultat devenait un pave illisible.
-         ☠️ MESURE DANS SON NAVIGATEUR : « 52 avenue » ne trouvait toujours pas
-         Restaurant Chez Marcel. Son entree locale est {nom,type,cp,ville,tel,
-         mail} — SANS adresse — et il n'y a AUCUNE session Supabase ouverte.
-         L'adresse vue sur la fiche vient d'une table ecrite en dur dans
-         client.html. Elle n'etait donc dans aucun des deux stocks lus ici.
-         ADRM comble ce trou. Il ne REMPLACE jamais une adresse saisie :
-         c.adresse passe toujours en premier. */
-      var _adr = c.adresse || ADRM[c.nom] || "";
-      var _lieu = [c.cp, c.ville].filter(Boolean).join(" ");
-      /* 07/09 (patron) : « fait afficher l'adresse complete, on voit que la rue ».
-         La table modele porte DEJA le code postal et la ville
-         (« 52 avenue Jean Jaures, 75019 Paris ») alors qu'une adresse saisie a
-         la main ne porte que la rue (« 12 RUE DES DAMES »). Sans ce test on
-         obtenait « ... 75019 Paris, 75019 Paris ». */
-      var _plein = _adr ? (/\d{5}/.test(_adr) ? _adr : [_adr, _lieu].filter(Boolean).join(", ")) : _lieu;
-      CL.push({n:c.nom,
-               s:_plein,
-               k:[c.nom, _adr, c.cp, c.ville, c.tel, c.mail, c.email].filter(Boolean).join(" "),
-               h:"client.html?c=" + encodeURIComponent(c.nom)});
-    });
-    /* ☠️ 07/09 (patron, EN NAVIGATION PRIVEE) : « ça marche pas les adresses ».
-       MESURE : en navigation privee le stockage local est VIDE, donc les deux
-       boucles ci-dessus ne poussent RIEN et l'index n'a aucun client — il n'y
-       avait donc rien que ADRM puisse completer. Les listes, elles, affichent
-       les clients modeles ecrits en dur dans les pages : la recherche etait le
-       seul endroit du SaaS a ne pas les voir. Meme effet le tout premier jour,
-       ou apres un vidage du cache, ou sur un poste neuf.
-       On les ajoute ici. « vu » garde la main : un client REEL portant le meme
-       nom a deja ete pousse et n'est jamais double ni ecrase. */
-    Object.keys(ADRM).forEach(function(nom){
-      if(vu[nom]) return;
-      vu[nom] = 1;
-      CL.push({n:nom, s:ADRM[nom], k:nom + " " + ADRM[nom],
-               h:"client.html?c=" + encodeURIComponent(nom)});
-    });
-    var piece = function(cle, mot, page, param){
-      J(cle).forEach(function(x){
-        if(!x || !x.ref) return;
-        DOC.push({n:x.ref, s:mot + (x.client ? " - " + x.client : ""),
-                  h:page + "?" + param + "=" + encodeURIComponent(x.ref)});
-      });
-    };
-    piece("tigerflow-inbox-devis",    "Devis",    "devis-detail.html", "ref");
-    piece("tigerflow-inbox-contrats", "Contrat",  "contrat.html",      "n");
-    piece("tigerflow-inbox-factures", "Facture",  "facture-detail.html","ref");
-    J("tigerflow-added-interventions").forEach(function(i){
-      if(!i || !i.client) return;
-      DOC.push({n:i.client + " - intervention", s:[i.date, i.ville].filter(Boolean).join(" - "),
-                h:"calendrier.html"});
-    });
-  })();
-  var PG = [
-    {n:"Tableau de bord", i:"🏠", h:"index.html"},{n:"Calendrier / Agenda", i:"📅", h:"calendrier.html"},{n:"Tournees", i:"🗺️", h:"tournee.html"},
-    {n:"Clients", i:"👥", h:"clients.html"},{n:"Nouveau client", i:"➕", h:"client-nouveau.html"},
-    {n:"Nouvelle intervention", i:"🗓️", h:"intervention-nouvelle.html"},{n:"Devis", i:"🧾", h:"devis-liste.html"},
-    {n:"Nouveau devis", i:"✏️", h:"devis.html"},{n:"Factures", i:"💶", h:"facture-liste.html"},
-    {n:"Taches", i:"✅", h:"taches.html"},{n:"Techniciens", i:"👷", h:"techniciens.html"},
-    {n:"Rapports", i:"📊", h:"rapports.html"},{n:"Connexion", i:"🔒", h:"connexion.html"},{n:"Reglages", i:"⚙️", h:"reglages.html"}
-  ];
-  var SEL = 0, RES = [];
-  var norm = function(x){ return x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\s.\-]/g,""); };
-  function search(q){
-    var nq = norm(q);
-    if(!nq) return [];
-    var out = [];
-    /* on cherche dans « k » (nom + adresse + CP + ville + tel + mail).
-       Repli sur n + s pour une entree ecrite par une version anterieure. */
-    CL.forEach(function(c){ if(norm(c.k || (c.n + " " + c.s)).indexOf(nq) > -1) out.push({g:"Clients", i:"👤", n:c.n, s:c.s, h:c.h}); });
-    DOC.forEach(function(d){ if(norm(d.n).indexOf(nq) > -1 || norm(d.s).indexOf(nq) > -1) out.push({g:"Documents", i:"📄", n:d.n, s:d.s, h:d.h}); });
-    PG.forEach(function(p){ if(norm(p.n).indexOf(nq) > -1) out.push({g:"Pages", i:p.i, n:p.n, s:"", h:p.h}); });
-    return out.slice(0, 9);
-  }
-  function draw(){
-    var box = document.getElementById("gs-res");
-    if(!RES.length){
-      var q = document.getElementById("gs-q").value.trim();
-      box.innerHTML = q ? '<div class="gs-empty">Aucun resultat pour « ' + q + ' »</div>'
-        : '<div class="gs-empty">Tape un nom de client, un numero de telephone,<br>une reference de devis/facture ou une page…</div>';
-      return;
-    }
-    var html = "", lastG = "";
-    RES.forEach(function(r, i){
-      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
-      html += '<div class="gs-r ' + (i === SEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsSel(' + i + ')">'
-        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
-        + '<span class="go">Entree ↵</span></div>';
-    });
-    box.innerHTML = html;
-  }
-  window.gsSel = function(i){ SEL = i; draw(); };
-  window.gsOpen = function(){
-    /* Sur ordinateur la barre est un vrai champ : / et Cmd+K y placent le
-       curseur au lieu d'ouvrir la fenetre. La fenetre reste pour le telephone. */
-    var ch = document.getElementById("gs-top");
-    if(ch && window.innerWidth > 760){ ch.focus(); ch.select(); return; }
-    document.getElementById("gs-veil").classList.add("open");
-    document.getElementById("gs-pal").classList.add("open");
-    var inp = document.getElementById("gs-q");
-    inp.value = ""; RES = []; SEL = 0; draw();
-    setTimeout(function(){ inp.focus(); }, 30);
-  };
-  window.gsClose = function(){
-    document.getElementById("gs-veil").classList.remove("open");
-    document.getElementById("gs-pal").classList.remove("open");
-  };
-  /* ===== resultats sous la barre (27/07) : meme moteur que la fenetre ===== */
-  var IRES = [], ISEL = 0;
-  function gsInPaint(){
-    var box = document.getElementById("gs-drop"), ch = document.getElementById("gs-top");
-    if(!box || !ch) return;
-    var q = ch.value.trim();
-    if(!q){ box.classList.remove("open"); box.innerHTML = ""; return; }
-    box.classList.add("open");
-    if(!IRES.length){ box.innerHTML = '<div class="gs-empty">Aucun resultat pour \u00ab ' + q + ' \u00bb</div>'; return; }
-    var html = "", lastG = "";
-    IRES.forEach(function(r, i){
-      if(r.g !== lastG){ html += '<div class="gs-g">' + r.g + '</div>'; lastG = r.g; }
-      html += '<div class="gs-r ' + (i === ISEL ? "sel" : "") + '" onclick="location.href=\'' + r.h + '\'" onmousemove="gsInSel(' + i + ')">'
-        + '<span class="gi">' + r.i + '</span><span><b>' + r.n + '</b>' + (r.s ? '<small>' + r.s + '</small>' : '') + '</span>'
-        + '<span class="go">Entree \u21b5</span></div>';
-    });
-    box.innerHTML = html;
-  }
-  window.gsInPaint = gsInPaint;
-  window.gsInSel = function(i){ ISEL = i; gsInPaint(); };
-  window.gsInClose = function(){ var b = document.getElementById("gs-drop"); if(b){ b.classList.remove("open"); } };
-  /* sur telephone le champ est masque : un appui rouvre la fenetre */
-  window.gsTap = function(){
-    /* clic n'importe ou dans la barre = curseur dans le champ, comme une vraie
-       barre de recherche. Sur telephone le champ est masque : on rouvre la fenetre. */
-    if(window.innerWidth <= 760){ gsOpen(); return; }
-    var ch = document.getElementById("gs-top");
-    if(ch) ch.focus();
-  };
-  (function(){
-    var ch = document.getElementById("gs-top");
-    if(!ch) return;
-    ch.addEventListener("input", function(){ IRES = search(this.value); ISEL = 0; gsInPaint(); });
-    ch.addEventListener("focus", function(){ if(this.value.trim()){ IRES = search(this.value); gsInPaint(); } });
-    ch.addEventListener("keydown", function(e){
-      if(e.key === "Escape"){ gsInClose(); this.blur(); return; }
-      if(!IRES.length) return;
-      if(e.key === "ArrowDown"){ e.preventDefault(); ISEL = Math.min(IRES.length - 1, ISEL + 1); gsInPaint(); }
-      else if(e.key === "ArrowUp"){ e.preventDefault(); ISEL = Math.max(0, ISEL - 1); gsInPaint(); }
-      else if(e.key === "Enter" && IRES[ISEL]){ location.href = IRES[ISEL].h; }
-    });
-    document.addEventListener("click", function(e){ if(!e.target.closest || !e.target.closest(".gsbtn")) gsInClose(); });
-  })();
-  document.getElementById("gs-q").addEventListener("input", function(){
-    RES = search(this.value); SEL = 0; draw();
-  });
-  document.addEventListener("keydown", function(e){
-    var open = document.getElementById("gs-pal").classList.contains("open");
-    if((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"){ e.preventDefault(); open ? gsClose() : gsOpen(); return; }
-    if(e.key === "/" && !open){
-      const t = e.target;
-      if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) return;
-      e.preventDefault(); gsOpen(); return;
-    }
-    if(!open) return;
-    if(e.key === "Escape"){ gsClose(); }
-    else if(e.key === "ArrowDown"){ e.preventDefault(); SEL = Math.min(RES.length - 1, SEL + 1); draw(); }
-    else if(e.key === "ArrowUp"){ e.preventDefault(); SEL = Math.max(0, SEL - 1); draw(); }
-    else if(e.key === "Enter" && RES[SEL]){ location.href = RES[SEL].h; }
-  });
-})();
-</script>
-<nav class="bnv" aria-label="Navigation mobile">
-  <a class="bn" href="index.html"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</a>
-  <a class="bn" href="calendrier.html"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda</a>
-  <a class="ctr" href="devis.html"><span class="dsc"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Devis</a>
-  <a class="bn" href="devis-liste.html"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
-  <a class="bn" href="#" onclick="bnvPlus(event)"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Plus</a>
-</nav>
-<div class="bnvsheet" id="bnvsheet" onclick="if(event.target===this){this.classList.remove('open');document.body.style.overflow=''}">
-  <div class="bnvcard">
-    <h3>Toutes les sections</h3>
-    <div class="bnvgrid">
-      <a href="clients.html"><span class="i">&#128101;</span>Clients</a>
-      <a href="devis-liste.html"><span class="i">&#128221;</span>Devis</a>
-      <a href="facture-liste.html"><span class="i">&#128182;</span>Factures</a>
-      <a href="paiements.html"><span class="i">&#128181;</span>Paiements</a>
-      <a href="contrats-liste.html"><span class="i">&#128196;</span>Contrats</a>
-      <a href="techniciens.html"><span class="i">&#128295;</span>Techniciens</a>
-      <a href="taches.html"><span class="i">&#9989;</span>Tâches</a>
-      <a href="reglages.html"><span class="i">&#9881;&#65039;</span>Réglages</a>
-      <a href="tech-mobile.html"><span class="i">&#128241;</span>Appli mobile</a>
-      <a href="connexion.html"><span class="i">&#128274;</span>Connexion</a>
+function frame(img, cls, alt){
+  return `<div class="frame${img.small?' small':''}" style="aspect-ratio:${img.w}/${img.h}"><img src="${img.src}" width="${img.w}" height="${img.h}" alt="${alt}">${pinsHtml(img.pins,cls)}</div>`;
+}
+function itemsHtml(items, add){
+  return `<div class="items">${items.map(([n,what,doTxt])=>`<div class="item${add?' add':''}" data-n="${n}" tabindex="0"><span class="num">${n}</span><span class="what">${what}</span><span class="do"><b>Faire :</b> ${doTxt}</span></div>`).join('')}</div>`;
+}
+const pagesEl=document.getElementById('pages');
+let total=0, bugs=0, decisions=0;
+PAGES.forEach(p=>{
+  total+=p.items.length; if(p.extra) total+=p.extra.items.length;
+  p.items.forEach(i=>{ if(i[2].includes('class="flag bug"')) bugs++; if(i[2].includes('à trancher')||i[2].includes('à préciser')) decisions++; });
+  const left = p.saigonStack
+    ? `<div class="stack">${p.saigonStack.map(im=>frame(im,'bad','Staging Saigon')).join('')}</div>`
+    : frame(p.saigon,'bad','Staging Saigon');
+  const sec=document.createElement('section');
+  sec.className='page'; sec.id=p.id;
+  sec.innerHTML=`
+    <div class="sec-head"><div><div class="eyebrow">${p.eyebrow}</div><h2>${p.title}</h2></div><div class="n">${p.items.length} écarts${p.extra?` + ${p.extra.items.length} ajouts`:''}</div></div>
+    <div class="compare">
+      <div class="shot"><div class="cap bad"><i></i>Saigon · staging <small>à corriger</small></div>${left}</div>
+      <div class="shot"><div class="cap good"><i></i>Maquette · référence <small>résultat attendu</small></div>${p.maquetteStack ? `<div class="stack">${p.maquetteStack.map(im=>frame(im,'good','Maquette de référence')).join('')}</div>` : frame(p.maquette,'good','Maquette de référence')}</div>
     </div>
-  </div>
-</div>
-<script>
-function bnvPlus(e){ e.preventDefault(); document.getElementById("bnvsheet").classList.add("open"); document.body.style.overflow = "hidden"; } /* bnvLock */
-document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s = document.getElementById("bnvsheet"); if(s){ s.classList.remove("open"); document.body.style.overflow = ""; } } });
-</script>
-<script>
-function bnvPlus(e){ e.preventDefault(); document.getElementById("bnvsheet").classList.add("open"); document.body.style.overflow = "hidden"; } /* bnvLock */
-document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var s = document.getElementById("bnvsheet"); if(s){ s.classList.remove("open"); document.body.style.overflow = ""; } } });
-</script>
-<script>
-(function(){
-  var p = location.pathname.split("/").pop() || "index.html";
-  document.querySelectorAll(".bnvgrid a").forEach(function(a){
-    if(a.getAttribute("href") === p) a.classList.add("here");
-  });
-})();
-
-</script>
-<script>
-/* Compte connecté : le bloc en bas à gauche reflète la photo, le nom et le rôle
-   choisis dans Réglages > Utilisateurs (sauvegardés dans le navigateur). */
-(function(){
-  function appliqueCompte(){
-    var c = null;
-    try{ c = JSON.parse(localStorage.getItem("tigerflow-compte")); }catch(e){}
-    /* le bandeau d'accueil salue le compte connecte — meme sans compte
-       enregistre, il salue tout court, jamais un prenom invente */
-    var hello = document.getElementById("c-hello");
-    if(hello){
-      var h = new Date().getHours();
-      var salut = (h >= 18 || h < 4) ? "Bonsoir" : "Bonjour";
-      var prenom = (c && c.nom) ? String(c.nom).trim().split(/\s+/)[0] : "";
-      hello.innerHTML = salut + (prenom ? ' <span class="hiname">' + prenom.replace(/[<>&]/g, "") + "</span>" : "");   /* mu-dash valide : le prenom porte la couleur maison */
-    }
-    if(!c) return;
-    var box = document.getElementById("side-user");
-    if(!box) return;
-    var ph = box.querySelector(".ph");
-    if(ph){
-      if(c.photo){
-        ph.textContent = "";
-        ph.style.backgroundImage = "url(" + c.photo + ")";
-        ph.style.backgroundSize = "cover";
-        ph.style.backgroundPosition = "center";
-      } else {
-        ph.style.backgroundImage = "";
-        if(c.ini) ph.textContent = c.ini;
-      }
-    }
-    var info = null;
-    for(var i = 0; i < box.children.length; i++){
-      var el = box.children[i];
-      if(el.tagName === "DIV" && !el.classList.contains("umenu")){ info = el; break; }
-    }
-    if(info){
-      var b = info.querySelector("b"), r = info.querySelector("span");
-      if(b && c.nom) b.textContent = c.nom;
-      if(r && c.role) r.textContent = c.role;
-    }
-  }
-  window.appliqueCompte = appliqueCompte;
-  if(document.readyState !== "loading") appliqueCompte();
-  else document.addEventListener("DOMContentLoaded", appliqueCompte);
-})();
-(function(){
-  /* 31/08 (patron) — LA TUILE IMPAYÉS DIT ENFIN L'ARGENT. Elle affichait « 3 »
-     en dur, sans montant : le chiffre qui compte, c'est ce qu'on te doit. */
-  function majImp(){
-    const b = document.getElementById("kt-imp"), s = document.getElementById("kt-imp-s");
-    if(!b || !s) return;
-    let F = [];
-    try{ F = JSON.parse(localStorage.getItem("tigerflow-inbox-factures")) || []; }catch(e){}
-    if(!Array.isArray(F) || !F.length) return;   /* rien en base : on garde la démo */
-    const t = new Date(); t.setHours(0, 0, 0, 0);
-    const ech = f => { try{ return new Date((f.valid || f.echeance || f.date) + "T12:00:00"); }catch(e){ return null; } };
-    const imp = F.filter(f => f && (f.statut === "attente" || f.statut === "retard") && ech(f) && ech(f) < t);
-    if(!imp.length){ b.textContent = "0"; s.textContent = "Aucun impayé — tout est encaissé ✓"; return; }
-    const tot = imp.reduce((a, f) => a + (+f.montant || 0), 0);
-    const vieux = imp.reduce((m, f) => Math.max(m, Math.round((t - ech(f)) / 864e5)), 0);
-    b.textContent = tot.toLocaleString("fr-FR", {maximumFractionDigits: 0}) + " €";
-    s.textContent = imp.length + " facture" + (imp.length > 1 ? "s" : "") + " en retard · la plus vieille depuis " + vieux + " j";
-  }
-  if(document.readyState !== "loading") majImp();
-  else document.addEventListener("DOMContentLoaded", majImp);
-})();
-</script>
-<script>
-/* 30/07 patron : « on peut pas cliquer sur l'agenda » — cliquer N'IMPORTE OU dans un
-   champ date/heure ouvre le calendrier natif (avant, seule la minuscule icone marchait). */
-document.addEventListener("click", function(e){
-  var el = e.target;
-  if(el && el.matches && el.matches('input[type="date"],input[type="time"],input[type="month"]')){
-    try{ if(el.showPicker) el.showPicker(); }catch(err){}
-  }
+    ${itemsHtml(p.items)}
+    ${p.extra?`
+    <div class="sec-head" style="margin-top:28px"><div><h3>${p.extra.title}</h3></div></div>
+    <div class="compare"><div class="shot"><div class="cap bad"><i></i>Aujourd\'hui <small>maquette et staging, texte identique</small></div>${frame({src:p.extra.src,w:p.extra.w,h:p.extra.h,small:true,pins:p.extra.pins},'add','Modale Valider la facture')}</div><div class="shot"><div class="cap good"><i></i>Version proposée <small>rendu réel, même design</small></div>${p.extra.render}</div></div>
+    ${itemsHtml(p.extra.items,true)}`:''}
+  `;
+  pagesEl.appendChild(sec);
+  const a=document.createElement('a'); a.href='#'+p.id; a.textContent=p.label; document.getElementById('nav').appendChild(a);
 });
-</script>
-<script>
-/* ── TF-INFOBULLES (28/08) : tout texte coupé par « … » montre son texte
-   complet au survol — partout, sans toucher aux infobulles déjà écrites. */
-(function(){
-  function coupe(el){
-    if(!el || el.nodeType !== 1 || el.hasAttribute("title")) return false;
-    var cs = getComputedStyle(el);
-    if(cs.textOverflow === "ellipsis" && el.scrollWidth > el.clientWidth + 1){
-      el.title = el.innerText.trim().replace(/\s+/g, " "); return true;
-    }
-    var lc = cs.webkitLineClamp;
-    if(lc && lc !== "none" && el.scrollHeight > el.clientHeight + 1){
-      el.title = el.innerText.trim().replace(/\s+/g, " "); return true;
-    }
-    return false;
-  }
-  document.addEventListener("mouseover", function(e){
-    var el = e.target, n = 0;
-    while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
-  }, true);
-})();
-</script>
-<script>
-/* ===================================================================
-   APPAREILS & PARTAGE DE COMPTE  —  07/09/2026 (demande du patron)
-   TigerFlow est facture PAR UTILISATEUR (69 €/mois, 49 € en annuel).
-   Dix personnes au bureau sur un seul compte = 690 €/mois qui ne
-   rentrent pas. Ce socle COMPTE les appareils ; il ne bloque rien tant
-   que l'interrupteur « Limite d'appareils » n'est pas allume dans
-   Reglages > Bêta.
+const f=document.createElement('a'); f.href='#fiche-facture'; f.textContent='Fiche facture'; document.getElementById('nav').appendChild(f);
+const g=document.createElement('a'); g.href='#global'; g.textContent='Règles globales'; document.getElementById('nav').appendChild(g);
+document.getElementById('stats').innerHTML=`
+  <div class="stat"><b>${PAGES.length+1}</b><span>écrans passés en revue</span></div>
+  <div class="stat"><b>${total}</b><span>écarts pointés</span></div>
+  <div class="stat"><b>23</b><span>propositions fiche facture</span></div>
+  <div class="stat"><b>${bugs}</b><span>bug bloquant</span></div>
+  <div class="stat"><b>7</b><span>décisions à prendre</span></div>`;
 
-   ☠️ POURQUOI PAS « UNE SEULE CONNEXION A LA FOIS » : au bureau les
-   collegues se RELAIENT (l'un a 9 h, l'autre a 10 h). Il n'y a jamais
-   deux sessions simultanees : le partage passe inapercu. Et ca
-   couperait le technicien qui a le mobile ET le poste.
-   On compte donc les appareils DISTINCTS sur 14 jours.
-
-   Ce qui sert d'empreinte : famille de navigateur, systeme, taille
-   d'ecran, fuseau, langue. Volontairement PAS de canvas ni de WebGL :
-   c'est explicable au client et proportionne (a mettre dans les CGU).
-   =================================================================== */
-(function(){
-  var KEY = "tigerflow-appareils", FEN = 14 * 864e5;   /* 14 jours */
-
-  function lire(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {}; }catch(e){ return {}; } }
-  function ecrire(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} }
-
-  /* nom lisible : « Chrome sur Windows », pas une chaine technique */
-  function nav(){
-    var u = navigator.userAgent;
-    if(/Edg\//.test(u))        return "Edge";
-    if(/OPR\/|Opera/.test(u))  return "Opera";
-    if(/Firefox\//.test(u))    return "Firefox";
-    if(/Chrome\//.test(u))     return "Chrome";
-    if(/Safari\//.test(u))     return "Safari";
-    return "Navigateur";
-  }
-  function sys(){
-    var u = navigator.userAgent;
-    if(/iPhone|iPad|iPod/.test(u)) return /iPad/.test(u) ? "iPad" : "iPhone";
-    if(/Android/.test(u))          return "Android";
-    if(/Windows/.test(u))          return "Windows";
-    if(/Mac OS X|Macintosh/.test(u)) return "Mac";
-    if(/Linux/.test(u))            return "Linux";
-    return "Ordinateur";
-  }
-  function mobile(){ return /iPhone|iPad|iPod|Android|Mobile/.test(navigator.userAgent); }
-
-  /* empreinte : courte, stable, et qui ne survit PAS a un changement de
-     machine. Deux collegues sur deux postes = deux empreintes. */
-  function empreinte(){
-    var brut = [nav(), sys(),
-                (screen.width || 0) + "x" + (screen.height || 0),
-                (window.devicePixelRatio || 1),
-                (navigator.language || ""),
-                (function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){ return ""; } })(),
-                (navigator.hardwareConcurrency || 0)].join("|");
-    var h = 5381;
-    for(var i = 0; i < brut.length; i++){ h = ((h << 5) + h + brut.charCodeAt(i)) >>> 0; }
-    return "a" + h.toString(36);
-  }
-
-  function qui(){
-    /* l'utilisateur connecte, tel que Reglages l'a enregistre */
-    try{
-      var c = JSON.parse(localStorage.getItem("tigerflow-compte") || "null");
-      if(c && c.nom) return c.nom;
-    }catch(e){}
-    return "Compte principal";
-  }
-
-  /* enregistre le passage. On garde les HORAIRES (pas le detail des pages) :
-     c'est ce qui distingue « une personne, trois appareils » de
-     « cinq collegues, un compte ». */
-  function vu(){
-    var reg = lire(), u = qui(), id = empreinte(), t = Date.now(), lim = t - FEN;
-    if(!reg[u]) reg[u] = {};
-    var a = reg[u][id] || {nom: nav() + " sur " + sys(), mob: mobile(), premier: t, vus: []};
-    a.dernier = t;
-    /* un passage par tranche de 30 min : sinon la liste explose */
-    if(!a.vus.length || t - a.vus[a.vus.length - 1] > 18e5) a.vus.push(t);
-    a.vus = a.vus.filter(function(x){ return x > lim; });
-    reg[u][id] = a;
-    /* purge : un appareil qui n'a rien fait depuis 14 jours sort du calcul */
-    Object.keys(reg[u]).forEach(function(k){
-      if(reg[u][k].dernier < lim && k !== id) delete reg[u][k];
-    });
-    ecrire(reg);
-    return {reg: reg, id: id, u: u};
-  }
-
-  /* --------- ce que Reglages consomme --------- */
-  window.apEmpreinte = empreinte;
-  window.apRegistre  = lire;
-  window.apQui       = qui;
-
-  window.apListe = function(u){
-    var reg = lire()[u] || {}, lim = Date.now() - FEN;
-    return Object.keys(reg).map(function(k){
-      var a = reg[k];
-      return {id:k, nom:a.nom, mob:!!a.mob, premier:a.premier, dernier:a.dernier,
-              passages:(a.vus || []).filter(function(x){ return x > lim; }).length};
-    }).filter(function(a){ return a.dernier > lim; })
-      .sort(function(x, y){ return y.dernier - x.dernier; });
-  };
-
-  /* Indice de partage. Ce n'est PAS le nombre d'appareils : une personne
-     avec PC + telephone + tablette en a trois et ne partage rien.
-     Ce qui trahit le partage, c'est le CHEVAUCHEMENT : plusieurs appareils
-     actifs le MEME jour, aux heures de bureau. */
-  window.apIndice = function(u){
-    var reg = lire()[u] || {}, lim = Date.now() - FEN;
-    var ids = Object.keys(reg).filter(function(k){ return reg[k].dernier > lim; });
-    if(ids.length <= 1) return {n:ids.length, jours:0, max:ids.length, score:0, verdict:"normal"};
-    var parJour = {};
-    ids.forEach(function(k){
-      (reg[k].vus || []).forEach(function(t){
-        if(t <= lim) return;
-        var d = new Date(t);
-        if(d.getHours() < 7 || d.getHours() > 20) return;      /* heures de bureau */
-        var j = d.toISOString().slice(0, 10);
-        (parJour[j] = parJour[j] || {})[k] = 1;
-      });
-    });
-    var jours = 0, max = 1;
-    Object.keys(parJour).forEach(function(j){
-      var n = Object.keys(parJour[j]).length;
-      /* ☠️ TESTE : le seuil etait a 2 et classait « leger doute » le cas le
-         plus HONNETE qui soit — une personne avec son PC le matin et son
-         telephone le soir, 10 jours d'affilee. Deux appareils, c'est la
-         normale ; le croisement commence a TROIS. */
-      if(n >= 3) jours++;
-      if(n > max) max = n;
-    });
-    /* max = le plus grand nombre d'appareils vus le meme jour ouvre */
-    var score = max >= 5 ? 3 : (max >= 4 || (max >= 3 && jours >= 3)) ? 2 : (max >= 3) ? 1 : 0;
-    return {n:ids.length, jours:jours, max:max, score:score,
-            verdict: score >= 3 ? "partage probable" : score === 2 ? "à surveiller" : score === 1 ? "leger doute" : "normal"};
-  };
-
-  /* ⚠️ DEUX interrupteurs, et c'est voulu :
-     - apLimiteOn()  = la fonction EXISTE (bêta V3). Elle montre l'ecran de
-       suivi dans Reglages. Absent = eteint.
-     - apBlocOn()    = on BLOQUE vraiment au-dela de la limite. Exige que la
-       beta soit allumee, et se regle dans l'ecran lui-meme.
-     Sans cette separation, allumer la beta V3 pour REGARDER les chiffres
-     aurait bloque les gens dans la seconde — alors que le bon ordre est :
-     on mesure 4 a 6 semaines, PUIS on bloque en connaissance de cause. */
-  window.apLimiteOn = function(){
-    try{ return localStorage.getItem("tigerflow-beta-appareils") === "1"; }catch(e){ return false; }
-  };
-  window.apBlocOn = function(){
-    try{ return window.apLimiteOn() && localStorage.getItem("tigerflow-appareils-bloque") === "1"; }
-    catch(e){ return false; }
-  };
-  window.apBlocSet = function(v){
-    try{ localStorage.setItem("tigerflow-appareils-bloque", v ? "1" : "0"); }catch(e){}
-  };
-  window.apMax = function(){
-    var v = 2; try{ v = parseInt(localStorage.getItem("tigerflow-appareils-max"), 10) || 2; }catch(e){}
-    return Math.max(1, Math.min(9, v));
-  };
-  window.apOublier = function(u, id){
-    var reg = lire(); if(reg[u] && reg[u][id]){ delete reg[u][id]; ecrire(reg); }
-  };
-
-  /* ☠️ 07/09 (patron) : « en bêta par défaut mais TOUT en inactif ».
-     Le comptage tournait sans condition — il ne demarre plus tant que la
-     bêta V3 « Appareils & partage de compte » n'est pas allumee dans
-     Reglages. Contrepartie assumee et dite au patron : le jour de
-     l'allumage le tableau part de zero, il faut 14 jours pour qu'il ait
-     quelque chose a raconter. Rien ne tourne dans son dos, c'est ce
-     qu'il a demande. */
-  if(window.apLimiteOn && window.apLimiteOn()) vu();
-})();
-</script>
-<script>
-/* ===== Limite d'appareils : l'écran de choix ==========================
-   Ne s'affiche QUE si l'interrupteur « Limite d'appareils » est allumé
-   dans Réglages > Bêta. Et jamais de cul-de-sac : on propose toujours
-   de libérer une place. Un technicien coincé sur le terrain, c'est un
-   rapport d'intervention non signé chez le client. =================== */
-(function(){
-  if(typeof apBlocOn !== "function" || !apBlocOn()) return;
-  var u = apQui(), moi = apEmpreinte(), l = apListe(u), max = apMax();
-  if(l.length <= max) return;
-  /* ☠️ TESTE : je gardais les « max » appareils vus le plus RECEMMENT.
-     Or l'appareil courant vient, par definition, de se connecter — il etait
-     donc toujours dans les gardes et l'ecran ne s'affichait jamais.
-     Ce sont les appareils les plus ANCIENNEMENT connus qui gardent leur
-     place ; c'est au nouveau venu de demander la sienne. */
-  var gardes = l.slice().sort(function(x, y){ return x.premier - y.premier; })
-                .slice(0, max).map(function(a){ return a.id; });
-  if(gardes.indexOf(moi) > -1) return;
-
-  var v = document.createElement("div");
-  v.id = "apveil";
-  v.innerHTML = '<div class="apbox">'
-    + '<div class="aptit">Trop d’appareils sur ce compte</div>'
-    + '<p class="apsub">Un compte TigerFlow vaut <b>' + max + ' appareil' + (max > 1 ? "s" : "") + '</b>. '
-    + 'Pour continuer ici, libérez une place — ou ajoutez un utilisateur dans Réglages.</p>'
-    + '<div class="aplst">' + l.slice(0, max).map(function(a){
-        return '<button class="apone" onclick="apLiberer(\'' + a.id + '\')">'
-             + '<span>' + (a.mob ? "📱" : "💻") + ' ' + a.nom + '</span>'
-             + '<em>Déconnecter</em></button>';
-      }).join("") + '</div>'
-    + '<a class="apadd" href="reglages.html">Ajouter un utilisateur →</a></div>';
-  var st = document.createElement("style");
-  st.textContent = '#apveil{position:fixed;inset:0;z-index:9999;background:rgba(16,18,22,.62);display:grid;place-items:center;padding:20px}'
-    + '#apveil .apbox{background:#fff;border-radius:18px;padding:26px 26px 22px;max-width:440px;width:100%;box-shadow:0 24px 60px rgba(16,18,22,.3);font-family:Inter,system-ui,sans-serif}'
-    + '#apveil .aptit{font-family:Sora,sans-serif;font-weight:800;font-size:1.12rem;color:#171A20;margin-bottom:7px}'
-    + '#apveil .apsub{font-size:.84rem;color:#3D434E;line-height:1.55;margin:0 0 16px}'
-    + '#apveil .aplst{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}'
-    + '#apveil .apone{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;border-radius:11px;border:1px solid #EBECF1;background:#F7F8FA;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;color:#171A20;text-align:left}'
-    + '#apveil .apone:hover{border-color:#FF5A1F;background:#FFF1EA}'
-    + '#apveil .apone em{font-style:normal;font-size:.74rem;font-weight:700;color:#FF5A1F;flex:none}'
-    + '#apveil .apadd{display:block;text-align:center;font-size:.78rem;font-weight:700;color:#3D434E;text-decoration:none;padding:9px}';
-  document.head.appendChild(st);
-  document.body.appendChild(v);
-  window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
-})();
+// highlight: pin <-> row, both sides
+document.querySelectorAll('section.page').forEach(sec=>{
+  const set=(n,on)=>{ sec.querySelectorAll(`[data-n="${n}"]`).forEach(el=>el.classList.toggle('on',on)); };
+  let current=null;
+  sec.addEventListener('mouseover',e=>{ const t=e.target.closest('[data-n]'); if(t) set(t.dataset.n,true); });
+  sec.addEventListener('mouseout',e=>{ const t=e.target.closest('[data-n]'); if(t && t.dataset.n!==current) set(t.dataset.n,false); });
+  sec.addEventListener('click',e=>{
+    const t=e.target.closest('[data-n]'); if(!t) return;
+    if(current) set(current,false);
+    current = current===t.dataset.n ? null : t.dataset.n;
+    if(current){ set(current,true); if(t.classList.contains('pin')){ const row=sec.querySelector(`.item[data-n="${current}"]`); row&&row.scrollIntoView({block:'nearest',behavior:'smooth'}); } }
+  });
+  sec.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ const t=e.target.closest('.item'); if(t){ e.preventDefault(); t.click(); } } });
+});
 </script>
 </body>
 </html>
