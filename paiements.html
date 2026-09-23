@@ -204,6 +204,9 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
 .dkv:last-child{border-bottom:0}
 .dkv .k{color:var(--muted)}
 .dkv .v{font-weight:600;text-align:right}
+/* 23/09 (Jo) : la date d'encaissement se CHOISIT — le patron pointe ses virements une fois par
+   semaine, la date doit etre celle du releve, pas celle du clic. */
+.encd{font:inherit;font-size:.85rem;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:#fff;color:var(--ink)}
 .dbig{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--orange);color:#fff;border-radius:12px;padding:13px;font-size:.9rem;font-weight:700;box-shadow:0 8px 20px -8px rgba(255,90,31,.55);margin-bottom:9px}
 .dbig:hover{background:var(--orange-deep)}
 .dbig.sec{background:#fff;color:var(--ink-2);border:1.5px solid var(--line);box-shadow:none}
@@ -901,7 +904,9 @@ function openPay(id){
     <div class="dcard">
       <div class="dh">Détails</div>
       <div class="dkv"><span class="k">Mode de paiement</span><span class="v">${r.mode}</span></div>
-      <div class="dkv"><span class="k">Date d'encaissement</span><span class="v">${fdate(r.d)}</span></div>
+      ${(r.st === "att" || r.st === "ech")
+        ? `<div class="dkv"><span class="k">Date d'encaissement</span><span class="v"><input type="date" id="enc-d" class="encd" value="${TODAY}" max="${TODAY}" onchange="encLbl()" title="La date à laquelle l'argent est arrivé (celle du relevé)"></span></div>`
+        : `<div class="dkv"><span class="k">Date d'encaissement</span><span class="v">${fdate(r.d)}</span></div>`}
       ${r.mis ? `<div class="dkv"><span class="k">Intervention liée</span><span class="v"><a class="fref" href="calendrier.html">${r.mis} →</a></span></div>` : ""}
       ${r.fac ? `<div class="dkv"><span class="k">Facture liée</span><span class="v"><a class="fref" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">${r.fac} →</a></span></div>` : ""}
       ${r.pj && r.pj.length ? `<div class="dkv" style="display:block"><span class="k">Justificatif${r.pj.length > 1 ? "s" : ""}</span>
@@ -922,9 +927,9 @@ function openPay(id){
     </div>
     <div class="dacts">
       ${r.st === "att"
-        ? `<button class="dbig" onclick="encaisser('${r.id}')">✓ Marquer comme encaissé aujourd'hui</button>`
+        ? `<button class="dbig" id="enc-btn" onclick="encaisser('${r.id}')">✓ Marquer comme encaissé le ${fdate(TODAY)}</button>`
         : r.st === "ech"
-        ? `<button class="dbig" onclick="encaisser('${r.id}')">✓ Le client a régularisé — encaisser</button>`
+        ? `<button class="dbig" id="enc-btn" onclick="encaisser('${r.id}')">✓ Le client a régularisé — encaissé le ${fdate(TODAY)}</button>`
         : `<button class="dbig sec" onclick="majPay('${r.id}')">↻ Mettre à jour le statut</button>`}
       <div class="duo">
         <button class="dbig sec" onclick="pjAjouter('${r.id}')">📎 Justificatif</button>
@@ -937,17 +942,25 @@ function openPay(id){
   g("dveil").classList.add("open");
   g("drawer").scrollTop = 0;
 }
+/* le libelle du bouton suit la date choisie */
+function encLbl(){
+  const d = g("enc-d"), b = g("enc-btn"); if(!d || !b) return;
+  const dv = d.value || TODAY;
+  b.textContent = b.textContent.replace(/le \d{2}\/\d{2}\/\d{4}$/, "le " + fdate(dv));
+}
 function encaisser(id){
+  /* 23/09 (Jo) : la date d'encaissement est celle choisie dans le panneau (defaut : aujourd'hui) */
+  const dIn = g("enc-d"); const DENC = (dIn && dIn.value) ? dIn.value : TODAY;
   try{
     const ov = JSON.parse(localStorage.getItem("tigerflow-paiements-statuts")) || {};
-    ov[id] = {st:"enc", d:TODAY};
+    ov[id] = {st:"enc", d:DENC};
     localStorage.setItem("tigerflow-paiements-statuts", JSON.stringify(ov));
     /* le registre partagé apprend l'encaissement si une facture est liée */
     const r = ROWS.find(x => x.id === id);
     if(r && r.fac){
       const reg = JSON.parse(localStorage.getItem("tigerflow-factures-paiements")) || {};
       if(!reg[r.fac]) reg[r.fac] = [];
-      reg[r.fac].push({m:r.m, mode:r.mode, t:Date.now(), d:TODAY, note:r.note || "", pid:r.id});
+      reg[r.fac].push({m:r.m, mode:r.mode, t:Date.now(), d:DENC, note:r.note || "", pid:r.id});
       localStorage.setItem("tigerflow-factures-paiements", JSON.stringify(reg));
       const f = FACS[r.fac];
       if(f && reg[r.fac].reduce((a, p) => a + p.m, 0) >= f.montant - 0.005){
@@ -960,7 +973,7 @@ function encaisser(id){
   }catch(e){}
   render();
   closeAll();
-  toast("Paiement encaissé — la facture liée est à jour");
+  toast("Paiement encaissé le " + fdate(DENC) + " — la facture liée est à jour");
 }
 
 /* ================= TIROIR CRÉATION ================= */
