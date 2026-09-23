@@ -1489,7 +1489,11 @@ function kpis(){
   const annT9 = paysAnn().reduce((a,p) => a + p.m, 0);
   if(solde > 0 && annT9 > 0){
     const a9 = paysAnn()[0];
-    sub.textContent = "⏳ " + eur(annT9) + " annoncé" + (paysAnn().length > 1 ? "s" : "") + " par " + a9.mode.toLowerCase() + (a9.da ? " le " + fdate(a9.da) : "") + " · à confirmer à réception";
+    /* 23/09 (Jo) : tant que l'argent n'est pas la, le solde ne bouge pas — mais si
+       l'annonce depasse le solde, on le dit deja : le trop-percu se reglera a la reception */
+    const tropA9 = annT9 > solde + 0.005 ? Math.round((annT9 - solde) * 100) / 100 : 0;
+    sub.textContent = "⏳ " + eur(annT9) + " annoncé" + (paysAnn().length > 1 ? "s" : "") + " par " + a9.mode.toLowerCase() + (a9.da ? " le " + fdate(a9.da) : "")
+      + (tropA9 > 0.005 ? " · " + eur(tropA9) + " de plus que le solde : trop-perçu à régler à la réception" : " · à confirmer à réception");
     sub.style.color = "var(--amber)";
   }
   /* 23/09 (visuel A) : trop-percu — la tuile change de nom et propose les deux gestes */
@@ -1898,7 +1902,8 @@ function paylist(){
   g('paylist').innerHTML = P.length
     ? P.map((p, i) => p.etat === "annonce"
         ? '<div class="pay annonce"><span>' + p.mode + '<small style="color:var(--muted)"> · annoncé le ' + (p.da ? fdate(p.da) : p.t) + (p.note ? ' · <em>' + p.note + '</em>' : '') + '</small></span>' +
-          '<span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end"><span class="paytag att">En attente de réception</span><b>' + eur(p.m) + '</b>' +
+          '<span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end"><span class="paytag att">En attente de réception</span>' +
+          (p.m > avSolde() + 0.005 ? '<span class="paytag att" title="Le trop-perçu se règle une fois l\'argent reçu">dont ' + eur(Math.round((p.m - avSolde()) * 100) / 100) + ' de trop</span>' : '') + '<b>' + eur(p.m) + '</b>' +
           '<span class="prd"><label for="prd-' + i + '">reçu le</label><input type="date" id="prd-' + i + '" class="prdin" value="' + isoJour() + '" max="' + isoJour() + '"' + (p.da ? ' min="' + p.da + '"' : '') + ' title="Date à laquelle l\'argent est arrivé sur le compte (celle du relevé)"></span>' +
           '<button class="payrecu" onclick="payRecu(' + i + ')" title="L\'argent est arrivé : confirmer la réception à cette date">✓ Paiement reçu</button>' +
           '<button class="paydel" tabindex="-1" onclick="payDel(event, ' + i + ')" title="Annuler ce paiement annoncé">✕</button></span>' + payPjHtml(p, i) + '</div>'
@@ -2319,8 +2324,9 @@ function payImpact(){
   if(m <= 0){ el.className = "avimpact"; el.textContent = "Solde dû : " + eur(solde) + " — le reste s'affiche pendant la saisie."; return; }
   /* 23/09 (visuel A) : on n'empeche plus de depasser le solde — l'excedent
      est annonce comme trop-percu, et se regle ensuite dans la tuile */
-  if(m > solde + 0.005){ el.className = "avimpact warn"; el.textContent = "⚠ " + eur(Math.round((m - solde) * 100) / 100) + " de plus que le solde dû" + (solde > 0.005 ? " (" + eur(solde) + ")" : "") + " — enregistré comme trop-perçu, à rembourser ou à garder en crédit"; return; }
+  if(m > solde + 0.005){ el.className = "avimpact warn"; el.textContent = "⚠ " + eur(Math.round((m - solde) * 100) / 100) + " de plus que le solde dû" + (solde > 0.005 ? " (" + eur(solde) + ")" : "") + (payAnnChoisi() ? " — enregistré comme annoncé ; le trop-perçu se réglera à la réception (rembourser ou garder en crédit)" : " — enregistré comme trop-perçu, à rembourser ou à garder en crédit"); return; }
   if(payAnnChoisi()){ el.className = "avimpact"; el.textContent = "→ Enregistré comme annoncé : le solde dû reste " + eur(solde) + " jusqu'à confirmation de la réception."; return; }
+  /* (l'avertissement trop-percu juste au-dessus passe avant : un paiement annonce qui depasse le solde le dit aussi) */
   el.className = "avimpact on";
   const reste = solde - m;
   el.textContent = "→ Reste après ce paiement : " + eur(reste) + (reste < 0.005 ? " — la facture sera soldée ✓" : "");
