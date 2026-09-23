@@ -148,7 +148,7 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 /* 23/09 (visuel A) : la tuile Solde du devient « Trop-percu » quand le client a paye trop */
 .kpi.k-amber{background:var(--amber-bg);border-color:#EBD79A}
 .kpi.k-amber .num{color:var(--amber)}
-.tropacts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.tropacts{display:flex;gap:6px;margin:9px 0 13px;flex-wrap:wrap;align-items:center}   /* 13px en bas = la place de la jauge, pour que les 3 tuiles gardent la meme hauteur */
 .tbtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;height:28px;padding:0 10px;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;transition:.13s}
 .tbtn:hover{border-color:var(--amber);color:var(--amber)}
 .tsel{height:28px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.78rem;font-weight:700;padding:0 6px;background:#fff;color:var(--ink);max-width:150px}
@@ -1502,6 +1502,9 @@ function kpis(){
   if(!acts){ acts = document.createElement('div'); acts.id = 'k-trop-acts'; acts.className = 'tropacts'; tile.appendChild(acts); }
   const tpP = tropPend(), tpR = tropRembPend(), tpPT = tropTot(tpP), tpRT = tropTot(tpR);
   if(lblS) lblS.textContent = (tpPT > 0.005 || tpRT > 0.005) ? "Trop-perçu" : "Solde dû";
+  /* 23/09 (Jo) : les trois tuiles gardent la MEME hauteur — en trop-percu, les boutons
+     prennent la place de la jauge (« 100 % encaisse… » ne dit rien de plus ici) */
+  const pw0 = g('paywrap'); if(pw0) pw0.style.display = (tpPT > 0.005 || tpRT > 0.005) ? "none" : "";
   if(tpPT > 0.005){
     tile.className = "kpi k-amber";
     g('k-solde').textContent = eur(tpPT);
@@ -1669,7 +1672,7 @@ function modeProForma(){
   cacher("tab-avoirs", pf);
   cacher("k-solde-tile", pf);
   cacher("k-paye-tile", pf);
-  cacher("paywrap", pf);
+  cacher("paywrap", pf || tropTot(tropPend()) > 0.005 || tropTot(tropRembPend()) > 0.005);   /* 23/09 : en trop-percu, les boutons prennent la place de la jauge */
   /* 27/08 (notre propre défaut prouvé le 20/08, §5septvicies) : une facture
      VALIDÉE a une existence fiscale — elle ne se supprime pas, elle s'annule
      par un AVOIR. Le bouton du ⋯ disparaît dès que le statut quitte
