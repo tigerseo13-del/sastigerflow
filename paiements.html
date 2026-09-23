@@ -224,8 +224,8 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
 .solde i{font-style:normal;display:block;font-size:.72rem;font-weight:700;margin-top:5px}
 .solde.s-enc{background:#F2FAF6;border-color:#CDEADB}
 .solde.s-enc b,.solde.s-enc i{color:var(--green-d,#0E7A54)}
-.solde.s-att{background:#FDF9EF;border-color:#EEDFAE}
-.solde.s-att b,.solde.s-att i{color:#9A6B08}
+.solde.s-att{background:#FFF3EC;border-color:#F6D3BC}
+.solde.s-att b{color:var(--orange-deep,#E24E12)}.solde.s-att i{color:#9A6B08}
 .solde.s-ech{background:#FDF1F0;border-color:#F3C4C0}
 .solde.s-ech b,.solde.s-ech i{color:var(--red,#C1352E)}
 .solde.s-remb{background:#F4F5F8;border-color:#E4E6EC}
@@ -237,10 +237,13 @@ tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
    est poussée au bas — toujours au même endroit, quel que soit le nombre de
    lignes de détail. C'est le reproche que j'avais fait à la maquette Saigon
    sans le corriger ici. */
-#dbody{display:flex;flex-direction:column;min-height:100%}
-.dacts{margin-top:auto;padding-top:14px;display:flex;flex-direction:column;gap:8px;
-  border-top:1px solid var(--line,#EBECF1);position:sticky;bottom:0;background:var(--bg,#F4F5F8);
-  padding-bottom:2px}
+/* 23/09 (Jo, capture Saigon) : on adopte leur mise en page — en-tete « Voir les
+   details » avec le trait orange, montant, details, et les boutons JUSTE SOUS
+   les details (plus de barre collee en bas). On garde notre champ date. */
+#dbody{display:block}
+.dtop{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #F0F1F4;border-left:4px solid var(--orange);border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.dtop .dttl{font-family:'Sora';font-weight:700;font-size:1rem}
+.dacts{margin-top:2px;padding-top:0;display:flex;flex-direction:column;gap:8px;border-top:0;position:static;background:none;padding-bottom:2px}
 .dacts .duo{display:flex;gap:8px}
 .dacts .duo .dbig{flex:1;min-width:0;margin-bottom:0;font-size:.82rem;padding:11px}
 .dacts .dbig{margin-bottom:0}
@@ -881,9 +884,9 @@ const PST = {
   enc:  {lbl:"Encaissé",   chip:"st-enc",  sol:"s-enc",  titre:"Montant encaissé",
          ligne:r => "\u2713 reçu le " + fdate(r.d)},
   att:  {lbl:"En attente", chip:"st-att",  sol:"s-att",  titre:"Montant attendu",
-         ligne:r => "\u23F3 " + (r.note ? r.note : "pas encore encaissé")},
+         ligne:r => "\u23F3 pas encore encaissé"},   /* 23/09 : la note vit dans la ligne Note, plus en double ici */
   ech:  {lbl:"Échoué",     chip:"st-ech",  sol:"s-ech",  titre:"Montant refusé",
-         ligne:r => "\u2715 " + (r.note ? r.note : "paiement refusé")},
+         ligne:r => "\u2715 paiement refusé"},
   remb: {lbl:"Remboursé",  chip:"st-remb", sol:"s-remb", titre:"Montant remboursé",
          ligne:r => "\u21BA remboursé" + (r.d ? " le " + fdate(r.d) : "")}
 };
@@ -892,23 +895,25 @@ function openPay(id){
   const r = ROWS.find(x => x.id === id);
   if(!r) return;
   g("dbody").innerHTML = `
+    <div class="dtop"><span class="dttl">Voir les détails</span><button class="dclose" onclick="closeAll()" title="Fermer">✕</button></div>
     <div class="dcard">
       <div class="drow1">
         <span class="st ${pst(r).chip}">${pst(r).lbl}</span>
-        <button class="dclose" onclick="closeAll()">✕</button>
       </div>
       <h2 style="font-family:'Sora';font-size:1.1rem">${r.client}</h2>
       <div style="font-size:.8rem;color:var(--muted);margin-top:3px">${r.id}</div>
     </div>
-    <div class="solde ${pst(r).sol}"><small>${pst(r).titre}</small><b>${eur(r.m)}</b><i>${pst(r).ligne(r)}</i></div>
+    <div class="solde ${pst(r).sol}"><small>Montant du paiement</small><b>${eur(r.m)}</b><i>${pst(r).ligne(r)}</i></div>
     <div class="dcard">
       <div class="dh">Détails</div>
       <div class="dkv"><span class="k">Mode de paiement</span><span class="v">${r.mode}</span></div>
+      <div class="dkv"><span class="k">Statut</span><span class="v"><span class="st ${pst(r).chip}">${pst(r).lbl}</span></span></div>
       ${(r.st === "att" || r.st === "ech")
         ? `<div class="dkv"><span class="k">Date d'encaissement</span><span class="v"><input type="date" id="enc-d" class="encd" value="${TODAY}" max="${TODAY}" onchange="encLbl()" title="La date à laquelle l'argent est arrivé (celle du relevé)"></span></div>`
         : `<div class="dkv"><span class="k">Date d'encaissement</span><span class="v">${fdate(r.d)}</span></div>`}
       ${r.mis ? `<div class="dkv"><span class="k">Intervention liée</span><span class="v"><a class="fref" href="calendrier.html">${r.mis} →</a></span></div>` : ""}
       ${r.fac ? `<div class="dkv"><span class="k">Facture liée</span><span class="v"><a class="fref" href="facture-detail.html" onclick="try{sessionStorage.setItem('tigerflow-facture-detail','${r.fac}')}catch(e){}">${r.fac} →</a></span></div>` : ""}
+      <div class="dkv"><span class="k">Note</span><span class="v" style="max-width:60%">${r.note ? r.note : "—"}</span></div>
       ${r.pj && r.pj.length ? `<div class="dkv" style="display:block"><span class="k">Justificatif${r.pj.length > 1 ? "s" : ""}</span>
         <div class="docgrid" style="margin-top:10px">${r.pj.map((x, k) => {
           const d = typeof x === "string" ? {n:x} : x;      /* anciens paiements : juste un nom */
@@ -922,8 +927,7 @@ function openPay(id){
             <div class="docvue">${vue}<span class="doctag">${ext}</span></div>
             <figcaption><b title="${d.n}">${d.n}</b><small>${d.s ? pjPoids(d.s) : ext}${d.src ? "" : " · aperçu non conservé"}</small></figcaption>
           </figure>`;
-        }).join("")}</div></div>` : ""}
-      ${(r.note && r.st === "enc") ? `<div class="dkv"><span class="k">Note</span><span class="v" style="max-width:60%">${r.note}</span></div>` : ""}
+        }).join("")}</div></div>` : `<div class="dkv"><span class="k">Justificatif</span><span class="v">—</span></div>`}
     </div>
     <div class="dacts">
       ${r.st === "att"
