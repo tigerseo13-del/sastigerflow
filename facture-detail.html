@@ -288,6 +288,18 @@ a,button,input,select,textarea,label{touch-action:manipulation}
 .avmeta b{color:var(--ink-2)}
 .avbig{font-family:'Sora',sans-serif;font-weight:700;font-size:1.1rem}
 .avpre{display:flex;gap:7px;margin-bottom:12px}
+/* 22/09 : remboursement lie a un avoir (facture deja payee) */
+#av-remb{margin:0 0 12px}
+#av-remb .q b{color:var(--orange-deep)}
+#av-remb .pfgrid{margin-bottom:8px}
+.avremb{flex-basis:100%;display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.avremb b{color:var(--ink-2);font-weight:600}
+.vlife li.av .vdot{background:var(--amber);border-color:var(--amber)}
+.vlife li.av .vdot::after{content:"";width:6px;height:2px;background:#fff}
+.vlife li.av b{color:var(--amber)}
+.vlife li.cancel .vdot{background:var(--red);border-color:var(--red)}
+.vlife li.cancel .vdot::after{content:"✕";color:#fff;font-size:9px;font-weight:800;line-height:1}
+.vlife li.cancel b{color:var(--red)}
 .frp{font-size:.76rem;font-weight:700;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:7px 12px;background:#fff;cursor:pointer;font-family:inherit;transition:.13s}
 .frp:hover{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
 .avimpact{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:12px;padding:0 2px}
@@ -1008,6 +1020,23 @@ a.hcli:hover{color:var(--orange-deep)}
       <button type="button" class="frp" onclick="avPreset(.5, this)">50 %</button>
       <button type="button" class="frp" onclick="avPreset(.1, this)">10 %</button>
     </div>
+    <!-- 22/09 : quand l'avoir depasse le solde, le client a paye plus que ce
+         qu'il doit — l'excedent lui revient. On dit COMMENT (mode) et SI c'est
+         deja fait ; sinon la facture porte « a rembourser » jusqu'a confirmation. -->
+    <div class="prq" id="av-remb" style="display:none">
+      <div class="q">Le client a déjà payé : <b id="av-remb-m">0,00 €</b> lui reviennent. Comment le rembourser ?</div>
+      <div class="pfgrid">
+        <div><label class="plab" for="av-remb-mode">Mode de remboursement <b class="req">*</b></label><select id="av-remb-mode" onchange="avRembUI()">
+          <option>Virement</option><option>Chèque</option><option>Espèces</option><option>Stripe (remboursement sur la carte)</option><option value="avaloir">Avoir à valoir sur une prochaine facture</option>
+        </select></div>
+        <div id="av-remb-refw"><label class="plab" for="av-remb-ref">Référence <span style="font-weight:400;text-transform:none;letter-spacing:0">— facultatif</span></label><input id="av-remb-ref" placeholder="IBAN du client, n° de chèque…"></div>
+      </div>
+      <div class="opts" id="av-remb-opts">
+        <label class="opt"><input type="radio" name="av-remb-fait" value="non" checked onchange="avRembUI()"><span><b>À faire</b><small>La facture affichera « à rembourser » jusqu'à ce que vous confirmiez que c'est parti.</small></span></label>
+        <label class="opt"><input type="radio" name="av-remb-fait" value="oui" onchange="avRembUI()"><span><b>Déjà remboursé</b><small>Virement parti, chèque envoyé ou espèces rendues : c'est réglé.</small></span></label>
+      </div>
+      <div class="avimpact" id="av-remb-note" style="display:none;margin-top:8px">Le montant reste au crédit du client : il sera déduit de sa prochaine facture. Rien à verser.</div>
+    </div>
     <div class="sfld"><label for="av-desc">Description <span style="font-weight:400;text-transform:none;letter-spacing:0">— facultatif</span></label><textarea id="av-desc" rows="3" placeholder="Précision pour le client et la compta…"></textarea></div>
     <div class="sacts">
       <button class="btn2" onclick="avClose()">Annuler</button>
@@ -1423,6 +1452,13 @@ function kpis(){
     : (_p ? "⚠ " + _p[3].toLowerCase() + " — " + _geste
           : "à encaisser" + (av > 0 ? " · avoir − " + eur(av) : ""));
   sub.style.color = solde <= 0 ? "var(--green-d)" : st === "retard" ? "var(--red)" : "var(--orange-deep)";
+  /* 22/09 : un remboursement a faire se lit aussi dans la tuile Solde du */
+  const rp9 = avRembPend();
+  if(solde <= 0 && rp9.length){
+    const rt9 = rp9.reduce((a,x) => a + x.remb.m, 0);
+    sub.textContent = "↩ " + eur(rt9) + " à rembourser au client par " + rp9[0].remb.mode.toLowerCase() + " (avoir " + rp9[0].num + ")";
+    sub.style.color = "var(--amber)";
+  }
   /* 22/09 : un paiement annonce se lit dans la tuile Solde du, sans toucher au solde */
   const annT9 = paysAnn().reduce((a,p) => a + p.m, 0);
   if(solde > 0 && annT9 > 0){
@@ -1496,7 +1532,13 @@ function kpis(){
   let envoye = null;
   try{ envoye = (JSON.parse(localStorage.getItem("tigerflow-factures-envois")) || {})[REF] || null; }catch(e){}
   const annP = paysAnn().reduce((x,p) => x + p.m, 0);
-  if(annP > 0 && solde > 0){
+  const rpP = avRembPend();
+  if(solde <= 0 && rpP.length){
+    /* 22/09 : on doit de l'argent au client — le geste n°1 est de le rembourser */
+    a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Remboursement effectué';
+    a.setAttribute("onclick", "avRembTous()");
+    a.title = eur(rpP.reduce((x,y) => x + y.remb.m, 0)) + " à rembourser — confirmer quand c'est parti";
+  } else if(annP > 0 && solde > 0){
     /* 22/09 : l'argent est annonce — le geste n°1 devient CONFIRMER LA RECEPTION */
     a.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Paiement reçu';
     a.setAttribute("onclick", "payRecuTous()");
@@ -1890,7 +1932,17 @@ function vieDraw(){
       S.push({t:"Payée", k:"todo"});
     } else if(solde <= 0){
       const last = P.length ? P[P.length - 1] : null;
-      S.push({t:"Payée", d:(last && last.d) ? fdate(last.d) : "", k:"done"});
+      const AV = avoirs(), avTot = AV.reduce((a2,x) => a2 + x.m, 0);
+      /* 22/09 : l'avoir est un evenement de la ligne de vie — ambre s'il est
+         partiel, rouge s'il annule toute la facture */
+      if(statutGet() === "annulee"){
+        S.push({t:"Annulée par avoir", d:(AV.length ? (AV[AV.length - 1].t || "").split(" ")[0] : ""), s:AV.length ? AV[AV.length - 1].num + " · − " + eur(avTot) : "", k:"cancel"});
+      } else {
+        if(AV.length) S.push({t:"Avoir émis", d:(AV[AV.length - 1].t || "").split(" ")[0], s:AV[AV.length - 1].num + " · " + (AV[AV.length - 1].motif || "") + " · − " + eur(avTot), k:"av"});
+        S.push({t:"Payée", d:(last && last.d) ? fdate(last.d) : "", k:"done"});
+      }
+      const rpV = avRembPend();
+      if(rpV.length) S.push({t:"À rembourser", s: eur(rpV.reduce((a2,x) => a2 + x.remb.m, 0)) + " · " + rpV[0].remb.mode.toLowerCase(), k:"now", fn:"avRembTous()", h:"Confirmer que le remboursement est parti"});
     } else if(envFac){
       if(j !== null && j < 0) S.push({t:"En retard · " + (-j) + " j", s:"relancer le paiement", k:"now", late:true, fn:"relancer()", h:"Envoyer une relance au client"});
       else S.push({t:"À encaisser", k:"now", fn:"goEncaisser()", h:"Saisir un paiement reçu"});
@@ -1923,7 +1975,8 @@ function annBan(){
   const quoi = arr.length > 1
     ? arr.length + ' avoirs (dernier : <b>' + (a ? a.num : '') + '</b>)'
     : "l'avoir <b>" + (a ? a.num : '—') + '</b>';
-  const quand = a && a.t ? ', émis le ' + fdate(String(a.t).slice(0, 10)) : '';
+  /* 23/09 : a.t est deja au format JJ/MM/AAAA HH:MM (stamp) — pas un ISO a convertir */
+  const quand = a && a.t ? ', émis le ' + String(a.t).slice(0, 10) : '';
   const pourquoi = a && a.motif ? ' — ' + a.motif : '';
   if(!b){
     b = document.createElement('div'); b.id = 'annban'; b.className = 'annban';
@@ -1936,6 +1989,44 @@ function annBan(){
 }
 
 /* ===== actions ===== */
+/* ===== 22/09 — remboursement lie a un avoir ===== */
+function avRembPend(){ return avoirs().filter(a => a.remb && !a.remb.fait && a.remb.mode !== "avaloir"); }
+function avRembUI(){
+  const box = g('av-remb'); if(!box) return;
+  const mode = g('av-remb-mode').value;
+  const aval = (mode === "avaloir");
+  const opts = g('av-remb-opts'), note = g('av-remb-note'), refw = g('av-remb-refw');
+  if(opts) opts.style.display = aval ? "none" : "";
+  if(note) note.style.display = aval ? "" : "none";
+  if(refw) refw.style.display = aval ? "none" : "";
+}
+function avRembChoisi(){
+  const mode = g('av-remb-mode').value;
+  const r = document.querySelector('input[name="av-remb-fait"]:checked');
+  return {mode, ref:(g('av-remb-ref').value || "").trim(), fait: mode === "avaloir" ? true : !!(r && r.value === "oui")};
+}
+function avRembFait(i){
+  const arr = avoirs(); const a = arr[i]; if(!a || !a.remb) return;
+  a.remb.fait = true; a.remb.d = isoJour();
+  avoirsSave(arr);
+  toast("✅ Remboursement de " + eur(a.remb.m) + " effectué (" + a.remb.mode.toLowerCase() + ")");
+  renderAll();
+}
+function avRembTous(){
+  const arr = avoirs(); let tot = 0;
+  arr.forEach(a => { if(a.remb && !a.remb.fait && a.remb.mode !== "avaloir"){ a.remb.fait = true; a.remb.d = isoJour(); tot += a.remb.m; } });
+  if(!tot) return;
+  avoirsSave(arr);
+  toast("✅ Remboursement de " + eur(tot) + " effectué");
+  renderAll();
+}
+function avRembLigne(a, i){
+  const r = a && a.remb; if(!r) return "";
+  if(r.mode === "avaloir") return '<span class="avremb"><span class="paytag ok">Avoir à valoir</span><span>' + eur(r.m) + ' au crédit du client, à déduire de sa prochaine facture</span></span>';
+  if(r.fait) return '<span class="avremb"><span class="paytag ok">Remboursé</span><span>' + eur(r.m) + ' par <b>' + r.mode.toLowerCase() + '</b>' + (r.d ? ' le ' + fdate(r.d) : '') + (r.ref ? ' · ' + r.ref : '') + '</span></span>';
+  return '<span class="avremb"><span class="paytag att">À rembourser</span><span>' + eur(r.m) + ' par <b>' + r.mode.toLowerCase() + '</b>' + (r.ref ? ' · ' + r.ref : '') + '</span>' +
+    '<button class="payrecu" style="margin-left:auto" onclick="avRembFait(' + i + ')" title="Le remboursement est parti : confirmer">✓ Remboursement effectué</button></span>';
+}
 function avSolde(){ return Math.max(0, REC.montant - pays().reduce((a,p) => a + p.m, 0) - avoirs().reduce((a,x) => a + x.m, 0)); }
 /* le plafond d'un avoir : ce qui a ete FACTURE moins les avoirs deja emis.
    (Pas le solde du — sinon impossible de rembourser une facture payee.) */
@@ -1953,6 +2044,9 @@ function avOpen(){
   const p1 = document.querySelector('#avveil .avpre .frp');
   if(p1) p1.textContent = avSolde() > 0.005 ? "Tout le solde" : "Tout le montant";
   g('av-desc').value = "";
+  const rm0 = g('av-remb-mode'); if(rm0) rm0.value = "Virement";
+  const rr0 = g('av-remb-ref'); if(rr0) rr0.value = "";
+  const rn0 = document.querySelector('input[name="av-remb-fait"][value="non"]'); if(rn0) rn0.checked = true;
   avImpact();
   /* les avoirs deja emis sur cette facture, sous la main */
   const dj = g('av-deja'), arr0 = avoirs();
@@ -1988,6 +2082,10 @@ function avImpact(){
   const solde = avSolde(), max = avMax();
   h1.textContent = eur(solde);
   h2c.classList.remove('ko');
+  /* 22/09 : l'excedent revient au client — on demande comment */
+  const trop9 = (m <= max + 0.005) ? Math.max(0, m - solde) : 0;
+  const rb = g('av-remb');
+  if(rb){ rb.style.display = trop9 > 0.005 ? "" : "none"; const rm = g('av-remb-m'); if(rm) rm.textContent = eur(trop9); if(trop9 > 0.005) avRembUI(); }
   if(m > max + 0.005){
     /* on ne crediten jamais plus que ce qui a ete facture */
     h2c.classList.add('ko');
@@ -2011,7 +2109,10 @@ function avEmit(){
   if(m <= 0){ toast("Indique le montant de l'avoir"); g('av-montant').focus(); return; }
   if(m > max + 0.005){ toast("⚠️ L'avoir dépasse le montant facturé (" + eur(max) + " max)"); g('av-montant').focus(); return; }
   const arr = avoirs();
-  arr.push({num:g('av-num').value, m, motif:g('av-motif').value, desc:(g('av-desc').value || "").trim(), t:stamp()});
+  const trop0 = Math.max(0, m - solde);
+  const rec = {num:g('av-num').value, m, motif:g('av-motif').value, desc:(g('av-desc').value || "").trim(), t:stamp()};
+  if(trop0 > 0.005){ const c = avRembChoisi(); rec.remb = {m: Math.round(trop0 * 100) / 100, mode: c.mode === "avaloir" ? "avaloir" : g('av-remb-mode').value, ref: c.ref, fait: c.fait, d: c.fait ? isoJour() : ""}; }
+  arr.push(rec);
   avoirsSave(arr);
   /* 06/08 (patron, capture Stan) : des avoirs qui couvrent TOUT le montant
      facture ANNULENT la facture — c'est le vocabulaire des logiciels de
@@ -2025,8 +2126,11 @@ function avEmit(){
   }
   avClose();
   const trop = Math.max(0, m - solde);
+  const rb2 = arr[arr.length - 1].remb;
   toast(trop > 0.005
-    ? "Avoir " + g('av-num').value + " émis — " + eur(trop) + " à rembourser au client"
+    ? (rb2 && rb2.mode === "avaloir" ? "Avoir " + g('av-num').value + " émis — " + eur(trop) + " au crédit du client"
+       : rb2 && rb2.fait ? "Avoir " + g('av-num').value + " émis — " + eur(trop) + " remboursés (" + rb2.mode.toLowerCase() + ")"
+       : "Avoir " + g('av-num').value + " émis — " + eur(trop) + " à rembourser au client par " + (rb2 ? rb2.mode.toLowerCase() : "virement"))
     : "Avoir " + g('av-num').value + " émis — " + eur(m) + " déduits du solde");
   renderAll();
 }
@@ -2069,7 +2173,7 @@ function avoirsRender(){
   const A = avoirs();
   g('n-avoirs').textContent = A.length;
   g('avlist').innerHTML = A.length
-    ? A.map((a, i) => '<div class="pay"><span><b>' + a.num + '</b><small style="color:var(--muted)"> · ' + a.motif + ' · ' + a.t + (a.desc ? ' · <em>' + a.desc + '</em>' : '') + '</small></span><span style="display:flex;align-items:center"><b style="color:var(--red)">− ' + eur(a.m) + '</b><button class="avdl" onclick="avPrint(' + i + ')" title="Télécharger l\'avoir en PDF">⬇ PDF</button><button class="paydel" tabindex="-1" onclick="avDel(event, ' + i + ')" title="Annuler cet avoir">✕</button></span></div>').join('')
+    ? A.map((a, i) => '<div class="pay"><span><b>' + a.num + '</b><small style="color:var(--muted)"> · ' + a.motif + ' · ' + a.t + (a.desc ? ' · <em>' + a.desc + '</em>' : '') + '</small></span><span style="display:flex;align-items:center"><b style="color:var(--red)">− ' + eur(a.m) + '</b><button class="avdl" onclick="avPrint(' + i + ')" title="Télécharger l\'avoir en PDF">⬇ PDF</button><button class="paydel" tabindex="-1" onclick="avDel(event, ' + i + ')" title="Annuler cet avoir">✕</button></span>' + avRembLigne(a, i) + '</div>').join('')
     : '<div class="empty2">Aucun avoir pour l\'instant.</div>';
 }
 let PPJ = null;
