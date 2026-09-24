@@ -275,18 +275,23 @@ h1,.num{font-family:'Sora',sans-serif}
 .rq svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted);fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 .rhd{display:flex;flex-direction:column;align-items:flex-start;gap:2px;font-size:.76rem;font-weight:700;color:var(--ink-2);margin:0 2px 8px}
 .rhd small{font-weight:600;color:var(--muted);font-size:.68rem}
-.rpick{display:grid;grid-template-columns:156px 82px minmax(0,1fr) 116px 22px;gap:8px;align-items:center;padding:8px 10px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:7px;cursor:pointer;transition:.12s;background:#fff;position:relative}
+.rpick{display:grid;grid-template-columns:142px 112px minmax(0,1fr) 116px 22px;gap:8px;align-items:start;padding:8px 10px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:7px;cursor:pointer;transition:.12s;background:#fff;position:relative}
 .rpick:hover{border-color:#1D8A57;background:#F0FBF4}
 .rpick.cur{border-style:dashed;background:#F7F8FA;cursor:default}
 .rpick.cur:hover{border-color:var(--line);background:#F7F8FA}
 .rpick.hid{display:none}
-.rpick .rid{display:flex;align-items:center;gap:8px;min-width:0}
+.rpick .rid{display:flex;align-items:center;gap:8px;min-width:0;align-self:center}
+.rpick > div:not(.rid){padding-top:1px}
+.rpick .rck{align-self:center}
+.rpick .rsub{display:block;font-size:.64rem;color:var(--muted);white-space:nowrap;margin-top:3px;padding-left:var(--ind,0)}
 .rpick .rid > span:last-child{min-width:0}
 .rpick .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.62rem;font-weight:700;font-family:'Sora';flex:none}
 .rpick.cur .av{opacity:.6}
 .rpick b{font-size:.82rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rpick small{font-size:.67rem;color:var(--muted);white-space:nowrap;display:block;overflow:hidden;text-overflow:ellipsis}
-.rl{font-size:.62rem;font-weight:700;color:var(--muted);display:block;margin-bottom:3px;white-space:nowrap}
+/* 24/09 (patron) : texte du libellé aligné sur le texte de la pilule, pas sur sa boîte */
+.rl{font-size:.62rem;font-weight:700;color:var(--muted);display:block;margin-bottom:3px;white-space:nowrap;padding-left:var(--ind,0)}
+.rpick .rs{--ind:8px}.rpick .rk{--ind:6px}
 .rst{font-size:.66rem;font-weight:700;padding:2px 8px;border-radius:9px;display:inline-block;white-space:nowrap}
 .rst.ok{background:#DDF3E6;color:#166A42}.rst.ko{background:#FEF3C7;color:#92400E}.rst.cg{background:#FFF6E6;color:#96620C}.rst.cur{background:#EEF0F3;color:#3C4250}
 .rsk{display:flex;gap:3px;flex-wrap:wrap;align-items:center}
@@ -4872,6 +4877,17 @@ const RZONES = {"Pablo":["Paris","92","95"], "Otman":["93","77"], "Fredo":["Pari
   "Enzo":["Paris","92"], "Éric":["Paris","95"], "Mahamadou":["93","Paris"], "Rémi":["77","91","94"], "Jawad":["77","91","94"]};
 const RICO = {"Rongeurs":"🐀","Cafards":"🪳","Punaises de lit":"🛏️","Guêpes / Frelons":"🐝","Pigeons":"🐦","Fourmis":"🐜","Désinfection":"🧴","Chenilles processionnaires":"🐛","Termites":"🪵"};
 const rEsc = x => String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+/* 24/09 (patron) : le RÔLE de la fiche technicien sous le prénom — clé
+   tigerflow-techs-skills[nom].role (vente / tech / mixte), mêmes valeurs par
+   défaut que la page Techniciens */
+const RROLE_DEF = {"Pablo":"vente","Otman":"vente","Fredo":"vente","Babacar":"vente","Wissam":"vente","Enzo":"tech","Éric":"tech","Mahamadou":"tech","Rémi":"mixte","Jawad":"mixte"};
+const RROLE_LBL = {vente:"Commercial", tech:"Technicien", mixte:"Polyvalent"};
+function rRole(nom){
+  let r = "";
+  try{ const m = JSON.parse(localStorage.getItem("tigerflow-techs-skills") || "{}"); const e = m[nom] || m[Object.keys(m).find(k => k.split(/\s+/)[0] === String(nom).split(/\s+/)[0]) || ""]; if(e && e.role) r = e.role; }catch(e){}
+  if(!r) r = RROLE_DEF[nom] || RROLE_DEF[String(nom).split(/\s+/)[0]] || "mixte";
+  return RROLE_LBL[r] || "Polyvalent";
+}
 /* le mot-clé de compétence qui correspond au nuisible de l'intervention */
 function rKw(v){
   const l = (typeDe(v).lbl || "").toLowerCase();
@@ -4958,9 +4974,9 @@ function reassListHTML(v){
     const tr = r.tr;
     const trTxt = tr ? "\u2248 " + tr.min + " min \u00b7 " + (tr.km < 10 ? tr.km.toFixed(1).replace(".", ",") : Math.round(tr.km)) + " km" : "\u2014";
     return '<div class="rpick' + (r.st[0] === 'cur' ? ' cur' : '') + '" ' + (r.st[0] === 'cur' ? '' : 'onclick="reassignTo(' + v.id + ',' + r.j + ')" title="Affecter à ' + rEsc(r.t.nom) + '"') + '>'
-      + '<div class="rid"><span class="av" style="background:' + r.t.grad + '">' + rEsc(r.t.ini) + '</span><span><b>' + rEsc(r.t.nom) + '</b><small>' + r.sub + '</small></span></div>'
-      + '<div><span class="rl">Statut</span><span class="rst ' + r.st[0] + '">' + r.st[1] + '</span></div>'
-      + '<div><span class="rl">Compétences</span><div class="rsk" data-sk="' + rEsc(r.skills.join(" · ")) + '" data-kw="' + rEsc(kw) + '">' + rSkillsHTML(r.skills, kw, 2) + '</div></div>'
+      + '<div class="rid"><span class="av" style="background:' + r.t.grad + '">' + rEsc(r.t.ini) + '</span><span><b>' + rEsc(r.t.nom) + '</b><small>' + rEsc(rRole(r.t.nom)) + '</small></span></div>'
+      + '<div class="rs"><span class="rl">Statut</span><span class="rst ' + r.st[0] + '">' + r.st[1] + '</span><span class="rsub">' + r.sub + '</span></div>'
+      + '<div class="rk"><span class="rl">Compétences</span><div class="rsk" data-sk="' + rEsc(r.skills.join(" · ")) + '" data-kw="' + rEsc(kw) + '">' + rSkillsHTML(r.skills, kw, 2) + '</div></div>'
       + '<div><span class="rl">Trajet estimé</span><span class="rtv' + (tr ? '' : ' na') + '">' + trTxt + '</span></div>'
       + '<span class="rck"></span></div>';
   }).join("");
@@ -4982,6 +4998,7 @@ function renderReass(){
 }
 /* une seule ligne de pilules par technicien : si la 2ᵉ passe à la ligne
    (tiroir de 680 px), on n'en garde qu'une et « +N » prend le reste */
+try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if(document.getElementById("rlist")) rFit(); }); }catch(e){}
 function rFit(){
   document.querySelectorAll("#rlist .rsk").forEach(sk => {
     const items = [...sk.children];

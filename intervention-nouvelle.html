@@ -232,18 +232,25 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
 .techhd small{font-weight:600;color:var(--muted);font-size:.72rem}
 /* colonnes FIXES : les mêmes pour toutes les lignes, donc tout s'aligne
    (avec `auto`, une ligne « En congé ce jour-là » décalait ses colonnes). */
-.tech{display:grid;grid-template-columns:150px 120px minmax(230px,470px) 132px minmax(0,1fr) 22px;align-items:center;gap:10px;
+.tech{display:grid;grid-template-columns:162px 120px minmax(230px,470px) 132px minmax(0,1fr) 22px;align-items:start;gap:10px;
   border:1.5px solid var(--line);border-radius:13px;padding:11px 14px;cursor:pointer;transition:.13s;background:#fff}
 .tech:hover{border-color:#D5D8DF}
 .tech.on{border-color:var(--green);background:color-mix(in srgb,#10B981 9%,#fff)}
 .tech.hid{display:none}
 .tech .tid{display:flex;align-items:center;gap:11px;min-width:0}
 .tech .tav{width:38px;height:38px;border-radius:50%;background:var(--tc,#DDE1E8);color:#fff;display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:.7rem;flex:none;box-shadow:0 0 0 2px #fff,0 0 0 3.5px color-mix(in srgb,var(--tc,#DDE1E8) 30%,#fff)}
+.tech .tid{align-self:center}
 .tech .tnm{min-width:0}
 .tech b{font-size:.87rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tech .treco{display:block;margin-top:3px}
-.tcol{display:flex;flex-direction:column;gap:4px;min-width:0;align-self:center}
-.tcol .tl{font-size:.66rem;font-weight:700;color:var(--muted);white-space:nowrap;line-height:14px;height:14px}
+/* 24/09 (patron) : le rôle de la fiche technicien sous le prénom — Commercial / Technicien / Polyvalent */
+.tech .trole{display:block;font-size:.72rem;color:var(--muted);white-space:nowrap;margin-top:1px}
+.tech .treco{display:none}
+/* labels tous à la même hauteur (haut de ligne), valeurs toutes à la même hauteur (boîte de 24 px) */
+.tcol{display:flex;flex-direction:column;gap:4px;min-width:0;align-self:start;padding-top:2px}
+/* 24/09 (patron) : le TEXTE du libellé est aligné sur le TEXTE de la pilule
+   (« Disponible » commence sous le S de « Statut »), pas sur le bord de sa boîte */
+.tcol .tl{font-size:.66rem;font-weight:700;color:var(--muted);white-space:nowrap;line-height:14px;height:14px;padding-left:var(--ind,0)}
+.tcol.ts{--ind:10px}.tcol.tk{--ind:7px}
 .tcol .tst,.tcol .tsk,.tcol .tv{min-height:24px;display:flex;align-items:center}
 .tst{font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:11px;white-space:normal;line-height:1.25;text-align:center;align-self:flex-start}
 .tst.dispo{background:var(--green-bg);color:var(--green-d)}
@@ -268,7 +275,7 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
 .tmore:hover .tpop,.tmore:focus .tpop,.tmore.open .tpop{display:block}
 .tv{font-size:.84rem;font-weight:700;color:var(--ink);white-space:nowrap}
 .tv.na{color:var(--muted);font-weight:500}
-.tech .chk{width:20px;height:20px;border-radius:7px;border:2px solid #D5D8DF;flex:none;display:grid;place-items:center;transition:.13s;justify-self:end;grid-column:6}
+.tech .chk{width:20px;height:20px;border-radius:7px;border:2px solid #D5D8DF;flex:none;display:grid;place-items:center;transition:.13s;justify-self:end;grid-column:6;align-self:center}
 .tech.on .chk{background:var(--green);border-color:var(--green)}
 .tech.on .chk::after{content:"✓";color:#fff;font-size:.7rem;font-weight:800}
 .recob{font-size:.64rem;font-weight:800;background:var(--orange-soft);color:var(--orange-deep);padding:3px 9px;border-radius:10px;white-space:nowrap}
@@ -1103,8 +1110,6 @@ function updateReco(){
     const skills = t.dataset.skills || "";
     const match = kws.some(k=>skills.includes(k));
     t.dataset.reco = match ? "1" : "0";
-    const slot = t.querySelector(".treco");
-    if(slot) slot.innerHTML = match ? '<span class="recob">⭐ Conseillé</span>' : "";
     const sk = t.querySelector(".tsk");
     if(sk && !t.dataset.manual) sk.innerHTML = skillsHTML(skills.split(" · ").filter(Boolean), kws);
     techTrajetCell(t);
@@ -1133,6 +1138,11 @@ function tskFit(){
 }
 let _tskT = null;
 window.addEventListener("resize", () => { clearTimeout(_tskT); _tskT = setTimeout(() => { if(typeof updateReco === "function") updateReco(); }, 120); });
+/* ☠ les largeurs mesurées avant l'arrivée d'Inter / Sora sont fausses : on
+   re-mesure quand les polices sont chargées, sinon des pilules passent à la
+   ligne après coup et les lignes ne sont plus alignées */
+try{ if(document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if(typeof updateReco === "function") updateReco(); }); }catch(e){}
+window.addEventListener("load", () => { if(typeof updateReco === "function") updateReco(); });
 /* ===== Compétences en pilules : 2 visibles (celles qui correspondent aux
    nuisibles choisis d'abord), puis « +N » qui liste TOUT au survol — comme
    la maquette Figma. Jamais de « Chenilles proc… ». ===== */
@@ -1505,6 +1515,17 @@ const TECHS_REF = [
   {p:"Jawad", i:"JA", c:"Rongeurs · Cafards", d:"dispo", s:["Rongeurs","Cafards","Punaises de lit","Désinfection"], z:["77","91","94"], col:"linear-gradient(135deg,#9CC94E,#5E8F0C)"}
 ];
 const TECHS_ALL = {};
+/* 24/09 : le RÔLE (Commercial / Technicien / Polyvalent) vient de la fiche
+   technicien — clé tigerflow-techs-skills[nom].role (vente / tech / mixte),
+   avec les mêmes valeurs par défaut que la page Techniciens (ROLES_DEF). */
+const ROLE_DEF = {"Pablo":"vente","Otman":"vente","Fredo":"vente","Babacar":"vente","Wissam":"vente","Enzo":"tech","Éric":"tech","Mahamadou":"tech","Rémi":"mixte","Jawad":"mixte"};
+const ROLE_LBL = {vente:"Commercial", tech:"Technicien", mixte:"Polyvalent"};
+function roleDe(nom){
+  let r = "";
+  try{ const m = JSON.parse(localStorage.getItem("tigerflow-techs-skills") || "{}"); const e = m[nom] || m[Object.keys(m).find(k => k.split(/\s+/)[0] === String(nom).split(/\s+/)[0]) || ""]; if(e && e.role) r = e.role; }catch(e){}
+  if(!r) r = ROLE_DEF[nom] || ROLE_DEF[String(nom).split(/\s+/)[0]] || "mixte";
+  return ROLE_LBL[r] || "Polyvalent";
+}
 function techsReels(){
   let list = TECHS_REF.map(t => ({...t}));
   try{
@@ -1582,9 +1603,9 @@ function techRow(t, i){
     + ' data-skills="' + esc(skills.join(" · ")) + '"' + (t.manual ? ' data-manual="1"' : '')
     + (t.col ? ' style="--tc:' + t.col + '"' : '') + ' onclick="togTech(this)"'
     + (ko ? ' title="' + esc(t.p) + ' est en cong\u00e9 du ' + cgFr2(t.cg.du) + ' au ' + cgFr2(t.cg.au) + '"' : '') + '>'
-    + '<div class="tid"><span class="tav">' + esc(t.i || "") + '</span><span class="tnm"><b>' + esc(t.p) + '</b><span class="treco"></span></span></div>'
-    + '<div class="tcol"><span class="tl">Statut</span><span class="tst ' + cls + '">' + lbl + '</span></div>'
-    + '<div class="tcol"><span class="tl">Compétences</span><span class="tsk">' + (t.manual ? '<span class="sk na">Ajouté manuellement</span>' : skillsHTML(skills, [])) + '</span></div>'
+    + '<div class="tid"><span class="tav">' + esc(t.i || "") + '</span><span class="tnm"><b>' + esc(t.p) + '</b><small class="trole">' + esc(t.manual ? "Ajouté manuellement" : roleDe(t.p)) + '</small><span class="treco"></span></span></div>'
+    + '<div class="tcol ts"><span class="tl">Statut</span><span class="tst ' + cls + '">' + lbl + '</span></div>'
+    + '<div class="tcol tk"><span class="tl">Compétences</span><span class="tsk">' + (t.manual ? '<span class="sk na">Ajouté manuellement</span>' : skillsHTML(skills, [])) + '</span></div>'
     + '<div class="tcol tt"><span class="tl">Trajet estimé</span><span class="tv na">—</span></div>'
     + '<span class="chk"></span></div>';
 }
