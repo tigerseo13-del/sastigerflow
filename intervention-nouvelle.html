@@ -220,14 +220,32 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
 .techs.scr::-webkit-scrollbar-track{background:#F2F3F6;border-radius:10px}
 .techs.scr::-webkit-scrollbar-thumb{background:#C3C8D2;border-radius:10px;border:2px solid #F2F3F6}
 .techs.scr::-webkit-scrollbar-thumb:hover{background:#A5ABB8}
-.tech{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:13px;padding:11px 14px;cursor:pointer;transition:.13s;background:#fff}
+/* 24/09 (patron, d'après Saigon / Figma) : le choix du technicien devient une
+   liste « Techniciens suggérés » — recherche par nom, statut, compétences en
+   pilules (+N avec la liste complète au survol), trajet et détour estimés,
+   case à cocher. Rien n'est tronqué : Saigon affiche « Chenilles proc… »,
+   « Désinsectisati… », « Proximité d'itinéraire estim » — pas nous. */
+.techq{position:relative;margin:2px 0 12px}
+.techq input{width:100%;padding-left:40px}
+.techq svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+.techhd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:.8rem;font-weight:700;color:var(--ink-2);margin:0 2px 8px}
+.techhd small{font-weight:600;color:var(--muted);font-size:.72rem}
+/* colonnes FIXES : les mêmes pour toutes les lignes, donc tout s'aligne
+   (avec `auto`, une ligne « En congé ce jour-là » décalait ses colonnes). */
+.tech{display:grid;grid-template-columns:150px 120px minmax(230px,470px) 132px minmax(0,1fr) 22px;align-items:center;gap:10px;
+  border:1.5px solid var(--line);border-radius:13px;padding:11px 14px;cursor:pointer;transition:.13s;background:#fff}
 .tech:hover{border-color:#D5D8DF}
 .tech.on{border-color:var(--green);background:color-mix(in srgb,#10B981 9%,#fff)}
-.tech .tav{width:38px;height:38px;border-radius:11px;background:#F3F4F7;border:1px solid var(--line);color:var(--ink-2);display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:.72rem;flex:none}
-.tech.on .tav{background:#fff}
-.tech b{font-size:.87rem;display:block}
-.tech small{font-size:.72rem;color:var(--muted)}
-.tst{font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:11px;white-space:nowrap}
+.tech.hid{display:none}
+.tech .tid{display:flex;align-items:center;gap:11px;min-width:0}
+.tech .tav{width:38px;height:38px;border-radius:50%;background:var(--tc,#DDE1E8);color:#fff;display:grid;place-items:center;font-family:'Sora';font-weight:800;font-size:.7rem;flex:none;box-shadow:0 0 0 2px #fff,0 0 0 3.5px color-mix(in srgb,var(--tc,#DDE1E8) 30%,#fff)}
+.tech .tnm{min-width:0}
+.tech b{font-size:.87rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tech .treco{display:block;margin-top:3px}
+.tcol{display:flex;flex-direction:column;gap:4px;min-width:0;align-self:center}
+.tcol .tl{font-size:.66rem;font-weight:700;color:var(--muted);white-space:nowrap;line-height:14px;height:14px}
+.tcol .tst,.tcol .tsk,.tcol .tv{min-height:24px;display:flex;align-items:center}
+.tst{font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:11px;white-space:normal;line-height:1.25;text-align:center;align-self:flex-start}
 .tst.dispo{background:var(--green-bg);color:var(--green-d)}
 .tst.tournee{background:var(--amber-bg);color:var(--amber)}
 /* ☠ 15/09 : la carte d'un technicien en congé A LA DATE CHOISIE. Ambre, pas
@@ -236,8 +254,21 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
 .tech.cgko .tav{filter:grayscale(.55);opacity:.8}
 .tst.cgko{background:#FFF6E6;color:#96620C}
 .tech.cgko.on{border-color:#E8951B;box-shadow:0 0 0 2px rgba(232,149,27,.16)}
-.tech .km{margin-left:auto;font-size:.75rem;font-weight:600;color:var(--muted);white-space:nowrap}
-.tech .chk{width:20px;height:20px;border-radius:7px;border:2px solid #D5D8DF;flex:none;display:grid;place-items:center;transition:.13s}
+.tsk{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.tsk .sk{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:9px;background:#F3F4F7;border:1px solid var(--line);white-space:nowrap;color:var(--ink)}
+.tsk .sk i{font-style:normal;font-size:.78rem;line-height:1}
+.tsk .sk.hit{border-color:#F6CDB5;background:var(--orange-soft);color:var(--orange-deep)}
+.tsk .sk.na{color:var(--muted);font-weight:500;background:#fff}
+.tmore{position:relative;display:inline-flex;align-items:center;font-size:.7rem;font-weight:700;color:var(--ink-2);padding:2px 8px;border-radius:9px;background:#fff;border:1px dashed #C9CED6;cursor:default}
+.tmore:hover,.tmore:focus,.tmore.open{border-style:solid;border-color:#A5ABB8;outline:none}
+.tpop.up{top:auto;bottom:calc(100% + 6px)}
+.tpop{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:6;background:#1A1D24;color:#fff;font-size:.74rem;font-weight:500;padding:9px 13px;border-radius:9px;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.28);text-align:left;cursor:default}
+.tpop div{padding:2px 0}
+.tpop div::before{content:"•  "}
+.tmore:hover .tpop,.tmore:focus .tpop,.tmore.open .tpop{display:block}
+.tv{font-size:.84rem;font-weight:700;color:var(--ink);white-space:nowrap}
+.tv.na{color:var(--muted);font-weight:500}
+.tech .chk{width:20px;height:20px;border-radius:7px;border:2px solid #D5D8DF;flex:none;display:grid;place-items:center;transition:.13s;justify-self:end;grid-column:6}
 .tech.on .chk{background:var(--green);border-color:var(--green)}
 .tech.on .chk::after{content:"✓";color:#fff;font-size:.7rem;font-weight:800}
 .recob{font-size:.64rem;font-weight:800;background:var(--orange-soft);color:var(--orange-deep);padding:3px 9px;border-radius:10px;white-space:nowrap}
@@ -262,7 +293,11 @@ input.err,select.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-bg)}
   .btn{padding:9px 13px;font-size:.79rem}
   .frow{grid-template-columns:1fr}
   .pays{grid-template-columns:1fr}
-  .tech .km{display:none}
+  .tech{grid-template-columns:1fr 22px;gap:6px 10px}
+  .tech .tid,.tech .tcol{grid-column:1}
+  .tech .chk{grid-column:2;grid-row:1}
+  .tcol.tt{display:none}
+  .tcol .tl{display:none}
   .chip{padding:12px 16px}
   .pcard,.tech{padding:14px 15px}
   .botacts .btn{width:100%;justify-content:center;padding:13px}
@@ -718,6 +753,8 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
     <!-- ===== 6. TECHNICIEN ===== -->
     <div class="card">
       <div class="card-h"><span class="num">6</span>Technicien <span style="font-weight:500;font-size:.78rem;color:var(--muted)">— plusieurs choix possibles · facultatif : sans choix, elle part dans « À affecter »</span></div>
+      <div class="techq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="f-techq" placeholder="Rechercher par nom…" autocomplete="off" oninput="techFilter()" aria-label="Rechercher un technicien par nom"></div>
+      <div class="techhd"><span id="techhd-t">Techniciens suggérés</span><small id="techhd-c"></small></div>
       <div class="techwrap" id="techwrap"><div class="techs" id="techs"></div><i class="tsb"><i class="tsbt"></i></i></div>
         <button class="morelink" onclick="reveal('g-addtech', this)">+ Ajouter un technicien</button>
       <div id="g-addtech" style="display:none;margin-top:11px">
@@ -989,13 +1026,14 @@ function addTech(){
   const nom = inp.value.trim();
   if(!nom){ inp.classList.add("err"); return; }
   const ini = nom.split(" ").map(w=>w[0]).join("").replace(/[^A-ZÀ-Ü]/gi,"").slice(0,2).toUpperCase();
-  const row = document.createElement("div");
-  row.className = "tech on";
-  row.dataset.v = nom;
-  row.onclick = function(){ togTech(this); };
-  row.innerHTML = '<span class="tav">' + ini + '</span><span><b>' + nom + '</b><small>Ajouté manuellement</small></span><span class="tst dispo">Disponible</span><span class="chk"></span>';
+  const tmp = document.createElement("div");
+  tmp.innerHTML = techRow({p:nom, i:ini, c:"Ajouté manuellement", d:"dispo", manual:true, s:[], z:[]}, 900);
+  const row = tmp.firstElementChild;
+  row.classList.add("on");
   kbd(row);
   document.getElementById("techs").appendChild(row);
+  techTrajetCell(row);
+  techCount();
   techScroll();
   TECHS.add(nom);
   inp.value = "";
@@ -1005,6 +1043,7 @@ function addTech(){
 function togTech(el){
   el.classList.toggle("on");
   el.classList.contains("on") ? TECHS.add(el.dataset.v) : TECHS.delete(el.dataset.v);
+  if(typeof techCount === "function") techCount();
   /* ☠ 15/09 : on AVERTIT, on ne bloque pas. Le patron doit pouvoir passer
      outre (un technicien rentre plus tôt, un congé saisi de travers) — mais
      il ne doit pas pouvoir le faire SANS LE SAVOIR. */
@@ -1049,25 +1088,129 @@ function pickPayByVal(v){
 }
 
 /* ===== Techniciens conseillés selon les nuisibles ===== */
+/* 24/09 : les mots-clés sont ceux des COMPÉTENCES de la page Techniciens
+   (« Rongeurs », pas « Dératisation ») — avant, rats et chenilles ne
+   conseillaient jamais personne. */
 const PESTMAP = {
-  "Rats / Souris":"Dératisation", "Cafards":"Cafards", "Punaises de lit":"Punaises",
-  "Guêpes / Frelons":"Guêpes", "Pigeons":"Pigeons", "Fourmis":"Désinsectisation", "Mites":"Désinsectisation",
-  "Puces":"Désinsectisation", "Moustiques":"Désinsectisation", "Mouches":"Désinsectisation",
-  "Chenilles processionnaires":"Désinsectisation", "Fouines / Loirs":"Dératisation", "Xylophages / Termites":"Désinsectisation"
+  "Rats / Souris":"Rongeurs", "Cafards":"Cafards", "Punaises de lit":"Punaises",
+  "Guêpes / Frelons":"Guêpes", "Pigeons":"Pigeons", "Fourmis":"Fourmis", "Mites":"Cafards",
+  "Puces":"Cafards", "Moustiques":"Cafards", "Mouches":"Cafards", "Désinsectisation générale":"Cafards",
+  "Chenilles processionnaires":"Chenilles", "Fouines / Loirs":"Rongeurs", "Xylophages / Termites":"Termites"
 };
 function updateReco(){
   const kws = [...PESTS].map(p=>PESTMAP[p]).filter(Boolean);
   document.querySelectorAll("#techs .tech").forEach(t=>{
-    const skills = (t.querySelector("small")||{}).textContent || "";
+    const skills = t.dataset.skills || "";
     const match = kws.some(k=>skills.includes(k));
-    let b = t.querySelector(".recob");
-    if(match && !b){
-      b = document.createElement("span");
-      b.className = "recob";
-      b.textContent = "⭐ Conseillé";
-      t.querySelector(".tst").before(b);
-    } else if(!match && b){ b.remove(); }
+    t.dataset.reco = match ? "1" : "0";
+    const slot = t.querySelector(".treco");
+    if(slot) slot.innerHTML = match ? '<span class="recob">⭐ Conseillé</span>' : "";
+    const sk = t.querySelector(".tsk");
+    if(sk && !t.dataset.manual) sk.innerHTML = skillsHTML(skills.split(" · ").filter(Boolean), kws);
+    techTrajetCell(t);
   });
+  techSort();
+  techCount();
+  tskFit();
+}
+/* Une seule ligne de pilules par technicien : 3 au plus ; dès qu'une passe
+   à la ligne (« Chenilles processionnaires » sur un tiroir de 880 px, ou
+   sur mobile), on en retire une et le « +N » prend le reste. */
+function tskFit(){
+  const kws = [...PESTS].map(p=>PESTMAP[p]).filter(Boolean);
+  document.querySelectorAll("#techs .tech:not(.hid)").forEach(t => {
+    if(t.dataset.manual) return;
+    const sk = t.querySelector(".tsk"); if(!sk) return;
+    const list = (t.dataset.skills || "").split(" · ").filter(Boolean);
+    for(let max = 3; max >= 1; max--){
+      const items = [...sk.children];
+      if(items.length < 2) return;
+      const wrapped = items.some(el => el.offsetTop > items[0].offsetTop + 4);
+      if(!wrapped) return;
+      sk.innerHTML = skillsHTML(list, kws, max - 1);
+    }
+  });
+}
+let _tskT = null;
+window.addEventListener("resize", () => { clearTimeout(_tskT); _tskT = setTimeout(() => { if(typeof updateReco === "function") updateReco(); }, 120); });
+/* ===== Compétences en pilules : 2 visibles (celles qui correspondent aux
+   nuisibles choisis d'abord), puis « +N » qui liste TOUT au survol — comme
+   la maquette Figma. Jamais de « Chenilles proc… ». ===== */
+const SKICO = {"Rongeurs":"🐀","Cafards":"🪳","Punaises de lit":"🛏️","Guêpes / Frelons":"🐝","Pigeons":"🐦","Fourmis":"🐜",
+  "Désinfection":"🧴","Chenilles processionnaires":"🐛","Termites":"🪵","Xylophages / Termites":"🪵","Mites":"🦋","Puces":"🐕","Moustiques":"🦟","Mouches":"🪰"};
+const esc = x => String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+function skillsHTML(list, kws, max){
+  kws = kws || [];
+  const hit = x => kws.some(k => x.includes(k));
+  const ord = [...list].sort((a, b) => (hit(b) ? 1 : 0) - (hit(a) ? 1 : 0));
+  const vis = ord.slice(0, max || 3), rest = ord.length - vis.length;
+  let h = vis.map(x => '<span class="sk' + (hit(x) ? ' hit' : '') + '"><i>' + (SKICO[x] || "•") + '</i>' + esc(x) + '</span>').join("");
+  if(rest > 0) h += '<span class="tmore" tabindex="0" onmouseenter="tpopPlace(this)" onfocus="tpopPlace(this)" onclick="event.stopPropagation();tpopPlace(this);this.classList.toggle(\'open\')" onkeydown="if(event.key===\'Enter\'){event.stopPropagation();this.classList.toggle(\'open\')}">+' + rest
+    + '<span class="tpop">' + ord.map(x => '<div>' + esc(x) + '</div>').join("") + '</span></span>';
+  return h;
+}
+/* La liste défile dans un cadre : en bas du cadre, l'info-bulle s'ouvrirait
+   dans le vide. Elle s'ouvre vers le haut dès qu'elle est dans la moitié basse. */
+function tpopPlace(el){
+  const box = document.getElementById("techs"), pop = el.querySelector(".tpop");
+  if(!box || !pop) return;
+  const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+  pop.classList.toggle("up", r.top - b.top > b.height / 2);
+}
+/* ===== Trajet estimé : minutes ET kilomètres, approximatifs (« ≈ »), dans
+   la même colonne — c'est le même trajet, et ça laisse la place aux
+   compétences. Dans la maquette, une estimation stable à partir de
+   l'adresse (étape 2) et des secteurs du technicien : même secteur = 2 à
+   14 km, sinon 12 à 42 km, à 2 min du km + 5. Sans adresse : « — ». ===== */
+function techTrajet(t){
+  const cp = (document.getElementById("f-cp") || {}).value || "";
+  if(!/^\d{5}$/.test(cp.trim())) return null;
+  const dep = cp.trim().slice(0, 2);
+  const zones = t.z || [];
+  const hitZ = zones.some(z => (dep === "75" && z === "Paris") || z.startsWith(dep));
+  let h = 0; for(const ch of (t.p + cp)) h = (h * 31 + ch.charCodeAt(0)) % 1000;
+  const km = hitZ ? 2 + (h % 120) / 10 : 12 + (h % 300) / 10;
+  const min = Math.round(km * 2 + 5);
+  return {min, km};
+}
+function techTrajetCell(row){
+  const t = TECHS_ALL[row.dataset.v] || {p:row.dataset.v, z:[]};
+  const e = techTrajet(t);
+  const a = row.querySelector(".tt .tv");
+  row.dataset.min = e ? e.min : 999;
+  const kmTxt = e ? (e.km < 10 ? e.km.toFixed(1).replace(".", ",") : Math.round(e.km)) + " km" : "";
+  if(a){ a.textContent = e ? "\u2248 " + e.min + " min \u00b7 " + kmTxt : "—"; a.classList.toggle("na", !e); a.title = e ? "temps et distance approximatifs depuis sa position" : "Renseigne l'adresse (étape 2)"; }
+}
+/* ===== L'ordre des suggestions : conseillés d'abord, puis disponibles,
+   puis en tournée, puis en congé ; à égalité, le trajet le plus court. ===== */
+function techSort(){
+  const box = document.getElementById("techs"); if(!box) return;
+  const RK = {dispo:0, interv:1, conge:2, cgko:3};
+  const rows = [...box.querySelectorAll(".tech")];
+  rows.sort((a, b) => (b.dataset.reco || "0").localeCompare(a.dataset.reco || "0")
+    || ((RK[a.classList.contains("cgko") ? "cgko" : a.dataset.d] ?? 1) - (RK[b.classList.contains("cgko") ? "cgko" : b.dataset.d] ?? 1))
+    || ((+a.dataset.min || 999) - (+b.dataset.min || 999))
+    || ((+a.dataset.i || 0) - (+b.dataset.i || 0)));
+  rows.forEach(r => box.appendChild(r));
+}
+function techCount(){
+  const c = document.getElementById("techhd-c"); if(!c) return;
+  const rows = [...document.querySelectorAll("#techs .tech")];
+  const vis = rows.filter(r => !r.classList.contains("hid")).length;
+  const on = rows.filter(r => r.classList.contains("on")).length;
+  c.textContent = (vis < rows.length ? vis + " sur " + rows.length : rows.length) + " technicien" + (rows.length > 1 ? "s" : "")
+    + " · " + (on ? on + " sélectionné" + (on > 1 ? "s" : "") : "aucun sélectionné");
+}
+function techFilter(){
+  const inp = document.getElementById("f-techq"); if(!inp) return;
+  const norm = x => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const q = norm(inp.value);
+  document.querySelectorAll("#techs .tech").forEach(r => r.classList.toggle("hid", !!q && !norm(r.dataset.v).includes(q)));
+  const t = document.getElementById("techhd-t");
+  if(t) t.textContent = q ? "Résultats de recherche" : "Techniciens suggérés";
+  techCount();
+  if(typeof tskFit === "function") tskFit();
+  if(typeof techScroll === "function") techScroll();
 }
 
 /* ===== Progression des étapes ===== */
@@ -1111,6 +1254,9 @@ document.getElementById("f-date").addEventListener("input", ()=>{
   document.getElementById("f-date").classList.remove("err");
   resume();
 });
+/* le trajet estimé dépend de l'adresse (étape 2) : on le recalcule dès
+   qu'elle change, à la main ou via le client choisi */
+["f-cp","f-ville","f-client"].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener("change", () => { if(typeof updateReco === "function") updateReco(); }); });
 
 /* ===== Divulgation progressive ===== */
 function reveal(id, btn){
@@ -1343,18 +1489,22 @@ const IKEY = "tigerflow-intervention-brouillon";
    apparaissent, les supprimees disparaissent, les conges sont repercutes.
    Le referentiel est recopie ici comme partout ailleurs (chaque page est
    autonome) ; la parite est controlee par la suite techint.js. */
+/* 24/09 : compétences COMPLÈTES, secteurs et couleur — recopiés de la page
+   Techniciens (com, zones, grad) pour les pilules, le « +N », le trajet
+   estimé et l'avatar. `c` reste la version courte (résumé, brouillons). */
 const TECHS_REF = [
-  {p:"Pablo", i:"PA", c:"Rongeurs · Cafards", d:"interv"},
-  {p:"Otman", i:"OT", c:"Rongeurs · Cafards", d:"dispo"},
-  {p:"Fredo", i:"FR", c:"Punaises de lit · Cafards", d:"interv"},
-  {p:"Babacar", i:"BA", c:"Guêpes / Frelons · Chenilles processionnaires", d:"conge"},
-  {p:"Wissam", i:"WI", c:"Rongeurs · Cafards", d:"dispo"},
-  {p:"Enzo", i:"EN", c:"Rongeurs · Cafards", d:"interv"},
-  {p:"Éric", i:"ÉR", c:"Rongeurs · Cafards", d:"dispo"},
-  {p:"Mahamadou", i:"MA", c:"Rongeurs · Cafards", d:"interv"},
-  {p:"Rémi", i:"RÉ", c:"Rongeurs · Guêpes / Frelons", d:"interv"},
-  {p:"Jawad", i:"JA", c:"Rongeurs · Cafards", d:"dispo"}
+  {p:"Pablo", i:"PA", c:"Rongeurs · Cafards", d:"interv", s:["Rongeurs","Cafards","Punaises de lit","Guêpes / Frelons","Désinfection"], z:["Paris","92","95"], col:"linear-gradient(135deg,#5B82F0,#2148C0)"},
+  {p:"Otman", i:"OT", c:"Rongeurs · Cafards", d:"dispo", s:["Rongeurs","Cafards","Fourmis","Pigeons","Désinfection"], z:["93","77"], col:"linear-gradient(135deg,#2FC9B9,#0E8A7A)"},
+  {p:"Fredo", i:"FR", c:"Punaises de lit · Cafards", d:"interv", s:["Punaises de lit","Cafards","Désinfection","Fourmis"], z:["Paris","94"], col:"linear-gradient(135deg,#9C63F2,#6425D0)"},
+  {p:"Babacar", i:"BA", c:"Guêpes / Frelons · Chenilles processionnaires", d:"conge", s:["Guêpes / Frelons","Chenilles processionnaires","Rongeurs","Termites"], z:["78","95","27"], col:"linear-gradient(135deg,#E8951B,#C06F06)"},
+  {p:"Wissam", i:"WI", c:"Rongeurs · Cafards", d:"dispo", s:["Rongeurs","Cafards","Punaises de lit","Désinfection"], z:["Paris","93"], col:"linear-gradient(135deg,#EE6A6A,#B52F28)"},
+  {p:"Enzo", i:"EN", c:"Rongeurs · Cafards", d:"interv", s:["Rongeurs","Cafards","Guêpes / Frelons","Punaises de lit"], z:["Paris","92"], col:"linear-gradient(135deg,#17A87E,#0A6B51)"},
+  {p:"Éric", i:"ÉR", c:"Rongeurs · Cafards", d:"dispo", s:["Rongeurs","Cafards","Pigeons","Désinfection"], z:["Paris","95"], col:"linear-gradient(135deg,#F06AA8,#C21D63)"},
+  {p:"Mahamadou", i:"MA", c:"Rongeurs · Cafards", d:"interv", s:["Rongeurs","Cafards","Punaises de lit","Fourmis"], z:["93","Paris"], col:"linear-gradient(135deg,#38BDD8,#0779A0)"},
+  {p:"Rémi", i:"RÉ", c:"Rongeurs · Guêpes / Frelons", d:"interv", s:["Rongeurs","Guêpes / Frelons","Cafards","Punaises de lit"], z:["77","91","94"], col:"#FF5A1F"},
+  {p:"Jawad", i:"JA", c:"Rongeurs · Cafards", d:"dispo", s:["Rongeurs","Cafards","Punaises de lit","Désinfection"], z:["77","91","94"], col:"linear-gradient(135deg,#9CC94E,#5E8F0C)"}
 ];
+const TECHS_ALL = {};
 function techsReels(){
   let list = TECHS_REF.map(t => ({...t}));
   try{
@@ -1362,7 +1512,7 @@ function techsReels(){
       const nom = ((r.prenom || "") + " " + (r.nom || "")).trim();
       if(!nom || list.some(t => t.p === nom)) return;
       const ini = ((r.prenom || " ")[0] + ((r.nom || "") ? r.nom[0] : (r.prenom || "  ")[1] || "")).toUpperCase();
-      list.unshift({p:nom, i:ini, c:Object.keys(r.com || {}).slice(0,2).join(" · ") || "Nouveau technicien", d:r.dispo || "dispo"});
+      list.unshift({p:nom, i:ini, c:Object.keys(r.com || {}).slice(0,2).join(" · ") || "Nouveau technicien", d:r.dispo || "dispo", s:Object.keys(r.com || {}), z:r.zones || [], col:r.grad || ""});
     });
     const del = JSON.parse(localStorage.getItem("tigerflow-techs-del") || "[]");
     list = list.filter(t => !del.includes(t.p));
@@ -1416,22 +1566,33 @@ document.addEventListener("DOMContentLoaded", function(){
     });
   });
 });
-function renderTechs(){
+/* Une ligne = avatar + nom (+ « Conseillé ») · Statut · Compétences · Trajet
+   estimé · Détour estimé · case. Les libellés sont sur chaque ligne, comme
+   chez Saigon et Figma. Même gabarit pour les techniciens ajoutés à la main. */
+function techRow(t, i){
   const LBL = {dispo:["dispo","Disponible"], interv:["tournee","En tournée"], conge:["tournee","En congé"]};
-  document.getElementById("techs").innerHTML = techsReels().map(t => {
-    let [cls, lbl] = LBL[t.d] || LBL.dispo;
-    /* le congé dit QUAND : « En congé » tout seul ne permet pas de décider */
-    if(t.cg) lbl = "En cong\u00e9 \u00b7 " + cgFr2(t.cg.du) + " \u2192 " + cgFr2(t.cg.au);
-    const ko = cgConflit(t);
-    if(ko){ cls = "cgko"; lbl = "En cong\u00e9 ce jour-l\u00e0"; }
-    return '<div class="tech' + (ko ? ' cgko' : '') + '" data-v="' + t.p + '" onclick="togTech(this)"'
-      + (ko ? ' title="' + t.p + ' est en cong\u00e9 du ' + cgFr2(t.cg.du) + ' au ' + cgFr2(t.cg.au) + '"' : '') + '>'
-      + '<span class="tav">' + t.i + '</span>'
-      + '<span><b>' + t.p + '</b><small>' + (t.c || "—") + '</small></span>'
-      + '<span class="tst ' + cls + '">' + lbl + '</span>'
-      + '<span class="chk"></span></div>';
-  }).join("");
-  document.querySelectorAll("#techs .tech").forEach(kbd);
+  let [cls, lbl] = LBL[t.d] || LBL.dispo;
+  /* le congé dit QUAND : « En congé » tout seul ne permet pas de décider */
+  if(t.cg) lbl = "En cong\u00e9 \u00b7 " + cgFr2(t.cg.du) + " \u2192 " + cgFr2(t.cg.au);
+  const ko = cgConflit(t);
+  if(ko){ cls = "cgko"; lbl = "En cong\u00e9 ce jour-l\u00e0"; }
+  const skills = (t.s && t.s.length) ? t.s : String(t.c || "").split(" · ").filter(x => x && x !== "—" && x !== "Ajouté manuellement" && x !== "Nouveau technicien");
+  TECHS_ALL[t.p] = t;
+  return '<div class="tech' + (ko ? ' cgko' : '') + '" data-v="' + esc(t.p) + '" data-d="' + (t.d || "dispo") + '" data-i="' + (i || 0) + '"'
+    + ' data-skills="' + esc(skills.join(" · ")) + '"' + (t.manual ? ' data-manual="1"' : '')
+    + (t.col ? ' style="--tc:' + t.col + '"' : '') + ' onclick="togTech(this)"'
+    + (ko ? ' title="' + esc(t.p) + ' est en cong\u00e9 du ' + cgFr2(t.cg.du) + ' au ' + cgFr2(t.cg.au) + '"' : '') + '>'
+    + '<div class="tid"><span class="tav">' + esc(t.i || "") + '</span><span class="tnm"><b>' + esc(t.p) + '</b><span class="treco"></span></span></div>'
+    + '<div class="tcol"><span class="tl">Statut</span><span class="tst ' + cls + '">' + lbl + '</span></div>'
+    + '<div class="tcol"><span class="tl">Compétences</span><span class="tsk">' + (t.manual ? '<span class="sk na">Ajouté manuellement</span>' : skillsHTML(skills, [])) + '</span></div>'
+    + '<div class="tcol tt"><span class="tl">Trajet estimé</span><span class="tv na">—</span></div>'
+    + '<span class="chk"></span></div>';
+}
+function renderTechs(){
+  document.getElementById("techs").innerHTML = techsReels().map(techRow).join("");
+  document.querySelectorAll("#techs .tech").forEach(r => { kbd(r); if(TECHS.has(r.dataset.v)) r.classList.add("on"); });
+  updateReco();
+  techFilter();
   techScroll();
 }
 /* Pose .scr seulement si la liste depasse le plafond. Rappelee apres chaque
@@ -1514,12 +1675,12 @@ function iDraftRestore(){
     // Techniciens ajoutés à la main : recréer leurs lignes
     (d.TECHS || []).filter(n=>!PRESET_TECHS.includes(n)).forEach(nom=>{
       const ini = nom.split(" ").map(w=>w[0]).join("").replace(/[^A-ZÀ-Ü]/gi,"").slice(0,2).toUpperCase();
-      const row = document.createElement("div");
-      row.className = "tech"; row.dataset.v = nom;
-      row.onclick = function(){ togTech(this); };
-      row.innerHTML = '<span class="tav">' + ini + '</span><span><b>' + nom + '</b><small>Ajouté manuellement</small></span><span class="tst dispo">Disponible</span><span class="chk"></span>';
+      const tmp = document.createElement("div");
+      tmp.innerHTML = techRow({p:nom, i:ini, c:"Ajouté manuellement", d:"dispo", manual:true, s:[], z:[]}, 900);
+      const row = tmp.firstElementChild;
       kbd(row);
       document.getElementById("techs").appendChild(row);
+      techTrajetCell(row);
     });
     // Valeurs des champs
     const els = [...document.querySelectorAll("input,select,textarea")];
