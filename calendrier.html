@@ -335,6 +335,15 @@ h1,.num{font-family:'Sora',sans-serif}
 .dcard.devisb .dst.dev{background:#DCE7FF;color:#1E4FBF}
 .dbig.blue{background:#2E5CE6;box-shadow:0 4px 12px -5px rgba(46,92,230,.5)}
 .dbig.blue:hover{background:#2148C0}
+/* 25/09 (patron) : même chose pour le PROCHAIN PASSAGE conseillé par le
+   technicien — la fiche de suivi part dans le bac « À planifier », la fiche
+   intervention doit le dire (bandeau violet), pas seulement le rapport. */
+.dcard.suivib{background:linear-gradient(180deg,#F5F0FF,#EFE8FE);border-color:#DACDF8}
+.dcard.suivib .dst.sui{background:#E9DDFF;color:#5B21B6}
+.dbig.violet{background:#7B3BEA;box-shadow:0 4px 12px -5px rgba(123,59,234,.5)}
+.dbig.violet:hover{background:#6425D0}
+.pcard.flash{border-color:#7B3BEA!important;box-shadow:0 0 0 2px #7B3BEA,0 8px 18px -8px rgba(123,59,234,.6);transform:translateY(-3px);animation:pflash 1.2s ease-in-out 3}
+@keyframes pflash{0%,100%{box-shadow:0 0 0 2px #7B3BEA,0 8px 18px -8px rgba(123,59,234,.6)}50%{box-shadow:0 0 0 6px rgba(123,59,234,.25),0 8px 18px -8px rgba(123,59,234,.6)}}
 .invbox .lbl{font-size:.7rem;color:var(--muted);display:block;font-weight:700}
 .invbox .amt{font-family:'Sora';font-size:1.5rem;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
 .invbox .go{margin-left:auto;padding:11px 17px;border-radius:11px;background:var(--orange);color:#fff;font-weight:700;font-size:.8rem;border:0;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex}
@@ -3884,6 +3893,20 @@ function renderDetail(){
             <a class="dbig sec" style="text-decoration:none" href="taches.html">Voir la tâche</a>
           </div>
         </div>` : ""}
+        ${r.next ? (() => {
+          const pf = PENDING.find(x => x.suivi && x.client === v.client && x.rappel === r.next);
+          const dn = new Date(r.next + "T12:00:00");
+          const when = JOURS[dn.getDay()] + " " + dn.getDate() + " " + MOIS[dn.getMonth()] + " " + dn.getFullYear();
+          const cren = (r.creneau && r.creneau !== "Indifférent") ? " · " + r.creneau : "";
+          return `<div class="dcard suivib">
+          <div class="dh" style="margin-bottom:6px"><span class="dst sui" style="font-size:.62rem;white-space:nowrap">🔁 Prochain passage</span> <span style="font-size:.8rem;font-weight:600;color:#5B21B6">conseillé par le technicien</span></div>
+          <div style="font-size:.84rem;font-weight:700;color:#3B1D7A;margin-top:2px">${when}${cren}</div>
+          <div style="font-size:.76rem;color:#6D4BB5;margin-top:5px">${pf ? "Une fiche de suivi attend dans le bac « À planifier » : à glisser sur un technicien." : "La fiche de suivi a déjà été posée sur l'agenda."}</div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px">
+            ${pf ? `<button class="dbig violet" onclick="voirSuivi(${pf.pid})">📅 Voir dans le bac</button>` : ""}
+            <button class="dbig sec" onclick="openReport(${v.id})">Changer la date</button>
+          </div>
+        </div>`; })() : ""}
         <div class="dcard">
           <div class="dh">Étape 1 — Observation</div>
           ${kv("Niveau d'infestation", r.niv)}
@@ -4862,6 +4885,20 @@ function delNote(id){
   toast("Note supprimée", () => { v.note = old; iflowSave(v); bnoteShare(v); renderDetail(); render(); });
 }
 let REASSQ = "";
+/* « Voir dans le bac » : on ferme la fiche, on déplie le bac et on fait
+   clignoter la fiche de suivi — le patron n'a plus qu'à la glisser. */
+function voirSuivi(pid){
+  closeDetail();
+  const tray = document.getElementById("tray");
+  if(tray) tray.classList.remove("collapsed");
+  setTimeout(() => {
+    const c = document.querySelector('#traycards .pcard[data-pid="' + pid + '"]');
+    if(!c){ toast("La fiche de suivi n'est plus dans le bac"); return; }
+    c.scrollIntoView({behavior:"smooth", block:"nearest", inline:"center"});
+    c.classList.add("flash");
+    setTimeout(() => c.classList.remove("flash"), 4500);
+  }, 250);
+}
 function togReass(){
   REASS = !REASS;
   REASSQ = "";
