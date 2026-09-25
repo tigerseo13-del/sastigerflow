@@ -170,7 +170,24 @@ h1,.num{font-family:'Sora',sans-serif}
 .dbtn:hover{border-color:#D5D8DF}
 
 .dmain{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.dhead .dmain{margin-bottom:8px;background:#F8F9FB;border:1px solid #EEF0F4;border-radius:15px;padding:11px 13px;position:relative}   /* 30/07 : le bouton orange porte deja l action — le fond n a pas a crier avec lui */
+.dhead .dmain{margin-bottom:8px;background:#F8F9FB;border:1px solid #EEF0F4;border-radius:15px;padding:11px 13px;position:relative}
+/* 25/09 (patron, option A) : rapport fait → le bloc d'actions passe en CADRE
+   VERT (comme Saigon), et ce que le rapport laisse au bureau s'empile
+   dessous en bandes d'une ligne : bleu = devis à faire, violet = prochain
+   passage à poser. Le vert garde un seul sens : c'est fait. */
+.dhead .dmain.rapok{background:#EEF9F2;border:1.5px solid #9FD9B8}
+.rapline{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.78rem;font-weight:700;color:#0F6E56;margin:-2px 0 2px}
+.rapline .dst{font-size:.62rem}
+.rapline small{font-weight:600;color:#0F6E56;opacity:.85}
+.dstrip{display:flex;align-items:center;gap:9px;border-radius:13px;padding:8px 12px;margin-bottom:8px;font-size:.8rem;border:1.5px solid}
+.dstrip.blue{background:#EEF4FF;border-color:#C9D9F7;color:#1E4FBF}
+.dstrip.vio{background:#F5F0FF;border-color:#DACDF8;color:#5B21B6}
+.dstrip .spill{font-size:.6rem;font-weight:800;letter-spacing:.04em;padding:2px 8px;border-radius:999px;white-space:nowrap;text-transform:uppercase}
+.dstrip.blue .spill{background:#DCE7FF;color:#1E4FBF}.dstrip.vio .spill{background:#E9DDFF;color:#5B21B6}
+.dstrip b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+.dstrip .sbtn{font:inherit;font-size:.74rem;font-weight:800;color:#fff;border:0;border-radius:999px;padding:6px 12px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.dstrip.blue .sbtn{background:#2E5CE6}.dstrip.vio .sbtn{background:#7B3BEA}
+.dstrip .sbtn:hover{filter:brightness(.92)}   /* 30/07 : le bouton orange porte deja l action — le fond n a pas a crier avec lui */
 .dhead .dmain::before{display:none}
 .dbig{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:10px 24px 10px 12px;border-radius:999px;font-size:.8rem;font-weight:700;border:0;background:var(--orange);color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px -5px rgba(255,90,31,.45);transition:transform .1s ease,box-shadow .15s ease}
 .dbig:hover{transform:translateY(-1px);box-shadow:0 7px 15px -5px rgba(255,90,31,.5)}
@@ -3996,10 +4013,28 @@ function renderDetail(){
             <button onclick="impRep(${v.id},'Personne au téléphone — passe au suivant')"><i style="background:#D63B33"></i>Personne au téléphone — passe au suivant</button>
             <button onclick="impRep(${v.id},'Je rappelle et je te redis — patiente')"><i style="background:#2E5CE6"></i>Je rappelle et je te redis</button>
           </div></div></div>`) : ""}
-      <div class="dmain">${mainBtns}
+      ${(function(){
+        /* option A (25/09) : cadre vert + bandes bleue / violette sous le bloc d'actions */
+        const RAP = (v.done && !v.cancelled && typeof REPORTS !== "undefined" && REPORTS[v.id]) ? REPORTS[v.id] : null;
+        let rapLine = "", strips = "";
+        if(RAP){
+          rapLine = `<div class="rapline"><span class="dst done">✓ Rapport validé</span><span>signé par le client</span><small>· ${RAP._demo ? "envoyé au client" : "prêt à partir"}${chGet(v.id) ? " · " + chHuman(chElapsed(v.id)) + " sur place" : ""}</small></div>`;
+          if(RAP.quote){
+            strips += `<div class="dstrip blue"><span class="spill">🧾 Devis à faire</span><b>${RAP.quoteDesc ? "« " + RAP.quoteDesc + " »" : "à chiffrer — le technicien n'a pas détaillé"}</b><a class="sbtn" href="devis.html?c=${encodeURIComponent(v.client)}&cp=${encodeURIComponent(v.cp)}&ville=${encodeURIComponent(v.ville)}&ref=${encodeURIComponent(refInt(v.id))}&tech=${encodeURIComponent((TECHS[v.tech]||{}).nom||"")}">Créer le devis</a></div>`;
+          }
+          if(RAP.next){
+            const pf = PENDING.find(x => x.suivi && x.client === v.client && x.rappel === RAP.next);
+            const dn = new Date(RAP.next + "T12:00:00");
+            const JC = ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."], MC = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+            const cren = (RAP.creneau && RAP.creneau !== "Indifférent") ? " · " + RAP.creneau.split("·")[0].trim().toLowerCase() : "";
+            strips += `<div class="dstrip vio"><span class="spill">🔁 Prochain passage</span><b>${JC[dn.getDay()]} ${dn.getDate()} ${MC[dn.getMonth()]}${cren}${pf ? " · fiche dans le bac" : " · posé sur l'agenda"}</b>${pf ? `<button class="sbtn" onclick="voirSuivi(${pf.pid})">Voir dans le bac</button>` : ""}</div>`;
+          }
+        }
+        return `<div class="dmain${RAP ? " rapok" : ""}">${rapLine}${mainBtns}
         <button class="dbig sec" style="flex:none" onclick="togDMenu(event)">Actions ▾</button>
         ${DMENU ? `<div class="dmenu">${menuItems}</div>` : ""}
-      </div>
+      </div>${strips}`;
+      })()}
       <div class="dtabs">
         ${(function(){
           /* 29/07 : le badge comptait « 1 » des le demarrage, sans qu'aucun
