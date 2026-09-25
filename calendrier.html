@@ -328,6 +328,13 @@ h1,.num{font-family:'Sora',sans-serif}
 .invbox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#F7F8FA;border:1px solid var(--line);border-radius:13px;padding:14px 16px}
 .invbox.r{background:var(--red-bg);border-color:#F3C4C0}
 .invbox.g{background:var(--green-bg);border-color:#BFE5D8}
+/* 25/09 (patron) : quand le rapport coche « devis complémentaire », un bandeau
+   BLEU sous le bandeau vert « Rapport validé » — même gabarit, autre couleur :
+   vert = c'est fait, bleu = il reste un devis à faire. */
+.dcard.devisb{background:linear-gradient(180deg,#EEF4FF,#E9F0FE);border-color:#C9D9F7}
+.dcard.devisb .dst.dev{background:#DCE7FF;color:#1E4FBF}
+.dbig.blue{background:#2E5CE6;box-shadow:0 4px 12px -5px rgba(46,92,230,.5)}
+.dbig.blue:hover{background:#2148C0}
 .invbox .lbl{font-size:.7rem;color:var(--muted);display:block;font-weight:700}
 .invbox .amt{font-family:'Sora';font-size:1.5rem;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
 .invbox .go{margin-left:auto;padding:11px 17px;border-radius:11px;background:var(--orange);color:#fff;font-weight:700;font-size:.8rem;border:0;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex}
@@ -3868,6 +3875,15 @@ function renderDetail(){
             <button class="dbig sec" onclick="rMail(${v.id})"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M22 6l-10 7L2 6"/></svg> Envoyer par e-mail au client</button>
           </div>
         </div>
+        ${r.quote ? `<div class="dcard devisb">
+          <div class="dh" style="margin-bottom:6px"><span class="dst dev" style="font-size:.62rem;white-space:nowrap">🧾 Devis à faire</span> <span style="font-size:.8rem;font-weight:600;color:#1E4FBF">travaux repérés en intervention</span></div>
+          <div style="font-size:.84rem;font-weight:700;color:#1A2B5C;margin-top:2px">${r.quoteDesc ? "« " + r.quoteDesc + " »" : "À chiffrer — le technicien n'a pas détaillé"}</div>
+          <div style="font-size:.76rem;color:#3D5A9C;margin-top:5px">Tâche « Établir le devis complémentaire » créée · le brouillon sera lié au client et à l'intervention ${refInt(v.id)}.</div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:10px">
+            <a class="dbig blue" style="text-decoration:none" href="devis.html?c=${encodeURIComponent(v.client)}&cp=${encodeURIComponent(v.cp)}&ville=${encodeURIComponent(v.ville)}&ref=${encodeURIComponent(refInt(v.id))}&tech=${encodeURIComponent((TECHS[v.tech]||{}).nom||"")}"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 2h6l1 3h3v17H5V5h3z"/><path d="M9 12h6M9 16h4"/></svg> Créer le devis</a>
+            <a class="dbig sec" style="text-decoration:none" href="taches.html">Voir la tâche</a>
+          </div>
+        </div>` : ""}
         <div class="dcard">
           <div class="dh">Étape 1 — Observation</div>
           ${kv("Niveau d'infestation", r.niv)}
