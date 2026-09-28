@@ -2713,6 +2713,11 @@ try{
 }catch(e){}
 const dvActifs = () => DEVAT.filter(x => x && x.etat === "attente");
 const dvDe = c => dvActifs().find(x => x.client === c);
+/* 28/09 — réglage V2 « Statut devis en attente / à relancer » (Réglages ›
+   Fonctions bêta), ÉTEINT par défaut : sans lui, la carte garde la coche et
+   « Devis en attente » / « À relancer · montant ». */
+function dvwOn(){ try{ return localStorage.getItem("tigerflow-beta-devis-attente") === "1"; }catch(e){ return false; } }
+function dvJours(x){ try{ const a = new Date(x.envoye + "T12:00:00"), b = new Date(iso(TODAYD) + "T12:00:00"); return Math.max(0, Math.round((b - a) / 86400000)); }catch(e){ return 0; } }
 const dvLate = x => !!(x.relance && x.relance <= iso(TODAYD));
 const dvEur = n => (Number.isInteger(+n) ? String(+n) : (+n).toFixed(2).replace(".", ",")) + " €";
 /* ══ 01/09 : LE JOUR OU LE DEVIS A BASCULE ══ Le registre des statuts ne gardait
@@ -3107,7 +3112,7 @@ const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
       const clippedEnd = Math.min(v.start + v.dur, DAYSTART + HOURS);
       const h = Math.max(34, (clippedEnd - Math.max(v.start, DAYSTART)) * 64 - 6);
       const buf = "";
-      let badge = "";
+      let badge = "", dvwCls = "";
       if(v.cancelled){
         badge = `<span class="lbadge cancd">Annulée</span>`;
       } else if(v.done){
@@ -3115,6 +3120,17 @@ const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
            📋 en attente, puis 🔔 à relancer (avec le montant) passé la date. */
         const _dv = (v.mode === "devis" && typeof dvDe === "function") ? dvDe(v.client) : null;
         if(_dv){
+          /* 28/09 (patron : « le sablier, c'est pas mal — mets ça en bêta ») :
+             avec le réglage V2 « Statut devis en attente / à relancer », la
+             coche verte laisse place à un sablier ambre (rouge passé la date
+             de relance) et le badge compte les jours depuis l'envoi. */
+          if(dvwOn()){
+            const _j = dvJours(_dv);
+            dvwCls = dvLate(_dv) ? " dvw dvlate2" : " dvw";
+            badge = dvLate(_dv)
+              ? `<span class="lbadge dvlate">🔔 Devis J+${_j} · à relancer</span>`
+              : `<span class="lbadge dvwait">⏳ Devis envoyé · J+${_j}</span>`;
+          } else
           badge = dvLate(_dv)
             ? `<span class="lbadge dvlate">🔔 À relancer · ${dvEur(_dv.montant)}</span>`
             : `<span class="lbadge dvwait">📋 Devis en attente</span>`;
@@ -3142,7 +3158,7 @@ const techs = techsOrdonnes().filter(t=>VIS.has(t.id));   /* ordre du patron */
       const enRetard = isToday && !v.done && !v.cancelled && v.start + v.dur <= NOWH;
       const hTxt = hcourt(v.start) + "–" + hcourt(v.start + v.dur);
       const L = locOf(v);
-      return `<div class="ev ticket ${v.imprev && !v.imprev.rep?'imprev':''} ${v.done?'done':''} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${enRetard?'late':''} ${nl>1?'nrw':''} ${LANDID===v.id?'land':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
+      return `<div class="ev ticket ${v.imprev && !v.imprev.rep?'imprev':''} ${v.done?'done':''}${dvwCls} ${v.cancelled?'cancelled':''} ${conf.has(v.id)?'conflict':''} ${live?'live':''} ${enRetard?'late':''} ${nl>1?'nrw':''} ${LANDID===v.id?'land':''} ${v.dur<=1.5?'md':''} ${v.dur<=1?'sm':''} ${v.dur<=0.5?'xs':''}" data-id="${v.id}"
         style="--evc:${TC.c};--evg:${TC.grad};--evb:${TC.bg};--ai:${Math.min(ci,8)};${lanePos}top:${top}px;height:${h}px"><span class="grip" title="Déplacer">⠿</span>
         ${v.mode === "devis" ? '<span class="mgstar" title="Visite devis"></span>' : ''}
         <div class="mgl" title="${L.cp} ${L.ville} · ${hstr(v.start)} – ${hstr(v.start+v.dur)}">
@@ -6800,6 +6816,24 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .ev.ticket.sm.done::before{background-size:44px 44px;background-position:right 11px center}
 .ev.ticket.xs.done::before{background-size:26px 26px;background-position:right 9px center}
 .ev.ticket.nrw.done::before{background-size:48px 48px;background-position:right 9px center}
+/* 28/09 (patron) — VISITE DE DEVIS EN ATTENTE, réglage V2 : troisième forme.
+   coche = fait · croix = annulée · SABLIER = on attend le client. Carte ambre,
+   plus de coche ; passé la date de relance, tout passe au rouge. */
+.ev.ticket.done.dvw{background:#FFFDF6;border-color:#F1E3B3}
+.ev.ticket.done.dvw .mgl{background:#FBF3DC;color:#8A6A12}
+.ev.ticket.done.dvw .mgpin{stroke:#B08A2E}
+.ev.ticket.done.dvw .mgr{background:#FFFDF6}
+.ev.ticket.done.dvw .mgt b{color:#6B5A2E;text-decoration:none}
+.ev.ticket.done.dvw .mgr3{color:#9A8A62}
+.ev.ticket.done.dvw::before{background-image:url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cpath%20d%3D%22M18%208h28M18%2056h28M22%208v8c0%208%2010%2012%2010%2016s-10%208-10%2016v8M42%208v8c0%208-10%2012-10%2016s10%208%2010%2016v8%22%20fill%3D%22none%22%20stroke%3D%22rgba%28176%2C120%2C20%2C.5%29%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')}
+.ev.ticket.done.dvw.dvlate2{background:#FFF8F7;border-color:#F3C1BC}
+.ev.ticket.done.dvw.dvlate2 .mgl{background:#FBE9E7;color:#9B2C25}
+.ev.ticket.done.dvw.dvlate2 .mgpin{stroke:#C0403A}
+.ev.ticket.done.dvw.dvlate2 .mgr{background:#FFF8F7}
+.ev.ticket.done.dvw.dvlate2 .mgt b{color:#7A3A35}
+.ev.ticket.done.dvw.dvlate2::before{background-image:url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cpath%20d%3D%22M18%208h28M18%2056h28M22%208v8c0%208%2010%2012%2010%2016s-10%208-10%2016v8M42%208v8c0%208-10%2012-10%2016s10%208%2010%2016v8%22%20fill%3D%22none%22%20stroke%3D%22rgba%28192%2C64%2C58%2C.5%29%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')}
+.ev.ticket.done.dvw .lbadge.dvwait{background:#FFFBEB;color:#A16207;border:1px solid #F6DE8B;position:relative;z-index:5}
+.ev.ticket.done.dvw .lbadge.dvlate{background:#FDF0EF;color:#B3261E;border:1px solid #F3C1BC;position:relative;z-index:5}
 /* la croix : deux diagonales tracées d'un coin à l'autre, PAR-DESSUS le
    contenu (z-index 4) pour qu'aucun texte ne vienne les couper. */
 .ev.ticket.cancelled{opacity:1;background:#FDFAFA}
