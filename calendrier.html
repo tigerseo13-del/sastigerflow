@@ -3821,6 +3821,7 @@ function renderDetail(){
             <span style="font-size:.8rem;color:var(--muted);font-weight:600">Aucune note pour cette intervention</span>
             <button class="dre" onclick="editNote(${v.id})">+ Ajouter une note</button>
           </div>`}
+      ${inoteHTML(v)}${cnoteHTML(v)}
     </div>
     <div class="dcard">
       <div class="dh">Technicien <button class="dre" onclick="togReass()">${REASS ? "Annuler" : "✎ Réassigner"}</button></div>
@@ -3853,11 +3854,22 @@ function renderDetail(){
   }
   else if(DTAB === "not"){
     body = `<div class="dcard">
-      <div class="dh">Notes internes</div>
-      <textarea rows="6" placeholder="Code portail, étage, consignes d'accès, historique verbal…"
+      <div class="dh">Note pour le technicien</div>
+      <textarea rows="4" placeholder="Code portail, étage, consignes d'accès…"
         oninput="INTERVS.find(x=>x.id===${v.id}).note=this.value">${v.note}</textarea>
-      <small style="font-size:.72rem;color:var(--muted);display:block;margin-top:7px">💾 Enregistrée automatiquement — visible uniquement par l'équipe</small>
-    </div>`;
+      <small style="font-size:.72rem;color:var(--muted);display:block;margin-top:7px">💾 Enregistrée automatiquement — le technicien la voit sur son appli</small>
+    </div>
+    <div class="dcard">
+      <div class="dh">${LOCK_SVG} Note interne · bureau</div>
+      <textarea rows="4" class="inotearea" style="margin-top:0" placeholder="Impayé, client difficile, devis à valider… ce que le client ne doit jamais lire"
+        oninput="inoteSet(${v.id}, this.value)">${v.inote || ""}</textarea>
+      <small style="font-size:.72rem;color:var(--muted);display:block;margin-top:7px">🔒 Visible par le bureau seulement — jamais sur le rapport client, jamais dans l'appli technicien${v.inoteAt ? " · " + (v.inoteBy || "Bureau") + " · " + fdate(v.inoteAt) : ""}</small>
+    </div>
+    ${cnotes(v).length ? `<div class="dcard">
+      <div class="dh">${LOCK_SVG} Note interne · client <a class="dre" style="text-decoration:none" href="client.html?c=${encodeURIComponent(v.client || "")}">Fiche client →</a></div>
+      ${cnotes(v).map(n => `<div class="inote cli" style="margin-top:7px;white-space:normal"><span class="it" style="white-space:normal">${n.txt}</span><small>${n.a || "Bureau"} · ${n.t || ""}</small></div>`).join("")}
+      <small style="font-size:.72rem;color:var(--muted);display:block;margin-top:7px">Posée sur la fiche client, elle suit toutes ses interventions. Se modifie depuis la fiche client.</small>
+    </div>` : ""}`;
   }
   else if(DTAB === "pj"){
     const FILES = pjFiles(v);
@@ -4043,7 +4055,7 @@ function renderDetail(){
           const nPJ = pjFiles(v).length;
           const rapOK = typeof REPORTS !== "undefined" && REPORTS[v.id];
           const BADGE = {
-            not: v.note ? '<i class="tbdot"></i>' : "",
+            not: (v.note || v.inote || cnotes(v).length) ? '<i class="tbdot"></i>' : "",
             pj:  nPJ ? `<span class="tbn">${nPJ}</span>` : "",
             rap: rapOK ? '<span class="tbok">✓</span>' : ""
           };
@@ -4184,7 +4196,7 @@ const IFKEY = "tigerflow-interv-flow";
 function iflowSave(v){
   try{
     const m = JSON.parse(localStorage.getItem(IFKEY)) || {};
-    m[v.id] = {started:!!v.started, done:!!v.done, devisFlag:!!v.devisFlag, paid:v.paid || null, note:v.note || ""};
+    m[v.id] = {started:!!v.started, done:!!v.done, devisFlag:!!v.devisFlag, paid:v.paid || null, note:v.note || "", inote:v.inote || "", inoteAt:v.inoteAt || "", inoteBy:v.inoteBy || ""};
     localStorage.setItem(IFKEY, JSON.stringify(m));
   }catch(e){}
   try{ if(typeof SB !== "undefined" && SB && v.sb) SB.from("interventions").update({note: v.note || ""}).eq("id", v.sb).then(()=>{}); }catch(e){}
@@ -4194,10 +4206,20 @@ function iflowSave(v){
      seules les notes sont restaurées, jamais l'état d'avancement */
   try{
     const m = JSON.parse(localStorage.getItem(IFKEY)) || {};
-    INTERVS.forEach(v => { const o = m[v.id]; if(o && o.note) v.note = o.note; });
+    INTERVS.forEach(v => { const o = m[v.id]; if(o && o.note) v.note = o.note; if(o && "inote" in o){ v.inote = o.inote || ""; v.inoteAt = o.inoteAt || ""; v.inoteBy = o.inoteBy || ""; } });
   }catch(e){}
   INTERVS.forEach(v => { v.started = false; v.done = false; v.paid = null; v.cancelled = false; v.devisFlag = false; });
 })();
+/* 28/09 démo : une note interne sur le 2ᵉ passage d'Awa Diallo, pour montrer
+   où elle vit (bureau seulement). */
+try{
+  const dv = INTERVS.find(z => z.client === "Awa Diallo" && z.start === 15);
+  if(dv && !dv.inote){ dv.inote = "1ʳᵉ visite réglée avec 3 semaines de retard — le devis complémentaire passe par Jo avant envoi."; dv.inoteAt = "2026-09-24"; dv.inoteBy = "Jo"; }
+}catch(e){}
+try{
+  const K = "tigerflow-notes-" + encodeURIComponent("Sophie Larson");
+  if(!localStorage.getItem(K)) localStorage.setItem(K, JSON.stringify([{t:"18/09/2026 10:05", a:"Jo Jo", txt:"Toujours appeler avant de venir — ne pas facturer le déplacement (geste commercial validé)."}]));
+}catch(e){}
 /* démo devis en attente : les visites d'HIER concernées sont terminées —
    posé APRÈS iflowApply, qui remet tout le monde « à démarrer ». */
 try{
@@ -4882,6 +4904,76 @@ function rMail(id){
 }
 
 let REASS = false;
+/* 28/09 — note interne (bureau). Une seule note par intervention, horodatée,
+   jamais copiée vers le registre partagé de l'appli technicien. */
+const LOCK_SVG = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#8A93A3;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:2px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';
+let INEDIT = null;
+function fdate(d){ try{ const x = new Date(d + "T12:00:00"); return String(x.getDate()).padStart(2,"0") + "/" + String(x.getMonth()+1).padStart(2,"0"); }catch(e){ return d; } }
+function inoteHTML(v){
+  if(INEDIT === v.id) return `
+      <textarea id="inotearea" class="inotearea" rows="3" placeholder="Impayé, client difficile, devis à valider… ce que le client ne doit jamais lire">${v.inote || ""}</textarea>
+      <div style="display:flex;gap:8px;margin-top:9px;align-items:center">
+        <button class="dbig sec" style="flex:none;padding:9px 16px" onclick="saveINote(${v.id})">${LOCK_SVG} Enregistrer la note interne</button>
+        <button class="dbig sec" style="flex:none;padding:9px 14px" onclick="INEDIT=null;renderDetail()">Annuler</button>
+        <small style="font-size:.7rem;color:var(--muted);margin-left:auto">jamais sur le rapport client</small>
+      </div>`;
+  if(v.inote) return `
+      <div class="inote" title="Note interne — bureau seulement, jamais sur le rapport client">
+        ${LOCK_SVG}
+        <span class="it" onclick="editINote(${v.id})"><b>Note interne</b>${v.inote}</span>
+        <small>${v.inoteBy || "Bureau"} · ${fdate(v.inoteAt || iso(TODAYD))}</small>
+        <button class="dic" title="Modifier" onclick="editINote(${v.id})"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button>
+        <button class="dic del" title="Supprimer" onclick="delINote(${v.id})"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+      </div>`;
+  return `
+      <div class="inote empty">
+        <button class="ilink" title="Bureau seulement — jamais sur le rapport client" onclick="editINote(${v.id})"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg> + Note interne (bureau)</button>
+      </div>`;
+}
+/* 28/09 — la note interne posée sur la FICHE CLIENT (client.html, carte
+   « Notes internes », clé tigerflow-notes-<client>) remonte en gris sur chacune
+   de ses interventions. Lecture seule ici : la source, c'est la fiche client. */
+function cnotes(v){
+  try{
+    const arr = JSON.parse(localStorage.getItem("tigerflow-notes-" + encodeURIComponent(v.client || "")));
+    return Array.isArray(arr) ? arr.filter(n => n && n.txt) : [];
+  }catch(e){ return []; }
+}
+function cnoteHTML(v){
+  const L = cnotes(v); if(!L.length) return "";
+  const n = L[0];
+  return `
+      <div class="inote cli" title="Note interne posée sur la fiche client — visible sur toutes ses interventions, jamais par le client">
+        ${LOCK_SVG}
+        <span class="it"><b>Note interne · client</b>${n.txt}</span>
+        <small>${(n.a || "Bureau").split(" ")[0]} · ${(n.t || "").slice(0,5)}${L.length > 1 ? " · +" + (L.length - 1) : ""}</small>
+        <a class="dic" href="client.html?c=${encodeURIComponent(v.client || "")}" title="Voir la fiche client">→</a>
+      </div>`;
+}
+function editINote(id){
+  INEDIT = id; NEDIT = null; renderDetail();
+  setTimeout(() => { const t = document.getElementById("inotearea"); if(t){ t.focus(); t.selectionStart = t.value.length; } }, 40);
+}
+function inoteSet(id, val){
+  const v = INTERVS.find(x => x.id === id); if(!v) return;
+  v.inote = (val || "").trim(); v.inoteAt = iso(TODAYD); v.inoteBy = "Jo";
+  iflowSave(v);
+}
+function saveINote(id){
+  const v = INTERVS.find(x => x.id === id);
+  const t = document.getElementById("inotearea");
+  if(!v || !t) return;
+  inoteSet(id, t.value);
+  INEDIT = null; renderDetail(); render();
+  toast(v.inote ? "🔒 Note interne enregistrée — bureau seulement" : "Note interne vidée");
+}
+function delINote(id){
+  const v = INTERVS.find(x => x.id === id);
+  if(!v || !v.inote) return;
+  const old = v.inote, oa = v.inoteAt, ob = v.inoteBy;
+  v.inote = ""; iflowSave(v); renderDetail(); render();
+  toast("Note interne supprimée", () => { v.inote = old; v.inoteAt = oa; v.inoteBy = ob; iflowSave(v); renderDetail(); render(); });
+}
 let NEDIT = null;
 function editNote(id){
   NEDIT = id; renderDetail();
@@ -6936,6 +7028,23 @@ a[href*="wa.me"]:focus-visible, [title="WhatsApp"]:focus-visible{ outline:2px so
 .cdc small.ko{color:#B3261E}
 .cdin{border:1.5px solid var(--line);border-radius:10px;padding:7px 10px;font:700 .76rem Inter,sans-serif;color:var(--ink);outline:none;background:#fff;font-family:inherit}
 .cdin:focus{border-color:var(--orange)}
+/* 28/09 (patron : « note pour le bureau, discrète mais visible ») — la note
+   interne vit sous la note technicien, en gris avec un cadenas : une ligne,
+   jamais sur le rapport client, jamais dans l'appli technicien. */
+.inote{margin-top:9px;display:flex;align-items:center;gap:8px;background:#F3F4F7;border:1px solid #E6E8EE;border-radius:10px;padding:7px 11px;font-size:.76rem;color:var(--ink-2);min-width:0}
+.inote svg{width:13px;height:13px;stroke:#8A93A3;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.inote .it{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.inote .it b{color:#6B7280;font-weight:800;font-size:.7rem;margin-right:7px}
+.inote.cli{background:#F7F8FA;border-style:dashed}
+.inote a.dic{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;color:var(--muted)}
+.inote small{color:var(--muted);flex:none;font-size:.66rem;font-weight:600}
+.inote .dic{width:24px;height:24px;flex:none}
+.inote.empty{background:transparent;border-color:transparent;padding:4px 2px 0;justify-content:flex-end;margin-top:6px}
+.ilink{background:none;border:0;color:var(--muted);font:600 .74rem Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:0}
+.ilink svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ilink:hover{color:var(--ink-2)}
+.inotearea{width:100%;border:1.5px solid #C9CED6;border-radius:11px;padding:11px 13px;font:600 .84rem Inter,sans-serif;background:#F7F8FA;outline:none;resize:vertical;box-sizing:border-box;margin-top:9px}
+.inotearea:focus{border-color:#8A93A3}
 .cdnote{margin-top:16px;background:#F8F9FB;border-radius:12px;padding:9px 13px;font-size:.72rem;font-weight:600;color:var(--ink-2)}
 .cdgo{display:flex;gap:9px;margin-top:12px}
 .cdgo .go{flex:1;border:0;cursor:pointer;background:var(--orange);color:#fff;font-size:.82rem;font-weight:800;font-family:inherit;border-radius:12px;padding:13px;box-shadow:0 10px 22px -10px rgba(240,78,10,.55);transition:.12s}
