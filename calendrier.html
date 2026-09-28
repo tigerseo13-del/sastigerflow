@@ -3821,7 +3821,7 @@ function renderDetail(){
             <span style="font-size:.8rem;color:var(--muted);font-weight:600">Aucune note pour cette intervention</span>
             <button class="dre" onclick="editNote(${v.id})">+ Ajouter une note</button>
           </div>`}
-      ${inoteHTML(v)}${cnoteHTML(v)}
+      ${niOn() ? inoteHTML(v) + cnoteHTML(v) : ""}
     </div>
     <div class="dcard">
       <div class="dh">Technicien <button class="dre" onclick="togReass()">${REASS ? "Annuler" : "✎ Réassigner"}</button></div>
@@ -3859,7 +3859,7 @@ function renderDetail(){
         oninput="INTERVS.find(x=>x.id===${v.id}).note=this.value">${v.note}</textarea>
       <small style="font-size:.72rem;color:var(--muted);display:block;margin-top:7px">💾 Enregistrée automatiquement — le technicien la voit sur son appli</small>
     </div>
-    <div class="dcard">
+    ${niOn() ? `<div class="dcard">
       <div class="dh">${LOCK_SVG} Note interne · bureau</div>
       <textarea rows="4" class="inotearea" style="margin-top:0" placeholder="Impayé, client difficile, devis à valider… ce que le client ne doit jamais lire"
         oninput="inoteSet(${v.id}, this.value)">${v.inote || ""}</textarea>
@@ -3869,7 +3869,7 @@ function renderDetail(){
       <div class="dh">${LOCK_SVG} Note interne · client <a class="dre" style="text-decoration:none" href="client.html?c=${encodeURIComponent(v.client || "")}">Fiche client →</a></div>
       ${cnotes(v).map(n => `<div class="inote cli" style="margin-top:7px;white-space:normal"><span class="it" style="white-space:normal">${n.txt}</span><small>${n.a || "Bureau"} · ${n.t || ""}</small></div>`).join("")}
       <small style="font-size:.72rem;color:var(--muted);display:block;margin-top:7px">Posée sur la fiche client, elle suit toutes ses interventions. Se modifie depuis la fiche client.</small>
-    </div>` : ""}`;
+    </div>` : ""}` : ""}`;
   }
   else if(DTAB === "pj"){
     const FILES = pjFiles(v);
@@ -4055,7 +4055,7 @@ function renderDetail(){
           const nPJ = pjFiles(v).length;
           const rapOK = typeof REPORTS !== "undefined" && REPORTS[v.id];
           const BADGE = {
-            not: (v.note || v.inote || cnotes(v).length) ? '<i class="tbdot"></i>' : "",
+            not: (v.note || (niOn() && (v.inote || cnotes(v).length))) ? '<i class="tbdot"></i>' : "",
             pj:  nPJ ? `<span class="tbn">${nPJ}</span>` : "",
             rap: rapOK ? '<span class="tbok">✓</span>' : ""
           };
@@ -4933,6 +4933,9 @@ function inoteHTML(v){
 /* 28/09 — la note interne posée sur la FICHE CLIENT (client.html, carte
    « Notes internes », clé tigerflow-notes-<client>) remonte en gris sur chacune
    de ses interventions. Lecture seule ici : la source, c'est la fiche client. */
+/* 28/09 — réglage V2 « Note interne » (Réglages › Fonctions bêta › Version 2),
+   ÉTEINT par défaut : sans lui, la fiche ne montre que la note technicien. */
+function niOn(){ try{ return localStorage.getItem("tigerflow-beta-note-interne") === "1"; }catch(e){ return false; } }
 function cnotes(v){
   try{
     const arr = JSON.parse(localStorage.getItem("tigerflow-notes-" + encodeURIComponent(v.client || "")));
