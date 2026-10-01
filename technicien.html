@@ -118,7 +118,12 @@ textarea{resize:vertical;min-height:64px}
 .rl-tech{background:#F0F1F5;color:var(--ink-2)}
 .rl-mixte{background:var(--orange-soft);color:var(--orange-deep)}
 .st-dispo{background:var(--green-bg);color:var(--green-d)}
-.st-conge{background:#EEF0F4;color:var(--muted)}
+.st-conge{background:var(--amber-bg);color:var(--amber)}
+.st-off{background:#EEF0F4;color:var(--muted)}
+/* 01/10 (patron) : le congé se lit dans la colonne du tech, pas seulement dans Planning */
+.congeleft{background:var(--amber-bg);color:var(--amber);border-radius:10px;padding:9px 12px;text-align:left;font-size:.8rem;font-weight:800;display:flex;gap:9px;align-items:flex-start;line-height:1.35}
+.congeleft svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:1px}
+.congeleft small{display:block;font-weight:600;opacity:.85;margin-top:2px}
 .gC{display:grid;grid-template-columns:344px minmax(0,1fr);gap:22px;align-items:start}
 @media(max-width:1080px){.gC{grid-template-columns:1fr}}
 .g2i{display:grid;grid-template-columns:1fr 1fr;gap:22px}
@@ -1085,8 +1090,8 @@ function profil(){
   if(T.photo){ sav.style.backgroundImage = "url(" + T.photo + ")"; sav.textContent = ""; }
   else { sav.textContent = ini(T); sav.style.background = T.grad || "linear-gradient(135deg,#5B82F0,#2148C0)"; }
   g("s-nom").textContent = NAME;
-  const stC = {dispo:"st-dispo", interv:"st-dispo", conge:"st-conge"}[T.dispo] || "st-conge";
-  const stT = {dispo:"Actif", interv:"Actif", conge:"Inactif"}[T.dispo] || "—";
+  const stC = {dispo:"st-dispo", interv:"st-dispo", conge:"st-conge", off:"st-off"}[T.dispo] || "st-off";
+  const stT = {dispo:"Actif", interv:"Actif", conge:"En congé", off:"Inactif"}[T.dispo] || "Inactif";
   const rl = ROLE_LIB[roleOf()];
   g("s-badge").innerHTML = '<span class="stbadge ' + stC + '">' + (T.dispo === "conge" ? "" : '<span class="dotp"></span>') + stT + '</span>'
     + '<span class="rolebadge ' + rl.c + '" title="Ce qu\'il prend dans l\'agenda">' + rl.i + rl.n + '</span>';
@@ -1467,11 +1472,32 @@ function delTech(e){
 }
 
 /* ================= CONGÉS ================= */
+/* 01/10 (patron) : « quand tu mets le tech en congé, affiche-le dans sa colonne ».
+   Dates + jour de retour (le 1er jour ouvré après le Au), juste au-dessus du bouton. */
+const JSEM = ["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+function congeRetour(au){
+  if(!au) return "";
+  const d = new Date(au + "T12:00:00"); if(isNaN(d)) return "";
+  d.setDate(d.getDate() + 1);
+  while(d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  const dd = String(d.getDate()).padStart(2, "0"), mm = String(d.getMonth() + 1).padStart(2, "0");
+  return JSEM[d.getDay()] + " " + dd + "/" + mm;
+}
+function congeLeftHTML(){
+  let c = null;
+  try{ c = (JSON.parse(localStorage.getItem("tigerflow-techs-statut")) || {})[NAME] || null; }catch(e){}
+  const ico = '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+  if(c && c.du && c.au){
+    const r = congeRetour(c.au);
+    return '<div class="congeleft">' + ico + '<span>En congé du ' + fdz(c.du) + ' au ' + fdz(c.au) + (r ? '<small>Retour ' + r + '</small>' : "") + '</span></div>';
+  }
+  return '<div class="congeleft">' + ico + '<span>' + (T.dispoD || "En congé") + '</span></div>';
+}
 function congeRender(){
   const box = g("congebox");
   if(!box) return;
   box.innerHTML = T.dispo === "conge"
-    ? '<button class="btn2" style="width:100%;justify-content:center" onclick="congeClear()">✕ Annuler le congé</button>'
+    ? congeLeftHTML() + '<button class="btn2" style="width:100%;justify-content:center;margin-top:9px" onclick="congeClear()">✕ Annuler le congé</button>'
     : '<button class="btn2 congebox-svg" style="width:100%;justify-content:center" onclick="congeForm()"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4"/></svg> Poser un congé</button>';
 }
 function congeForm(){
