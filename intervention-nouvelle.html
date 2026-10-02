@@ -467,6 +467,7 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
 .recfin input[type="date"]{max-width:190px}
 .recfin input[type="number"]{max-width:90px}
 .recfin small{font-size:.76rem;font-weight:600;color:var(--muted)}
+.rechint{font-size:.74rem;color:var(--muted);margin:6px 0 2px}
 .recsum{margin-top:11px;background:color-mix(in srgb,#10B981 9%,#fff);border-radius:10px;padding:9px 12px;font-size:.78rem;font-weight:600;color:var(--green-d)}
 .recsum:empty{display:none}
 .recoff{margin-top:9px;border:0;background:none;font-size:.74rem;font-weight:600;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:2px}
@@ -804,13 +805,18 @@ html{overflow-y:scroll;scrollbar-gutter:stable}
             <span class="chip" onclick="recDay(this,'lun')">Lun</span><span class="chip" onclick="recDay(this,'mar')">Mar</span><span class="chip" onclick="recDay(this,'mer')">Mer</span><span class="chip" onclick="recDay(this,'jeu')">Jeu</span><span class="chip" onclick="recDay(this,'ven')">Ven</span><span class="chip" onclick="recDay(this,'sam')">Sam</span><span class="chip" onclick="recDay(this,'dim')">Dim</span>
           </div>
         </div>
-        <div class="reclbl">Jusqu'à</div>
+        <!-- 02/10 (patron) : « ou après Nb passages — facultatif » se lisait mal.
+             On écrit la condition d'arrêt comme une phrase, et « facultatif »
+             devient une vraie explication : rien d'indiqué = jusqu'à nouvel ordre. -->
+        <div class="reclbl">S'arrête</div>
         <div class="recfin">
+          <small>le</small>
           <input type="date" id="rec-fin" onchange="recDraw()" aria-label="Date de fin">
           <small>ou après</small>
           <input type="number" id="rec-nb" min="2" max="52" placeholder="Nb" oninput="recDraw()" aria-label="Nombre de passages">
-          <small>passages — facultatif</small>
+          <small>passages</small>
         </div>
+        <div class="rechint">Rien d'indiqué : se répète jusqu'à nouvel ordre.</div>
         <div class="recsum" id="rec-sum"></div>
         <button type="button" class="recoff" onclick="recReset()">✕ Ne pas répéter</button>
       </div>
@@ -1332,6 +1338,7 @@ function recTxt(){
   if(RECUR.days.size && /semaines/.test(RECUR.freq)) t += " le " + [...RECUR.days].join(", ");
   if(RECUR.fin) t += " — jusqu'au " + RECUR.fin.split("-").reverse().join("/");
   else if(RECUR.nb) t += " — " + RECUR.nb + " passages";
+  else t += " — jusqu'à nouvel ordre";
   return t[0].toUpperCase() + t.slice(1);
 }
 function recDraw(){
