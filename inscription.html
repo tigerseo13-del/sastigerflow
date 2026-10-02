@@ -279,7 +279,7 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
       <div class="ferr" id="err-email">Une adresse e-mail valide est requise.</div></div>
     <div class="row2">
       <div class="fld" id="f-pass"><label for="pass">Mot de passe</label>
-        <div class="pwrap"><input type="password" id="pass" autocomplete="new-password" placeholder="8 caractères minimum" oninput="fldOk('pass')">
+        <div class="pwrap"><input type="password" id="pass" autocomplete="new-password" placeholder="8 caractères minimum · facultatif pour la maquette" oninput="fldOk('pass')">
         <button type="button" class="oeil" onclick="voir('pass')" aria-label="Afficher"><svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button></div>
         <div class="ferr">8 caractères minimum, dont un chiffre.</div></div>
       <div class="fld" id="f-pass2"><label for="pass2">Confirmer le mot de passe</label>
@@ -587,37 +587,25 @@ function paysChange(){
 }
 
 async function submitCompte(){
-  let stop = false;
+  /* 02/10 (patron : « faut qu'on puisse valider sans vraiment s'inscrire,
+     mot de passe facultatif, on peut quand même faire Suivant ») — MAQUETTE :
+     rien ne bloque. Les champs vides sont remplis avec une société d'exemple,
+     et Supabase n'est appelé que si e-mail ET mot de passe sont saisis — sans
+     jamais arrêter le parcours (compte déjà existant, hors ligne : on passe). */
   const p = val("pays"), manual = document.getElementById("manual").classList.contains("on");
-  if(!SOC && !manual){ fldKo("soc"); stop = true; }
-  if(manual && !val("m-nom")){ fldKo("m-nom"); stop = true; }
-  const email = val("email"), pass = document.getElementById("pass").value, pass2 = document.getElementById("pass2").value;
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ document.getElementById("err-email").textContent = "Une adresse e-mail valide est requise."; fldKo("email"); stop = true; }
-  if(pass.length < 8 || !/\d/.test(pass)){ fldKo("pass"); stop = true; }
-  else if(pass !== pass2){ fldKo("pass2"); stop = true; }
-  if(!document.getElementById("cgu-c").checked){ document.getElementById("cgu").classList.add("ko"); stop = true; }
-  if(stop) return;
-
-  const soc = SOC ? Object.assign({}, SOC) : { nom: val("m-nom"), adresse: val("m-adr"), cp: val("m-cp"), ville: val("m-ville"),
+  let email = val("email"); if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) email = "demo@exemple.fr";
+  const pass = document.getElementById("pass").value;
+  let soc = SOC ? Object.assign({}, SOC) : { nom: val("m-nom"), adresse: val("m-adr"), cp: val("m-cp"), ville: val("m-ville"),
     siret: p === "FR" ? val("m-id").replace(/\s/g, "") : "", ident: p === "FR" ? "" : val("m-id"), forme: "", tva: "" };
-  if(!SOC && soc.siret.length === 14) soc.tva = tvaFR(soc.siret.slice(0, 9));
+  if(!soc.nom) soc = { nom:"Dératek Lyon", adresse:"14 rue Garibaldi", cp:"69006", ville:"Lyon", siret:"83920451200018", forme:"SARL", tva:"", ident:"" };
+  if(!soc.tva && soc.siret && soc.siret.length === 14) soc.tva = tvaFR(soc.siret.slice(0, 9));
   soc.pays = p;
   T = Object.assign(T, { soc, email, pays: p, debut: T.debut || new Date().toISOString(), etape: "email" });
   SOC = soc; tSave();
-
   const b = document.getElementById("go-compte"); b.disabled = true; b.firstChild.textContent = "Un instant… ";
-  /* Cahier 12 + 15 + 61 : l'e-mail inscrit devient le premier administrateur.
-     Supabase crée l'utilisateur et envoie le lien de confirmation ; la
-     société voyage dans les métadonnées, la base la rattachera (étape suivante). */
-  if(SB){
-    try{
-      const {error} = await SB.auth.signUp({ email, password: pass, options: {
-        data: { role: "admin", societe: soc.nom, siret: soc.siret || soc.ident || "", pays: p },
-        emailRedirectTo: location.href.split("#")[0] + "#formule" } });
-      if(error){
-        if(/already registered/i.test(error.message)){ document.getElementById("err-email").innerHTML = 'Ce compte existe déjà. <a href="connexion.html" style="color:inherit">Se connecter</a>'; fldKo("email"); b.disabled = false; b.firstChild.textContent = "Créer mon compte "; return; }
-      }
-    }catch(e){ /* hors ligne : la maquette continue */ }
+  if(SB && val("email") && pass.length >= 8){
+    try{ await SB.auth.signUp({ email, password: pass, options: { data: { role: "admin", societe: soc.nom, siret: soc.siret || soc.ident || "", pays: p },
+      emailRedirectTo: location.href.split("#")[0] + "#formule" } }); }catch(e){}
   }
   b.disabled = false; b.firstChild.textContent = "Créer mon compte ";
   go("email");
@@ -767,6 +755,9 @@ function todoDone(k){ T.checklist = T.checklist || {}; T.checklist[k] = true; tS
 
 /* ── au chargement : on reprend là où on en était ── */
 (function init(){
+  /* 02/10 (patron : « faut qu'on arrive sur la première page, tout le parcours »)
+     Arriver sur inscription.html SANS ancre = repartir de zéro. */
+  if(!location.hash){ try{ localStorage.removeItem(TKEY); }catch(e){} T = {}; SOC = null; N = 1; BILL = "m"; PROMO = null; }
   if(T.email) document.getElementById("email").value = T.email;
   if(T.pays){ document.getElementById("pays").value = T.pays; if(T.pays !== "FR") paysChange(); }
   if(SOC && SOC.siren) socShow();
