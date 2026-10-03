@@ -354,6 +354,9 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .ov.on{display:grid}
 .modal{background:#fff;border-radius:18px;width:min(460px,100%);padding:22px;box-shadow:0 30px 70px -30px rgba(0,0,0,.5)}
 .modal h3{font-family:'Sora';font-size:1.08rem}
+.recap{border:1px solid var(--line);border-radius:12px;padding:2px 14px 0;margin:2px 0 14px;font-size:.84rem;overflow:hidden}
+.recap .kv small{display:block;color:var(--muted);font-size:.74rem;margin-top:1px}.recap .kv span{color:var(--ink2)}.recap .kv b{white-space:nowrap;flex:none}
+.recap .tot{background:var(--bg);margin:0 -14px;padding:10px 14px;border:0}.recap .tot span{color:var(--ink);font-weight:700}
 .rsel{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .fld .rsel label{margin:0;font-size:inherit;color:inherit;display:flex;gap:9px;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;padding:10px 11px;cursor:pointer}
 .fld .rsel input{width:auto;padding:0;border:0;accent-color:#10B981;margin-top:3px;flex:none}
@@ -628,7 +631,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 <!-- fenêtres -->
 <div class="ov" id="ov-inv" onclick="if(event.target===this)closeOv()"><div class="modal">
   <h3>Inviter un utilisateur</h3><p>Il reçoit un e-mail pour créer son mot de passe. Un technicien installe ensuite l'appli mobile.</p>
-  <div class="fld"><label>Prénom et nom</label><input id="i-nom" placeholder="Ex : Karim Benali"></div>
+  <div class="fld"><label>Prénom et nom</label><input id="i-nom" placeholder="Ex : Karim Benali" oninput="inviteRecap()"></div>
   <div class="fld"><label>Adresse e-mail</label><input id="i-mail" type="email" placeholder="karim@votre-societe.fr"></div>
   <div class="fld"><label>Rôle</label>
     <div class="rsel" id="i-role">
@@ -637,6 +640,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
       <label><input type="radio" name="irole" value="Polyvalent"><span><b>Polyvalent</b><small>Bureau + appli mobile</small></span></label>
       <label><input type="radio" name="irole" value="Administrateur"><span><b>Administrateur</b><small>Tout, y compris cet espace société</small></span></label>
     </div></div>
+  <div class="recap" id="i-recap"></div>
   <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><button class="btn o" onclick="sendInvite()">Envoyer l'invitation</button></div>
 </div></div>
 <div class="ov" id="ov-rm" onclick="if(event.target===this)closeOv()"><div class="modal">
@@ -883,7 +887,21 @@ function removeU(i){ const u0 = S.users[i]; if(u0.st === "invite"){ S.users.spli
 function removeU2(i){ const u = S.users[i]; u.st = "inactif"; u.last = "Désactivé le " + fdate(new Date()); save(); log("Utilisateur désactivé", u.nom || u.mail); toast((u.nom || u.mail) + " n'a plus accès"); drawAll(); }
 function reactU(i){ const u = S.users[i]; u.st = "actif"; u.last = "Réactivé aujourd'hui"; save(); log("Utilisateur réactivé", u.nom || u.mail); toast((u.nom || u.mail) + " a de nouveau accès"); drawAll(); }
 function openInvite(){ ["i-nom","i-mail"].forEach(id => document.getElementById(id).value = ""); document.querySelector('#i-role input[value="Technicien"]').checked = true;
-  openOv("ov-inv"); }
+  inviteRecap(); openOv("ov-inv"); }
+/* 03/10 patron (réf. Costructor) : dire le prix avant d'envoyer. Cahier : prorata sur la prochaine facture, rien de débité au clic, la place compte quand la personne accepte. */
+function inviteRecap(){
+  const n = nbU(), t = tr(), n2 = n + 1, t2 = tr(n2), who = (document.getElementById("i-nom").value.trim().split(" ")[0]) || "cette personne";
+  const per = x => x[S.bill], unit = S.bill === "a" ? "an" : "mois", mult = S.bill === "a" ? 12 : 1;
+  const now = n * per(t) * mult, after = n2 * per(t2) * mult;
+  const nx = nextDate(), today = new Date(), days = Math.max(1, Math.round((nx - today) / 864e5)), period = S.bill === "a" ? 365 : 30;
+  const pro = Math.round(((after - now) * days / period) * 100) / 100;
+  const chg = t2 !== t ? " · toute l'équipe passe en tranche " + t2.lab : " · tranche " + t2.lab;
+  let h = '<div class="kv"><span>Aujourd\'hui<small>' + n + ' utilisateur' + (n > 1 ? 's' : '') + ' × ' + per(t) + ' €</small></span><b>' + eur0(now) + ' HT / ' + unit + '</b></div>' +
+    '<div class="kv"><span>Dès que ' + esc(who) + ' accepte<small>' + n2 + ' utilisateurs × ' + per(t2) + ' €' + chg + '</small></span><b>' + eur0(after) + ' HT / ' + unit + '</b></div>';
+  h += enEssai() ? '<div class="kv tot"><span>Pendant l\'essai<small>Gratuit jusqu\'au ' + fdate(nx) + ', puis ' + eur0(after) + ' HT / ' + unit + '</small></span><b>0 €</b></div>'
+    : '<div class="kv tot"><span>Sur votre prochaine facture<small>prorata jusqu\'au ' + fdate(nx) + ' · rien n\'est débité aujourd\'hui</small></span><b>+ ' + eur(pro) + ' HT</b></div>';
+  document.getElementById("i-recap").innerHTML = h;
+}
 function sendInvite(){
   const m = document.getElementById("i-mail").value.trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){ document.getElementById("i-mail").style.borderColor = "var(--red)"; return; }
