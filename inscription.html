@@ -26,7 +26,8 @@ html{font-size:15px}
 body{font-family:'Inter',sans-serif;color:var(--ink);min-height:100vh;min-height:100dvh;background:#F4F5F8;-webkit-font-smoothing:antialiased}
 button,input,select{font-family:inherit;font-size:inherit;color:inherit}
 svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.step{display:none}.step.on{display:block}
+.step{display:none}.step.on{display:block;animation:stepin .22s ease-out}
+@keyframes stepin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 /* ── étapes 1-2 : la carte scindée de connexion.html ── */
 .solo{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:26px 16px;
@@ -57,9 +58,14 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
 .fld.ko .ferr{display:block}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .row3{display:grid;grid-template-columns:130px 1fr;gap:12px}
+.pwm{display:none;align-items:center;gap:5px;margin-top:7px}.pwm.on{display:flex}
+.pwm i{width:34px;height:4px;border-radius:3px;background:#E4E6EC}.pwm span{font-size:.7rem;font-weight:700;color:var(--muted);margin-left:4px}
+.pwm.l1 i:nth-child(1){background:var(--red)}.pwm.l2 i:nth-child(-n+2){background:#D99A1B}.pwm.l3 i{background:var(--green)}
 .pwrap{position:relative}.pwrap input{padding-right:42px}
 .oeil{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer;color:var(--muted);padding:5px;display:flex}
 .hint{font-size:.72rem;color:var(--muted);margin-top:5px}
+.lblrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}.lblrow label{margin:0}
+select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-radius:99px;padding:3px 8px;font-size:.72rem;font-weight:700;color:var(--ink2)}
 .subline{display:none;align-items:center;gap:9px;font-size:.82rem;color:var(--ink2);background:#F6F7F9;border-radius:9px;padding:9px 12px}
 .subline.on{display:flex}.subline .lnk{margin-left:auto}
 .subedit{display:none}.subedit.on{display:block}
@@ -280,13 +286,8 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
     <h1>Créer le compte de l'entreprise</h1>
     <p class="sub">Vous serez l'administrateur. Vos techniciens recevront leur propre accès ensuite.</p>
 
-    <div class="fld" id="f-pays"><label for="pays">Pays</label>
-      <select id="pays" onchange="paysChange()">
-        <option value="FR">France</option><option value="BE">Belgique</option><option value="CH">Suisse</option>
-      </select></div>
-
     <!-- recherche dans l'annuaire public (France) -->
-    <div class="fld" id="f-soc"><label for="soc">Votre société</label>
+    <div class="fld" id="f-soc"><div class="lblrow"><label for="soc">Votre société</label><select id="pays" class="mini" onchange="paysChange()" title="Pays"><option value="FR">🇫🇷 France</option><option value="BE">🇧🇪 Belgique</option><option value="CH">🇨🇭 Suisse</option></select></div>
       <input id="soc" autocomplete="off" placeholder="Nom de la société ou numéro SIRET" oninput="socSearch()" onkeydown="socKey(event)">
       <div class="sres" id="sres"></div>
       <div class="ferr">Choisissez votre société dans la liste, ou saisissez-la à la main.</div>
@@ -295,11 +296,11 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
     <div class="socok" id="socok">
       <div class="ck"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg></div>
       <div><b id="ok-nom"></b><small id="ok-det"></small></div>
-      <button class="chg" type="button" onclick="socReset()">Changer</button>
+      <span class="lblrow-ok" style="margin-left:auto;display:flex;gap:8px;align-items:center"><button class="chg" type="button" onclick="socReset()" style="margin:0">Changer</button></span>
     </div>
     <!-- saisie à la main (pas trouvée, Belgique, Suisse) -->
     <div class="manual" id="manual">
-      <div class="fld" id="f-m-nom"><label for="m-nom">Nom de la société</label><input id="m-nom" placeholder="Ex : Dératek Lyon" oninput="fldOk('m-nom')"><div class="ferr">Le nom de la société est requis.</div></div>
+      <div class="fld" id="f-m-nom"><div class="lblrow lblrow-m"><label for="m-nom">Nom de la société</label></div><input id="m-nom" placeholder="Ex : Dératek Lyon" oninput="fldOk('m-nom')"><div class="ferr">Le nom de la société est requis.</div></div>
       <div class="fld"><label for="m-adr">Adresse</label><input id="m-adr" placeholder="N° et rue"></div>
       <div class="row3"><div class="fld"><label for="m-cp">Code postal</label><input id="m-cp" placeholder="69006"></div>
         <div class="fld"><label for="m-ville">Ville</label><input id="m-ville" placeholder="Lyon"></div></div>
@@ -331,8 +332,9 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
       <input type="email" id="email" autocomplete="email" placeholder="vous@votre-societe.fr" oninput="fldOk('email')">
       <div class="ferr" id="err-email">Une adresse e-mail valide est requise.</div></div>
     <div class="fld" id="f-pass"><label for="pass">Mot de passe <span style="font-weight:500;color:var(--muted)">· 8 caractères minimum</span></label>
-      <div class="pwrap"><input type="password" id="pass" autocomplete="new-password" placeholder="Choisissez-le, vous pourrez le changer" oninput="fldOk('pass')">
+      <div class="pwrap"><input type="password" id="pass" autocomplete="new-password" placeholder="Choisissez-le, vous pourrez le changer" oninput="fldOk('pass');pwMeter(this.value)">
       <button type="button" class="oeil" onclick="voir('pass')" aria-label="Afficher"><svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button></div>
+      <div class="pwm" id="pwm"><i></i><i></i><i></i><span id="pwm-t"></span></div>
       <div class="ferr">8 caractères minimum, dont un chiffre.</div></div>
     <label class="cgu" id="cgu"><input type="checkbox" id="cgu-c" onchange="document.getElementById('cgu').classList.remove('ko')">
       <span>J'accepte les <a href="#" onclick="return false">conditions générales</a> et la <a href="#" onclick="return false">politique de confidentialité</a></span></label>
@@ -577,6 +579,7 @@ document.addEventListener("keydown", e => { if(e.key !== "Enter" || /textarea/i.
 function fldKo(id){ const f = document.getElementById("f-" + id); if(f) f.classList.add("ko"); }
 function fldOk(id){ const f = document.getElementById("f-" + id); if(f) f.classList.remove("ko"); }
 function val(id){ const e = document.getElementById(id); return e ? e.value.trim() : ""; }
+function pwMeter(v){ const m = document.getElementById("pwm"); if(!v){ m.className = "pwm"; return; } let n = 0; if(v.length >= 8) n++; if(/\d/.test(v) && /[a-zA-Z]/.test(v)) n++; if(v.length >= 12 || /[^a-zA-Z0-9]/.test(v)) n++; m.className = "pwm on l" + Math.max(1, n); document.getElementById("pwm-t").textContent = ["", "Trop court", "Correct", "Solide"][Math.max(1, n)]; }
 function voir(id){ const p = document.getElementById(id); p.type = p.type === "password" ? "text" : "password"; p.focus(); }
 function say(box, txt, cls){ const m = document.getElementById(box); m.textContent = txt; m.className = "msg" + (cls ? " " + cls : ""); }
 function toast(t){ const e = document.getElementById("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove("on"), 2400); }
@@ -592,6 +595,7 @@ function socSearch(){
   fldOk("soc"); clearTimeout(sT);
   const q = val("soc"); const box = document.getElementById("sres");
   if(q.length < 3){ box.classList.remove("on"); return; }
+  box.innerHTML = '<div class="none">Recherche dans l\'annuaire…</div>'; box.classList.add("on");
   sT = setTimeout(async () => {
     try{
       const r = await fetch("https://recherche-entreprises.api.gouv.fr/search?per_page=6&q=" + encodeURIComponent(q));
@@ -627,7 +631,7 @@ function fsiret(s){ s = String(s || ""); return s.length === 14 ? s.slice(0,3) +
 function socPick(i){
   SOC = sHits[i]; SOC.tva = tvaFR(SOC.siren);
   document.getElementById("sres").classList.remove("on");
-  socShow();
+  socShow(); setTimeout(() => document.getElementById("email").focus(), 50);
 }
 const SUB_PRIS = ["demo","test","admin","tigerflow","app","www","mail","api"];
 function slug(t){ return (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30); }
@@ -650,19 +654,21 @@ function subFrom(nom){ const e = document.getElementById("sub"); if(!e.value && 
   document.getElementById("sub-prev").textContent = e.value || "—"; document.getElementById("subline").classList.toggle("on", !!e.value && !document.getElementById("subedit").classList.contains("on")); }
 function subEdit(){ document.getElementById("subline").classList.remove("on"); document.getElementById("subedit").classList.add("on"); document.getElementById("sub").focus(); }
 function metiers(){ return [...document.querySelectorAll("#chips input:checked")].map(i => i.value); }
+function paysTo(sel){ const e = document.getElementById("pays"), h = document.querySelector(sel); if(h && e.parentElement !== h) h.insertBefore(e, h.firstChild); }
 function socShow(){
-  if(!SOC) return; subFrom(SOC.nom);
+  if(!SOC) return; subFrom(SOC.nom); paysTo("#socok .lblrow-ok");
   document.getElementById("f-soc").style.display = "none";
   document.getElementById("ok-nom").textContent = SOC.nom;
   document.getElementById("ok-det").innerHTML = esc(SOC.adresse) + ", " + esc(SOC.cp + " " + SOC.ville) + "<br>SIRET " + fsiret(SOC.siret) + " · TVA " + esc(SOC.tva) + (SOC.forme ? " · " + esc(SOC.forme) : "");
   document.getElementById("socok").classList.add("on");
 }
 function socReset(){
-  SOC = null; document.getElementById("sub").value = ""; document.getElementById("subline").classList.remove("on"); document.getElementById("socok").classList.remove("on");
+  SOC = null; paysTo("#f-soc .lblrow"); document.getElementById("sub").value = ""; document.getElementById("subline").classList.remove("on"); document.getElementById("socok").classList.remove("on");
   document.getElementById("f-soc").style.display = ""; const s = document.getElementById("soc"); s.value = ""; s.focus();
 }
 function manualOn(){
   document.getElementById("sres").classList.remove("on");
+  paysTo("#manual .lblrow-m");
   document.getElementById("m-nom").addEventListener("input", () => { document.getElementById("sub").value = ""; subFrom(val("m-nom")); });
   document.getElementById("f-soc").style.display = "none"; document.getElementById("socok").classList.remove("on"); SOC = null;
   document.getElementById("manual").classList.add("on");
@@ -671,6 +677,7 @@ function manualOn(){
 }
 function manualOff(){
   document.getElementById("manual").classList.remove("on");
+  paysTo("#f-soc .lblrow");
   document.getElementById("f-soc").style.display = "";
 }
 function paysChange(){
