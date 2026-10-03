@@ -527,6 +527,12 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
   <section class="sec" id="s-tenants">
     <div id="ten-list">
       <div class="ph"><div><h1>Clients</h1><p id="ten-sub">—</p></div></div>
+      <div class="kgrid">
+        <a class="kt blue" href="#tenants" onclick="setTF('all')"><div class="kl"><svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M2.5 21h19"/></svg>Clients</div><b id="t-k1">—</b><div class="ks" id="t-k1-ft">—</div></a>
+        <a class="kt green" href="#paiements"><div class="kl"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 6.5H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H6"/></svg>Chiffre d'affaires</div><b id="t-k2">—</b><div class="ks" id="t-k2-ft">—</div><span class="go">Voir →</span></a>
+        <a class="kt orange" href="#tenants" onclick="setTF('essai')"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Essais en cours</div><b id="t-k3">—</b><div class="ks" id="t-k3-ft">—</div><span class="go">Voir →</span></a>
+        <a class="kt red" href="#tenants" onclick="setTF('annule')"><div class="kl"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M14 7h7v7"/></svg>Taux de churn</div><b id="t-k4">—</b><div class="ks" id="t-k4-ft">—</div><span class="go">Voir →</span></a>
+      </div>
       <div class="card" style="padding:14px 16px">
         <div class="fbar">
           <label class="search" style="flex:1;max-width:360px"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="ten-q" placeholder="Nom, adresse d'espace, e-mail…" oninput="drawTenants()"></label>
@@ -803,6 +809,14 @@ let TF = "all";
 function setTF(k){ TF = k; drawTenants(); }
 function drawTenants(){
   const T = S.tenants, q = (document.getElementById("ten-q").value || "").trim().toLowerCase();
+  { const act = T.filter(t => t.st === "actif"), ess = T.filter(t => t.st === "essai"), ann = T.filter(t => t.st === "annule"), sus = T.filter(t => t.st === "suspendu");
+    const mrr = act.reduce((x, t) => x + seatCost(t.n, t.bill), 0), conv = T.filter(t => t.st !== "essai" && t.st !== "annule" && new Date(t.reg) > new Date("2026-08-01")).length;
+    const k = (i, v, f) => { document.getElementById("t-k" + i).textContent = v; document.getElementById("t-k" + i + "-ft").textContent = f; };
+    k(1, T.length, act.length + " actifs · " + sus.length + " suspendu" + (sus.length > 1 ? "s" : "") + " · " + act.reduce((x, t) => x + t.n, 0) + " places facturées");
+    k(2, eur0(mrr) + " HT / mois", eur0(mrr * 12) + " HT par an · " + (act.length ? eur0(Math.round(mrr / act.length)) : "—") + " par client en moyenne");
+    k(3, ess.length, ess.length ? ess.map(t => t.nom + " · fin le " + fdate(t.fin)).join(" · ") : "Aucun essai en cours");
+    const churn = T.length ? Math.round(ann.length / T.length * 100) : 0;
+    k(4, churn + " %", ann.length + " résilié" + (ann.length > 1 ? "s" : "") + " sur " + T.length + " · " + conv + " essais convertis depuis août"); }
   chips("ten-f", [["all","Tous " + T.length],["actif","Actifs " + T.filter(t => t.st === "actif").length],["essai","En essai " + T.filter(t => t.st === "essai").length],["suspendu","Suspendus " + T.filter(t => t.st === "suspendu").length],["annule","Annulés " + T.filter(t => t.st === "annule").length]], TF, "setTF");
   document.getElementById("ten-sub").textContent = T.length + " sociétés · " + T.filter(t => t.st === "actif").reduce((s, t) => s + t.n, 0) + " places facturées";
   const L = T.filter(t => (TF === "all" || t.st === TF) && (!q || (t.nom + " " + t.sub + " " + t.mail + " " + t.ville).toLowerCase().includes(q)));
