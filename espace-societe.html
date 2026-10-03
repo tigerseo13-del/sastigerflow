@@ -87,7 +87,15 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .pgico{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--orange-bg);color:var(--orange-deep);margin-right:9px;flex:none}
 .pgico svg{width:14px;height:14px}
 .tright{margin-left:auto;display:flex;align-items:center;gap:10px}
-.gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--muted);font-size:.82rem;width:300px}
+.gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--muted);font-size:.82rem;width:340px}
+.gswrap{position:relative}
+.gsres{display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 40px -18px rgba(23,26,32,.35);padding:6px;z-index:70;max-height:360px;overflow:auto}
+.gsres.on{display:block}
+.gsres a{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;font-size:.84rem;white-space:nowrap}.gsres a>span:nth-child(2){overflow:hidden;text-overflow:ellipsis}
+.gsres a:hover,.gsres a.cur{background:var(--bg)}
+.gsres a .k{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);width:72px;flex:none}
+.gsres a small{color:var(--muted);margin-left:auto;font-size:.74rem;white-space:nowrap}
+.gsres .none{padding:12px;font-size:.82rem;color:var(--muted)}
 .gsbtn input{border:0;outline:none;flex:1;background:none;font-size:.82rem}
 .gsbtn kbd{font-family:inherit;font-size:.68rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted)}
 .bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink2)}
@@ -417,7 +425,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
   <header class="topbar">
     <div class="crumbs"><span class="pgico" id="pg-ico"></span><span class="cur" id="pg-title">Tableau de bord</span></div>
     <div class="tright">
-      <label class="gsbtn"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input placeholder="Utilisateur, facture, demande…"><kbd>/</kbd></label>
+      <div class="gswrap"><label class="gsbtn"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gs" placeholder="Utilisateur, facture, demande…" autocomplete="off" oninput="gsDraw()" onfocus="gsDraw()" onkeydown="gsKey(event)"><kbd>/</kbd></label><div class="gsres" id="gsres"></div></div>
       <a class="bell" href="#aide" title="Aide"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.3-2.5 3.8M12 17.2h.01"/></svg></a>
       <a class="bell" href="#notifications" title="Notifications"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="dot" id="t-not">3</span></a>
     </div>
@@ -482,7 +490,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
   <!-- ═══ SOCIÉTÉ ═══ -->
   <section class="sec" id="s-societe">
     <div class="ph"><div><h1>Société</h1><p>Les informations de votre entreprise et vos préférences.</p></div>
-      <div class="act"><button class="btn o needwrite" onclick="saveSoc()"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Enregistrer</button></div></div>
+      <div class="act" id="soc-save"><button class="btn o needwrite" onclick="saveSoc()"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Enregistrer</button></div></div>
     <div class="tabs" data-tabs="soc">
       <button data-t="fiche" class="on" onclick="openTab('soc','fiche')"><svg class="i" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M2.5 21h19"/></svg>Fiche société</button>
       <button data-t="domaine" onclick="openTab('soc','domaine')"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Adresse &amp; domaine</button>
@@ -519,7 +527,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
       </div>
     </div>
     <div class="tp" data-tp="soc-notifs"><div class="card">
-      <div class="hdr"><div><h3>Comment voulez-vous être prévenu ?</h3><div class="sub">Pour chaque type d'événement, par e-mail, dans l'espace, ou les deux.</div></div></div>
+      <div class="hdr"><div><h3>Comment voulez-vous être prévenu ?</h3><div class="sub">Pour chaque type d'événement, par e-mail, dans l'espace, ou les deux. Chaque changement est enregistré tout de suite.</div></div></div>
       <div id="prefs"></div>
     </div></div>
   </section>
@@ -615,6 +623,10 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
   <div class="fld"><label>Adresse e-mail</label><input id="i-mail" type="email" placeholder="karim@votre-societe.fr"></div>
   <div class="fld"><label>Rôle</label><select id="i-role"><option>Technicien</option><option>Commercial</option><option>Polyvalent</option><option>Administrateur</option></select></div>
   <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><button class="btn o" onclick="sendInvite()">Envoyer l'invitation</button></div>
+</div></div>
+<div class="ov" id="ov-rm" onclick="if(event.target===this)closeOv()"><div class="modal">
+  <h3>Retirer <span id="rm-who">—</span> ?</h3><p>Cette personne perd son accès tout de suite, bureau et appli mobile. Ses interventions et documents restent dans TigerFlow. Une place se libère dans votre abonnement.</p>
+  <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><button class="btn r" id="rm-ok">Retirer l'accès</button></div>
 </div></div>
 <div class="ov" id="ov-res" onclick="if(event.target===this)closeOv()"><div class="modal">
   <h3>Résilier pour de bon ?</h3><p>Vos techniciens perdront l'accès à l'appli à la date choisie. Vous pourrez revenir quand vous voulez, vos données vous attendent 30 jours.</p>
@@ -742,7 +754,36 @@ function tourDraw(){
 }
 try{ if(localStorage.getItem('tigerflow-espace-mini')==='1') document.body.classList.add('mini'); }catch(e){}
 if(/visite=1/.test(location.hash)){ location.hash = "#tableau"; setTimeout(tourStart, 400); }
+/* ── recherche globale (ergonomie : la barre fait quelque chose) ── */
+let GSI = -1;
+function gsItems(q){
+  q = q.toLowerCase(); const R = [];
+  S.users.forEach(u => { if((u.nom + " " + u.mail).toLowerCase().includes(q)) R.push({ k:"Utilisateur", t:u.nom || u.mail, s:u.role, h:"#utilisateurs" }); });
+  S.tickets.forEach(t => { if(t.sujet.toLowerCase().includes(q)) R.push({ k:"Demande", t:t.sujet, s:STT[t.st][0], h:"#support", go:() => { CUR = t.id; } }); });
+  const now = new Date(); for(let k = 1; k <= 4; k++){ const d = new Date(now.getFullYear(), now.getMonth() - k + 1, 1); const no = "TF-" + d.getFullYear() + "-" + String(12 - k).padStart(4, "0"); if((no + " facture " + fdate(d)).toLowerCase().includes(q)) R.push({ k:"Facture", t:no, s:fdate(d), h:"#abonnement", go:() => openTab("abo","factures") }); }
+  Object.keys(TITRES).forEach(id => { if(TITRES[id][0].toLowerCase().includes(q)) R.push({ k:"Page", t:TITRES[id][0], s:"", h:"#" + id }); });
+  [["Changer de tranche","#abonnement"],["Ajouter une carte","#abonnement",() => openTab("abo","paiement")],["Résilier","#abonnement",() => openTab("abo","resilier")],["Inviter un utilisateur","#utilisateurs",() => setTimeout(openInvite, 60)],["Domaine personnalisé","#societe",() => openTab("soc","domaine")],["Visite guidée","#aide",() => setTimeout(tourStart, 60)]].forEach(a => { if(a[0].toLowerCase().includes(q)) R.push({ k:"Action", t:a[0], s:"", h:a[1], go:a[2] }); });
+  return R.slice(0, 8);
+}
+function gsDraw(){
+  const q = document.getElementById("gs").value.trim(), box = document.getElementById("gsres");
+  if(q.length < 2){ box.classList.remove("on"); return; }
+  const R = gsItems(q); GSI = Math.min(GSI, R.length - 1);
+  box.innerHTML = R.length ? R.map((r, i) => '<a href="' + r.h + '" class="' + (i === GSI ? "cur" : "") + '" onmousedown="gsGo(' + i + ')"><span class="k">' + r.k + '</span>' + esc(r.t) + '<small>' + esc(r.s) + '</small></a>').join("") : '<div class="none">Rien pour « ' + esc(q) + ' »</div>';
+  box.classList.add("on");
+}
+function gsGo(i){ const R = gsItems(document.getElementById("gs").value.trim()); const r = R[i]; if(!r) return; document.getElementById("gsres").classList.remove("on"); document.getElementById("gs").value = ""; if(r.go) r.go(); location.hash = r.h; setTimeout(drawAll, 30); }
+function gsKey(e){
+  const R = gsItems(document.getElementById("gs").value.trim());
+  if(e.key === "ArrowDown"){ GSI = Math.min(GSI + 1, R.length - 1); gsDraw(); e.preventDefault(); }
+  else if(e.key === "ArrowUp"){ GSI = Math.max(GSI - 1, 0); gsDraw(); e.preventDefault(); }
+  else if(e.key === "Enter"){ gsGo(GSI < 0 ? 0 : GSI); e.preventDefault(); }
+  else if(e.key === "Escape"){ document.getElementById("gsres").classList.remove("on"); e.target.blur(); }
+}
+document.addEventListener("keydown", e => { if(e.key === "/" && !/input|textarea|select/i.test(document.activeElement.tagName)){ e.preventDefault(); document.getElementById("gs").focus(); } });
+document.addEventListener("click", e => { if(!e.target.closest(".gswrap")) document.getElementById("gsres").classList.remove("on"); });
 function openTab(g, t){
+  if(g === "soc"){ const b = document.getElementById("soc-save"); if(b) b.style.visibility = t === "fiche" ? "" : "hidden"; }
   document.querySelectorAll('[data-tabs="' + g + '"] button').forEach(b => b.classList.toggle("on", b.dataset.t === t));
   document.querySelectorAll('[data-tp^="' + g + '-"]').forEach(p => p.classList.toggle("on", p.dataset.tp === g + "-" + t));
 }
@@ -816,7 +857,8 @@ function drawUsers(){
     '<td><div class="acts">' + (u.st === "invite" ? '<button class="btn g sm needwrite" onclick="toast(\'Invitation renvoyée à ' + esc(u.mail) + '\')">Renvoyer</button>' : "") + (u.me ? "" : '<button class="btn g sm needwrite" onclick="removeU(' + i + ')">Retirer</button>') + '</div></td></tr>').join("");
 }
 function setRole(i, r){ S.users[i].role = r; save(); log("Rôle modifié", (S.users[i].nom || S.users[i].mail) + " → " + r); toast("Rôle mis à jour"); drawAll(); }
-function removeU(i){ const u = S.users.splice(i, 1)[0]; save(); log("Utilisateur retiré", u.nom || u.mail); toast((u.nom || u.mail) + " n'a plus accès"); drawAll(); }
+function removeU(i){ const u0 = S.users[i]; document.getElementById("rm-who").textContent = u0.nom || u0.mail; document.getElementById("rm-ok").onclick = () => { closeOv(); removeU2(i); }; openOv("ov-rm"); }
+function removeU2(i){ const u = S.users.splice(i, 1)[0]; save(); log("Utilisateur retiré", u.nom || u.mail); toast((u.nom || u.mail) + " n'a plus accès"); drawAll(); }
 function openInvite(){ ["i-nom","i-mail"].forEach(id => document.getElementById(id).value = ""); openOv("ov-inv"); }
 function sendInvite(){
   const m = document.getElementById("i-mail").value.trim();
@@ -838,7 +880,7 @@ function drawSoc(){
   document.getElementById("dom-sub").textContent = T.sub || (SOC.nom || "mon-espace").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   const P = [["fac","Facturation","Factures, paiements, carte refusée"],["sup","Support","Réponses à vos demandes"],["equ","Équipe","Invitations acceptées, utilisateurs retirés"],["abo","Abonnement","Fin d'essai, changement de prix"],["usg","Alertes d'usage","Tranche presque pleine, limites atteintes"]];
   document.getElementById("prefs").innerHTML = P.map(([k, t, d]) => '<div class="trow"><div><b>' + t + '</b><small>' + d + '</small></div><div class="sw">' +
-    ["E-mail","Dans l'espace"].map((l, j) => '<span class="tg' + (S.prefs[k][j] ? " on" : "") + '" onclick="S.prefs.' + k + '[' + j + ']=S.prefs.' + k + '[' + j + ']?0:1;save();drawSoc()"><i></i>' + l + '</span>').join("") + '</div></div>').join("");
+    ["E-mail","Dans l'espace"].map((l, j) => '<span class="tg' + (S.prefs[k][j] ? " on" : "") + '" onclick="S.prefs.' + k + '[' + j + ']=S.prefs.' + k + '[' + j + ']?0:1;save();drawSoc();drawUsage();toast(\'Préférence enregistrée\')"><i></i>' + l + '</span>').join("") + '</div></div>').join("");
 }
 function domVerif(){
   const v = document.getElementById("dom-perso").value.trim().toLowerCase(); if(!v || v.indexOf(".") < 0){ document.getElementById("dom-perso").style.borderColor = "var(--red)"; return; }
@@ -889,7 +931,7 @@ function saveCard(){
 function defCard(i){ S.cards.forEach((c, j) => c.def = j === i); save(); drawAll(); }
 
 /* support */
-let CUR = null, NEW = false;
+let CUR = (S.tickets[0] || {}).id || null, NEW = false;
 function newTicket(){ NEW = true; CUR = null; setTimeout(drawSupport, 30); }
 function drawSupport(){
   document.getElementById("tks").innerHTML = S.tickets.map(t => '<button class="tk' + (t.id === CUR ? " on" : "") + '" onclick="CUR=' + t.id + ';NEW=false;S.tickets.find(x=>x.id===' + t.id + ').unread=false;save();drawAll()"><div class="t1">' + (t.unread ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--red)"></span>' : "") + esc(t.sujet) + '<span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></div><p>' + esc(t.msgs[t.msgs.length - 1].t) + '</p><small>' + esc(t.cat) + ' · ' + esc(t.msgs[t.msgs.length - 1].w) + '</small></button>').join("");
