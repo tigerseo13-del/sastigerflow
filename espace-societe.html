@@ -353,6 +353,11 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .ov.on{display:grid}
 .modal{background:#fff;border-radius:18px;width:min(460px,100%);padding:22px;box-shadow:0 30px 70px -30px rgba(0,0,0,.5)}
 .modal h3{font-family:'Sora';font-size:1.08rem}
+.rsel{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fld .rsel label{margin:0;font-size:inherit;color:inherit;display:flex;gap:9px;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;padding:10px 11px;cursor:pointer}
+.fld .rsel input{width:auto;padding:0;border:0;accent-color:#10B981;margin-top:3px;flex:none}
+.rsel b{display:block;font-size:.84rem}.rsel small{display:block;font-size:.72rem;color:var(--muted);line-height:1.35;margin-top:2px}
+.rsel label:has(input:checked){border-color:#10B981;background:#ECFDF5}
 .modal p{font-size:.82rem;color:var(--muted);margin:4px 0 16px;line-height:1.5}
 .modal .fld{margin-bottom:12px}
 .modal .ft{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
@@ -624,7 +629,14 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
   <h3>Inviter un utilisateur</h3><p>Il reçoit un e-mail pour créer son mot de passe. Un technicien installe ensuite l'appli mobile.</p>
   <div class="fld"><label>Prénom et nom</label><input id="i-nom" placeholder="Ex : Karim Benali"></div>
   <div class="fld"><label>Adresse e-mail</label><input id="i-mail" type="email" placeholder="karim@votre-societe.fr"></div>
-  <div class="fld"><label>Rôle</label><select id="i-role"><option>Technicien</option><option>Commercial</option><option>Polyvalent</option><option>Administrateur</option></select></div>
+  <div class="fld"><label>Rôle</label>
+    <div class="rsel" id="i-role">
+      <label><input type="radio" name="irole" value="Technicien" checked><span><b>Technicien</b><small>Appli mobile : ses interventions, photos, rapports</small></span></label>
+      <label><input type="radio" name="irole" value="Commercial"><span><b>Commercial</b><small>Bureau : clients, devis, planning</small></span></label>
+      <label><input type="radio" name="irole" value="Polyvalent"><span><b>Polyvalent</b><small>Bureau + appli mobile</small></span></label>
+      <label><input type="radio" name="irole" value="Administrateur"><span><b>Administrateur</b><small>Tout, y compris cet espace société</small></span></label>
+    </div></div>
+  <div class="hint" id="i-impact" style="margin-top:0"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg><span id="i-impact-t">—</span></div>
   <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><button class="btn o" onclick="sendInvite()">Envoyer l'invitation</button></div>
 </div></div>
 <div class="ov" id="ov-rm" onclick="if(event.target===this)closeOv()"><div class="modal">
@@ -855,7 +867,7 @@ const DROITS = [
 ];
 function drawUsers(){
   { const n = nbU(), inv = S.users.filter(u => u.st === "invite").length; const e = document.getElementById("u-sub"); if(e) e.textContent = n + " utilisateur" + (n > 1 ? "s" : "") + (inv ? " · " + inv + " invitation" + (inv > 1 ? "s" : "") + " en attente" : "") + " · tranche " + tr().lab + " · une place par utilisateur"; }
-  document.getElementById("u-rows").innerHTML = S.users.map((u, i) => '<tr><td><div class="who"><span class="av" style="' + (u.st === "invite" ? "background:#D7DAE1;color:#6C7285" : "") + '">' + ini(u.nom || u.mail) + '</span><div><b>' + esc(u.nom || u.mail) + (u.me ? ' <span class="pill n">vous</span>' : "") + '</b><small>' + (u.nom ? esc(u.mail) : "En attente de sa réponse") + '</small></div></div></td>' +
+  document.getElementById("u-rows").innerHTML = S.users.map((u, i) => '<tr><td><div class="who"><span class="av" style="' + (u.st === "invite" ? "background:#D7DAE1;color:#6C7285" : "") + '">' + ini(u.nom || u.mail) + '</span><div><b>' + esc(u.nom || u.mail) + '</b><small>' + (u.nom ? esc(u.mail) : "En attente de sa réponse") + '</small></div></div></td>' +
     '<td>' + (u.me ? "<b>Administrateur</b>" : '<select class="needwrite" onchange="setRole(' + i + ',this.value)">' + ROLES.map(r => '<option' + (r === u.role ? " selected" : "") + '>' + r + '</option>').join("") + '</select>') + '</td>' +
     '<td>' + (u.st === "actif" ? '<span class="pill g">Actif</span>' : '<span class="pill a">Invité</span>') + '</td>' +
     '<td style="color:var(--muted)">' + esc(u.last) + '</td>' +
@@ -864,12 +876,15 @@ function drawUsers(){
 function setRole(i, r){ S.users[i].role = r; save(); log("Rôle modifié", (S.users[i].nom || S.users[i].mail) + " → " + r); toast("Rôle mis à jour"); drawAll(); }
 function removeU(i){ const u0 = S.users[i]; document.getElementById("rm-who").textContent = u0.nom || u0.mail; document.getElementById("rm-ok").onclick = () => { closeOv(); removeU2(i); }; openOv("ov-rm"); }
 function removeU2(i){ const u = S.users.splice(i, 1)[0]; save(); log("Utilisateur retiré", u.nom || u.mail); toast((u.nom || u.mail) + " n'a plus accès"); drawAll(); }
-function openInvite(){ ["i-nom","i-mail"].forEach(id => document.getElementById(id).value = ""); openOv("ov-inv"); }
+function openInvite(){ ["i-nom","i-mail"].forEach(id => document.getElementById(id).value = ""); document.querySelector('#i-role input[value="Technicien"]').checked = true;
+  const n = nbU() + 1, t = tr(), nx = TR[TR.indexOf(t) + 1];
+  document.getElementById("i-impact-t").innerHTML = enEssai() ? "Gratuit pendant l'essai. Ensuite, ce sera votre " + n + "ᵉ utilisateur." : (nx && n > t.max ? "<b>" + n + "ᵉ utilisateur :</b> toute l'équipe passe en tranche " + nx.lab + ", soit " + nx[S.bill] + " € par personne au lieu de " + t[S.bill] + " €." : "<b>" + n + "ᵉ utilisateur :</b> + " + t[S.bill] + " € par mois, au prorata jusqu'au prochain prélèvement.");
+  openOv("ov-inv"); }
 function sendInvite(){
   const m = document.getElementById("i-mail").value.trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){ document.getElementById("i-mail").style.borderColor = "var(--red)"; return; }
   document.getElementById("i-mail").style.borderColor = "";
-  const r = document.getElementById("i-role").value, nom = document.getElementById("i-nom").value.trim();
+  const r = document.querySelector("#i-role input:checked").value, nom = document.getElementById("i-nom").value.trim();
   S.users.push({ nom, mail:m, role:r, st:"invite", last:"Invité aujourd'hui" });
   S.nots.unshift({ id:Date.now(), cat:"equ", t:"Invitation envoyée", d:m + " a été invité comme " + r + ".", w:"À l'instant", un:true });
   log("Utilisateur invité", m + " · " + r); save(); closeOv(); toast("Invitation envoyée à " + m); drawAll();
