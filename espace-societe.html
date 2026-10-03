@@ -124,7 +124,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .cover h1{font-family:'Sora';font-size:1.3rem;letter-spacing:-.4px}
 .cover .sub{font-size:.84rem;color:var(--ink2);width:100%;margin-top:-6px}
 .cover .cbtns{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
-.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}.kgrid.k3{grid-template-columns:repeat(3,1fr);margin-bottom:4px}div.kt:hover{transform:none}
 .kt{display:block;border-radius:16px;padding:16px 18px;box-shadow:var(--sh-1);transition:.15s;position:relative;color:var(--ink)}
 .kt:hover{transform:translateY(-2px)}
 .kt .kl{display:flex;align-items:center;gap:9px;font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px;color:var(--ink2)}
@@ -542,10 +542,10 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
   <!-- ═══ ABONNEMENT ═══ -->
   <section class="sec" id="s-abonnement">
     <div class="ph"><div><h1>Abonnement</h1><p>Votre tranche, vos factures, votre carte.</p></div></div>
-    <div class="hero">
-      <div><div class="t">Votre abonnement</div><h2 id="a-tr">Tranche 1 à 5</h2><div class="m" id="a-m">—</div></div>
-      <div><div class="t">Montant</div><div class="big" id="a-amt">—</div><div class="m" id="a-amt2">—</div></div>
-      <div class="nx" id="a-nx">Prochain prélèvement<b>—</b></div>
+    <div class="kgrid k3">
+      <div class="kt green"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/></svg>Votre tranche</div><b id="a-tr">—</b><div class="ks" id="a-m">—</div></div>
+      <div class="kt blue"><div class="kl"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>Montant</div><b id="a-amt">—</b><div class="ks" id="a-amt2">—</div></div>
+      <div class="kt orange"><div class="kl"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="a-nx-l">Prochain prélèvement</span></div><b id="a-nx">—</b><div class="ks" id="a-nx-c">—</div></div>
     </div>
     <div class="tabs mt" data-tabs="abo">
       <button data-t="tranches" class="on" onclick="openTab('abo','tranches')">Tranches</button>
@@ -923,11 +923,13 @@ function setBill(b){ S.bill = b; save(); drawAll(); }
 function drawAbo(){
   const n = nbU(), t = tr(), nx = nextDate();
   document.getElementById("bm").classList.toggle("on", S.bill === "m"); document.getElementById("ba").classList.toggle("on", S.bill === "a");
-  document.getElementById("a-tr").textContent = (enEssai() ? "Essai gratuit · " : "") + "Tranche " + t.lab;
+  document.getElementById("a-tr").textContent = (enEssai() ? "Essai · " : "") + t.lab;
   document.getElementById("a-m").textContent = n + " utilisateur" + (n > 1 ? "s" : "") + " × " + t[S.bill] + " € · facturation " + (S.bill === "a" ? "annuelle" : "mensuelle");
   document.getElementById("a-amt").textContent = eur0(ht()) + " HT";
   document.getElementById("a-amt2").textContent = (S.bill === "a" ? "par an" : "par mois") + " · " + eur(ht() * 1.2) + " TTC";
-  document.getElementById("a-nx").innerHTML = (enEssai() ? "Fin de l'essai et 1er prélèvement" : "Prochain prélèvement") + "<b>" + fdate(nx) + "</b>";
+  document.getElementById("a-nx-l").textContent = enEssai() ? "Fin de l'essai, 1er prélèvement" : "Prochain prélèvement";
+  document.getElementById("a-nx").textContent = fdate(nx);
+  { const c = S.cards.find(x => x.def); document.getElementById("a-nx-c").innerHTML = c ? (S.impaye ? '<span style="color:var(--red)">Visa •••• ' + c.fin + ' · refusée</span>' : "Visa •••• " + c.fin) : '<span style="color:var(--amber)">Aucune carte enregistrée</span>'; }
   document.getElementById("r-end").textContent = fdate(nx);
   document.getElementById("tiers").innerHTML = TR.map(x => { const on = x === t; return '<div class="tier' + (on ? " on" : "") + '">' + (on ? '<span class="pl">Votre tranche · ' + n + ' utilisateur' + (n > 1 ? "s" : "") + '</span>' : "") +
     '<div class="tr">' + x.lab + ' utilisateurs</div><div class="pr">' + x[S.bill] + ' € <small>/ utilisateur / mois</small></div>' +
