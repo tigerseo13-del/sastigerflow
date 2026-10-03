@@ -297,6 +297,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .sup{display:grid;grid-template-columns:320px 1fr;gap:16px;height:calc(100vh - 190px);min-height:520px}
 .sup .lst{display:flex;flex-direction:column;padding:0;overflow:hidden}
 .sup .lst .hd{padding:16px;border-bottom:1px solid var(--line)}
+.cats{display:flex;gap:8px;flex-wrap:wrap}.cats label{margin:0;cursor:pointer}.cats input{display:none}.cats span{display:inline-block;border:1.5px solid var(--line);border-radius:99px;padding:7px 14px;font-size:.8rem;font-weight:700;color:var(--ink2)}.cats input:checked+span{border-color:#10B981;background:#ECFDF5;color:#047857}
 .search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0 10px;height:36px;color:var(--muted)}.search input{border:0;background:none;flex:1;font-size:.82rem;min-width:0;outline:0}
 .sup .lst .search{width:100%;margin:10px 0 0}
 .tk{display:block;width:100%;text-align:left;padding:13px 16px;border-bottom:1px solid var(--line)}
@@ -520,9 +521,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
         <div class="fld"><label>Numéro SIRET</label><input id="f-siret"></div>
         <div class="fld"><label>Numéro de TVA</label><input id="f-tva"></div>
       </div>
-      <div class="tid"><svg class="i" viewBox="0 0 24 24" style="color:var(--muted)"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5h.01"/></svg>
-        <span>Identifiant de votre compte : <code id="f-tid">—</code> · à donner au support si on vous le demande</span></div>
-      <div class="hint"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Logo, IBAN, n° Certibiocide, assurance et mentions des devis se règlent dans TigerFlow.</span><a class="btn g sm" href="reglages.html">Ouvrir Réglages</a></div>
+            <div class="hint" style="font-size:.76rem;color:var(--muted)"><span>Identifiant de compte <code id="f-tid">—</code> (à donner au support) · Logo, IBAN, Certibiocide, assurance et mentions des devis : dans <a href="reglages.html" style="color:var(--ink);font-weight:700;text-decoration:underline">Réglages TigerFlow</a>.</span></div>
     </div></div>
     <div class="tp" data-tp="soc-domaine">
       <div class="card">
@@ -593,7 +592,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
       <div class="card lst">
         <div class="hd"><div style="display:flex;align-items:center;margin-bottom:10px"><div><b style="font-family:'Sora'">Mes demandes</b><div class="sub" style="font-size:.76rem;color:var(--muted);white-space:nowrap">Réponse sous 24 h</div></div>
           <button class="btn g sm" style="margin-left:auto" onclick="newTicket()"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M12 5v14M5 12h14"/></svg>Nouvelle demande</button></div>
-          <label class="search"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input placeholder="Rechercher une demande"></label></div>
+          <label class="search"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="tk-q" placeholder="Rechercher une demande" oninput="drawSupport()"></label></div>
         <div id="tks" style="overflow:auto;flex:1"></div>
       </div>
       <div class="card conv" id="conv"></div>
@@ -997,10 +996,12 @@ function defCard(i){ S.cards.forEach((c, j) => c.def = j === i); save(); drawAll
 let CUR = (S.tickets[0] || {}).id || null, NEW = false;
 function newTicket(){ NEW = true; CUR = null; setTimeout(drawSupport, 30); }
 function drawSupport(){
-  document.getElementById("tks").innerHTML = S.tickets.map(t => '<button class="tk' + (t.id === CUR ? " on" : "") + '" onclick="CUR=' + t.id + ';NEW=false;S.tickets.find(x=>x.id===' + t.id + ').unread=false;save();drawAll()"><div class="t1">' + (t.unread ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--red)"></span>' : "") + esc(t.sujet) + '<span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></div><p>' + esc(t.msgs[t.msgs.length - 1].t) + '</p><small>' + esc(t.cat) + ' · ' + esc(t.msgs[t.msgs.length - 1].w) + '</small></button>').join("");
+  const q = ((document.getElementById("tk-q") || {}).value || "").trim().toLowerCase();
+  const L = S.tickets.filter(t => !q || (t.sujet + " " + t.cat + " " + t.msgs.map(m => m.t).join(" ")).toLowerCase().includes(q));
+  document.getElementById("tks").innerHTML = (L.length ? "" : '<div class="empty" style="padding:30px 16px;font-size:.82rem">Aucune demande ne correspond.</div>') + L.map(t => '<button class="tk' + (t.id === CUR ? " on" : "") + '" onclick="CUR=' + t.id + ';NEW=false;S.tickets.find(x=>x.id===' + t.id + ').unread=false;save();drawAll()"><div class="t1">' + (t.unread ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--red)"></span>' : "") + esc(t.sujet) + '<span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></div><p>' + esc(t.msgs[t.msgs.length - 1].t) + '</p><small>' + esc(t.cat) + ' · ' + esc(t.msgs[t.msgs.length - 1].w) + '</small></button>').join("");
   const c = document.getElementById("conv");
   if(NEW){
-    c.innerHTML = '<div class="hd"><b>Nouvelle demande</b></div><div class="newtk on"><div class="fld" style="margin-bottom:12px"><label>Sujet</label><input id="n-suj" placeholder="Ex : Comment importer mes clients ?"></div><div class="fld" style="margin-bottom:12px"><label>Catégorie</label><select id="n-cat"><option>Technique</option><option>Facturation</option><option>Compte et utilisateurs</option><option>Autre</option></select></div><div class="fld" style="margin-bottom:12px"><label>Votre message</label><textarea id="n-msg" rows="6" placeholder="Décrivez ce qui se passe. Une capture d\'écran aide beaucoup."></textarea></div><div style="display:flex;gap:8px"><button class="btn g" onclick="toast(\'Pièce jointe ajoutée\')">' + IC.clip + 'Joindre un fichier</button><button class="btn o" style="margin-left:auto" onclick="sendTicket()">Envoyer la demande</button></div></div>';
+    c.innerHTML = '<div class="hd"><b>Nouvelle demande</b></div><div class="newtk on"><div class="fld" style="margin-bottom:12px"><label>Sujet</label><input id="n-suj" placeholder="Ex : Comment importer mes clients ?"></div><div class="fld" style="margin-bottom:12px"><label>Catégorie</label><div class="cats" id="n-cat">' + ["Technique","Facturation","Compte et utilisateurs","Autre"].map((c, i) => '<label><input type="radio" name="ncat" value="' + c + '"' + (i ? "" : " checked") + '><span>' + c + '</span></label>').join("") + '</div></div><div class="fld" style="margin-bottom:12px"><label>Votre message</label><textarea id="n-msg" rows="6" placeholder="Décrivez ce qui se passe. Une capture d\'écran aide beaucoup."></textarea></div><div style="display:flex;gap:8px"><button class="btn g" onclick="toast(\'Pièce jointe ajoutée\')">' + IC.clip + 'Joindre un fichier</button><button class="btn o" style="margin-left:auto" onclick="sendTicket()">Envoyer la demande</button></div><div class="hint" style="margin-top:14px"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Réponse sous 24 h ouvrées. Vous êtes prévenu par e-mail et ici dès qu\'on vous répond.</span></div></div>';
     return;
   }
   const t = S.tickets.find(x => x.id === CUR);
@@ -1015,7 +1016,7 @@ function reply(){ const i = document.getElementById("reply"); const v = i.value.
 function sendTicket(){
   const s = document.getElementById("n-suj").value.trim(), m = document.getElementById("n-msg").value.trim();
   if(!s || !m){ toast("Indiquez un sujet et un message"); return; }
-  const id = Date.now(); S.tickets.unshift({ id, sujet:s, cat:document.getElementById("n-cat").value, st:"ouvert", msgs:[{ me:true, t:m, w:"À l'instant" }] });
+  const id = Math.max(0, ...S.tickets.map(t => t.id)) + 1; S.tickets.unshift({ id, sujet:s, cat:document.querySelector("#n-cat input:checked").value, st:"ouvert", msgs:[{ me:true, t:m, w:"À l'instant" }] });
   log("Demande au support", s); save(); NEW = false; CUR = id; toast("Demande envoyée · réponse sous 24 h ouvrées"); drawAll();
 }
 
