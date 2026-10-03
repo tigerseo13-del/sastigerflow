@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TigerFlow — Back-office</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Back-office éditeur TigerFlow — maquette 03/10. Base CSS partagée avec l'espace société. */
+:root{color-scheme:light only;
+  --orange:#FF5A1F;--orange-deep:#EA4A10;--orange-bg:#FFF1EB;--ink:#171A20;--ink2:#3D434E;--muted:#6C7285;
+  --line:#EBECF1;--bg:#F4F5F8;--card:#fff;--side:#14161B;
+  --green:#10B981;--green-d:#047857;--green-bg:#ECFDF5;--blue:#2E5CE6;--blue-bg:#EBF1FE;--amber:#A16207;--amber-bg:#FBF3D9;
+  --red:#D63B33;--red-bg:#FDE9E8;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--sh-1:0 1px 2px rgba(23,26,32,.04),0 8px 24px -12px rgba(23,26,32,.12)}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── barre latérale (même noir que le SaaS) ── */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:238px;background:var(--side);color:#B9BEC9;display:flex;flex-direction:column;z-index:50}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 18px 6px}
+.brand .logo{width:46px;height:46px;border-radius:50%;background:#0A0B0E;border:1.5px solid #262A32;display:grid;place-items:center;flex:none}
+.brand .logo svg{width:22px;height:22px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.35rem;color:#fff;letter-spacing:.4px}
+.brand .name em{font-style:normal;color:var(--orange)}
+.btag{margin:0 18px 8px;font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7E8593}
+.nav{display:flex;flex-direction:column;gap:4px;padding:14px 10px 0}
+.nav a{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:var(--r-md);font-size:.86rem;font-weight:500;color:#B9BEC9;transition:.13s}
+.nav a:hover{background:#1D2027;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600;box-shadow:0 8px 20px -6px rgba(255,90,31,.55)}
+.nav a .cnt{margin-left:auto;font-size:.68rem;font-weight:800;background:var(--red);color:#fff;border-radius:99px;min-width:20px;height:20px;display:grid;place-items:center;padding:0 6px}
+.nav a.active .cnt{background:#fff;color:var(--red)}
+.nav a svg{width:17px;height:17px}
+.navbot{margin-top:auto;padding:10px 14px 10px}
+.back-app{display:flex;align-items:center;justify-content:center;gap:8px;background:#1D2027;color:#fff;border-radius:var(--r-md);padding:11px;font-weight:700;font-size:.84rem}
+.back-app:hover{background:#262A32}
+.back-app{width:100%;border:0;cursor:pointer;font-family:inherit;font-size:.84rem}
+.swapp{position:relative}
+.collapse{display:flex;align-items:center;gap:8px;margin:0 14px 8px;padding:8px 13px;color:#7E8593;font-size:.78rem;font-weight:600;border-radius:10px;width:calc(100% - 28px)}
+.collapse:hover{background:#1D2027;color:#fff}
+body.mini .sidebar{width:72px}
+body.mini .main{margin-left:72px}
+body.mini .brand .name,body.mini .btag,body.mini .nav a span.lbl,body.mini .nav a .cnt,body.mini .back-app span,body.mini .back-app .chev,body.mini .collapse span,body.mini .side-user > div:not(.av),body.mini .side-user .chev{display:none}
+body.mini .nav a{justify-content:center;padding:11px}
+body.mini .back-app{padding:11px}
+body.mini .collapse{justify-content:center;width:auto;margin:0 auto 8px}
+body.mini .collapse svg{transform:rotate(180deg)}
+body.mini .side-user{justify-content:center;padding:8px;margin:0 14px 14px}
+body.mini .swmenu{left:0;width:240px;right:auto}
+body.mini .brand{justify-content:center;padding:18px 0 6px}
+.swmenu{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 8px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 40px -18px rgba(23,26,32,.45);padding:6px;z-index:60;color:var(--ink)}
+.swapp.open .swmenu{display:block}
+.swmenu a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:10px}
+.swmenu a:hover{background:var(--bg)}
+.swmenu a.cur{opacity:.55}
+.swmenu b{display:block;font-size:.84rem}.swmenu small{display:block;font-size:.72rem;color:var(--muted)}
+.swic{width:34px;height:34px;border-radius:9px;color:#fff;display:grid;place-items:center;flex:none}
+.swic svg{width:17px;height:17px}
+.navbot .small{display:flex;align-items:center;gap:8px;font-size:.76rem;color:#7E8593;padding:6px 13px}
+.navbot .small:hover{color:#FFB68F}
+
+/* ── haut de page ── */
+.main{margin-left:238px;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:12px 26px;min-height:64px;
+  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.07) 0, transparent 45%),radial-gradient(circle at 92% -60%, rgba(255,90,31,.05) 0, transparent 45%),linear-gradient(115deg,#FFFCFB,#FFF9F6 55%,#FFFBF8);
+  border-bottom:1px solid #F7EDE6;box-shadow:inset 0 3px 0 -1px var(--orange)}
+.crumbs{display:flex;align-items:center}
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
+.pgico{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--orange-bg);color:var(--orange-deep);margin-right:9px;flex:none}
+.pgico svg{width:14px;height:14px}
+.tright{margin-left:auto;display:flex;align-items:center;gap:10px}
+.gsbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 13px;border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--muted);font-size:.82rem;width:340px}
+.gswrap{position:relative}
+.gsres{display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 40px -18px rgba(23,26,32,.35);padding:6px;z-index:70;max-height:360px;overflow:auto}
+.gsres.on{display:block}
+.gsres a{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;font-size:.84rem;white-space:nowrap}.gsres a>span:nth-child(2){overflow:hidden;text-overflow:ellipsis}
+.gsres a:hover,.gsres a.cur{background:var(--bg)}
+.gsres a .k{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);width:72px;flex:none}
+.gsres a small{color:var(--muted);margin-left:auto;font-size:.74rem;white-space:nowrap}
+.gsres .none{padding:12px;font-size:.82rem;color:var(--muted)}
+.gsbtn input{border:0;outline:none;flex:1;background:none;font-size:.82rem}
+.gsbtn kbd{font-family:inherit;font-size:.68rem;font-weight:700;background:#F1F2F5;border-radius:6px;padding:2px 6px;color:var(--muted)}
+.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink2)}
+.bell:hover{border-color:var(--orange);color:var(--orange-deep)}
+.bell .dot{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:.68rem;font-weight:700;min-width:17px;height:17px;border-radius:6px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+/* le compte (avatar + menu) vit en bas de la barre latérale, comme dans le SaaS */
+.side-user{display:flex;align-items:center;gap:10px;margin:0 14px 14px;padding:10px 12px;background:#1D2027;border-radius:12px;position:relative;cursor:pointer}
+.side-user:hover{background:#262A32}
+.side-user .av{width:32px;height:32px;font-size:.72rem}
+.side-user b{display:block;font-size:.8rem;color:#fff;font-weight:600}
+.side-user span{display:block;font-size:.68rem;color:#7A8091;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-user .chev{margin-left:auto;width:15px;height:15px;color:#7E838F}
+.umenu{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 40px -18px rgba(23,26,32,.35);padding:6px;z-index:60;color:var(--ink)}
+.side-user.open .umenu{display:block}
+.umenu .hd{padding:9px 11px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.umenu .hd b{font-size:.84rem;color:var(--ink)}.umenu .hd small{display:block;font-size:.74rem;color:var(--muted)}
+.umenu a{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;font-size:.84rem;color:var(--ink2)}
+.umenu a:hover{background:var(--bg)}
+.umenu a.out{color:var(--red);border-top:1px solid var(--line);border-radius:0 0 8px 8px;margin-top:4px}
+.av{width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center;font-family:'Sora';font-weight:700;font-size:.76rem;flex:none}
+
+
+/* ── le même vocabulaire que index.html : bandeau, tuiles teintées, en-têtes de carte ── */
+.cover{position:relative;border-radius:20px;overflow:hidden;border:1px solid var(--line);padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 30%,#FFF8F4 65%,#FFF3EC 100%)}
+.cover h1{font-family:'Sora';font-size:1.3rem;letter-spacing:-.4px}
+.cover .sub{font-size:.84rem;color:var(--ink2);width:100%;margin-top:-6px}
+.cover .cbtns{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}.kgrid.k3{grid-template-columns:repeat(3,1fr);margin-bottom:4px}
+.kt{display:block;border-radius:16px;padding:16px 18px;box-shadow:var(--sh-1);transition:.15s;position:relative;color:var(--ink)}
+.kt:hover{transform:translateY(-2px)}
+.kt .kl{display:flex;align-items:center;gap:9px;font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px;color:var(--ink2)}
+.kt .kl svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.kt b{font-family:'Sora';font-size:1.7rem;letter-spacing:-.6px;display:block}
+.kt .ks{font-size:.74rem;font-weight:700;margin-top:5px;color:var(--ink2)}
+.kt .go{position:absolute;right:14px;top:15px;font-size:.74rem;font-weight:700;opacity:.6;color:var(--ink2)}
+.kt.blue{background:var(--blue-bg)}.kt.orange{background:var(--orange-bg)}.kt.green{background:var(--green-bg)}.kt.red{background:var(--red-bg)}
+.kt.blue .kl svg{stroke:var(--blue)}.kt.orange .kl svg{stroke:var(--orange-deep)}.kt.green .kl svg{stroke:var(--green-d)}.kt.red .kl svg{stroke:var(--red)}
+.chsq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;margin-right:2px}
+.chsq svg{width:15px;height:15px}
+.chsq.o{background:var(--orange-bg);color:var(--orange-deep)}.chsq.g{background:var(--green-bg);color:var(--green-d)}.chsq.b{background:var(--blue-bg);color:var(--blue)}.chsq.a{background:var(--amber-bg);color:var(--amber)}
+.card{padding:24px 26px}
+.card h3{font-size:.95rem;font-weight:800}
+/* ── contenu ── */
+.page{padding:24px 30px 60px;width:100%}
+.sec{display:none}.sec.on{display:block}
+.ph{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+.ph h1{font-family:'Sora';font-weight:800;font-size:1.25rem;letter-spacing:-.3px}
+.ph p{color:var(--muted);font-size:.86rem;margin-top:3px}
+.ph .act{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:10px 16px;font-weight:700;font-size:.84rem;white-space:nowrap}
+.btn.o{background:var(--orange);color:#fff;box-shadow:0 10px 22px -12px rgba(255,90,31,.8)}
+.btn.o:hover{background:var(--orange-deep)}
+.btn.g{background:#fff;border:1px solid #DCDFE6;color:var(--ink)}
+.btn.g:hover{border-color:#C5C9D3}
+.btn.r{background:#fff;border:1px solid var(--red-bg);color:var(--red)}
+.btn.sm{padding:7px 12px;font-size:.78rem}
+.card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--sh-1);border:1px solid #F0F1F4;padding:20px}
+.card h3{font-family:'Sora';font-size:1rem;display:flex;align-items:center;gap:9px}
+.card h3 > svg{color:var(--ink2)}
+.card .sub{color:var(--muted);font-size:.8rem;margin-top:3px}
+.card .hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.card .hdr .lk{margin-left:auto;font-size:.8rem;font-weight:700;color:var(--ink2);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.g21>.card{display:flex;flex-direction:column}.g21>.card .hint{margin-top:auto}.g21>.card>.btn.mt{margin-top:auto}.g21>.card .kv:last-child{margin-bottom:6px}.g21>.card .kv{flex:none}
+.mt{margin-top:16px}
+.stat{display:flex;align-items:flex-start;gap:12px}
+.stat .lab{font-size:.78rem;color:var(--muted);font-weight:600}
+.stat .val{font-family:'Sora';font-weight:800;font-size:1.6rem;margin-top:6px;letter-spacing:-.02em}
+.stat .val small{font-family:'Inter';font-size:.82rem;color:var(--muted);font-weight:600}
+.stat .ft{font-size:.74rem;color:var(--muted);margin-top:4px}
+.stat .ic{margin-left:auto;width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none}
+.ic.o{background:#EEF0F3;color:var(--ink2)}.ic.b{background:var(--blue-bg);color:var(--blue)}.ic.gr{background:var(--green-bg);color:var(--green-d)}.ic.a{background:var(--amber-bg);color:var(--amber)}
+.bar{height:9px;border-radius:9px;background:#ECEDF1;overflow:hidden}
+.bar span{display:block;height:100%;border-radius:9px;background:var(--ink2)}
+.seats{display:flex;gap:6px;margin:14px 0 10px}
+.seats i{flex:1;height:34px;border-radius:9px;background:#F1F2F5;border:1.5px dashed #D7DAE1;display:grid;place-items:center;color:#AEB3BE;font-style:normal;font-size:.72rem;font-weight:700}
+.seats i.on{background:#EEF0F3;border:1.5px solid #D7DAE1;color:var(--ink)}
+.hint{display:flex;gap:10px;align-items:center;background:var(--bg);border-radius:12px;padding:12px 14px;font-size:.8rem;color:var(--ink2);margin-top:12px}
+.hint svg{color:var(--muted)}
+.hint .btn{margin-left:auto}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.84rem;color:var(--muted)}
+.kv:last-child{border:0}.kv b{color:var(--ink);text-align:right}
+.qa{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qa a{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:.82rem;font-weight:700}
+.qa a:hover{border-color:#C5C9D3;background:#FAFBFC}
+.qa a span{width:32px;height:32px;border-radius:9px;background:#EEF0F3;color:var(--ink2);display:grid;place-items:center;flex:none}
+.li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border:0}
+.li .ico{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none}
+.li b{display:block;font-size:.84rem}.li small{display:block;font-size:.74rem;color:var(--muted);margin-top:2px}
+.li .r{margin-left:auto}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:800;border-radius:99px;padding:3px 9px;white-space:nowrap}
+.pill.o{background:#EEF0F3;color:var(--ink2)}.pill.g{background:var(--green-bg);color:var(--green-d)}.pill.b{background:var(--blue-bg);color:var(--blue)}
+.pill.a{background:var(--amber-bg);color:var(--amber)}.pill.r{background:var(--red-bg);color:var(--red)}.pill.n{background:#EEF0F3;color:var(--ink2)}
+
+/* tableaux */
+.tbl{width:100%;border-collapse:collapse;font-size:.84rem}
+.tbl th{text-align:left;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border:0}
+.tbl .who{display:flex;align-items:center;gap:10px}
+.tbl .who .av{width:32px;height:32px;font-size:.7rem}
+.tbl .who small{display:block;color:var(--muted);font-size:.74rem}
+.tbl select{border:1px solid #DCDFE6;border-radius:8px;padding:6px 8px;background:#fff;font-size:.8rem}
+.tbl .acts{display:flex;gap:6px;justify-content:flex-end}
+.mx td,.mx th{text-align:center}.mx td:first-child,.mx th:first-child{text-align:left}
+.yes{color:var(--green-d)}.no{color:#B5BAC4}
+
+/* onglets */
+.tabs{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{border-radius:9px;padding:8px 14px;font-weight:700;font-size:.82rem;color:var(--ink2);display:flex;align-items:center;gap:7px}
+.tabs button.on{background:var(--ink);color:#fff}
+.tabs button.danger{color:var(--red);margin-left:6px}.tabs button.danger.on{background:var(--red);color:#fff}
+.tabs button svg{width:15px;height:15px}
+.tp{display:none}.tp.on{display:block}
+
+/* formulaires */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.fld label{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);margin-bottom:6px}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid #DCDFE6;border-radius:9px;padding:10px 12px;font-size:.86rem;background:#fff;outline:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--orange)}
+.fld input[readonly]{background:#F6F7F9;color:var(--muted)}
+.fld.full{grid-column:1/-1}
+.domrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.domurl{font-family:'Sora';font-weight:800;font-size:1.05rem;background:var(--bg);border-radius:11px;padding:10px 16px}
+.domurl .domd{color:var(--muted);font-weight:600}
+.dns{margin-top:14px;background:var(--bg);border-radius:12px;padding:14px 16px;font-size:.84rem}
+.dns code{font-family:ui-monospace,Menlo,monospace;font-weight:700}
+.tid{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:11px;padding:12px 14px;font-size:.8rem;color:var(--ink2);margin-top:16px}
+.tid code{font-family:ui-monospace,Menlo,monospace;color:var(--ink);font-weight:700}
+.trow{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.trow:last-child{border:0}
+.trow b{display:block;font-size:.86rem}.trow small{display:block;font-size:.76rem;color:var(--muted);margin-top:2px}
+.trow .sw{margin-left:auto;display:flex;gap:18px}
+.tg{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink2);cursor:pointer}
+.tg i{width:36px;height:20px;border-radius:99px;background:#D7DAE1;position:relative;transition:.15s;flex:none}
+.tg i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.tg.on i{background:var(--green)}.tg.on i::after{left:18px}
+
+/* abonnement */
+.hero{background:linear-gradient(90deg,#FFFFFF 0%,#FFFCFA 30%,#FFF8F4 65%,#FFF3EC 100%);border:1px solid var(--line);color:var(--ink2);border-radius:var(--r-lg);padding:22px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;position:relative;overflow:hidden}
+.hero::after{content:none}
+.hero>*{position:relative}
+.hero .t{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero h2{font-family:'Sora';color:var(--ink);font-size:1.4rem;margin-top:4px}
+.hero .m{font-size:.84rem;margin-top:3px}
+.hero .big{font-family:'Sora';font-weight:800;color:var(--ink);font-size:1.7rem}
+.hero .nx{margin-left:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:.8rem}
+.hero .nx b{display:block;color:var(--ink);font-size:.95rem;margin-top:2px}
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.fold>summary{list-style:none;cursor:pointer}.fold>summary::-webkit-details-marker{display:none}.fold>summary .hdr{margin:0}.fold>summary .chev{margin-left:auto;transition:.18s;color:var(--muted)}.fold[open]>summary .chev{transform:rotate(180deg)}.fold[open]>summary .hdr{margin-bottom:14px}
+.incl{display:flex;gap:8px;align-items:center;font-size:.78rem;color:var(--muted);margin:14px 0 0}.incl svg{width:16px;height:16px;color:var(--green-d);stroke-width:2.6;flex:none}
+.tier .auto{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}.tier.on .auto{color:#047857;font-weight:700}
+.tier{background:#fff;border:2px solid var(--line);border-radius:16px;padding:20px;position:relative}
+.tier.on{border-color:#10B981;background:#F6FEFA;box-shadow:0 12px 28px -12px rgba(16,185,129,.3)}
+.tier .pl{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#10B981;color:#fff;font-size:.68rem;font-weight:800;border-radius:99px;padding:3px 11px;white-space:nowrap}
+.tier .tr{font-size:.72rem;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.tier .pr{font-family:'Sora';font-weight:800;font-size:1.8rem;margin-top:8px}
+.tier .pr small{font-family:'Inter';font-size:.76rem;color:var(--muted);font-weight:600}
+.tier ul{list-style:none;margin:14px 0 16px;display:flex;flex-direction:column;gap:8px}
+.tier li{display:flex;gap:8px;font-size:.8rem;color:var(--ink2)}
+.tier li svg{width:15px;height:15px;color:var(--green-d);stroke-width:2.6}
+.tier .btn{width:100%;justify-content:center}
+.bill{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px;gap:4px;margin-bottom:16px}
+.bill button{border-radius:99px;padding:7px 16px;font-weight:700;font-size:.8rem;color:var(--ink2)}
+.bill button.on{background:#10B981;color:#fff}
+.bill .eco{margin-left:8px;font-size:.7rem;font-weight:800;background:#ECFDF5;color:#047857;border-radius:99px;padding:2px 8px}.bill button.on .eco{background:rgba(255,255,255,.25);color:#fff}
+.cc{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.cc .vis{width:54px;height:36px;border-radius:7px;background:linear-gradient(135deg,#1A1F71,#2E3BB0);color:#fff;font-weight:900;font-style:italic;display:grid;place-items:center;font-size:.8rem;flex:none}
+.cc b{font-size:.88rem}.cc small{display:block;font-size:.76rem;color:var(--muted)}
+.cc .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.res label{border:1.5px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;display:flex;gap:10px;font-size:.82rem;line-height:1.45;color:var(--ink2)}
+.res label b{display:block;color:var(--ink);font-size:.88rem}
+.res input{accent-color:#10B981;margin-top:3px}
+.res label:has(input:checked){border-color:#10B981;background:#ECFDF5}
+.flow{display:flex;gap:0;margin-top:14px}
+.flow .st{flex:1;position:relative;text-align:center;font-size:.74rem;color:var(--muted);padding-top:34px}
+.flow .st::before{content:"";position:absolute;top:13px;left:0;right:0;height:2px;background:var(--line)}
+.flow .st:first-child::before{left:50%}.flow .st:last-child::before{right:50%}
+.flow .st i{position:absolute;top:2px;left:50%;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid #D7DAE1;display:grid;place-items:center;font-style:normal;font-size:.66rem;font-weight:800;color:var(--muted);z-index:1}
+.flow .st b{display:block;color:var(--ink);font-size:.78rem}
+.flow .st.done i{background:var(--red);border-color:var(--red);color:#fff}
+.flow .st.now i{background:var(--amber);border-color:var(--amber);color:#fff}
+.flow .st.lock i{background:var(--side);border-color:var(--side);color:#fff}
+.alertbar{display:none;align-items:center;gap:12px;background:var(--red-bg);border-bottom:1px solid #F5C6C0;color:#8E211B;padding:11px 26px;font-size:.84rem}
+.alertbar.on{display:flex}
+.alertbar b{color:var(--red)}
+.alertbar.usage{background:var(--amber-bg);border-color:#F0DBA3;color:#6B4600}
+.alertbar.usage b{color:var(--amber)}
+.alertbar .btn{margin-left:auto}
+.demo{display:flex;align-items:center;gap:12px;border:1.5px dashed #D7DAE1;border-radius:12px;padding:12px 14px;font-size:.8rem;color:var(--muted);margin-top:14px}
+.demo b{color:var(--ink2)}
+
+/* support */
+.sup{display:grid;grid-template-columns:320px 1fr;gap:16px;height:calc(100vh - 190px);min-height:520px}
+.sup .lst{display:flex;flex-direction:column;padding:0;overflow:hidden}
+.sup .lst .hd{padding:16px;border-bottom:1px solid var(--line)}
+.atts{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px}.atts:empty{display:none}.compose+.atts,.atts+.compose{border-top:0}.atts span{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;font-weight:700;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:5px 6px 5px 9px;margin-bottom:8px}.atts span svg{width:13px;height:13px}.atts button{color:var(--muted);font-size:.9rem;line-height:1;padding:0 3px}.atts button:hover{color:var(--red)}.newtk .atts{padding:0;margin-bottom:10px}
+.cats{display:flex;gap:8px;flex-wrap:wrap}.cats label{margin:0;cursor:pointer}.cats input{display:none}.cats span{display:inline-block;border:1.5px solid var(--line);border-radius:99px;padding:7px 14px;font-size:.8rem;font-weight:700;color:var(--ink2)}.cats input:checked+span{border-color:#10B981;background:#ECFDF5;color:#047857}
+.search{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0 10px;height:36px;color:var(--muted)}.search input{border:0;background:none;flex:1;font-size:.82rem;min-width:0;outline:0}
+.sup .lst .search{width:100%;margin:10px 0 0}
+.tk{display:block;width:100%;text-align:left;padding:13px 16px;border-bottom:1px solid var(--line)}
+.tk:hover{background:#FAFBFC}.tk.on{background:#F4F5F8;box-shadow:inset 3px 0 0 var(--side)}
+.tk .t1{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.84rem}
+.tk .t1 .pill{margin-left:auto}
+.tk p{font-size:.76rem;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tk small{font-size:.7rem;color:#9AA0AD}
+.conv{display:flex;flex-direction:column;padding:0;overflow:hidden}
+.conv .hd{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}.conv .hd .back{display:none}
+.conv .hd b{font-family:'Sora';font-size:.98rem}
+.conv .hd .act{margin-left:auto;display:flex;gap:8px}
+.msgs{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:#FBFBFC}
+.m{max-width:72%;font-size:.84rem;line-height:1.5}
+.m .bub{background:#fff;border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:10px 13px}
+.m.mine{align-self:flex-end}.m.mine .bub{background:var(--side);color:#fff;border-color:var(--side);border-radius:14px 14px 4px 14px}
+.m small{display:block;font-size:.7rem;color:#9AA0AD;margin-top:4px}
+.m.mine small{text-align:right}
+.m .att{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-size:.76rem;font-weight:700;background:rgba(255,255,255,.18);border-radius:8px;padding:5px 9px}
+.m:not(.mine) .att{background:var(--bg)}
+.compose{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.compose input{flex:1;border:1px solid #DCDFE6;border-radius:10px;padding:10px 12px;outline:none}
+.compose input:focus{border-color:var(--orange)}
+.empty{flex:1;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:.84rem}
+.empty .ic{width:52px;height:52px;border-radius:50%;margin:0 auto 10px}
+.newtk{padding:18px;display:none}
+.newtk.on{display:block}
+
+/* notifications */
+.nt{display:flex;gap:12px;align-items:flex-start;padding:11px 16px;border-bottom:1px solid var(--line);color:inherit;cursor:pointer}.nt:hover{background:#FAFBFC}.nt .r{opacity:.55}.nt:hover .r{opacity:1}
+.nt:last-child{border:0}
+.nt.un{background:#FAFBFC}
+.nt .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none}
+.nt b{font-size:.86rem;display:flex;align-items:center;gap:7px}
+.nt.un b::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--red)}
+.nt p{font-size:.8rem;color:var(--ink2);margin-top:3px}
+.nt .meta{display:flex;gap:8px;align-items:center;margin-top:4px;font-size:.72rem;color:var(--muted)}
+.nt .r{margin-left:auto;display:flex;gap:4px}
+.nt .r button{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+.nt .r button:hover{background:var(--bg);color:var(--ink)}
+
+/* aide */
+.steps{list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:10px;margin:14px 0 18px}.steps li{display:flex;gap:12px;font-size:.86rem;line-height:1.5;color:var(--ink2)}.steps li::before{counter-increment:st;content:counter(st);width:26px;height:26px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font-weight:800;font-size:.76rem;color:var(--ink);flex:none}.steps b{color:var(--ink)}
+.faq details{border-bottom:1px solid var(--line);padding:14px 0}
+.faq details:last-child{border:0}
+.faq summary{font-weight:700;font-size:.88rem;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px}
+.faq summary::after{content:"+";margin-left:auto;font-size:1.2rem;color:var(--ink2);font-weight:700}
+.faq details[open] summary::after{content:"−"}
+.faq p{font-size:.84rem;color:var(--ink2);line-height:1.6;margin-top:8px}.faq p a{color:var(--ink);font-weight:700;text-decoration:underline}.faq .search{width:100%}
+.guide{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:.84rem}
+.guide:last-child{border:0}
+.guide span{width:36px;height:36px;border-radius:10px;background:#EEF0F3;color:var(--ink2);display:grid;place-items:center;flex:none}
+.guide small{display:block;color:var(--muted);font-size:.74rem}
+
+/* fenêtre (invitation, résiliation) — pas de alert() */
+.ov{position:fixed;inset:0;background:rgba(15,17,22,.45);display:none;place-items:center;z-index:90;padding:16px}
+.ov.on{display:grid}
+.modal{background:#fff;border-radius:18px;width:min(460px,100%);padding:22px;box-shadow:0 30px 70px -30px rgba(0,0,0,.5)}
+.modal h3{font-family:'Sora';font-size:1.08rem}
+.recap{border:1px solid var(--line);border-radius:12px;padding:2px 14px 0;margin:2px 0 14px;font-size:.84rem;overflow:hidden}
+.recap .kv small{display:block;color:var(--muted);font-size:.74rem;margin-top:1px}.recap .kv span{color:var(--ink2)}.recap .kv b{white-space:nowrap;flex:none}
+.recap .tot{background:var(--bg);margin:0 -14px;padding:10px 14px;border:0}.recap .tot span{color:var(--ink);font-weight:700}
+.rsel{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fld .rsel label{margin:0;font-size:inherit;color:inherit;display:flex;gap:9px;align-items:flex-start;border:1.5px solid var(--line);border-radius:11px;padding:10px 11px;cursor:pointer}
+.fld .rsel input{width:auto;padding:0;border:0;accent-color:#10B981;margin-top:3px;flex:none}
+.rsel b{display:block;font-size:.84rem}.rsel small{display:block;font-size:.72rem;color:var(--muted);line-height:1.35;margin-top:2px}
+.rsel label:has(input:checked){border-color:#10B981;background:#ECFDF5}
+.modal p{font-size:.82rem;color:var(--muted);margin:4px 0 16px;line-height:1.5}
+.modal .fld{margin-bottom:12px}
+.modal .ft{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.impact{background:var(--bg);border-radius:11px;padding:11px 13px;font-size:.8rem;color:var(--ink2);line-height:1.5}
+.tour{position:fixed;inset:0;z-index:95;display:none}
+.tour.on{display:block}
+.tour .shade{position:absolute;inset:0}
+.tour .spot{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(15,17,22,.55);pointer-events:none;transition:.25s}
+.tour .box{position:absolute;width:340px;background:#fff;border-radius:16px;padding:18px 20px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.tour .box small{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tour .box b{display:block;font-family:'Sora';font-size:1rem;margin:4px 0 6px}
+.tour .box p{font-size:.84rem;color:var(--ink2);line-height:1.5}
+.tour .box .ft{display:flex;align-items:center;gap:8px;margin-top:14px}
+.tour .box .skip{margin-right:auto;font-size:.8rem;font-weight:700;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);background:var(--side);color:#fff;font-size:.84rem;font-weight:600;border-radius:11px;padding:11px 18px;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.ro .needwrite{opacity:.45;pointer-events:none}
+
+@media (max-width:980px){
+  .sidebar{position:static;width:auto;flex-direction:row;align-items:center;overflow-x:auto}
+  .brand{padding:10px 12px}.brand img{width:120px}.brand .tag{display:none}
+  .nav{flex-direction:row;padding:8px}.nav a{padding:9px 11px;white-space:nowrap}
+  .navbot,.side-user{display:none}
+  .main{margin-left:0}.gsbtn{display:none}
+  .g4{grid-template-columns:1fr 1fr}.g2,.g21,.tiers,.fgrid,.res{grid-template-columns:1fr}
+  .sup{grid-template-columns:1fr;height:auto}.kgrid{grid-template-columns:1fr 1fr}.cover .cbtns{margin-left:0}
+  .tbl{display:block;overflow-x:auto}
+  .kt .go{display:none}.conv .hd{flex-wrap:wrap}.conv .hd .act{margin-left:0;width:100%}.compose input{min-width:0}
+  .sup .conv{display:none}.sup.open .lst{display:none}.sup.open .conv{display:flex;min-height:70vh}.conv .hd .back{display:inline-flex}
+}
+
+/* ---- Back-office additions ---- */
+.fbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.fbar .cats{margin:0}
+.fbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.mini-in,.mini-sel{height:34px;border:1px solid var(--line);border-radius:9px;padding:0 10px;font:inherit;font-size:.84rem;font-weight:700;color:var(--ink);background:#fff;outline:none}
+.mini-in{width:84px;text-align:right}
+.mini-in:focus,.mini-sel:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+.tg{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:600;color:var(--ink2);cursor:pointer;user-select:none}
+.tg input{display:none}
+.tg i{width:34px;height:20px;border-radius:99px;background:#D9DCE3;position:relative;transition:.15s;flex:none}
+.tg i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:.15s}
+.tg input:checked+i{background:var(--green)}
+.tg input:checked+i::after{left:16px}
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.roles>div{background:var(--bg);border-radius:12px;padding:14px}
+.roles b{display:block;font-size:.86rem;margin-bottom:4px}
+.roles small{display:block;color:var(--ink2);font-size:.78rem;line-height:1.45}
+.row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.row:last-child{border:0}
+.row:hover{background:#FAFBFC}
+.row .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:.72rem;font-weight:800;flex:none}
+.row b{display:block;font-size:.86rem}
+.row small{display:block;color:var(--muted);font-size:.76rem;margin-top:2px}
+.row .pill{margin-left:auto}
+.ico.b{background:var(--blue-bg);color:var(--blue)}.ico.o{background:#FFF0E8;color:var(--orange)}.ico.g{background:var(--green-bg);color:var(--green-d)}.ico.r{background:var(--red-bg);color:var(--red)}.ico.n{background:#EEF0F3;color:var(--ink2)}
+.jl{padding:9px 4px;border-bottom:1px solid var(--line);font-size:.84rem;color:var(--ink2)}
+.jl:last-child{border:0}
+.jl b{color:var(--ink)}
+.jl small{display:block;color:var(--muted);font-size:.74rem;margin-top:2px}
+.lbl2{display:block;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px}
+.uprow{display:flex;align-items:center;gap:14px}
+.logo-prev{width:56px;height:56px;border-radius:14px;background:var(--ink);display:grid;place-items:center;flex:none}
+.logo-prev img{width:38px;height:38px;object-fit:contain}
+.vidrow{display:flex;align-items:center;gap:16px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.vidrow video{width:160px;height:90px;border-radius:8px;object-fit:cover;background:#000;flex:none}
+.vidrow b{display:block;font-size:.86rem}
+.vidrow small{display:block;color:var(--muted);font-size:.76rem;margin-top:3px}
+.vidrow .btn{margin-left:auto}
+.faqe{display:grid;grid-template-columns:1fr 1.4fr auto;gap:12px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}
+.faqe:last-child{border:0}
+.faqe .fld{margin:0;min-width:0}
+.faqe .fld textarea,.faqe .fld input{width:100%}
+.faqa{display:flex;gap:6px;align-items:center;padding-bottom:2px}
+.quick{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px 0;border-top:1px solid var(--line);background:#fff}
+.quick button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 11px;font:inherit;font-size:.74rem;font-weight:600;color:var(--ink2);cursor:pointer;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.quick button:hover{border-color:var(--green);color:var(--green-d);background:var(--green-bg)}
+.quick .ed{border-style:dashed;color:var(--muted)}
+.tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto}
+.tags .pill i{font-style:normal;cursor:pointer;opacity:.55;margin-left:2px}
+.tags .pill i:hover{opacity:1;color:var(--red)}
+.tags button{border:1px dashed var(--line);background:none;border-radius:99px;padding:3px 9px;font:inherit;font-size:.7rem;font-weight:700;color:var(--muted);cursor:pointer}
+.tags button:hover{border-color:var(--green);color:var(--green-d)}
+.tbl tr.clk{cursor:pointer}
+.tbl tr.clk:hover td{background:#FAFBFC}
+.kgrid.k3{grid-template-columns:repeat(3,1fr)}
+.ibtn{display:inline-flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);color:var(--ink2);text-decoration:none}
+.tbl small{font-weight:500}
+.sel-st{display:grid;gap:8px}
+.sel-st label{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:.86rem}
+.sel-st label:has(input:checked){border-color:var(--green);background:var(--green-bg)}
+.sel-st input{accent-color:var(--green)}
+@media (max-width:900px){
+  .btag{display:none}.roles{grid-template-columns:1fr 1fr}.kgrid.k3{grid-template-columns:1fr}.faqe{grid-template-columns:1fr}.faqa{justify-content:flex-end}
+    .vidrow{flex-wrap:wrap}.vidrow .btn{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <span class="logo" style="position:relative;overflow:hidden"><img src="logo-tigre.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove()"></span>
+    <span class="name">TIGER<em>FLOW</em></span>
+  </div>
+  <div class="btag">Back-office éditeur</div>
+  <nav class="nav" id="nav">
+    <a href="#tableau" data-s="tableau"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="lbl">Tableau de bord</span></a>
+    <a href="#tenants" data-s="tenants"><svg class="i" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M8 7h4M8 11h4M8 15h4M2.5 21h19"/></svg><span class="lbl">Clients (tenants)</span><span class="cnt" id="c-ten">2</span></a>
+    <a href="#abonnements" data-s="abonnements"><svg class="i" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg><span class="lbl">Abonnements</span></a>
+    <a href="#paiements" data-s="paiements"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 0 0 8 12a3.5 3.5 0 0 0 6.8 3M7 10.5h5M7 13.5h5"/></svg><span class="lbl">Paiements</span></a>
+    <a href="#webhooks" data-s="webhooks"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><circle cx="12" cy="12" r="3"/></svg><span class="lbl">Webhooks &amp; automatisations</span></a>
+    <a href="#support" data-s="support"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/></svg><span class="lbl">Support</span><span class="cnt" id="c-sup">2</span></a>
+    <a href="#contenu" data-s="contenu"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span class="lbl">Contenu du site</span></a>
+    <a href="#notifications" data-s="notifications"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="lbl">Notifications</span><span class="cnt" id="c-not">3</span></a>
+    <a href="#equipe" data-s="equipe"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></svg><span class="lbl">Équipe TigerFlow</span></a>
+  </nav>
+  <div class="navbot">
+    <div class="swapp" id="swapp">
+      <button class="back-app" onclick="document.getElementById('swapp').classList.toggle('open');event.stopPropagation()"><svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></svg><span>Mes applications</span><svg class="i chev" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button>
+      <div class="swmenu">
+        <a href="landing.html"><span class="swic" style="background:var(--orange)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg></span><div><b>Site public</b><small>landing</small></div></a>
+        <a href="espace-societe.html"><span class="swic" style="background:#3D434E"><svg class="i" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M2.5 21h19"/></svg></span><div><b>Espace société</b><small>ce que voit un client</small></div></a>
+        <a href="#tableau" class="cur"><span class="swic" style="background:#1A1B1E"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><div><b>Back-office</b><small>vous êtes ici</small></div></a>
+      </div>
+    </div>
+  </div>
+  <button class="collapse" onclick="document.body.classList.toggle('mini')"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Réduire</span></button>
+  <div class="side-user" id="me" onclick="this.classList.toggle('open');event.stopPropagation()">
+    <div class="av">AL</div>
+    <div><b>Alexandre</b><span>Super Admin</span></div>
+    <svg class="i chev" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>
+    <div class="umenu">
+      <div class="hd"><b>Alexandre</b><small>hello@tigerflow.io</small></div>
+      <a href="#equipe"><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/></svg>Mon compte</a>
+      <a class="out" href="backoffice-connexion.html"><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Se déconnecter</a>
+    </div>
+  </div>
+</aside>
+
+<div class="main" id="main">
+  <header class="topbar">
+    <div class="crumbs"><span class="pgico" id="pg-ico"></span><span class="cur" id="pg-title">Tableau de bord</span></div>
+    <div class="tright">
+      <div class="gswrap"><label class="gsbtn"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gs" placeholder="Tenant, paiement, conversation…" autocomplete="off" oninput="gsDraw()" onkeydown="gsKey(event)" onblur="setTimeout(()=>document.getElementById('gsres').classList.remove('on'),150)"><kbd>/</kbd></label><div class="gsres" id="gsres"></div></div>
+      <a class="ibtn bell" href="#notifications" title="Notifications"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="dot" id="bell-n">3</span></a>
+    </div>
+  </header>
+
+  <div class="page">
+
+  <!-- ═══ TABLEAU DE BORD ═══ -->
+  <section class="sec" id="s-tableau">
+    <div class="cover"><h1>Bonjour, Alexandre</h1>
+      <div class="cbtns"><a class="btn g" href="#support">Voir le support</a><a class="btn o" href="#tenants">Voir les clients</a></div>
+      <div class="sub" id="d-sub">—</div></div>
+    <div class="kgrid">
+      <a class="kt blue" href="#tenants"><div class="kl"><svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M2.5 21h19"/></svg>Tenants</div><b id="d-ten">—</b><div class="ks" id="d-ten-ft">—</div><span class="go">Voir →</span></a>
+      <a class="kt green" href="#abonnements"><div class="kl"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>Abonnements actifs</div><b id="d-abo">—</b><div class="ks" id="d-abo-ft">—</div><span class="go">Voir →</span></a>
+      <a class="kt orange" href="#tenants" onclick="TF='essai'"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Conversion des essais</div><b id="d-conv">—</b><div class="ks" id="d-conv-ft">—</div><span class="go">Voir →</span></a>
+      <a class="kt red" href="#paiements"><div class="kl"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Paiements échoués</div><b id="d-fail">—</b><div class="ks" id="d-fail-ft">—</div><span class="go">Voir →</span></a>
+    </div>
+    <div class="g21">
+      <div class="card"><div class="hdr"><div><h3><span class="chsq b"><svg class="i" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M2.5 21h19"/></svg></span>Derniers tenants inscrits</h3><div class="sub">Les 5 plus récents</div></div><a class="lk" href="#tenants">Tous les tenants ›</a></div>
+        <table class="tbl"><thead><tr><th>Société</th><th>Statut</th><th>Places</th><th>Inscrit le</th><th></th></tr></thead><tbody id="d-recent"></tbody></table></div>
+      <div class="card"><div class="hdr"><div><h3><span class="chsq g"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/></svg></span>Support</h3><div class="sub">À traiter</div></div><a class="lk" href="#support">Ouvrir ›</a></div><div id="d-sup"></div></div>
+    </div>
+  </section>
+
+  <!-- ═══ TENANTS ═══ -->
+  <section class="sec" id="s-tenants">
+    <div id="ten-list">
+      <div class="ph"><div><h1>Clients (tenants)</h1><p id="ten-sub">—</p></div></div>
+      <div class="card" style="padding:14px 16px">
+        <div class="fbar">
+          <label class="search" style="flex:1;max-width:360px"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="ten-q" placeholder="Nom, adresse d'espace, e-mail…" oninput="drawTenants()"></label>
+          <div class="cats" id="ten-f"></div>
+        </div>
+        <table class="tbl" style="margin-top:12px"><thead><tr><th>Société</th><th>Statut</th><th>Facturation</th><th>Places</th><th>Stockage</th><th>Inscrit le</th><th></th></tr></thead><tbody id="ten-rows"></tbody></table>
+      </div>
+    </div>
+    <div id="ten-detail" style="display:none"></div>
+  </section>
+
+  <!-- ═══ ABONNEMENTS ═══ -->
+  <section class="sec" id="s-abonnements">
+    <div class="ph"><div><h1>Abonnements</h1><p>Les tarifs par place et la liste des abonnements.</p></div></div>
+    <div class="tabs" data-tabs="abo">
+      <button data-t="tarifs" class="on" onclick="openTab('abo','tarifs')">Tarifs</button>
+      <button data-t="liste" onclick="openTab('abo','liste')">Abonnements</button>
+      <button data-t="options" onclick="openTab('abo','options')">Options &amp; codes promo</button>
+    </div>
+    <div class="tp on" data-tp="abo-tarifs">
+      <div class="hint" style="margin:0 0 14px"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg><span>Un seul produit, un prix par place qui baisse par palier. Modifier un prix ne change rien aux places déjà prises : la nouvelle grille s'applique aux nouvelles places et aux nouveaux clients, après un préavis de 30 jours.</span></div>
+      <div class="card" oninput="document.getElementById('tar-save').className='btn o'">
+        <table class="tbl"><thead><tr><th>Palier</th><th>Places</th><th>Mensuel (HT / place / mois)</th><th>Annuel (HT / place / mois)</th><th>Support inclus</th><th>Statut</th></tr></thead><tbody id="tar-rows"></tbody></table>
+        <div class="act" style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn g" onclick="drawTarifs()">Annuler</button><button class="btn g" id="tar-save" onclick="saveTarifs()">Enregistrer la grille</button></div>
+      </div>
+      <div class="card mt"><div class="hdr"><div><h3>Inclus pour toutes les places</h3><div class="sub">Ce que chaque utilisateur a, quel que soit le palier</div></div></div>
+        <div class="cats" id="incl-list"></div></div>
+    </div>
+    <div class="tp" data-tp="abo-liste">
+      <div class="card" style="padding:14px 16px">
+        <div class="fbar"><label class="search" style="flex:1;max-width:360px"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="abo-q" placeholder="Rechercher un abonnement…" oninput="drawAbos()"></label><div class="cats" id="abo-f"></div></div>
+        <table class="tbl" style="margin-top:12px"><thead><tr><th>Société</th><th>Statut</th><th>Cycle</th><th>Places</th><th>Montant HT</th><th>Prochaine échéance</th><th></th></tr></thead><tbody id="abo-rows"></tbody></table>
+      </div>
+    </div>
+    <div class="tp" data-tp="abo-options">
+      <div class="g2">
+        <div class="card"><div class="hdr"><div><h3>Options payantes</h3><div class="sub">Facturées en plus de l'abonnement</div></div></div>
+          <div class="trow"><div><b>Domaine personnalisé</b><small>app.societe-du-client.fr</small></div><div class="sw"><input class="mini-in" value="9" oninput="toast('Prix modifié · 30 jours de préavis pour les clients actuels')"> € / mois</div></div>
+          <div class="trow"><div><b>SMS aux clients finaux</b><small>Rappels, relances de devis</small></div><div class="sw"><input class="mini-in" value="0,07" oninput="toast('Prix modifié')"> € / SMS</div></div>
+        </div>
+        <div class="card"><div class="hdr"><div><h3>Codes promo</h3><div class="sub">Appliqués à l'inscription</div></div><button class="btn g sm" onclick="openOv('ov-promo')">Nouveau code</button></div>
+          <table class="tbl"><thead><tr><th>Code</th><th>Réduction</th><th>Validité</th><th>Utilisé</th><th>Statut</th></tr></thead><tbody id="promo-rows"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PAIEMENTS ═══ -->
+  <section class="sec" id="s-paiements">
+    <div class="ph"><div><h1>Paiements</h1><p>Ce qui est encaissé, ce qui a échoué.</p></div><div class="act"><button class="btn g" onclick="toast('Export CSV du mois téléchargé')">Export CSV</button></div></div>
+    <div class="kgrid k3">
+      <div class="kt green"><div class="kl">Encaissé ce mois</div><b id="p-rev">—</b><div class="ks" id="p-rev-ft">—</div></div>
+      <div class="kt blue"><div class="kl">Transactions</div><b id="p-tx">—</b><div class="ks" id="p-tx-ft">—</div></div>
+      <div class="kt red"><div class="kl">Échecs</div><b id="p-ko">—</b><div class="ks" id="p-ko-ft">—</div></div>
+    </div>
+    <div class="card" style="padding:14px 16px">
+      <div class="fbar"><label class="search" style="flex:1;max-width:360px"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="pay-q" placeholder="Tenant, n° de paiement…" oninput="drawPays()"></label><div class="cats" id="pay-f"></div>
+        <select class="mini-sel" id="pay-m" onchange="drawPays()"><option value="all">Tous les mois</option><option value="10">Octobre 2026</option><option value="9">Septembre 2026</option><option value="8">Août 2026</option></select></div>
+      <table class="tbl" style="margin-top:12px"><thead><tr><th>N°</th><th>Tenant</th><th>Montant TTC</th><th>Date</th><th>Moyen</th><th>Statut</th><th></th></tr></thead><tbody id="pay-rows"></tbody></table>
+    </div>
+  </section>
+
+  <!-- ═══ WEBHOOKS ═══ -->
+  <section class="sec" id="s-webhooks">
+    <div class="ph"><div><h1>Webhooks &amp; automatisations</h1><p>Quand un événement arrive, une règle agit. Les 3 règles d'impayé sont livrées pré-configurées.</p></div><div class="act"><button class="btn o" onclick="editHook(null)">Nouvelle règle</button></div></div>
+    <div id="wh-list" class="card" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Règle</th><th>Déclencheur</th><th>Conditions</th><th>Actions</th><th>Dernier déclenchement</th><th>Statut</th><th></th></tr></thead><tbody id="wh-rows"></tbody></table></div>
+    <div id="wh-edit" style="display:none"></div>
+  </section>
+
+  <!-- ═══ SUPPORT ═══ -->
+  <section class="sec" id="s-support">
+    <div class="sup">
+      <div class="card lst">
+        <div class="hd"><div style="display:flex;align-items:center;margin-bottom:10px"><div><b style="font-family:'Sora'">Conversations</b><div class="sub" style="font-size:.76rem;color:var(--muted)">Landing + espaces société</div></div>
+          <button class="btn g sm" style="margin-left:auto" onclick="newConv()"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M12 5v14M5 12h14"/></svg>Nouvelle</button></div>
+          <label class="search"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="cv-q" placeholder="Rechercher…" oninput="drawSupport()"></label>
+          <div class="cats" id="cv-f" style="margin-top:10px"></div></div>
+        <div id="cvs" style="overflow:auto;flex:1"></div>
+      </div>
+      <div class="card conv" id="conv"></div>
+    </div>
+  </section>
+
+  <!-- ═══ CONTENU ═══ -->
+  <section class="sec" id="s-contenu">
+    <div class="ph"><div><h1>Contenu du site</h1><p>Ce que les visiteurs voient sur la landing. Publié immédiatement.</p></div><div class="act"><a class="btn g" href="landing.html" target="_blank" rel="noopener">Voir le site</a></div></div>
+    <div class="tabs" data-tabs="ct">
+      <button data-t="marque" class="on" onclick="openTab('ct','marque')">Logo &amp; identité</button>
+      <button data-t="videos" onclick="openTab('ct','videos')">Vidéos</button>
+      <button data-t="faq" onclick="openTab('ct','faq')">FAQ</button>
+      <button data-t="manuels" onclick="openTab('ct','manuels')">Manuels</button>
+    </div>
+    <div class="tp on" data-tp="ct-marque"><div class="card" oninput="document.getElementById('ct-save').className='btn o'">
+      <div class="fgrid">
+        <div class="fld"><label>Logo</label><div class="uprow"><span class="logo-prev"><img src="logo-tigre.png" alt=""></span><input type="file" id="ct-logo" accept="image/*" style="display:none" onchange="toast('Logo remplacé : '+this.files[0].name)"><button class="btn g sm" onclick="document.getElementById('ct-logo').click()">Remplacer</button><small>PNG ou SVG, fond transparent</small></div></div>
+        <div class="fld"><label>Nom affiché</label><input value="TigerFlow"></div>
+        <div class="fld full"><label>Phrase d'accroche (hero)</label><input value="Le logiciel des entreprises antinuisibles"></div>
+        <div class="fld full"><label>Description</label><textarea rows="3">Planning, techniciens, devis, factures, encaissement : une seule fois, au même endroit.</textarea></div>
+      </div>
+      <div class="act" style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn g" id="ct-save" onclick="this.className='btn g';toast('Contenu publié')">Publier</button></div>
+    </div></div>
+    <div class="tp" data-tp="ct-videos"><div class="g2">
+      <div class="card"><div class="hdr"><div><h3>Vidéo de présentation</h3><div class="sub">Ouverte depuis le bouton « Voir la démo »</div></div></div>
+        <div class="vidrow"><video src="demo-tigerflow.mp4" muted preload="metadata"></video><div><b>demo-tigerflow.mp4</b><small>1 min 38 · 2,5 Mo · publiée le 3 oct. 2026</small><div style="display:flex;gap:8px;margin-top:8px"><input type="file" id="ct-vid" accept="video/*" style="display:none" onchange="toast('Vidéo remplacée : '+this.files[0].name)"><button class="btn g sm" onclick="document.getElementById('ct-vid').click()">Remplacer</button><button class="btn g sm" onclick="openOv('ov-link')">Lien YouTube / Vimeo</button></div></div></div>
+      </div>
+      <div class="card"><div class="hdr"><div><h3>Tutoriels</h3><div class="sub">Affichés dans l'Aide de l'espace société</div></div><button class="btn g sm" onclick="openOv('ov-link')">Ajouter</button></div>
+        <div id="tuto-rows"></div></div>
+    </div></div>
+    <div class="tp" data-tp="ct-faq"><div class="card"><div class="hdr"><div><h3>Questions fréquentes</h3><div class="sub">Dans l'ordre d'affichage sur la landing</div></div><button class="btn g sm" onclick="addFaq()">Ajouter une question</button></div><div id="faq-rows"></div>
+      <div class="act" style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn o" onclick="toast('FAQ publiée')">Publier</button></div></div></div>
+    <div class="tp" data-tp="ct-manuels"><div class="card"><div class="hdr"><div><h3>Manuels &amp; documentation</h3><div class="sub">PDF ou lien, affichés dans l'Aide</div></div><div style="display:flex;gap:8px"><input type="file" id="ct-pdf" accept=".pdf" style="display:none" onchange="addManuel(this.files[0].name)"><button class="btn g sm" onclick="document.getElementById('ct-pdf').click()">Ajouter un PDF</button><button class="btn g sm" onclick="openOv('ov-link')">Ajouter un lien</button></div></div><div id="man-rows"></div></div></div>
+  </section>
+
+  <!-- ═══ NOTIFICATIONS ═══ -->
+  <section class="sec" id="s-notifications">
+    <div class="ph"><div><h1>Notifications</h1><p id="n-sub">—</p></div><div class="act"><button class="btn g" onclick="readAll()">Tout marquer comme lu</button></div></div>
+    <div class="tabs" id="n-tabs"></div>
+    <div class="card" style="padding:0" id="n-list"></div>
+    <div class="card mt"><div class="hdr"><div><h3>Ce qui est envoyé automatiquement</h3><div class="sub">E-mail + notification dans l'espace société du client</div></div></div>
+      <div class="trow"><div><b>Nouvelle inscription</b><small>À l'équipe TigerFlow</small></div><div class="sw"><label class="tg"><input type="checkbox" checked><i></i>E-mail</label><label class="tg"><input type="checkbox" checked><i></i>In-app</label></div></div>
+      <div class="trow"><div><b>Paiement reçu / échoué</b><small>Au client</small></div><div class="sw"><label class="tg"><input type="checkbox" checked><i></i>E-mail</label><label class="tg"><input type="checkbox" checked><i></i>In-app</label></div></div>
+      <div class="trow"><div><b>Suspension / rétablissement</b><small>Au client</small></div><div class="sw"><label class="tg"><input type="checkbox" checked><i></i>E-mail</label><label class="tg"><input type="checkbox" checked><i></i>In-app</label></div></div>
+      <div class="trow"><div><b>Réponse du support</b><small>Au client</small></div><div class="sw"><label class="tg"><input type="checkbox" checked><i></i>E-mail</label><label class="tg"><input type="checkbox" checked><i></i>In-app</label></div></div>
+    </div>
+  </section>
+
+  <!-- ═══ ÉQUIPE ═══ -->
+  <section class="sec" id="s-equipe">
+    <div class="ph"><div><h1>Équipe TigerFlow</h1><p>Qui a accès à ce back-office, et avec quel rôle.</p></div><div class="act"><button class="btn o" onclick="openOv('ov-user')">Ajouter un membre</button></div></div>
+    <div class="card" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Membre</th><th>Rôle</th><th>Titre</th><th>Statut</th><th>Créé le</th><th>Modifié le</th><th></th></tr></thead><tbody id="eq-rows"></tbody></table></div>
+    <div class="card mt"><div class="hdr"><div><h3>Les rôles</h3><div class="sub">Ce que chacun peut faire</div></div></div>
+      <div class="roles">
+        <div><b>Super Admin</b><small>Tout, y compris l'équipe, les tarifs et les webhooks.</small></div>
+        <div><b>Account Manager</b><small>Tenants, abonnements, support. Pas les tarifs ni l'équipe.</small></div>
+        <div><b>IT</b><small>Webhooks, contenu du site, journal. Pas les paiements.</small></div>
+        <div><b>Finance</b><small>Paiements, abonnements, export. Lecture seule ailleurs.</small></div>
+      </div></div>
+  </section>
+
+  </div>
+</div>
+
+<!-- fenêtres -->
+<div class="ov" id="ov-status" onclick="if(event.target===this)closeOv()"><div class="modal"><h3 id="st-h">—</h3><p id="st-p">—</p><div class="fld" id="st-why"><label>Motif (visible dans le journal du tenant)</label><input id="st-m" placeholder="Ex : impayé depuis 10 jours"></div><div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><button class="btn o" id="st-ok">Confirmer</button></div></div></div>
+<div class="ov" id="ov-user" onclick="if(event.target===this)closeOv()"><div class="modal"><h3>Ajouter un membre</h3><p>Il reçoit un e-mail pour choisir son mot de passe. La double authentification est obligatoire.</p>
+  <div class="fld"><label>Prénom et nom</label><input id="eq-nom" placeholder="Ex : Floriant Martin"></div>
+  <div class="fld"><label>E-mail</label><input id="eq-mail" placeholder="floriant@tigerflow.io"></div>
+  <div class="fld"><label>Titre</label><input id="eq-titre" placeholder="Ex : Support client"></div>
+  <div class="fld"><label>Rôle</label><div class="rsel"><label><input type="radio" name="eqr" value="Super Admin"><span><b>Super Admin</b><small>Tout</small></span></label><label><input type="radio" name="eqr" value="Account Manager" checked><span><b>Account Manager</b><small>Clients, abonnements, support</small></span></label><label><input type="radio" name="eqr" value="IT"><span><b>IT</b><small>Webhooks, site, journal</small></span></label><label><input type="radio" name="eqr" value="Finance"><span><b>Finance</b><small>Paiements, export</small></span></label></div></div>
+  <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><button class="btn o" onclick="addUser()">Envoyer l'invitation</button></div></div></div>
+<div class="ov" id="ov-promo" onclick="if(event.target===this)closeOv()"><div class="modal"><h3>Nouveau code promo</h3><p>Appliqué sur la première période après l'essai.</p>
+  <div class="fgrid"><div class="fld"><label>Code</label><input id="pr-code" placeholder="RENTREE30" style="text-transform:uppercase"></div><div class="fld"><label>Réduction</label><input id="pr-pct" placeholder="30 %"></div><div class="fld"><label>Valable jusqu'au</label><input id="pr-fin" type="date"></div><div class="fld"><label>Nombre max d'utilisations</label><input id="pr-max" placeholder="100"></div></div>
+  <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><button class="btn o" onclick="addPromo()">Créer le code</button></div></div></div>
+<div class="ov" id="ov-link" onclick="if(event.target===this)closeOv()"><div class="modal"><h3>Ajouter un lien</h3><div class="fld"><label>Titre</label><input id="lk-t" placeholder="Ex : Planifier sa première intervention"></div><div class="fld"><label>Lien YouTube, Vimeo ou PDF</label><input id="lk-u" placeholder="https://"></div>
+  <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><button class="btn o" onclick="addLink()">Ajouter</button></div></div></div>
+<div class="ov" id="ov-imp" onclick="if(event.target===this)closeOv()"><div class="modal"><h3>Se connecter en tant que <span id="imp-who">—</span></h3><p>Vous allez ouvrir l'espace de ce client avec ses droits d'administrateur, en lecture et en écriture. L'action est journalisée et le client est prévenu par e-mail.</p>
+  <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><a class="btn o" href="espace-societe.html" target="_blank" rel="noopener" onclick="closeOv();toast('Connexion en tant que client journalisée')">Ouvrir son espace</a></div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ───────── données de démonstration (maquette) ───────── */
+const KEY = "tigerflow-bo";
+const TR = [ {min:1,max:5,lab:"1 à 5",m:69,a:49,sup:"Support par e-mail"}, {min:6,max:10,lab:"6 à 10",m:49,a:39,sup:"Support prioritaire"}, {min:11,max:999,lab:"11 et +",m:39,a:29,sup:"Interlocuteur dédié"} ];
+function tr(i){ return TR.find(t => i >= t.min && i <= t.max) || TR[2]; }
+function seatCost(n, b){ let c = 0; for(let i = 1; i <= n; i++) c += tr(i)[b]; return c; }
+function seatBreak(n, b){ const p = []; TR.forEach(t => { const k = Math.max(0, Math.min(n, t.max) - t.min + 1); if(k > 0) p.push(k + " × " + t[b] + " €"); }); return p.join(" + "); }
+const D0 = {
+  tenants:[
+    { id:1, nom:"Agence Antinuisible", sub:"agence-antinuisible", mail:"contact@agenceantinuisible.fr", st:"actif", bill:"m", n:4, tech:3, sto:1.2, reg:"2026-09-19", last:"Aujourd'hui, 9 h 40", ville:"Paris", carte:"4242", dom:"" },
+    { id:2, nom:"Dératek Lyon", sub:"deratek-lyon", mail:"pierre@deratek.fr", st:"essai", bill:"a", n:2, tech:1, sto:0.3, reg:"2026-09-28", last:"Hier, 17 h 02", ville:"Lyon", carte:"", fin:"2026-10-12", dom:"" },
+    { id:3, nom:"Hygiène 3D Sud", sub:"hygiene3d-sud", mail:"direction@hygiene3dsud.fr", st:"actif", bill:"a", n:7, tech:5, sto:4.8, reg:"2026-08-03", last:"Aujourd'hui, 8 h 15", ville:"Marseille", carte:"1881", dom:"app.hygiene3dsud.fr" },
+    { id:4, nom:"Nuisibles Express", sub:"nuisibles-express", mail:"karim@nuisibles-express.fr", st:"suspendu", bill:"m", n:3, tech:2, sto:0.9, reg:"2026-07-21", last:"Lun. 29 sept.", ville:"Lille", carte:"0005", impaye:"2026-09-30", dom:"" },
+    { id:5, nom:"ProDésinfection", sub:"prodesinfection", mail:"contact@prodesinfection.fr", st:"actif", bill:"m", n:12, tech:9, sto:7.4, reg:"2026-06-11", last:"Aujourd'hui, 7 h 55", ville:"Nantes", carte:"7719", dom:"" },
+    { id:6, nom:"Rat&Co", sub:"rat-and-co", mail:"jo@ratandco.fr", st:"annule", bill:"m", n:0, tech:0, sto:0.4, reg:"2026-05-02", last:"Ven. 12 sept.", ville:"Bordeaux", carte:"3030", dom:"" }
+  ],
+  pays:[
+    { no:"PAY-2026-0142", t:3, amt:3542.4, d:"2026-10-01", st:"ok", moy:"Visa •••• 1881" },
+    { no:"PAY-2026-0141", t:5, amt:764.4, d:"2026-10-01", st:"ok", moy:"Visa •••• 7719" },
+    { no:"PAY-2026-0140", t:1, amt:331.2, d:"2026-10-01", st:"ok", moy:"Visa •••• 4242" },
+    { no:"PAY-2026-0139", t:4, amt:248.4, d:"2026-09-30", st:"ko", moy:"Visa •••• 0005" },
+    { no:"PAY-2026-0131", t:5, amt:764.4, d:"2026-09-01", st:"ok", moy:"Visa •••• 7719" },
+    { no:"PAY-2026-0130", t:1, amt:248.4, d:"2026-09-01", st:"ok", moy:"Visa •••• 4242" },
+    { no:"PAY-2026-0129", t:4, amt:248.4, d:"2026-09-01", st:"ok", moy:"Visa •••• 0005" },
+    { no:"PAY-2026-0118", t:5, amt:681.6, d:"2026-08-01", st:"ok", moy:"Visa •••• 7719" },
+    { no:"PAY-2026-0117", t:6, amt:165.6, d:"2026-08-01", st:"att", moy:"Visa •••• 3030" }
+  ],
+  hooks:[
+    { id:1, nom:"Impayé J+1 — rappel", trig:"stripe_ko", cond:["Statut paiement : échoué"], act:["Envoyer un e-mail au client","Journaliser"], last:"30 sept., 06:10", on:true, sys:true },
+    { id:2, nom:"Impayé J+3 — nouvelle tentative", trig:"stripe_ko", cond:["Statut paiement : échoué depuis 3 j"], act:["Relancer le prélèvement","Envoyer un e-mail au client","Journaliser"], last:"—", on:true, sys:true },
+    { id:3, nom:"Impayé J+7 — lecture seule", trig:"stripe_ko", cond:["Statut paiement : échoué depuis 7 j"], act:["Mettre le tenant en lecture seule","Envoyer un e-mail au client","Journaliser"], last:"—", on:true, sys:true },
+    { id:4, nom:"Paiement reçu — rétablir", trig:"stripe_ok", cond:["Statut tenant : suspendu"], act:["Rétablir l'accès complet","Envoyer un e-mail au client","Journaliser"], last:"1 oct., 02:04", on:true, sys:true },
+    { id:5, nom:"Nouvel essai — prévenir l'équipe", trig:"tenant_new", cond:[], act:["Notifier l'équipe TigerFlow","Journaliser"], last:"28 sept., 11:32", on:true, sys:false }
+  ],
+  convs:[
+    { id:1041, t:1, src:"espace", sujet:"Importer mes clients depuis Excel", st:"ouvert", tags:["Import"], unread:true, msgs:[{me:false,t:"Bonjour, j'ai 800 clients dans un fichier Excel. Comment je les mets dans TigerFlow ?",w:"Aujourd'hui, 9 h 02",att:"clients.xlsx"},{me:true,t:"Bonjour ! Envoyez-nous le fichier ici, on s'en occupe et on vous prévient dès que c'est fait (sous 24 h).",w:"Aujourd'hui, 9 h 40"}] },
+    { id:1042, t:0, src:"landing", qui:"Marc · SOS Guêpes 77", ct:"06 12 45 78 90", sujet:"Est-ce que ça gère les contrats annuels ?", st:"ouvert", tags:["Prospect"], unread:true, msgs:[{me:false,t:"Bonjour, je fais surtout des contrats annuels avec des syndics, est-ce que TigerFlow gère ça ?",w:"Aujourd'hui, 11 h 20"}] },
+    { id:1040, t:3, src:"espace", sujet:"Facture de septembre", st:"cours", tags:["Facturation"], unread:false, msgs:[{me:false,t:"Il manque notre référence de commande sur la facture de septembre.",w:"Hier, 15 h 02"},{me:true,t:"C'est noté, on régénère la facture avec la référence.",w:"Hier, 15 h 30"}] },
+    { id:1038, t:5, src:"espace", sujet:"Signature des devis sur tablette", st:"resolu", tags:["Technique"], unread:false, msgs:[{me:false,t:"La signature ne s'affiche plus sur la tablette de Pablo.",w:"Lun. 29 sept."},{me:true,t:"C'était un souci de mise à jour, c'est corrigé. Faites une mise à jour de l'appli.",w:"Lun. 29 sept."}] }
+  ],
+  quick:["Bonjour ! Merci pour votre message, je regarde ça et je reviens vers vous très vite.","Pouvez-vous m'envoyer une capture d'écran de ce que vous voyez ?","C'est corrigé de notre côté. Pouvez-vous rafraîchir la page (Ctrl+Shift+R) et me dire si c'est bon ?","Je vous propose un rendez-vous de 15 minutes en visio pour regarder ensemble : quel créneau vous arrange ?"],
+  nots:[
+    { id:1, cat:"pay", t:"Paiement échoué", d:"Nuisibles Express · 248,40 € · Visa •••• 0005 refusée", w:"Il y a 2 h", un:true },
+    { id:2, cat:"sup", t:"Nouvelle demande depuis la landing", d:"Marc · SOS Guêpes 77 : « Est-ce que ça gère les contrats annuels ? »", w:"Il y a 3 h", un:true },
+    { id:3, cat:"new", t:"Nouvelle inscription", d:"Dératek Lyon a démarré son essai (2 utilisateurs, annuel)", w:"Hier", un:true },
+    { id:4, cat:"pay", t:"Paiements du 1er octobre", d:"3 prélèvements réussis · 4 638,00 € TTC", w:"1 oct.", un:false },
+    { id:5, cat:"sup", t:"Demande résolue", d:"ProDésinfection · Signature des devis sur tablette", w:"29 sept.", un:false }
+  ],
+  team:[
+    { id:1, nom:"Alexandre", mail:"hello@tigerflow.io", role:"Super Admin", titre:"Fondateur", st:"actif", c:"2026-06-01", m:"2026-10-03" },
+    { id:2, nom:"Floriant Martin", mail:"floriant@tigerflow.io", role:"Account Manager", titre:"Support client", st:"actif", c:"2026-09-01", m:"2026-09-28" },
+    { id:3, nom:"Saigon Tech", mail:"dev@saigon-tech.vn", role:"IT", titre:"Développement", st:"actif", c:"2026-09-15", m:"2026-09-15" },
+    { id:4, nom:"Cabinet Durand", mail:"compta@cabinet-durand.fr", role:"Finance", titre:"Expert-comptable", st:"inactif", c:"2026-07-10", m:"2026-09-02" }
+  ],
+  promos:[ { code:"LANCEMENT40", pct:40, fin:"2026-12-31", used:3, max:100, on:true }, { code:"SALON26", pct:20, fin:"2026-11-15", used:0, max:50, on:true } ],
+  faq:[["Combien ça coûte vraiment ?","Un prix par place et par mois : les 5 premières places à 69 €, les places 6 à 10 à 49 €, à partir de la 11ᵉ 39 €."],["Je dois donner ma carte pour l'essai ?","Non. 14 jours d'essai sans carte bancaire."],["Mes techniciens ont besoin de quoi ?","Un téléphone, Android ou iPhone."],["Je peux récupérer mes clients depuis Excel ?","Oui, envoyez votre fichier au support, on l'importe sous 24 h."],["Et si j'arrête ?","Vous résiliez quand vous voulez depuis votre espace."],["Où sont stockées mes données ?","En Europe, chez Amazon Web Services."]],
+  tutos:[["Planifier sa première intervention","https://youtu.be/…","3 min"],["Faire un devis et le faire signer","https://youtu.be/…","4 min"],["Installer l'appli sur le téléphone d'un technicien","https://youtu.be/…","2 min"]],
+  manuels:[["Guide de démarrage TigerFlow.pdf","PDF · 2,1 Mo"],["Manuel de l'appli technicien.pdf","PDF · 1,4 Mo"]],
+  journal:[]
+};
+let S; try{ S = JSON.parse(localStorage.getItem(KEY)); }catch(e){} if(!S || !S.tenants) S = JSON.parse(JSON.stringify(D0));
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function log(t, d){ S.journal.unshift({ qui:"Alexandre", t, d, w:"À l'instant" }); }
+
+/* ───────── utilitaires ───────── */
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function eur(v){ return v.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €"; }
+function eur0(v){ return v.toLocaleString("fr-FR") + " €"; }
+function fdate(s){ const d = new Date(s); return d.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}); }
+function ini(n){ return n.split(/\s+/).map(x => x[0]).join("").slice(0,2).toUpperCase(); }
+function ten(id){ return S.tenants.find(t => t.id === id); }
+function ht(t){ return seatCost(t.n, t.bill) * (t.bill === "a" ? 12 : 1); }
+const STT = { actif:["Actif","g"], essai:["Essai","b"], suspendu:["Suspendu","a"], annule:["Annulé","r"] };
+const IC = { ok:'<svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M5 12.5l4.5 4.5L19 7"/></svg>', clip:'<svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M21 11.5l-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"/></svg>' };
+function toast(m){ const t = document.getElementById("toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2600); }
+function openOv(id){ document.getElementById(id).classList.add("on"); }
+function closeOv(){ document.querySelectorAll(".ov").forEach(o => o.classList.remove("on")); }
+document.addEventListener("keydown", e => { if(e.key === "Escape" && document.querySelector(".ov.on")) closeOv(); if(e.key === "/" && !/input|textarea|select/i.test(document.activeElement.tagName)){ e.preventDefault(); document.getElementById("gs").focus(); } });
+document.addEventListener("click", () => { document.querySelectorAll(".swapp.open,.side-user.open").forEach(x => x.classList.remove("open")); });
+function openTab(g, t){ document.querySelectorAll('[data-tabs="' + g + '"] button').forEach(b => b.classList.toggle("on", b.dataset.t === t)); document.querySelectorAll('[data-tp^="' + g + '-"]').forEach(p => p.classList.toggle("on", p.dataset.tp === g + "-" + t)); }
+function chips(id, list, cur, fn){ document.getElementById(id).innerHTML = list.map(([k, l]) => '<label><input type="radio" name="' + id + '" value="' + k + '"' + (cur === k ? " checked" : "") + ' onchange="' + fn + "('" + k + "')" + '"><span>' + l + '</span></label>').join(""); }
+
+/* ───────── navigation ───────── */
+const TITRES = { tableau:"Tableau de bord", tenants:"Clients (tenants)", abonnements:"Abonnements", paiements:"Paiements", webhooks:"Webhooks & automatisations", support:"Support", contenu:"Contenu du site", notifications:"Notifications", equipe:"Équipe TigerFlow" };
+let CURT = null;
+function render(){
+  let h = (location.hash || "#tableau").slice(1); const [sec, q] = h.split("?"); const id = TITRES[sec] ? sec : "tableau";
+  document.querySelectorAll(".sec").forEach(s => s.classList.toggle("on", s.id === "s-" + id));
+  document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("active", a.dataset.s === id));
+  document.getElementById("pg-title").textContent = TITRES[id]; document.getElementById("pg-ico").innerHTML = document.querySelector('#nav a[data-s="' + id + '"] svg').outerHTML;
+  if(id === "tenants"){ const m = /t=(\d+)/.exec(q || ""); if(m) openTenant(+m[1]); else closeTenant(); }
+  drawAll(); window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", render);
+function drawAll(){ drawDash(); drawTenants(); drawTarifs(); drawAbos(); drawPays(); drawHooks(); drawSupport(); drawContent(); drawNots(); drawTeam(); }
+
+/* ───────── tableau de bord ───────── */
+function drawDash(){
+  const T = S.tenants, act = T.filter(t => t.st === "actif"), ess = T.filter(t => t.st === "essai"), ko = S.pays.filter(p => p.st === "ko");
+  const mrr = act.reduce((s, t) => s + seatCost(t.n, t.bill), 0);
+  document.getElementById("d-sub").textContent = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"}).replace(/^./, c => c.toUpperCase()) + " · " + eur0(mrr) + " HT de revenu mensuel récurrent";
+  document.getElementById("d-ten").textContent = T.length; document.getElementById("d-ten-ft").textContent = act.length + " actifs · " + ess.length + " en essai · " + T.filter(t => t.st === "suspendu").length + " suspendu";
+  document.getElementById("d-abo").textContent = act.length; document.getElementById("d-abo-ft").textContent = act.filter(t => t.bill === "a").length + " annuels · " + act.filter(t => t.bill === "m").length + " mensuels";
+  document.getElementById("d-conv").textContent = "68 %"; document.getElementById("d-conv-ft").textContent = ess.length + " essai en cours · 2 convertis sur 3 le mois dernier";
+  document.getElementById("d-fail").textContent = ko.length; document.getElementById("d-fail-ft").textContent = ko.length ? eur(ko.reduce((s, p) => s + p.amt, 0)) + " TTC à récupérer" : "Aucun ce mois-ci";
+  document.getElementById("c-ten").textContent = ess.length; document.getElementById("c-ten").style.display = ess.length ? "" : "none";
+  document.getElementById("d-recent").innerHTML = [...T].sort((a, b) => b.reg.localeCompare(a.reg)).slice(0, 5).map(t => '<tr><td><div class="who"><span class="av" style="' + (t.st === "actif" ? "" : "background:#D7DAE1;color:#6C7285") + '">' + ini(t.nom) + '</span><div><b>' + esc(t.nom) + '</b><small>' + esc(t.sub) + '.tigerflow.io</small></div></div></td><td><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></td><td>' + t.n + '</td><td style="color:var(--muted)">' + fdate(t.reg) + '</td><td><div class="acts"><a class="btn g sm" href="#tenants?t=' + t.id + '">Ouvrir</a></div></td></tr>').join("");
+  const open = S.convs.filter(c => c.st !== "resolu" && !c.arch);
+  document.getElementById("d-sup").innerHTML = open.length ? open.map(c => '<a class="row" href="#support" onclick="CUR=' + c.id + '"><span class="ico ' + (c.src === "landing" ? "o" : "b") + '">' + (c.src === "landing" ? "P" : ini(ten(c.t).nom)) + '</span><div><b>' + esc(c.sujet) + '</b><small>' + (c.src === "landing" ? esc(c.qui) : esc(ten(c.t).nom)) + ' · ' + esc(c.msgs[c.msgs.length - 1].w) + '</small></div><span class="pill ' + (c.st === "ouvert" ? "o" : "b") + '">' + (c.st === "ouvert" ? "Ouverte" : "En cours") + '</span></a>').join("") : '<div class="empty">Rien à traiter</div>';
+  document.getElementById("c-sup").textContent = open.filter(c => c.unread).length;
+}
+
+/* ───────── tenants ───────── */
+let TF = "all";
+function setTF(k){ TF = k; drawTenants(); }
+function drawTenants(){
+  const T = S.tenants, q = (document.getElementById("ten-q").value || "").trim().toLowerCase();
+  chips("ten-f", [["all","Tous " + T.length],["actif","Actifs " + T.filter(t => t.st === "actif").length],["essai","En essai " + T.filter(t => t.st === "essai").length],["suspendu","Suspendus " + T.filter(t => t.st === "suspendu").length],["annule","Annulés " + T.filter(t => t.st === "annule").length]], TF, "setTF");
+  document.getElementById("ten-sub").textContent = T.length + " sociétés · " + T.filter(t => t.st === "actif").reduce((s, t) => s + t.n, 0) + " places facturées";
+  const L = T.filter(t => (TF === "all" || t.st === TF) && (!q || (t.nom + " " + t.sub + " " + t.mail + " " + t.ville).toLowerCase().includes(q)));
+  document.getElementById("ten-rows").innerHTML = L.length ? L.map(t => '<tr class="clk" onclick="location.hash=\'#tenants?t=' + t.id + '\'"><td><div class="who"><span class="av" style="' + (t.st === "actif" ? "" : "background:#D7DAE1;color:#6C7285") + '">' + ini(t.nom) + '</span><div><b>' + esc(t.nom) + '</b><small>' + esc(t.sub) + '.tigerflow.io · ' + esc(t.ville) + '</small></div></div></td>' +
+    '<td><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span>' + (t.st === "essai" ? '<small style="display:block;color:var(--muted);font-size:.72rem;margin-top:3px">fin le ' + fdate(t.fin) + '</small>' : t.st === "suspendu" ? '<small style="display:block;color:var(--red);font-size:.72rem;margin-top:3px">impayé depuis le ' + fdate(t.impaye) + '</small>' : '') + '</td>' +
+    '<td>' + (t.st === "essai" ? "Essai" : t.bill === "a" ? "Annuel" : "Mensuel") + '<small style="display:block;color:var(--muted);font-size:.72rem">' + (t.n ? eur0(seatCost(t.n, t.bill)) + " HT / mois" : "—") + '</small></td>' +
+    '<td><b>' + t.n + '</b> <small style="color:var(--muted)">dont ' + t.tech + ' tech.</small></td><td>' + t.sto.toLocaleString("fr-FR") + ' Go</td><td style="color:var(--muted)">' + fdate(t.reg) + '</td>' +
+    '<td><div class="acts"><button class="btn g sm" onclick="event.stopPropagation();impers(' + t.id + ')" title="Se connecter en tant que">Entrer</button><a class="btn g sm" href="#tenants?t=' + t.id + '" onclick="event.stopPropagation()">Fiche ›</a></div></td></tr>').join("") : '<tr><td colspan="7" class="empty">Aucun tenant ne correspond</td></tr>';
+}
+function closeTenant(){ CURT = null; document.getElementById("ten-list").style.display = ""; document.getElementById("ten-detail").style.display = "none"; }
+function openTenant(id){
+  const t = ten(id); if(!t){ closeTenant(); return; } CURT = id;
+  document.getElementById("ten-list").style.display = "none"; const d = document.getElementById("ten-detail"); d.style.display = "";
+  const pays = S.pays.filter(p => p.t === id), users = [{nom:"Administrateur",mail:t.mail,role:"Administrateur"}].concat(Array.from({length:Math.max(0, t.n - 1)}, (_, i) => ({nom:["Karim Benali","Julie Martin","Mehdi Rahal","Pablo Ortega","Sophie Leroy","Nadia Cherif","Lucas Petit","Hugo Marchand","Inès Dubois","Yanis Bakker","Clara Fontaine"][i] || "Utilisateur " + (i + 2), mail:"user" + (i + 2) + "@" + t.sub + ".fr", role: i < t.tech ? "Technicien" : "Commercial"})));
+  const journal = [{qui:"Système",t:"Prélèvement " + (pays[0] ? (pays[0].st === "ok" ? "réussi" : "échoué") : "—"),w:pays[0] ? fdate(pays[0].d) : "—"},{qui:"Floriant",t:"Réponse au support",w:"Hier, 15 h 30"},{qui:"Système",t:"Inscription · essai démarré",w:fdate(t.reg)}].concat(S.journal.filter(j => j.d === t.nom).map(j => ({qui:j.qui,t:j.t,w:j.w})));
+  d.innerHTML = '<a class="lk" href="#tenants" style="display:inline-flex;gap:6px;align-items:center;margin-bottom:12px">‹ Tous les clients</a>' +
+    '<div class="ph"><div><h1>' + esc(t.nom) + ' <span class="pill ' + STT[t.st][1] + '" style="vertical-align:middle;margin-left:6px">' + STT[t.st][0] + '</span></h1><p>' + esc(t.sub) + '.tigerflow.io' + (t.dom ? ' · ' + esc(t.dom) : '') + ' · ' + esc(t.ville) + ' · inscrit le ' + fdate(t.reg) + ' · dernière activité ' + esc(t.last) + '</p></div>' +
+    '<div class="act"><a class="btn g" href="#support" onclick="CUR=' + (S.convs.find(c => c.t === id) || {id:null}).id + '">Historique support</a><button class="btn g" onclick="impers(' + id + ')">Se connecter en tant que</button>' +
+    (t.st === "suspendu" ? '<button class="btn o" onclick="setStatus(' + id + ',\'actif\')">Rétablir</button>' : t.st === "annule" ? '<button class="btn o" onclick="setStatus(' + id + ',\'actif\')">Réactiver</button>' : '<button class="btn r" onclick="setStatus(' + id + ',\'suspendu\')">Suspendre</button>') + '</div></div>' +
+    (t.st === "suspendu" ? '<div class="alertbar on" style="margin:0 0 16px"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span><b>Suspendu pour impayé</b> depuis le ' + fdate(t.impaye) + ' · ' + eur(seatCost(t.n, "m") * 1.2) + ' TTC dus · prochaine tentative automatique J+7, puis lecture seule.</span><button class="btn g sm" onclick="toast(\'Nouvelle tentative de prélèvement lancée\')">Relancer le prélèvement</button></div>' : '') +
+    '<div class="g21"><div>' +
+    '<div class="card"><div class="hdr"><div><h3>Fiche</h3></div></div><div class="fgrid" style="font-size:.86rem"><div><small class="lbl2">Société</small><b>' + esc(t.nom) + '</b></div><div><small class="lbl2">E-mail de facturation</small><b>' + esc(t.mail) + '</b></div><div><small class="lbl2">Adresse d\'espace</small><b>' + esc(t.sub) + '.tigerflow.io</b></div><div><small class="lbl2">Domaine personnalisé</small><b>' + (t.dom ? esc(t.dom) + ' <span class="pill g">actif · 9 €/mois</span>' : '—') + '</b></div></div></div>' +
+    '<div class="card mt"><div class="hdr"><div><h3>Usage</h3><div class="sub">Ce qui est facturé et ce qui est consommé</div></div></div>' +
+    '<div class="kv"><span>Places (' + t.n + ')</span><b>' + (t.n ? seatBreak(t.n, t.bill) + ' = ' + eur0(seatCost(t.n, t.bill)) + ' HT / mois' : '—') + '</b></div><div class="seats">' + Array.from({length:Math.min(12, Math.max(t.n, 1))}, (_, k) => '<i class="' + (k < t.n ? "on" : "") + '">' + (k < t.n ? k + 1 : "+") + '</i>').join("") + '</div>' +
+    '<div class="kv"><span>Techniciens (appli mobile)</span><b>' + t.tech + '</b></div><div class="kv"><span>Stockage</span><b>' + t.sto.toLocaleString("fr-FR") + ' Go</b></div><div class="bar"><span style="width:' + Math.min(100, t.sto / 10 * 100) + '%"></span></div></div>' +
+    '<div class="card mt"><div class="hdr"><div><h3>Utilisateurs du tenant</h3><div class="sub">Lecture seule · aucune donnée métier n\'est visible d\'ici</div></div></div><table class="tbl">' + users.map(u => '<tr><td><div class="who"><span class="av" style="width:28px;height:28px;font-size:.65rem">' + ini(u.nom) + '</span><div><b>' + esc(u.nom) + '</b><small>' + esc(u.mail) + '</small></div></div></td><td><span class="pill n">' + u.role + '</span></td><td><span class="pill g">Actif</span></td></tr>').join("") + '</table></div>' +
+    '</div><div>' +
+    '<div class="card"><div class="hdr"><div><h3>Abonnement</h3></div></div>' +
+    '<div class="kv"><span>Statut</span><b><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></b></div><div class="kv"><span>Cycle</span><b>' + (t.bill === "a" ? "Annuel · 2 mois offerts" : "Mensuel") + '</b></div><div class="kv"><span>Montant</span><b>' + (t.n ? eur(ht(t) * 1.2) + ' TTC / ' + (t.bill === "a" ? "an" : "mois") : "—") + '</b></div>' +
+    '<div class="kv"><span>' + (t.st === "essai" ? "Fin de l'essai" : "Prochain prélèvement") + '</span><b>' + (t.st === "essai" ? fdate(t.fin) : "1er nov. 2026") + '</b></div><div class="kv"><span>Carte</span><b>' + (t.carte ? 'Visa •••• ' + t.carte : '<span style="color:var(--amber)">Aucune</span>') + '</b></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' + (t.st === "essai" ? '<button class="btn g sm" onclick="extendTrial(' + id + ')">Prolonger l\'essai de 14 j</button>' : '') + '<button class="btn g sm" onclick="toast(\'Ouvert dans Stripe\')">Voir dans Stripe</button>' + (t.st !== "annule" ? '<button class="btn g sm" style="color:var(--red)" onclick="setStatus(' + id + ',\'annule\')">Annuler l\'abonnement</button>' : '') + '</div></div>' +
+    '<div class="card mt"><div class="hdr"><div><h3>Derniers paiements</h3></div><a class="lk" href="#paiements">Tous ›</a></div>' + (pays.length ? pays.slice(0, 4).map(p => '<div class="kv"><span>' + fdate(p.d) + '<small style="display:block;font-size:.72rem;font-family:ui-monospace,monospace">' + p.no + '</small></span><b>' + eur(p.amt) + ' <span class="pill ' + (p.st === "ok" ? "g" : p.st === "ko" ? "r" : "a") + '">' + (p.st === "ok" ? "Payé" : p.st === "ko" ? "Échoué" : "En attente") + '</span></b></div>').join("") : '<div class="empty">Aucun paiement (essai)</div>') + '</div>' +
+    '<div class="card mt"><div class="hdr"><div><h3>Journal</h3><div class="sub">Qui a fait quoi sur ce tenant</div></div></div>' + journal.map(j => '<div class="jl"><b>' + esc(j.qui) + '</b> ' + esc(j.t) + '<small>' + esc(j.w) + '</small></div>').join("") + '</div>' +
+    '</div></div>';
+}
+function setStatus(id, st){
+  const t = ten(id); const H = { suspendu:["Suspendre " + t.nom + " ?","L'équipe perd l'accès au bureau et à l'appli (lecture seule). Les données sont conservées. Le client est prévenu par e-mail. Vous pourrez rétablir à tout moment."], actif:["Rétablir " + t.nom + " ?","L'accès complet est rendu immédiatement et le client est prévenu par e-mail."], annule:["Annuler l'abonnement de " + t.nom + " ?","Plus aucun prélèvement. L'accès reste jusqu'à la fin de la période payée, puis les données sont conservées 30 jours avant suppression."] };
+  document.getElementById("st-h").textContent = H[st][0]; document.getElementById("st-p").textContent = H[st][1]; document.getElementById("st-m").value = ""; document.getElementById("st-why").style.display = st === "actif" ? "none" : "";
+  const ok = document.getElementById("st-ok"); ok.className = st === "actif" ? "btn o" : "btn r"; ok.textContent = st === "suspendu" ? "Suspendre" : st === "annule" ? "Annuler l'abonnement" : "Rétablir";
+  ok.onclick = () => { t.st = st; if(st === "actif"){ delete t.impaye; } log(st === "suspendu" ? "Tenant suspendu" : st === "annule" ? "Abonnement annulé" : "Accès rétabli", t.nom); S.nots.unshift({ id:Date.now(), cat:"pay", t:(st === "suspendu" ? "Tenant suspendu" : st === "annule" ? "Abonnement annulé" : "Accès rétabli") + " — " + t.nom, d:document.getElementById("st-m").value || "Action manuelle", w:"À l'instant", un:false }); save(); closeOv(); toast(t.nom + " · " + STT[st][0]); openTenant(id); drawAll(); };
+  openOv("ov-status");
+}
+function extendTrial(id){ const t = ten(id); const f = new Date(t.fin); f.setDate(f.getDate() + 14); t.fin = f.toISOString().slice(0, 10); log("Essai prolongé de 14 jours", t.nom); save(); toast("Essai prolongé jusqu'au " + fdate(t.fin)); openTenant(id); }
+function impers(id){ const t = ten(id); document.getElementById("imp-who").textContent = t.nom; log("Connexion en tant que", t.nom); save(); openOv("ov-imp"); }
+
+/* ───────── abonnements ───────── */
+let AF = "all";
+function setAF(k){ AF = k; drawAbos(); }
+function drawTarifs(){
+  document.getElementById("tar-rows").innerHTML = TR.map((t, i) => '<tr><td><b>Palier ' + (i + 1) + '</b></td><td>' + (t.max > 100 ? "À partir de la 11ᵉ" : "Places " + t.lab) + '</td><td><input class="mini-in" data-k="m" data-i="' + i + '" value="' + t.m + '"> €</td><td><input class="mini-in" data-k="a" data-i="' + i + '" value="' + t.a + '"> €</td><td>' + t.sup + '</td><td><span class="pill g">Actif</span></td></tr>').join("");
+  document.getElementById("tar-save").className = "btn g";
+  document.getElementById("incl-list").innerHTML = ["Toutes les fonctionnalités","Devis, factures, rapports illimités","Appli technicien mobile","Mises à jour","Support","Export des données","Hébergement en UE"].map(x => '<label><input type="checkbox" checked disabled><span>' + x + '</span></label>').join("");
+}
+function saveTarifs(){ document.querySelectorAll("#tar-rows input").forEach(i => { TR[+i.dataset.i][i.dataset.k] = +i.value.replace(",", ".") || TR[+i.dataset.i][i.dataset.k]; }); document.getElementById("tar-save").className = "btn g"; log("Grille tarifaire modifiée", "—"); save(); toast("Grille enregistrée · applicable aux nouvelles places après 30 jours de préavis"); drawAll(); }
+function drawAbos(){
+  const q = (document.getElementById("abo-q").value || "").trim().toLowerCase();
+  chips("abo-f", [["all","Tous"],["actif","Actifs"],["essai","En essai"],["suspendu","Suspendus"],["annule","Annulés"]], AF, "setAF");
+  const L = S.tenants.filter(t => (AF === "all" || t.st === AF) && (!q || t.nom.toLowerCase().includes(q)));
+  document.getElementById("abo-rows").innerHTML = L.map(t => '<tr class="clk" onclick="location.hash=\'#tenants?t=' + t.id + '\'"><td><b>' + esc(t.nom) + '</b><small style="display:block;color:var(--muted);font-size:.72rem">' + esc(t.sub) + '</small></td><td><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></td><td>' + (t.st === "essai" ? "Essai → " + (t.bill === "a" ? "annuel" : "mensuel") : t.bill === "a" ? "Annuel" : "Mensuel") + '</td><td>' + t.n + '</td><td><b>' + (t.n ? eur0(ht(t)) : "—") + '</b><small style="display:block;color:var(--muted);font-size:.72rem">' + (t.n ? seatBreak(t.n, t.bill) + (t.bill === "a" ? " × 12" : "") : "") + '</small></td><td>' + (t.st === "essai" ? "Fin d'essai " + fdate(t.fin) : t.st === "annule" ? "—" : "1er nov. 2026") + '</td><td><div class="acts"><a class="btn g sm" href="#tenants?t=' + t.id + '" onclick="event.stopPropagation()">Fiche ›</a></div></td></tr>').join("");
+  document.getElementById("promo-rows").innerHTML = S.promos.map((p, i) => '<tr><td><code>' + esc(p.code) + '</code></td><td>−' + p.pct + ' %</td><td>' + fdate(p.fin) + '</td><td>' + p.used + ' / ' + p.max + '</td><td><label class="tg"><input type="checkbox"' + (p.on ? " checked" : "") + ' onchange="S.promos[' + i + '].on=this.checked;save();toast(\'Code ' + (p.on ? "désactivé" : "activé") + '\')"><i></i>' + (p.on ? "Actif" : "Inactif") + '</label></td></tr>').join("");
+}
+function addPromo(){ const c = document.getElementById("pr-code").value.trim().toUpperCase(); if(!c) return toast("Indiquez un code"); S.promos.unshift({ code:c, pct:parseInt(document.getElementById("pr-pct").value) || 10, fin:document.getElementById("pr-fin").value || "2026-12-31", used:0, max:parseInt(document.getElementById("pr-max").value) || 100, on:true }); save(); closeOv(); toast("Code " + c + " créé"); drawAbos(); }
+
+/* ───────── paiements ───────── */
+let PF = "all";
+function setPF(k){ PF = k; drawPays(); }
+function drawPays(){
+  const q = (document.getElementById("pay-q").value || "").trim().toLowerCase(), m = document.getElementById("pay-m").value;
+  chips("pay-f", [["all","Tous"],["ok","Payés"],["ko","Échoués"],["att","En attente"]], PF, "setPF");
+  const mois = S.pays.filter(p => p.d.startsWith("2026-10"));
+  document.getElementById("p-rev").textContent = eur(mois.filter(p => p.st === "ok").reduce((s, p) => s + p.amt, 0)); document.getElementById("p-rev-ft").textContent = "TTC · octobre 2026";
+  document.getElementById("p-tx").textContent = mois.length; document.getElementById("p-tx-ft").textContent = mois.filter(p => p.st === "ok").length + " réussies";
+  const ko = S.pays.filter(p => p.st === "ko"); document.getElementById("p-ko").textContent = ko.length; document.getElementById("p-ko-ft").textContent = ko.length ? eur(ko.reduce((s, p) => s + p.amt, 0)) + " à récupérer" : "Aucun";
+  const L = S.pays.filter(p => (PF === "all" || p.st === PF) && (m === "all" || p.d.slice(5, 7) === m.padStart(2, "0")) && (!q || (p.no + " " + ten(p.t).nom).toLowerCase().includes(q)));
+  document.getElementById("pay-rows").innerHTML = L.length ? L.map(p => '<tr><td style="font-family:ui-monospace,monospace;font-size:.8rem">' + p.no + '</td><td><a href="#tenants?t=' + p.t + '" style="font-weight:700">' + esc(ten(p.t).nom) + '</a></td><td><b>' + eur(p.amt) + '</b></td><td>' + fdate(p.d) + '</td><td style="color:var(--muted)">' + p.moy + '</td><td><span class="pill ' + (p.st === "ok" ? "g" : p.st === "ko" ? "r" : "a") + '">' + (p.st === "ok" ? "Payé" : p.st === "ko" ? "Échoué" : "En attente") + '</span></td><td><div class="acts">' + (p.st === "ko" ? '<button class="btn g sm" onclick="toast(\'Nouvelle tentative lancée\')">Relancer</button>' : '<button class="btn g sm" onclick="toast(\'Facture ' + p.no + ' téléchargée\')">PDF</button><button class="btn g sm" onclick="toast(\'Avoir créé pour ' + p.no + '\')">Rembourser</button>') + '</div></td></tr>').join("") : '<tr><td colspan="7" class="empty">Aucun paiement</td></tr>';
+}
+
+/* ───────── webhooks ───────── */
+const TRIG = { stripe_ok:"Stripe · paiement réussi", stripe_ko:"Stripe · paiement échoué", stripe_att:"Stripe · paiement en attente", tenant_new:"Nouveau tenant créé", sub_new:"Abonnement créé", sub_cancel:"Abonnement annulé", sub_renew:"Abonnement renouvelé" };
+const CONDS = ["Statut tenant : actif","Statut tenant : suspendu","Statut tenant : essai","Statut paiement : échoué","Statut paiement : échoué depuis 3 j","Statut paiement : échoué depuis 7 j","Facturation : annuelle","Places : plus de 10","Stockage : plus de 10 Go"];
+const ACTS = ["Mettre le tenant en lecture seule","Rétablir l'accès complet","Suspendre le tenant","Relancer le prélèvement","Envoyer un e-mail au client","Notifier l'équipe TigerFlow","Journaliser"];
+function drawHooks(){
+  document.getElementById("wh-rows").innerHTML = S.hooks.map(h => '<tr><td><b>' + esc(h.nom) + '</b>' + (h.sys ? '<small style="display:block;color:var(--muted);font-size:.72rem">livrée avec TigerFlow</small>' : '') + '</td><td>' + TRIG[h.trig] + '</td><td style="font-size:.8rem;color:var(--ink2)">' + (h.cond.length ? h.cond.join("<br>") : '<span style="color:var(--muted)">toujours</span>') + '</td><td style="font-size:.8rem;color:var(--ink2)">' + h.act.join("<br>") + '</td><td style="color:var(--muted)">' + h.last + '</td><td><label class="tg"><input type="checkbox"' + (h.on ? " checked" : "") + ' onchange="S.hooks.find(x=>x.id===' + h.id + ').on=this.checked;save();drawHooks();toast(\'Règle ' + (h.on ? "désactivée" : "activée") + '\')"><i></i>' + (h.on ? "Active" : "Inactive") + '</label></td><td><div class="acts"><button class="btn g sm" onclick="editHook(' + h.id + ')">Modifier</button>' + (h.sys ? '' : '<button class="btn g sm" onclick="S.hooks=S.hooks.filter(x=>x.id!==' + h.id + ');save();drawHooks();toast(\'Règle supprimée\')">Supprimer</button>') + '</div></td></tr>').join("");
+}
+function editHook(id){
+  const h = id ? S.hooks.find(x => x.id === id) : { nom:"", trig:"stripe_ko", cond:[], act:["Journaliser"], on:true };
+  document.getElementById("wh-list").style.display = "none"; const e = document.getElementById("wh-edit"); e.style.display = "";
+  e.innerHTML = '<a class="lk" href="#webhooks" onclick="document.getElementById(\'wh-edit\').style.display=\'none\';document.getElementById(\'wh-list\').style.display=\'\';return false" style="display:inline-flex;margin-bottom:12px">‹ Toutes les règles</a>' +
+    '<div class="card"><div class="hdr"><div><h3>' + (id ? "Modifier la règle" : "Nouvelle règle") + '</h3><div class="sub">Quand <b>ceci</b> arrive, si <b>ces conditions</b> sont vraies, alors <b>faire</b> ça.</div></div></div>' +
+    '<div class="fgrid"><div class="fld"><label>Nom</label><input id="wh-nom" value="' + esc(h.nom) + '" placeholder="Ex : Impayé J+1 — rappel"></div><div class="fld"><label>Statut</label><select id="wh-on"><option value="1"' + (h.on ? " selected" : "") + '>Active</option><option value="0"' + (!h.on ? " selected" : "") + '>Inactive</option></select></div>' +
+    '<div class="fld full"><label>1 · Déclencheur</label><div class="cats" id="wh-trig">' + Object.entries(TRIG).map(([k, v]) => '<label><input type="radio" name="whtrig" value="' + k + '"' + (h.trig === k ? " checked" : "") + '><span>' + v + '</span></label>').join("") + '</div></div>' +
+    '<div class="fld full"><label>2 · Conditions (toutes doivent être vraies · aucune = toujours)</label><div class="cats" id="wh-cond">' + CONDS.map(c => '<label><input type="checkbox" value="' + c + '"' + (h.cond.includes(c) ? " checked" : "") + '><span>' + c + '</span></label>').join("") + '</div></div>' +
+    '<div class="fld full"><label>3 · Actions</label><div class="cats" id="wh-act">' + ACTS.map(a => '<label><input type="checkbox" value="' + a + '"' + (h.act.includes(a) ? " checked" : "") + '><span>' + a + '</span></label>').join("") + '</div></div></div>' +
+    '<div class="act" style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="btn g" onclick="drawHooks();document.getElementById(\'wh-edit\').style.display=\'none\';document.getElementById(\'wh-list\').style.display=\'\'">Annuler</button><button class="btn o" onclick="saveHook(' + (id || 0) + ')">Enregistrer la règle</button></div></div>';
+}
+function saveHook(id){
+  const nom = document.getElementById("wh-nom").value.trim(); if(!nom) return toast("Donnez un nom à la règle");
+  const h = id ? S.hooks.find(x => x.id === id) : { id:Date.now(), sys:false, last:"—" };
+  h.nom = nom; h.on = document.getElementById("wh-on").value === "1"; h.trig = document.querySelector("#wh-trig input:checked").value;
+  h.cond = [...document.querySelectorAll("#wh-cond input:checked")].map(i => i.value); h.act = [...document.querySelectorAll("#wh-act input:checked")].map(i => i.value);
+  if(!id) S.hooks.push(h); save(); toast("Règle enregistrée"); document.getElementById("wh-edit").style.display = "none"; document.getElementById("wh-list").style.display = ""; drawHooks();
+}
+
+/* ───────── support ───────── */
+let CUR = (S.convs.find(c => c.unread) || {}).id || null, CF = "open", NEWC = false, SUPOPEN = !!CUR, ATT = [];
+function setCF(k){ CF = k; drawSupport(); }
+function conv(id){ return S.convs.find(c => c.id === id); }
+function cname(c){ return c.src === "landing" ? c.qui : ten(c.t).nom; }
+function drawSupport(){
+  const q = (document.getElementById("cv-q").value || "").trim().toLowerCase();
+  chips("cv-f", [["open","À traiter " + S.convs.filter(c => c.st !== "resolu" && !c.arch).length],["landing","Prospects"],["resolu","Résolues"],["arch","Archivées"]], CF, "setCF");
+  const L = S.convs.filter(c => (CF === "open" ? c.st !== "resolu" && !c.arch : CF === "landing" ? c.src === "landing" && !c.arch : CF === "resolu" ? c.st === "resolu" && !c.arch : c.arch) && (!q || (c.sujet + " " + cname(c) + " " + c.msgs.map(m => m.t).join(" ")).toLowerCase().includes(q)));
+  document.getElementById("cvs").innerHTML = L.length ? L.map(c => '<button class="tk' + (c.id === CUR ? " on" : "") + '" onclick="CUR=' + c.id + ';NEWC=false;SUPOPEN=true;conv(' + c.id + ').unread=false;save();drawAll()"><div class="t1">' + (c.unread ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--red)"></span>' : '') + esc(c.sujet) + '<span class="pill ' + (c.st === "ouvert" ? "o" : c.st === "cours" ? "b" : "g") + '">' + (c.st === "ouvert" ? "Ouverte" : c.st === "cours" ? "En cours" : "Résolue") + '</span></div><p>' + esc(c.msgs[c.msgs.length - 1].t) + '</p><small>' + (c.src === "landing" ? '<span class="pill o" style="font-size:.62rem;padding:1px 6px">Prospect</span> ' : '') + esc(cname(c)) + ' · ' + esc(c.msgs[c.msgs.length - 1].w) + '</small></button>').join("") : '<div class="empty" style="padding:30px 16px;font-size:.82rem">Rien ici</div>';
+  const el = document.getElementById("conv"); document.querySelector(".sup").classList.toggle("open", SUPOPEN);
+  if(NEWC){ el.innerHTML = '<div class="hd"><button class="btn g sm back" onclick="SUPOPEN=false;drawSupport()">‹</button><b>Nouvelle conversation</b></div><div class="newtk on"><div class="fld" style="margin-bottom:12px"><label>Client</label><select id="n-t">' + S.tenants.map(t => '<option value="' + t.id + '">' + esc(t.nom) + '</option>').join("") + '</select></div><div class="fld" style="margin-bottom:12px"><label>Sujet</label><input id="n-suj" placeholder="Ex : Votre import est terminé"></div><div class="fld" style="margin-bottom:12px"><label>Message</label><textarea id="n-msg" rows="5"></textarea></div><div style="display:flex;justify-content:flex-end"><button class="btn o" onclick="sendNew()">Envoyer</button></div></div>'; return; }
+  const c = conv(CUR); if(!c){ el.innerHTML = '<div class="empty"><div><b style="color:var(--ink)">Choisissez une conversation</b><br>ou créez-en une nouvelle</div></div>'; return; }
+  el.innerHTML = '<div class="hd"><button class="btn g sm back" onclick="SUPOPEN=false;drawSupport()">‹</button><div><b>' + esc(c.sujet) + '</b><div style="font-size:.74rem;color:var(--muted)">' + (c.src === "landing" ? esc(c.qui) + ' · ' + esc(c.ct) + ' · prospect (landing)' : '<a href="#tenants?t=' + c.t + '" style="font-weight:700">' + esc(cname(c)) + '</a> · espace société') + ' · n° ' + c.id + '</div><div class="tags">' + c.tags.map(t => '<span class="pill n">' + esc(t) + ' <i onclick="rmTag(' + c.id + ',\'' + esc(t) + '\')">×</i></span>').join("") + '<button onclick="addTag(' + c.id + ')">+ tag</button></div></div>' +
+    '<div class="act">' + (c.st === "resolu" ? '<button class="btn g sm" onclick="setSt(\'ouvert\')">Rouvrir</button>' : '<button class="btn g sm" onclick="setSt(\'resolu\')">' + IC.ok + 'Résolue</button>') + '<button class="btn g sm" onclick="conv(' + c.id + ').arch=!conv(' + c.id + ').arch;save();CUR=null;drawAll();toast(\'Conversation archivée\')">Archiver</button></div></div>' +
+    '<div class="msgs" id="msgs">' + c.msgs.map(m => '<div class="m' + (m.me ? " mine" : "") + '"><div class="bub">' + (m.me ? '<b style="font-size:.76rem;color:rgba(255,255,255,.7)">Floriant · TigerFlow</b><br>' : '<b style="font-size:.76rem;color:var(--ink2)">' + esc(cname(c)) + '</b><br>') + esc(m.t) + (m.att ? '<br><span class="att">' + IC.clip + esc(m.att) + '</span>' : "") + '</div><small>' + esc(m.w) + '</small></div>').join("") + '</div>' +
+    '<div class="quick">' + S.quick.map((qq, i) => '<button onclick="document.getElementById(\'reply\').value=S.quick[' + i + '];document.getElementById(\'reply\').focus()" title="' + esc(qq) + '">' + esc(qq.slice(0, 34)) + '…</button>').join("") + '<button class="ed" onclick="editQuick()">Modifier les réponses rapides</button></div>' +
+    '<div class="atts" id="r-att"></div><div class="compose"><input type="file" id="r-file" multiple style="display:none" onchange="[...this.files].forEach(f=>ATT.push(f.name));this.value=\'\';drawAtts()"><button class="btn g sm" title="Joindre" onclick="document.getElementById(\'r-file\').click()">' + IC.clip + '</button><input id="reply" placeholder="Répondre…" onkeydown="if(event.key===\'Enter\')reply()"><button class="btn o sm" onclick="reply()">Envoyer</button></div>';
+  const m = document.getElementById("msgs"); if(m) m.scrollTop = m.scrollHeight;
+}
+function drawAtts(){ document.getElementById("r-att").innerHTML = ATT.map((n, i) => '<span>' + IC.clip + esc(n) + '<button onclick="ATT.splice(' + i + ',1);drawAtts()">×</button></span>').join(""); }
+function reply(){ const i = document.getElementById("reply"), v = i.value.trim(); if(!v && !ATT.length) return; const c = conv(CUR); c.msgs.push({ me:true, t:v || "Pièce jointe", w:"À l'instant", att:ATT.join(", ") || undefined }); ATT = []; if(c.st === "ouvert") c.st = "cours"; save(); drawAll(); }
+function setSt(st){ const c = conv(CUR); c.st = st; save(); drawAll(); toast(st === "resolu" ? "Conversation résolue · le client est prévenu" : "Conversation rouverte"); }
+function newConv(){ NEWC = true; CUR = null; SUPOPEN = true; drawSupport(); }
+function sendNew(){ const s = document.getElementById("n-suj").value.trim(), m = document.getElementById("n-msg").value.trim(); if(!s || !m) return toast("Sujet et message"); const id = Math.max(...S.convs.map(c => c.id)) + 1; S.convs.unshift({ id, t:+document.getElementById("n-t").value, src:"espace", sujet:s, st:"cours", tags:[], unread:false, msgs:[{ me:true, t:m, w:"À l'instant" }] }); NEWC = false; CUR = id; save(); toast("Message envoyé · le client est prévenu par e-mail et dans son espace"); drawAll(); }
+function addTag(id){ const t = prompt("Tag :", "Facturation"); if(t){ conv(id).tags.push(t.trim()); save(); drawSupport(); } }
+function rmTag(id, t){ const c = conv(id); c.tags = c.tags.filter(x => x !== t); save(); drawSupport(); }
+function editQuick(){ const v = prompt("Réponses rapides (une par ligne) :", S.quick.join("\n")); if(v != null){ S.quick = v.split("\n").map(x => x.trim()).filter(Boolean); save(); drawSupport(); toast("Réponses rapides mises à jour"); } }
+
+/* ───────── contenu ───────── */
+function drawContent(){
+  document.getElementById("tuto-rows").innerHTML = S.tutos.map((t, i) => '<div class="trow"><div><b>' + esc(t[0]) + '</b><small>' + esc(t[1]) + ' · ' + esc(t[2]) + '</small></div><div class="sw"><button class="btn g sm" onclick="S.tutos.splice(' + i + ',1);save();drawContent();toast(\'Tutoriel retiré\')">Retirer</button></div></div>').join("");
+  document.getElementById("faq-rows").innerHTML = S.faq.map((f, i) => '<div class="faqe"><div class="fld"><label>Question ' + (i + 1) + '</label><input value="' + esc(f[0]) + '" oninput="S.faq[' + i + '][0]=this.value;save()"></div><div class="fld"><label>Réponse</label><textarea rows="2" oninput="S.faq[' + i + '][1]=this.value;save()">' + esc(f[1]) + '</textarea></div><div class="faqa"><button class="btn g sm" ' + (i === 0 ? "disabled" : "") + ' onclick="[S.faq[' + i + '],S.faq[' + (i - 1) + ']]=[S.faq[' + (i - 1) + '],S.faq[' + i + ']];save();drawContent()">↑</button><button class="btn g sm" ' + (i === S.faq.length - 1 ? "disabled" : "") + ' onclick="[S.faq[' + i + '],S.faq[' + (i + 1) + ']]=[S.faq[' + (i + 1) + '],S.faq[' + i + ']];save();drawContent()">↓</button><button class="btn g sm" onclick="S.faq.splice(' + i + ',1);save();drawContent()">Supprimer</button></div></div>').join("");
+  document.getElementById("man-rows").innerHTML = S.manuels.map((m, i) => '<div class="trow"><div><b>' + esc(m[0]) + '</b><small>' + esc(m[1]) + '</small></div><div class="sw"><button class="btn g sm" onclick="S.manuels.splice(' + i + ',1);save();drawContent();toast(\'Document retiré\')">Retirer</button></div></div>').join("");
+}
+function addFaq(){ S.faq.push(["Nouvelle question", ""]); save(); drawContent(); }
+function addManuel(n){ S.manuels.push([n, "PDF · ajouté à l'instant"]); save(); drawContent(); toast("Document ajouté"); }
+function addLink(){ const t = document.getElementById("lk-t").value.trim(), u = document.getElementById("lk-u").value.trim(); if(!t || !u) return toast("Titre et lien"); if(/pdf/i.test(u)) S.manuels.push([t, u]); else S.tutos.push([t, u, "vidéo"]); save(); closeOv(); drawContent(); toast("Ajouté"); }
+
+/* ───────── notifications ───────── */
+let NF = "all";
+const CATN = { pay:["Paiements","g"], sup:["Support","b"], new:["Inscriptions","o"] };
+function drawNots(){
+  const un = S.nots.filter(n => n.un).length; document.getElementById("n-sub").textContent = un ? un + " non lue" + (un > 1 ? "s" : "") : "Tout est lu"; document.getElementById("bell-n").textContent = un; document.getElementById("c-not").textContent = un; document.getElementById("bell-n").style.display = document.getElementById("c-not").style.display = un ? "" : "none";
+  const F = [["all","Toutes"],["un","Non lues"],["pay","Paiements"],["sup","Support"],["new","Inscriptions"]];
+  document.getElementById("n-tabs").innerHTML = F.map(f => '<button class="' + (NF === f[0] ? "on" : "") + '" onclick="NF=\'' + f[0] + '\';drawNots()">' + f[1] + '</button>').join("");
+  const L = S.nots.filter(n => NF === "all" || (NF === "un" ? n.un : n.cat === NF)), GO = { pay:"#paiements", sup:"#support", new:"#tenants" };
+  document.getElementById("n-list").innerHTML = L.length ? L.map(n => '<a class="nt' + (n.un ? " un" : "") + '" href="' + GO[n.cat] + '" onclick="n=S.nots.find(x=>x.id===' + n.id + ');n.un=false;save()"><span class="ico ' + CATN[n.cat][1] + '">' + CATN[n.cat][0][0] + '</span><div><b>' + esc(n.t) + '</b><p>' + esc(n.d) + '</p><div class="meta"><span class="pill ' + CATN[n.cat][1] + '">' + CATN[n.cat][0] + '</span>' + esc(n.w) + '</div></div></a>').join("") : '<div class="empty">Rien ici</div>';
+}
+function readAll(){ S.nots.forEach(n => n.un = false); save(); drawNots(); toast("Tout est marqué comme lu"); }
+
+/* ───────── équipe ───────── */
+function drawTeam(){
+  document.getElementById("eq-rows").innerHTML = S.team.map((u, i) => '<tr><td><div class="who"><span class="av" style="' + (u.st === "actif" ? "" : "background:#D7DAE1;color:#6C7285") + '">' + ini(u.nom) + '</span><div><b>' + esc(u.nom) + '</b><small>' + esc(u.mail) + '</small></div></div></td><td>' + (i === 0 ? '<b>Super Admin</b>' : '<select onchange="S.team[' + i + '].role=this.value;S.team[' + i + '].m=\'2026-10-03\';save();drawTeam();toast(\'Rôle modifié\')">' + ["Super Admin","Account Manager","IT","Finance"].map(r => '<option' + (r === u.role ? " selected" : "") + '>' + r + '</option>').join("") + '</select>') + '</td><td>' + esc(u.titre) + '</td><td><span class="pill ' + (u.st === "actif" ? "g" : "n") + '">' + (u.st === "actif" ? "Actif" : "Inactif") + '</span></td><td style="color:var(--muted)">' + fdate(u.c) + '</td><td style="color:var(--muted)">' + fdate(u.m) + '</td><td><div class="acts">' + (i === 0 ? '' : u.st === "actif" ? '<button class="btn g sm" onclick="S.team[' + i + '].st=\'inactif\';save();drawTeam();toast(\'Accès désactivé\')">Désactiver</button>' : '<button class="btn g sm" onclick="S.team[' + i + '].st=\'actif\';save();drawTeam();toast(\'Accès rétabli\')">Réactiver</button>') + '</div></td></tr>').join("");
+}
+function addUser(){ const n = document.getElementById("eq-nom").value.trim(), m = document.getElementById("eq-mail").value.trim(); if(!n || !m) return toast("Nom et e-mail"); S.team.push({ id:Date.now(), nom:n, mail:m, role:document.querySelector('input[name=eqr]:checked').value, titre:document.getElementById("eq-titre").value.trim(), st:"actif", c:"2026-10-03", m:"2026-10-03" }); save(); closeOv(); toast("Invitation envoyée à " + m); drawTeam(); }
+
+/* ───────── recherche globale ───────── */
+let GSI = 0;
+function gsItems(q){ const R = []; q = q.toLowerCase();
+  S.tenants.forEach(t => { if((t.nom + " " + t.sub + " " + t.mail).toLowerCase().includes(q)) R.push({ k:"Tenant", t:t.nom, s:STT[t.st][0] + " · " + t.n + " places", h:"#tenants?t=" + t.id }); });
+  S.pays.forEach(p => { if((p.no + " " + ten(p.t).nom).toLowerCase().includes(q)) R.push({ k:"Paiement", t:p.no, s:ten(p.t).nom + " · " + eur(p.amt), h:"#paiements" }); });
+  S.convs.forEach(c => { if((c.sujet + " " + cname(c)).toLowerCase().includes(q)) R.push({ k:"Support", t:c.sujet, s:cname(c), h:"#support", go:() => { CUR = c.id; SUPOPEN = true; } }); });
+  Object.keys(TITRES).forEach(id => { if(TITRES[id].toLowerCase().includes(q)) R.push({ k:"Page", t:TITRES[id], s:"", h:"#" + id }); });
+  return R.slice(0, 8); }
+function gsDraw(){ const q = document.getElementById("gs").value.trim(), box = document.getElementById("gsres"); if(q.length < 2){ box.classList.remove("on"); return; } const R = gsItems(q); GSI = Math.min(GSI, Math.max(0, R.length - 1)); box.innerHTML = R.length ? R.map((r, i) => '<a href="' + r.h + '" class="' + (i === GSI ? "cur" : "") + '" onmousedown="gsGo(' + i + ')"><span class="k">' + r.k + '</span>' + esc(r.t) + '<small>' + esc(r.s) + '</small></a>').join("") : '<div class="none">Rien trouvé</div>'; box.classList.add("on"); }
+function gsGo(i){ const R = gsItems(document.getElementById("gs").value.trim()); const r = R[i]; if(!r) return; if(r.go) r.go(); location.hash = r.h; document.getElementById("gs").value = ""; document.getElementById("gsres").classList.remove("on"); drawAll(); }
+function gsKey(e){ const R = gsItems(document.getElementById("gs").value.trim()); if(e.key === "ArrowDown"){ GSI = Math.min(GSI + 1, R.length - 1); gsDraw(); e.preventDefault(); } else if(e.key === "ArrowUp"){ GSI = Math.max(GSI - 1, 0); gsDraw(); e.preventDefault(); } else if(e.key === "Enter"){ gsGo(GSI); } else if(e.key === "Escape"){ document.getElementById("gsres").classList.remove("on"); e.target.blur(); } }
+
+render();
+</script>
+</body>
+</html>
