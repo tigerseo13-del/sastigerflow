@@ -249,6 +249,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .hero .nx{margin-left:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:.8rem}
 .hero .nx b{display:block;color:var(--ink);font-size:.95rem;margin-top:2px}
 .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.fold>summary{list-style:none;cursor:pointer}.fold>summary::-webkit-details-marker{display:none}.fold>summary .hdr{margin:0}.fold>summary .chev{margin-left:auto;transition:.18s;color:var(--muted)}.fold[open]>summary .chev{transform:rotate(180deg)}.fold[open]>summary .hdr{margin-bottom:14px}
 .incl{display:flex;gap:8px;align-items:center;font-size:.78rem;color:var(--muted);margin:14px 0 0}.incl svg{width:16px;height:16px;color:var(--green-d);stroke-width:2.6;flex:none}
 .tier .auto{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}.tier.on .auto{color:#047857;font-weight:700}
 .tier{background:#fff;border:2px solid var(--line);border-radius:16px;padding:20px;position:relative}
@@ -513,7 +514,9 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
         <div class="fld"><label>Site web</label><input id="f-site" placeholder="https://"></div>
         <div class="fld"><label>E-mail de contact</label><input id="f-mail"></div>
         <div class="fld"><label>Téléphone</label><input id="f-tel" placeholder="01 23 45 67 89"></div>
-        <div class="fld full"><label>Adresse</label><input id="f-adr"></div>
+        <div class="fld full"><label>Adresse</label><input id="f-adr" placeholder="N° et rue"></div>
+        <div class="fld"><label>Code postal</label><input id="f-cp" inputmode="numeric" maxlength="5"></div>
+        <div class="fld"><label>Ville</label><input id="f-ville"></div>
         <div class="fld"><label>Numéro SIRET</label><input id="f-siret"></div>
         <div class="fld"><label>Numéro de TVA</label><input id="f-tva"></div>
       </div>
@@ -526,8 +529,8 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
         <div class="hdr"><div><h3><span class="chsq b"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>Adresse de votre espace</h3><div class="sub">C'est l'adresse que vos utilisateurs tapent pour se connecter. Choisie à l'inscription, elle peut être changée une fois.</div></div></div>
         <div class="domrow"><div class="domurl"><span id="dom-sub">mon-espace</span><span class="domd">.tigerflow.io</span></div><span class="pill g">Active</span><button class="btn g sm" onclick="toast('Demande envoyée au support : le changement d\'adresse est fait sous 24 h')">Changer</button></div>
       </div>
-      <div class="card mt">
-        <div class="hdr"><div><h3><span class="chsq a"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>Domaine personnalisé <span class="pill n" style="margin-left:6px">Option · 9 € / mois</span></h3><div class="sub">Vos utilisateurs se connectent sur votre propre nom de domaine, par exemple app.votre-societe.fr. Le certificat de sécurité est fourni.</div></div></div>
+      <details class="card mt fold">
+        <summary><div class="hdr"><div><h3><span class="chsq a"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span>Utiliser mon propre domaine <span class="pill n" style="margin-left:6px">Option · 9 € / mois</span></h3><div class="sub">Par exemple app.votre-societe.fr à la place de l'adresse tigerflow.io. Certificat de sécurité fourni.</div></div><svg class="i chev" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M6 9l6 6 6-6"/></svg></div></summary>
         <div class="fld" style="max-width:420px"><label for="dom-perso">Votre domaine</label><div style="display:flex;gap:8px"><input id="dom-perso" placeholder="app.votre-societe.fr"><button class="btn o" onclick="domVerif()">Vérifier</button></div></div>
         <div class="dns" id="dns" style="display:none">
           <b>1 · Chez votre hébergeur de domaine, ajoutez cet enregistrement :</b>
@@ -535,7 +538,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
           <b style="display:block;margin-top:14px">2 · Puis revenez ici</b>
           <div class="hint" style="margin-top:8px"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="dns-st">En attente de la propagation DNS, en général moins d'une heure.</span><button class="btn g sm" onclick="domOk()">Revérifier</button></div>
         </div>
-      </div>
+      </details>
     </div>
     <div class="tp" data-tp="soc-notifs"><div class="card">
       <div class="hdr"><div><h3>Comment voulez-vous être prévenu ?</h3><div class="sub">Pour chaque type d'événement, par e-mail, dans l'espace, ou les deux. Chaque changement est enregistré tout de suite.</div></div></div>
@@ -916,7 +919,7 @@ function sendInvite(){
 function drawSoc(){
   const set = (id, v) => { const e = document.getElementById(id); if(document.activeElement !== e) e.value = v || ""; };
   set("f-nom", REG.nom || SOC.nom); set("f-site", REG.site); set("f-mail", REG.email || ADMIN_MAIL); set("f-tel", REG.tel);
-  set("f-adr", [REG.adresse || SOC.adresse, (REG.cp || SOC.cp) + " " + (REG.ville || SOC.ville)].filter(x => x && x.trim()).join(", "));
+  set("f-adr", REG.adresse || SOC.adresse); set("f-cp", REG.cp || SOC.cp); set("f-ville", REG.ville || SOC.ville);
   set("f-siret", REG.siret || SOC.siret); set("f-tva", REG.tvaNum || SOC.tva);
   document.getElementById("f-tid").textContent = "TF-" + String(SOC.siret || "000000000").slice(0, 9);
   document.getElementById("dom-sub").textContent = T.sub || (SOC.nom || "mon-espace").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -935,7 +938,7 @@ function saveSoc(){
   document.getElementById("soc-btn").className = "btn g needwrite";
   try{
     const all = jget("tigerflow-reglages") || {}; const d = all.info = all.info || {};
-    [["f-reglage-1","nom","f-nom"],["f-reglage-5","site","f-site"],["f-reglage-4","email","f-mail"],["f-reglage-3","tel","f-tel"],["f-reglage-6","siret","f-siret"],["f-reglage-7","tvaNum","f-tva"]].forEach(([a, b, id]) => { const v = document.getElementById(id).value.trim(); d[a] = v; d[b] = v; });
+    [["f-reglage-1","nom","f-nom"],["f-reglage-2","adresse","f-adr"],["f-reglage-2b","cp","f-cp"],["f-reglage-2c","ville","f-ville"],["f-reglage-5","site","f-site"],["f-reglage-4","email","f-mail"],["f-reglage-3","tel","f-tel"],["f-reglage-6","siret","f-siret"],["f-reglage-7","tvaNum","f-tva"]].forEach(([a, b, id]) => { const v = document.getElementById(id).value.trim(); d[a] = v; d[b] = v; });
     localStorage.setItem("tigerflow-reglages", JSON.stringify(all));
   }catch(e){}
   log("Fiche société modifiée", "Informations de l'entreprise"); toast("Fiche société enregistrée · reprise dans Réglages");
