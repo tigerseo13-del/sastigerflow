@@ -59,6 +59,18 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
 .pwrap{position:relative}.pwrap input{padding-right:42px}
 .oeil{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer;color:var(--muted);padding:5px;display:flex}
 .hint{font-size:.72rem;color:var(--muted);margin-top:5px}
+.subw{display:flex;align-items:center;border:1px solid #DCDFE6;border-radius:9px;background:#fff;overflow:hidden}
+.subw input{border:0!important;border-radius:0!important;flex:1;min-width:0}
+.subw .subd{font-size:.84rem;color:var(--muted);padding:0 10px;border-left:1px solid var(--line);white-space:nowrap;align-self:stretch;display:flex;align-items:center;background:#F6F7F9}
+.subw .subst{width:34px;display:grid;place-items:center;font-size:.8rem;font-weight:800}
+.subw .subst.ok{color:var(--green-d)}.subw .subst.ko{color:var(--red)}
+.fld.ko .subw{border-color:var(--red)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip input{display:none}
+.chip span{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #DCDFE6;border-radius:99px;padding:7px 13px;font-size:.8rem;font-weight:600;color:var(--ink2);cursor:pointer;background:#fff}
+.chip span::before{content:"";width:14px;height:14px;border-radius:50%;border:1.5px solid #C5C9D3;flex:none}
+.chip input:checked+span{border-color:var(--ink);background:var(--ink);color:#fff}
+.chip input:checked+span::before{border-color:#fff;background:#fff;box-shadow:inset 0 0 0 3px var(--ink)}
 
 /* recherche société (annuaire public) */
 .sres{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid #DCDFE6;border-radius:11px;
@@ -147,6 +159,14 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
 .tier ul{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:9px}
 .tier li{display:flex;gap:8px;font-size:.8rem;color:var(--ink2)}
 .tier li svg{width:15px;height:15px;color:var(--green);stroke-width:2.6;margin-top:1px}
+.cmp{margin-top:18px}
+.cmp summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:.84rem;font-weight:700;color:var(--ink2);background:#fff;border:1px solid var(--line);border-radius:99px;padding:9px 16px}
+.cmp summary::after{content:"⌄";font-size:1rem;line-height:0}
+.cmp[open] summary::after{content:"⌃"}
+.cmpt{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:12px;font-size:.84rem}
+.cmpt th{background:#F6F7F9;font-family:'Sora';font-weight:800;padding:12px 14px;text-align:center;font-size:.8rem}
+.cmpt th:first-child,.cmpt td:first-child{text-align:left;color:var(--ink2);font-weight:600}
+.cmpt td{padding:11px 14px;border-top:1px solid var(--line);text-align:center}
 .tot{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .tot .big{font-family:'Sora';font-weight:800;font-size:1.3rem}
 .tot .det{font-size:.8rem;color:var(--muted)}
@@ -274,6 +294,22 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
       <div class="hint" id="back-search" style="margin:-6px 0 14px"><button class="lnk" type="button" onclick="manualOff()">← Rechercher dans l'annuaire</button></div>
     </div>
 
+    <!-- 03/10 (cahier Saigon l.13) : l'adresse de l'espace, xxxxx.tigerflow.io, vérifiée disponible -->
+    <div class="fld" id="f-sub"><label for="sub">Adresse de votre espace</label>
+      <div class="subw"><input id="sub" autocomplete="off" placeholder="votre-societe" maxlength="30" oninput="subCheck()"><span class="subd">.tigerflow.io</span><span class="subst" id="subst"></span></div>
+      <div class="ferr" id="err-sub">Cette adresse est déjà prise, choisissez-en une autre.</div>
+      <div class="hint">Lettres, chiffres et tirets. Un domaine à vous (ex. app.votre-societe.fr) pourra être ajouté ensuite, en option.</div>
+    </div>
+    <!-- 03/10 (cahier Saigon l.58) : les métiers → données préremplies (types d'intervention, nuisibles) -->
+    <div class="fld" id="f-met"><label>Vos métiers <span style="font-weight:500;color:var(--muted)">· on prépare votre espace avec les bons types d'intervention</span></label>
+      <div class="chips" id="chips">
+        <label class="chip"><input type="checkbox" value="deratisation" checked><span>Dératisation</span></label>
+        <label class="chip"><input type="checkbox" value="desinsectisation" checked><span>Désinsectisation</span></label>
+        <label class="chip"><input type="checkbox" value="desinfection"><span>Désinfection</span></label>
+        <label class="chip"><input type="checkbox" value="debouchage"><span>Débouchage · assainissement</span></label>
+        <label class="chip"><input type="checkbox" value="nettoyage"><span>Nettoyage · débarras</span></label>
+      </div>
+    </div>
     <div class="fld" id="f-email"><label for="email">Adresse e-mail de l'administrateur</label>
       <input type="email" id="email" autocomplete="email" placeholder="vous@votre-societe.fr" oninput="fldOk('email')">
       <div class="ferr" id="err-email">Une adresse e-mail valide est requise.</div></div>
@@ -348,6 +384,22 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
     <div class="cnth">bureau et techniciens terrain, c'est le même prix</div>
   </div>
   <div class="tiers" id="tiers"></div>
+  <details class="cmp"><summary>Comparer les tranches en détail</summary>
+    <table class="cmpt"><thead><tr><th></th><th>1 à 5</th><th>6 à 10</th><th>11 et +</th></tr></thead><tbody>
+      <tr><td>Prix mensuel · par utilisateur / mois</td><td>69 €</td><td>49 €</td><td>39 €</td></tr>
+      <tr><td>Prix annuel · par utilisateur / mois</td><td>49 €</td><td>39 €</td><td>29 €</td></tr>
+      <tr><td>Utilisateur bureau</td><td>✓ même prix</td><td>✓ même prix</td><td>✓ même prix</td></tr>
+      <tr><td>Technicien terrain (appli mobile)</td><td>✓ même prix</td><td>✓ même prix</td><td>✓ même prix</td></tr>
+      <tr><td>Devis, factures, rapports</td><td>Illimités</td><td>Illimités</td><td>Illimités</td></tr>
+      <tr><td>Agenda, planning, tournées</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Contrats et passages récurrents</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Relances automatiques, file d'appels</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Plan d'appâtage, rapports clients</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Signature des devis sur tablette</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Support</td><td>Par e-mail</td><td>Prioritaire</td><td>Interlocuteur dédié</td></tr>
+      <tr><td>Accompagnement à la mise en route</td><td>—</td><td>—</td><td>✓</td></tr>
+    </tbody></table>
+  </details>
   <div class="tot">
     <div><div class="big" id="t-big">69 € HT / mois</div><div class="det" id="t-det">1 utilisateur × 69 €</div></div>
     <div class="free"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg><span id="t-free">Rien à payer avant le …</span></div>
@@ -421,6 +473,8 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
     <div class="l"><span>Administrateur</span><b id="c-mail">—</b></div>
     <div class="l"><span>Formule</span><b id="c-tr">—</b></div>
     <div class="l"><span>Montant</span><b id="c-amt">—</b></div>
+    <div class="l"><span>Adresse de l'espace</span><b id="c-sub">—</b></div>
+    <div class="l"><span>Préparé pour</span><b id="c-met">—</b></div>
     <div class="l"><span>Essai gratuit</span><b><span class="badge" id="c-trial">jusqu'au …</span></b></div>
     <div class="l"><span>Moyen de paiement</span><b id="c-cb">—</b></div>
   </div>
@@ -451,7 +505,7 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
       <span class="go2">Abonnement <svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M9 6l6 6-6 6"/></svg></span></a>
     <div class="wfoot">
       <a class="skip" href="index.html">Passer pour l'instant</a>
-      <button class="ghost" onclick="toast('La visite guidée arrive bientôt')"><svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>Visite guidée</button>
+      <a class="ghost" href="espace-societe.html#tableau?visite=1" style="text-decoration:none"><svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>Visite guidée</a>
       <a class="go auto" href="espace-societe.html" style="text-decoration:none">Ouvrir mon espace société <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
     </div>
   </div>
@@ -555,8 +609,26 @@ function socPick(i){
   document.getElementById("sres").classList.remove("on");
   socShow();
 }
+const SUB_PRIS = ["demo","test","admin","tigerflow","app","www","mail","api","deratek","agence-antinuisible"];
+function slug(t){ return (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30); }
+let subT = null;
+function subCheck(){
+  const e = document.getElementById("sub"), st = document.getElementById("subst"); fldOk("sub");
+  e.value = slug(e.value) || e.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+  st.textContent = ""; st.className = "subst"; clearTimeout(subT);
+  if(e.value.length < 3) return;
+  st.textContent = "…";
+  subT = setTimeout(() => {
+    const pris = SUB_PRIS.indexOf(e.value) >= 0;
+    st.textContent = pris ? "✕" : "✓"; st.className = "subst " + (pris ? "ko" : "ok");
+    document.getElementById("err-sub").textContent = pris ? "« " + e.value + ".tigerflow.io » est déjà pris. Essayez " + e.value + "-" + (new Date().getFullYear() % 100) + "." : "";
+    if(pris) fldKo("sub");
+  }, 450);
+}
+function subFrom(nom){ const e = document.getElementById("sub"); if(!e.value && nom){ e.value = slug(nom); subCheck(); } }
+function metiers(){ return [...document.querySelectorAll("#chips input:checked")].map(i => i.value); }
 function socShow(){
-  if(!SOC) return;
+  if(!SOC) return; subFrom(SOC.nom);
   document.getElementById("f-soc").style.display = "none";
   document.getElementById("ok-nom").textContent = SOC.nom;
   document.getElementById("ok-det").innerHTML = esc(SOC.adresse) + ", " + esc(SOC.cp + " " + SOC.ville) + "<br>SIRET " + fsiret(SOC.siret) + " · TVA " + esc(SOC.tva) + (SOC.forme ? " · " + esc(SOC.forme) : "");
@@ -568,6 +640,7 @@ function socReset(){
 }
 function manualOn(){
   document.getElementById("sres").classList.remove("on");
+  document.getElementById("m-nom").addEventListener("blur", () => subFrom(val("m-nom")), { once:true });
   document.getElementById("f-soc").style.display = "none"; document.getElementById("socok").classList.remove("on"); SOC = null;
   document.getElementById("manual").classList.add("on");
   const q = val("soc"); if(q && !/^\d+$/.test(q.replace(/\s/g, ""))) document.getElementById("m-nom").value = q;
@@ -600,7 +673,8 @@ async function submitCompte(){
   if(!soc.nom) soc = { nom:"Dératek Lyon", adresse:"14 rue Garibaldi", cp:"69006", ville:"Lyon", siret:"83920451200018", forme:"SARL", tva:"", ident:"" };
   if(!soc.tva && soc.siret && soc.siret.length === 14) soc.tva = tvaFR(soc.siret.slice(0, 9));
   soc.pays = p;
-  T = Object.assign(T, { soc, email, pays: p, debut: T.debut || new Date().toISOString(), etape: "email" });
+  let sub = val("sub") || slug(soc.nom) || "mon-espace"; if(SUB_PRIS.indexOf(sub) >= 0 && val("sub")){ fldKo("sub"); return; } if(SUB_PRIS.indexOf(sub) >= 0) sub += "-" + (new Date().getFullYear() % 100);
+  T = Object.assign(T, { soc, email, pays: p, sub, metiers: metiers(), debut: T.debut || new Date().toISOString(), etape: "email" });
   SOC = soc; tSave();
   const b = document.getElementById("go-compte"); b.disabled = true; b.firstChild.textContent = "Un instant… ";
   if(SB && val("email") && pass.length >= 8){
@@ -702,6 +776,14 @@ function submitPaiement(avecCarte){
   go("confirmation");
 }
 
+/* Les 5 métiers (cahier l.58 « pre-defined dataset (5 domains) ») et ce qu'ils préremplissent */
+const METIERS = {
+  deratisation:    { nom:"Dératisation",    types:["Dératisation", "Pose de postes d'appâtage", "Contrôle des appâts"], nuisibles:["Rats", "Souris", "Mulots"] },
+  desinsectisation:{ nom:"Désinsectisation", types:["Traitement punaises de lit", "Traitement cafards", "Destruction nid de guêpes / frelons", "Traitement fourmis"], nuisibles:["Punaises de lit", "Cafards", "Guêpes / Frelons", "Fourmis", "Mites"] },
+  desinfection:    { nom:"Désinfection",    types:["Désinfection de locaux", "Décontamination après sinistre"], nuisibles:["Bactéries / virus", "Moisissures"] },
+  debouchage:      { nom:"Débouchage · assainissement", types:["Débouchage de canalisation", "Curage", "Inspection caméra", "Vidange de fosse"], nuisibles:[] },
+  nettoyage:       { nom:"Nettoyage · débarras", types:["Débarras de logement", "Nettoyage après décès", "Nettoyage syndrome de Diogène"], nuisibles:[] }
+};
 /* ═══ LA CRÉATION DU TENANT ═══════════════════════════════════════════
    Cahier 58-61. Ce que la maquette sait faire seule : poser l'abonnement
    et la fiche société là où les autres pages les lisent déjà.
@@ -710,6 +792,9 @@ function submitPaiement(avecCarte){
    La vraie séparation des données (societe_id + RLS Supabase) est l'étape d'après. */
 function creerTenant(){
   T.n = N; T.bill = BILL; T.tranche = tranche().lab; T.prixU = prixU();
+  /* cahier l.58-60 : jeu de données selon les métiers cochés → Réglages (types d'intervention, nuisibles) */
+  const M = (T.metiers || []).map(k => METIERS[k]).filter(Boolean);
+  T.preset = { types: [].concat(...M.map(m => m.types)), nuisibles: [].concat(...M.map(m => m.nuisibles)) };
   T.etat = "essai"; T.finEssai = finEssai().toISOString(); T.cree = T.cree || new Date().toISOString(); T.etape = "cree";
   T.checklist = T.checklist || {};
   tSave();
@@ -722,6 +807,7 @@ function creerTenant(){
     set("f-reglage-2c", "ville", s.ville); set("f-reglage-2d", "pays", {FR:"France", BE:"Belgique", CH:"Suisse"}[s.pays]);
     set("f-reglage-4", "email", T.email); set("f-reglage-6", "siret", s.siret); set("f-reglage-7", "tvaNum", s.tva);
     set("f-reglage-25", "forme", s.forme);
+    all.tenant = { sub: T.sub, metiers: T.metiers, preset: T.preset };
     localStorage.setItem("tigerflow-reglages", JSON.stringify(all));
   }catch(e){}
 }
@@ -736,6 +822,8 @@ function fillConf(){
   const ht = htEcheance();
   document.getElementById("c-amt").textContent = eur(ht) + " HT " + (BILL === "a" ? "/ an" : "/ mois") + (PROMO ? " · −" + PROMO.pct + " %" : "");
   document.getElementById("c-trial").textContent = "jusqu'au " + fdate(finEssai(), true);
+  document.getElementById("c-sub").textContent = (T.sub || "mon-espace") + ".tigerflow.io";
+  document.getElementById("c-met").textContent = (T.metiers || []).map(k => METIERS[k].nom).join(", ") || "—";
   document.getElementById("c-cb").innerHTML = T.carte ? "Carte •••• " + esc(T.carte.fin) : '<span style="color:#9A5B00">À ajouter avant le ' + fdate(finEssai()) + '</span>';
 }
 
