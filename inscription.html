@@ -385,7 +385,7 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
 <section class="step" id="s-formule"><div class="wrap">
   <div class="center">
     <div class="h2">Votre formule</div>
-    <p class="lead">Un prix par utilisateur, bureau ou terrain. Plus l'équipe est grande, moins chaque personne coûte.</p>
+    <p class="lead">Un prix par place, bureau ou terrain. Les 5 premières à 69 €, les suivantes moins cher.</p>
     <div class="bill">
       <button id="b-m" class="on" onclick="setBill('m')">Mensuel</button>
       <button id="b-a" onclick="setBill('a')">Annuel <span class="gift">2 mois offerts</span></button>
@@ -397,10 +397,10 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
     <div class="cnth">bureau et techniciens terrain, c'est le même prix · vous pourrez en ajouter ou en retirer à tout moment</div>
   </div>
   <div class="tiers" id="tiers"></div>
-  <details class="cmp"><summary>Comparer les tranches en détail</summary>
-    <table class="cmpt"><thead><tr><th></th><th>1 à 5</th><th>6 à 10</th><th>11 et +</th></tr></thead><tbody>
-      <tr><td>Prix mensuel · par utilisateur / mois</td><td>69 €</td><td>49 €</td><td>39 €</td></tr>
-      <tr><td>Prix annuel · par utilisateur / mois</td><td>49 €</td><td>39 €</td><td>29 €</td></tr>
+  <details class="cmp"><summary>Comparer les paliers en détail</summary>
+    <table class="cmpt"><thead><tr><th></th><th>Places 1 à 5</th><th>Places 6 à 10</th><th>Dès la 11ᵉ</th></tr></thead><tbody>
+      <tr><td>Prix mensuel · par place / mois</td><td>69 €</td><td>49 €</td><td>39 €</td></tr>
+      <tr><td>Prix annuel · par place / mois</td><td>49 €</td><td>39 €</td><td>29 €</td></tr>
       <tr><td>Utilisateur bureau</td><td>✓ même prix</td><td>✓ même prix</td><td>✓ même prix</td></tr>
       <tr><td>Technicien terrain (appli mobile)</td><td>✓ même prix</td><td>✓ même prix</td><td>✓ même prix</td></tr>
       <tr><td>Devis, factures, rapports</td><td>Illimités</td><td>Illimités</td><td>Illimités</td></tr>
@@ -467,7 +467,7 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
     <aside class="card sum">
       <h3>Récapitulatif</h3>
       <div class="l"><span>Société</span><b id="r-soc">—</b></div>
-      <div class="l"><span>Tranche</span><b id="r-tr">1 à 5 utilisateurs</b></div>
+      <div class="l"><span>Utilisateurs</span><b id="r-tr">1 utilisateur</b></div>
       <div class="l"><span>Facturation</span><b id="r-bill">Mensuelle</b></div>
       <div class="l"><span id="r-calc">1 × 69 €</span><b id="r-ht">69,00 € HT</b></div>
       <div class="l" id="r-promo-l" style="display:none"><span id="r-promo-lab">Code promo</span><b id="r-promo" style="color:var(--green-d)"></b></div>
@@ -720,8 +720,9 @@ async function renvoyer(){
 }
 
 /* ═══ 3 · FORMULE ═════════════════════════════════════════════════════ */
-/* Le tarif d'abonnement.html, pas celui du prototype : 3 tranches, prix PAR
-   utilisateur, toute l'équipe au prix de sa tranche. Annuel = 2 mois offerts. */
+/* 03/10 patron : prix PAR PLACE. Les 5 premières places à 69 €, les places 6 à 10
+   à 49 €, à partir de la 11ᵉ 39 € (annuel 49/39/29 = 2 mois offerts). Une place
+   déjà prise ne change jamais de prix. */
 const TR = [
   { min:1,  max:5,   lab:"1 à 5",   m:69, a:49, who:"l'artisan et sa petite équipe",
     pts:["Toutes les fonctionnalités","Devis, factures, rapports illimités","Appli technicien mobile","Support par e-mail"] },
@@ -732,7 +733,10 @@ const TR = [
 ];
 function tranche(){ return TR.find(t => N >= t.min && N <= t.max) || TR[2]; }
 function prixU(){ return tranche()[BILL]; }
-function htMois(){ return N * prixU(); }
+function seatP(i, b){ const t = TR.find(x => i >= x.min && i <= x.max) || TR[2]; return t[b || BILL]; }
+function seatCost(n, b){ let c = 0; for(let i = 1; i <= n; i++) c += seatP(i, b); return c; }
+function seatBreak(n, b){ b = b || BILL; const parts = []; TR.forEach(t => { const k = Math.max(0, Math.min(n, t.max) - t.min + 1); if(k > 0) parts.push(k + " × " + t[b] + " €"); }); return parts.join(" + "); }
+function htMois(){ return seatCost(N); }
 function htEcheance(){ let v = BILL === "a" ? htMois() * 12 : htMois(); if(PROMO) v = v * (1 - PROMO.pct / 100); return Math.round(v * 100) / 100; }
 function setBill(b){ BILL = b; T.bill = b; tSave(); document.getElementById("b-m").classList.toggle("on", b === "m"); document.getElementById("b-a").classList.toggle("on", b === "a"); drawTiers(); }
 function setN(n, typing){ N = Math.max(1, Math.min(200, n || 1)); T.n = N; tSave(); if(!typing) document.getElementById("n").value = N; drawTiers(); }
@@ -741,18 +745,18 @@ function drawTiers(){
   if(document.activeElement !== document.getElementById("n")) document.getElementById("n").value = N;
   const cur = tranche();
   document.getElementById("tiers").innerHTML = TR.map(t => '<div class="tier' + (t === cur ? " on" : "") + '" onclick="setN(' + (t === cur ? N : t.min) + ')">' +
-    '<span class="pill">Votre tranche · ' + N + ' utilisateur' + (N > 1 ? "s" : "") + '</span>' +
-    '<div class="tr">' + t.lab + ' utilisateurs</div>' +
+    '<span class="pill">Vous êtes ici · ' + N + ' utilisateur' + (N > 1 ? "s" : "") + '</span>' +
+    '<div class="tr">' + (t.max > 100 ? 'À partir de la 11ᵉ place' : 'Places ' + t.lab) + '</div>' +
     '<div class="pr">' + t[BILL] + ' € <small>/ utilisateur / mois</small></div>' +
     '<div class="who">' + t.who + (BILL === "a" ? " · facturé à l'année" : " · " + t.a + " € en annuel") + '</div>' +
     '<ul>' + t.pts.map(p => '<li><svg class="i" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>' + p + '</li>').join("") + '</ul></div>').join("");
   const u = N + " utilisateur" + (N > 1 ? "s" : "");
   if(BILL === "m"){
     document.getElementById("t-big").textContent = eur0(htMois()) + " HT / mois";
-    document.getElementById("t-det").textContent = u + " × " + prixU() + " €" + " · facturé chaque mois";
+    document.getElementById("t-det").textContent = seatBreak(N) + " · facturé chaque mois";
   } else {
     document.getElementById("t-big").textContent = eur0(htMois() * 12) + " HT / an";
-    document.getElementById("t-det").textContent = u + " × " + prixU() + " € × 12 mois · au lieu de " + eur0(N * cur.m * 12);
+    document.getElementById("t-det").textContent = seatBreak(N) + " × 12 mois · au lieu de " + eur0(seatCost(N, "m") * 12);
   }
   document.getElementById("t-free").textContent = "Rien à payer avant le " + fdate(finEssai());
 }
@@ -770,9 +774,9 @@ function fillPaiement(){
   const ht = htEcheance(), per = BILL === "a" ? "par an" : "par mois";
   document.getElementById("consent-t").textContent = "J'accepte que TigerFlow prélève " + eur(ht * 1.2) + " TTC " + per + " à partir du " + fdate(f) + ", à la fin de l'essai. Je peux résilier à tout moment depuis Abonnement.";
   document.getElementById("r-soc").textContent = s.nom || "—";
-  document.getElementById("r-tr").textContent = tranche().lab + " utilisateurs";
+  document.getElementById("r-tr").textContent = N + " utilisateur" + (N > 1 ? "s" : "");
   document.getElementById("r-bill").textContent = BILL === "a" ? "Annuelle · 2 mois offerts" : "Mensuelle";
-  document.getElementById("r-calc").textContent = N + " × " + prixU() + " €" + (BILL === "a" ? " × 12" : "");
+  document.getElementById("r-calc").textContent = seatBreak(N) + (BILL === "a" ? " × 12" : "");
   const brut = BILL === "a" ? htMois() * 12 : htMois();
   document.getElementById("r-ht").textContent = eur(brut) + " HT";
   document.getElementById("r-promo-l").style.display = PROMO ? "" : "none";
@@ -846,7 +850,7 @@ function fillConf(){
   document.getElementById("c-lead").textContent = "L'espace de " + (s.nom || "votre société") + " est prêt.";
   document.getElementById("c-soc").textContent = s.nom || "—";
   document.getElementById("c-mail").textContent = (T.email && T.email !== "demo@exemple.fr") ? T.email : "non renseigné";
-  document.getElementById("c-tr").textContent = (T.n || N) + " utilisateur" + ((T.n || N) > 1 ? "s" : "") + " · tranche " + tranche().lab;
+  document.getElementById("c-tr").textContent = (T.n || N) + " utilisateur" + ((T.n || N) > 1 ? "s" : "") + " · " + seatBreak(T.n || N);
   const ht = htEcheance();
   document.getElementById("c-amt").textContent = eur(ht) + " HT " + (BILL === "a" ? "/ an" : "/ mois") + (PROMO ? " · −" + PROMO.pct + " %" : "");
   document.getElementById("c-trial").textContent = "jusqu'au " + fdate(finEssai(), true);
