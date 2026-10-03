@@ -542,6 +542,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
         <a class="kt orange" href="#tenants" onclick="setTF('essai')"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Essais en cours</div><b id="t-k3">—</b><div class="ks" id="t-k3-ft">—</div><span class="go">Voir →</span></a>
         <a class="kt red" href="#tenants" onclick="setTF('annule')"><div class="kl"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M14 7h7v7"/></svg>Taux de churn</div><b id="t-k4">—</b><div class="ks" id="t-k4-ft">—</div><span class="go">Voir →</span></a>
       </div>
+      <div class="card mb"><div class="hdr"><div><h3>Mois par mois</h3><div class="sub">Nouveaux clients inscrits · en rouge, les résiliations</div></div></div><div class="mbars" id="t-mois"></div></div>
       <div class="card" style="padding:14px 16px">
         <div class="fbar">
           <label class="search" style="flex:1;max-width:360px"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="ten-q" placeholder="Nom, adresse d'espace, e-mail…" oninput="drawTenants()"></label>
@@ -716,7 +717,7 @@ const D0 = {
     { id:3, nom:"Hygiène 3D Sud", sub:"hygiene3d-sud", mail:"direction@hygiene3dsud.fr", st:"actif", bill:"a", n:7, tech:5, sto:4.8, reg:"2026-08-03", last:"Aujourd'hui, 8 h 15", ville:"Marseille", carte:"1881", dom:"app.hygiene3dsud.fr" },
     { id:4, nom:"Nuisibles Express", sub:"nuisibles-express", mail:"karim@nuisibles-express.fr", st:"suspendu", bill:"m", n:3, tech:2, sto:0.9, reg:"2026-07-21", last:"Lun. 29 sept.", ville:"Lille", carte:"0005", impaye:"2026-09-30", dom:"" },
     { id:5, nom:"ProDésinfection", sub:"prodesinfection", mail:"contact@prodesinfection.fr", st:"actif", bill:"m", n:12, tech:9, sto:7.4, reg:"2026-06-11", last:"Aujourd'hui, 7 h 55", ville:"Nantes", carte:"7719", dom:"" },
-    { id:6, nom:"Rat&Co", sub:"rat-and-co", mail:"jo@ratandco.fr", st:"annule", bill:"m", n:0, tech:0, sto:0.4, reg:"2026-05-02", last:"Ven. 12 sept.", ville:"Bordeaux", carte:"3030", dom:"" }
+    { id:6, nom:"Rat&Co", sub:"rat-and-co", mail:"jo@ratandco.fr", st:"annule", fin_abo:"2026-09-12", bill:"m", n:0, tech:0, sto:0.4, reg:"2026-05-02", last:"Ven. 12 sept.", ville:"Bordeaux", carte:"3030", dom:"" }
   ],
   pays:[
     { no:"PAY-2026-0142", t:3, amt:3542.4, d:"2026-10-01", st:"ok", moy:"Visa •••• 1881" },
@@ -833,7 +834,11 @@ function drawTenants(){
     k(2, eur0(mrr) + " HT / mois", eur0(mrr * 12) + " HT par an · " + (act.length ? eur0(Math.round(mrr / act.length)) : "—") + " par client en moyenne");
     k(3, ess.length, ess.length ? ess.map(t => t.nom + " · fin le " + fdate(t.fin)).join(" · ") : "Aucun essai en cours");
     const churn = T.length ? Math.round(ann.length / T.length * 100) : 0;
-    k(4, churn + " %", ann.length + " résilié" + (ann.length > 1 ? "s" : "") + " sur " + T.length + " · " + conv + " essais convertis depuis août"); }
+    k(4, churn + " %", ann.length + " résilié" + (ann.length > 1 ? "s" : "") + " sur " + T.length + " · " + conv + " essais convertis depuis août");
+    const MN = ["","janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre"], MS = ["05","06","07","08","09","10"];
+    const nw = MS.map(k => T.filter(t => t.reg.slice(5, 7) === k).length), rs = MS.map(k => T.filter(t => t.fin_abo && t.fin_abo.slice(5, 7) === k).length), mx = Math.max(...nw, 1);
+    let cum = 0;
+    document.getElementById("t-mois").innerHTML = MS.map((k, i) => { cum += nw[i] - rs[i]; return '<button onclick="document.getElementById(\'ten-q\').value=\'\';setTF(\'all\')" title="' + cum + ' client(s) fin ' + MN[+k] + '"><span class="v">+' + nw[i] + (rs[i] ? ' <span style="color:var(--red)">−' + rs[i] + '</span>' : '') + '</span><span class="bar2" style="height:' + Math.max(6, Math.round(nw[i] / mx * 100)) + 'px">' + (rs[i] ? '<i style="height:' + Math.round(rs[i] / mx * 100) + 'px"></i>' : '') + '</span><span class="l">' + MN[+k].slice(0, 4) + '.</span><span class="d">' + cum + ' au total</span></button>'; }).join(""); }
   chips("ten-f", [["all","Tous " + T.length],["actif","Actifs " + T.filter(t => t.st === "actif").length],["essai","En essai " + T.filter(t => t.st === "essai").length],["suspendu","Suspendus " + T.filter(t => t.st === "suspendu").length],["annule","Annulés " + T.filter(t => t.st === "annule").length]], TF, "setTF");
   document.getElementById("ten-sub").textContent = T.length + " sociétés · " + T.filter(t => t.st === "actif").reduce((s, t) => s + t.n, 0) + " places facturées";
   const L = T.filter(t => (TF === "all" || t.st === TF) && (!q || (t.nom + " " + t.sub + " " + t.mail + " " + t.ville).toLowerCase().includes(q)));
