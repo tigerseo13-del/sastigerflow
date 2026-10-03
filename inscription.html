@@ -247,7 +247,10 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
   .duo{grid-template-columns:1fr}.brandp{padding:28px 26px}.blogo{width:180px;margin-bottom:12px}.bfeat,.bnote{display:none}.btitle{margin:0;font-size:1.05rem}
   .formp{padding:28px 22px}
   .tiers{grid-template-columns:1fr}.pay{grid-template-columns:1fr}.sum{position:static}
-  .st span{display:none}.sline{width:16px}.topin{gap:12px}.tlogo{height:32px}
+  .st span{display:none}.sline{width:10px}.topin{gap:8px;padding:10px 12px}.tlogo{height:28px}.stepper{gap:6px;margin-right:0}.st i{width:22px;height:22px;font-size:.68rem}.topin>div:last-child{display:none}
+  .tier:not(.on) ul{display:none}.tier:not(.on){padding:16px 18px}.tier:not(.on) .who::after{content:" · toucher pour voir";color:var(--muted);font-weight:500}
+  .navb{position:sticky;bottom:0;background:var(--bg);padding:12px 0 14px;margin-top:14px;z-index:5;gap:8px}
+  .navb .go.auto{flex:1;justify-content:center}
   .row2{grid-template-columns:1fr}
 }
 </style>
@@ -409,7 +412,7 @@ label,.lab{display:block;font-size:.74rem;font-weight:700;color:var(--ink2);marg
     <div class="free"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg><span id="t-free">Rien à payer avant le …</span></div>
   </div>
   <div class="navb">
-    <button class="back" onclick="go('email')"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Retour</button>
+    <button class="back" onclick="go('compte')"><svg class="i" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Retour</button>
     <button class="go auto" onclick="go('paiement')">Continuer vers le paiement <svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
   </div>
 </div></section>
@@ -560,6 +563,8 @@ function render(){
   window.scrollTo(0, 0);
 }
 window.addEventListener("hashchange", render);
+document.addEventListener("keydown", e => { if(e.key !== "Enter" || /textarea/i.test(document.activeElement.tagName)) return;
+  const h = location.hash; if(h === "#formule"){ e.preventDefault(); go("paiement"); } else if(h === "#email"){ e.preventDefault(); go("formule"); } });
 
 /* ── petites aides de formulaire (même comportement que connexion.html) ── */
 function fldKo(id){ const f = document.getElementById("f-" + id); if(f) f.classList.add("ko"); }
@@ -828,14 +833,14 @@ function fillConf(){
   const s = T.soc || {};
   document.getElementById("c-lead").textContent = "L'espace de " + (s.nom || "votre société") + " est prêt.";
   document.getElementById("c-soc").textContent = s.nom || "—";
-  document.getElementById("c-mail").textContent = T.email || "—";
+  document.getElementById("c-mail").textContent = (T.email && T.email !== "demo@exemple.fr") ? T.email : "non renseigné";
   document.getElementById("c-tr").textContent = (T.n || N) + " utilisateur" + ((T.n || N) > 1 ? "s" : "") + " · tranche " + tranche().lab;
   const ht = htEcheance();
   document.getElementById("c-amt").textContent = eur(ht) + " HT " + (BILL === "a" ? "/ an" : "/ mois") + (PROMO ? " · −" + PROMO.pct + " %" : "");
   document.getElementById("c-trial").textContent = "jusqu'au " + fdate(finEssai(), true);
   document.getElementById("c-sub").textContent = (T.sub || "mon-espace") + ".tigerflow.io";
   document.getElementById("c-met").textContent = (T.metiers || []).map(k => METIERS[k].nom).join(", ") || "—";
-  document.getElementById("c-cb").innerHTML = T.carte ? "Carte •••• " + esc(T.carte.fin) : '<span style="color:#9A5B00">À ajouter avant le ' + fdate(finEssai()) + '</span>';
+  document.getElementById("c-cb").innerHTML = T.carte ? "Carte •••• " + esc(T.carte.fin) : '<span style="color:#9A5B00">À ajouter avant le ' + fdate(finEssai()) + '</span> · <a href="#paiement" style="color:var(--orange-deep);font-weight:700">Ajouter maintenant</a>';
 }
 
 /* ═══ 6 · BIENVENUE ═══════════════════════════════════════════════════
