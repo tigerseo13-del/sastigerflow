@@ -384,10 +384,15 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .ro .needwrite{opacity:.45;pointer-events:none}
 
+.pbar{display:flex;gap:3px;margin:8px 0 10px;height:30px}
+.pbar span{display:grid;place-items:center;font-size:.72rem;font-weight:800;border-radius:7px;white-space:nowrap;overflow:hidden;padding:0 6px}
+.pbar .p0{background:var(--green);color:#fff}.pbar .p1{background:#6EE7B7;color:#064E3B}.pbar .p2{background:#D1FAE5;color:#065F46}
+.pbar .nx{background:var(--bg);color:var(--muted);font-weight:600;border:1px dashed var(--line)}
 @media (max-width:980px){
   .sidebar{position:static;width:auto;flex-direction:row;align-items:center;overflow-x:auto}
   .brand{padding:10px 12px}.brand img{width:120px}.brand .tag{display:none}
-  .nav{flex-direction:row;padding:8px}.nav a{padding:9px 11px;white-space:nowrap}
+  .nav{flex:1 1 auto;min-width:0;flex-direction:row;padding:6px 8px;gap:2px;overflow-x:auto;scrollbar-width:none}.nav::-webkit-scrollbar{display:none}.nav a{position:relative;padding:9px 10px;white-space:nowrap;flex:none}.nav a .lbl{display:none}.nav a.active .lbl{display:inline}.nav a .cnt{position:absolute;top:2px;right:2px;min-width:16px;height:16px;font-size:.6rem;padding:0 4px}.collapse,.swapp{display:none!important}.sidebar{overflow:visible}.brand{flex:none;padding:8px 6px 8px 12px}.brand .name{display:none}.topbar{padding:8px 12px;min-height:0}
+  .btag{display:none}.cover{padding:16px}.cover .cbtns{width:100%;flex-wrap:nowrap;gap:8px}.cover .cbtns .btn{flex:1;min-width:0;justify-content:center;padding:10px 6px;font-size:.78rem;white-space:nowrap}.cover .cbtns .btn svg{display:none}
   .navbot,.side-user{display:none}
   .main{margin-left:0}.gsbtn{display:none}
   .g4{grid-template-columns:1fr 1fr}.g2,.g21,.tiers,.fgrid,.res{grid-template-columns:1fr}
@@ -443,7 +448,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 
 <div class="main" id="main">
   <header class="topbar">
-    <div class="crumbs"><span class="pgico" id="pg-ico"></span><span class="cur" id="pg-title">Tableau de bord</span></div>
+    <div class="crumbs" style="display:none"><span class="pgico" id="pg-ico"></span><span class="cur" id="pg-title">Tableau de bord</span></div><div style="flex:1"></div>
     <div class="tright">
       <div class="gswrap"><label class="gsbtn"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="gs" placeholder="Utilisateur, facture, demande…" autocomplete="off" oninput="gsDraw()" onfocus="gsDraw()" onkeydown="gsKey(event)"><kbd>/</kbd></label><div class="gsres" id="gsres"></div></div>
       <a class="bell" href="#aide" title="Aide"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.3-2.5 3.8M12 17.2h.01"/></svg></a>
@@ -765,7 +770,7 @@ function render(){
   SECS.forEach(s => document.getElementById("s-" + s).classList.toggle("on", s === id));
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("active", a.dataset.s === id));
   document.getElementById("me").classList.remove("open");
-  document.getElementById("pg-title").textContent = TITRES[id][0]; document.getElementById("pg-ico").innerHTML = '<svg class="i" viewBox="0 0 24 24">' + TITRES[id][1] + "</svg>";
+  document.getElementById("pg-title").textContent = TITRES[id][0]; try{ if(innerWidth <= 980){ const na = document.querySelector('#nav a[data-s="' + id + '"]'); if(na) na.scrollIntoView({inline:"center", block:"nearest"}); } }catch(e){} document.getElementById("pg-ico").innerHTML = '<svg class="i" viewBox="0 0 24 24">' + TITRES[id][1] + "</svg>";
   drawAll(); window.scrollTo(0, 0);
 }
 window.addEventListener("hashchange", render);
@@ -879,8 +884,8 @@ function drawDash(unread, open){
   document.getElementById("d-not").textContent = unread;
   document.getElementById("d-tr-sub").textContent = seatBreak(n) + " par mois · " + (S.bill === "a" ? "annuel" : "mensuel");
   const cap = t.max > 100 ? n + 3 : t.max;
-  let h = ""; for(let k = 0; k < Math.min(cap, 12); k++) h += '<i class="' + (k < n ? "on" : "") + '">' + (k < n ? k + 1 : "+") + '</i>';
-  document.getElementById("d-seats").innerHTML = h;
+  document.getElementById("d-seats").className = "pbar";
+  document.getElementById("d-seats").innerHTML = TR.map((r, i) => { const k = Math.max(0, Math.min(n, r.max) - r.min + 1); return k ? '<span class="p' + i + '" style="flex:' + k + '" title="' + k + ' place(s) à ' + r[S.bill] + ' €">' + k + ' × ' + r[S.bill] + ' €</span>' : ''; }).join("") + (n < 10 ? '<span class="nx" style="flex:' + Math.max(1, 10 - n) + '">prochaine place : ' + tr(n + 1)[S.bill] + ' €</span>' : '');
   const nx = TR[TR.indexOf(t) + 1];
   document.getElementById("d-hint-t").textContent = "La prochaine place sera à " + seatPrice(n + 1) + " € par mois" + (seatPrice(n + 1) < seatPrice(n) ? " (moins cher que les précédentes)" : "") + ". Les places déjà prises ne changent pas de prix.";
   document.getElementById("d-amt").textContent = eur(ht() * 1.2) + " TTC " + (S.bill === "a" ? "/ an" : "/ mois");
