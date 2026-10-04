@@ -621,7 +621,7 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
       <div class="incl"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Pour toutes les places : toutes les fonctionnalités, devis, factures et rapports illimités, appli technicien mobile.</div>
     </div>
     <div class="tp" data-tp="abo-factures"><div class="card" style="padding:6px 8px">
-      <table class="tbl"><thead><tr><th>Date</th><th>N°</th><th>Détail</th><th>Montant TTC</th><th>Statut</th><th></th></tr></thead><tbody id="inv"></tbody></table>
+      <table class="tbl"><thead><tr><th>Date</th><th>N°</th><th>Détail</th><th>Montant</th><th>Statut</th><th></th></tr></thead><tbody id="inv"></tbody></table><p style="font-size:.74rem;color:var(--muted);margin:10px 4px 0">TVA non applicable — autoliquidation par le preneur (art. 283-2 CGI). Montants en euros, hors taxes.</p>
     </div></div>
     <div class="tp" data-tp="abo-paiement"><div class="card">
       <div class="hdr"><div><h3>Carte enregistrée</h3><div class="sub">Prélevée automatiquement à chaque échéance. Paiement géré par Stripe.</div></div></div>
@@ -951,7 +951,7 @@ function drawDash(unread, open){
   document.getElementById("d-seats").innerHTML = TR.map((r, i) => { const k = Math.max(0, Math.min(n, r.max) - r.min + 1); return k ? '<span class="p' + i + '" style="flex:' + k + '" title="' + k + ' place(s) à ' + r[S.bill] + ' €">' + k + ' × ' + r[S.bill] + ' €</span>' : ''; }).join("") + (n < 10 ? '<span class="nx" style="flex:' + Math.max(1, 10 - n) + '">prochaine place : ' + tr(n + 1)[S.bill] + ' €</span>' : '');
   const nx = TR[TR.indexOf(t) + 1];
   document.getElementById("d-hint-t").textContent = "La prochaine place sera à " + seatPrice(n + 1) + " € par mois" + (seatPrice(n + 1) < seatPrice(n) ? " (moins cher que les précédentes)" : "") + ". Les places déjà prises ne changent pas de prix.";
-  document.getElementById("d-amt").textContent = eur(ht() * 1.2) + " TTC " + (S.bill === "a" ? "/ an" : "/ mois");
+  document.getElementById("d-amt").textContent = eur(ht()) + (S.bill === "a" ? " / an" : " / mois");
   document.getElementById("d-date-l").textContent = enEssai() ? "Fin de l'essai, 1er prélèvement" : "Date";
   document.getElementById("d-date").textContent = fdate(nextDate());
   const c = S.cards.find(x => x.def);
@@ -1044,13 +1044,13 @@ function setBill(b){
   if(b === S.bill) return;
   const n = nbU(), t = tr(), c = S.cards.find(x => x.def), card = c ? "votre Visa •••• " + c.fin : "la carte que vous allez enregistrer";
   if(b === "a"){
-    const tot = seatCost(n, "a") * 12 * 1.2, eco = (seatCost(n, "m") - seatCost(n, "a")) * 12;
+    const tot = seatCost(n, "a") * 12, eco = (seatCost(n, "m") - seatCost(n, "a")) * 12;
     document.getElementById("bill-h").textContent = "Passer en annuel ?";
-    document.getElementById("bill-p").innerHTML = enEssai() ? "<b>" + eur(tot) + " TTC</b> seront prélevés sur " + card + " à la fin de votre essai, le " + fdate(nextDate()) + ", pour 12 mois. Vous économisez " + eur0(eco) + " par rapport au mensuel."
-      : "<b>" + eur(tot) + " TTC</b> seront prélevés sur " + card + " aujourd'hui, pour 12 mois à partir de ce jour. Votre abonnement mensuel en cours est déduit au prorata. Vous économisez " + eur0(eco) + " sur l'année.";
+    document.getElementById("bill-p").innerHTML = enEssai() ? "<b>" + eur(tot) + "</b> seront prélevés sur " + card + " à la fin de votre essai, le " + fdate(nextDate()) + ", pour 12 mois. Vous économisez " + eur0(eco) + " par rapport au mensuel."
+      : "<b>" + eur(tot) + "</b> seront prélevés sur " + card + " aujourd'hui, pour 12 mois à partir de ce jour. Votre abonnement mensuel en cours est déduit au prorata. Vous économisez " + eur0(eco) + " sur l'année.";
   } else {
     document.getElementById("bill-h").textContent = "Repasser en mensuel ?";
-    document.getElementById("bill-p").innerHTML = "Votre année payée reste valable jusqu'à son terme. Ensuite, vous serez prélevé chaque mois : <b>" + eur(seatCost(n, "m") * 1.2) + " TTC</b> par mois au lieu de " + eur(seatCost(n, "a") * 1.2) + ".";
+    document.getElementById("bill-p").innerHTML = "Votre année payée reste valable jusqu'à son terme. Ensuite, vous serez prélevé chaque mois : <b>" + eur(seatCost(n, "m")) + "</b> par mois au lieu de " + eur(seatCost(n, "a") * 1.2) + ".";
   }
   document.getElementById("bill-ok").onclick = () => { closeOv(); S.bill = b; save(); drawAll(); toast(b === "a" ? "Abonnement annuel activé" : "Retour au mensuel enregistré"); };
   openOv("ov-bill");
@@ -1062,7 +1062,7 @@ function drawAbo(){
   document.getElementById("a-tr").textContent = (enEssai() ? "Essai · " : "") + n + " place" + (n > 1 ? "s" : "");
   document.getElementById("a-m").textContent = seatBreak(n) + " par mois · facturation " + (S.bill === "a" ? "annuelle" : "mensuelle");
   document.getElementById("a-amt").textContent = eur0(ht()) + " HT";
-  document.getElementById("a-amt2").textContent = (S.bill === "a" ? "par an" : "par mois") + " · " + eur(ht() * 1.2) + " TTC";
+  document.getElementById("a-amt2").textContent = (S.bill === "a" ? "par an" : "par mois") + " · " + eur(ht()) + " · TVA : autoliquidation";
   document.getElementById("a-nx-l").textContent = enEssai() ? "Fin de l'essai, 1er prélèvement" : "Prochain prélèvement";
   document.getElementById("a-nx").textContent = fdate(nx);
   { const c = S.cards.find(x => x.def); document.getElementById("a-nx-c").innerHTML = c ? (S.impaye ? '<span style="color:var(--red)">Visa •••• ' + c.fin + ' · refusée</span>' : "Visa •••• " + c.fin) : '<span style="color:var(--amber)">Aucune carte enregistrée</span>'; }
@@ -1073,8 +1073,8 @@ function drawAbo(){
     (on ? '<span class="auto">' + IC.ok + seatBreak(n) + ' = ' + eur0(seatCost(n)) + ' HT / mois</span>' : '<span class="auto">' + (x.min > n ? "Pour votre " + x.min + "ᵉ place et les suivantes" : "Vos " + x.max + " premières places") + '</span>') + '</div>'; }).join("");
   const now = new Date(); const rows = [];
   for(let k = 1; k <= 4; k++){ const d = new Date(now.getFullYear(), now.getMonth() - k + 1, 1); rows.push({ d, no:"TF-" + d.getFullYear() + "-" + String(12 - k).padStart(4, "0"), n: k === 1 ? n : Math.max(1, n - (k > 2 ? 1 : 0)) }); }
-  document.getElementById("inv").innerHTML = rows.map((r, i) => { const v = seatCost(r.n, "m") * 1.2, ko = S.impaye && i === 0;
-    return '<tr><td>' + fdate(r.d) + '</td><td style="font-family:ui-monospace,monospace;font-size:.8rem">' + r.no + '</td><td style="color:var(--muted)">' + seatBreak(r.n, "m") + ' HT</td><td><b>' + eur(v) + '</b></td><td>' + (ko ? '<span class="pill r">Refusée</span>' : '<span class="pill g">Payée</span>') + '</td><td style="text-align:right"><button class="btn g sm" onclick="toast(\'Facture ' + r.no + ' téléchargée\')">PDF</button></td></tr>'; }).join("");
+  document.getElementById("inv").innerHTML = rows.map((r, i) => { const v = seatCost(r.n, "m"), ko = S.impaye && i === 0;
+    return '<tr><td>' + fdate(r.d) + '</td><td style="font-family:ui-monospace,monospace;font-size:.8rem">' + r.no + '</td><td style="color:var(--muted)">' + seatBreak(r.n, "m") + ' · TVA autoliquidée</td><td><b>' + eur(v) + '</b></td><td>' + (ko ? '<span class="pill r">Refusée</span>' : '<span class="pill g">Payée</span>') + '</td><td style="text-align:right"><button class="btn g sm" onclick="toast(\'Facture ' + r.no + ' téléchargée\')">PDF</button></td></tr>'; }).join("");
   document.getElementById("cards").innerHTML = S.cards.map((c, i) => '<div class="cc" style="margin-bottom:10px"><span class="vis">VISA</span><div><b>Visa •••• ' + esc(c.fin) + '</b><small>Expire le ' + esc(c.exp) + '</small></div><div class="r">' + (S.impaye && c.def ? '<span class="pill r">Refusée</span>' : c.def ? '<span class="pill g">Par défaut</span>' : '<button class="btn g sm" onclick="defCard(' + i + ')">Utiliser par défaut</button>') + (S.cards.length > 1 && !c.def ? '<button class="btn g sm needwrite" onclick="S.cards.splice(' + i + ',1);save();drawAll()">Retirer</button>' : "") + '</div></div>').join("");
   const F = [["1","Échec","Jour J",1],["2","1er essai","J+1",0],["3","2e essai","J+3",0],["4","3e essai","J+7",0],["","Lecture seule","après J+7",0]];
   document.getElementById("flow").innerHTML = F.map((f, i) => '<div class="st' + (S.impaye ? (i === 0 ? " done" : i === 1 ? " now" : i === 4 ? " lock" : "") : (i === 4 ? " lock" : "")) + '"><i>' + (i === 4 ? '<svg class="i" viewBox="0 0 24 24" style="width:12px;height:12px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>' : f[0]) + '</i><b>' + f[1] + '</b>' + f[2] + '</div>').join("") ;
