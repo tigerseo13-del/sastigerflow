@@ -401,6 +401,13 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
   .kt .go{display:none}.conv .hd{flex-wrap:wrap}.conv .hd .act{margin-left:0;width:100%}.compose input{min-width:0}
   .sup .conv{display:none}.sup.open .lst{display:none}.sup.open .conv{display:flex;min-height:70vh}.conv .hd .back{display:inline-flex}
 }
+
+/* UX pass 3 */
+.toast{display:flex;align-items:center;gap:14px}.toast button{border:0;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:.78rem;font-weight:800;border-radius:7px;padding:5px 10px;cursor:pointer}.toast button:hover{background:var(--orange)}
+.toast.on{pointer-events:auto}
+.tbl thead th{position:sticky;top:64px;background:#fff;z-index:2}
+.hl{animation:hl 2.2s ease-out}@keyframes hl{0%,55%{background:#FFF3E8;box-shadow:inset 3px 0 0 var(--orange)}100%{background:transparent;box-shadow:none}}
+@media (max-width:900px){.btn.sm,.ibtn,.tk,.acts .btn{min-height:40px}.btn.sm{padding:9px 14px;font-size:.84rem}.cats label span{min-height:36px;display:inline-flex;align-items:center}.tg i{width:40px;height:24px}.tg i::after{width:20px;height:20px}.tg input:checked+i::after{left:18px}}
 </style>
 </head>
 <body>
@@ -844,7 +851,13 @@ function openTab(g, t){
   document.querySelectorAll('[data-tabs="' + g + '"] button').forEach(b => b.classList.toggle("on", b.dataset.t === t));
   document.querySelectorAll('[data-tp^="' + g + '-"]').forEach(p => p.classList.toggle("on", p.dataset.tp === g + "-" + t));
 }
-function toast(t){ const e = document.getElementById("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove("on"), 2400); }
+
+/* UX pass 3 : toast avec Annuler, focus + Entrée dans les fenêtres, surlignage de la ligne visée */
+function toastUndo(m, undo){ const t = document.getElementById("toast"); t.innerHTML = esc(m) + '<button type="button">Annuler</button>'; t.querySelector("button").onclick = () => { t.classList.remove("on"); undo(); }; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 5000); }
+(function(){ const o = openOv; openOv = function(id){ o(id); setTimeout(() => { const m = document.getElementById(id); const f = m.querySelector("input:not([type=hidden]):not([type=file]):not([type=checkbox]):not([type=radio]),textarea,select"); if(f && f.offsetParent) f.focus(); else { const b = m.querySelector(".ft .btn.o,.ft .btn.r"); if(b) b.focus(); } }, 60); }; })();
+document.addEventListener("keydown", e => { if(e.key !== "Enter") return; const m = document.querySelector(".ov.on"); if(!m) return; if(/textarea/i.test(document.activeElement.tagName)) return; const b = m.querySelector(".ft .btn.o,.ft .btn.r"); if(b){ e.preventDefault(); b.click(); } });
+function hilite(sel){ setTimeout(() => { const el = typeof sel === "string" ? document.querySelector(sel) : sel; if(!el) return; el.classList.remove("hl"); void el.offsetWidth; el.classList.add("hl"); el.scrollIntoView({block:"center", behavior:"smooth"}); }, 120); }
+function toast(t){ const e = document.getElementById("toast"); e.textContent = t; e.classList.remove("on"); void e.offsetWidth; e.classList.add("on"); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove("on"), 2400); }
 function openOv(id){ document.getElementById(id).classList.add("on"); }
 function closeOv(){ document.querySelectorAll(".ov").forEach(o => o.classList.remove("on")); }
 document.addEventListener("keydown", e => { if(e.key === "Escape" && document.querySelector(".ov.on")) closeOv(); });
@@ -919,7 +932,7 @@ function drawUsers(){
 function setRole(i, r){ S.users[i].role = r; save(); log("Rôle modifié", (S.users[i].nom || S.users[i].mail) + " → " + r); toast("Rôle mis à jour"); drawAll(); }
 function removeU(i){ const u0 = S.users[i]; if(u0.st === "invite"){ S.users.splice(i, 1); save(); toast("Invitation annulée"); drawAll(); return; }
   document.getElementById("rm-who").textContent = u0.nom || u0.mail; document.getElementById("rm-ok").onclick = () => { closeOv(); removeU2(i); }; openOv("ov-rm"); }
-function removeU2(i){ const u = S.users[i]; u.st = "inactif"; u.last = "Désactivé le " + fdate(new Date()); save(); log("Utilisateur désactivé", u.nom || u.mail); toast((u.nom || u.mail) + " n'a plus accès"); drawAll(); }
+function removeU2(i){ const u = S.users[i], prev = u.last; u.st = "inactif"; u.last = "Désactivé le " + fdate(new Date()); save(); log("Utilisateur désactivé", u.nom || u.mail); drawAll(); toastUndo((u.nom || u.mail) + " n'a plus accès", () => { u.st = "actif"; u.last = prev; save(); drawAll(); }); }
 function reactU(i){ const u = S.users[i]; u.st = "actif"; u.last = "Réactivé aujourd'hui"; save(); log("Utilisateur réactivé", u.nom || u.mail); toast((u.nom || u.mail) + " a de nouveau accès"); drawAll(); }
 function openInvite(){ ["i-nom","i-mail"].forEach(id => document.getElementById(id).value = ""); document.querySelector('#i-role input[value="Technicien"]').checked = true;
   inviteRecap(); openOv("ov-inv"); }
@@ -1069,7 +1082,7 @@ function drawNots(){
   const GO = { fac:"#abonnement", abo:"#abonnement", usg:"#abonnement", sup:"#support", equ:"#utilisateurs" };
   document.getElementById("n-list").innerHTML = L.length ? L.map(n => '<a class="nt' + (n.un ? " un" : "") + '" href="' + GO[n.cat] + '" onclick="goN(' + n.id + ')"><span class="ico ' + CATI[n.cat] + '">' + IC[n.cat] + '</span><div><b>' + esc(n.t) + '</b><p>' + esc(n.d) + '</p><div class="meta"><span class="pill ' + CATN[n.cat][1] + '">' + CATN[n.cat][0] + '</span>' + esc(n.w) + '</div></div><div class="r">' + (n.un ? '<button title="Marquer comme lu" onclick="event.preventDefault();event.stopPropagation();markN(' + n.id + ')">' + IC.ok + '</button>' : "") + '<button title="Supprimer" onclick="event.preventDefault();event.stopPropagation();delN(' + n.id + ')">' + IC.del + '</button></div></a>').join("") : '<div style="padding:30px;text-align:center;color:var(--muted);font-size:.84rem">Rien ici</div>';
 }
-function goN(id){ const n = S.nots.find(x => x.id === id); n.un = false; save();
+function goN(id){ const n = S.nots.find(x => x.id === id); n.un = false; save(); hilite(n.cat === "fac" ? "[data-tp=\"abo-factures\"] .tbl tbody tr:first-child" : n.cat === "sup" ? ".tk.on" : n.cat === "equ" ? "#u-rows tr:last-child" : n.cat === "abo" || n.cat === "usg" ? "[data-tp=\"abo-tranches\"] .card, [data-tp=\"abo-tranches\"]" : "");
   if(n.cat === "fac") setTimeout(() => openTab("abo","factures"), 60); if(n.cat === "abo" || n.cat === "usg") setTimeout(() => openTab("abo","tranches"), 60);
   if(n.cat === "sup"){ const t = S.tickets.find(t => n.d.includes(t.sujet)); if(t){ CUR = t.id; NEW = false; SUPOPEN = true; } } }
 function markN(id){ S.nots.find(n => n.id === id).un = false; save(); drawAll(); }
