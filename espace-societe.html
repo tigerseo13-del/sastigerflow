@@ -21,7 +21,7 @@
    #support #notifications #activite #aide
    ═══════════════════════════════════════════════════════════════════════ */
 :root{color-scheme:light only;
-  --orange:#FF5A1F;--orange-deep:#EA4A10;--orange-bg:#FFF1EB;--ink:#171A20;--ink2:#3D434E;--muted:#6C7285;
+  --orange:#FF5A1F;--orange-deep:#EA4A10;--orange-bg:#FFF1EB;--ink:#171A20;--ink2:#3D434E;--muted:#5B6172;
   --line:#EBECF1;--bg:#F4F5F8;--card:#fff;--side:#14161B;
   --green:#10B981;--green-d:#047857;--green-bg:#ECFDF5;--blue:#2E5CE6;--blue-bg:#EBF1FE;--amber:#A16207;--amber-bg:#FBF3D9;
   --red:#D63B33;--red-bg:#FDE9E8;
@@ -408,6 +408,12 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .tbl thead th{position:sticky;top:64px;background:#fff;z-index:2}
 .hl{animation:hl 2.2s ease-out}@keyframes hl{0%,55%{background:#FFF3E8;box-shadow:inset 3px 0 0 var(--orange)}100%{background:transparent;box-shadow:none}}
 @media (max-width:900px){.btn.sm,.ibtn,.tk,.acts .btn{min-height:40px}.btn.sm{padding:9px 14px;font-size:.84rem}.cats label span{min-height:36px;display:inline-flex;align-items:center}.tg i{width:40px;height:24px}.tg i::after{width:20px;height:20px}.tg input:checked+i::after{left:18px}}
+
+/* ergonomie : barre modifs non enregistrées (collante en bas) */
+.dirtybar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%) translateY(20px);display:flex;align-items:center;gap:12px;background:var(--side);color:#fff;border-radius:12px;padding:10px 12px 10px 16px;font-size:.84rem;font-weight:600;box-shadow:0 14px 40px -10px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:.2s;z-index:95;white-space:nowrap}
+.dirtybar.on{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.dirtybar .btn{padding:7px 12px;font-size:.78rem}.dirtybar .btn.g{background:rgba(255,255,255,.12);color:#fff;border-color:transparent}
+@media (max-width:900px){.dirtybar{left:12px;right:12px;transform:translateY(20px);justify-content:space-between;padding:8px 8px 8px 12px;font-size:.78rem;gap:6px}.dirtybar.on{transform:none}.dirtybar span{display:none}.dirtybar .btn{flex:1;justify-content:center}}
 </style>
 </head>
 <body>
@@ -524,7 +530,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
       <button data-t="domaine" onclick="openTab('soc','domaine')"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Adresse &amp; domaine</button>
       <button data-t="notifs" onclick="openTab('soc','notifs')"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg>Préférences</button>
     </div>
-    <div class="tp on" data-tp="soc-fiche"><div class="card" oninput="document.getElementById('soc-btn').className='btn o needwrite'">
+    <div class="tp on" data-tp="soc-fiche"><div class="card" oninput="document.getElementById('soc-btn').className='btn o needwrite';dirtyOn(saveSoc, () => { drawSoc && drawSoc(); document.getElementById('soc-btn').className='btn g needwrite'; })">
       <div class="fgrid">
         <div class="fld"><label>Nom de la société</label><input id="f-nom"></div>
         <div class="fld"><label>Site web</label><input id="f-site" placeholder="https://"></div>
@@ -689,6 +695,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 <div class="tour" id="tour"><div class="shade" onclick="tourEnd()"></div><div class="spot" id="tspot"></div>
   <div class="box" id="tbox"><small id="t-n">Étape 1 sur 5</small><b id="t-t"></b><p id="t-p"></p>
     <div class="ft"><button class="skip" onclick="tourEnd()">Passer la visite</button><button class="btn g sm" id="t-prev" onclick="tourGo(-1)">Précédent</button><button class="btn o sm" id="t-next" onclick="tourGo(1)">Suivant</button></div></div></div>
+<div class="dirtybar" id="dirtybar"><span>Modifications non enregistrées</span><button class="btn g" onclick="dirtyDrop()">Abandonner</button><button class="btn o" onclick="dirtySave()">Enregistrer</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -857,6 +864,14 @@ function toastUndo(m, undo){ const t = document.getElementById("toast"); t.inner
 (function(){ const o = openOv; openOv = function(id){ o(id); setTimeout(() => { const m = document.getElementById(id); const f = m.querySelector("input:not([type=hidden]):not([type=file]):not([type=checkbox]):not([type=radio]),textarea,select"); if(f && f.offsetParent) f.focus(); else { const b = m.querySelector(".ft .btn.o,.ft .btn.r"); if(b) b.focus(); } }, 60); }; })();
 document.addEventListener("keydown", e => { if(e.key !== "Enter") return; const m = document.querySelector(".ov.on"); if(!m) return; if(/textarea/i.test(document.activeElement.tagName)) return; const b = m.querySelector(".ft .btn.o,.ft .btn.r"); if(b){ e.preventDefault(); b.click(); } });
 function hilite(sel){ setTimeout(() => { const el = typeof sel === "string" ? document.querySelector(sel) : sel; if(!el) return; el.classList.remove("hl"); void el.offsetWidth; el.classList.add("hl"); el.scrollIntoView({block:"center", behavior:"smooth"}); }, 120); }
+
+/* ergonomie : modifications non enregistrées */
+let DIRTY = null;
+function dirtyOn(saveFn, dropFn){ DIRTY = { saveFn, dropFn }; const d = document.getElementById("dirtybar"); d.classList.add("on"); }
+function dirtyOff(){ DIRTY = null; document.getElementById("dirtybar").classList.remove("on"); }
+function dirtySave(){ if(DIRTY){ const f = DIRTY.saveFn; dirtyOff(); f(); } }
+function dirtyDrop(){ if(DIRTY){ const f = DIRTY.dropFn; dirtyOff(); f(); toast("Modifications abandonnées"); } }
+window.addEventListener("beforeunload", e => { if(DIRTY){ e.preventDefault(); e.returnValue = ""; } });
 function toast(t){ const e = document.getElementById("toast"); e.textContent = t; e.classList.remove("on"); void e.offsetWidth; e.classList.add("on"); clearTimeout(e._t); e._t = setTimeout(() => e.classList.remove("on"), 2400); }
 function openOv(id){ document.getElementById(id).classList.add("on"); }
 function closeOv(){ document.querySelectorAll(".ov").forEach(o => o.classList.remove("on")); }
@@ -979,6 +994,7 @@ function domVerif(){
 }
 function domOk(){ document.getElementById("dns-st").innerHTML = "<b style='color:var(--green-d)'>✓ " + (S.domPerso || "") + " est actif.</b> L'option sera ajoutée à votre prochaine facture (9 € / mois)."; toast("Domaine personnalisé activé"); }
 function saveSoc(){
+  dirtyOff();
   document.getElementById("soc-btn").className = "btn g needwrite";
   try{
     const all = jget("tigerflow-reglages") || {}; const d = all.info = all.info || {};

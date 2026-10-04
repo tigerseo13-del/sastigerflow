@@ -8,7 +8,7 @@
 <style>
 /* Back-office éditeur TigerFlow — maquette 03/10. Base CSS partagée avec l'espace société. */
 :root{color-scheme:light only;
-  --orange:#FF5A1F;--orange-deep:#EA4A10;--orange-bg:#FFF1EB;--ink:#171A20;--ink2:#3D434E;--muted:#6C7285;
+  --orange:#FF5A1F;--orange-deep:#EA4A10;--orange-bg:#FFF1EB;--ink:#171A20;--ink2:#3D434E;--muted:#5B6172;
   --line:#EBECF1;--bg:#F4F5F8;--card:#fff;--side:#14161B;
   --green:#10B981;--green-d:#047857;--green-bg:#ECFDF5;--blue:#2E5CE6;--blue-bg:#EBF1FE;--amber:#A16207;--amber-bg:#FBF3D9;
   --red:#D63B33;--red-bg:#FDE9E8;
@@ -471,6 +471,12 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .tbl thead th{position:sticky;top:64px;background:#fff;z-index:2}
 .hl{animation:hl 2.2s ease-out}@keyframes hl{0%,55%{background:#FFF3E8;box-shadow:inset 3px 0 0 var(--orange)}100%{background:transparent;box-shadow:none}}
 @media (max-width:900px){.btn.sm,.ibtn,.tk,.acts .btn{min-height:40px}.btn.sm{padding:9px 14px;font-size:.84rem}.cats label span{min-height:36px;display:inline-flex;align-items:center}.tg i{width:40px;height:24px}.tg i::after{width:20px;height:20px}.tg input:checked+i::after{left:18px}}
+
+/* ergonomie : barre modifs non enregistrées (collante en bas) */
+.dirtybar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%) translateY(20px);display:flex;align-items:center;gap:12px;background:var(--side);color:#fff;border-radius:12px;padding:10px 12px 10px 16px;font-size:.84rem;font-weight:600;box-shadow:0 14px 40px -10px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:.2s;z-index:95;white-space:nowrap}
+.dirtybar.on{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.dirtybar .btn{padding:7px 12px;font-size:.78rem}.dirtybar .btn.g{background:rgba(255,255,255,.12);color:#fff;border-color:transparent}
+@media (max-width:900px){.dirtybar{left:12px;right:12px;transform:translateY(20px);justify-content:space-between;padding:8px 8px 8px 12px;font-size:.78rem;gap:6px}.dirtybar.on{transform:none}.dirtybar span{display:none}.dirtybar .btn{flex:1;justify-content:center}}
 </style>
 </head>
 <body>
@@ -502,7 +508,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
       </div>
     </div>
   </div>
-  <button class="collapse" onclick="document.body.classList.toggle('mini')"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Réduire</span></button>
+  <button class="collapse" onclick="document.body.classList.toggle('mini');try{localStorage.setItem('tigerflow-bo-mini',document.body.classList.contains('mini')?'1':'0')}catch(e){}"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Réduire</span></button>
   <div class="side-user" id="me" onclick="this.classList.toggle('open');event.stopPropagation()">
     <div class="av">AL</div>
     <div><b>Alexandre</b><span>Super Admin</span></div>
@@ -576,9 +582,9 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
     </div>
     <div class="tp on" data-tp="abo-tarifs">
       <div class="hint" style="margin:0 0 14px"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg><span>Un seul produit, un prix par place qui baisse par palier. Modifier un prix ne change rien aux places déjà prises : la nouvelle grille s'applique aux nouvelles places et aux nouveaux clients, après un préavis de 30 jours.</span></div>
-      <div class="card" oninput="document.getElementById('tar-save').className='btn o'">
+      <div class="card" oninput="document.getElementById('tar-save').className='btn o';dirtyOn(saveTarifs, drawTarifs)">
         <table class="tbl"><thead><tr><th>Palier</th><th>Places</th><th>Mensuel (HT / place / mois)</th><th>Annuel (HT / place / mois)</th><th>Support inclus</th><th>Statut</th></tr></thead><tbody id="tar-rows"></tbody></table>
-        <div class="act" style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn g" onclick="drawTarifs()">Annuler</button><button class="btn g" id="tar-save" onclick="saveTarifs()">Enregistrer la grille</button></div>
+        <div class="act" style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn g" onclick="dirtyOff();drawTarifs()">Annuler</button><button class="btn g" id="tar-save" onclick="saveTarifs()">Enregistrer la grille</button></div>
       </div>
       <div class="card mt"><div class="hdr"><div><h3>Inclus pour toutes les places</h3><div class="sub">Ce que chaque utilisateur a, quel que soit le palier</div></div></div>
         <div class="cats" id="incl-list"></div></div>
@@ -717,6 +723,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 <div class="ov" id="ov-imp" onclick="if(event.target===this)closeOv()"><div class="modal"><h3>Se connecter en tant que <span id="imp-who">—</span></h3><p>Vous allez ouvrir l'espace de ce client avec ses droits d'administrateur, en lecture et en écriture. L'action est journalisée et le client est prévenu par e-mail.</p>
   <div class="ft"><button class="btn g" onclick="closeOv()">Annuler</button><a class="btn o" href="espace-societe.html" target="_blank" rel="noopener" onclick="closeOv();toast('Connexion en tant que client journalisée')">Ouvrir son espace</a></div></div></div>
 
+<div class="dirtybar" id="dirtybar"><span>Modifications non enregistrées</span><button class="btn g" onclick="dirtyDrop()">Abandonner</button><button class="btn o" onclick="dirtySave()">Enregistrer</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -805,10 +812,19 @@ function toastUndo(m, undo){ const t = document.getElementById("toast"); t.inner
 (function(){ const o = openOv; openOv = function(id){ o(id); setTimeout(() => { const m = document.getElementById(id); const f = m.querySelector("input:not([type=hidden]):not([type=file]):not([type=checkbox]):not([type=radio]),textarea,select"); if(f && f.offsetParent) f.focus(); else { const b = m.querySelector(".ft .btn.o,.ft .btn.r"); if(b) b.focus(); } }, 60); }; })();
 document.addEventListener("keydown", e => { if(e.key !== "Enter") return; const m = document.querySelector(".ov.on"); if(!m) return; if(/textarea/i.test(document.activeElement.tagName)) return; const b = m.querySelector(".ft .btn.o,.ft .btn.r"); if(b){ e.preventDefault(); b.click(); } });
 function hilite(sel){ setTimeout(() => { const el = typeof sel === "string" ? document.querySelector(sel) : sel; if(!el) return; el.classList.remove("hl"); void el.offsetWidth; el.classList.add("hl"); el.scrollIntoView({block:"center", behavior:"smooth"}); }, 120); }
+
+/* ergonomie : modifications non enregistrées */
+let DIRTY = null;
+function dirtyOn(saveFn, dropFn){ DIRTY = { saveFn, dropFn }; const d = document.getElementById("dirtybar"); d.classList.add("on"); }
+function dirtyOff(){ DIRTY = null; document.getElementById("dirtybar").classList.remove("on"); }
+function dirtySave(){ if(DIRTY){ const f = DIRTY.saveFn; dirtyOff(); f(); } }
+function dirtyDrop(){ if(DIRTY){ const f = DIRTY.dropFn; dirtyOff(); f(); toast("Modifications abandonnées"); } }
+window.addEventListener("beforeunload", e => { if(DIRTY){ e.preventDefault(); e.returnValue = ""; } });
 function toast(m){ const t = document.getElementById("toast"); t.textContent = m; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2600); }
 function openOv(id){ document.getElementById(id).classList.add("on"); }
 function closeOv(){ document.querySelectorAll(".ov").forEach(o => o.classList.remove("on")); }
-document.addEventListener("keydown", e => { if(e.key === "Escape" && document.querySelector(".ov.on")) closeOv(); if(e.key === "/" && !/input|textarea|select/i.test(document.activeElement.tagName)){ e.preventDefault(); document.getElementById("gs").focus(); } });
+document.addEventListener("keydown", e => { if(e.key === "Escape" && !document.querySelector(".ov.on") && !/input|textarea|select/i.test(document.activeElement.tagName)){ if(CURT != null && location.hash.startsWith("#tenants")){ location.hash = "#tenants"; return; } const we = document.getElementById("wh-edit"); if(we && we.style.display !== "none" && location.hash.startsWith("#webhooks")){ we.style.display = "none"; document.getElementById("wh-list").style.display = ""; return; } }
+  if(e.key === "Escape" && document.querySelector(".ov.on")) closeOv(); if(e.key === "/" && !/input|textarea|select/i.test(document.activeElement.tagName)){ e.preventDefault(); document.getElementById("gs").focus(); } });
 document.addEventListener("click", () => { document.querySelectorAll(".swapp.open,.side-user.open").forEach(x => x.classList.remove("open")); });
 function openTab(g, t){ document.querySelectorAll('[data-tabs="' + g + '"] button').forEach(b => b.classList.toggle("on", b.dataset.t === t)); document.querySelectorAll('[data-tp^="' + g + '-"]').forEach(p => p.classList.toggle("on", p.dataset.tp === g + "-" + t)); }
 function chips(id, list, cur, fn){ document.getElementById(id).innerHTML = list.map(([k, l]) => '<label><input type="radio" name="' + id + '" value="' + k + '"' + (cur === k ? " checked" : "") + ' onchange="' + fn + "('" + k + "')" + '"><span>' + l + '</span></label>').join(""); }
@@ -816,6 +832,7 @@ function chips(id, list, cur, fn){ document.getElementById(id).innerHTML = list.
 /* ───────── navigation ───────── */
 const TITRES = { tableau:"Tableau de bord", tenants:"Clients", abonnements:"Abonnements", paiements:"Paiements", webhooks:"Webhooks & automatisations", support:"Support", contenu:"Contenu du site", notifications:"Notifications", equipe:"Équipe TigerFlow" };
 let CURT = null;
+try{ if(localStorage.getItem('tigerflow-bo-mini') === '1') document.body.classList.add('mini'); }catch(e){}
 function render(){
   let h = (location.hash || "#tableau").slice(1); const [sec, q] = h.split("?"); const id = TITRES[sec] ? sec : "tableau";
   document.querySelectorAll(".sec").forEach(s => s.classList.toggle("on", s.id === "s-" + id));
@@ -910,11 +927,12 @@ function impers(id){ const t = ten(id); document.getElementById("imp-who").textC
 let AF = "all";
 function setAF(k){ AF = k; drawAbos(); }
 function drawTarifs(){
+  if(DIRTY && DIRTY.saveFn === saveTarifs && document.activeElement && document.activeElement.closest && document.activeElement.closest("#tar-rows")) return;
   document.getElementById("tar-rows").innerHTML = TR.map((t, i) => '<tr><td><b>Palier ' + (i + 1) + '</b></td><td>' + (t.max > 100 ? "À partir de la 11ᵉ" : "Places " + t.lab) + '</td><td><input class="mini-in" data-k="m" data-i="' + i + '" value="' + t.m + '"> €</td><td><input class="mini-in" data-k="a" data-i="' + i + '" value="' + t.a + '"> €</td><td>' + t.sup + '</td><td><label class="tg"><input type="checkbox"' + (t.off ? "" : " checked") + ' onchange="TR[' + i + '].off=!this.checked;save();drawTarifs();toast(this.checked?\'Palier activé\':\'Palier désactivé · ses places passent au palier précédent\')"><i></i>' + (t.off ? "Inactif" : "Actif") + '</label></td></tr>').join("");
   document.getElementById("tar-save").className = "btn g";
   document.getElementById("incl-list").innerHTML = ["Toutes les fonctionnalités","Devis, factures, rapports illimités","Appli technicien mobile","Mises à jour","Support","Export des données","Hébergement en UE"].map(x => '<label><input type="checkbox" checked disabled><span>' + x + '</span></label>').join("");
 }
-function saveTarifs(){ document.querySelectorAll("#tar-rows input").forEach(i => { TR[+i.dataset.i][i.dataset.k] = +i.value.replace(",", ".") || TR[+i.dataset.i][i.dataset.k]; }); document.getElementById("tar-save").className = "btn g"; log("Grille tarifaire modifiée", "—"); save(); toast("Grille enregistrée · applicable aux nouvelles places après 30 jours de préavis"); drawAll(); }
+function saveTarifs(){ dirtyOff(); document.querySelectorAll("#tar-rows input[data-k]").forEach(i => { TR[+i.dataset.i][i.dataset.k] = +i.value.replace(",", ".") || TR[+i.dataset.i][i.dataset.k]; }); document.getElementById("tar-save").className = "btn g"; log("Grille tarifaire modifiée", "—"); save(); toast("Grille enregistrée · applicable aux nouvelles places après 30 jours de préavis"); drawAll(); }
 function drawAbos(){
   const q = (document.getElementById("abo-q").value || "").trim().toLowerCase();
   chips("abo-f", [["all","Tous"],["actif","Actifs"],["essai","En essai"],["suspendu","Suspendus"],["annule","Annulés"]], AF, "setAF");
