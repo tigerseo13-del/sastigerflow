@@ -214,7 +214,15 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .tabs button.on{background:var(--ink);color:#fff}
 .tabs button.danger{color:var(--red);margin-left:6px}.tabs button.danger.on{background:var(--red);color:#fff}
 .tabs button svg{width:15px;height:15px}
-.nday{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:12px 16px 6px;background:#FAFBFC;border-bottom:1px solid var(--line)}.nt+.nday{border-top:1px solid var(--line)}
+.nt2{display:grid;grid-template-columns:30px 1fr auto auto 30px;gap:14px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:.86rem;color:inherit;text-decoration:none}
+.nt2.un{background:#FFFDF7}.nt2 .ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center}.nt2 .ico svg{width:15px;height:15px}
+.nt2 .tx{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nt2 b{font-weight:700}.nt2 .d{color:var(--ink2)}
+.nt2 .udot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--orange);margin-right:8px;vertical-align:middle}
+.nt2 .lk2{font-size:.76rem;font-weight:700;color:var(--ink2);white-space:nowrap}.nt2 .w{font-size:.76rem;color:var(--muted);white-space:nowrap}
+.nt2 .mk{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--muted);border:0;background:none;cursor:pointer}.nt2 .mk:hover{background:var(--bg)}.nt2 .mk svg{width:15px;height:15px}
+.nday.nfl a{color:var(--orange-deep);font-weight:700;text-transform:none;letter-spacing:0;margin-left:6px}
+@media (max-width:900px){.nt2{grid-template-columns:30px 1fr 30px}.nt2 .lk2,.nt2 .w{display:none}.nt2 .tx{white-space:normal}}
+.nday{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:12px 16px 6px;background:#FAFBFC}.nt2+.nday{border-top:1px solid var(--line)}
 #s-societe .tabs{display:none}#s-societe .tp{display:block}#s-societe .tp+.tp{margin-top:16px}
 .abo2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
 .plan{padding:0 0 16px}.phead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--line)}
@@ -704,8 +712,13 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
   <!-- ═══ NOTIFICATIONS ═══ -->
   <section class="sec" id="s-notifications">
     <div class="ph"><div><h1>Notifications</h1><p id="n-sub" style="display:none">—</p></div></div>
-    <div class="tabs" id="n-tabs"></div>
-    <div class="card" style="padding:0" id="n-list"></div>
+    <div class="kgrid">
+      <a class="kt orange" href="#notifications" data-nf="un" onclick="nfSet('un');return false"><div class="kl"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg>Non lues</div><b id="nk-un">0</b><div class="ks">Depuis votre dernière visite</div><span class="go">Filtrer →</span></a>
+      <a class="kt green" href="#notifications" data-nf="fac" onclick="nfSet('fac');return false"><div class="kl"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>Facturation</div><b id="nk-fac">0</b><div class="ks" id="nk-fac-s">Factures, carte, prix</div><span class="go">Filtrer →</span></a>
+      <a class="kt blue" href="#notifications" data-nf="equ" onclick="nfSet('equ');return false"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/></svg>Équipe</div><b id="nk-equ">0</b><div class="ks" id="nk-equ-s">Invitations, arrivées</div><span class="go">Filtrer →</span></a>
+      <a class="kt red" href="#notifications" data-nf="sup" onclick="nfSet('sup');return false"><div class="kl"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/></svg>Support</div><b id="nk-sup">0</b><div class="ks" id="nk-sup-s">Réponses de Floriant</div><span class="go">Filtrer →</span></a>
+    </div>
+    <div class="card" style="padding:0 0 4px" id="n-list"></div>
   </section>
 
   <!-- ═══ AIDE ═══ -->
@@ -1209,17 +1222,24 @@ function sendTicket(){
 
 /* notifications */
 let NF = "all";
+function nfSet(f){ NF = (NF === f) ? "all" : f; drawNots(); }
 function drawNots(){
-  const un = S.nots.filter(n => n.un).length;
-  document.getElementById("n-sub").textContent = un ? un + " notification" + (un > 1 ? "s" : "") + " non lue" + (un > 1 ? "s" : "") : "Tout est lu";
-  const F = [["all","Toutes",S.nots.length],["un","Non lues",un],["fac","Facturation"],["equ","Équipe"],["sup","Support"]];
-  document.getElementById("n-tabs").innerHTML = F.map(f => '<button class="' + (NF === f[0] ? "on" : "") + '" onclick="NF=\'' + f[0] + '\';drawNots()">' + f[1] + (f[2] !== undefined ? ' <span class="pill ' + (NF === f[0] ? "o" : "n") + '">' + f[2] + '</span>' : "") + '</button>').join("");
   const catOf = n => (n.cat === "abo" || n.cat === "usg") ? "fac" : n.cat;
+  const un = S.nots.filter(n => n.un).length, cnt = k => S.nots.filter(n => catOf(n) === k).length;
+  document.getElementById("n-sub").textContent = un ? un + " non lue" + (un > 1 ? "s" : "") : "Tout est lu";
+  const set = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  set("nk-un", un); set("nk-fac", cnt("fac")); set("nk-equ", cnt("equ")); set("nk-sup", cnt("sup"));
+  set("nk-sup-s", S.nots.some(n => n.cat === "sup" && n.un) ? "Réponse de Floriant non lue" : "Réponses de Floriant");
+  set("nk-equ-s", S.users.some(u => u.st === "invite") ? S.users.filter(u => u.st === "invite").length + " invitation en attente" : "Invitations, arrivées");
+  document.querySelectorAll("[data-nf]").forEach(a => a.classList.toggle("sel", a.dataset.nf === NF));
   const L = S.nots.filter(n => NF === "all" || (NF === "un" ? n.un : catOf(n) === NF));
   const day = n => /instant|^Il y a/i.test(n.w) ? "Aujourd'hui" : /^Hier/i.test(n.w) ? "Hier" : "Plus tôt";
   const GO = { fac:"#abonnement", abo:"#abonnement", usg:"#abonnement", sup:"#support", equ:"#utilisateurs" };
+  const LK = { fac:"Voir la facture ›", abo:"Tarifs ›", usg:"Tarifs ›", sup:"Lire ›", equ:"Utilisateurs ›" };
+  const head = NF === "all" ? "" : '<div class="nday nfl">Filtre : ' + ({ un:"Non lues", fac:"Facturation", equ:"Équipe", sup:"Support" })[NF] + ' <a href="#notifications" onclick="nfSet(\'all\');return false">tout voir</a></div>';
   let lastDay = null;
-  document.getElementById("n-list").innerHTML = L.length ? L.map(n => { const d = day(n), h = d !== lastDay ? '<div class="nday">' + d + '</div>' : ""; lastDay = d; return h + '<a class="nt' + (n.un ? " un" : "") + '" href="' + GO[n.cat] + '" onclick="goN(' + n.id + ')"><span class="ico ' + CATI[n.cat] + '">' + IC[n.cat] + '</span><div><b>' + esc(n.t) + '</b><p>' + esc(n.d) + '</p><div class="meta"><span class="pill ' + CATN[n.cat][1] + '">' + CATN[n.cat][0] + '</span>' + esc(n.w) + '</div></div><div class="r">' + (n.un ? '<button title="Marquer comme lu" onclick="event.preventDefault();event.stopPropagation();markN(' + n.id + ')">' + IC.ok + '</button>' : "") + '</div></a>'; }).join("") : '<div style="padding:30px;text-align:center;color:var(--muted);font-size:.84rem">Rien ici</div>';
+  document.getElementById("n-list").innerHTML = head + (L.length ? L.map(n => { const d = day(n), h = d !== lastDay ? '<div class="nday">' + d + '</div>' : ""; lastDay = d;
+    return h + '<a class="nt2' + (n.un ? " un" : "") + '" href="' + GO[n.cat] + '" onclick="goN(' + n.id + ')"><span class="ico ' + CATI[n.cat] + '">' + IC[n.cat] + '</span><span class="tx">' + (n.un ? '<i class="udot"></i>' : '') + '<b>' + esc(n.t) + '</b> <span class="d">— ' + esc(n.d.replace(/\.$/, "")) + '</span></span><span class="lk2">' + (/carte/i.test(n.t) ? "Carte ›" : LK[n.cat]) + '</span><span class="w">' + esc(n.w) + '</span>' + (n.un ? '<button class="mk" title="Marquer comme lu" onclick="event.preventDefault();event.stopPropagation();markN(' + n.id + ')">' + IC.ok + '</button>' : '<span class="mk"></span>') + '</a>'; }).join("") : '<div style="padding:30px;text-align:center;color:var(--muted);font-size:.84rem">Rien ici</div>');
 }
 function goN(id){ const n = S.nots.find(x => x.id === id); n.un = false; save(); hilite(n.cat === "fac" ? "[data-tp=\"abo-factures\"] .tbl tbody tr:first-child" : n.cat === "sup" ? ".tk.on" : n.cat === "equ" ? "#u-rows tr:last-child" : n.cat === "abo" || n.cat === "usg" ? "[data-tp=\"abo-tranches\"] .card, [data-tp=\"abo-tranches\"]" : "");
   if(n.cat === "fac") setTimeout(() => openTab("abo","factures"), 60); if(n.cat === "abo" || n.cat === "usg") setTimeout(() => openTab("abo","tranches"), 60);
