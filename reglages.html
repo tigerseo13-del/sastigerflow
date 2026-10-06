@@ -731,7 +731,8 @@ input[type=color]{padding:3px;height:42px;width:56px;cursor:pointer}
 .drawer h2{font-family:'Sora';font-size:1.14rem;font-weight:800;letter-spacing:-.3px}
 .dh{display:flex;align-items:center;gap:9px;font-family:'Sora';font-weight:700;font-size:.9rem;margin-bottom:13px}
 .dh::before{content:"";width:4px;height:15px;border-radius:3px;background:var(--orange);flex:none}
-.dh .dre{margin-left:auto;font-size:.74rem;font-weight:700;color:var(--orange-deep);background:none;border:0;cursor:pointer;font-family:inherit}
+.dh .rhint{font-size:.72rem;color:var(--muted);line-height:1.5;margin-top:6px}
+.dre{margin-left:auto;font-size:.74rem;font-weight:700;color:var(--orange-deep);background:none;border:0;cursor:pointer;font-family:inherit}
 .dh .dre:hover{text-decoration:underline}
 .dmain{display:flex;gap:8px}
 .dbig{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;font-size:.85rem;font-weight:700;border:0;background:var(--orange);color:#fff;cursor:pointer;font-family:inherit}
@@ -1347,6 +1348,8 @@ const RBADGE = {"Administrateur":"b-padm", "Manager":"b-man", "Opérateur":"b-op
 const MODULES = ["Tableau de bord","Agenda","Clients","Devis","Factures","Paiements","Contrats","Tâches","Techniciens","Paramètres"];
 const PERMLVL = ["Aucun accès","Lecture seule","Modification","Accès complet"];
 const PERMDEF = [1,2,2,2,2,2,2,2,1,0];
+/* 06/10 : valeurs par défaut par rôle — les mêmes que la matrice de l'espace société */
+const PERMROLE = { "Opérateur":[1,2,1,1,0,2,0,2,0,0], Manager:[1,2,2,2,2,2,2,2,1,0], Administrateur:[3,3,3,3,3,3,3,3,3,3] };
 let CATS = [
   {n:"Cafards", nb:5, d:"17/07/2026", on:true},
   {n:"Chenilles processionnaires", nb:6, d:"14/07/2026", on:true},
@@ -1740,14 +1743,15 @@ function uAdd(i){
       <span class="rlab">E-mail <b style="color:var(--red)">*</b></span><input id="nu-m" placeholder="Saisir ici" value="${esc(u.mail)}">
       <span class="rlab">Fonction</span><input id="nu-f" placeholder="Saisir ici" value="${u.fonc && u.fonc !== '\u2014' ? esc(u.fonc) : ''}">
       <span class="rlab">Rôle <b style="color:var(--red)">*</b></span>
-      <select id="nu-r"><option value="">Sélectionner</option>${["Administrateur","Manager","Opérateur"].map(r => `<option ${u.role === r ? "selected" : ""}>${r}</option>`).join("")}</select>
+      <select id="nu-r" onchange="permRole(this.value)"><option value="">Sélectionner</option>${["Administrateur","Manager","Opérateur"].map(r => `<option ${u.role === r ? "selected" : ""}>${r}</option>`).join("")}</select>
+      <div class="rhint">Administrateur : tout · Manager : bureau (planning, clients, devis, factures) · Opérateur : terrain (appli mobile, ses interventions, encaissement). Le rôle pré-remplit les permissions ci-dessous, que vous pouvez affiner.</div>
       <div class="togr" style="margin-top:6px"><span>Actif</span>${tgl(u.actif !== false)}</div>
     </div>
     <div class="dcard">
-      <div class="dh">Contrôle des permissions par module<button class="dre" onclick="permReset()">Réinitialiser par défaut</button></div>
+      <div class="dh">Contrôle des permissions par module<button class="dre" onclick="permReset()">Réinitialiser selon le rôle</button></div>
       <div class="permh"><span>Module</span><span>Aucun accès</span><span>Lecture seule</span><span>Modification</span><span>Accès complet</span></div>
       ${MODULES.map((m, i) => `<div class="permrow"><span>${m}</span>${PERMLVL.map((_, l) =>
-        `<span class="pdot ${PERMDEF[i] === l ? "on" : ""}" data-m="${i}" onclick="permSet(this)"></span>`).join("")}</div>`).join("")}
+        `<span class="pdot ${(PERMROLE[u.role] || PERMDEF)[i] === l ? "on" : ""}" data-m="${i}" onclick="permSet(this)"></span>`).join("")}</div>`).join("")}
     </div>
     <div class="dcard">
       <div class="dh">Documents<label class="pjadd" style="margin-left:auto"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>Importer<input type="file" multiple style="display:none" onchange="uDocAdd(this)"></label></div>
@@ -1768,12 +1772,11 @@ function uAdd(i){
   openDrawer();
 }
 function permSet(el){ el.closest(".permrow").querySelectorAll(".pdot").forEach(d => d.classList.remove("on")); el.classList.add("on"); }
-function permReset(){
-  document.querySelectorAll("#dbody .permrow").forEach((row, i) => {
-    row.querySelectorAll(".pdot").forEach((d, l) => d.classList.toggle("on", PERMDEF[i] === l));
-  });
-  toast("Permissions remises aux valeurs par défaut");
+function permRole(role){
+  const d = PERMROLE[role] || PERMDEF;
+  document.querySelectorAll("#dbody .permrow").forEach((row, i) => { row.querySelectorAll(".pdot").forEach((dot, l) => dot.classList.toggle("on", d[i] === l)); });
 }
+function permReset(){ permRole($id("nu-r").value); toast("Permissions remises aux valeurs du rôle"); }
 let UDOCS = [];
 function uDocRender(){
   const box = document.getElementById("u-docs");
