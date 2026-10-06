@@ -94,6 +94,8 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
 .chip input{display:none}
 .chip span{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #DCDFE6;border-radius:99px;padding:7px 13px;font-size:.8rem;font-weight:600;color:var(--ink2);cursor:pointer;background:#fff}
 .chip span::before{content:"";width:14px;height:14px;border-radius:50%;border:1.5px solid #C5C9D3;flex:none}
+.chip.off span{cursor:not-allowed;color:var(--muted);background:var(--bg);border-style:dashed}.chip.off span::before{opacity:.4}
+.chip.off em{font-style:normal;font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:#E5E7EB;color:#4B5563;border-radius:99px;padding:2px 7px;margin-left:2px}
 .chip input:checked+span{border-color:var(--green);background:var(--green-bg);color:var(--green-d)}
 .chip input:checked+span::before{border-color:var(--green);background:var(--green);box-shadow:inset 0 0 0 2px var(--green-bg)}
 
@@ -115,6 +117,7 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
 .socok .chg{margin-left:auto;border:0;background:none;color:var(--green-d);font-weight:700;font-size:.74rem;cursor:pointer;white-space:nowrap}
 .manual{display:none}.manual.on{display:block}
 .lnk{border:0;background:none;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;font-weight:700;font-size:.76rem;cursor:pointer;padding:0}
+.wai{width:15px;height:15px;fill:none;stroke:#25D366;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:4px}
 .cgu{display:flex;gap:9px;align-items:flex-start;font-size:.78rem;color:var(--ink2);line-height:1.5;margin:4px 0 18px;cursor:pointer}
 .cgu input{width:16px;height:16px;margin-top:2px;accent-color:var(--green);flex:none}
 .cgu a{color:var(--ink);font-weight:600}
@@ -340,12 +343,18 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
       <div class="chips" id="chips">
         <label class="chip"><input type="checkbox" value="nuisibles" checked><span>Traitement des nuisibles</span></label>
         <label class="chip"><input type="checkbox" value="debouchage"><span>Assainissement (débouchage)</span></label>
-        <label class="chip"><input type="checkbox" value="nettoyage"><span>Nettoyage · débarras</span></label>
+        <label class="chip off" title="Pas encore disponible"><input type="checkbox" value="nettoyage" disabled><span>Nettoyage · débarras <em>à venir</em></span></label>
       </div>
     </div>
     <div class="fld" id="f-email"><label for="email">Adresse e-mail de l'administrateur</label>
       <input type="email" id="email" autocomplete="email" placeholder="vous@votre-societe.fr" oninput="fldOk('email')">
       <div class="ferr" id="err-email">Une adresse e-mail valide est requise.</div></div>
+    <div class="fld" id="f-tel"><label for="tel">Téléphone portable de l'administrateur</label>
+      <input type="tel" id="tel" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" oninput="fldOk('tel');waSame()">
+      <div class="ferr" id="err-tel">Un numéro de portable est requis : c'est ainsi qu'on vous aide à démarrer.</div></div>
+    <div class="fld" id="f-wa"><label for="wa"><svg class="wai" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/><path d="M8.5 9.5c.3 2.5 2.5 4.7 5 5l1.6-1.6-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2z"/></svg>Numéro WhatsApp <span style="font-weight:500;color:var(--muted)">· si différent</span></label>
+      <input type="tel" id="wa" autocomplete="off" inputmode="tel" placeholder="Le même que le portable" oninput="document.getElementById('wa').dataset.edit=1">
+      <div class="hint" style="font-size:.74rem;color:var(--muted);margin-top:5px">Pour vous aider vite au démarrage, et vous prévenir si un prélèvement échoue.</div></div>
     <div class="fld" id="f-pass"><label for="pass">Mot de passe <span style="font-weight:500;color:var(--muted)">· 8 caractères minimum</span></label>
       <div class="pwrap"><input type="password" id="pass" autocomplete="new-password" placeholder="Choisissez-le, vous pourrez le changer" oninput="fldOk('pass');pwMeter(this.value)">
       <button type="button" class="oeil" onclick="voir('pass')" aria-label="Afficher"><svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button></div>
@@ -506,6 +515,7 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
   <div class="recap">
     <div class="l"><span>Société</span><b id="c-soc">—</b></div>
     <div class="l"><span>Administrateur</span><b id="c-mail">—</b></div>
+    <div class="l"><span>Téléphone</span><b id="c-tel">—</b></div>
     <div class="l"><span>Formule</span><b id="c-tr">—</b></div>
     <div class="l"><span>Montant</span><b id="c-amt">—</b></div>
     <div class="l"><span>Adresse de l'espace</span><b id="c-sub">—</b></div>
@@ -586,6 +596,7 @@ document.addEventListener("keydown", e => { if(e.key !== "Enter" || /textarea/i.
 
 /* ── petites aides de formulaire (même comportement que connexion.html) ── */
 function fldKo(id){ const f = document.getElementById("f-" + id); if(f) f.classList.add("ko"); }
+function waSame(){ const w = document.getElementById("wa"); if(!w.dataset.edit) w.placeholder = val("tel") ? "Le même : " + val("tel") : "Le même que le portable"; }
 function fldOk(id){ const f = document.getElementById("f-" + id); if(f) f.classList.remove("ko"); }
 function val(id){ const e = document.getElementById(id); return e ? e.value.trim() : ""; }
 function pwMeter(v){ const m = document.getElementById("pwm"); if(!v){ m.className = "pwm"; return; } let n = 0; if(v.length >= 8) n++; if(/\d/.test(v) && /[a-zA-Z]/.test(v)) n++; if(v.length >= 12 || /[^a-zA-Z0-9]/.test(v)) n++; m.className = "pwm on l" + Math.max(1, n); document.getElementById("pwm-t").textContent = ["", "Trop court", "Correct", "Solide"][Math.max(1, n)]; }
@@ -706,6 +717,7 @@ async function submitCompte(){
      jamais arrêter le parcours (compte déjà existant, hors ligne : on passe). */
   const p = val("pays"), manual = document.getElementById("manual").classList.contains("on");
   let email = val("email"); if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) email = "demo@exemple.fr";
+  const tel = val("tel"), wa = val("wa") || tel;
   const pass = document.getElementById("pass").value;
   let soc = SOC ? Object.assign({}, SOC) : { nom: val("m-nom"), adresse: val("m-adr"), cp: val("m-cp"), ville: val("m-ville"),
     siret: p === "FR" ? val("m-id").replace(/\s/g, "") : "", ident: p === "FR" ? "" : val("m-id"), forme: "", tva: "" };
@@ -713,11 +725,11 @@ async function submitCompte(){
   if(!soc.tva && soc.siret && soc.siret.length === 14) soc.tva = tvaFR(soc.siret.slice(0, 9));
   soc.pays = p;
   let sub = subFree(val("sub") || slug(soc.nom));
-  T = Object.assign(T, { soc, email, pays: p, sub, metiers: metiers(), debut: T.debut || new Date().toISOString(), etape: "email" });
+  T = Object.assign(T, { soc, email, tel, wa, pays: p, sub, metiers: metiers(), debut: T.debut || new Date().toISOString(), etape: "email" });
   SOC = soc; tSave();
   const b = document.getElementById("go-compte"); b.disabled = true; b.firstChild.textContent = "Un instant… ";
   if(SB && val("email") && pass.length >= 8){
-    try{ await SB.auth.signUp({ email, password: pass, options: { data: { role: "admin", societe: soc.nom, siret: soc.siret || soc.ident || "", pays: p },
+    try{ await SB.auth.signUp({ email, password: pass, options: { data: { role: "admin", tel, whatsapp: wa, societe: soc.nom, siret: soc.siret || soc.ident || "", pays: p },
       emailRedirectTo: location.href.split("#")[0] + "#formule" } }); }catch(e){}
   }
   b.disabled = false; b.firstChild.textContent = "Créer mon espace ";
@@ -860,6 +872,7 @@ function fillConf(){
   document.getElementById("c-lead").textContent = "Récapitulatif de l'inscription de " + (s.nom || "votre société") + ".";
   document.getElementById("c-soc").textContent = s.nom || "—";
   document.getElementById("c-mail").textContent = (T.email && T.email !== "demo@exemple.fr") ? T.email : "non renseigné";
+  document.getElementById("c-tel").textContent = T.tel ? T.tel + (T.wa && T.wa !== T.tel ? " · WhatsApp : " + T.wa : " · WhatsApp") : "non renseigné";
   document.getElementById("c-tr").textContent = (T.n || N) + " utilisateur" + ((T.n || N) > 1 ? "s" : "") + " · " + seatBreak(T.n || N);
   const ht = htEcheance();
   document.getElementById("c-amt").textContent = eur(ht) + " HT " + (BILL === "a" ? "/ an" : "/ mois") + (PROMO ? " · −" + PROMO.pct + " %" : "");
@@ -889,6 +902,7 @@ function todoDone(k){ T.checklist = T.checklist || {}; T.checklist[k] = true; tS
      Arriver sur inscription.html SANS ancre = repartir de zéro. */
   if(!location.hash){ try{ localStorage.removeItem(TKEY); }catch(e){} T = {}; SOC = null; N = 1; BILL = "m"; PROMO = null; }
   if(T.email) document.getElementById("email").value = T.email;
+  if(T.tel){ document.getElementById("tel").value = T.tel; if(T.wa && T.wa !== T.tel) document.getElementById("wa").value = T.wa; }
   if(T.pays){ document.getElementById("pays").value = T.pays; if(T.pays !== "FR") paysChange(); }
   if(SOC && SOC.siren) socShow();
   else if(SOC){ manualOn(); ["nom","adresse","cp","ville"].forEach((k, i) => { document.getElementById(["m-nom","m-adr","m-cp","m-ville"][i]).value = SOC[k] || ""; }); }
