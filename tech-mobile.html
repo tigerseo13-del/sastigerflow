@@ -1817,17 +1817,17 @@ function mcard(m, cta){
                "Blattes":"\uD83E\uDEB3","Cafards":"\uD83E\uDEB3","Guêpes":"\uD83D\uDC1D","Frelons":"\uD83D\uDC1D"}[nuis] || "\uD83D\uDC1B";
   const prog = enc ? `
     <div class="agprog"><span class="pb"><i style="width:${m.prog || 50}%"></i></span><small>${m.progt || ""}</small></div>
-    <button class="agcont" onclick="event.stopPropagation();openM(${m.id})"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer</button>` : "";
+    <button class="agcont" onclick="event.stopPropagation();openM(${m.id})"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer l’intervention</button>` : "";
   const acts = done ? "" : `
       <span class="agacts">
         <span class="agac" onclick="callC(M[${m.id}],event)" aria-label="Appeler"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg></span>
         <span class="agac" onclick="navC(M[${m.id}],event)" aria-label="Itinéraire"><svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8z"/></svg></span>
       </span>`;
-  return `<div class="ag ${cls}" onclick="openM(${m.id})">
+  return `<div class="ag ${cls}" onclick="openM(${m.id})"${done ? ` aria-label="${annul ? "Annulée" : "Terminée"}"` : ""}>
     <div class="agl">${cpVille(m.ville)}<span class="aghb"><span class="ph">${plageH(m.h, m.dur)}</span><span class="pd">${dateFr(m)}</span></span></div>
     <div class="agr">
       <div class="agr1"><span class="em">${emo}</span><span class="ti">${nuis}</span>
-        <span class="agchk" onclick="event.stopPropagation();openM(${m.id})" title="Ouvrir pour clôturer">${annul ? "\u2715" : "\u2713"}</span></div>
+${done ? `<span class="agmk${annul ? " x" : ""}" aria-hidden="true"></span>` : ""}</div>
       <div class="agr2"><span class="itchip ${T.cls}">${T.lbl}${amt}</span>${pri}${att}</div>
       <div class="agr3"><span class="who"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="min-width:0;overflow:hidden"><span class="agcli">${m.client}</span><span class="agrue">${annul ? "Annulée" + (m.motif ? " · " + m.motif : "") : (m.adr || "")}</span></span></span>${acts}</div>
       ${prog}
@@ -2263,7 +2263,6 @@ function rdetail(){
       <button class="qa b" onclick="smsC(M[${m.id}])"><span class="qi"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8z"/></svg></span>SMS</button>
       <button class="qa wa" title="WhatsApp" onclick="waC(M[${m.id}])"><span class="qi"><svg class="fillsvg" viewBox="0 0 24 24"><path d="${WAPATH}"/></svg></span>WhatsApp</button>
       <button class="qa n" onclick="navC(M[${m.id}])"><span class="qi"><svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8z"/></svg></span>Itinéraire</button>
-      <button class="qa w" onclick="impOpen(${m.id})"><span class="qi"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/></svg></span>Imprévu</button>
     </div>
     </div>
     ${ban}
@@ -4228,7 +4227,7 @@ button.bill{cursor:pointer}
    boutons à 44 px, « Annuler / Réinitialiser / Plus tard » en texte gris. */
 :root{--ink-btn:#1F2430}
 .bo{box-shadow:none!important;padding:12px 15px;min-height:44px;border-radius:12px}
-.bo.agbo{min-height:0}
+.bo.agbo{min-height:44px}
 .bo.k{background:var(--ink-btn);font-family:Inter,sans-serif}
 .bo.k:disabled{background:#C9CDD6}
 .bo.mini{width:auto;flex:none;border-radius:999px;padding:11px 22px;font:800 .88rem Inter,sans-serif}   /* « .pill » existait déjà (puces) : nom à part */
@@ -4250,6 +4249,41 @@ button.bill{cursor:pointer}
 .fltf.navc{margin-top:20px;padding:0}
 .ntbtn.navc{margin-top:9px;padding:0}
 #s-enc .cta .lnk{padding:12px 0 4px}
+</style>
+<style>
+/* 07/10 (patron : « Continuer » vert dans la liste, orange sur l'Accueil — même action, même couleur ;
+   la case ✓ vide faisait croire qu'on clôture en la cochant : elle ne reste que sur les terminées) */
+.agcont{background:var(--orange);font:800 .8rem Sora,Inter,sans-serif;border-radius:11px;padding:10px 12px;min-height:44px;margin-top:10px;gap:7px}
+.agcont svg{width:13px;height:13px}
+</style>
+<style>
+/* 07/10 (patron, capture de l'agenda : « terminé et annulé, mais le vert et la croix ») —
+   même grammaire que l'agenda du bureau : COCHE = c'est fait · CROIX = ça n'a pas eu lieu.
+   La carte s'éteint (vert pâle / rouge pâle), le signe se voit de loin, à droite. */
+.ag{position:relative}
+.ag.fini{opacity:1}
+.agmk{flex:none;width:34px;height:30px;margin:-5px -4px -3px auto;background:center/contain no-repeat}   /* le signe vit dans la ligne du titre : il ne recouvre ni le montant ni le client */
+.ag.fini:not(.annul){background:#F5FBF8;border-color:#DCEEE5}
+.ag.fini:not(.annul) .agl{background:#EAF6EF}
+.ag.fini:not(.annul) .agl,.ag.fini:not(.annul) .agl *{color:#4E8C74!important;border-color:#CFE6DA!important}
+.ag.fini:not(.annul) .agr .ti,.ag.fini:not(.annul) .agcli{color:#5E8A78}
+.ag.fini:not(.annul) .itchip{opacity:.7}
+.ag.fini:not(.annul) .agmk{background-image:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cpath%20d%3D%22M7%2033%20L25%2051%20L57%2013%22%20fill%3D%22none%22%20stroke%3D%22rgba%2814%2C138%2C95%2C.62%29%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")}
+.ag.annul{background:#FDFAFA;border-color:#F1DEDC}
+.ag.annul .agl{background:#FBF0EF}
+.ag.annul .agl,.ag.annul .agl *{color:#C99A96!important;border-color:#F1DEDC!important}
+.ag.annul .agr .ti,.ag.annul .agcli,.ag.annul .agr3{color:#A98F8C}
+.ag.annul .itchip{opacity:.6}
+.ag.annul .agmk{width:28px;height:26px;margin:-3px 0 -1px auto;background-image:url("data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cpath%20d%3D%22M14%2014%20L50%2050%20M50%2014%20L14%2050%22%20fill%3D%22none%22%20stroke%3D%22rgba%28192%2C64%2C58%2C.62%29%22%20stroke-width%3D%224%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E")}
+</style>
+<style>
+/* 07/10 (patron : « enlève Imprévu, c'est pas dans la maquette Saigon + mets sur 2 lignes comme eux ») —
+   comme leur « Quick actions » : petite icône de couleur SANS rond, pastille blanche bordée.
+   Appeler · SMS · WhatsApp sur la 1re ligne, Itinéraire sur la 2e. */
+.qacard .qacts{gap:6px}
+.qacard .qa{gap:5px;padding:8px 10px 8px 9px;min-height:38px;box-sizing:border-box;font-size:.75rem}   /* tient à 3 par ligne dès 360 px de large */
+.qacard .qa .qi{width:auto;height:auto;border-radius:0;background:none!important}
+.qacard .qa .qi svg{width:15px;height:15px}
 </style>
 </body>
 </html>
