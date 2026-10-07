@@ -430,7 +430,7 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .waitb{background:var(--amber-bg);border:1px dashed #E2C56E;color:var(--amber);border-radius:13px;padding:12px 14px;font-size:.79rem;font-weight:700;margin-bottom:10px;line-height:1.45}
 .doneb{display:flex;align-items:center;gap:9px;background:var(--green-bg);color:var(--green-d);border-radius:13px;padding:13px 14px;font-size:.85rem;font-weight:800;margin-bottom:4px}
 .doneb svg{width:17px;height:17px}
-.cta{position:sticky;bottom:38px;padding:16px 0 4px;background:linear-gradient(#F4F5F800,#F4F5F8 12%)}
+.cta{position:sticky;bottom:0;padding:16px 0 12px;background:linear-gradient(#F4F5F800,#F4F5F8 12%)}   /* 07/10 : plus de « + » central dans le menu — le pavé d’action se colle en bas, plus de jour en dessous */
 
 /* ============================================================
    15/08 (patron) — LA CARTOUCHE DE L'AGENDA SUR LE TÉLÉPHONE.
@@ -603,7 +603,6 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .rclr{margin-left:auto;border:0;background:none;color:var(--orange-deep,#D63B05);font:800 .68rem Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:0}
 .rsign{text-align:center;font-size:.72rem;font-weight:600;color:var(--muted);margin-top:8px}
 
-.rsteps2 
 .rctx{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#FAFBFC;border:1px solid #EEF0F4;border-radius:13px;padding:11px 14px;margin-bottom:4px;box-shadow:none}
 .rctx .rcli{font-family:Sora;font-weight:800;font-size:.86rem}
 .rctx .rmeta{font-size:.72rem;font-weight:700;color:var(--muted)}
@@ -781,9 +780,9 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .tl.c-b b,.tl.c-o b,.tl.c-g b{color:var(--ink)}
 .pav{box-shadow:0 0 0 2.5px #fff,0 0 0 5px var(--orange)}
 #s-enc .fh,#s-rapport .fh,#s-sign .fh,#s-atelier .fh{margin:-10px -16px 14px;padding:12px 16px}
-#s-enc .fh{background:var(--green-bg)}#s-enc .fh b{color:var(--green-d)}
-#s-rapport .fh{background:var(--orange-soft)}#s-rapport .fh b{color:var(--orange-deep)}
-#s-atelier .fh{background:var(--orange-soft)}#s-atelier .fh b{color:var(--orange-deep)}
+#s-enc .fh{background:transparent}#s-enc .fh b{color:var(--ink)}   /* 07/10 : en-tête neutre comme les autres écrans */
+#s-rapport .fh{background:transparent}#s-rapport .fh b{color:var(--ink)}   /* 07/10 : plus d’orange dans l’en-tête — l’orange = « Envoyer le rapport » */
+#s-atelier .fh{background:transparent}#s-atelier .fh b{color:var(--ink)}
 #s-sign .fh{background:var(--blue-bg)}#s-sign .fh b{color:var(--blue)}
 #s-ok.on .okic{animation:okpop .45s cubic-bezier(.36,1.6,.5,1) both}
 #s-ok.on .okic svg path{stroke-dasharray:30;stroke-dashoffset:30;animation:okdraw .55s ease .2s forwards}
@@ -1181,72 +1180,51 @@ try{
   </section>
 
   <!-- ============ ATELIER DEVIS ============ -->
-  <section class="scr" id="s-atelier">
-    <div class="fh">
-      <button class="tico" onclick="atBack()"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <b onclick="atBack()">Devis <span id="at-cli" style="color:var(--orange-deep)"></span></b>
-      <span style="width:40px"></span>
-    </div>
-    <div class="ctah">Bibliothèque de prestations — touche pour ajouter</div>
-    <div style="display:flex;gap:8px;margin-bottom:9px">
-      <input id="blq" placeholder="Chercher une prestation (punaise, guêpes, nid…)" oninput="rbl()"
-        style="flex:1;border:1.5px solid var(--line);border-radius:12px;padding:10px 13px;font:600 .82rem Inter,sans-serif;background:#fff;outline:none">
-      <button class="pill" style="white-space:nowrap" onclick="blLibre()">+ Ligne libre</button>
-    </div>
-    <div id="blrows"></div>
-    <div class="cta">
-      <div class="dvtot"><span style="font-size:.8rem;font-weight:700;color:var(--muted)">Total TTC</span><b id="dv-tot">0 €</b></div>
-      <button class="bo" id="at-sign" onclick="atSign()"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>Le client signe sur le téléphone</button>
-      <button class="lnk" id="at-mail" onclick="atMail()">Envoyer le devis par e-mail — la fiche attendra sa réponse</button>
-    </div>
+  <!-- ============ 07/10 — DEVIS (Figma « Site visit and quote ») : rempli par ratelier() ============ -->
+  <section class="scr" id="s-atelier"></section>
+
+  <!-- bibliothèque de prestations -->
+  <section class="scr" id="s-biblio">
+    <div class="dhead"><span class="tico" style="visibility:hidden" aria-hidden="true"></span>
+      <div class="dtt"><b>Bibliothèque de prestations</b><small>prix HT · touche pour choisir</small></div>
+      <button class="tico" onclick="go('atelier')" aria-label="Fermer"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div class="lsrch" style="display:flex;margin:0 0 10px"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="bl-q" placeholder="Chercher une prestation…" oninput="rbiblio()"></div>
+    <div class="blcats" id="bl-cats"></div>
+    <div id="bl-body"></div>
+    <div class="cta" id="bl-foot"></div>
   </section>
 
-  <!-- ============ SIGNATURE ============ -->
-  <section class="scr" id="s-sign">
-    <div class="fh">
-      <button class="tico" onclick="go('atelier')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <b onclick="go('atelier')">Signature du client</b>
-      <span style="width:40px"></span>
-    </div>
-    <p style="color:var(--muted);font-size:.8rem;margin:0 2px 12px">Tends le téléphone au client : il signe avec le doigt, le devis de <b id="sg-tot" style="color:var(--ink)">0 €</b> est accepté.</p>
-    <div class="sigbox"><canvas id="sigc" width="356" height="190"></canvas><div class="sigh" id="sigh">Signature ici</div></div>
-    <div class="cta">
-      <button class="bo g" onclick="sigOK()"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>C&rsquo;est signé — encaisser</button>
-      <button class="lnk" onclick="sigClear()">Effacer et recommencer</button>
-    </div>
-  </section>
+  <!-- détail du devis · envoi par e-mail -->
+  <section class="scr" id="s-dvdet"></section>
+  <section class="scr" id="s-dvmail"></section>
 
-  <!-- ============ ENCAISSEMENT ============ -->
+  <!-- ============ ENCAISSEMENT (07/10 : Figma « Payment » + « Payment method ») ============ -->
   <section class="scr" id="s-enc">
     <div class="fh">
       <button class="tico" onclick="encBack()"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
       <b onclick="encBack()">Encaissement</b>
       <span style="width:40px"></span>
     </div>
-    <p style="color:var(--muted);font-size:.8rem;margin:0 2px 4px" id="enc-cli"></p>
-    <div class="elab">Combien ?</div>
-    <div class="pills" id="enc-part">
-      <button class="pill on" data-p="1" onclick="encPart(this)">La totalité</button>
-      <button class="pill" data-p="0.3" onclick="encPart(this)">Acompte 30 %</button>
+    <div class="encx"><b id="enc-cli">—</b><small id="enc-sub">Le travail est fait, le client est devant toi.</small></div>
+    <div id="enc-sig"></div>
+    <div class="cd encc">
+      <div class="elab" style="margin-top:0">Combien ?</div>
+      <div class="pills" id="enc-part">
+        <button class="pill on" data-p="1" onclick="encPart(this)">La totalité</button>
+        <button class="pill" data-p="0.3" onclick="encPart(this)">Acompte 30 %</button>
+      </div>
+      <div class="elab">Montant TTC</div>
+      <div class="encmw"><input class="encm" id="enc-m" inputmode="decimal" value="0,00" onfocus="this.select()" oninput="encBtnState()"><span>€</span></div>
+      <div class="elab">Moyen de paiement</div>
+      <div class="paygrid" id="enc-modes"></div>
+      <div class="elab">Preuve de paiement <span class="ehint2">facultatif — ticket CB, chèque, reçu</span></div>
+      <input type="file" id="enc-cam" accept="image/*" capture="environment" hidden onchange="encPhoto(this.files);this.value=''">
+      <input type="file" id="enc-gal" accept="image/*" hidden onchange="encPhoto(this.files);this.value=''">
+      <div class="rpbtns"><button type="button" class="rpb" onclick="g('enc-cam').click()"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Prendre une photo</button><button type="button" class="rpb" onclick="g('enc-gal').click()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l4.5-4.5 4 4 3-3L21 17"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>Importer</button></div>
+      <div id="enc-ph"></div>
     </div>
-    <div class="elab">Montant TTC</div>
-    <input class="encm" id="enc-m" inputmode="decimal" value="0,00" onfocus="this.select()" oninput="encBtnState()">
-    <div class="elab">Payé comment ? <small class="ehint">un appui enregistre et ouvre le rapport</small></div>
-    <div class="paygrid" id="enc-modes">
-      <button class="pill on" data-m="Carte bancaire" onclick="encPay(this)"><span class="pico">💳</span>Carte</button>
-      <button class="pill" data-m="Espèces" onclick="encPay(this)"><span class="pico">💶</span>Espèces</button>
-      <button class="pill" data-m="Chèque" onclick="encPay(this)"><span class="pico">🧾</span>Chèque</button>
-      <button class="pill" data-m="Virement" onclick="encPay(this)"><span class="pico">🏦</span>Virement</button>
-    </div>
-    <div class="cta" style="margin-top:14px">
-      <!-- 04/08 (2A) : la 2ᵉ issue était un texte gris nu qu'on ne voyait pas
-           comme un bouton — même bouton 2 lignes que le bureau (visuel C). -->
-      <button class="fbig ghost" onclick="encLater()">
-        <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
-        <span class="ftx"><b>Faire le rapport sans encaisser</b><small id="enclater-sub">le client paiera plus tard — le montant reste dû</small></span>
-        <span class="fchv">›</span>
-      </button>
-    </div>
+    <button class="fbig ghost" id="enc-later" onclick="encLater()"></button>
+    <div class="cta"><div class="rapnavrow"><button type="button" class="bprev" onclick="encBack()">Annuler</button><button class="bo" id="enc-go" style="flex:1" disabled onclick="encSave()">Enregistrer le paiement</button></div></div>
   </section>
 
   <!-- ============ RAPPORT ============ -->
@@ -1259,6 +1237,10 @@ try{
     <div class="rsteps2" id="rsteps2"></div>
     <div id="rapbody"></div>
   </section>
+
+  <!-- 07/10 — reçu de paiement (Figma « Invoice details ») et détail du rapport (« Report details ») -->
+  <section class="scr" id="s-fact"></section>
+  <section class="scr" id="s-rdet"></section>
 
   <!-- ============ OK ============ -->
   <section class="scr" id="s-ok">
@@ -1290,6 +1272,17 @@ try{
        dit ce qu'il fait (« Se déconnecter », pas « Confirmer »), en rouge doux. -->
   <!-- 07/10 — filtre de la liste (Figma « Job List 13 / 29 »). Les créneaux
        sont ceux de l'agenda (8-10, 10-12, 12-14, 14-16, 16-18). -->
+  <!-- 07/10 — fenêtre commune (paiement enregistré / en attente, rapport envoyé, arrêt du chrono, QR code) + signature -->
+  <div class="sheet mid" id="mdlsheet" onclick="if(event.target===this)mdlClose()"><div class="shc dl mdl" id="mdlbox"></div></div>
+  <div class="sheet mid" id="sigsheet">
+    <div class="shc dl sgs">
+      <div class="flth"><span class="sht">Signature du client</span><button class="fltx" onclick="sigClose()" aria-label="Fermer">✕</button></div>
+      <div class="shs" id="sig-sub">Tends le téléphone au client : il signe avec le doigt.</div>
+      <div class="sigbox"><canvas id="sigm" width="356" height="200"></canvas><div class="sigh" id="sigmh">Le client signe ici</div></div>
+      <div class="dlb"><button class="dlno" onclick="sigClose()">Annuler</button><button class="dlok" onclick="sigSave()">Enregistrer</button></div>
+      <button class="lnk" onclick="sigInit('sigm','sigmh')">Effacer et recommencer</button>
+    </div>
+  </div>
   <div class="sheet" id="fltsheet" onclick="if(event.target===this)fltClose()">
     <div class="shc">
       <div class="shh"></div>
@@ -1393,19 +1386,23 @@ const ICB = {
   paw:'<circle cx="12" cy="14.6" r="3"/><circle cx="7.3" cy="9.6" r="1.6"/><circle cx="12" cy="7.9" r="1.6"/><circle cx="16.7" cy="9.6" r="1.6"/>',
   bird:'<path d="M4 18.5c6 0 10-4 10-9l3-2.2-1 4.2c2 0 3.2-1 4-2.2 0 6-5 9.2-11 9.2z"/>'
 };
-let BL = [
-  {n:"Traitement punaises de lit — 2 passages", d:"chambres + literie, produits inclus", p:480},
-  {n:"Traitement punaises de lit — passage unique", d:"studio / 1 pièce, vapeur + produit", p:280},
-  {n:"Dératisation locaux professionnels", d:"forfait postes sécurisés + suivi", p:160},
-  {n:"Dératisation logement particulier", d:"diagnostic + appâts + rebouchage points d'entrée", p:140},
-  {n:"Désinsectisation blattes — cuisine", d:"gel appât + pulvérisation", p:120},
-  {n:"Désinsectisation blattes — logement complet", d:"gel + pulvérisation toutes pièces, 2ᵉ passage inclus", p:220},
-  {n:"Destruction nid de guêpes / frelons", d:"poudrage + retrait du nid si accessible", p:150},
-  {n:"Nid de frelons en hauteur (perche)", d:"intervention > 8 m, perche télescopique", p:230},
-  {n:"Dépigeonnage — pose de pics (10 ml)", d:"pics inox sur corniches et rebords", p:380},
-  {n:"Traitement fourmis", d:"gel appât + barrière périmétrique", p:110},
-  {n:"Désinfection / décontamination", d:"nébulisation virucide et bactéricide", p:190},
-  {n:"Pose de postes sécurisés (x4)", d:"appâts protégés enfants / animaux", p:90}
+let BL = [   /* 07/10 : rangée par nuisible (bibliothèque du Figma), prix HT */
+  {c:"punaises", n:"Punaises de lit — 2 passages", d:"chambres + literie, produits inclus", p:400},
+  {c:"punaises", n:"Punaises de lit — passage unique", d:"studio / 1 pièce, vapeur + produit", p:240},
+  {c:"punaises", n:"Punaises de lit — traitement thermique", d:"chaleur, sans produit, logement complet", p:590},
+  {c:"rongeurs", n:"Dératisation — logement particulier", d:"diagnostic + appâts + rebouchage des accès", p:120},
+  {c:"rongeurs", n:"Dératisation — locaux professionnels", d:"postes sécurisés numérotés + suivi", p:140},
+  {c:"rongeurs", n:"Pose de postes sécurisés (×4)", d:"appâts protégés enfants / animaux", p:80},
+  {c:"guepes", n:"Destruction nid de guêpes / frelons", d:"poudrage + retrait du nid si accessible", p:120},
+  {c:"guepes", n:"Nid de frelons en hauteur (perche)", d:"jusqu’à 8 m, perche télescopique", p:190},
+  {c:"cafards", n:"Cafards — cuisine", d:"gel appât + pulvérisation", p:100},
+  {c:"cafards", n:"Cafards — logement complet", d:"toutes pièces, 2ᵉ passage inclus", p:190},
+  {c:"pigeons", n:"Pose de pics anti-pigeons (10 ml)", d:"pics inox sur corniches et rebords", p:320},
+  {c:"pigeons", n:"Filet anti-pigeons (10 m²)", d:"filet + fixations, garantie 5 ans", p:360},
+  {c:"termites", n:"Traitement de charpente (au mètre)", d:"bûchage + injection, insectes xylophages", p:40},
+  {c:"chenilles", n:"Échenillage + écopièges", d:"retrait des nids, 2 collerettes posées", p:220},
+  {c:"desinsect", n:"Traitement fourmis", d:"gel appât + barrière périmétrique", p:95},
+  {c:"desinsect", n:"Désinfection / décontamination", d:"nébulisation virucide et bactéricide", p:160}
 ];
 let ENC = 140;                     // encaissé aujourd'hui (07/10 : l'intervention terminée du jour, payée par CB)
 let CURID = null;                  // fiche ouverte
@@ -1413,12 +1410,203 @@ let ENCTX = null;                  // contexte d'encaissement {kind, mid, did, b
 let ATX = null;                    // contexte atelier {mid}
 let SEL = new Set();               // presta sélectionnées
 let RSTEP = 1, RAPID = null;       // rapport
+/* =====================================================================
+   07/10 (patron : « fais pareil » sur tout le parcours du Figma Saigon) —
+   traitement ponctuel, 2ᵉ passage / garantie, sous contrat, visite devis.
+   Sur la fiche : Facturation, Rapport, Devis complémentaire, Note éditable.
+   Encaissement : QR code, carte, espèces, chèque, virement + preuve photo,
+   fenêtres « Paiement enregistré / en attente ». Rapport en 3 étapes avec
+   les listes propres à chaque nuisible (les 8 fiches validées), signature
+   dans une fenêtre, détail du rapport, reçu de paiement. Devis complet
+   (lignes, frais, remise, TVA par taux), bibliothèque par nuisible,
+   signature sur place, envoi par e-mail, finalisation sans envoi.
+   Nos règles restent : un seul orange par écran (l'action à faire),
+   « Annuler le démarrage » (jamais « annuler l'intervention »), Imprévu,
+   montants au format français, créneaux de l'agenda.
+   ===================================================================== */
+const RF = {"punaises":{"extra":[],"zones":["Pièce","Matelas","Sommier","Tête de lit","Canapé / Fauteuil","Mobilier","Plinthes","Sol","Prises","Rideaux / Tissus","Bagages"],"signes":["Punaises vivantes","Punaises mortes","Traces noires (déjections)","Traces de sang","Œufs / mues","Piqûres constatées","Odeur suspecte","Aucun signe visible"],"obsPh":"Ce que vous avez constaté : pièces concernées, depuis quand, voyage récent, voisinage…","meth":["Pulvérisation","Traitement vapeur","Traitement thermique (chaleur)","Cryogénisation (froid)","Poudrage","Aspiration","Piégeage / détection","Détection canine","Traitement préventif"],"prods":["Insecticide punaises (pyréthrinoïde)","Insecticide autre famille (résistance)","Poudre / terre de diatomée","Aérosol professionnel","Vapeur sèche (sans produit)","Neige carbonique (CO₂)","Pièges de détection","Housses anti-punaises","Aucun produit"],"mats":["Pulvérisateur","Machine vapeur","Générateur thermique","Cryogénisateur","Aspirateur professionnel","Poudreuse","Lampe / loupe d'inspection","Combinaison de protection","Housses de matelas"],"actPh":"Ce qui a été fait : pièces traitées, nombre de passages, précautions demandées au client…","recos":["Laver le linge à 60 °C","Sécher au sèche-linge chaud 30 min","Congeler les petits objets (−18 °C, 72 h)","Ne pas déplacer les objets infestés","Ne pas dormir dans une autre pièce","Aspirer puis jeter le sac","Housses anti-punaises","Ne pas réoccuper avant le délai indiqué","Aérer après le traitement","Contrôle recommandé (2ᵉ passage)"],"passage":[{"l":"Dans 10 jours","d":10,"def":false},{"l":"Dans 15 jours","d":15,"def":true},{"l":"Dans 3 semaines","d":21,"def":false}]},"cafards":{"extra":[{"t":"Espèce","c":["Germanique (blonde)","Orientale (noire)","Américaine","Non identifiée"]}],"zones":["Cuisine","Salle de bain","Plinthes","Électroménager","Placards","Gaines techniques","Local poubelles","Réserve"],"signes":["Cafards visibles","Cafards morts","Excréments","Mues / œufs","Odeur suspecte","Activité nocturne","Vus en journée (forte infestation)","Aucun signe visible"],"obsPh":"Ce que vous avez constaté : pièces, depuis quand, source d'humidité ou de chaleur, voisins touchés…","meth":["Gel insecticide","Pulvérisation","Nébulisation","Poudrage","Pièges / appâts","Rebouchage / calfeutrage","Traitement préventif"],"prods":["Gel anti-cafards","Insecticide liquide","Aérosol professionnel","Poudre insecticide","Régulateur de croissance (IGR)","Piège collant","Appât anti-cafards","Aucun produit"],"mats":["Pulvérisateur","Nébulisateur","Pistolet à gel","Poudreuse","Lampe d'inspection","Pistolet à mastic (rebouchage)","EPI (masque, gants, combinaison)"],"actPh":"Ce qui a été fait : nombre de points de gel, pièces traitées, fissures rebouchées, consignes données…","recos":["Nettoyer les surfaces alimentaires","Ne pas essuyer les points de gel","Pas d'insecticide ménager (annule le gel)","Sortir les déchets chaque jour","Aliments dans des boîtes fermées","Éviter l'humidité stagnante (fuites)","Vider les placards contaminés","Aérer après le traitement","Prévenir les voisins / le syndic","Contrôle recommandé (2ᵉ passage)"],"passage":[{"l":"Dans 15 jours","d":15,"def":false},{"l":"Dans 3 semaines","d":21,"def":true},{"l":"Dans 1 mois","d":30,"def":false},{"l":"Tous les 3 mois (contrat)","d":90,"def":false}]},"rats-souris":{"extra":[{"t":"Espèce","c":["Rat brun (surmulot)","Rat noir (toits, combles)","Souris","Non identifiée"]}],"zones":["Cuisine","Réserve","Cave","Garage","Combles","Faux plafond","Local poubelles","Extérieur","Regards / Égouts"],"signes":["Excréments","Bruits / grattements","Traces de passage","Câbles rongés","Denrées / emballages rongés","Terriers / trous","Rongeur vu (vivant ou mort)","Odeur suspecte","Nid (papier, isolant)","Aucun signe visible"],"obsPh":"Ce que vous avez constaté : points d'entrée, où ça passe, depuis quand, voisins / égouts…","meth":["Pose d'appâts (stations)","Pièges mécaniques","Capture (cages, nasses)","Relevé / recharge des stations","Rebouchage des accès","Traitement des terriers","Désinfection","Traitement préventif"],"prods":["Blocs paraffinés","Pâte fraîche (sachets)","Grains / céréales","Appât non toxique (monitoring)","Plaques engluées","Désinfectant","Aucun produit"],"mats":["Boîtes sécurisées (stations)","Pièges mécaniques","Cages / nasses","Lampe d'inspection","Caméra d'inspection","Mousse / grillage de rebouchage","EPI (gants, masque)"],"actPh":"Ce qui a été fait : nombre de stations posées et numérotées, accès rebouchés, plan des postes…","recos":["Stocker les aliments hermétiquement","Ne pas déplacer les stations d'appâts","Enfants et animaux à l'écart des stations","Sortir les déchets chaque jour","Reboucher les accès visibles","Signaler les rongeurs morts (gants)","Dégager la végétation le long des murs","Désinfecter les zones souillées","Surveiller l'activité","Contrôle recommandé (2ᵉ passage)"],"passage":[{"l":"Dans 8 jours","d":8,"def":false},{"l":"Dans 15 jours","d":15,"def":true},{"l":"Dans 1 mois","d":30,"def":false},{"l":"Tous les 2 mois (contrat)","d":60,"def":false}]},"guepes-frelons":{"extra":[{"t":"Espèce","c":["Guêpes","Frelon européen","Frelon asiatique","Abeilles → apiculteur","Non identifié"]},{"t":"Hauteur du nid","c":["< 3 m","3 – 6 m (perche)","> 6 m (nacelle)","Inaccessible (mur, cheminée)"]}],"zones":["Toiture","Combles","Façade","Volet / Caisson","Cheminée","Arbre / Haie","Sol / Terrier","Intérieur"],"signes":["Nid visible","Nid non localisé (recherche)","Va-et-vient fréquent","Activité importante","Insectes agressifs","Personne piquée","Aucun signe visible"],"obsPh":"Ce que vous avez constaté : emplacement exact du nid, taille, accès, personnes allergiques…","meth":["Pulvérisation","Poudrage","Injection dans le nid (perche)","Destruction du nid","Retrait du nid","Piégeage (frelon asiatique)","Traitement préventif"],"prods":["Insecticide liquide","Poudre insecticide","Aérosol professionnel (longue portée)","Piège frelon","Attractif pour pièges","Aucun produit"],"mats":["Perche télescopique","Pulvérisateur","Poudreuse","Combinaison anti-frelons","Échelle","Nacelle","Harnais (travail en hauteur)","Lampe / caméra d'inspection"],"actPh":"Ce qui a été fait : nid traité ou retiré, produit injecté, délai avant retrait, accès sécurisé…","recos":["Ne pas approcher le nid","Ne pas boucher l'accès avant 48 h","Activité résiduelle normale 24 – 48 h","Fermer les fenêtres 24 h","Éloigner enfants et animaux","Ne pas intervenir soi-même","Pas de nourriture dehors","Surveiller l'activité restante","Retrait du nid à prévoir (devis)","Contrôle recommandé"],"passage":[{"l":"Aucun (intervention unique)","d":0,"def":true},{"l":"Dans 48 h (retrait du nid)","d":2,"def":false},{"l":"Dans 1 semaine (contrôle)","d":7,"def":false}]},"desinsectisation":{"extra":[{"t":"Insecte","c":["Fourmis","Puces","Mites (alimentaires / textiles)","Mouches","Moustiques","Araignées","Poissons d'argent","Autre (champ libre)"]}],"zones":["Cuisine","Salle de bain","Chambre","Salon","Plinthes","Placards","Réserve","Combles","Cave","Local poubelles","Terrasse / Balcon","Jardin","Façade"],"signes":["Insectes visibles","Activité importante","Œufs / larves","Traces / déjections","Piqûres (puces, moustiques)","Trous dans textiles / denrées (mites)","Nid / fourmilière localisé","Animal domestique porteur (puces)","Odeur suspecte","Aucun signe visible"],"obsPh":"Ce que vous avez constaté : insecte, pièces, depuis quand, animaux, source (eau stagnante, denrées)…","meth":["Pulvérisation","Nébulisation","Poudrage","Gel / appât (fourmis)","Piégeage","Larvicide (eaux stagnantes)","Traitement préventif"],"prods":["Insecticide liquide","Poudre insecticide","Aérosol professionnel","Gel insecticide","Régulateur de croissance (IGR)","Larvicide","Pièges attractifs","Phéromones (mites)","Aucun produit"],"mats":["Pulvérisateur","Nébulisateur","Poudreuse","Pistolet à gel","Aspirateur professionnel","Désinsectiseur UV (mouches)","Lampe d'inspection","EPI (masque, gants, combinaison)"],"actPh":"Ce qui a été fait : pièces traitées, produit et dosage, délai avant retour, sources supprimées…","recos":["Ne pas laver les surfaces traitées 15 jours","Ne pas réoccuper avant le délai indiqué","Aérer après le traitement","Denrées dans des boîtes fermées","Textiles à 60 °C (mites, puces)","Traiter l'animal chez le vétérinaire (puces)","Aspirateur tous les jours 15 jours (puces)","Supprimer les eaux stagnantes (moustiques)","Éviter l'humidité stagnante","Sortir les déchets chaque jour","Surveiller l'activité restante","Contrôle recommandé (2ᵉ passage)"],"passage":[{"l":"Dans 15 jours","d":15,"def":false},{"l":"Dans 3 semaines","d":21,"def":true},{"l":"Dans 1 mois","d":30,"def":false},{"l":"Tous les 3 mois (contrat)","d":90,"def":false}]},"pigeons":{"extra":[{"t":"Effectif estimé","c":["Quelques-uns (< 5)","5 – 20","Colonie (> 20)"]}],"zones":["Balcon","Toiture","Rebord de fenêtre","Façade","Gouttière","Combles","Terrasse","Cour intérieure"],"signes":["Fientes visibles","Accumulation de fientes (épaisseur)","Nids présents","Œufs / oisillons","Présence régulière","Bruits / battements","Dégradations constatées","Parasites (poux, acariens)","Pigeons morts","Aucun signe visible"],"obsPh":"Ce que vous avez constaté : où ils se posent, où ils nichent, accès, hauteur, voisins…","meth":["Pose de pics","Pose de filets","Fil tendu","Système électrique","Retrait des nids","Nettoyage / désinfection","Traitement des parasites","Effarouchement","Traitement préventif"],"prods":["Gel répulsif","Répulsif oiseaux","Désinfectant professionnel","Insecticide anti-parasites","Pics anti-pigeons","Filets de protection","Fixations / colle","Aucun produit"],"mats":["Échelle","Nacelle","Harnais / ligne de vie","Perche télescopique","Pulvérisateur","Nettoyeur haute pression","Aspirateur (fientes)","EPI (masque FFP3, gants, combinaison)"],"actPh":"Ce qui a été fait : mètres de pics ou de filets posés, nids retirés, surfaces nettoyées, garantie…","recos":["Ne pas nourrir les pigeons (interdit en ville)","Pas de nourriture ni gamelles dehors","Fermer les accès (combles, ouvertures)","Fientes : masque et gants, jamais à sec","Nettoyage régulier des rebords","Vérifier filets et pics après tempête","Prévenir la copropriété / le syndic","Surveiller les nouvelles présences","Installer des protections durables","Contrôle recommandé"],"passage":[{"l":"Aucun (pose unique)","d":0,"def":false},{"l":"Dans 1 mois (contrôle)","d":30,"def":true},{"l":"Dans 3 mois","d":90,"def":false},{"l":"Tous les ans (entretien filets)","d":365,"def":false}]},"chenilles":{"extra":[{"t":"Espèce","c":["Du pin (nids blancs, hiver)","Du chêne (été)","Non identifiée"]},{"t":"Nombre de nids","c":["1 – 3","4 – 10","> 10","Non visible (chêne)"]}],"zones":["Pin","Chêne","Cèdre","Haie","Pelouse","Terrasse","Toiture"],"signes":["Nids visibles","Chenilles observées","Procession au sol","Défoliation des arbres","Cocons / enfouissement","Activité importante","Personne ou animal atteint (urtication)","Aucun signe visible"],"obsPh":"Ce que vous avez constaté : essence et hauteur des arbres, nombre de nids, proximité école / passage…","meth":["Échenillage (retrait des nids)","Aspiration","Traitement biologique (Bt)","Écopiège (collerette)","Piège à phéromones","Nichoirs à mésanges","Incinération des nids","Traitement préventif"],"prods":["Écopiège (collerette + sac)","Bacillus thuringiensis (Bt)","Phéromones (capsules)","Produit de traitement de l'arbre","Sacs de collecte (incinération)","Nichoirs","Aucun produit"],"mats":["Échenilloir / perche télescopique","Sécateur","Atomiseur (Bt)","Échelle","Nacelle","Harnais (travail en hauteur)","Aspirateur spécialisé","EPI (combinaison, masque, lunettes)"],"actPh":"Ce qui a été fait : nids retirés et incinérés, écopièges posés, arbres traités, zone balisée…","recos":["Ne pas toucher les chenilles ni les nids","Éloigner enfants et animaux","Ne pas tondre / souffler sous les arbres","Contact : rincer, consulter si réaction","Ne pas brûler les nids soi-même","Prévenir les voisins (arbres mitoyens)","Écopièges à relever au printemps","Surveiller les nouveaux nids","Installer des pièges préventifs","Contrôle recommandé (saison suivante)"],"passage":[{"l":"Aucun","d":0,"def":false},{"l":"Dans 1 mois (contrôle)","d":30,"def":true},{"l":"Automne (traitement Bt)","d":"aut","def":false},{"l":"Hiver (échenillage)","d":"hiv","def":false}]},"termites-xylophages":{"extra":[{"t":"Insecte","c":["Termites","Capricorne","Vrillette","Lyctus","Non identifié"]}],"zones":["Charpente","Poutres","Plancher / Parquet","Escalier","Menuiseries","Meubles","Cave","Combles"],"signes":["Trous d'envol dans le bois","Sciure / vermoulure","Galeries visibles","Bois fragilisé (sonne creux)","Cordonnets de terre (termites)","Insectes visibles","Insectes ailés / essaimage","Bruits dans le bois (capricorne)","Aucun signe visible"],"obsPh":"Ce que vous avez constaté : éléments touchés, étendue, humidité, ancienneté, commune sous arrêté termites…","meth":["Injection (bois)","Pulvérisation / badigeon (surface)","Bûchage / brossage (mise à nu)","Barrière chimique (sol / murs, termites)","Stations d'appâts termites","Remplacement des pièces infestées","Traitement préventif"],"prods":["Insecticide bois (injection / pulvérisation)","Gel de traitement du bois","Produit anti-termites (barrière)","Appât termites (stations)","Produit préventif","Fongicide (bois humide)","Aucun produit"],"mats":["Perceuse (trous d'injection)","Injecteur / pistolet","Pulvérisateur","Poinçon de sondage","Hache / brosse (bûchage)","Humidimètre","Lampe d'inspection","EPI (masque, gants, combinaison)"],"actPh":"Ce qui a été fait : éléments bûchés et injectés (ml de produit), stations posées, pièces à remplacer, garantie…","recos":["Déclarer les termites en mairie (obligatoire)","Conserver le certificat de traitement (garantie)","Ventiler caves et combles","Éviter l'humidité (fuites, remontées)","Pas de bois stocké contre la maison","Retirer les bois morts au sol","Ne pas reboucher avant le contrôle","Surveiller les nouvelles traces","Faire vérifier la charpente (structure)","Contrôle régulier recommandé"],"passage":[{"l":"Dans 1 mois (stations termites)","d":30,"def":false},{"l":"Dans 3 mois","d":90,"def":false},{"l":"Dans 1 an","d":365,"def":true},{"l":"Tous les ans (contrat)","d":365,"def":false}]}};
+const hx = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const jsq = t => String(t == null ? "" : t).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+const isoOf = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const num = v => String(Math.round((+v || 0) * 100) / 100).replace(".", ",");
+const tvaL = t => String(t).replace(".", ",") + " %";
+function rfam(m){
+  const n = String(m && m.nuis ? m.nuis.join(" ") : "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if(/punaise/.test(n)) return "punaises";
+  if(/blatte|cafard/.test(n)) return "cafards";
+  if(/\brats?\b|souris|derat|rongeur/.test(n)) return "rats-souris";
+  if(/guepe|frelon/.test(n)) return "guepes-frelons";
+  if(/pigeon/.test(n)) return "pigeons";
+  if(/chenille/.test(n)) return "chenilles";
+  if(/termite|xylophage|capricorne|vrillette/.test(n)) return "termites-xylophages";
+  return "desinsectisation";
+}
+function rfOf(m){ return RF[rfam(m)] || RF.desinsectisation; }
+/* date d'un raccourci « prochain passage » : n jours, ou la saison suivante */
+function passDate(d){
+  if(!d) return "";
+  const t = new Date();
+  if(d === "aut" || d === "hiv"){
+    const c = new Date(t.getFullYear(), d === "aut" ? 8 : 11, d === "aut" ? 15 : 1);
+    if(c <= t) c.setFullYear(c.getFullYear() + 1);
+    return isoOf(c);
+  }
+  t.setDate(t.getDate() + d);
+  return isoOf(t);
+}
+/* ---------- fenêtre de confirmation commune (paiement, rapport, chrono…) ---------- */
+const MIC = {
+  ok:'<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>',
+  wait:'<svg viewBox="0 0 24 24"><path d="M6 2h12M6 22h12M8 2v4.5a4 4 0 001.6 3.2L12 12l2.4-2.3A4 4 0 0016 6.5V2M8 22v-4.5a4 4 0 011.6-3.2L12 12l2.4 2.3a4 4 0 011.6 3.2V22"/></svg>',
+  stop:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg>',
+  mail:'<svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>'
+};
+let MDLF = [], MDLL = null;
+function mdl(o){
+  MDLF = (o.btns || []).map(b => b.fn || null);
+  MDLL = o.link ? (o.link.fn || null) : null;
+  g("mdlbox").innerHTML =
+    (o.ic ? `<div class="mic ${o.ic}">${MIC[o.ic] || ""}</div>` : "") +
+    `<div class="mh">${o.h}</div>` + (o.t ? `<div class="mt">${o.t}</div>` : "") + (o.html || "") +
+    (o.link ? `<button type="button" class="mlink" onclick="mdlGo(-1)">${o.link.l}</button>` : "") +
+    `<div class="mb${o.row ? " row" : ""}">` +
+    (o.btns || []).map((b, i) => `<button type="button" class="${b.p ? "mbp" : "mbs"}" onclick="mdlGo(${i})">${b.l}</button>`).join("") + `</div>`;
+  g("mdlsheet").classList.add("on");
+}
+function mdlGo(i){ const f = i < 0 ? MDLL : MDLF[i]; mdlClose(); if(typeof f === "function") f(); }
+function mdlClose(){ g("mdlsheet").classList.remove("on"); }
+/* ---------- signature dans une fenêtre (rapport + devis) ---------- */
+let SIGCB = null;
+function sigOpen(sub, cb){
+  SIGCB = cb;
+  g("sig-sub").textContent = sub || "Tends le téléphone au client : il signe avec le doigt.";
+  g("sigsheet").classList.add("on");
+  sigInit("sigm", "sigmh");
+}
+function sigClose(){ g("sigsheet").classList.remove("on"); SIGCB = null; }
+function sigSave(){
+  const h = g("sigmh");
+  if(h && h.style.display !== "none"){ toast("Le client n’a pas encore signé"); return; }
+  let src = "";
+  try{ src = g("sigm").toDataURL("image/png"); }catch(e){}
+  const cb = SIGCB;
+  sigClose();
+  if(cb) cb(src);
+}
+/* ---------- QR code de paiement (dessin de démonstration) ---------- */
+function qrSVG(){
+  const N = 25; let s = 11;
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  let r = "";
+  const fin = (x, y) => `<rect x="${x}" y="${y}" width="7" height="7" fill="#111"/><rect x="${x + 1}" y="${y + 1}" width="5" height="5" fill="#fff"/><rect x="${x + 2}" y="${y + 2}" width="3" height="3" fill="#111"/>`;
+  for(let y = 0; y < N; y++) for(let x = 0; x < N; x++){
+    const inF = (x < 8 && y < 8) || (x > N - 9 && y < 8) || (x < 8 && y > N - 9);
+    if(!inF && rnd() > .5) r += `<rect x="${x}" y="${y}" width="1" height="1" fill="#111"/>`;
+  }
+  return `<svg viewBox="-1 -1 ${N + 2} ${N + 2}" shape-rendering="crispEdges"><rect x="-1" y="-1" width="${N + 2}" height="${N + 2}" fill="#fff"/>${r}${fin(0, 0)}${fin(N - 7, 0)}${fin(0, N - 7)}</svg>`;
+}
+/* ---------- photo réduite (preuve de paiement, photos du devis) ---------- */
+function readImg(file, max, q, cb){
+  if(!file || !/^image\//.test(file.type)){ cb(null); return; }
+  const fr = new FileReader();
+  fr.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const r = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL("image/jpeg", q));
+    };
+    img.onerror = () => cb(null);
+    img.src = ev.target.result;
+  };
+  fr.onerror = () => cb(null);
+  fr.readAsDataURL(file);
+}
+/* ---------- devis : numéro, totaux, synchronisation avec l'onglet Devis ---------- */
+let DVN = 84;
+function nextDevRef(){ return "DEV-2026-" + String(DVN++).padStart(4, "0"); }
+function dvCalc(Q){
+  const L = (Q.lignes || []).map(l => ({ht:(+l.p || 0) * (+l.q || 0), t:+l.t || 0}));
+  const F = (Q.frais || []).map(f => ({ht:+f.p || 0, t:+f.t || 0}));
+  const sous = L.reduce((a, x) => a + x.ht, 0), fr = F.reduce((a, x) => a + x.ht, 0), brut = sous + fr;
+  let rem = 0;
+  if(Q.rem && Q.rem.on) rem = Q.rem.mode === "%" ? brut * (+Q.rem.v || 0) / 100 : Math.min(+Q.rem.v || 0, brut);
+  const k = brut ? (brut - rem) / brut : 1;
+  const tva = {};
+  L.concat(F).forEach(x => { if(x.ht) tva[x.t] = (tva[x.t] || 0) + x.ht * k * x.t / 100; });
+  const r2 = v => Math.round(v * 100) / 100;
+  const ht = brut - rem, tt = Object.values(tva).reduce((a, v) => a + v, 0);
+  return {sous:r2(sous), fr:r2(fr), rem:r2(rem), ht:r2(ht), tva:tva, tvat:r2(tt), ttc:r2(ht + tt)};
+}
+function totRows(c){
+  return `<div class="qr"><span>Sous-total prestations HT</span><b>${EUR(c.sous)}</b></div>`
+    + (c.fr ? `<div class="qr"><span>Frais HT</span><b>${EUR(c.fr)}</b></div>` : "")
+    + (c.rem ? `<div class="qr rm"><span>Remise commerciale</span><b>− ${EUR(c.rem)}</b></div>` : "")
+    + `<div class="qr"><span>Total HT</span><b>${EUR(c.ht)}</b></div>`
+    + Object.keys(c.tva).sort((a, b) => a - b).map(t => `<div class="qr sm"><span>TVA ${tvaL(t)}</span><b>${EUR(c.tva[t])}</b></div>`).join("")
+    + `<div class="qr"><span>Total TVA</span><b>${EUR(c.tvat)}</b></div>`
+    + `<div class="qr big"><span>Total TTC</span><b>${EUR(c.ttc)}</b></div>`;
+}
+function dvSync(m){
+  const dv = m && m.dv; if(!dv) return;
+  const st = dv.st === "signe" ? "paye" : dv.st === "envoye" ? "attente" : "brouillon";
+  const sub = dv.st === "signe" ? "Signé " + (dv.sign && dv.sign.mode === "email" ? "par e-mail" : "sur place")
+    : dv.st === "envoye" ? "Envoyé par e-mail — en attente de signature"
+    : dv.st === "final" ? "Finalisé — en attente de signature" : "Brouillon — à faire valider";
+  const id = "q-" + dv.ref;
+  let d = DEVIS.find(x => x.id === id);
+  if(!d){ d = {id:id, ref:dv.ref, mid:m.id, client:m.client}; DEVIS.unshift(d); }
+  Object.assign(d, {m:dv.ttc, st:st, cree:dv.cree, sub:sub,
+    dst: dv.st === "signe" ? String(dv.sign && dv.sign.at || dateFr(null)).split(" ")[0] : dv.st === "envoye" ? dv.envAt : undefined});
+}
+/* devis signé (sur place ou par e-mail) : la visite devient un traitement,
+   le reste à encaisser = total TTC − acompte déjà reçu */
+function acceptDv(m){
+  const dv = m.dv; if(!dv) return;
+  dv.st = "signe";
+  m.dvok = true; m.itype = "encais"; m.type = "traitement";
+  m.prix = Math.max(0, Math.round(((dv.ttc || 0) - (dv.acompte || 0)) * 100) / 100);
+  m.devisM = dv.ttc; m.devout = dv.sign && dv.sign.mode === "email" ? "email" : "signé";
+  dvSync(m);
+}
+const initials = t => String(t || "").split(/\s+/).filter(Boolean).map(x => x[0]).join("").slice(0, 2).toUpperCase();
+function dhead(t, sub, back){
+  return `<div class="dhead"><button class="tico" onclick="${back}" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="dtt" onclick="${back}"><b>${t}</b>${sub ? `<small>${sub}</small>` : ""}</div>
+    <span class="tico" style="visibility:hidden" aria-hidden="true"></span></div>`;
+}
+const BIC = {
+  ok:'<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>',
+  eur:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>',
+  doc:'<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>',
+  wait:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  mail:'<svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>',
+  rep:'<svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg>',
+  pen:'<svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>',
+  send:'<svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>',
+  play:'<svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
+  star:'<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>',
+  dl:'<svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
+  cam:'<svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+  img:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l4.5-4.5 4 4 3-3L21 17"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>'
+};
+function billRow(cls, ic, t, s, fn){
+  return fn
+    ? `<button type="button" class="bill ${cls}" onclick="${fn}"><span class="bic2">${ic}</span><span class="bt"><b>${t}</b>${s ? `<small>${s}</small>` : ""}</span><span class="bchv">›</span></button>`
+    : `<div class="bill ${cls}"><span class="bic2">${ic}</span><span class="bt"><b>${t}</b>${s ? `<small>${s}</small>` : ""}</span></div>`;
+}
+function fbtn(fn, ic, t, s, ghost){
+  return `<button class="fbig${ghost ? " ghost" : ""}" onclick="${fn}"><span class="fic">${ic}</span><span class="ftx"><b>${t}</b><small>${s}</small></span><span class="fchv">›</span></button>`;
+}
+
 const g = id => document.getElementById(id);
 
 const WAPATH = "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z";
 
 /* ================= navigation ================= */
-const NAVMAP = {home:"nb-home", list:"nb-list", detail:"nb-list", devis:"nb-devis", atelier:"nb-devis", sign:"nb-devis", enc:"nb-list", rapport:"nb-list", ok:"nb-home", reglages:"nb-reg", confid:"nb-reg", suppr:"nb-reg", notifs:"nb-home"};
+const NAVMAP = {home:"nb-home", list:"nb-list", detail:"nb-list", devis:"nb-devis", atelier:"nb-list", sign:"nb-devis", enc:"nb-list", rapport:"nb-list", ok:"nb-home", reglages:"nb-reg", confid:"nb-reg", suppr:"nb-reg", fact:"nb-list", rdet:"nb-list", biblio:"nb-list", dvdet:"nb-list", dvmail:"nb-list", notifs:"nb-home"};
 function go(k){
   document.querySelectorAll(".scr").forEach(s => s.classList.remove("on"));
   g("s-" + k).classList.add("on");
@@ -1571,7 +1759,7 @@ function rhome(){
     nc.innerHTML = `
       <div class="hsh"><b>${enCours ? "En cours" : "Prochaine intervention"}</b><small>${plageH(next.h, next.dur)}</small></div>
       ${mcard(next, cta)}
-      ${enCours && next.debut ? `<div class="homechrono" data-debut="${next.debut}"><span class="cdot"></span>Sur place depuis <b class="ctick">${chronoTxt(Date.now() - next.debut)}</b></div>` : ""}`;
+      ${enCours && next.debut && chOff(next) != null ? chOffHTML(next, "homechrono") : ""}${enCours && next.debut && chOff(next) == null ? `<div class="homechrono" data-debut="${next.debut}"><span class="cdot"></span>Sur place depuis <b class="ctick">${chronoTxt(Date.now() - next.debut)}</b></div>` : ""}`;
   } else {
     nc.innerHTML = `<div class="hsh"><b>Journée bouclée</b></div><p style="font-size:.85rem;color:var(--muted)">Plus rien à faire — beau travail Thomas.</p>`;
   }
@@ -1653,6 +1841,7 @@ function chrono(m){
   if(!m.debut) return "";
   const min = Math.max(0, Math.round((Date.now() - m.debut) / 60000));
   const t = min < 60 ? min + " min" : Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0");
+  if(chOff(m) != null) return chOffHTML(m, "chrono");
   return `<div class="chrono" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis <b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>`;
 }
 /* 04/08 (patron) : les terminées n'ont RIEN à faire dans l'onglet « À faire »
@@ -2052,105 +2241,9 @@ function pbPhotoIn(inp){
 }
 function rdetail(){
   const m = M[CURID]; if(!m) return;
-  let badge = m.st === "done" ? `<span class="stb g">TERMINÉE</span>`
-    : m.st === "wait" ? `<span class="stb a">DEVIS ENVOYÉ — EN ATTENTE</span>`
-    : m.st === "encours" ? `<span class="stb b">EN COURS</span>`
-    : m.type === "devis" ? `<span class="stb o">DEVIS À ÉTABLIR</span>` : `<span class="stb n">PLANIFIÉE</span>`;
-  let ban = "";
-  /* 04/08 : une mission terminee dont le rapport a ete fait ICI garde son
-     document a portee de pouce — le meme que celui du bureau. */
-  if(m.st === "done"){
-    try{
-      const sv = JSON.parse(localStorage.getItem("tigerflow-reports") || "{}");
-      if(sv["m" + m.id] && sv["m" + m.id].iv)
-        ban += `<div class="ban" style="background:#ECFDF5;border:1px solid #BFE6D8;color:#065F46" onclick="window.open('rapport-client.html?id=m${m.id}&v=20260804b','_blank')">
-      <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#0F8A4F;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-      <span class="bb"><b>RAPPORT CLIENT</b><small>Le document 2 pages, prêt à montrer ou envoyer.</small></span><span class="chev">›</span></div>`;
-    }catch(e){}
-  }
-  if(m.type === "devis" && (m.st === "todo" || m.st === "encours"))
-    ban += `<div class="ban o" onclick="toast('Le devis se fait sur place, avec la bibliothèque de prestations')">
-      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>
-      <span class="bb"><b>DEVIS À ÉTABLIR</b><small>Un devis sera établi avant toute intervention.</small></span><span class="chev">›</span></div>`;
-  /* 04/08 (patron : « une note posée sur PC doit s'afficher ici ») — la note
-     saisie AU BUREAU voyage par le registre partagé tigerflow-notes-bureau
-     (par référence d'intervention, et par client en secours). Elle s'affiche
-     en bannière dédiée, non modifiable d'ici — la note du technicien reste
-     à part, en dessous. */
-  try{
-    const NB = JSON.parse(localStorage.getItem("tigerflow-notes-bureau") || "{}");
-    const nb = NB[m.ref] || NB["c:" + String(m.client || "").trim().toLowerCase()];
-    if(nb && nb.t)
-      ban += `<div class="ban a">
-      <svg class="fillsvg" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
-      <span class="bb"><b>NOTE IMPORTANTE DU BUREAU</b><small>${String(nb.t).replace(/</g, "&lt;")}</small></span></div>`;
-  }catch(e){}
-  if(NOTEED === m.id)
-    ban += `<div class="ban a" style="flex-direction:column;align-items:stretch;cursor:default">
-      <b style="font-size:.7rem;font-weight:800;letter-spacing:.05em">NOTE POUR CETTE INTERVENTION</b>
-      <textarea id="note-ta" class="rta" style="min-height:72px;margin:9px 0 10px" placeholder="Ex. : sonner au portail, chien dans la cour, clé chez le voisin…">${m.note || ""}</textarea>
-      <div style="display:flex;gap:8px">
-        <button class="bo g" style="padding:10px;font-size:.8rem" onclick="noteSave(${m.id})">Enregistrer</button>
-        <button class="obtn" onclick="NOTEED=null;rdetail()">Annuler</button>
-      </div></div>`;
-  else if(m.note)
-    ban += `<div class="ban a" onclick="noteEdit(${m.id})">
-      <svg class="fillsvg" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9 5.9 20.4l1.5-6.8L2.2 9l6.9-.7z"/></svg>
-      <span class="bb"><b>NOTE DU TERRAIN</b><small>${m.note}</small></span><span class="chev">›</span></div>`;
-  else
-    ban += `<div class="qacard"><div class="ctah">Note</div><button class="addnote" onclick="noteEdit(${m.id})">+ Ajouter une note</button></div>`;
-  let cta = "";
-  if(m.st === "todo"){
-    cta = `<button class="bo" onclick="startM(${m.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Démarrer l&rsquo;intervention</button>`;
-  } else if(m.st === "encours"){
-    cta = m.type === "devis"
-      ? `<div class="ctah">En cours — quand le constat est fait :</div>
-         <button class="bo" onclick="openAtelier(${m.id})"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Faire le devis — bibliothèque</button>
-         <p style="text-align:center;color:var(--muted);font-size:.72rem;margin-top:8px;line-height:1.5">Après la signature : encaissement (maintenant ou plus tard), puis le rapport de visite clôture la fiche. Le devis vit sa vie dans l&rsquo;onglet Devis.</p>
-         <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`
-      : m.itype === "ctr"
-      ? `<div class="ctah" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l&rsquo;intervention ${itchip(m)}</div>
-         <button class="fbig" onclick="finCtr(${m.id})">
-           <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
-           <span class="ftx"><b>Faire le rapport</b><small>déjà payée par le contrat — rien à encaisser</small></span>
-           <span class="fchv">›</span>
-         </button>
-         <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`
-      : m.itype === "suite"
-      ? `<div class="ctah" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l&rsquo;intervention ${itchip(m)}</div>
-         ${m.solde ? `<button class="fbig" onclick="finSolde(${m.id})">
-           <span class="fic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
-           <span class="ftx"><b>Encaisser ${EUR(m.solde)}</b><small>puis faire le rapport</small></span>
-           <span class="fchv">›</span>
-         </button>
-         <button class="fbig ghost" onclick="openRapport(${m.id})">
-           <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
-           <span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client paiera plus tard — ${m.solde ? "les " + EUR(m.solde) + " restent dus" : "le montant reste dû"}</small></span>
-           <span class="fchv">›</span>
-         </button>`
-                   : `<button class="fbig" onclick="finCtr(${m.id})">
-           <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
-           <span class="ftx"><b>Faire le rapport</b><small>2ᵉ passage inclus — rien à encaisser</small></span>
-           <span class="fchv">›</span>
-         </button>`}
-         <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`
-      : `<div class="ctah" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l&rsquo;intervention ${itchip(m)}</div>
-         <button class="fbig" onclick="finTrait(${m.id})">
-           <span class="fic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg></span>
-           <span class="ftx"><b>Encaisser ${m.prix ? EUR(m.prix) : "le client"}</b><small>puis faire le rapport</small></span>
-           <span class="fchv">›</span>
-         </button>
-         <button class="fbig ghost" onclick="openRapport(${m.id})">
-           <span class="fic"><svg viewBox="0 0 24 24"><path d="M9 2h6l1 3h3a1 1 0 011 1v15a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1h3z"/><path d="M9 12h6M9 16h4"/></svg></span>
-           <span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client paiera plus tard — ${m.prix ? "les " + EUR(m.prix) + " restent dus" : "le montant reste dû"}</small></span>
-           <span class="fchv">›</span>
-         </button>
-         <button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`;
-  } else if(m.st === "wait"){
-    cta = `<div class="waitb">Devis ${m.devisM ? "de " + EUR(m.devisM) + " " : ""}envoyé — le client réfléchit. Le bureau s'occupe de la relance ; s'il accepte, l'intervention arrivera dans ta tournée.</div>`;
-  } else {
-    cta = `<div class="doneb"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Intervention terminée${m.paid ? " — encaissée" : ""}</div>`;
-  }
+  /* 07/10 : cartes Devis complémentaire · Rapport · Facturation · Note (Figma Saigon) */
+  const ban = dvsupCard(m) + reportCard(m) + billCard(m) + noteCard(m);
+  const cta = ctaOf(m);
   g("s-detail").innerHTML = `
     <div class="dhead">
       <button class="tico" onclick="go('list')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -2159,24 +2252,7 @@ function rdetail(){
     </div>
     <!-- 04/08 (patron, visuel B validé) : l'identité du client vit dans UNE carte
          bordée au dégradé TigerFlow — fini les éléments qui flottent sur le gris. -->
-    <div class="idcard">
-    <div class="idtop">${badge}${m.prio === "HAUTE" && m.st !== "done" && m.st !== "annulee" ? `<span class="stb r">URGENT</span>` : ""}</div>
-    <div class="dtitle">${m.client}</div>
-    <div class="dadr"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>${m.adr}, ${m.ville}</div>
-    <!-- 04/08 (1A) : le chrono vit AUSSI dans la fiche ouverte — avant, le tech
-         devait ressortir pour voir depuis quand il est sur place. -->
-    ${m.st === "encours" && m.debut ? `<div class="chrono fdet" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis&nbsp;<b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>` : ""}
-    <!-- 04/08 (3A) : le texte gris ne double plus le montant déjà écrit dans la
-         pastille — il ne reste que pour les types SANS montant (contrat, devis). -->
-    <!-- 07/10 (Figma Saigon) : type + nuisible sur une seule ligne -->
-    <div class="dchips">${itchip(m)}${m.nuis.map(chip).join("")}</div>
-    ${((m.itype === "suite" && m.solde) || (m.itype === "encais" && m.prix)) ? "" : `<div class="itrow"><small>${(ITYPES[m.itype] || ITYPES.devis).desc}</small></div>`}
-    <div class="i3">
-      <div><small><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg>Date / Heure</small><b>${dateFr(m)}<br>${plageH(m.h, m.dur)}</b></div>
-      <div><small><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Durée estimée</small><b>${m.dur}</b></div>
-      <div><small><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Nuisible</small><b>${m.nuis[0]}</b></div>
-    </div>
-    </div>
+    ${idCard(m)}
     ${m.imprev ? (m.imprev.rep
       ? `<div class="impban done"><span class="ii"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span><b>Le bureau a répondu · ${m.imprev.rep.h}</b><small>${m.imprev.rep.txt}</small></span></div>`
       : `<div class="impban wait"><span class="ii"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/></svg></span><span><b>${m.imprev.t} · signalé ${m.imprev.h}</b><small>Le bureau appelle le client — sa réponse arrive ici.</small></span></div>`) : ""}
@@ -2205,6 +2281,137 @@ function rdetail(){
     <div class="cta">${cta}</div>`;
 }
 
+/* ---------- la fiche : cartes Devis complémentaire · Rapport · Facturation · Note ---------- */
+function idCard(m, plain){
+  const badge = m.st === "done" ? `<span class="stb g">TERMINÉE</span>`
+    : m.st === "wait" ? `<span class="stb a">DEVIS ENVOYÉ — EN ATTENTE</span>`
+    : m.st === "encours" ? `<span class="stb b">EN COURS</span>`
+    : m.st === "annulee" ? `<span class="stb r">ANNULÉE</span>`
+    : `<span class="stb n">PLANIFIÉE</span>`;
+  const desc = m.dvok ? (m.prix ? "" : "réglé par le devis")
+    : ((m.itype === "suite" && m.solde) || (m.itype === "encais" && m.prix)) ? "" : (ITYPES[m.itype] || ITYPES.devis).desc;
+  return `<div class="idcard">
+    <div class="idtop">${badge}${m.prio === "HAUTE" && m.st !== "done" && m.st !== "annulee" ? `<span class="stb r">URGENT</span>` : ""}</div>
+    <div class="dtitle">${m.client}</div>
+    <div class="dadr"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>${m.adr}, ${m.ville}</div>
+    ${!plain && m.st === "encours" && m.debut ? (chOff(m) != null ? chOffHTML(m, "chrono fdet") : `<div class="chrono fdet" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis&nbsp;<b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>`) : ""}
+    <div class="dchips">${itchip(m)}${m.nuis.map(chip).join("")}</div>
+    ${desc ? `<div class="itrow"><small>${desc}</small></div>` : ""}
+    <div class="i3">
+      <div><small><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9.5h18"/></svg>Date / Heure</small><b>${dateFr(m)}<br>${plageH(m.h, m.dur)}</b></div>
+      <div><small><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Durée estimée</small><b>${m.dur}</b></div>
+      <div><small><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Nuisible</small><b>${m.nuis[0]}</b></div>
+    </div>
+    </div>`;
+}
+function billCard(m){
+  const p = m.pay, dv = m.dv, rows = [];
+  if(m.dvok && dv){
+    const sol = Math.max(0, (dv.ttc || 0) - (dv.acompte || 0));
+    rows.push(billRow("g", BIC.ok, "Devis accepté — " + dv.ref,
+      (dv.sign && dv.sign.mode === "email" ? "Signé par e-mail le " : "Signé le ") + (dv.sign ? dv.sign.at : "") + " · " + EUR(dv.ttc) + " TTC"
+      + (dv.acompte ? " · acompte " + EUR(dv.acompte) + " reçu" : "") + (p ? "" : sol ? " · reste " + EUR(sol) + " à la fin" : " · réglé"),
+      "openDv(" + m.id + ")"));
+  }
+  if(p && p.st === "paye") rows.push(billRow("g", BIC.ok, "Paiement reçu", EUR(p.montant) + " · " + modeL(p.mode) + " · " + p.date, "openFact(" + m.id + ")"));
+  else if(p && p.st === "attente") rows.push(billRow("a", BIC.wait, "Paiement en attente", EUR(p.montant) + " restent dus — le bureau relance", "openFact(" + m.id + ")"));
+  else if(m.itype === "devis" && !m.dvok){
+    if(!dv) rows.push(billRow("b", BIC.doc, "Devis à établir", "Un devis est fait sur place, avant tout traitement."));
+    else if(dv.st === "brouillon") rows.push(billRow("b", BIC.doc, "Devis en cours — " + dv.ref, EUR(dv.ttc) + " TTC · reste à le faire valider", "openDv(" + m.id + ")"));
+    else if(dv.st === "final") rows.push(billRow("a", BIC.doc, "Devis finalisé — " + dv.ref, EUR(dv.ttc) + " TTC · le bureau l’envoie au client pour signature", "openDv(" + m.id + ")"));
+    else if(dv.st === "envoye") rows.push(billRow("a", BIC.mail, "Devis envoyé — en attente de signature", dv.ref + " · " + EUR(dv.ttc) + " TTC · envoyé à " + hx(dv.mail || m.email || "client"), "openDv(" + m.id + ")"));
+  }
+  else if(m.dvok){ /* devis accepté : la ligne au-dessus dit tout */ }
+  else if(m.itype === "ctr") rows.push(billRow("g", BIC.ok, "Payé par le contrat", "Rien à encaisser sur place."));
+  else if(m.itype === "suite") rows.push(m.solde
+    ? billRow("a", BIC.eur, EUR(m.solde) + " — solde à encaisser", "2ᵉ passage / garantie · à la fin de l’intervention")
+    : billRow("g", BIC.ok, "2ᵉ passage / garantie — rien à payer", "Inclus dans le traitement de départ."));
+  else if(m.itype === "encais" && m.prix) rows.push(billRow("a", BIC.eur, EUR(m.prix) + " à encaisser", "Traitement ponctuel · à la fin de l’intervention"));
+  return rows.length ? `<div class="qacard"><div class="ctah">Facturation</div>${rows.join("")}</div>` : "";
+}
+function reportCard(m){
+  if(m.st !== "done") return "";
+  let has = !!m.rapd;
+  if(!has){ try{ const sv = JSON.parse(localStorage.getItem("tigerflow-reports") || "{}"); has = !!(sv["m" + m.id] && sv["m" + m.id].iv); }catch(e){} }
+  return has ? `<div class="qacard"><div class="ctah">Rapport</div>${billRow("g", BIC.rep, "Rapport client", "Le document 2 pages, prêt à montrer ou envoyer.", "openRdet(" + m.id + ")")}</div>` : "";
+}
+function dvsupCard(m){
+  return m.dvsup ? `<div class="qacard"><div class="ctah">Devis complémentaire</div>${billRow("b", BIC.doc, m.dvsup.ref + " · brouillon", m.dvsup.qd ? hx(m.dvsup.qd) : "À chiffrer au bureau", "go('devis')")}</div>` : "";
+}
+/* 07/10 (Figma « note éditable synchronisée avec le portail ») : la note du
+   bureau reste en lecture seule ; celle du technicien s'ajoute, se lit et se
+   modifie dans la même carte. */
+function noteCard(m){
+  let nb = null;
+  try{
+    const NB = JSON.parse(localStorage.getItem("tigerflow-notes-bureau") || "{}");
+    nb = NB[m.ref] || NB["c:" + String(m.client || "").trim().toLowerCase()];
+  }catch(e){}
+  const bur = nb && nb.t ? `<div class="ntb"><b>Note du bureau</b>${hx(nb.t)}</div>` : "";
+  let me;
+  if(NOTEED === m.id) me = `<div class="nted"><b>Note pour cette intervention</b>
+      <textarea id="note-ta" class="rta" placeholder="Ex. : sonner au portail, chien dans la cour, clé chez le voisin…">${hx(m.note || "")}</textarea>
+      <div class="ntbtn"><button type="button" class="bo g" onclick="noteSave(${m.id})">Enregistrer</button><button type="button" class="obtn" onclick="NOTEED=null;rdetail()">Annuler</button></div>
+      <small>Synchronisée avec le bureau : il la voit et peut la modifier aussi.</small></div>`;
+  else if(m.note) me = `<button type="button" class="ntv" onclick="noteEdit(${m.id})"><span class="nti">${BIC.star}</span><span class="ntx"><b>Note pour cette intervention</b><small>${hx(m.note)}</small></span><span class="bchv">›</span></button>`;
+  else me = `<button type="button" class="addnote" onclick="noteEdit(${m.id})">+ Ajouter une note</button>`;
+  return `<div class="qacard"><div class="ctah">Note</div>${bur}${me}</div>`;
+}
+function ctaOf(m){
+  let cta = "";
+  const due = m.itype === "encais" ? (+m.prix || 0) : m.itype === "suite" ? (+m.solde || 0) : 0;
+  if(m.st === "todo"){
+    if(m.itype === "devis" && !m.dvok){
+      cta = (!m.dv || m.dv.st === "brouillon")
+        ? `<button class="bo" onclick="openAtelier(${m.id})">${BIC.doc}${m.dv ? "Reprendre le devis" : "Créer le devis"}</button>`
+        : `<button class="bo" onclick="openRapport(${m.id})">${BIC.rep}Faire le rapport de visite</button>`;
+    } else if(m.dvok){
+      cta = `<button class="bo" onclick="startM(${m.id})">${BIC.play}Démarrer le traitement</button>
+        <button class="lnk" onclick="openRapport(${m.id})">Traiter plus tard — faire le rapport de visite</button>`;
+    } else cta = `<button class="bo" onclick="startM(${m.id})">${BIC.play}Démarrer l’intervention</button>`;
+  } else if(m.st === "encours"){
+    const head = `<div class="ctah" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l’intervention ${itchip(m)}</div>`;
+    const p = m.pay;
+    if(m.itype === "devis" && !m.dvok) cta = `<button class="bo" onclick="openAtelier(${m.id})">${BIC.doc}Créer le devis</button>`;
+    else if(p && p.st === "paye") cta = head + fbtn(`stopAsk(${m.id},'rap')`, BIC.rep, "Faire le rapport", "paiement reçu — " + EUR(p.montant) + " " + modeP(p.mode) + " · il ne reste que le rapport");
+    else if(p && p.st === "attente") cta = head
+      + fbtn(`stopAsk(${m.id},'rap')`, BIC.rep, "Faire le rapport", "paiement plus tard — les " + EUR(p.montant) + " restent dus")
+      + fbtn(`stopAsk(${m.id},'enc')`, BIC.eur, "Encaisser maintenant", "si le client paie finalement tout de suite", 1);
+    else if(due > 0) cta = head
+      + fbtn(`stopAsk(${m.id},'enc')`, BIC.eur, "Encaisser " + EUR(due), "puis faire le rapport")
+      + fbtn(`stopAsk(${m.id},'later')`, BIC.rep, "Faire le rapport sans encaisser", "le client paiera plus tard — les " + EUR(due) + " restent dus", 1);
+    else cta = head + fbtn(`stopAsk(${m.id},'rap')`, BIC.rep, "Faire le rapport",
+      m.itype === "ctr" ? "déjà payé par le contrat — rien à encaisser" : m.itype === "suite" ? "2ᵉ passage inclus — rien à encaisser" : "le devis est réglé — rien à encaisser");
+    if(!p) cta += `<button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`;   /* 07/10 : plus d'annulation une fois le paiement réglé ou reporté */
+  } else if(m.st === "wait"){
+    cta = `<div class="waitb">Devis ${m.devisM ? "de " + EUR(m.devisM) + " " : ""}envoyé — le client réfléchit. Le bureau s'occupe de la relance ; s'il accepte, l'intervention arrivera dans ta tournée.</div>`;
+  }
+  return cta;
+}
+/* ---------- 07/10 (Figma « Stop modal ») : clôturer arrête le chrono, après confirmation ---------- */
+function stopAsk(id, what){
+  const fin = () => {
+    chStop(id);
+    const m = M[id]; if(m && m.debut && !m.fin) m.fin = Date.now();
+    doFin(id, what);
+  };
+  if(chGet(id) && !chStopped(id)){
+    mdl({ic:"stop", h:"Arrêter le chrono ?", row:true,
+      t:"Ça arrête le temps de travail de cette intervention — sur place depuis " + chHuman(chElapsed(id)) + ". On continue ?",
+      btns:[{l:"Annuler"}, {l:"Oui, arrêter", p:1, fn:fin}]});
+  } else doFin(id, what);
+}
+function doFin(id, what){
+  const m = M[id]; if(!m) return;
+  const due = m.itype === "encais" ? (+m.prix || 0) : m.itype === "suite" ? (+m.solde || 0) : 0;
+  if(what === "enc"){ ENCTX = {kind:"trait", mid:id, did:null, base:due}; renc(); go("enc"); }
+  else if(what === "later"){ ENCTX = {kind:"trait", mid:id, did:null, base:due}; encLater(); }
+  else openRapport(id);
+}
+function finTrait(id){ stopAsk(id, "enc"); }
+function finCtr(id){ stopAsk(id, "rap"); }
+function finSolde(id){ stopAsk(id, "enc"); }
+
 /* ---------- note du bureau (présente sur toutes les fiches, même vide) ---------- */
 let NOTEED = null;
 function noteEdit(id){ NOTEED = id; rdetail(); const ta = g("note-ta"); if(ta && ta.focus) ta.focus(); }
@@ -2214,7 +2421,7 @@ function noteSave(id){
   NOTEED = null;
   toast(v ? "Note enregistrée — le bureau la voit aussi" : "Note vidée");
   rdetail();
-  const b = document.querySelector("#s-detail .ban.a");
+  const b = document.querySelector("#s-detail .ntv");
   if(b){ b.classList.add("flash2"); setTimeout(() => b.classList.remove("flash2"), 900); }
 }
 
@@ -2235,6 +2442,14 @@ function chResume(id){ const a = chAll(), c = a[chKey(id)]; if(!c || !c.stop) re
 const chFmt = s => { const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h + ":" + String(m).padStart(2,"0") : String(m).padStart(2,"0")) + ":" + String(x).padStart(2,"0"); };
 const chHuman = s => { const h = Math.floor(s/3600), m = Math.round(s%3600/60); return h ? h + " h " + String(m).padStart(2,"0") : m + " min"; };
 setInterval(() => { document.querySelectorAll("[data-chrono]").forEach(e => { const cid = +e.getAttribute("data-chrono"); if(!chStopped(cid)) e.textContent = chFmt(chElapsed(cid)); }); }, 1000);
+/* 07/10 : chrono ARRÊTÉ (modale « Arrêter le chrono ? ») — la fiche, la liste
+   et l'accueil n'affichent plus un compteur qui tourne : temps figé, en gris-vert. */
+function chOff(m){
+  if(!m || !m.debut) return null;
+  if(m.fin) return Math.max(0, Math.floor((m.fin - m.debut) / 1000));
+  return chStopped(m.id) ? chElapsed(m.id) : null;
+}
+function chOffHTML(m, cls){ return `<div class="${cls} off"><span class="cok">✓</span>Chrono arrêté ·&nbsp;<b>${chHuman(chOff(m))} sur place</b></div>`; }
 function chHTML(id){
   return chStopped(id)
     ? `<span class="chok">✓ ${chHuman(chElapsed(id))} sur place</span><button class="chr" onclick="rapKeep();chResume(${id});rrap()">▶ Reprendre</button>`
@@ -2250,23 +2465,7 @@ function startM(id){
   renderAll();
   const app = g("app"); if(app) app.scrollTop = app.scrollHeight;
 }
-function cancelM(id){ const m = M[id]; m.st = "todo"; toast("Démarrage annulé"); renderAll(); }
-function finTrait(id){
-  const m = M[id];
-  ENCTX = {kind:"trait", mid:id, did:null, base:m.prix || 120};
-  renc(); go("enc");
-}
-function finCtr(id){
-  const m = M[id];
-  m.st = "done"; m.paid = false;
-  toast("✓ Terminée — couverte, aucun encaissement. Direction le rapport.");
-  openRapport(id);
-}
-function finSolde(id){
-  const m = M[id];
-  ENCTX = {kind:"trait", mid:id, did:null, base:m.solde};
-  renc(); go("enc");
-}
+function cancelM(id){ const m = M[id]; m.st = "todo"; delete m.debut; delete m.fin; const a = chAll(); delete a[chKey(id)]; chSave(a); toast("Démarrage annulé"); renderAll(); }
 function cliOui(id){
   const m = M[id];
   const d = DEVIS.find(x => x.mid === id && x.st === "attente");
@@ -2279,83 +2478,148 @@ function devisOui(did){
   renc(); go("enc");
 }
 
-/* ---------- encaissement ---------- */
-let PART = 1;
+/* ---------- encaissement (07/10 : comme le Figma « Payment » + « Payment method ») ----------
+   Combien ? → montant TTC → moyen (QR code, carte, espèces, chèque, virement)
+   → preuve photo facultative → « Enregistrer le paiement ». Le moyen se
+   choisit, il ne valide plus tout seul : la preuve photo vient après. */
+const MODEP = {"QR code":"par QR code", "Carte":"par carte", "Espèces":"en espèces", "Chèque":"par chèque", "Virement":"par virement"};
+const modeP = k => MODEP[k] || ("par " + String(k || "").toLowerCase());          /* « reçus par chèque », « reçus en espèces » */
+const modeL = k => k === "QR code" ? "QR code" : String(k || "").toLowerCase();   /* « 260,00 € · chèque » */
+const PMODES = [
+  {k:"QR code", s:"lien de paiement", ic:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/></svg>'},
+  {k:"Carte", s:"terminal", ic:'<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>'},
+  {k:"Espèces", s:"", ic:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></svg>'},
+  {k:"Chèque", s:"", ic:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 14c1.5-2 3-2 4 0s2.5 2 4 0M15 10h4"/></svg>'},
+  {k:"Virement", s:"", ic:'<svg viewBox="0 0 24 24"><path d="M3 10L12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>'}
+];
+let PART = 1, ENCM = null, ENCPH = null;
 function renc(){
   if(!ENCTX) return;
   const m = ENCTX.mid ? M[ENCTX.mid] : null;
-  g("enc-cli").innerHTML = (m ? "<b>" + m.client + "</b> — " : "") + (ENCTX.kind === "devisOK" ? "le client a accepté le devis." : "le travail est fait, le client est devant toi.");
-  PART = 1;
+  const dvk = ENCTX.kind === "devis" && m && m.dv;
+  ENCM = null; ENCPH = null; PART = 1;
+  const dd = ENCTX.did ? DEVIS.find(x => x.id === ENCTX.did) : null;
+  g("enc-cli").textContent = m ? m.client : (dd ? dd.client : "Client");
+  g("enc-sub").textContent = dvk ? "Le client vient de signer le devis " + m.dv.ref + " — " + EUR(m.dv.ttc) + " TTC." : "Le travail est fait, le client est devant toi.";
+  g("enc-sig").innerHTML = dvk && m.dv.sign && m.dv.sign.src
+    ? `<div class="cd encsig"><div class="elab" style="margin-top:0">Signature du client</div><img src="${m.dv.sign.src}" alt="Signature du client"><small>Signé le ${m.dv.sign.at}</small></div>` : "";
   document.querySelectorAll("#enc-part .pill").forEach((p, i) => p.classList.toggle("on", i === 0));
-  encRecalc();
-  /* 04/08 (2A) : le bouton « sans encaisser » rappelle le montant qui restera dû */
-  const _sub = g("enclater-sub");
-  if(_sub){ const _v = (g("enc-m").value || "").trim(); _sub.textContent = _v && _v !== "0,00" ? "le client paiera plus tard — les " + _v + " € restent dus" : "le client paiera plus tard — le montant reste dû"; }
+  encRecalc(); encModes(); encPhPaint();
+  g("enc-later").innerHTML = dvk
+    ? `<span class="fic">${BIC.wait}</span><span class="ftx"><b>Encaisser plus tard</b><small>le client réglera l’acompte plus tard — le devis reste signé</small></span><span class="fchv">›</span>`
+    : `<span class="fic">${BIC.rep}</span><span class="ftx"><b>Faire le rapport sans encaisser</b><small>le client paiera plus tard — les ${EUR(ENCTX.base)} restent dus</small></span><span class="fchv">›</span>`;
 }
 function encPart(el){
   document.querySelectorAll("#enc-part .pill").forEach(p => p.classList.remove("on"));
   el.classList.add("on"); PART = parseFloat(el.dataset.p); encRecalc();
 }
+function encVal(){ return parseFloat(String(g("enc-m").value || "0").replace(/\s/g, "").replace(",", ".")) || 0; }
 function encRecalc(){
-  const v = ENCTX ? ENCTX.base * PART : 0;
+  const v = ENCTX ? Math.round(ENCTX.base * PART * 100) / 100 : 0;
   g("enc-m").value = v.toFixed(2).replace(".", ",");
-  const _b = g("enc-btn"); if(_b) _b.textContent = "Encaissé — " + EUR(v);
   encBtnState();
 }
-function encBtnState(){
-  const v = parseFloat((g("enc-m").value || "0").replace(",", ".")) || 0;
-  const b = g("enc-go"); if(b) b.disabled = v <= 0;
+function encBtnState(){ const b = g("enc-go"); if(b) b.disabled = !(encVal() > 0 && ENCM); }
+function encModes(){
+  g("enc-modes").innerHTML = PMODES.map(p => `<button type="button" class="pill ${ENCM === p.k ? "on" : ""}" onclick="encMode('${p.k}')"><span class="pico">${p.ic}</span><span class="pml">${p.k}${p.s ? `<small>${p.s}</small>` : ""}</span></button>`).join("");
 }
-function encMode(el){
-  document.querySelectorAll("#enc-modes .pill").forEach(p => p.classList.remove("on"));
-  el.classList.add("on");
-}
-/* Un appui sur le moyen de paiement vaut validation : la question « comment
-   a-t-il paye ? » EST la confirmation. Un appui de moins, sur le terrain. */
-function encPay(el){
-  const v = parseFloat((g("enc-m").value || "0").replace(",", ".")) || 0;
-  if(v <= 0){ toast("Indique d'abord un montant"); g("enc-m").focus(); return; }
-  encMode(el);
-  encDone();
+function encMode(k){ ENCM = k; encModes(); encBtnState(); }
+function encPay(el){ encMode(el && el.dataset ? el.dataset.m : "Carte"); }
+function encPhoto(files){ readImg(files && files[0], 1280, .72, src => { if(src){ ENCPH = src; encPhPaint(); toast("Preuve ajoutée"); } }); }
+function encPhPaint(){
+  g("enc-ph").innerHTML = ENCPH ? `<div class="encph"><img src="${ENCPH}" alt="Preuve de paiement"><span><b>Preuve de paiement</b><small>${dateFr(null)} · ${hhmm(Date.now())}</small></span><button type="button" onclick="ENCPH=null;encPhPaint()" aria-label="Retirer">✕</button></div>` : "";
 }
 function encBack(){
-  if(ENCTX && ENCTX.mid){ go("detail"); } else { go("devis"); }
+  const mid = ENCTX ? ENCTX.mid : null;
+  ENCTX = null;
+  if(mid != null) openM(mid); else go("devis");
+}
+function encSave(){
+  const v = encVal();
+  if(!(v > 0)){ toast("Indique d’abord un montant"); g("enc-m").focus(); return; }
+  if(!ENCM){ toast("Choisis le moyen de paiement"); return; }
+  if(ENCM === "QR code"){
+    mdl({h:"Paiement par QR code",
+      t:"Fais scanner ce code au client avec l’appareil photo de son téléphone : il paie " + EUR(v) + " par carte, en ligne.",
+      html:`<div class="qrbox">${qrSVG()}</div><button type="button" class="mlink" onclick="toast('Lien de paiement copié — tu peux aussi l’envoyer par SMS')">Ouvrir le lien de paiement</button>`,
+      btns:[{l:"Vérifier le paiement", p:1, fn:() => { toast("Paiement confirmé"); encDone(); }}, {l:"Annuler"}]});
+    return;
+  }
+  encDone();
 }
 function encDone(){
   if(!ENCTX) return;
-  const raw = parseFloat((g("enc-m").value || "0").replace(",", ".")) || 0;
-  const mode = (document.querySelector("#enc-modes .pill.on") || {dataset:{m:"Carte bancaire"}}).dataset.m;
+  const raw = encVal(), mode = ENCM || "Carte";
+  const mid = ENCTX.mid, m = mid != null ? M[mid] : null;
   ENC += raw;
-  const m = ENCTX.mid ? M[ENCTX.mid] : null;
-  if(ENCTX.did){ const d = DEVIS.find(x => x.id === ENCTX.did); if(d){ d.st = "paye"; d.dst = dateFr(null); } }
-  toast(EUR(raw) + " encaissés par " + mode.toLowerCase());
-  if(ENCTX.kind === "trait"){
-    m.paid = true;
-    openRapport(ENCTX.mid);
-  } else if(m){
-    /* devis signé pendant une visite : la visite est FINIE — clôture + rapport */
-    m.st = "done"; m.paid = true;
-    const mid = ENCTX.mid;
-    toast("Devis encaissé — reste le rapport de visite pour boucler la fiche");
-    openRapport(mid);
-  } else {
-    g("ok-h").textContent = "La boucle est bouclée";
-    g("ok-t").textContent = "Devis accepté et " + EUR(raw) + " encaissés. Le bureau planifie l’intervention de traitement — c’est elle qui aura le rapport.";
-    const okd2 = g("ok-doc"); if(okd2) okd2.style.display = "none";
-    ENCTX = null; go("ok");
+  if(ENCTX.kind === "devis" && m && m.dv){
+    const dv = m.dv;
+    dv.acompte = Math.round(((dv.acompte || 0) + raw) * 100) / 100;
+    dv.payMode = mode; dv.payAt = dateFr(null) + " · " + hhmm(Date.now()); dv.payPh = ENCPH;
+    acceptDv(m);
+    ENCTX = null; renderAll();
+    mdl({ic:"ok", h:"Paiement enregistré",
+      t:EUR(raw) + (raw < dv.ttc ? " d’acompte" : "") + " reçus " + modeP(mode) + ". Le devis " + dv.ref + " est accepté" + (m.prix ? " — reste " + EUR(m.prix) + " à la fin du traitement." : " et réglé."),
+      link:{l:"Voir le reçu", fn:() => openFact(mid, "dv")},
+      btns:[{l:"Retour à l’intervention", p:1, fn:() => openM(mid)}]});
+    return;
   }
+  if(m){
+    m.paid = raw >= ENCTX.base;
+    m.pay = {st:"paye", montant:raw, du:ENCTX.base, mode:mode, date:dateFr(null), h:hhmm(Date.now()), preuve:ENCPH};
+  }
+  if(ENCTX.did){ const d = DEVIS.find(x => x.id === ENCTX.did); if(d){ d.st = "paye"; d.dst = dateFr(null); } }
+  ENCTX = null; renderAll();
+  if(!m){   /* encaissement sans intervention rattachée (devis seul) : retour aux devis */
+    mdl({ic:"ok", h:"Paiement enregistré", t:EUR(raw) + " reçus " + modeP(mode) + ". Le bureau planifie l’intervention.", btns:[{l:"Retour aux devis", p:1, fn:() => go("devis")}]});
+    return;
+  }
+  mdl({ic:"ok", h:"Paiement enregistré",
+    t:EUR(raw) + " reçus " + modeP(mode) + " pour cette intervention.",
+    link:{l:"Voir le reçu", fn:() => openFact(mid)},
+    btns:[{l:"Continuer vers le rapport", p:1, fn:() => openRapport(mid)}, {l:"Retour à l’intervention", fn:() => openM(mid)}]});
 }
 function encLater(){
   if(!ENCTX) return;
-  if(ENCTX.kind === "trait"){ toast("Encaissement remis à plus tard — le rapport s’ouvre"); openRapport(ENCTX.mid); }
-  else if(ENCTX.mid){
-    /* le devis attendra son paiement dans l’onglet Devis — mais la VISITE, elle, est finie */
-    const m = M[ENCTX.mid];
-    m.st = "done"; m.paid = false;
-    toast("Le devis attend son encaissement dans l’onglet Devis — la visite se clôture : rapport");
-    openRapport(ENCTX.mid);
+  const mid = ENCTX.mid, m = mid != null ? M[mid] : null;
+  if(ENCTX.kind === "devis" && m && m.dv){
+    acceptDv(m); ENCTX = null; renderAll();
+    mdl({ic:"wait", h:"Devis signé — acompte plus tard",
+      t:"Le devis " + m.dv.ref + " est accepté. Le client réglera plus tard : " + EUR(m.prix) + " à encaisser à la fin du traitement.",
+      btns:[{l:"Retour à l’intervention", p:1, fn:() => openM(mid)}]});
+    return;
   }
-  else { toast("D’accord — le devis reste en attente d’encaissement"); ENCTX = null; go("devis"); }
+  const due = ENCTX.base;
+  if(!m){ ENCTX = null; toast("Le devis reste en attente d’encaissement"); go("devis"); return; }
+  if(m){ m.paid = false; m.pay = {st:"attente", montant:due, du:due, mode:"Plus tard", date:dateFr(null), h:hhmm(Date.now())}; }
+  ENCTX = null; renderAll();
+  mdl({ic:"wait", h:"Paiement en attente",
+    t:"Le client paiera plus tard : les " + EUR(due) + " restent dus. Le bureau s’occupe de la relance.",
+    btns:[{l:"Continuer vers le rapport", p:1, fn:() => openRapport(mid)}, {l:"Retour à l’intervention", fn:() => openM(mid)}]});
+}
+/* ---------- reçu de paiement (Figma « Invoice details ») ---------- */
+let FCID = null, FCW = "pay";
+function openFact(mid, w){ FCID = mid; FCW = w || "pay"; rfact(); go("fact"); }
+function rfact(){
+  const m = M[FCID]; if(!m) return;
+  const p = m.pay, dv = m.dv;
+  const kv = (l, v) => `<div class="kv"><small>${l}</small><b>${v || "—"}</b></div>`;
+  let rows = "", tt = "Reçu de paiement";
+  if(FCW === "dv" && dv){
+    rows = kv("Acompte reçu (TTC)", EUR(dv.acompte || 0)) + kv("Moyen de paiement", dv.payMode) + kv("Date de réception", dv.payAt)
+      + kv("Devis", dv.ref + " · " + EUR(dv.ttc) + " TTC") + kv("Reste à encaisser", EUR(m.prix || 0))
+      + `<div class="kv"><small>Preuve</small>${dv.payPh ? `<img class="fcph" src="${dv.payPh}" alt="Preuve">` : "<b>—</b>"}</div>`;
+  } else if(p && p.st === "paye"){
+    rows = kv("Montant reçu (TTC)", EUR(p.montant)) + kv("Moyen de paiement", p.mode) + kv("Date de réception", p.date + " · " + p.h)
+      + (p.du && p.montant < p.du ? kv("Reste dû", EUR(p.du - p.montant)) : "")
+      + `<div class="kv"><small>Preuve</small>${p.preuve ? `<img class="fcph" src="${p.preuve}" alt="Preuve">` : "<b>—</b>"}</div>`;
+  } else if(p && p.st === "attente"){
+    tt = "Paiement en attente";
+    rows = kv("Montant dû (TTC)", EUR(p.montant)) + kv("Paiement", "Plus tard — le bureau relance") + kv("Date", p.date);
+  } else rows = kv("Paiement", "Aucun paiement enregistré");
+  g("s-fact").innerHTML = dhead(tt, "#" + m.ref, "openM(" + m.id + ")") + idCard(m, true)
+    + `<div class="qacard"><div class="ctah">Informations</div>${rows}</div>`
+    + (p && p.st === "attente" && FCW !== "dv" ? "" : `<button class="obtn wide" onclick="toast('Reçu PDF téléchargé (maquette)')">${BIC.dl}Télécharger le PDF</button>`);
 }
 
 /* ---------- rapport (3 étapes, Suivant libre) ---------- */
@@ -2402,146 +2666,169 @@ function rrap(){
   g("rsteps2").innerHTML = `<div class="rjbar"><i class="rjtrack"></i><i class="rjfill" style="width:${RSTEP === 1 ? 0 : RSTEP === 2 ? 50 : 100}%"></i>${jn(1)}${jn(2)}${jn(3)}</div>
     <div class="rjlabs">${RSLBL.map((lb, i) => `<span class="rjl ${RSTEP > i+1 ? "ok" : RSTEP === i+1 ? "cur" : ""}" ${RSTEP !== i+1 ? `onclick="rapKeep();RSTEP=${i+1};rrap()"` : ""}>${lb}</span>`).join("")}</div>`;
   const m = M[RAPID] || {};
-  RAPD = RAPD || {niv:"", zones:new Set(), ztr:new Set(), recos:new Set(), signes:new Set(), urg:"", meths:new Set(), prods:[], mats:new Set(), quote:false, photos:[]};
-  if(!RAPD.photos) RAPD.photos = [];   /* 05/08 : brouillon d'avant la version photos */
-  if(!RAPD.ztr) RAPD.ztr = new Set();
+  const F = rfOf(m);
+  RAPD = RAPD || {};
+  ["zones", "ztr", "recos", "signes", "meths", "mats"].forEach(k => { if(!(RAPD[k] instanceof Set)) RAPD[k] = new Set(RAPD[k] || []); });
+  if(!RAPD.prods) RAPD.prods = [];
+  if(!RAPD.photos) RAPD.photos = [];
+  if(!RAPD.ex) RAPD.ex = {};
+  if(RAPD.niv === undefined) RAPD.niv = "";
+  if(RAPD.urg === undefined) RAPD.urg = "";
+  /* le raccourci « prochain passage » pré-coché est celui de la fiche du nuisible */
+  if(RAPD.nextk === undefined){ const d = (F.passage || []).find(p => p.def); RAPD.nextk = d ? d.l : ""; RAPD.next = d ? passDate(d.d) : ""; }
   if(RAPID != null) RAPDRAFTS[RAPID] = RAPD;
   const rctx = m.client ? `<div class="rctx">
-    ${typeof itchip === "function" && m.itype ? itchip(m) : ""}
+    ${m.itype ? itchip(m) : ""}
     <span class="rcli">${m.client}</span>
     <span class="rmeta">${(m.nuis || []).join(" · ")}${m.h ? " · " + m.h : ""}${m.ville ? " · " + String(m.ville).replace(/^\d{4,5}\s+/, "") : ""}</span>
   </div>` : "";
-  const devban = m.devout
-    ? `<div class="devban">${m.devout === "email"
-        ? "Devis envoyé par email — " + EUR(m.devisM || 0) + " · en attente de la réponse client"
-        : "Devis signé sur place — " + EUR(m.devisM || 0) + (m.paid ? " · encaissé" : " · à encaisser")}</div>`
-    : "";
-  const esc = z => String(z).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-  const chips = (arr, set, cb) => arr.map(z =>
-    `<button type="button" class="rchip multi ${set.has(z) ? "on" : ""}" onclick="${cb}('${esc(z)}')">${z}</button>`).join("");
-  const chipsLim = (arr, set, cb, key) => {
-    const LIM = 5, open = MMORE.has(key);
-    const vis = open ? arr : arr.filter((z, i) => i < LIM || set.has(z));
-    const hidden = arr.length - vis.length;
-    return vis.map(z => `<button type="button" class="rchip multi ${set.has(z) ? "on" : ""}" onclick="${cb}('${esc(z)}')">${z}</button>`).join("")
-      + (arr.length > LIM ? `<button type="button" class="rchip more" onclick="rapMore('${key}')">${open ? "Réduire" : "+ " + hidden + " autres…"}</button>` : "");
-  };
+  const devban = m.dv
+    ? `<div class="devban">Devis ${m.dv.ref} · ${EUR(m.dv.ttc)} TTC — ${m.dvok ? "accepté" + (m.dv.acompte ? ", acompte " + EUR(m.dv.acompte) + " reçu" : "") : m.dv.st === "envoye" ? "envoyé par e-mail, en attente de signature" : "en attente de signature"}</div>` : "";
+  const chips = (arr, set, cb) => (arr || []).map(z => `<button type="button" class="rchip multi ${set.has(z) ? "on" : ""}" onclick="${cb}('${jsq(z)}')">${hx(z)}</button>`).join("");
+  const extraOn = (arr, set, cb) => [...set].filter(z => !(arr || []).includes(z)).map(z => `<button type="button" class="rchip multi on" onclick="${cb}('${jsq(z)}')" title="Retirer">${hx(z)}</button>`).join("");
+  const autre = k => `<button type="button" class="rchip autre" onclick="rapAutre('${k}')">+ Autre…</button>`;
+  const autreIn = k => RAUT === k ? `<input id="raut-in" class="rta rautin" placeholder="Précise, puis valide : ça s’ajoute à la liste" onchange="rapAutreAdd('${k}',this.value)">` : "";
   const cchips = (arr, cur, cb) => arr.map(([z, c]) =>
-    `<button type="button" class="rchip one ${cur === z ? "on" : ""}" style="--cc:${c}" onclick="${cb}('${esc(z)}')"><i style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block"></i>${z}</button>`).join("");
-  /* titre de section a choix multiple : compteur vivant + mention (le rendu
-     etant rejoue a chaque coche, le compte est toujours juste) */
-  const mlab = (titre, set) => `<div class="rlab">${titre} ${set.size ? '<b class="rlc">· ' + set.size + "</b>" : ""}</div>`;
+    `<button type="button" class="rchip one ${cur === z ? "on" : ""}" style="--cc:${c}" onclick="${cb}('${jsq(z)}')"><i style="width:8px;height:8px;border-radius:50%;background:${c};display:inline-block"></i>${z}</button>`).join("");
+  const mlab = (titre, set, fac) => `<div class="rlab">${titre} ${set && set.size ? '<b class="rlc">· ' + set.size + "</b>" : ""}${fac ? `<span class="rfac">${fac}</span>` : ""}</div>`;
+  const obsPh = String(F.obsPh || "Ce que tu as constaté…").replace("Ce que vous avez constaté", "Ce que tu as constaté");
+  const actPh = F.actPh || "Ce qui a été fait…";
   let h = "";
   if(RSTEP === 1) h = rctx + devban + `<div class="rlab">Niveau d'infestation</div>
     <div class="rchips">${cchips(R_NIV, RAPD.niv, "rapNiv")}</div>
+    ${(F.extra || []).map((x, xi) => `<div class="rlab">${hx(x.t)}</div><div class="rchips">${x.c.map(c => `<button type="button" class="rchip one ${RAPD.ex[x.t] === c ? "on" : ""}" onclick="rapEx(${xi},'${jsq(c)}')">${hx(c)}</button>`).join("")}</div>`).join("")}
     ${mlab("Zones touchées", RAPD.zones)}
-    <div class="rchips">${chips(R_ZONES, RAPD.zones, "rapZone")}</div>
+    <div class="rchips">${chips(F.zones, RAPD.zones, "rapZone")}${extraOn(F.zones, RAPD.zones, "rapZone")}${autre("zones")}</div>${autreIn("zones")}
     ${mlab("Signes de présence", RAPD.signes)}
-    <div class="rchips">${chips(R_SIGNES, RAPD.signes, "rapSigne")}</div>
+    <div class="rchips">${chips(F.signes, RAPD.signes, "rapSigne")}</div>
     <div class="rlab">Observations</div>
-    <textarea class="rta" id="r-obs" placeholder="Ce que tu as constaté chez ${m.client || "le client"} : traces, accès, ampleur…">${RAPD.obs || ""}</textarea>
+    <textarea class="rta" id="r-obs" placeholder="${hx(obsPh)}">${hx(RAPD.obs || "")}</textarea>
     <div class="rlab">Niveau d'urgence du client</div>
     <div class="rchips">${cchips(R_URG, RAPD.urg, "rapUrg")}</div>
     <div class="rlab">Photos / preuves <b class="rlc">· ${RAPD.photos.length}/15</b></div>
     <input type="file" id="rp-cam" accept="image/*" capture="environment" multiple hidden onchange="rapPhotoIn(this.files);this.value=''">
     <input type="file" id="rp-gal" accept="image/*" multiple hidden onchange="rapPhotoIn(this.files);this.value=''">
     <div class="rpbtns">
-      <button type="button" class="rpb cam" onclick="document.getElementById('rp-cam').click()">
-        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        Prendre une photo</button>
-      <button type="button" class="rpb" onclick="document.getElementById('rp-gal').click()">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l4.5-4.5 4 4 3-3L21 17"/><circle cx="8.5" cy="8.5" r="1.5"/></svg>
-        Galerie</button>
+      <button type="button" class="rpb cam" onclick="document.getElementById('rp-cam').click()">${BIC.cam}Prendre une photo</button>
+      <button type="button" class="rpb" onclick="document.getElementById('rp-gal').click()">${BIC.img}Importer</button>
     </div>
-    <div class="rphint">${RAPD.photos.length ? "Touche une \u00e9tiquette sous chaque photo \u2014 elles partiront sur le rapport client."
-      : "Elles partiront sur le rapport client. \u00c9tiquette Avant / Apr\u00e8s / Preuve pour chacune."}</div>
+    <div class="rphint">${RAPD.photos.length ? "Touche une étiquette sous chaque photo — elles partiront sur le rapport client."
+      : "Elles partiront sur le rapport client. Étiquette Avant / Après / Preuve pour chacune."}</div>
     <div class="rpgrid">${RAPD.photos.map((p, i) => `
       <figure class="rpc">
         <img src="${p.src}" alt="Photo ${i + 1}" onclick="rapPhotoZoom(${i})">
-        <button type="button" class="rpx" onclick="rapPhotoDel(${i})" aria-label="Supprimer la photo">\u2715</button>
+        <button type="button" class="rpx" onclick="rapPhotoDel(${i})" aria-label="Supprimer la photo">✕</button>
         <figcaption>${R_PLBL.map(l => `<button type="button" class="rpl ${p.lbl === l ? "on" : ""}" onclick="rapPhotoLbl(${i},'${l}')">${l}</button>`).join("")}</figcaption>
       </figure>`).join("")}</div>`;
-  else if(RSTEP === 2) h = `${mlab("Méthode de traitement", RAPD.meths)}
-    <div class="rchips">${chipsLim(R_METH, RAPD.meths, "rapMeth", "meths")}</div>
-    <div class="rlab">Produits utilisés <span style="font-weight:500;color:var(--muted)">— n° AMM sur l'étiquette</span></div>
-    <div id="r-prods">${RAPD.prods.map((p, i) => `
-      <div class="rprod">
-        <input placeholder="Produit (ex : CimexOut)" value="${p.n}" onchange="RAPD.prods[${i}].n=this.value">
-        <input placeholder="Qté" value="${p.q}" style="max-width:70px" onchange="RAPD.prods[${i}].q=this.value">
-        <button type="button" onclick="rapKeep();RAPD.prods.splice(${i},1);rrap()">✕</button>
-      </div>`).join("")}</div>
-    ${rapSuggs(m).length ? `<div class="rsug">${rapSuggs(m).map(n => `<button type="button" class="rchip" style="font-size:.72rem;padding:6px 11px" onclick="rapAddSugg('${esc(n)}')">+ ${n}</button>`).join("")}</div>` : ""}
-    <button type="button" class="obtn" style="margin-top:8px" onclick="rapKeep();RAPD.prods.push({n:'',q:''});rrap()">+ Ajouter un produit</button>
+  else if(RSTEP === 2){
+    const pr = RAPD.prods.filter(p => p.n !== "Aucun produit");
+    h = `${mlab("Méthode de traitement", RAPD.meths)}
+    <div class="rchips">${chips(F.meth, RAPD.meths, "rapMeth")}${extraOn(F.meth, RAPD.meths, "rapMeth")}${autre("meths")}</div>${autreIn("meths")}
+    <div class="rlab">Produits utilisés ${pr.length ? '<b class="rlc">· ' + pr.length + "</b>" : ""}<span class="rfac">avec quantité</span></div>
+    <div class="rchips">${(F.prods || []).map(p => `<button type="button" class="rchip multi ${RAPD.prods.some(x => x.n === p) ? "on" : ""}" onclick="rapProd('${jsq(p)}')">${hx(p)}</button>`).join("")}</div>
+    ${pr.length ? `<div class="rqty">${RAPD.prods.map((p, i) => p.n === "Aucun produit" ? "" : `<div class="rq"><span>${hx(p.n)}</span><span class="stp"><button type="button" onclick="rapQ(${i},-1)" aria-label="Moins">−</button><input value="${hx(p.q)}" onchange="rapQset(${i},this.value)" aria-label="Quantité"><button type="button" onclick="rapQ(${i},1)" aria-label="Plus">+</button></span></div>`).join("")}<small>Touche le chiffre pour ajouter l’unité : 250 ml, 3 postes, 2 sachets…</small></div>` : ""}
     ${mlab("Matériel utilisé", RAPD.mats)}
-    <div class="rchips">${chipsLim(R_MATS, RAPD.mats, "rapMat", "mats")}</div>
-    ${mlab("Zones traitées", RAPD.ztr)}
-    <div class="rchips">${chipsLim(R_TZONES, RAPD.ztr, "rapZtr", "ztr")}${[...RAPD.ztr].filter(z => !R_TZONES.includes(z)).map(z =>
-      `<button type="button" class="rchip multi on" onclick="rapZtrDel('${esc(z)}')" title="Retirer">${z}</button>`).join("")}<button type="button" class="rchip autre" onclick="rapZtrOpen()">+ Autre…</button></div>
-    ${MZO ? `<input id="mztin" class="rta" style="margin-top:8px" placeholder="Précise la zone (toiture, vide sanitaire…) — valide pour ajouter" onchange="rapZtrAdd(this.value)">` : ""}
-    <div class="rlab">Actions réalisées</div>
-    <textarea class="rta" id="r-met" placeholder="Pose de 6 postes, pulvérisation plinthes, colmatage provisoire…">${RAPD.met || ""}</textarea>`;
-  else if(RSTEP === 3) h = `${m.debut ? `<div class="tempsbox">
-      <span class="tico2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
-      <span class="txt"><b data-debut="${m.debut}">Sur place depuis <span class="ctick">${chronoTxt((m.fin || Date.now()) - m.debut)}</span></b><small>arrivée à ${hhmm(m.debut)} · le temps se fige à l'envoi du rapport</small></span>
-    </div>` : ""}
-    <div class="rlab">Recommandations au client</div>
-    <div class="recolist">${R_RECOS.map(x=>`<button type="button" class="recoc ${RAPD.recos.has(x)?"on":""}" onclick="rapReco('${esc(x)}')"><i class="rcb">✓</i><span>${x}</span></button>`).join("")}</div>
-    <div class="rcount">${RAPD.recos.size ? "✓ " + RAPD.recos.size + " conseil" + (RAPD.recos.size > 1 ? "s" : "") + " — ils partiront sur le rapport du client" : "coche ceux que tu as donnés au client"}</div>
-
-    <div class="rlab">Un devis en plus à prévoir ?</div>
+    <div class="rchips">${chips(F.mats, RAPD.mats, "rapMat")}</div>
+    ${mlab("Zone traitée", RAPD.ztr, "même liste que les zones touchées")}
+    <div class="rchips">${chips(F.zones, RAPD.ztr, "rapZtr")}${extraOn(F.zones, RAPD.ztr, "rapZtr")}${autre("ztr")}</div>${autreIn("ztr")}
+    <div class="rlab">Action réalisée</div>
+    <textarea class="rta" id="r-met" placeholder="${hx(actPh)}">${hx(RAPD.met || "")}</textarea>`;
+  }
+  else if(RSTEP === 3){
+    const recos = F.recos || [];
+    const LIM = 5, open = MMORE.has("recos");
+    const vis = open ? recos : recos.filter((x, i) => i < LIM || RAPD.recos.has(x));
+    const pas = F.passage || [];
+    const pcur = pas.find(p => p.l === RAPD.nextk);
+    const aucun = pcur && pcur.d === 0;
+    h = `${mlab("Recommandations au client", RAPD.recos)}
+    <div class="recolist">${vis.map(x => `<button type="button" class="recoc ${RAPD.recos.has(x) ? "on" : ""}" onclick="rapReco('${jsq(x)}')"><i class="rcb">✓</i><span>${hx(x)}</span></button>`).join("")}</div>
+    ${recos.length > LIM ? `<button type="button" class="rmore" onclick="rapMore('recos')">${open ? "Voir moins" : "Voir plus (" + (recos.length - vis.length) + ")"}</button>` : ""}
+    <div class="rlab">Un devis supplémentaire ?</div>
     <div class="dvqg">
       <button type="button" class="dvq ${!RAPD.quote ? "on-n" : ""}" onclick="rapQuote(false)">
         <span class="ic"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>
-        <span><b>Non — tout est réglé</b><small>L'intervention couvre tout ce qui a été vu.</small></span>
+        <span><b>Non — tout est réglé</b><small>L’intervention couvre tout ce qui a été constaté.</small></span>
       </button>
       <button type="button" class="dvq ${RAPD.quote ? "on-o" : ""}" onclick="rapQuote(true)">
         <span class="ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span>
         <span><b>Oui — travaux à chiffrer</b><small>Les travaux repérés partent au bureau pour chiffrage.</small></span>
       </button>
     </div>
-    ${RAPD.quote ? `<textarea class="rta" id="r-qd" style="margin-top:10px;min-height:84px" placeholder="Quoi chiffrer ? Ex : 2ᵉ traitement dans 3 semaines, rebouchage maçonnerie…">${RAPD.qd || ""}</textarea>
-    <div class="devban" style="margin:9px 0 0">ℹ️ Un brouillon de devis naîtra dans l'onglet Devis à la clôture.</div>` : ""}
-
-    <div class="rlab">Prochain passage <span class="rfac">facultatif</span></div>
-    <!-- 29/07 (patron) : raccourcis d'un appui + creneau conseille. Au telephone,
-         le selecteur de date natif reste le meilleur calendrier qui soit. -->
-    <div class="rchips" style="margin-bottom:8px">
-      ${[["Dans 2 semaines",14],["Dans 1 mois",30],["Dans 3 mois",90]].map(([l,n]) =>
-        `<button type="button" class="rchip multi ${RAPD.next === rapPlusJours(n) ? 'on' : ''}" onclick="rapQuick(${n})">${l}</button>`).join("")}
-    </div>
-    <input type="date" class="rta rdate" id="r-next" value="${RAPD.next || ""}" onchange="rapKeep()">
-    <div class="rlab" style="border-top:0;padding-top:8px;margin-bottom:8px">Créneau conseillé <span class="rfac">accompagne la fiche de suivi</span></div>
-    <div class="rchips">
-      ${["Matin · 8h – 12h","Après-midi · 14h – 18h","Indifférent"].map(c =>
-        `<button type="button" class="rchip multi ${RAPD.creneau === c ? 'on' : ''}" onclick="rapCreneau('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("")}
-    </div>
-    ${RAPD.next ? `<div class="rdatesel">📅 Fiche de suivi le <b>&nbsp;${rapJoli(RAPD.next)}${RAPD.creneau && RAPD.creneau !== "Indifférent" ? ", " + RAPD.creneau.split(" ·")[0].toLowerCase() : ""}</b></div>` : ""}
-    <div class="rlab">Signature du client
-      <button type="button" class="rclr" onclick="sigInit('rsig','rsigh');g('rsigh').style.display=''">Effacer</button></div>
-    <div class="sigbox"><canvas id="rsig" width="356" height="190"></canvas><div class="sigh" id="rsigh">Le client signe ici</div></div>
-    <div class="rsign">Sa signature vaut prise de connaissance du rapport</div>`;
+    ${RAPD.quote ? `<textarea class="rta" id="r-qd" style="margin-top:10px;min-height:84px" placeholder="Que faut-il chiffrer ? Ex. : 2ᵉ traitement dans 3 semaines, rebouchage des accès…">${hx(RAPD.qd || "")}</textarea>
+    <div class="rinfo">ℹ️ Un brouillon de devis sera créé automatiquement et rattaché à ${hx(m.client || "ce client")}.</div>` : ""}
+    <div class="rlab">Prochain passage conseillé</div>
+    <div class="rchips">${pas.map(p => `<button type="button" class="rchip one ${RAPD.nextk === p.l ? "on" : ""}" onclick="rapPass('${jsq(p.l)}')">${hx(p.l)}</button>`).join("")}</div>
+    ${aucun ? "" : `<input type="date" class="rta rdate" id="r-next" value="${RAPD.next || ""}" onchange="rapKeep();RAPD.nextk='';rrap()">
+    <div class="rlab" style="border-top:0;padding-top:8px;margin-bottom:8px">Créneau conseillé</div>
+    <div class="rchips">${["Matin · 8h – 12h", "Après-midi · 14h – 18h", "Indifférent"].map(c => `<button type="button" class="rchip one ${RAPD.creneau === c ? "on" : ""}" onclick="rapCreneau('${jsq(c)}')">${c}</button>`).join("")}</div>
+    ${RAPD.next ? `<div class="rdatesel">📅 Prochain passage le <b>&nbsp;${rapJoli(RAPD.next)}${RAPD.creneau && RAPD.creneau !== "Indifférent" ? ", " + RAPD.creneau.split(" ·")[0].toLowerCase() : ""}</b></div>` : ""}`}
+    <div class="rlab">Notes de suivi <span class="rfac">interne — jamais sur le rapport client</span></div>
+    <textarea class="rta" id="r-notes" style="min-height:84px" placeholder="Pour le bureau et le prochain passage : accès, clé, ce qu’il reste à faire…">${hx(RAPD.notes || "")}</textarea>
+    <div class="rlab">Signature du client</div>
+    ${RAPD.sig && RAPD.sig.src
+      ? `<div class="sigdone"><img src="${RAPD.sig.src}" alt="Signature du client"><div class="sgd"><small>Signé le ${RAPD.sig.at}</small><button type="button" class="obtn" onclick="rapSign()">${BIC.pen}Refaire la signature</button></div></div>`
+      : `<button type="button" class="sigbtn" onclick="rapSign()">${BIC.pen}Faire signer le client</button><div class="rsign">Sa signature vaut prise de connaissance du rapport</div>`}`;
+  }
   h += `<div style="height:14px"></div><div class="cta rapnav">
     <div class="rapnavrow">
-      ${RSTEP > 1 ? `<button type="button" class="bprev" onclick="rapKeep();RSTEP--;rrap()">‹ Précédent</button>` : ""}
-      ` + (RSTEP < 3
-    /* 29/07 (choix patron) : « Suivant » tout court — meme regle que sur le
-       calendrier, l'etape d'arrivee est deja lisible sur la jauge. */
-    ? `<button class="bo" style="flex:1" onclick="rapNext()">Suivant ›</button>`
-    : `<button class="bo g" style="flex:1" onclick="finishRap()"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Signer &amp; clôturer</button>`)
-    + `</div><button class="lnk" onclick="rapLater()">Enregistrer et continuer plus tard</button></div>`;
-  /* 31/07 : le chrono vit en tete du rapport, sur les 3 etapes */
-  g("rapbody").innerHTML = `<div class="rchr">${(chStart(RAPID), chHTML(RAPID))}<small>temps réel sur place</small></div>` + h;
-  try{ window.scrollTo({top:0, behavior:"instant"}); }catch(e){ window.scrollTo(0,0); }
-  if(RSTEP === 3) sigInit("rsig", "rsigh");
+      ${RSTEP > 1 ? `<button type="button" class="bprev" onclick="rapKeep();RSTEP--;rrap()">‹ Retour</button>` : ""}
+      ${RSTEP < 3 ? `<button class="bo" style="flex:1" onclick="rapNext()">Suivant ›</button>`
+                  : `<button class="bo" style="flex:1" onclick="finishRap()">${BIC.send}Envoyer le rapport</button>`}
+    </div><button class="lnk" onclick="rapLater()">Enregistrer et continuer plus tard</button></div>`;
+  g("rapbody").innerHTML = (chGet(RAPID) ? `<div class="rchr">${chHTML(RAPID)}<small>temps réel sur place</small></div>` : "") + h;
+  try{ const ap = g("app"); if(ap) ap.scrollTop = 0; window.scrollTo(0, 0); }catch(e){}
 }
 let RAPD = null;
+let RAUT = null;   /* « + Autre… » ouvert : zones | meths | ztr */
 function rapKeep(){
-  const o = g("r-obs"), t = g("r-met"), n = g("r-next");
+  if(!RAPD) return;
+  const o = g("r-obs"), t = g("r-met"), n = g("r-next"), no = g("r-notes"), qd = g("r-qd");
   if(o) RAPD.obs = o.value;
   if(t) RAPD.met = t.value;
-  const qd = g("r-qd"); if(qd) RAPD.qd = qd.value;
+  if(qd) RAPD.qd = qd.value;
   if(n) RAPD.next = n.value;
+  if(no) RAPD.notes = no.value;
 }
+function rapEx(xi, v){ rapKeep(); const x = (rfOf(M[RAPID]).extra || [])[xi]; if(!x) return; RAPD.ex[x.t] = RAPD.ex[x.t] === v ? "" : v; rrap(); }
+function rapProd(n){
+  rapKeep();
+  const i = RAPD.prods.findIndex(p => p.n === n);
+  if(i >= 0) RAPD.prods.splice(i, 1);
+  else if(n === "Aucun produit") RAPD.prods = [{n:n, q:""}];
+  else { RAPD.prods = RAPD.prods.filter(p => p.n !== "Aucun produit"); RAPD.prods.push({n:n, q:"1"}); }
+  rrap();
+}
+function rapQ(i, d){
+  rapKeep();
+  const p = RAPD.prods[i]; if(!p) return;
+  const mm = String(p.q || "").match(/^\s*(\d+(?:[.,]\d+)?)(.*)$/);
+  const n = mm ? parseFloat(mm[1].replace(",", ".")) : 0, u = mm ? mm[2] : "";
+  p.q = String(Math.max(0, n + d)).replace(".", ",") + u;
+  rrap();
+}
+function rapQset(i, v){ if(RAPD && RAPD.prods[i]) RAPD.prods[i].q = v; }
+function rapPass(l){
+  rapKeep();
+  const p = (rfOf(M[RAPID]).passage || []).find(x => x.l === l);
+  if(RAPD.nextk === l){ RAPD.nextk = ""; RAPD.next = ""; }
+  else { RAPD.nextk = l; RAPD.next = p ? passDate(p.d) : ""; }
+  rrap();
+}
+function rapAutre(k){ rapKeep(); RAUT = RAUT === k ? null : k; rrap(); setTimeout(() => { const i = g("raut-in"); if(i) i.focus(); }, 60); }
+function rapAutreAdd(k, v){
+  v = String(v || "").trim(); RAUT = null;
+  if(v) (k === "zones" ? RAPD.zones : k === "meths" ? RAPD.meths : RAPD.ztr).add(v);
+  rrap();
+}
+function rapSign(){
+  rapKeep();
+  sigOpen("Tends le téléphone au client : sa signature vaut prise de connaissance du rapport.", src => {
+    RAPD.sig = {src:src, at:dateFr(null) + " à " + hhmm(Date.now())};
+    rrap(); toast("Signature enregistrée");
+  });
+}
+
 function rapNext(){ rapKeep(); RSTEP++; rrap(); }
 function rapLater(){
   rapKeep();
@@ -2608,8 +2895,7 @@ function rapMobPersist(m){
   const vt = String(m.ville || "").trim().split(/\s+/);
   const cp = /^\d{5}$/.test(vt[0] || "") ? vt[0] : "";
   const ville = cp ? vt.slice(1).join(" ") : (m.ville || "");
-  let sig = "";
-  try{ const c = g("rsig"), hh2 = g("rsigh"); if(c && hh2 && hh2.style.display === "none") sig = c.toDataURL("image/png"); }catch(e){}
+  const sig = (RAPD.sig && RAPD.sig.src) || "";
   const tps = m.debut ? Math.max(60, Math.floor(((m.fin || Date.now()) - m.debut) / 1000)) : (RAPD.tps || 0);
   const mode = m.itype === "ctr" ? "ctr" : (m.itype === "devis" ? "devis" : "encais");
   const rec = {
@@ -2620,7 +2906,7 @@ function rapMobPersist(m){
     recos: [...RAPD.recos],
     quote: !!RAPD.quote, quoteDesc: RAPD.qd || "",
     next: RAPD.next || "", creneau: RAPD.creneau || "",
-    notes: "", photos: [],
+    notes: RAPD.notes || "", photos: [],
     prods: (RAPD.prods || []).filter(p => p && p.n).map(p => ({p: -1, nom: p.n, q: p.q || 1})),
     prodsTxt: (RAPD.prods || []).filter(p => p && p.n).map(p => ({nom: p.n, q: p.q || 1})),
     tps: tps, sig: sig, mobile: true,
@@ -2628,7 +2914,7 @@ function rapMobPersist(m){
       start: hDec(m.h), dur: durDec(m.dur), tech: "Thomas Martin",
       type: (m.nuis && m.nuis.length ? m.nuis.join(", ") : "Intervention"),
       mode: mode, cadre: mode === "ctr" ? "Sous contrat" : (mode === "devis" ? "Visite devis" : "Hors contrat"),
-      montant: +(m.prix || m.solde || 0) || 0, paid: !!m.paid, encm: m.paid ? "Encaissé sur place" : "",
+      montant: +((m.pay && m.pay.du) || m.prix || m.solde || 0) || 0, paid: !!(m.pay && m.pay.st === "paye"), encm: m.pay && m.pay.st === "paye" ? "Encaissé sur place — " + m.pay.mode.toLowerCase() : "",
       rue: m.adr || "", cp: cp, ville: ville, tel: m.tel || ""}
   };
   try{
@@ -2638,118 +2924,311 @@ function rapMobPersist(m){
   }catch(e){ return ""; }
   return key;
 }
+function rapSnap(R){
+  const a = s => [...(s || [])];
+  return {niv:R.niv || "", ex:Object.assign({}, R.ex || {}), zones:a(R.zones), signes:a(R.signes), obs:R.obs || "", urg:R.urg || "",
+    photos:(R.photos || []).slice(), meths:a(R.meths), prods:(R.prods || []).map(p => ({n:p.n, q:p.q})), mats:a(R.mats), ztr:a(R.ztr),
+    met:R.met || "", recos:a(R.recos), quote:!!R.quote, qd:R.qd || "", next:R.next || "", nextk:R.nextk || "", creneau:R.creneau || "",
+    notes:R.notes || "", sig:R.sig || null, at:dateFr(null) + " à " + hhmm(Date.now())};
+}
 function finishRap(){
-  const m = M[RAPID];
-  if(m){
-    m.st = "done";
-    if(m.debut && !m.fin) m.fin = Date.now();   /* le chrono s'arrete ici */
-  }
-  const rkey = rapMobPersist(m);
-  delete RAPDRAFTS[RAPID];
-  if(RAPD && RAPD.quote && m){
-    DEVIS.push({id:"d" + Date.now(), mid:m.id, client:m.client, m:0, st:"brouillon",
+  rapKeep();
+  const mid = RAPID, m = M[mid];
+  if(!m || !RAPD) return;
+  if(chGet(mid) && !chStopped(mid)) chStop(mid);
+  if(m.debut && !m.fin) m.fin = Date.now();
+  m.st = "done";
+  m.rapd = rapSnap(RAPD);
+  rapMobPersist(m);
+  delete RAPDRAFTS[mid];
+  let extra = "";
+  if(RAPD.quote){
+    const ref = nextDevRef();
+    m.dvsup = {ref:ref, qd:RAPD.qd || ""};
+    DEVIS.unshift({id:"q-" + ref, ref:ref, mid:m.id, client:m.client, m:0, st:"brouillon", cree:dateFr(null),
       sub:"Brouillon issu du rapport — " + (RAPD.qd ? RAPD.qd.slice(0, 60) : "à chiffrer au bureau")});
-    toast("Brouillon de devis créé pour " + m.client + " — onglet Devis");
+    extra += `<div class="mx">📄 Brouillon de devis <b>${ref}</b> créé et rattaché à ${hx(m.client)}.</div>`;
   }
-  g("ok-h").textContent = "Rapport envoyé";
-  const _d = dureeReelle(m);
-  g("ok-t").textContent = "Intervention bouclée" + (_d ? " en " + _d : "") + (m && m.paid ? ", paiement encaissé" : "") + " — le bureau voit tout en temps réel.";
-  const okd = g("ok-doc");
-  if(okd){
-    okd.style.display = rkey ? "" : "none";
-    okd.onclick = () => window.open("rapport-client.html?id=" + rkey + "&v=20260804b", "_blank");
+  const nx = todos().find(x => x.id !== mid);
+  if(nx) extra += `<div class="mx">Prochaine intervention : <b>${nx.h} · ${hx(nx.client)}</b></div>`;
+  RAPID = null; RAPD = null;
+  renderAll();
+  const paid = m.pay && m.pay.st === "paye";
+  mdl({ic:"ok", h:"Rapport envoyé",
+    t:paid ? "Le rapport et le paiement de cette intervention sont enregistrés : le bureau les voit tout de suite."
+           : "Le rapport de cette intervention est enregistré : le bureau le voit tout de suite.",
+    html:extra,
+    btns:[{l:"Voir le rapport", fn:() => openRdet(mid)}, {l:"Retour à l’accueil", p:1, fn:() => go("home")}]});
+}
+/* ---------- détail du rapport (Figma « Report details ») ---------- */
+let RDID = null;
+function openRdet(mid){ RDID = mid; rrdet(); go("rdet"); }
+function rrdet(){
+  const m = M[RDID]; if(!m) return;
+  let R = m.rapd;
+  if(!R){
+    try{
+      const s = JSON.parse(localStorage.getItem("tigerflow-reports") || "{}")["m" + m.id];
+      if(s) R = {niv:s.niv, ex:{}, zones:s.zones, signes:s.signes, obs:s.obs, urg:s.urg, photos:[], meths:s.meths,
+        prods:(s.prodsTxt || []).map(p => ({n:p.nom, q:p.q})), mats:s.mats, ztr:s.tzones, met:s.act, recos:s.recos,
+        quote:s.quote, qd:s.quoteDesc, next:s.next, creneau:s.creneau, notes:s.notes, sig:s.sig ? {src:s.sig, at:""} : null};
+    }catch(e){}
   }
-  RAPID = null; go("ok");
+  R = R || {};
+  const kv = (l, v) => `<div class="kv"><small>${l}</small><b>${v || "—"}</b></div>`;
+  const ls = a => a && a.length ? a.map(hx).join(", ") : "";
+  const exs = Object.keys(R.ex || {}).filter(k => R.ex[k]).map(k => kv(hx(k), hx(R.ex[k]))).join("");
+  const nxt = R.next ? rapJoli(R.next) + (R.creneau && R.creneau !== "Indifférent" ? ", " + R.creneau.split(" ·")[0].toLowerCase() : "") : (R.nextk || "");
+  g("s-rdet").innerHTML = dhead("Rapport", "#" + m.ref, "openM(" + m.id + ")")
+    + `<div class="rdok">${BIC.ok}<span>Rapport validé · envoyé au client${R.at ? " · " + R.at : ""}</span></div>`
+    + idCard(m, true)
+    + `<div class="qacard"><div class="ctah">Étape 1 · Observation</div>
+        ${kv("Niveau d’infestation", hx(R.niv))}${exs}${kv("Zones touchées", ls(R.zones))}${kv("Signes de présence", ls(R.signes))}
+        ${kv("Observations", hx(R.obs))}${kv("Urgence du client", hx(R.urg))}
+        ${(R.photos || []).length ? `<div class="kv"><small>Photos / preuves</small><div class="rdph">${R.photos.map(p => `<figure><img src="${p.src}" alt=""><figcaption>${p.lbl}</figcaption></figure>`).join("")}</div></div>` : kv("Photos / preuves", "")}
+      </div>
+      <div class="qacard"><div class="ctah">Étape 2 · Traitement</div>
+        ${kv("Méthode", ls(R.meths))}${kv("Produits", (R.prods || []).map(p => hx(p.n) + (p.q ? " · " + hx(p.q) : "")).join("<br>"))}
+        ${kv("Matériel", ls(R.mats))}${kv("Zone traitée", ls(R.ztr))}${kv("Action réalisée", hx(R.met))}
+      </div>
+      <div class="qacard"><div class="ctah">Étape 3 · Clôture</div>
+        ${kv("Recommandations", (R.recos || []).map(hx).join("<br>"))}
+        ${kv("Devis supplémentaire", R.quote ? "Oui — " + (hx(R.qd) || "à chiffrer") + (m.dvsup ? " · " + m.dvsup.ref : "") : "Non — tout est réglé")}
+        ${kv("Prochain passage", nxt)}${kv("Notes de suivi (interne)", hx(R.notes))}
+        <div class="kv"><small>Signature du client</small>${R.sig && R.sig.src ? `<img class="rdsig" src="${R.sig.src}" alt="Signature du client">${R.sig.at ? `<em>Signé le ${R.sig.at}</em>` : ""}` : "<b>—</b>"}</div>
+      </div>
+      <button class="obtn wide" onclick="window.open('rapport-client.html?id=m${m.id}&v=20260804b','_blank')">${BIC.dl}Télécharger le PDF</button>
+      <button class="obtn wide" onclick="toast('Rapport envoyé à ${jsq(m.email || "client")}')">${BIC.mail}Envoyer au client par e-mail</button>`;
 }
 
-/* ---------- atelier devis ---------- */
+/* ---------- 07/10 — « Créer le devis » (Figma « Site visit and quote ») ----------
+   Titre · prestations (prix HT, quantité, TVA, total ligne TTC) · frais
+   (déplacement, urgence, week-end) · remise commerciale % ou € · TVA par taux ·
+   total TTC · photos · note. Puis le détail du devis et trois façons de le
+   faire valider : signer sur place, envoyer par e-mail, finaliser sans envoyer. */
+let QD = null;
+const FEES = [["Déplacement", 35], ["Urgence", 50], ["Week-end", 80]];
 function openAtelier(mid){
-  ATX = {mid:mid}; SEL = new Set(); BLQP = {};
-  g("at-cli").textContent = mid ? "— " + M[mid].client : "— nouveau client";
-  rbl(); go("atelier");
+  const m = M[mid]; if(!m) return;
+  QD = m.dv ? JSON.parse(JSON.stringify(m.dv)) : {ref:null, titre:"", lignes:[], frais:[], rem:{on:false, mode:"%", v:10}, photos:[], notes:""};
+  QD.mid = mid;
+  ratelier(); go("atelier");
 }
-function atBack(){ if(ATX && ATX.mid){ go("detail"); } else { go("devis"); } }
-let BLQP = {};   /* {index: {q, p}} — quantités et prix ajustés sur place */
-function blUpd(i, field, val, ev){
-  if(ev) ev.stopPropagation();
-  const v = parseFloat(String(val).replace(",", "."));
-  BLQP[i] = BLQP[i] || {q:1, p:BL[i].p};
-  if(field === "q") BLQP[i].q = (v && v > 0) ? v : 1;
-  else BLQP[i].p = (v || v === 0) && v >= 0 ? v : BL[i].p;
-  g("dv-tot").textContent = atTotal() + " €";
-  const lt = g("blt-" + i); if(lt) lt.textContent = "Ligne : " + EUR(BLQP[i].q * BLQP[i].p);
+function atBack(){ const mid = QD ? QD.mid : null; QD = null; if(mid != null) openM(mid); else go("devis"); }
+function qKeep(){ if(!QD) return; const t = g("q-titre"), n = g("q-notes"); if(t) QD.titre = t.value; if(n) QD.notes = n.value; }
+function ratelier(){
+  if(!QD) return;
+  const m = M[QD.mid] || {};
+  const c = dvCalc(QD);
+  const TV = [5.5, 10, 20];
+  const sel = (arr, i) => `<select onchange="qSet('${arr}',${i},'t',this.value)">${TV.map(t => `<option value="${t}" ${+QD[arr][i].t === t ? "selected" : ""}>${tvaL(t)}</option>`).join("")}</select>`;
+  const lig = QD.lignes.map((l, i) => `
+    <div class="ql">
+      <div class="qlh"><input class="qn" value="${hx(l.n)}" placeholder="Nom de la prestation" onchange="qSet('lignes',${i},'n',this.value)"><button type="button" class="qx" onclick="qDel('lignes',${i})" aria-label="Retirer la ligne">✕</button></div>
+      ${l.d ? `<small class="qdsc">${hx(l.d)}</small>` : ""}
+      <div class="qlg">
+        <label><small>Prix HT</small><input inputmode="decimal" value="${num(l.p)}" onchange="qSet('lignes',${i},'p',this.value)"></label>
+        <label><small>Qté</small><input inputmode="decimal" value="${num(l.q)}" onchange="qSet('lignes',${i},'q',this.value)"></label>
+        <label><small>TVA</small>${sel("lignes", i)}</label>
+      </div>
+      <div class="qlt"><small>Total ligne TTC</small><b>${EUR((+l.p || 0) * (+l.q || 0) * (1 + (+l.t || 0) / 100))}</b></div>
+    </div>`).join("");
+  const fr = QD.frais.map((f, i) => `
+    <div class="ql">
+      <div class="qlh"><input class="qn" value="${hx(f.n)}" placeholder="Nom des frais" onchange="qSet('frais',${i},'n',this.value)"><button type="button" class="qx" onclick="qDel('frais',${i})" aria-label="Retirer les frais">✕</button></div>
+      <div class="qlg q2">
+        <label><small>Prix HT</small><input inputmode="decimal" value="${num(f.p)}" onchange="qSet('frais',${i},'p',this.value)"></label>
+        <label><small>TVA</small>${sel("frais", i)}</label>
+      </div>
+      <div class="qlt"><small>Total TTC</small><b>${EUR((+f.p || 0) * (1 + (+f.t || 0) / 100))}</b></div>
+    </div>`).join("");
+  const rem = QD.rem.on ? `<div class="qrem">
+      <div class="qremh"><b>Remise commerciale</b><span class="seg"><button type="button" class="${QD.rem.mode === "%" ? "on" : ""}" onclick="qRemMode('%')">%</button><button type="button" class="${QD.rem.mode === "€" ? "on" : ""}" onclick="qRemMode('€')">€</button></span><button type="button" class="qx" onclick="qRem(false)" aria-label="Retirer la remise">✕</button></div>
+      <div class="qremi"><input inputmode="decimal" value="${num(QD.rem.v)}" onchange="qRemV(this.value)"><span>${QD.rem.mode}</span><b>− ${EUR(c.rem)}</b></div>
+      <div class="qchips">${(QD.rem.mode === "%" ? [5, 10, 15] : [10, 20, 50]).map(v => `<button type="button" class="qfee ${+QD.rem.v === v ? "on" : ""}" onclick="qRemV(${v})">${v} ${QD.rem.mode}</button>`).join("")}</div>
+      <small>La remise est déduite du total HT — la TVA suit automatiquement.</small>
+    </div>` : `<button type="button" class="lnkb" onclick="qRem(true)">+ Ajouter une remise commerciale</button>`;
+  g("s-atelier").innerHTML = `
+    ${dhead(QD.ref ? "Modifier le devis" : "Créer le devis", QD.ref || "", "atBack()")}
+    <div class="rctx">${itchip(m)}<span class="rcli">${hx(m.client)}</span><span class="rmeta">${(m.nuis || []).join(" · ")}${m.ville ? " · " + String(m.ville).replace(/^\d{4,5}\s+/, "") : ""}</span></div>
+    <div class="qacard"><div class="ctah">Titre du devis</div><input class="qin" id="q-titre" value="${hx(QD.titre)}" placeholder="Ex. : Dératisation des locaux — 2 passages" oninput="QD.titre=this.value"></div>
+    <div class="qacard"><div class="ctah">Prestations${QD.lignes.length ? ` <span class="lcnt">${QD.lignes.length}</span>` : ""}</div>
+      ${lig || `<p class="qempty">Aucune prestation : pioche dans la bibliothèque ou crée une ligne.</p>`}
+      <div class="qadd"><button type="button" class="obtn" onclick="openBiblio()">${BIC.doc}Bibliothèque</button><button type="button" class="obtn" onclick="qLigne()">+ Nouvelle ligne</button></div>
+    </div>
+    <div class="qacard"><div class="ctah">Frais <span class="rfac2">facultatif</span></div>
+      ${fr}
+      <div class="qchips">${FEES.map(([n, p]) => `<button type="button" class="qfee" onclick="qFrais('${jsq(n)}',${p})">+ ${n} ${p} €</button>`).join("")}<button type="button" class="qfee" onclick="qFrais('',0)">+ Autres frais</button></div>
+    </div>
+    <div class="qacard qtot">
+      <div class="qr"><span>Sous-total prestations HT</span><b>${EUR(c.sous)}</b></div>
+      <div class="qr"><span>Frais HT</span><b>${EUR(c.fr)}</b></div>
+      ${rem}
+      <div class="qr"><span>Total HT</span><b>${EUR(c.ht)}</b></div>
+      ${Object.keys(c.tva).sort((a, b) => a - b).map(t => `<div class="qr sm"><span>TVA ${tvaL(t)}</span><b>${EUR(c.tva[t])}</b></div>`).join("")}
+      <div class="qr"><span>Total TVA</span><b>${EUR(c.tvat)}</b></div>
+      <div class="qr big"><span>Total TTC</span><b>${EUR(c.ttc)}</b></div>
+    </div>
+    <div class="qacard"><div class="ctah">Photos / preuves</div>
+      <input type="file" id="q-cam" accept="image/*" capture="environment" multiple hidden onchange="qPhoto(this.files);this.value=''">
+      <input type="file" id="q-gal" accept="image/*" multiple hidden onchange="qPhoto(this.files);this.value=''">
+      <div class="rpbtns"><button type="button" class="rpb" onclick="g('q-cam').click()">${BIC.cam}Prendre une photo</button><button type="button" class="rpb" onclick="g('q-gal').click()">${BIC.img}Importer</button></div>
+      ${QD.photos.length ? `<div class="qph">${QD.photos.map((p, i) => `<span class="qphi"><img src="${p.src}" alt=""><button type="button" onclick="qKeep();QD.photos.splice(${i},1);ratelier()" aria-label="Retirer">✕</button></span>`).join("")}</div>` : ""}
+    </div>
+    <div class="qacard"><div class="ctah">Note sur le devis <span class="rfac2">visible par le client</span></div>
+      <textarea class="rta" id="q-notes" style="min-height:76px" placeholder="Accès, délais, conditions particulières…" oninput="QD.notes=this.value">${hx(QD.notes)}</textarea></div>
+    <div class="cta"><div class="rapnavrow"><button type="button" class="bprev" onclick="atBack()">Annuler</button><button class="bo" style="flex:1" onclick="qSave()" ${QD.lignes.length ? "" : "disabled"}>Enregistrer le devis</button></div></div>`;
 }
-function blLibre(){
-  const n = prompt("Désignation de la prestation :");
-  if(!n || !n.trim()) return;
-  const p = parseFloat(String(prompt("Prix TTC (€) :") || "").replace(",", "."));
-  if(!p || p <= 0){ toast("Prix invalide — ligne non ajoutée"); return; }
-  BL.push({n:n.trim(), d:"ligne libre — ajoutée sur place", p:Math.round(p)});
-  SEL.add(BL.length - 1);
-  const q = g("blq"); if(q) q.value = "";
-  rbl();
-  toast("Ligne ajoutée et cochée : " + n.trim() + " — " + EUR(Math.round(p)));
+function qSet(arr, i, f, v){
+  qKeep();
+  const it = QD[arr][i]; if(!it) return;
+  if(f === "n") it.n = v;
+  else { const x = parseFloat(String(v).replace(/\s/g, "").replace(",", ".")); it[f] = isNaN(x) ? (f === "q" ? 1 : 0) : Math.max(0, x); }
+  ratelier();
 }
-function rbl(){
-  const q = (g("blq") ? g("blq").value : "").toLowerCase().trim();
-  g("blrows").innerHTML = BL.map((b, i) => ({b, i}))
-    .filter(x => !q || (x.b.n + " " + x.b.d).toLowerCase().includes(q) || SEL.has(x.i))
-    .map(({b, i}) => `
-    <div class="bl ${SEL.has(i) ? "on" : ""}" onclick="blTog(${i})">
-      <span class="bck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>
-      <span class="bb"><b>${b.n}</b><small>${b.d}</small>${SEL.has(i) ? `
-        <span class="bqp" onclick="event.stopPropagation()">
-          <label>Qté <input inputmode="decimal" value="${(BLQP[i]||{}).q ?? 1}" onchange="blUpd(${i},'q',this.value,event)"></label>
-          <label>Prix € <input inputmode="decimal" value="${(BLQP[i]||{}).p ?? b.p}" onchange="blUpd(${i},'p',this.value,event)"></label>
-          <em id="blt-${i}">Ligne : ${EUR(((BLQP[i]||{}).q ?? 1) * ((BLQP[i]||{}).p ?? b.p))}</em>
-        </span>` : ""}</span>
-      <span class="bp">${SEL.has(i) ? "" : b.p + " €"}</span>
-    </div>`).join("") || `<p style="text-align:center;color:var(--muted);font-size:.78rem;padding:14px">Rien au catalogue pour cette recherche — utilise « + Ligne libre ».</p>`;
-  g("dv-tot").textContent = atTotal() + " €";
-  const rdy = SEL.size > 0;
-  const bs = g("at-sign"), bm = g("at-mail");
-  if(bs) bs.disabled = !rdy;
-  if(bm){ if(rdy){ bm.removeAttribute("disabled"); } else { bm.setAttribute("disabled", "disabled"); } }
+function qDel(arr, i){ qKeep(); QD[arr].splice(i, 1); ratelier(); }
+function qLigne(){
+  qKeep(); QD.lignes.push({n:"", d:"", p:0, q:1, t:10}); ratelier();
+  setTimeout(() => { const all = document.querySelectorAll("#s-atelier .ql .qn"); const l = all[QD.lignes.length - 1]; if(l) l.focus(); }, 60);
 }
-function blTog(i){ if(SEL.has(i)){ SEL.delete(i); delete BLQP[i]; } else { SEL.add(i); BLQP[i] = {q:1, p:BL[i].p}; } rbl(); }
-function atTotal(){ return Math.round([...SEL].reduce((s, i) => s + ((BLQP[i]||{}).q ?? 1) * ((BLQP[i]||{}).p ?? BL[i].p), 0) * 100) / 100; }
-function atSign(){
-  if(!SEL.size){ toast("Choisis au moins une prestation dans la bibliothèque"); return; }
-  g("sg-tot").textContent = EUR(atTotal());
-  go("sign"); sigInit("sigc", "sigh");
+function qFrais(n, p){
+  qKeep();
+  if(n && QD.frais.some(f => f.n === n)){ toast(n + " est déjà dans le devis"); return; }
+  QD.frais.push({n:n, p:p, t:10}); ratelier();
 }
-function atMail(){
-  if(!SEL.size){ toast("Choisis au moins une prestation dans la bibliothèque"); return; }
-  const t = atTotal();
-  if(ATX && ATX.mid){
-    const m = M[ATX.mid];
-    m.devisM = t; m.devout = "email";
-    m.st = "done"; m.paid = false;
-    DEVIS.push({id:"d" + (DEVIS.length + 1), mid:m.id, client:m.client, m:t, st:"attente", sub:"Envoyé par e-mail — en attente de réponse"});
-    toast("Devis de " + EUR(t) + " envoyé par email — la visite se clôture : rapport");
-    ATX = null;
-    openRapport(m.id);
-  } else {
-    DEVIS.push({id:"d" + (DEVIS.length + 1), mid:null, client:"Nouveau client", m:t, st:"attente", sub:"Envoyé à l’instant par e-mail"});
-    toast("Devis de " + EUR(t) + " envoyé — visible dans l’onglet Devis");
-    ATX = null;
-    go("devis");
-  }
+function qRem(on){ qKeep(); QD.rem.on = !!on; ratelier(); }
+function qRemMode(mo){ qKeep(); QD.rem.mode = mo; QD.rem.v = mo === "%" ? 10 : 20; ratelier(); }
+function qRemV(v){ qKeep(); const x = parseFloat(String(v).replace(",", ".")); QD.rem.v = isNaN(x) ? 0 : Math.max(0, x); ratelier(); }
+function qPhoto(files){
+  qKeep();
+  const list = [...(files || [])].slice(0, 6);
+  let n = list.length; if(!n) return;
+  list.forEach(f => readImg(f, 1280, .72, src => { if(src) QD.photos.push({src:src}); if(--n === 0) ratelier(); }));
 }
-function sigOK(){
-  const t = atTotal();
-  const mid = ATX ? ATX.mid : null;
-  let did = null;
-  if(mid){
-    M[mid].devisM = t;
-    M[mid].devout = "sign\u00E9";
-    did = "d" + Date.now();
-    DEVIS.push({id:did, mid:mid, client:M[mid].client, m:t, st:"attente", sub:"Signé sur place — en attente d’encaissement"});
-  }
-  ENCTX = {kind:"devisOK", mid:mid, did:did, base:t || 120};
-  ATX = null;
-  toast("Devis signé sur place — place à l’encaissement");
-  renc(); go("enc");
+function qSave(){
+  qKeep();
+  if(!QD.lignes.length){ toast("Ajoute au moins une prestation"); return; }
+  if(QD.lignes.some(l => !String(l.n || "").trim())){ toast("Donne un nom à chaque prestation"); return; }
+  const m = M[QD.mid]; if(!m) return;
+  const c = dvCalc(QD);
+  const neuf = !QD.ref;
+  if(neuf){ QD.ref = nextDevRef(); QD.cree = dateFr(null); }
+  const st = m.dv && m.dv.st ? m.dv.st : "brouillon";
+  m.dv = Object.assign(m.dv || {}, JSON.parse(JSON.stringify(QD)), {ht:c.ht, tvat:c.tvat, ttc:c.ttc, st:st});
+  delete m.dv.mid;
+  if(m.dvok) m.prix = Math.max(0, Math.round((c.ttc - (m.dv.acompte || 0)) * 100) / 100);
+  dvSync(m);
+  QD = null;
+  toast(neuf ? "Devis " + m.dv.ref + " enregistré — " + EUR(m.dv.ttc) + " TTC" : "Devis mis à jour");
+  openDv(m.id);
+}
+/* ---------- bibliothèque de prestations (par nuisible, prix HT) ---------- */
+const BLCAT = [["punaises", "Punaises de lit", "🛏️"], ["rongeurs", "Rongeurs", "🐀"], ["guepes", "Guêpes / Frelons", "🐝"], ["cafards", "Cafards", "🪳"],
+  ["pigeons", "Pigeons", "🐦"], ["termites", "Termites & xylophages", "🪵"], ["chenilles", "Chenilles processionnaires", "🐛"], ["desinsect", "Désinsectisation", "🧪"]];
+let BLSEL = new Set(), BLCF = "";
+function openBiblio(){ qKeep(); BLSEL = new Set(); BLCF = ""; const q = g("bl-q"); if(q) q.value = ""; rbiblio(); go("biblio"); }
+function rbiblio(){
+  const q = sansAcc((g("bl-q") || {}).value || "").trim();
+  const items = BL.map((b, i) => ({b, i})).filter(({b}) => (!BLCF || b.c === BLCF) && (!q || sansAcc(b.n + " " + b.d).includes(q)));
+  g("bl-cats").innerHTML = `<button type="button" class="fchip ${!BLCF ? "on" : ""}" onclick="BLCF='';rbiblio()">Tout</button>`
+    + BLCAT.map(([k, l, e]) => `<button type="button" class="fchip ${BLCF === k ? "on" : ""}" onclick="BLCF='${k}';rbiblio()"><span>${e}</span>${l}</button>`).join("");
+  const groups = BLCAT.map(([k, l, e]) => ({k, l, e, its:items.filter(x => x.b.c === k)})).filter(gp => gp.its.length);
+  g("bl-body").innerHTML = groups.map(gp => `<div class="blg"><div class="blgh"><span>${gp.e}</span>${gp.l}<span class="lcnt">${gp.its.length}</span></div>
+      ${gp.its.map(({b, i}) => `<div class="bl ${BLSEL.has(i) ? "on" : ""}" onclick="blTog(${i})"><span class="bck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="bb"><b>${hx(b.n)}</b><small>${hx(b.d)}</small></span><span class="bp">${EUR(b.p)}</span></div>`).join("")}</div>`).join("")
+    || `<p style="text-align:center;color:var(--muted);font-size:.78rem;padding:14px">Rien dans la bibliothèque pour cette recherche — crée une ligne dans le devis.</p>`;
+  const n = BLSEL.size, tot = [...BLSEL].reduce((a, i) => a + BL[i].p, 0);
+  g("bl-foot").innerHTML = `<div class="blfoot"><span><b>${n} sélectionnée${n > 1 ? "s" : ""}</b><small>${EUR(tot)} HT</small></span><button class="bo" onclick="blAdd()" ${n ? "" : "disabled"}>Ajouter au devis</button></div>`;
+}
+function blTog(i){ BLSEL.has(i) ? BLSEL.delete(i) : BLSEL.add(i); rbiblio(); }
+function blAdd(){
+  if(!QD || !BLSEL.size) return;
+  [...BLSEL].forEach(i => QD.lignes.push({n:BL[i].n, d:BL[i].d, p:BL[i].p, q:1, t:10}));
+  toast(BLSEL.size + " prestation" + (BLSEL.size > 1 ? "s ajoutées" : " ajoutée") + " au devis");
+  BLSEL = new Set();
+  ratelier(); go("atelier");
+}
+/* ---------- détail du devis + les 3 façons de le faire valider ---------- */
+let DVID = null;
+function openDv(mid){ DVID = mid; rdvdet(); go("dvdet"); }
+function rdvdet(){
+  const m = M[DVID], dv = m && m.dv; if(!dv) return;
+  const c = dvCalc(dv);
+  const ST = {brouillon:["À faire valider", "b"], final:["En attente de signature", "a"], envoye:["Envoyé — en attente", "a"], signe:["Accepté", "g"]}[dv.st] || ["", "b"];
+  const lines = dv.lignes.map(l => `<div class="dvl"><span><b>${hx(l.n)}</b><small>${num(l.q)} × ${EUR(+l.p)} HT · TVA ${tvaL(l.t)}</small></span><b>${EUR(l.p * l.q * (1 + l.t / 100))}</b></div>`).join("")
+    + (dv.frais || []).map(f => `<div class="dvl"><span><b>${hx(f.n || "Frais")}</b><small>frais · ${EUR(+f.p)} HT · TVA ${tvaL(f.t)}</small></span><b>${EUR(f.p * (1 + f.t / 100))}</b></div>`).join("");
+  const choix = dv.st === "brouillon" ? `<div class="ctah" style="margin-top:6px">Faire valider le devis</div>
+      ${fbtn("dvSignHere(" + m.id + ")", BIC.pen, "Faire signer sur place", "le client signe sur ton téléphone, puis l’acompte")}
+      ${fbtn("dvMail(" + m.id + ")", BIC.send, "Envoyer pour signature par e-mail", "le client signe depuis sa boîte mail", 1)}
+      ${fbtn("dvFinal(" + m.id + ")", BIC.doc, "Finaliser sans envoyer", "le bureau l’enverra — tu fais le rapport de visite", 1)}` : "";
+  g("s-dvdet").innerHTML = dhead("Devis", dv.ref, "openM(" + m.id + ")")
+    + `<div class="qacard dvcli"><span class="cav">${initials(m.client)}</span><span class="dvc2"><b>${hx(m.client)}</b><small>${dv.ref} · créé le ${dv.cree || dateFr(null)}</small></span><span class="dvst ${ST[1]}">${ST[0]}</span></div>`
+    + (dv.titre ? `<div class="qacard"><div class="ctah">Titre</div><b class="dvtit">${hx(dv.titre)}</b></div>` : "")
+    + `<div class="qacard"><div class="ctah">Prestations</div>${lines}</div>`
+    + `<div class="qacard qtot">${totRows(c)}</div>`
+    + ((dv.photos || []).length ? `<div class="qacard"><div class="ctah">Pièces jointes</div><div class="qph">${dv.photos.map(p => `<span class="qphi"><img src="${p.src}" alt=""></span>`).join("")}</div></div>` : "")
+    + (dv.notes ? `<div class="qacard"><div class="ctah">Note</div><p class="dvnote">${hx(dv.notes)}</p></div>` : "")
+    + (dv.sign && dv.sign.src ? `<div class="qacard"><div class="ctah">Signature du client</div><img class="rdsig" src="${dv.sign.src}" alt="Signature"><em class="sgat">Signé le ${dv.sign.at}</em></div>` : "")
+    + (dv.sign && !dv.sign.src ? `<div class="qacard"><div class="ctah">Signature du client</div><em class="sgat">Signé par e-mail le ${dv.sign.at}</em></div>` : "")
+    + `<div class="dvch">${choix}${dv.st !== "signe" ? `<button class="lnk" onclick="openAtelier(${m.id})">Modifier le devis</button>` : ""}</div>`;
+}
+function dvSignHere(mid){
+  const m = M[mid], dv = m && m.dv; if(!dv) return;
+  sigOpen("En signant, le client accepte le devis " + dv.ref + " de " + EUR(dv.ttc) + " TTC.", src => {
+    dv.sign = {src:src, at:dateFr(null) + " à " + hhmm(Date.now()), mode:"place"};
+    acceptDv(m);
+    ENCTX = {kind:"devis", mid:mid, did:null, base:dv.ttc};
+    renc(); go("enc");
+    toast("Devis signé — place à l’acompte");
+  });
+}
+function dvFinal(mid){
+  const m = M[mid]; if(!m || !m.dv) return;
+  m.dv.st = "final"; dvSync(m); renderAll();
+  toast("Devis " + m.dv.ref + " finalisé — il attend la signature du client");
+  openM(mid);
+}
+function dvMail(mid){
+  const m = M[mid], dv = m && m.dv; if(!dv) return;
+  const ct = String(m.contact || "").trim();
+  g("s-dvmail").innerHTML = dhead("Envoyer le devis", dv.ref, "openDv(" + mid + ")") + `
+    <div class="cd mlc">
+      <label class="mlf"><small>Destinataire</small><input id="ml-to" type="email" value="${hx(m.email || "")}" placeholder="E-mail du client"></label>
+      <label class="mlf"><small>Objet</small><input id="ml-sub" value="Votre devis ${dv.ref}"></label>
+      <label class="mlf"><small>Message</small><textarea id="ml-msg" class="rta">Bonjour${ct ? " " + hx(ct) : ""},
+
+Vous trouverez ci-joint votre devis ${dv.ref} d’un montant de ${EUR(dv.ttc)} TTC.
+Vous pouvez le signer en ligne, en un clic, directement depuis cet e-mail.
+
+Nous restons à votre disposition pour toute question.
+
+Bien cordialement,
+Thomas Martin</textarea></label>
+      <div class="mlatt">${BIC.doc}<span>${dv.ref}.pdf · ${EUR(dv.ttc)} TTC</span></div>
+      <label class="mlchk"><input type="checkbox" id="ml-copy" checked> M’envoyer une copie</label>
+    </div>
+    <div class="cta"><button class="bo" onclick="dvMailSend(${mid})">${BIC.send}Envoyer au client</button></div>`;
+  go("dvmail");
+}
+function dvMailSend(mid){
+  const m = M[mid], dv = m && m.dv; if(!dv) return;
+  const to = String(g("ml-to").value || "").trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)){ toast("Indique l’e-mail du client"); g("ml-to").focus(); return; }
+  dv.st = "envoye"; dv.mail = to; dv.envAt = dateFr(null);
+  dvSync(m); renderAll();
+  mdl({ic:"mail", h:"Devis envoyé pour signature",
+    t:"Le client le reçoit sur " + hx(to) + " et le signe directement depuis sa boîte mail. Tu es prévenu dès qu’il signe.",
+    btns:[{l:"Retour à l’intervention", p:1, fn:() => openM(mid)}]});
+  /* DÉMO : le client signe quelques secondes plus tard. En vrai, c'est sa signature en ligne qui déclenche ça. */
+  setTimeout(() => {
+    if(!m.dv || m.dv.st !== "envoye") return;
+    m.dv.sign = {src:"", at:dateFr(null) + " à " + hhmm(Date.now()), mode:"email"};
+    if(m.st === "done"){ m.dv.st = "signe"; dvSync(m); }
+    else acceptDv(m);
+    NOTIFS.unshift({k:"devis", t:"Devis signé", meta:[String(m.ville || ""), (m.nuis || [])[0], "Visite devis"].filter(Boolean).join(" · "),
+      txt:m.client + " a signé le devis " + m.dv.ref + " par e-mail" + (m.st === "done" ? " — le bureau planifie le traitement." : " — tu peux démarrer le traitement."), time:"à l’instant", jour:"auj", un:true});
+    renderAll();
+    toast("✍ " + m.client + " a signé le devis par e-mail");
+  }, 7000);
 }
 
 /* ---------- signature (canvas) ---------- */
@@ -3542,5 +4021,206 @@ window.pbScanStop = function(){
   document.addEventListener("keydown", function(e){ if(e.key === "Escape") ferme(); });
 })();
 </script>
+<style>
+/* ===== 07/10 — parcours complet d'après le Figma Saigon (fiche, encaissement, rapport, devis) ===== */
+/* fenêtre commune */
+.sheet .shc.mdl{text-align:center;padding:22px 18px 16px;width:86%}
+.mic{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;margin:0 auto 12px}
+.mic svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.mic.ok{background:var(--green-bg);color:var(--green-d);box-shadow:0 0 0 8px #F1FBF6}
+.mic.wait{background:var(--amber-bg);color:var(--amber);box-shadow:0 0 0 8px #FFFBEF}
+.mic.stop{background:#EEF0F3;color:var(--ink-2);box-shadow:0 0 0 8px #F6F7F9}
+.mic.mail{background:var(--blue-bg);color:var(--blue);box-shadow:0 0 0 8px #F4F7FF}
+.mh{font-family:'Sora';font-weight:800;font-size:1.04rem;margin-bottom:6px;color:var(--ink)}
+.mt{font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5;margin-bottom:12px}
+.mx{font-size:.75rem;font-weight:600;color:var(--ink-2);background:#F6F7F9;border-radius:10px;padding:8px 10px;margin:0 0 8px;text-align:left;line-height:1.45}
+.mlink{display:block;margin:0 auto 12px;border:0;background:none;color:var(--blue);font:700 .8rem Inter,sans-serif;text-decoration:underline;cursor:pointer}
+.mb{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.mb.row{flex-direction:row}
+.mb button{all:unset;box-sizing:border-box;flex:1;text-align:center;padding:12px 10px;border-radius:12px;font:800 .82rem Inter,sans-serif;cursor:pointer}
+.mb .mbp{background:var(--orange);color:#fff;box-shadow:0 8px 18px -10px rgba(240,78,10,.6)}
+.mb .mbs{border:1.5px solid #E3E6EB;color:var(--ink-2);background:#fff}
+.qrbox{width:180px;margin:2px auto 8px;border:1px solid #E3E6EB;border-radius:12px;padding:8px;background:#fff}
+.qrbox svg{display:block;width:100%}
+.sheet .shc.sgs{width:92%;padding:16px 14px 12px}
+.sgs .sigbox{margin:4px 0 12px}
+.dlb .dlok{background:var(--orange);color:#fff}
+/* fiche : facturation, rapport, note */
+.bill{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;border-radius:13px;padding:11px 12px;border:1px solid;font-family:Inter,sans-serif}
+button.bill{cursor:pointer}
+.bill + .bill{margin-top:8px}
+.bill .bic2{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none;background:#fff}
+.bill .bic2 svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.bill .bt{flex:1;min-width:0}
+.bill .bt b{display:block;font-size:.82rem;font-weight:800;line-height:1.3}
+.bill .bt small{display:block;font-size:.7rem;font-weight:600;line-height:1.4;margin-top:2px;opacity:.92}
+.bill .bchv{font-weight:800;font-size:1.05rem;opacity:.55;flex:none}
+.bill.g{background:var(--green-bg);border-color:#BFE5D8;color:var(--green-d)}
+.bill.a{background:var(--amber-bg);border-color:#F3D28B;color:#8A5A0B}
+.bill.b{background:var(--blue-bg);border-color:#D9E4FC;color:#2148C0}
+.ntb{background:#F6F7F9;border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:.78rem;line-height:1.45;color:var(--ink-2)}
+.ntb b{display:block;font-size:.64rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.ntv{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;background:var(--amber-bg);border:1px solid #F3D28B;border-radius:13px;padding:11px 12px;cursor:pointer;color:#8A5A0B;font-family:Inter,sans-serif}
+.ntv .nti{width:30px;height:30px;border-radius:9px;background:#fff;display:grid;place-items:center;flex:none}
+.ntv .nti svg{width:15px;height:15px;fill:currentColor;stroke:none}
+.ntv .ntx{flex:1;min-width:0}
+.ntv .ntx b{display:block;font-size:.8rem;font-weight:800}
+.ntv .ntx small{display:block;font-size:.74rem;font-weight:600;color:var(--ink-2);margin-top:2px;line-height:1.4;white-space:pre-wrap}
+.ntv .bchv{font-weight:800;opacity:.55}
+.nted{background:var(--amber-bg);border:1px solid #F3D28B;border-radius:13px;padding:11px 12px}
+.nted > b{display:block;font-size:.8rem;font-weight:800;color:#8A5A0B;margin-bottom:8px}
+.nted .rta{min-height:84px;background:#fff}
+.ntbtn{display:flex;gap:8px;margin-top:9px}
+.ntbtn .bo{flex:1;padding:10px;font-size:.8rem;margin:0}
+.nted small{display:block;font-size:.68rem;color:#8A5A0B;margin-top:8px;font-weight:600}
+/* encaissement */
+.encx{margin:0 2px 12px}
+.encx b{display:block;font-family:'Sora';font-size:1rem;font-weight:800}
+.encx small{display:block;font-size:.76rem;color:var(--muted);font-weight:600;margin-top:2px}
+.cd.encc{padding:14px 14px 15px;margin-bottom:12px}
+.encmw{position:relative}
+.encmw span{position:absolute;right:15px;top:50%;transform:translateY(-50%);font:800 1.1rem Sora,sans-serif;color:var(--muted)}
+#s-enc .pill.on{border-color:var(--green);background:var(--green-bg);color:var(--green-d)}
+#enc-modes{grid-template-columns:1fr 1fr 1fr;gap:8px}
+#enc-modes .pill{flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:11px 4px;text-align:center;border-radius:13px}
+#enc-modes .pill .pml{display:block;font-size:.76rem;font-weight:800;line-height:1.2}
+#enc-modes .pill small{display:block;font-size:.58rem;font-weight:600;color:var(--muted);margin-top:1px}
+#enc-modes .pill .pico svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ehint2{text-transform:none;letter-spacing:0;font-weight:600;color:#A6ABBB;margin-left:4px}
+.encph{display:flex;align-items:center;gap:10px;margin-top:10px;background:#F6F7F9;border-radius:12px;padding:8px}
+.encph img{width:54px;height:54px;object-fit:cover;border-radius:9px}
+.encph span{flex:1}.encph b{display:block;font-size:.78rem}.encph small{font-size:.68rem;color:var(--muted)}
+.encph button{border:0;background:#fff;border-radius:8px;width:28px;height:28px;cursor:pointer;color:var(--muted)}
+.cd.encsig{padding:13px 14px;margin-bottom:12px;text-align:left}
+.encsig img{display:block;width:100%;height:96px;object-fit:contain;background:#FAFBFC;border:1px dashed #D6D9E0;border-radius:12px}
+.encsig small{display:block;font-size:.7rem;color:var(--muted);margin-top:6px;font-weight:600}
+#enc-later{margin-bottom:4px}
+/* rapport */
+.rpb.cam{background:#fff;border-color:#E6E8EE;color:var(--ink);box-shadow:none}
+.rpb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.rqty{background:#FAFBFC;border:1px solid #F0F1F5;border-radius:14px;padding:6px 12px 9px;margin-top:8px}
+.rq{display:flex;align-items:center;gap:10px;padding:7px 0}
+.rq + .rq{border-top:1px solid #EEF0F4}
+.rq > span:first-child{flex:1;font-size:.78rem;font-weight:700;color:var(--ink-2);line-height:1.3}
+.stp{display:inline-flex;align-items:center;border:1.5px solid #E3E6EB;border-radius:10px;overflow:hidden;background:#fff;flex:none}
+.stp button{all:unset;width:30px;height:30px;display:grid;place-items:center;font-weight:800;color:var(--ink-2);cursor:pointer}
+.stp input{width:62px;border:0;border-left:1px solid #EEF0F4;border-right:1px solid #EEF0F4;text-align:center;font:800 .78rem Inter,sans-serif;height:30px;padding:0 4px}
+.rqty small{display:block;font-size:.66rem;color:var(--muted);margin-top:5px}
+.rmore{all:unset;display:block;margin:9px auto 0;font:800 .76rem Inter,sans-serif;color:var(--ink-2);cursor:pointer;padding:6px 12px;border:1.5px solid #E3E6EB;border-radius:10px;background:#fff}
+.rinfo{margin-top:9px;background:var(--blue-bg);border:1px solid #D9E4FC;color:#2148C0;border-radius:12px;padding:10px 12px;font-size:.76rem;font-weight:700;line-height:1.45}
+.rautin{min-height:0!important;margin-top:8px}
+.dvq.on-o{border-color:var(--blue);background:var(--blue-bg);box-shadow:none}
+.dvq.on-o .ic{background:var(--blue);color:#fff}
+.dvq.on-o b{color:#2148C0}.dvq.on-o small{color:#3B5BB5}
+.sigbtn{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed #C9CDD6;background:#fff;border-radius:14px;padding:17px;font:800 .84rem Inter,sans-serif;color:var(--ink-2);cursor:pointer}
+.sigbtn svg,.obtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sigdone{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid #E7E9EF;border-radius:14px;padding:10px}
+.sigdone img{width:52%;height:84px;object-fit:contain;background:#FAFBFC;border:1px dashed #D6D9E0;border-radius:10px}
+.sigdone .sgd{flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.sigdone small{font-size:.7rem;color:var(--muted);font-weight:700}
+/* détail du rapport + reçu */
+.rdok{display:flex;align-items:center;gap:8px;background:var(--green-bg);border:1px solid #BFE5D8;color:var(--green-d);border-radius:12px;padding:10px 12px;font-size:.76rem;font-weight:800;margin:2px 0 12px}
+.rdok svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.kv{padding:8px 0}
+.kv + .kv{border-top:1px solid #F0F1F5}
+.kv small{display:block;font-size:.66rem;font-weight:700;color:var(--muted);margin-bottom:2px}
+.kv b{display:block;font-size:.8rem;font-weight:700;color:var(--ink);line-height:1.45}
+.kv em{display:block;font-style:normal;font-size:.68rem;color:var(--muted);margin-top:4px}
+.rdsig{display:block;width:100%;height:90px;object-fit:contain;background:#FAFBFC;border:1px dashed #D6D9E0;border-radius:10px;margin-top:4px}
+.rdph{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
+.rdph figure{margin:0}.rdph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.rdph figcaption{font-size:.6rem;font-weight:700;color:var(--muted);text-align:center}
+.obtn.wide{display:flex;width:100%;justify-content:center;padding:12px;font-size:.8rem;margin-bottom:9px}
+.fcph{display:block;width:120px;height:90px;object-fit:cover;border-radius:10px;margin-top:4px}
+/* devis */
+.qin{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font:600 .84rem Inter,sans-serif;background:#fff}
+.qin:focus{outline:none;border-color:var(--orange)}
+.ql{border:1px solid #E7E9EF;border-radius:14px;padding:9px 11px 10px;margin-bottom:9px;background:#FCFCFD}
+.qlh{display:flex;gap:8px;align-items:center}
+.qn{flex:1;min-width:0;border:0;border-bottom:1.5px dashed transparent;background:transparent;font:800 .84rem Inter,sans-serif;color:var(--ink);padding:4px 0;outline:none}
+.qn:focus{border-bottom-color:var(--orange)}
+.qx{border:0;background:#F3F4F6;color:var(--muted);border-radius:8px;width:26px;height:26px;cursor:pointer;flex:none;font-size:.7rem}
+.qdsc{display:block;font-size:.7rem;color:var(--muted);margin:0 0 4px}
+.qlg{display:grid;grid-template-columns:1fr .7fr 1fr;gap:7px;margin-top:6px}
+.qlg.q2{grid-template-columns:1fr 1fr}
+.qlg label small{display:block;font-size:.6rem;font-weight:700;color:var(--muted);margin-bottom:3px}
+.qlg input,.qlg select{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:7px 8px;font:700 .78rem Inter,sans-serif;background:#fff;min-width:0;color:var(--ink)}
+.qlt{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:7px;border-top:1px dashed #E3E6EB}
+.qlt small{font-size:.68rem;font-weight:700;color:var(--muted)}.qlt b{font-family:Sora;font-size:.86rem}
+.qadd{display:flex;gap:8px}.qadd .obtn{flex:1;justify-content:center;padding:10px}
+.qempty{font-size:.76rem;color:var(--muted);margin:0 0 10px}
+.qchips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.qfee{border:1.5px solid #E3E6EB;background:#fff;border-radius:10px;padding:7px 10px;font:700 .72rem Inter,sans-serif;color:var(--ink-2);cursor:pointer}
+.qfee.on{border-color:var(--green);background:#fff;color:var(--green-d)}
+.qtot .qr{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:5px 0;font-size:.78rem;font-weight:600;color:var(--ink-2)}
+.qtot .qr b{font-variant-numeric:tabular-nums;color:var(--ink)}
+.qtot .qr.sm{font-size:.72rem;color:var(--muted)}
+.qtot .qr.big{border-top:1px solid #E3E6EB;margin-top:6px;padding-top:10px;font-size:.9rem;font-weight:800;color:var(--ink)}
+.qtot .qr.big b{font-family:Sora;font-size:1.05rem}
+.qtot .qr.rm b{color:var(--green-d)}
+.lnkb{all:unset;display:block;font:800 .76rem Inter,sans-serif;color:var(--blue);cursor:pointer;padding:6px 0}
+.qrem{background:var(--green-bg);border:1px solid #BFE5D8;border-radius:12px;padding:10px 11px;margin:6px 0}
+.qremh{display:flex;align-items:center;gap:8px}
+.qremh b{flex:1;font-size:.78rem;color:var(--green-d)}
+.seg{display:inline-flex;background:#fff;border:1px solid #CFE9DD;border-radius:9px;overflow:hidden}
+.seg button{border:0;background:none;padding:5px 11px;font:800 .74rem Inter,sans-serif;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--green);color:#fff}
+.qremi{display:flex;align-items:center;gap:8px;margin:8px 0}
+.qremi input{width:80px;border:1.5px solid #CFE9DD;border-radius:9px;padding:7px 8px;font:800 .82rem Inter,sans-serif;background:#fff}
+.qremi span{font-weight:800;color:var(--green-d)}
+.qremi b{margin-left:auto;color:var(--green-d);font-size:.84rem}
+.qrem small{display:block;font-size:.66rem;color:var(--green-d);margin-top:6px;font-weight:600}
+.qph{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}
+.qphi{position:relative;display:block}
+.qphi img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px}
+.qphi button{position:absolute;top:4px;right:4px;border:0;background:rgba(16,17,20,.6);color:#fff;border-radius:7px;width:22px;height:22px;font-size:.62rem;cursor:pointer}
+.rfac2{font-weight:600;text-transform:none;letter-spacing:0;color:#A6ABBB;margin-left:4px}
+.blcats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 12px;padding:0 16px 2px}
+.blcats::-webkit-scrollbar{display:none}
+.blcats .fchip{flex:none;white-space:nowrap}
+.blg{margin-bottom:12px}
+.blgh{display:flex;align-items:center;gap:7px;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:4px 2px 8px}
+.blgh .lcnt{margin-left:auto}
+.bl .bp{font-size:.8rem;white-space:nowrap}
+.bl.on{border-color:var(--green);background:var(--green-bg)}
+.bl.on .bck{background:var(--green);border-color:var(--green)}
+.blfoot{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E7E9EF;border-radius:14px;padding:9px 9px 9px 14px;box-shadow:0 6px 18px -10px rgba(0,0,0,.25)}
+.blfoot > span{flex:1}.blfoot b{display:block;font-size:.8rem}.blfoot small{font-size:.7rem;color:var(--muted);font-weight:700}
+.blfoot .bo{width:auto;padding:12px 16px;font-size:.82rem}
+.dvcli{display:flex;align-items:center;gap:11px}
+.dvcli .cav{width:40px;height:40px;border-radius:50%;background:#EEF0F3;display:grid;place-items:center;font-weight:800;font-size:.8rem;color:var(--ink-2);flex:none}
+.dvc2{flex:1;min-width:0}.dvc2 b{display:block;font-size:.86rem}.dvc2 small{font-size:.7rem;color:var(--muted);font-weight:600}
+.dvst{font-size:.62rem;font-weight:800;padding:4px 8px;border-radius:8px;white-space:nowrap}
+.dvst.b{background:var(--blue-bg);color:var(--blue)}.dvst.a{background:var(--amber-bg);color:var(--amber)}.dvst.g{background:var(--green-bg);color:var(--green-d)}
+.dvl{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 0}
+.dvl + .dvl{border-top:1px solid #F0F1F5}
+.dvl span b{display:block;font-size:.8rem}.dvl span small{font-size:.68rem;color:var(--muted)}
+.dvl > b{font-size:.82rem;white-space:nowrap}
+.dvtit{font-size:.86rem}
+.dvnote{font-size:.78rem;color:var(--ink-2);margin:0;white-space:pre-wrap}
+.sgat{display:block;font-style:normal;font-size:.68rem;color:var(--muted);margin-top:4px}
+.dvch{margin:4px 0 20px}
+.cd.mlc{padding:12px 14px}
+.mlf{display:block;margin-bottom:10px}
+.mlf small{display:block;font-size:.64rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.mlf input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;font:600 .82rem Inter,sans-serif}
+.mlf textarea{min-height:200px;font-size:.8rem;line-height:1.5}
+.mlatt{display:flex;align-items:center;gap:8px;background:#F6F7F9;border-radius:10px;padding:9px 11px;font-size:.76rem;font-weight:700;color:var(--ink-2)}
+.mlatt svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex:none}
+.mlchk{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;color:var(--ink-2);margin-top:10px}
+.mlchk input{width:17px;height:17px;accent-color:var(--green)}
+.bo svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bo svg.fillsvg{fill:currentColor;stroke:none}
+</style>
+<style>
+/* 07/10 — corrections après relecture du parcours complet */
+.ctah .lcnt{display:inline-grid;vertical-align:middle;margin-left:6px}
+.qrbox svg,.qrbox svg *{stroke:none!important}
+.chrono.off,.homechrono.off{background:#F3F5F7!important;border-color:#E3E6EB!important;color:#3D4452!important}
+.chrono.off b,.homechrono.off b{font-weight:800}
+.chrono .cok,.homechrono .cok{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#E3F5EC;color:#0E7A54;font-size:.62rem;font-weight:900;margin-right:2px}
+#s-atelier .rctx{margin:0 0 12px}
+#s-atelier .rctx .rmeta{flex-basis:100%}
+</style>
 </body>
 </html>
