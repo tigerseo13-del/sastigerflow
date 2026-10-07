@@ -382,6 +382,27 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .agl i{font-style:normal;font-size:.68rem;font-weight:700;opacity:.95;line-height:1.2}
 .agl .cp{margin-top:3px;font-size:.63rem;font-weight:800;font-variant-numeric:tabular-nums;opacity:.88;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+/* 07/10 (patron : « Choisy-le-Roi s'affiche mal ») — la ville ne tient pas sur
+   une ligne de 67 px. Le CP garde sa ligne ; la ville passe DESSOUS, en
+   minuscules, coupée SEULEMENT aux tirets et aux espaces (jamais au milieu
+   d'un mot), jusqu'à 3 lignes ; les « … » seulement si c'est encore trop long. */
+.agl .cp.cpv{white-space:normal;overflow:visible;text-overflow:clip}
+.agl .cp .z{display:block}
+.agl .cp .v{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+  font-weight:700;line-height:1.25;margin-top:1px;word-break:normal;overflow-wrap:normal;hyphens:manual}
+/* 07/10 (patron : « mets l'heure comme eux ») — comme la carte de Saigon : le CP
+   en gros en haut, la ville dessous, et le créneau + la date dans une petite
+   cartouche blanche en bas de la colonne. La durée n'est plus écrite : le
+   créneau la dit (11:30–12:30). */
+.agl{width:94px;padding:11px 8px 10px 10px}
+.agl .cp.cpv{margin-top:0;margin-bottom:8px;opacity:1}
+.agl .cp.cpv .z{font-family:'Sora',Inter,sans-serif;font-size:1.16rem;font-weight:800;line-height:1.05;letter-spacing:-.01em}
+.agl .cp.cpv .v{font-size:.72rem;margin-top:3px}
+.aghb{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:1px;background:#fff;
+  border:1px solid #E3E6EB;border:1px solid color-mix(in srgb,var(--evc) 25%,#fff);border-radius:9px;padding:4px 3px;
+  font-variant-numeric:tabular-nums;line-height:1.25;text-align:center}
+.aghb .ph{font-size:.62rem;font-weight:700;white-space:nowrap}
+.aghb .pd{font-size:.62rem;font-weight:600;white-space:nowrap;opacity:.9}
 .agr{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;padding:10px 11px 8px 12px}
 .agr1{display:flex;align-items:center;gap:8px;min-width:0}
 .agr1 .em{font-size:.95rem;line-height:1;flex:none}
@@ -399,6 +420,7 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .agr3 .who{flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* l'adresse de rue : le bloc de gauche est trop étroit pour elle, et le
    technicien conduit vers une rue — pas vers un code postal. */
+.agcli{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agrue{display:block;font-size:.68rem;font-weight:600;color:var(--muted);margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agr3 .who svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;flex:none;opacity:.7}
@@ -1360,6 +1382,28 @@ function rhome(){
 }
 
 /* ---------- liste ---------- */
+/* 07/10 — le créneau « 11:30–12:30 » = début + durée (« 1h00 », « 1h15 », « 45min ») */
+function plageH(h, dur){
+  if(!h) return "";
+  const p = String(h).split(":"), d0 = (+p[0] || 0) * 60 + (+p[1] || 0);
+  const m1 = String(dur || "").match(/(\d+)\s*h\s*(\d*)/i), m2 = String(dur || "").match(/(\d+)\s*min/i);
+  const dm = m1 ? (+m1[1]) * 60 + (+m1[2] || 0) : (m2 ? +m2[1] : 0);
+  if(!dm) return h;
+  const f = d0 + dm;
+  return h + "\u2013" + String(Math.floor(f / 60) % 24).padStart(2, "0") + ":" + String(f % 60).padStart(2, "0");
+}
+/* la date de l'intervention (celles du jour n'en portent pas : aujourd'hui) */
+function dateFr(m){
+  const d = m && m.date ? new Date(m.date + "T12:00:00") : new Date();
+  return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+}
+/* 07/10 — « 94600 Choisy-le-Roi » → CP sur une ligne, ville dessous (voir CSS .cpv) */
+function cpVille(v){
+  const t = String(v || "").trim();
+  const mm = t.match(/^(\d{4,5})\s+(.+)$/);
+  return mm ? `<span class="cp cpv"><span class="z">${mm[1]}</span><span class="v">${mm[2]}</span></span>`
+            : `<span class="cp cpv"><span class="v">${t}</span></span>`;
+}
 function mcard(m){
   const done = m.st === "done", enc = m.st === "encours", wait = m.st === "wait";
   const T = ITYPES[m.itype] || ITYPES.devis;
@@ -1382,12 +1426,12 @@ function mcard(m){
         <span class="agac" onclick="navC(M[${m.id}],event)" aria-label="Itinéraire"><svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8z"/></svg></span>
       </span>`;
   return `<div class="ag ${cls}" onclick="openM(${m.id})">
-    <div class="agl"><b>${m.h}</b><i>${m.dur}</i><span class="cp">${m.ville}</span></div>
+    <div class="agl">${cpVille(m.ville)}<span class="aghb"><span class="ph">${plageH(m.h, m.dur)}</span><span class="pd">${dateFr(m)}</span></span></div>
     <div class="agr">
       <div class="agr1"><span class="em">${emo}</span><span class="ti">${nuis}</span>
         <span class="agchk" onclick="event.stopPropagation();openM(${m.id})" title="Ouvrir pour clôturer">\u2713</span></div>
       <div class="agr2"><span class="itchip ${T.cls}">${T.lbl}${amt}</span>${pri}${att}</div>
-      <div class="agr3"><span class="who"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="min-width:0;overflow:hidden">${m.client}<span class="agrue">${m.adr || ""}</span></span></span>${acts}</div>
+      <div class="agr3"><span class="who"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="min-width:0;overflow:hidden"><span class="agcli">${m.client}</span><span class="agrue">${m.adr || ""}</span></span></span>${acts}</div>
       ${prog}
     </div>
   </div>`;
@@ -2086,7 +2130,7 @@ function rrap(){
   const rctx = m.client ? `<div class="rctx">
     ${typeof itchip === "function" && m.itype ? itchip(m) : ""}
     <span class="rcli">${m.client}</span>
-    <span class="rmeta">${(m.nuis || []).join(" · ")}${m.h ? " · " + m.h : ""}${m.ville ? " · " + m.ville.split(" ").slice(-1) : ""}</span>
+    <span class="rmeta">${(m.nuis || []).join(" · ")}${m.h ? " · " + m.h : ""}${m.ville ? " · " + String(m.ville).replace(/^\d{4,5}\s+/, "") : ""}</span>
   </div>` : "";
   const devban = m.devout
     ? `<div class="devban">${m.devout === "email"
