@@ -653,6 +653,12 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
   <section class="sec" id="s-abonnement">
     <div class="ph"><div><h1>Abonnement</h1></div></div>
     <!-- 06/10 (patron : « c'est le bordel », proposition A) : deux colonnes, sans onglets -->
+    <div class="kgrid" id="abo-kg">
+      <a class="kt blue" href="#utilisateurs"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4a3.5 3.5 0 0 1 0 7M21.5 20c-.5-2.5-2-4.3-4.5-5"/></svg>Places</div><b id="k-tr">—</b><div class="ks" id="k-tr-s">—</div><span class="go">Utilisateurs →</span></a>
+      <a class="kt green" href="#abonnement" onclick="openTab('abo','factures');return false"><div class="kl"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>Montant</div><b id="k-amt">—</b><div class="ks" id="k-amt-s">—</div><span class="go">Factures →</span></a>
+      <a class="kt orange" href="#abonnement" onclick="openTab('abo','paiement');return false"><div class="kl"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span id="k-nx-l">Prélèvement</span></div><b id="k-nx">—</b><div class="ks" id="k-nx-s">—</div><span class="go">Carte →</span></a>
+      <a class="kt red" href="#abonnement" id="k-eco-kt" onclick="setBill(S.bill === 'a' ? 'm' : 'a');return false"><div class="kl"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 6.5H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H7"/></svg><span id="k-eco-l">Annuel</span></div><b id="k-eco">—</b><div class="ks" id="k-eco-s">—</div><span class="go" id="k-eco-go">Passer en annuel →</span></a>
+    </div>
     <div class="abo2" id="abo2">
       <div class="card plan">
         <div class="phead"><div><b id="a-tr">—</b><small id="a-m">—</small><div class="pbar2" id="a-bar"></div></div>
@@ -953,7 +959,7 @@ document.addEventListener("keydown", e => { if(e.key === "/" && !/input|textarea
 document.addEventListener("click", e => { if(!e.target.closest(".gswrap")) document.getElementById("gsres").classList.remove("on"); });
 function openTab(g, t){
   if(g === "soc"){ const p = document.querySelector('[data-tp="soc-' + t + '"]'); if(p) setTimeout(() => p.scrollIntoView({ behavior:"smooth", block:"start" }), 50); return; }
-  if(g === "abo"){ const a2 = document.getElementById("abo2"), rl = document.getElementById("resil-lk"); if(a2) a2.style.display = t === "tranches" ? "" : "none"; if(rl) rl.style.display = t === "tranches" ? "" : "none"; if(t !== "tranches") document.querySelectorAll('[data-tp^="abo-"]').forEach(p => p.classList.toggle("on", p.dataset.tp === "abo-" + t)); else document.querySelectorAll('[data-tp^="abo-"]').forEach(p => p.classList.remove("on")); return; }
+  if(g === "abo"){ const a2 = document.getElementById("abo2"), rl = document.getElementById("resil-lk"); if(a2) a2.style.display = t === "tranches" ? "" : "none"; const kg = document.getElementById("abo-kg"); if(kg) kg.style.display = t === "tranches" ? "" : "none"; if(rl) rl.style.display = t === "tranches" ? "" : "none"; if(t !== "tranches") document.querySelectorAll('[data-tp^="abo-"]').forEach(p => p.classList.toggle("on", p.dataset.tp === "abo-" + t)); else document.querySelectorAll('[data-tp^="abo-"]').forEach(p => p.classList.remove("on")); return; }
   document.querySelectorAll('[data-tabs="' + g + '"] button').forEach(b => b.classList.toggle("on", b.dataset.t === t));
   document.querySelectorAll('[data-tp^="' + g + '-"]').forEach(p => p.classList.toggle("on", p.dataset.tp === g + "-" + t));
 }
@@ -1159,6 +1165,12 @@ function drawAbo(){
   document.getElementById("a-nx").textContent = fdate(nx);
   { const c = S.cards.find(x => x.def); document.getElementById("a-nx-c").innerHTML = c ? (S.impaye ? '<span style="color:var(--red)">Visa •••• ' + c.fin + ' · refusée</span>' : "Visa •••• " + c.fin) : '<span style="color:var(--amber)">Aucune carte enregistrée</span>'; }
   document.getElementById("r-end").textContent = fdate(nx);
+  { const eco = (seatCost(n, "m") - seatCost(n, "a")) * 12, set = (id, v) => { const e = document.getElementById(id); if(e) e.innerHTML = v; };
+    set("k-tr", n); set("k-tr-s", seatBreak(n) + " · " + (S.bill === "a" ? "annuel" : "mensuel"));
+    set("k-amt", eur0(ht()) + " HT"); set("k-amt-s", (S.bill === "a" ? "par an" : "par mois") + " · TVA autoliquidée");
+    set("k-nx-l", enEssai() ? "Fin de l'essai" : "Prélèvement"); set("k-nx", nx.getDate() + (nx.getDate() === 1 ? "ᵉʳ" : "") + " " + ["janv.","fév.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."][nx.getMonth()] + " " + nx.getFullYear()); const c = S.cards.find(x => x.def); set("k-nx-s", c ? "Visa •••• " + c.fin : '<span style="color:var(--amber)">Aucune carte</span>');
+    const kt = document.getElementById("k-eco-kt"); if(kt){ kt.className = "kt " + (S.bill === "a" ? "green" : "red"); }
+    set("k-eco-l", S.bill === "a" ? "Annuel · actif" : "Annuel"); set("k-eco", (S.bill === "a" ? "" : "−") + eur0(eco)); set("k-eco-s", S.bill === "a" ? "économisés par an" : "par an si vous passez en annuel"); set("k-eco-go", S.bill === "a" ? "Repasser en mensuel →" : "Passer en annuel →"); }
   document.getElementById("tiers").innerHTML = TR.map(x => { const on = x === t; return '<div class="tr2' + (on ? " on" : "") + '"><span class="n">' + (x.max > 100 ? '11ᵉ place et +' : 'Places ' + x.lab) + (on ? ' <span class="pill g">Vous êtes ici</span>' : '') + '</span><span class="p">' + x[S.bill] + ' € <small>/ place / mois</small></span><span class="s">' + IC.ok + x.sup + '</span><span class="e">' + (on ? seatBreak(n) + ' = ' + eur0(seatCost(n)) + (S.bill === "a" ? " / mois, facturé à l'année" : "") : (x.min > n ? "dès votre " + x.min + "ᵉ place" : "vos " + x.max + " premières places")) + '</span></div>'; }).join("");
   const now = new Date(); const rows = [];
   for(let k = 1; k <= 4; k++){ const d = new Date(now.getFullYear(), now.getMonth() - k + 1, 1); rows.push({ d, no:"TF-" + d.getFullYear() + "-" + String(12 - k).padStart(4, "0"), n: k === 1 ? n : Math.max(1, n - (k > 2 ? 1 : 0)) }); }

@@ -386,8 +386,11 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
     <p class="sub" style="margin-bottom:0">On vient d'envoyer un lien de confirmation à</p>
     <div class="to" id="mail-to">—</div>
     <div class="boxinfo">Cliquez sur le lien de l'e-mail pour activer votre compte et choisir votre formule. Rien reçu ? Regardez dans les spams.</div>
-    <button class="ghost" onclick="renvoyer()"><svg class="i" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>Renvoyer l'e-mail</button>
-    <p class="alt">Mauvaise adresse ? <a href="#compte">Revenir</a></p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <a class="go auto" id="openmail" href="#" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;width:auto;padding:13px 26px">Ouvrir ma boîte mail <svg class="i" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></svg></a>
+      <button class="ghost" onclick="renvoyer()"><svg class="i" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg>Renvoyer l'e-mail</button>
+    </div>
+    <p class="alt" style="margin-top:22px">Mauvaise adresse ? <a href="#compte">Revenir</a></p>
     <div class="msg" id="msg-email"></div>
     <p class="alt" style="margin-top:34px;padding-top:22px;border-top:1px solid var(--line)">Déjà confirmé dans un autre onglet ? <a href="#formule" onclick="go('formule');return false">Continuer</a></p>
   </div>
@@ -581,7 +584,9 @@ function render(){
   [1,2,3].forEach(k => { const e = document.getElementById("st" + k);
     e.classList.toggle("on", k - 1 === i); e.classList.toggle("done", k - 1 < i);
     e.querySelector("i").innerHTML = (k - 1 < i) ? '<svg class="i" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>' : k + 2; });
-  if(id === "email") document.getElementById("mail-to").textContent = T.email || "—";
+  if(id === "email"){ document.getElementById("mail-to").textContent = T.email || "—";
+    const d = ((T.email || "").split("@")[1] || "").toLowerCase(), MB = { "gmail.com":"https://mail.google.com", "googlemail.com":"https://mail.google.com", "outlook.com":"https://outlook.live.com", "outlook.fr":"https://outlook.live.com", "hotmail.com":"https://outlook.live.com", "hotmail.fr":"https://outlook.live.com", "live.fr":"https://outlook.live.com", "yahoo.fr":"https://mail.yahoo.com", "yahoo.com":"https://mail.yahoo.com", "orange.fr":"https://messagerie.orange.fr", "wanadoo.fr":"https://messagerie.orange.fr", "free.fr":"https://zimbra.free.fr", "sfr.fr":"https://webmail.sfr.fr", "laposte.net":"https://www.laposte.net/accueil", "icloud.com":"https://www.icloud.com/mail" };
+    const om = document.getElementById("openmail"); om.href = MB[d] || "https://" + (d || "mail.google.com"); }
   if(id === "formule") drawTiers();
   if(id === "paiement") fillPaiement();
   if(id === "confirmation") fillConf();
