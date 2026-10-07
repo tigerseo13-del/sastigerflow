@@ -780,7 +780,7 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .tl.c-b b,.tl.c-o b,.tl.c-g b{color:var(--ink)}
 .pav{box-shadow:0 0 0 2.5px #fff,0 0 0 5px var(--orange)}
 #s-enc .fh,#s-rapport .fh,#s-sign .fh,#s-atelier .fh{margin:-10px -16px 14px;padding:12px 16px}
-#s-enc .fh{background:transparent}#s-enc .fh b{color:var(--ink)}   /* 07/10 : en-tête neutre comme les autres écrans */
+#s-enc .fh{background:var(--green-bg)}#s-enc .fh b{color:var(--green-d)}   /* 07/10 (patron, Figma « Payment ») : l’écran de l’argent garde son bandeau vert */
 #s-rapport .fh{background:transparent}#s-rapport .fh b{color:var(--ink)}   /* 07/10 : plus d’orange dans l’en-tête — l’orange = « Envoyer le rapport » */
 #s-atelier .fh{background:transparent}#s-atelier .fh b{color:var(--ink)}
 #s-sign .fh{background:var(--blue-bg)}#s-sign .fh b{color:var(--blue)}
@@ -1206,6 +1206,7 @@ try{
       <span style="width:40px"></span>
     </div>
     <div class="encx"><b id="enc-cli">—</b><small id="enc-sub">Le travail est fait, le client est devant toi.</small></div>
+    <div id="enc-ch"></div>
     <div id="enc-sig"></div>
     <div class="cd encc">
       <div class="elab" style="margin-top:0">Combien ?</div>
@@ -1620,6 +1621,7 @@ function go(k){
   const _t = document.getElementById("toast");
   if(_t){ _t.classList.remove("show"); clearTimeout(_t._h); }
   g("app").scrollTop = 0;
+  const sw = document.querySelector(".screenwrap"); if(sw) sw.setAttribute("data-scr", k);   /* 07/10 : la barre d'état prend la couleur du bandeau (Encaissement) */
   renderAll();
 }
 let TT = null;
@@ -2293,7 +2295,7 @@ function idCard(m, plain){
     <div class="idtop">${badge}${m.prio === "HAUTE" && m.st !== "done" && m.st !== "annulee" ? `<span class="stb r">URGENT</span>` : ""}</div>
     <div class="dtitle">${m.client}</div>
     <div class="dadr"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg>${m.adr}, ${m.ville}</div>
-    ${!plain && m.st === "encours" && m.debut ? (chOff(m) != null ? chOffHTML(m, "chrono fdet") : `<div class="chrono fdet" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis&nbsp;<b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>`) : ""}
+    ${!plain && m.st === "encours" && m.debut ? (chOff(m) != null ? chOffHTML(m, "chrono fdet", true) : `<div class="chrono fdet" data-debut="${m.debut}"><span class="cdot"></span>Sur place depuis&nbsp;<b class="ctick">${chronoTxt(Date.now() - m.debut)}</b></div>`) : ""}
     <div class="dchips">${itchip(m)}${m.nuis.map(chip).join("")}</div>
     ${desc ? `<div class="itrow"><small>${desc}</small></div>` : ""}
     <div class="i3">
@@ -2389,16 +2391,14 @@ function ctaOf(m){
 }
 /* ---------- 07/10 (Figma « Stop modal ») : clôturer arrête le chrono, après confirmation ---------- */
 function stopAsk(id, what){
-  const fin = () => {
-    chStop(id);
-    const m = M[id]; if(m && m.debut && !m.fin) m.fin = Date.now();
-    doFin(id, what);
-  };
-  if(chGet(id) && !chStopped(id)){
-    mdl({ic:"stop", h:"Arrêter le chrono ?", row:true,
-      t:"Ça arrête le temps de travail de cette intervention — sur place depuis " + chHuman(chElapsed(id)) + ". On continue ?",
-      btns:[{l:"Annuler"}, {l:"Oui, arrêter", p:1, fn:fin}]});
-  } else doFin(id, what);
+  /* 07/10 (patron : « ça rend fou ») — plus de fenêtre « Arrêter le chrono ? » :
+     appuyer sur « Encaisser » ou « Faire le rapport », c'est avoir fini. Le chrono
+     s'arrête tout seul ; l'écran suivant le dit (« Chrono arrêté · 47 min — Reprendre »)
+     et s'il revient en arrière sans encaisser, le chrono repart (encBack). */
+  const m = M[id];
+  if(chGet(id) && !chStopped(id)){ chStop(id); if(m) m.chAuto = true; }
+  if(m && m.debut && !m.fin) m.fin = Date.now();
+  doFin(id, what);
 }
 function doFin(id, what){
   const m = M[id]; if(!m) return;
@@ -2437,7 +2437,7 @@ function chGet(id){ return chAll()[chKey(id)]; }
 function chElapsed(id){ const c = chGet(id); return c ? Math.max(0, Math.floor(((c.stop || Date.now()) - c.t0) / 1000)) : 0; }
 function chStopped(id){ const c = chGet(id); return !!(c && c.stop); }
 function chStop(id){ const a = chAll(), c = a[chKey(id)]; if(!c || c.stop) return; c.stop = Date.now(); chSave(a); if(typeof RAPD !== "undefined" && RAPD) RAPD.tps = chElapsed(id); if(M[id]) M[id].tps = chElapsed(id); }
-function chResume(id){ const a = chAll(), c = a[chKey(id)]; if(!c || !c.stop) return; c.t0 += Date.now() - c.stop; c.stop = null; chSave(a); }
+function chResume(id){ const a = chAll(), c = a[chKey(id)]; if(!c || !c.stop) return; c.t0 += Date.now() - c.stop; c.stop = null; chSave(a); if(M[id]){ delete M[id].fin; delete M[id].chAuto; } }
 const chFmt = s => { const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h ? h + ":" + String(m).padStart(2,"0") : String(m).padStart(2,"0")) + ":" + String(x).padStart(2,"0"); };
 const chHuman = s => { const h = Math.floor(s/3600), m = Math.round(s%3600/60); return h ? h + " h " + String(m).padStart(2,"0") : m + " min"; };
 setInterval(() => { document.querySelectorAll("[data-chrono]").forEach(e => { const cid = +e.getAttribute("data-chrono"); if(!chStopped(cid)) e.textContent = chFmt(chElapsed(cid)); }); }, 1000);
@@ -2448,7 +2448,7 @@ function chOff(m){
   if(m.fin) return Math.max(0, Math.floor((m.fin - m.debut) / 1000));
   return chStopped(m.id) ? chElapsed(m.id) : null;
 }
-function chOffHTML(m, cls){ return `<div class="${cls} off"><span class="cok">✓</span>Chrono arrêté ·&nbsp;<b>${chHuman(chOff(m))} sur place</b></div>`; }
+function chOffHTML(m, cls, rep){ return `<div class="${cls} off"><span class="cok">✓</span>Chrono arrêté ·&nbsp;<b>${chHuman(chOff(m))}${rep ? "" : " sur place"}</b>${rep ? `<button type="button" class="chrp" onclick="event.stopPropagation();chResume(${m.id});toast('Le chrono repart');rdetail()">Reprendre</button>` : ""}</div>`; }
 function chHTML(id){
   return chStopped(id)
     ? `<span class="chok">✓ ${chHuman(chElapsed(id))} sur place</span><button class="chr" onclick="rapKeep();chResume(${id});rrap()">▶ Reprendre</button>`
@@ -2484,12 +2484,12 @@ function devisOui(did){
 const MODEP = {"QR code":"par QR code", "Carte":"par carte", "Espèces":"en espèces", "Chèque":"par chèque", "Virement":"par virement"};
 const modeP = k => MODEP[k] || ("par " + String(k || "").toLowerCase());          /* « reçus par chèque », « reçus en espèces » */
 const modeL = k => k === "QR code" ? "QR code" : String(k || "").toLowerCase();   /* « 260,00 € · chèque » */
-const PMODES = [
-  {k:"QR code", s:"lien de paiement", ic:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/></svg>'},
-  {k:"Carte", s:"terminal", ic:'<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>'},
-  {k:"Espèces", s:"", ic:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></svg>'},
-  {k:"Chèque", s:"", ic:'<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 14c1.5-2 3-2 4 0s2.5 2 4 0M15 10h4"/></svg>'},
-  {k:"Virement", s:"", ic:'<svg viewBox="0 0 24 24"><path d="M3 10L12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>'}
+const PMODES = [   /* 07/10 (patron : « chez eux c'est en couleur ») — chaque moyen a sa couleur, icône bicolore */
+  {k:"QR code", c:"qr", s:"lien de paiement", ic:'<svg viewBox="0 0 24 24"><rect class="f" x="3" y="3" width="7" height="7" rx="1.5"/><rect class="f" x="14" y="3" width="7" height="7" rx="1.5"/><rect class="f" x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/></svg>'},
+  {k:"Carte", c:"carte", s:"terminal", ic:'<svg viewBox="0 0 24 24"><rect class="f" x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20M6 15h4"/></svg>'},
+  {k:"Espèces", c:"esp", s:"", ic:'<svg viewBox="0 0 24 24"><rect class="f" x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></svg>'},
+  {k:"Chèque", c:"chq", s:"", ic:'<svg viewBox="0 0 24 24"><rect class="f" x="2" y="6" width="20" height="12" rx="2"/><path d="M6 14c1.5-2 3-2 4 0s2.5 2 4 0M15 10h4"/></svg>'},
+  {k:"Virement", c:"vir", s:"", ic:'<svg viewBox="0 0 24 24"><path class="f" d="M3 10L12 4l9 6z"/><path d="M3 10L12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>'}
 ];
 let PART = 1, ENCM = null, ENCPH = null;
 function renc(){
@@ -2500,6 +2500,8 @@ function renc(){
   const dd = ENCTX.did ? DEVIS.find(x => x.id === ENCTX.did) : null;
   g("enc-cli").textContent = m ? m.client : (dd ? dd.client : "Client");
   g("enc-sub").textContent = dvk ? "Le client vient de signer le devis " + m.dv.ref + " — " + EUR(m.dv.ttc) + " TTC." : "Le travail est fait, le client est devant toi.";
+  g("enc-ch").innerHTML = ENCTX.kind === "trait" && m && chStopped(m.id)
+    ? `<div class="encch"><span class="cok">✓</span><span class="et">Chrono arrêté ·&nbsp;<b>${chHuman(chElapsed(m.id))} sur place</b></span><button type="button" onclick="encBack()">Reprendre</button></div>` : "";
   g("enc-sig").innerHTML = dvk && m.dv.sign && m.dv.sign.src
     ? `<div class="cd encsig"><div class="elab" style="margin-top:0">Signature du client</div><img src="${m.dv.sign.src}" alt="Signature du client"><small>Signé le ${m.dv.sign.at}</small></div>` : "";
   document.querySelectorAll("#enc-part .pill").forEach((p, i) => p.classList.toggle("on", i === 0));
@@ -2520,7 +2522,7 @@ function encRecalc(){
 }
 function encBtnState(){ const b = g("enc-go"); if(b) b.disabled = !(encVal() > 0 && ENCM); }
 function encModes(){
-  g("enc-modes").innerHTML = PMODES.map(p => `<button type="button" class="pill ${ENCM === p.k ? "on" : ""}" onclick="encMode('${p.k}')"><span class="pico">${p.ic}</span><span class="pml">${p.k}${p.s ? `<small>${p.s}</small>` : ""}</span></button>`).join("");
+  g("enc-modes").innerHTML = PMODES.map(p => `<button type="button" class="pill pm-${p.c} ${ENCM === p.k ? "on" : ""}" onclick="encMode('${p.k}')"><span class="pico">${p.ic}</span><span class="pml">${p.k}${p.s ? `<small>${p.s}</small>` : ""}</span></button>`).join("");
 }
 function encMode(k){ ENCM = k; encModes(); encBtnState(); }
 function encPay(el){ encMode(el && el.dataset ? el.dataset.m : "Carte"); }
@@ -2530,6 +2532,8 @@ function encPhPaint(){
 }
 function encBack(){
   const mid = ENCTX ? ENCTX.mid : null;
+  const mb = mid != null ? M[mid] : null;
+  if(ENCTX && ENCTX.kind === "trait" && mb && mb.chAuto && !mb.pay){ chResume(mid); toast("Le chrono repart"); }   /* pas encaissé : il n'a pas fini */
   ENCTX = null;
   if(mid != null) openM(mid); else go("devis");
 }
@@ -4284,6 +4288,26 @@ button.bill{cursor:pointer}
 .qacard .qa{gap:5px;padding:8px 10px 8px 9px;min-height:38px;box-sizing:border-box;font-size:.75rem}   /* tient à 3 par ligne dès 360 px de large */
 .qacard .qa .qi{width:auto;height:auto;border-radius:0;background:none!important}
 .qacard .qa .qi svg{width:15px;height:15px}
+</style>
+<style>
+/* 07/10 — Encaissement en couleur (patron : « chez eux c'est en couleur, chez toi noir et blanc ») */
+.screenwrap[data-scr="enc"] .sbar{background:var(--green-bg)}
+#s-enc .elab::before{content:"";display:inline-block;width:3.5px;height:12px;border-radius:3px;background:var(--orange);margin-right:7px;vertical-align:-1.5px}   /* liseré de section, comme le rapport */
+#enc-modes .pill .pico{color:var(--pmc,#3D4452)}
+#enc-modes .pill .pico svg{width:23px;height:23px;stroke-width:1.9}
+#enc-modes .pill .pico svg .f{fill:currentColor;fill-opacity:.16}
+#enc-modes .pm-qr{--pmc:#2E5CE6}
+#enc-modes .pm-carte{--pmc:#6D3BC4}
+#enc-modes .pm-esp{--pmc:#0E8A5F}
+#enc-modes .pm-chq{--pmc:#B45309}
+#enc-modes .pm-vir{--pmc:#0F6E8C}
+/* chrono arrêté tout seul : la ligne du haut de l'Encaissement, et « Reprendre » sur la fiche */
+.encch{display:flex;align-items:center;gap:8px;background:#F3F5F7;border:1px solid #E3E6EB;border-radius:12px;padding:9px 12px;margin:-4px 0 12px;font-size:.78rem;font-weight:700;color:#3D4452}
+.encch .et{flex:1;min-width:0}
+.encch .cok{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#E3F5EC;color:#0E7A54;font-size:.66rem;font-weight:900;flex:none}
+.encch button{all:unset;cursor:pointer;font:800 .78rem Inter,sans-serif;color:var(--ink-btn,#1F2430);text-decoration:underline;text-underline-offset:3px;padding:6px 2px}
+.chrono.off{white-space:nowrap}
+.chrono .chrp{all:unset;cursor:pointer;margin-left:8px;font:800 .74rem Inter,sans-serif;color:var(--ink-btn,#1F2430);text-decoration:underline;text-underline-offset:3px}
 </style>
 </body>
 </html>
