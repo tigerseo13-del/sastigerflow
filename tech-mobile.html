@@ -1224,7 +1224,7 @@ try{
       <div id="enc-ph"></div>
     </div>
     <button class="fbig ghost" id="enc-later" onclick="encLater()"></button>
-    <div class="cta"><div class="rapnavrow"><button type="button" class="bprev" onclick="encBack()">Annuler</button><button class="bo" id="enc-go" style="flex:1" disabled onclick="encSave()">Enregistrer le paiement</button></div></div>
+    <div class="cta"><button class="bo" id="enc-go" disabled onclick="encSave()">Enregistrer le paiement</button><button type="button" class="lnk" onclick="encBack()">Annuler</button></div>
   </section>
 
   <!-- ============ RAPPORT ============ -->
@@ -1250,7 +1250,7 @@ try{
       <p id="ok-t">Le bureau voit tout en temps réel.</p>
       <div id="ok-next"></div>
       <button class="bo" id="ok-doc" style="max-width:240px;margin:0 auto 10px;background:#fff;color:var(--ink);border:1.5px solid var(--line);box-shadow:none;display:none">📄 Voir le rapport client</button>
-      <button class="bo" onclick="go('home')" style="max-width:240px;margin:0 auto">Retour à l&rsquo;accueil</button>
+      <button class="bo k" onclick="go('home')" style="max-width:240px;margin:0 auto">Retour à l&rsquo;accueil</button>
     </div>
   </section>
 
@@ -1293,7 +1293,7 @@ try{
       <div class="fltc" id="flt-cren"></div>
       <div class="fltl">Nuisibles</div>
       <div class="fltc" id="flt-nuis"></div>
-      <div class="fltf"><button class="fltr" onclick="fltReset()">↺ Réinitialiser</button><button class="bo" onclick="fltApply()">Appliquer</button></div>
+      <div class="fltf navc"><button type="button" class="tl" onclick="fltReset()">↺ Réinitialiser</button><button class="bo k mini" onclick="fltApply()">Appliquer</button></div>
     </div>
   </div>
   <div class="sheet mid" id="logoutsheet" onclick="if(event.target===this)logoutClose()">
@@ -1312,7 +1312,7 @@ try{
       <div class="imptype" onclick="impPick(this,'Client absent')"><span class="ri" style="background:var(--red-bg);color:var(--red)"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8.5 11a4 4 0 100-8 4 4 0 000 8zM18 8l4 4M22 8l-4 4"/></svg></span><span><b>Client absent</b><small>personne sur place — le bureau appelle et me dit</small></span><span class="impchk"></span></div>
       <div class="imptype" onclick="impPick(this,'Problème sur place')"><span class="ri" style="background:var(--orange-soft);color:var(--orange-deep)"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0zM12 9v4M12 17h.01"/></svg></span><span><b>Problème sur place</b><small>accès impossible, situation plus grave que prévu…</small></span><span class="impchk"></span></div>
       <textarea id="imp-note" class="rta" placeholder="Un mot pour le bureau (facultatif)"></textarea>
-      <button class="bo" id="imp-go" disabled onclick="impSend()">Prévenir le bureau</button>
+      <button class="bo k" id="imp-go" disabled onclick="impSend()">Prévenir le bureau</button>
       <button class="lnk" onclick="impClose()">Annuler</button>
     </div>
   </div>
@@ -1598,7 +1598,7 @@ function billRow(cls, ic, t, s, fn){
     : `<div class="bill ${cls}"><span class="bic2">${ic}</span><span class="bt"><b>${t}</b>${s ? `<small>${s}</small>` : ""}</span></div>`;
 }
 function fbtn(fn, ic, t, s, ghost){
-  return `<button class="fbig${ghost ? " ghost" : ""}" onclick="${fn}"><span class="fic">${ic}</span><span class="ftx"><b>${t}</b><small>${s}</small></span><span class="fchv">›</span></button>`;
+  return `<button class="fbig${ghost === "k" ? " k" : ghost ? " ghost" : ""}" onclick="${fn}"><span class="fic">${ic}</span><span class="ftx"><b>${t}</b><small>${s}</small></span><span class="fchv">›</span></button>`;
 }
 
 const g = id => document.getElementById(id);
@@ -2351,7 +2351,7 @@ function noteCard(m){
   let me;
   if(NOTEED === m.id) me = `<div class="nted"><b>Note pour cette intervention</b>
       <textarea id="note-ta" class="rta" placeholder="Ex. : sonner au portail, chien dans la cour, clé chez le voisin…">${hx(m.note || "")}</textarea>
-      <div class="ntbtn"><button type="button" class="bo g" onclick="noteSave(${m.id})">Enregistrer</button><button type="button" class="obtn" onclick="NOTEED=null;rdetail()">Annuler</button></div>
+      <div class="ntbtn navc"><button type="button" class="tl" onclick="NOTEED=null;rdetail()">Annuler</button><button type="button" class="bo k mini" onclick="noteSave(${m.id})">Enregistrer</button></div>
       <small>Synchronisée avec le bureau : il la voit et peut la modifier aussi.</small></div>`;
   else if(m.note) me = `<button type="button" class="ntv" onclick="noteEdit(${m.id})"><span class="nti">${BIC.star}</span><span class="ntx"><b>Note pour cette intervention</b><small>${hx(m.note)}</small></span><span class="bchv">›</span></button>`;
   else me = `<button type="button" class="addnote" onclick="noteEdit(${m.id})">+ Ajouter une note</button>`;
@@ -2770,12 +2770,9 @@ function rrap(){
       ? `<div class="sigdone"><img src="${RAPD.sig.src}" alt="Signature du client"><div class="sgd"><small>Signé le ${RAPD.sig.at}</small><button type="button" class="obtn" onclick="rapSign()">${BIC.pen}Refaire la signature</button></div></div>`
       : `<button type="button" class="sigbtn" onclick="rapSign()">${BIC.pen}Faire signer le client</button><div class="rsign">Sa signature vaut prise de connaissance du rapport</div>`}`;
   }
-  h += `<div style="height:14px"></div><div class="cta rapnav">
-    <div class="rapnavrow">
-      ${RSTEP > 1 ? `<button type="button" class="bprev" onclick="rapKeep();RSTEP--;rrap()">‹ Retour</button>` : ""}
-      ${RSTEP < 3 ? `<button class="bo" style="flex:1" onclick="rapNext()">Suivant ›</button>`
-                  : `<button class="bo" style="flex:1" onclick="finishRap()">${BIC.send}Envoyer le rapport</button>`}
-    </div><button class="lnk" onclick="rapLater()">Enregistrer et continuer plus tard</button></div>`;
+  h += `<div style="height:14px"></div><div class="cta rapnav">${RSTEP < 3
+    ? `<div class="navc">${RSTEP > 1 ? `<button type="button" class="rd" onclick="rapKeep();RSTEP--;rrap()" aria-label="Étape précédente">‹</button>` : ""}<button type="button" class="tl" onclick="rapLater()">Finir plus tard</button><button class="bo k mini" onclick="rapNext()">Suivant ›</button></div>`
+    : `<button class="bo" onclick="finishRap()">${BIC.send}Envoyer le rapport</button><div class="navc2"><button type="button" class="tl" onclick="rapKeep();RSTEP--;rrap()">‹ Retour</button><button type="button" class="tl" onclick="rapLater()">Finir plus tard</button></div>`}</div>`;
   g("rapbody").innerHTML = (chGet(RAPID) ? `<div class="rchr">${chHTML(RAPID)}<small>temps réel sur place</small></div>` : "") + h;
   try{ const ap = g("app"); if(ap) ap.scrollTop = 0; window.scrollTo(0, 0); }catch(e){}
 }
@@ -3077,7 +3074,7 @@ function ratelier(){
     </div>
     <div class="qacard"><div class="ctah">Note sur le devis <span class="rfac2">visible par le client</span></div>
       <textarea class="rta" id="q-notes" style="min-height:76px" placeholder="Accès, délais, conditions particulières…" oninput="QD.notes=this.value">${hx(QD.notes)}</textarea></div>
-    <div class="cta"><div class="rapnavrow"><button type="button" class="bprev" onclick="atBack()">Annuler</button><button class="bo" style="flex:1" onclick="qSave()" ${QD.lignes.length ? "" : "disabled"}>Enregistrer le devis</button></div></div>`;
+    <div class="cta"><div class="navc"><button type="button" class="tl" onclick="atBack()">Annuler</button><button class="bo k mini" onclick="qSave()" ${QD.lignes.length ? "" : "disabled"}>Enregistrer le devis</button></div></div>`;
 }
 function qSet(arr, i, f, v){
   qKeep();
@@ -3137,7 +3134,7 @@ function rbiblio(){
       ${gp.its.map(({b, i}) => `<div class="bl ${BLSEL.has(i) ? "on" : ""}" onclick="blTog(${i})"><span class="bck"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="bb"><b>${hx(b.n)}</b><small>${hx(b.d)}</small></span><span class="bp">${EUR(b.p)}</span></div>`).join("")}</div>`).join("")
     || `<p style="text-align:center;color:var(--muted);font-size:.78rem;padding:14px">Rien dans la bibliothèque pour cette recherche — crée une ligne dans le devis.</p>`;
   const n = BLSEL.size, tot = [...BLSEL].reduce((a, i) => a + BL[i].p, 0);
-  g("bl-foot").innerHTML = `<div class="blfoot"><span><b>${n} sélectionnée${n > 1 ? "s" : ""}</b><small>${EUR(tot)} HT</small></span><button class="bo" onclick="blAdd()" ${n ? "" : "disabled"}>Ajouter au devis</button></div>`;
+  g("bl-foot").innerHTML = `<div class="blfoot"><span><b>${n} sélectionnée${n > 1 ? "s" : ""}</b><small>${EUR(tot)} HT</small></span><button class="bo k mini" onclick="blAdd()" ${n ? "" : "disabled"}>Ajouter au devis</button></div>`;
 }
 function blTog(i){ BLSEL.has(i) ? BLSEL.delete(i) : BLSEL.add(i); rbiblio(); }
 function blAdd(){
@@ -3157,7 +3154,7 @@ function rdvdet(){
   const lines = dv.lignes.map(l => `<div class="dvl"><span><b>${hx(l.n)}</b><small>${num(l.q)} × ${EUR(+l.p)} HT · TVA ${tvaL(l.t)}</small></span><b>${EUR(l.p * l.q * (1 + l.t / 100))}</b></div>`).join("")
     + (dv.frais || []).map(f => `<div class="dvl"><span><b>${hx(f.n || "Frais")}</b><small>frais · ${EUR(+f.p)} HT · TVA ${tvaL(f.t)}</small></span><b>${EUR(f.p * (1 + f.t / 100))}</b></div>`).join("");
   const choix = dv.st === "brouillon" ? `<div class="ctah" style="margin-top:6px">Faire valider le devis</div>
-      ${fbtn("dvSignHere(" + m.id + ")", BIC.pen, "Faire signer sur place", "le client signe sur ton téléphone, puis l’acompte")}
+      ${fbtn("dvSignHere(" + m.id + ")", BIC.pen, "Faire signer sur place", "le client signe sur ton téléphone, puis l’acompte", "k")}
       ${fbtn("dvMail(" + m.id + ")", BIC.send, "Envoyer pour signature par e-mail", "le client signe depuis sa boîte mail", 1)}
       ${fbtn("dvFinal(" + m.id + ")", BIC.doc, "Finaliser sans envoyer", "le bureau l’enverra — tu fais le rapport de visite", 1)}` : "";
   g("s-dvdet").innerHTML = dhead("Devis", dv.ref, "openM(" + m.id + ")")
@@ -3206,7 +3203,7 @@ Thomas Martin</textarea></label>
       <div class="mlatt">${BIC.doc}<span>${dv.ref}.pdf · ${EUR(dv.ttc)} TTC</span></div>
       <label class="mlchk"><input type="checkbox" id="ml-copy" checked> M’envoyer une copie</label>
     </div>
-    <div class="cta"><button class="bo" onclick="dvMailSend(${mid})">${BIC.send}Envoyer au client</button></div>`;
+    <div class="cta"><button class="bo k" onclick="dvMailSend(${mid})">${BIC.send}Envoyer au client</button></div>`;
   go("dvmail");
 }
 function dvMailSend(mid){
@@ -4221,6 +4218,38 @@ button.bill{cursor:pointer}
 .chrono .cok,.homechrono .cok{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#E3F5EC;color:#0E7A54;font-size:.62rem;font-weight:900;margin-right:2px}
 #s-atelier .rctx{margin:0 0 12px}
 #s-atelier .rctx .rmeta{flex-basis:100%}
+</style>
+<style>
+/* ===== 07/10 (patron : « l'orange sur mobile, il te massacre les yeux » — choix C) =====
+   ORANGE PLEIN = seulement pour avancer la mission : le bouton principal de la
+   fiche (Démarrer, Encaisser, Faire le rapport), « Enregistrer le paiement » et
+   « Envoyer le rapport ». FONCÉ = tout le reste (Suivant, Appliquer, Enregistrer,
+   Ajouter au devis, Envoyer au client, les boutons des fenêtres). Plus de halo,
+   boutons à 44 px, « Annuler / Réinitialiser / Plus tard » en texte gris. */
+:root{--ink-btn:#1F2430}
+.bo{box-shadow:none!important;padding:12px 15px;min-height:44px;border-radius:12px}
+.bo.agbo{min-height:0}
+.bo.k{background:var(--ink-btn);font-family:Inter,sans-serif}
+.bo.k:disabled{background:#C9CDD6}
+.bo.mini{width:auto;flex:none;border-radius:999px;padding:11px 22px;font:800 .88rem Inter,sans-serif}   /* « .pill » existait déjà (puces) : nom à part */
+.fltf .bo.mini,.ntbtn .bo.mini,.blfoot .bo.mini{flex:none;padding:11px 22px;font-size:.86rem;margin:0}
+.rlab{flex-wrap:wrap;row-gap:1px}
+.rlab .rfac{flex-basis:100%;margin-left:var(--rfac-in,16px)}   /* l'indication passe SOUS le titre au lieu de l'écraser */
+.fbig{box-shadow:none!important}
+.fbig.k{background:var(--ink-btn)}
+.mb .mbp{background:var(--ink-btn);box-shadow:none}
+.mb .mbs{border:0;background:none;color:#6B7280;padding:10px}
+.mb:not(.row) .mbp{order:-1}
+.dlb .dlok{background:var(--ink-btn)}
+.dlb .dlno{border:0;background:none;color:#6B7280}
+.navc{display:flex;align-items:center;gap:10px;padding:2px 2px 4px}
+.navc .tl,.navc2 .tl{all:unset;font:700 .82rem Inter,sans-serif;color:#6B7280;cursor:pointer;padding:12px 2px}
+.navc .tl{flex:1}
+.navc .rd{all:unset;flex:none;width:44px;height:44px;box-sizing:border-box;border-radius:50%;border:1.5px solid #D5D9E0;display:grid;place-items:center;font:800 1.1rem Inter,sans-serif;color:#3D4452;cursor:pointer;background:#fff}
+.navc2{display:flex;justify-content:space-between;margin-top:4px}
+.fltf.navc{margin-top:20px;padding:0}
+.ntbtn.navc{margin-top:9px;padding:0}
+#s-enc .cta .lnk{padding:12px 0 4px}
 </style>
 </body>
 </html>
