@@ -1165,7 +1165,7 @@ try{
     <p class="rgtxt">La demande envoie ton nom et ton e-mail à ton administrateur, qui fait la suppression depuis le portail. Tes interventions restent dans l&rsquo;historique de l&rsquo;entreprise ; tes données personnelles, elles, sont supprimées (article 17 du RGPD).</p>
     <div id="del-zone">
       <label class="rgchk"><input type="checkbox" id="del-ok" onchange="delChk()"><span>J&rsquo;ai compris : mon compte et mes données personnelles seront supprimés.</span></label>
-      <button class="bdel" id="del-go" disabled onclick="delSend()">Envoyer la demande de suppression</button>
+      <button class="bdel" id="del-go" disabled onclick="delSend()">Envoyer la demande</button>
     </div>
     <div class="rgdone" id="del-done" style="display:none"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>Demande envoyée le <b id="del-date">—</b>. Ton administrateur va la traiter ; ton compte reste actif d&rsquo;ici là.</span></div>
   </section>
@@ -1756,8 +1756,8 @@ function rhome(){
     /* 07/10 : comme le Figma — le bouton est DANS la carte. Il démarre ou
        reprend (jamais « Terminer » : on termine depuis la fiche, après le rapport). */
     const cta = enCours
-      ? `<button class="bo agbo" onclick="event.stopPropagation();openM(${next.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer l&rsquo;intervention</button>`
-      : `<button class="bo agbo" onclick="event.stopPropagation();openM(${next.id});startM(${next.id})"><svg class="fillsvg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Démarrer l&rsquo;intervention</button>`;
+      ? `<button type="button" class="agfoot" onclick="event.stopPropagation();openM(${next.id})"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer l&rsquo;intervention<span class="chv">›</span></button>`
+      : `<button type="button" class="agfoot" onclick="event.stopPropagation();openM(${next.id});startM(${next.id})"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Démarrer l&rsquo;intervention<span class="chv">›</span></button>`;
     nc.innerHTML = `
       <div class="hsh"><b>${enCours ? "En cours" : "Prochaine intervention"}</b><small>${plageH(next.h, next.dur)}</small></div>
       ${mcard(next, cta)}
@@ -1814,12 +1814,20 @@ function mcard(m, cta){
             : (m.itype === "encais" && m.prix ? "\u00a0·\u00a0" + EUR(m.prix) : "");
   const pri = (!done && !enc && m.prio === "HAUTE") ? `<span class="agpri">URGENT</span>` : "";
   const att = wait ? `<span class="agpri" style="color:var(--amber);background:var(--amber-bg)">DEVIS ENVOYÉ</span>` : "";
+  /* 09/10 (patron : « ajoute comme eux sur la liste ») — le statut sur chaque carte, comme leur appli :
+     pastille à droite de la ligne du type (elle passe dessous, toujours à droite, si la place manque). */
+  const stp = annul ? `<span class="ags r">ANNULÉE</span>` : done ? `<span class="ags g">TERMINÉE</span>`
+            : enc ? `<span class="ags o">EN COURS</span>` : wait ? `<span class="ags a">DEVIS ENVOYÉ</span>` : `<span class="ags n">PLANIFIÉE</span>`;
   const nuis = (m.nuis && m.nuis[0]) ? m.nuis[0] : T.lbl;
   const emo = {"Punaise de lit":"\uD83D\uDECF","Dératisation":"\uD83D\uDC00","Rats":"\uD83D\uDC00","Souris":"\uD83D\uDC00",
                "Blattes":"\uD83E\uDEB3","Cafards":"\uD83E\uDEB3","Guêpes":"\uD83D\uDC1D","Frelons":"\uD83D\uDC1D"}[nuis] || "\uD83D\uDC1B";
   const prog = enc ? `
     <div class="agprog"><span class="pb"><i style="width:${m.prog || 50}%"></i></span><small>${m.progt || ""}</small></div>
-    <button class="agcont" onclick="event.stopPropagation();openM(${m.id})"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer l’intervention</button>` : "";
+` : "";
+  /* 08/10 (patron : « bouton de bouton », « fais ta reco ») — le bouton sort de la colonne de droite
+     (déjà occupée par le statut, le téléphone et l'itinéraire) : bandeau PÊCHE en bas de la carte,
+     sur toute sa largeur. L'orange plein reste pour le bouton de la fiche. */
+  const foot = cta || (enc ? `<button type="button" class="agfoot" onclick="event.stopPropagation();openM(${m.id})"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Continuer l’intervention<span class="chv">›</span></button>` : "");
   const acts = done ? "" : `
       <span class="agacts">
         <span class="agac" onclick="callC(M[${m.id}],event)" aria-label="Appeler"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg></span>
@@ -1830,11 +1838,11 @@ function mcard(m, cta){
     <div class="agr">
       <div class="agr1"><span class="em">${emo}</span><span class="ti">${nuis}</span>
 ${done ? `<span class="agmk${annul ? " x" : ""}" aria-hidden="true"></span>` : ""}</div>
-      <div class="agr2"><span class="itchip ${T.cls}">${T.lbl}${amt}</span>${pri}${att}</div>
+      <div class="agr2"><span class="itchip ${T.cls}">${T.lbl}${amt}</span>${pri}${stp}</div>
       <div class="agr3"><span class="who"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span style="min-width:0;overflow:hidden"><span class="agcli">${m.client}</span><span class="agrue">${annul ? "Annulée" + (m.motif ? " · " + m.motif : "") : (m.adr || "")}</span></span></span>${acts}</div>
       ${prog}
-      ${cta || ""}
     </div>
+    ${foot}
   </div>`;
 }
 /* Chrono : uniquement si l'heure de demarrage est connue. Sans elle on
@@ -4308,6 +4316,25 @@ button.bill{cursor:pointer}
 .encch button{all:unset;cursor:pointer;font:800 .78rem Inter,sans-serif;color:var(--ink-btn,#1E3350);text-decoration:underline;text-underline-offset:3px;padding:6px 2px}
 .chrono.off{white-space:nowrap}
 .chrono .chrp{all:unset;cursor:pointer;margin-left:8px;font:800 .74rem Inter,sans-serif;color:var(--ink-btn,#1E3350);text-decoration:underline;text-underline-offset:3px}
+</style>
+<style>
+/* 08/10 — bandeau « Continuer / Démarrer l'intervention » en bas des cartes (liste + accueil), style PÊCHE :
+   fond orange très pâle, texte orange foncé (un orange clair + texte blanc ne se lit plus au soleil). */
+.ag{flex-wrap:wrap}
+.agfoot{all:unset;box-sizing:border-box;flex:0 0 100%;display:flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:0 12px;background:#FFEDE3;color:#D9480F;border-top:1px solid #FFD3BD;font:700 .84rem Inter,sans-serif;cursor:pointer;text-align:center}
+.agfoot svg{width:11px;height:11px;fill:currentColor;flex:none}
+.agfoot .chv{font-weight:800;margin-left:1px}
+.agfoot:active{background:#FFE0CF}
+.agfoot:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+</style>
+<style>
+/* 09/10 — statut sur chaque carte de la liste (comme leur appli) : pastille douce, à droite */
+.ags{margin-left:auto;font-size:.6rem;font-weight:800;letter-spacing:.05em;border-radius:6px;padding:3px 7px;white-space:nowrap;line-height:1.3}
+.ags.o{color:#D9480F;background:#FFEDE3}
+.ags.n{color:#4B5563;background:#EEF0F3}
+.ags.a{color:var(--amber);background:var(--amber-bg)}
+.ags.g{color:#0E7A54;background:#E3F5EC}
+.ags.r{color:#B42318;background:#FBE4E1}
 </style>
 </body>
 </html>
