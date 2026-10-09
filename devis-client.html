@@ -268,6 +268,7 @@ body.mreflow .rapl .rf{font-size:0.68rem}
 .fbox.sig{background:#fff}
 .rib{font-size:0.73rem;line-height:1.6;color:var(--ink-2)}
 .rib .r{display:flex;gap:10px}
+.rib .r[hidden]{display:none}
 .rib .r span{color:var(--muted);min-width:76px;font-weight:600}
 .rib .r b{font-weight:700;color:var(--ink);font-family:Sora;letter-spacing:.01em}
 .rib .note{margin-top:9px;padding-top:9px;border-top:1px solid var(--line-2);font-size:0.7rem;color:var(--muted)}
@@ -467,12 +468,16 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
         Coordonnées bancaires
       </div>
       <div class="rib">
+        <!-- 09/10 (patron : « le nom de la banque ne doit pas être en premier, la banque en dernier ») :
+             Titulaire → IBAN → BIC → Banque. Rempli depuis Réglages › Coordonnées bancaires. -->
         <div class="r"><span>Titulaire du compte</span></div>
         <div class="r"><b id="rib-nom">Agence Antinuisible</b></div>
-        <div class="r" style="margin-top:7px"><span>Banque</span></div>
-        <div class="r"><b id="rib-bq">Crédit Mutuel Arkéa</b></div>
         <div class="r" style="margin-top:7px"><span>IBAN</span></div>
         <div class="r"><b id="rib-iban">FR76 1732 8844 0037 2288 9594 658</b></div>
+        <div class="r" id="rib-bic-l" style="margin-top:7px" hidden><span>BIC</span></div>
+        <div class="r" id="rib-bic-v" hidden><b id="rib-bic"></b></div>
+        <div class="r" style="margin-top:7px"><span>Banque</span></div>
+        <div class="r"><b id="rib-bq">Crédit Mutuel Arkéa</b></div>
       </div>
     </div>
 
@@ -639,6 +644,16 @@ function socLire(){
   };
 }
 const SOC = socLire();
+/* 09/10 : le RIB vient de Réglages › Coordonnées bancaires (tigerflow-banque) — Titulaire → IBAN → BIC → Banque */
+(function ribPoser(){
+  try{
+    const B = JSON.parse(localStorage.getItem("tigerflow-banque") || "{}");
+    const T = (id, t) => { const e = document.getElementById(id); if(e) e.textContent = t; };
+    if(B.iban) T("rib-iban", B.iban);
+    if(B.banque) T("rib-bq", B.banque);
+    if(B.bic){ T("rib-bic", B.bic); ["rib-bic-l", "rib-bic-v"].forEach(id => { const e = document.getElementById(id); if(e) e.hidden = false; }); }
+  }catch(e){}
+})();
 (function socPoser(){
   if(!SOC.regl) return;   /* pas de Reglages → la maquette reste telle quelle */
   const T = (id, t) => { const e = document.getElementById(id); if(e) e.textContent = t; };

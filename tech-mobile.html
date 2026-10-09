@@ -1158,16 +1158,16 @@ try{
   <section class="scr" id="s-suppr">
     <div class="dhead"><button class="tico" onclick="go('reglages')" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><div class="dtt"><b>Supprimer mon compte</b></div><span style="width:40px;flex:none"></span></div>
     <div class="seclab">Détails</div>
-    <div class="rgwarn"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>La suppression de ton compte et de toutes tes données personnelles passe par ton administrateur.</span></div>
+    <div class="rgwarn"><svg viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>C&rsquo;est ton administrateur qui supprime le compte : ce bouton lui envoie ta demande.</span></div>
     <div class="cd" style="padding:4px 15px">
       <a class="rrow" href="mailto:support@tigerflow.app" style="color:inherit;text-decoration:none"><span class="ri o"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></span><span class="rb"><b>support@tigerflow.app</b><small>Une question avant de demander ?</small></span><svg class="rch" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></a>
     </div>
-    <p class="rgtxt">La demande envoie ton nom et ton e-mail à ton administrateur, qui fait la suppression depuis le portail. Tes interventions restent dans l&rsquo;historique de l&rsquo;entreprise ; tes données personnelles, elles, sont supprimées (article 17 du RGPD).</p>
+    <p class="rgtxt">Tes données personnelles sont effacées (RGPD, art. 17). Tes interventions restent dans l&rsquo;historique de l&rsquo;entreprise.</p>
     <div id="del-zone">
-      <label class="rgchk"><input type="checkbox" id="del-ok" onchange="delChk()"><span>J&rsquo;ai compris : mon compte et mes données personnelles seront supprimés.</span></label>
+      <label class="rgchk"><input type="checkbox" id="del-ok" onchange="delChk()"><span>J&rsquo;ai compris : mon compte et mes données seront supprimés.</span></label>
       <button class="bdel" id="del-go" disabled onclick="delSend()">Envoyer la demande</button>
     </div>
-    <div class="rgdone" id="del-done" style="display:none"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>Demande envoyée le <b id="del-date">—</b>. Ton administrateur va la traiter ; ton compte reste actif d&rsquo;ici là.</span></div>
+    <div class="rgdone" id="del-done" style="display:none"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span>Demande envoyée le <b id="del-date">—</b>. Ton compte reste actif jusqu&rsquo;à la suppression.</span></div>
   </section>
 
   <section class="scr" id="s-notifs">
@@ -1738,6 +1738,8 @@ function impSend(){
   }, 4200);
 }
 function todos(){ return Object.values(M).filter(m => m.st === "todo").sort((a, b) => a.h.localeCompare(b.h)); }
+/* 09/10 — LA prochaine intervention : la même sur l'Accueil et dans la liste (bandeau « Démarrer ») */
+function prochaine(){ return todos()[0] || null; }   /* la première à venir, dans l'ordre des heures : la 1re carte de « À venir » */
 
 /* ================= rendu global ================= */
 function renderAll(){ rhome(); rlist(); rdevis(); rnotifs(); if(CURID) rdetail(); }
@@ -1747,7 +1749,7 @@ function rhome(){
   /* 29/07 : si une intervention tourne, l'accueil l'annonce EN PREMIER avec son
      chronometre. Avant, il fallait aller sur l'onglet Interventions pour le voir. */
   const encours = Object.values(M).find(m => m.st === "encours");
-  const next = encours || ((M[2].st === "todo") ? M[2] : (todos()[0] || null));
+  const next = encours || prochaine();
   const nc = g("nextcard");
   const all = Object.values(M);
   const nb = s => all.filter(m => m.st === s).length;
@@ -1908,7 +1910,12 @@ function rlist(){
     const head = `<div class="lsec ${cls} lsech" id="ls-${k}" onclick="lsecTog('${k}')"><span>${lbl}</span><span class="lsr"><span class="lcnt">${vis.length}</span><svg class="lchv${ferme ? " ferme" : ""}" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></span></div>`;
     if(ferme) return head;
     if(!vis.length) return head + `<p class="lvide">Rien avec ces filtres.</p>`;
-    const cards = vis.map(m => mcard(m)).join("");
+    /* 09/10 (patron : « garder Démarrer sur la liste ? » → compromis) : quand rien n'est en cours,
+       la PROCHAINE intervention — et elle seule — a le bandeau pêche « Démarrer l'intervention ».
+       Les autres : on touche la carte. Pas de bouton « Devis » dans la liste. */
+    const nx = ec.length ? null : prochaine();
+    const cards = vis.map(m => mcard(m, nx && m.id === nx.id
+      ? `<button type="button" class="agfoot" onclick="event.stopPropagation();openM(${m.id});startM(${m.id})"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>Démarrer l’intervention<span class="chv">›</span></button>` : "")).join("");
     return head + (wrap ? `<div class="encwrap">${cards}</div>` : cards);
   };
   let h = "";
@@ -2370,10 +2377,11 @@ function ctaOf(m){
   let cta = "";
   const due = m.itype === "encais" ? (+m.prix || 0) : m.itype === "suite" ? (+m.solde || 0) : 0;
   if(m.st === "todo"){
+    /* 09/10 (patron : « visite de devis : Créer le devis ou Démarrer ? ») — une visite devis se DÉMARRE
+       comme les autres (le bureau voit le tech sur place, le chrono tourne) ; « Créer le devis » vient
+       ensuite, dans la fiche, une fois sur place. */
     if(m.itype === "devis" && !m.dvok){
-      cta = (!m.dv || m.dv.st === "brouillon")
-        ? `<button class="bo" onclick="openAtelier(${m.id})">${BIC.doc}${m.dv ? "Reprendre le devis" : "Créer le devis"}</button>`
-        : `<button class="bo" onclick="openRapport(${m.id})">${BIC.rep}Faire le rapport de visite</button>`;
+      cta = `<button class="bo" onclick="startM(${m.id})">${BIC.play}Démarrer l’intervention</button>`;
     } else if(m.dvok){
       cta = `<button class="bo" onclick="startM(${m.id})">${BIC.play}Démarrer le traitement</button>
         <button class="lnk" onclick="openRapport(${m.id})">Traiter plus tard — faire le rapport de visite</button>`;
@@ -2381,7 +2389,9 @@ function ctaOf(m){
   } else if(m.st === "encours"){
     const head = `<div class="ctah" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Clôturer l’intervention ${itchip(m)}</div>`;
     const p = m.pay;
-    if(m.itype === "devis" && !m.dvok) cta = `<button class="bo" onclick="openAtelier(${m.id})">${BIC.doc}Créer le devis</button>`;
+    if(m.itype === "devis" && !m.dvok) cta = (!m.dv || m.dv.st === "brouillon")
+      ? `<button class="bo" onclick="openAtelier(${m.id})">${BIC.doc}${m.dv ? "Reprendre le devis" : "Créer le devis"}</button>`
+      : `<button class="bo" onclick="stopAsk(${m.id},'rap')">${BIC.rep}Faire le rapport de visite</button>`;
     else if(p && p.st === "paye") cta = head + fbtn(`stopAsk(${m.id},'rap')`, BIC.rep, "Faire le rapport", "paiement reçu — " + EUR(p.montant) + " " + modeP(p.mode) + " · il ne reste que le rapport");
     else if(p && p.st === "attente") cta = head
       + fbtn(`stopAsk(${m.id},'rap')`, BIC.rep, "Faire le rapport", "paiement plus tard — les " + EUR(p.montant) + " restent dus")
@@ -2391,7 +2401,8 @@ function ctaOf(m){
       + fbtn(`stopAsk(${m.id},'later')`, BIC.rep, "Faire le rapport sans encaisser", "le client paiera plus tard — les " + EUR(due) + " restent dus", 1);
     else cta = head + fbtn(`stopAsk(${m.id},'rap')`, BIC.rep, "Faire le rapport",
       m.itype === "ctr" ? "déjà payé par le contrat — rien à encaisser" : m.itype === "suite" ? "2ᵉ passage inclus — rien à encaisser" : "le devis est réglé — rien à encaisser");
-    if(!p) cta += `<button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`;   /* 07/10 : plus d'annulation une fois le paiement réglé ou reporté */
+    if(m.dvok && !p) cta += `<button class="lnk" onclick="stopAsk(${m.id},'rap')">Traiter plus tard — faire le rapport de visite</button>`;   /* 09/10 : devis signé pendant la visite */
+    if(!p && !m.dvok) cta += `<button class="lnk" onclick="cancelM(${m.id})">Annuler le démarrage</button>`;   /* 07/10 : plus d'annulation une fois le paiement réglé ou reporté (ni après un devis signé) */
   } else if(m.st === "wait"){
     cta = `<div class="waitb">Devis ${m.devisM ? "de " + EUR(m.devisM) + " " : ""}envoyé — le client réfléchit. Le bureau s'occupe de la relance ; s'il accepte, l'intervention arrivera dans ta tournée.</div>`;
   }
@@ -4335,6 +4346,17 @@ button.bill{cursor:pointer}
 .ags.a{color:var(--amber);background:var(--amber-bg)}
 .ags.g{color:#0E7A54;background:#E3F5EC}
 .ags.r{color:#B42318;background:#FBE4E1}
+</style>
+<style>
+/* 09/10 (patron : « ajustez pour 100 ou 120 ») — la carte tient à 100 %, 120 %, 135 % (texte agrandi ou zoom)
+   et sur les petits téléphones (360 px) : rien de fixe en px autour du texte. */
+.agl{width:5.9rem;min-width:84px}                                   /* la colonne CP / ville grandit avec le texte */
+.agl .cp.cpv .z{white-space:nowrap}                                 /* le code postal ne se coupe jamais */
+.agl .cp.cpv .v{word-break:normal;overflow-wrap:normal;hyphens:manual}  /* la ville se coupe aux espaces et aux tirets, jamais au milieu d'un mot */
+.itchip{white-space:normal;line-height:1.25;text-align:left}        /* le montant n'est plus rogné : la pastille passe sur 2 lignes */
+.agr3{flex-wrap:wrap;row-gap:8px}
+.agr3 .who{flex:1 1 6.5rem}                                         /* moins de 6,5 rem pour le nom → appeler / itinéraire passent dessous */
+.agr3 .agacts{margin-left:auto}
 </style>
 </body>
 </html>
