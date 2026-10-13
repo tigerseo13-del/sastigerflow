@@ -744,7 +744,7 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
         <div id="aide-none" style="display:none;padding:24px 0;color:var(--muted);font-size:.84rem">Pas de réponse là-dessus. <a href="#support" onclick="newTicket()" style="color:var(--ink);font-weight:700;text-decoration:underline">Posez la question au support</a>, on répond sous 24 h.</div>
         <details open><summary>Comment ajouter un technicien ?</summary><p><a href="#utilisateurs" onclick="setTimeout(openInvite,50)">Utilisateurs → Inviter un utilisateur</a>. Il reçoit un e-mail, choisit son mot de passe et installe l'appli mobile. Il compte dans votre abonnement dès qu'il accepte.</p></details>
         <details><summary>Un technicien quitte l'entreprise, je fais quoi ?</summary><p><a href="#utilisateurs">Utilisateurs</a> → Désactiver sur sa ligne. Il perd l'accès tout de suite, ses interventions et documents restent, et la place se libère dans votre abonnement. Vous pouvez le réactiver plus tard.</p></details>
-        <details><summary>Combien je paie si j'ajoute quelqu'un ?</summary><p>Le prix de sa place : les 5 premières places sont à 69 € par mois, les places 6 à 10 à 49 €, et à partir de la 11ᵉ 39 €. Les places déjà prises ne changent pas de prix. En annuel, 2 mois sont offerts. Le changement compte au prorata sur la prochaine facture.</p></details>
+        <details><summary>Combien je paie si j'ajoute quelqu'un ?</summary><p>Le prix de sa place : les 5 premières places sont à 49 € par mois, les places 6 à 10 à 39 €, et à partir de la 11ᵉ 29 €. Les places déjà prises ne changent pas de prix. En annuel, 1 mois est offert. Le changement compte au prorata sur la prochaine facture.</p></details>
         <details><summary>Que se passe-t-il si ma carte est refusée ?</summary><p>On réessaie 1, 3 et 7 jours après, et on vous prévient par e-mail à chaque fois. Sans paiement au bout de 7 jours, le compte passe en lecture seule : vous voyez tout, mais vous ne pouvez plus créer. Tout revient dès que le paiement passe.</p></details>
         <details><summary>Je peux résilier quand je veux ?</summary><p>Oui, sans engagement. <a href="#abonnement" onclick="setTimeout(()=>openTab('abo','resilier'),50)">Abonnement → Résilier</a>. Vous gardez l'accès jusqu'à la fin de la période payée et vos données 30 jours de plus.</p></details>
         <details><summary>Où sont mes factures ?</summary><p><a href="#abonnement" onclick="setTimeout(()=>openTab('abo','factures'),50)">Abonnement → Factures</a>. Chaque facture est téléchargeable en PDF, avec la TVA.</p></details>
@@ -849,7 +849,7 @@ const DEF = {
     { id:2, cat:"sup", t:"Nouvelle réponse du support", d:"Votre demande « Importer mes clients depuis Excel » a une réponse.", w:"Il y a 3 h", un:true },
     { id:3, cat:"equ", t:"Invitation envoyée", d:"thomas@exemple.fr a été invité comme Opérateur.", w:"Hier", un:true },
     { id:4, cat:"equ", t:"Invitation acceptée", d:"Mehdi Rahal a rejoint votre équipe.", w:"Lun. 29 sept." },
-    { id:5, cat:"usg", t:"Prochain palier de prix", d:"Votre 6ᵉ place sera à 49 € par mois au lieu de 69 €.", w:"Lun. 29 sept." },
+    { id:5, cat:"usg", t:"Prochain palier de prix", d:"Votre 6ᵉ place sera à 39 € par mois au lieu de 49 €.", w:"Lun. 29 sept." },
     { id:6, cat:"fac", t:"Carte mise à jour", d:"La carte •••• 4242 est maintenant utilisée pour vos prélèvements.", w:"Ven. 26 sept." }
   ]
 };
@@ -857,14 +857,15 @@ let S = Object.assign({}, DEF, jget(EKEY) || {}); if(!S.prefs.usg) S.prefs.usg =
 function save(){ try{ localStorage.setItem(EKEY, JSON.stringify(S)); }catch(e){} }
 
 /* ── tarif : celui d'abonnement.html et de l'inscription ── */
-const TR = [ {min:1,max:5,lab:"1 à 5",m:69,a:49,sup:"Support par e-mail"}, {min:6,max:10,lab:"6 à 10",m:49,a:39,sup:"Support prioritaire"}, {min:11,max:999,lab:"11 et +",m:39,a:29,sup:"Interlocuteur dédié"} ];
+/* 13/10 patron : 49 / 39 / 29 € par place et par mois, sans engagement ; annuel = 1 mois offert (11 mois payés) */
+const TR = [ {min:1,max:5,lab:"1 à 5",m:49,a:49*11/12,sup:"Support par e-mail"}, {min:6,max:10,lab:"6 à 10",m:39,a:39*11/12,sup:"Support prioritaire"}, {min:11,max:999,lab:"11 et +",m:29,a:29*11/12,sup:"Interlocuteur dédié"} ];
 function nbU(){ return S.users.filter(u => u.st === "actif").length; }
 function nbAll(){ return S.users.length; }
 function tr(n){ n = n || nbU(); return TR.find(t => n >= t.min && n <= t.max) || TR[2]; }
-/* 03/10 patron : prix PAR PLACE (les 5 premières à 69 €, les places 6 à 10 à 49 €, dès la 11ᵉ 39 €) — plus « toute l'équipe passe à… ». */
+/* 03/10 patron : prix PAR PLACE (les 5 premières à 49 €, les places 6 à 10 à 39 €, dès la 11ᵉ 29 €) — plus « toute l'équipe passe à… ». */
 function seatPrice(i, b){ b = b || S.bill; return tr(i)[b]; }
 function seatCost(n, b){ let c = 0; for(let i = 1; i <= n; i++) c += seatPrice(i, b); return c; }
-function seatBreak(n, b){ b = b || S.bill; const parts = []; TR.forEach(t => { const k = Math.max(0, Math.min(n, t.max) - t.min + 1); if(k > 0) parts.push(k + " × " + t[b] + " €"); }); return parts.join(" + ") || "0 place"; }
+function seatBreak(n, b){ b = b || S.bill; const parts = []; TR.forEach(t => { const k = Math.max(0, Math.min(n, t.max) - t.min + 1); if(k > 0) parts.push(k + " × " + t.m + " €"); }); return parts.join(" + ") || "0 place"; }
 function ht(n){ n = n || nbU(); return seatCost(n, S.bill) * (S.bill === "a" ? 12 : 1); }
 function eur(v){ return v.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €"; }
 function eur0(v){ return v.toLocaleString("fr-FR") + " €"; }
@@ -916,7 +917,7 @@ const GUIDES = {
   planif:["Planifier sa première intervention","3 min · dans TigerFlow",["Ouvrez <b>Calendrier</b> et cliquez sur le créneau voulu.","Choisissez le client (ou créez-le en 10 secondes avec son adresse).","Indiquez le type d'intervention et le technicien. Le trajet et la durée se calent tout seuls.","Enregistrez : le technicien la voit immédiatement sur son appli."],"calendrier.html"],
   devis:["Faire un devis et le faire signer","4 min · dans TigerFlow",["<b>Devis → Nouveau</b> : choisissez le client et les prestations de votre catalogue.","Vérifiez les mentions (Certibiocide, assurance) : elles viennent de Réglages.","Envoyez par e-mail ou faites signer sur la tablette, sur place.","Signé = il passe en « Accepté » et peut devenir une intervention en un clic."],"devis.html"],
   appli:["Installer l'appli sur le téléphone d'un technicien","2 min",["Invitez-le depuis <b>Utilisateurs</b> avec le rôle Opérateur.","Il reçoit un e-mail, choisit son mot de passe.","Il installe « TigerFlow Technicien » (App Store / Google Play) et se connecte avec cet e-mail.","Ses interventions du jour apparaissent, avec photos, rapport et signature client."],"#utilisateurs"],
-  tableau:["Lire son tableau de bord","3 min",["Les 4 tuiles du haut : équipe, abonnement, support, notifications. Cliquez pour aller au détail.","<b>Vos places</b> : combien de places sont prises et à quel prix. Les premières sont à 69 €, les suivantes moins cher.","<b>Prochain prélèvement</b> : montant, date, carte. « Voir les factures » pour les PDF.","En bas : les dernières notifications et vos demandes au support."],"#tableau"]
+  tableau:["Lire son tableau de bord","3 min",["Les 4 tuiles du haut : équipe, abonnement, support, notifications. Cliquez pour aller au détail.","<b>Vos places</b> : combien de places sont prises et à quel prix. Les premières sont à 49 €, les suivantes moins cher.","<b>Prochain prélèvement</b> : montant, date, carte. « Voir les factures » pour les PDF.","En bas : les dernières notifications et vos demandes au support."],"#tableau"]
 };
 function openGuide(k){ const g = GUIDES[k]; document.getElementById("g-h").textContent = g[0]; document.getElementById("g-p").textContent = g[1];
   document.getElementById("g-steps").innerHTML = g[2].map(x => "<li><span>" + x + "</span></li>").join(""); const go = document.getElementById("g-go"); go.href = g[3]; go.onclick = () => closeOv(); openOv("ov-guide"); }
@@ -1029,9 +1030,9 @@ function drawDash(unread, open){
   document.getElementById("d-tr-sub").textContent = seatBreak(n) + " par mois · " + (S.bill === "a" ? "annuel" : "mensuel");
   const cap = t.max > 100 ? n + 3 : t.max;
   document.getElementById("d-seats").className = "pbar";
-  document.getElementById("d-seats").innerHTML = TR.map((r, i) => { const k = Math.max(0, Math.min(n, r.max) - r.min + 1); return k ? '<span class="p' + i + '" style="flex:' + k + '" title="' + k + ' place(s) à ' + r[S.bill] + ' €">' + k + ' × ' + r[S.bill] + ' €</span>' : ''; }).join("") + (n < 10 ? '<span class="nx" style="flex:' + Math.max(1, 10 - n) + '">prochaine place : ' + tr(n + 1)[S.bill] + ' €</span>' : '');
+  document.getElementById("d-seats").innerHTML = TR.map((r, i) => { const k = Math.max(0, Math.min(n, r.max) - r.min + 1); return k ? '<span class="p' + i + '" style="flex:' + k + '" title="' + k + ' place(s) à ' + r.m + ' €">' + k + ' × ' + r.m + ' €</span>' : ''; }).join("") + (n < 10 ? '<span class="nx" style="flex:' + Math.max(1, 10 - n) + '">prochaine place : ' + tr(n + 1).m + ' €</span>' : '');
   const nx = TR[TR.indexOf(t) + 1];
-  document.getElementById("d-hint-t").textContent = "La prochaine place sera à " + seatPrice(n + 1) + " € par mois" + (seatPrice(n + 1) < seatPrice(n) ? " (moins cher que les précédentes)" : "") + ". Les places déjà prises ne changent pas de prix.";
+  document.getElementById("d-hint-t").textContent = "La prochaine place sera à " + tr(n + 1).m + " € par mois" + (tr(n + 1).m < tr(n).m ? " (moins cher que les précédentes)" : "") + ". Les places déjà prises ne changent pas de prix.";
   document.getElementById("d-amt").textContent = eur(ht()) + (S.bill === "a" ? " / an" : " / mois");
   document.getElementById("d-date-l").textContent = enEssai() ? "Fin de l'essai, 1er prélèvement" : "Date";
   document.getElementById("d-date").textContent = fdate(nextDate());
@@ -1103,7 +1104,7 @@ function inviteRecap(){
   const nx = nextDate(), today = new Date(), days = Math.max(1, Math.round((nx - today) / 864e5)), period = S.bill === "a" ? 365 : 30;
   const pro = Math.round(((after - now) * days / period) * 100) / 100;
   let h = '<div class="kv"><span>Aujourd\'hui<small>' + seatBreak(n) + ' par mois</small></span><b>' + eur0(now) + ' HT / ' + unit + '</b></div>' +
-    '<div class="kv"><span>Dès que ' + esc(who) + ' accepte<small>' + n2 + 'ᵉ place à ' + seatPrice(n2) + ' € par mois</small></span><b>' + eur0(after) + ' HT / ' + unit + '</b></div>';
+    '<div class="kv"><span>Dès que ' + esc(who) + ' accepte<small>' + n2 + 'ᵉ place à ' + tr(n2).m + ' € par mois</small></span><b>' + eur0(after) + ' HT / ' + unit + '</b></div>';
   h += enEssai() ? '<div class="kv tot"><span>Pendant l\'essai<small>Gratuit jusqu\'au ' + fdate(nx) + ', puis ' + eur0(after) + ' HT / ' + unit + '</small></span><b>0 €</b></div>'
     : '<div class="kv tot"><span>Sur votre prochaine facture<small>prorata jusqu\'au ' + fdate(nx) + ' · rien n\'est débité aujourd\'hui</small></span><b>+ ' + eur(pro) + ' HT</b></div>';
   document.getElementById("i-recap").innerHTML = h;
@@ -1168,7 +1169,7 @@ function setBill(b){
 }
 function drawAbo(){
   const n = nbU(), t = tr(), nx = nextDate();
-  document.getElementById("ba-eco").textContent = "−" + eur0((seatCost(n, "m") - seatCost(n, "a")) * 12) + " / an";
+  document.getElementById("ba-eco").textContent = "1 mois offert";
   document.getElementById("bm").classList.toggle("on", S.bill === "m"); document.getElementById("ba").classList.toggle("on", S.bill === "a");
   document.getElementById("a-tr").textContent = (enEssai() ? "Essai · " : "") + n + " place" + (n > 1 ? "s" : "") + " · " + eur0(ht()) + " HT / " + (S.bill === "a" ? "an" : "mois");
   document.getElementById("a-m").textContent = seatBreak(n) + " · facturation " + (S.bill === "a" ? "annuelle" : "mensuelle") + " · TVA autoliquidée";
@@ -1178,7 +1179,7 @@ function drawAbo(){
   document.getElementById("a-nx").textContent = fdate(nx);
   { const c = S.cards.find(x => x.def); document.getElementById("a-nx-c").innerHTML = c ? (S.impaye ? '<span style="color:var(--red)">Visa •••• ' + c.fin + ' · refusée</span>' : "Visa •••• " + c.fin) : '<span style="color:var(--amber)">Aucune carte enregistrée</span>'; }
   document.getElementById("r-end").textContent = fdate(nx);
-  document.getElementById("tiers").innerHTML = TR.map(x => { const on = x === t; return '<div class="tr2' + (on ? " on" : "") + '"><span class="n">' + (x.max > 100 ? '11ᵉ place et +' : 'Places ' + x.lab) + (on ? ' <span class="pill g">Vous êtes ici</span>' : '') + '</span><span class="p">' + x[S.bill] + ' € <small>/ place / mois</small></span><span class="s">' + IC.ok + x.sup + '</span><span class="e">' + (on ? seatBreak(n) + ' = ' + eur0(seatCost(n)) + (S.bill === "a" ? " / mois, facturé à l'année" : "") : (x.min > n ? "dès votre " + x.min + "ᵉ place" : "vos " + x.max + " premières places")) + '</span></div>'; }).join("");
+  document.getElementById("tiers").innerHTML = TR.map(x => { const on = x === t; return '<div class="tr2' + (on ? " on" : "") + '"><span class="n">' + (x.max > 100 ? '11ᵉ place et +' : 'Places ' + x.lab) + (on ? ' <span class="pill g">Vous êtes ici</span>' : '') + '</span><span class="p">' + x.m + ' € <small>/ place / mois</small></span><span class="s">' + IC.ok + x.sup + '</span><span class="e">' + (on ? seatBreak(n) + ' = ' + eur0(seatCost(n)) + (S.bill === "a" ? " / mois, facturé à l'année" : "") : (x.min > n ? "dès votre " + x.min + "ᵉ place" : "vos " + x.max + " premières places")) + '</span></div>'; }).join("");
   const now = new Date(); const rows = [];
   for(let k = 1; k <= 4; k++){ const d = new Date(now.getFullYear(), now.getMonth() - k + 1, 1); rows.push({ d, no:"TF-" + d.getFullYear() + "-" + String(12 - k).padStart(4, "0"), n: k === 1 ? n : Math.max(1, n - (k > 2 ? 1 : 0)) }); }
   document.getElementById("inv").innerHTML = rows.map((r, i) => { const v = seatCost(r.n, "m"), ko = S.impaye && i === 0;
