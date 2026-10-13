@@ -853,6 +853,8 @@ const DEF = {
     { id:6, cat:"fac", t:"Carte mise à jour", d:"La carte •••• 4242 est maintenant utilisée pour vos prélèvements.", w:"Ven. 26 sept." }
   ]
 };
+/* 13/10 : une société qui vient de s'inscrire démarre vide — seulement son administrateur, pas les données de démo */
+if(T.etape === "cree" && !jget(EKEY)){ DEF.users = [DEF.users[0]]; DEF.tickets = []; DEF.nots = [{ id:1, cat:"fac", t:"Essai gratuit démarré", d:"Aucun prélèvement avant le " + new Date(T.finEssai).toLocaleDateString("fr-FR", { day:"numeric", month:"long" }) + ". Vous pouvez résilier à tout moment.", w:"À l'instant", un:true }]; }
 let S = Object.assign({}, DEF, jget(EKEY) || {}); if(!S.prefs.usg) S.prefs.usg = [0,1];
 S.tickets.forEach(t => { if(t.sujet === "Facture de septembre"){ t.sujet = "Bon de commande sur nos factures"; t.msgs[0].t = "Pouvez-vous ajouter notre n° de bon de commande sur nos factures ?"; t.msgs[1].t = "C'est noté, il apparaîtra sur toutes vos factures, dès la première."; } });
 S.nots.forEach(x => { if(x.d && x.d.indexOf("331,20") > -1) x.d = "Votre dernière facture a été réglée par prélèvement."; });
@@ -862,7 +864,8 @@ function save(){ try{ localStorage.setItem(EKEY, JSON.stringify(S)); }catch(e){}
 /* ── tarif : celui d'abonnement.html et de l'inscription ── */
 /* 13/10 patron : 49 / 39 / 29 € par place et par mois, sans engagement ; annuel = 1 mois offert (11 mois payés) */
 const TR = [ {min:1,max:5,lab:"1 à 5",m:49,a:49*11/12,sup:"Support par e-mail"}, {min:6,max:10,lab:"6 à 10",m:39,a:39*11/12,sup:"Support prioritaire"}, {min:11,max:999,lab:"11 et +",m:29,a:29*11/12,sup:"Interlocuteur dédié"} ];
-function nbU(){ return S.users.filter(u => u.st === "actif").length; }
+function nbU(){ return Math.max(S.users.filter(u => u.st === "actif").length, +T.n || 0); } /* places choisies à l'inscription = places réservées */
+function nbLibres(){ return Math.max(0, nbU() - S.users.filter(u => u.st === "actif" || u.st === "invite").length); }
 function nbAll(){ return S.users.length; }
 function tr(n){ n = n || nbU(); return TR.find(t => n >= t.min && n <= t.max) || TR[2]; }
 /* 03/10 patron : prix PAR PLACE (les 5 premières à 49 €, les places 6 à 10 à 39 €, dès la 11ᵉ 29 €) — plus « toute l'équipe passe à… ». */
@@ -1023,8 +1026,9 @@ function drawDash(unread, open){
   const n = nbU(), t = tr(), inv = S.users.filter(u => u.st === "invite").length;
   document.getElementById("hello").textContent = "Bonjour, " + SOC.nom;
   document.getElementById("hello-sub").textContent = new Date().toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"}).replace(/^./, c => c.toUpperCase()) + " · " + (S.impaye ? "Paiement en attente" : enEssai() ? "Essai gratuit en cours" : "Compte à jour");
-  document.getElementById("d-users").textContent = n;
-  document.getElementById("d-users-ft").textContent = inv ? inv + " invitation" + (inv > 1 ? "s" : "") + " en attente" : "Toute l'équipe est connectée";
+  const act = S.users.filter(u => u.st === "actif").length, lib = nbLibres();
+  document.getElementById("d-users").textContent = act;
+  document.getElementById("d-users-ft").textContent = inv ? inv + " invitation" + (inv > 1 ? "s" : "") + " en attente" : lib ? lib + " place" + (lib > 1 ? "s" : "") + " à attribuer · invitez votre équipe" : "Toute l'équipe est connectée";
   document.getElementById("d-tk").textContent = open;
   { const ut = S.tickets.filter(t => t.unread).length; document.getElementById("d-tk-s").textContent = (open ? (open > 1 ? "Demandes en attente" : "Demande en attente") : "Aucune demande en attente") + (ut ? " · " + ut + " réponse" + (ut > 1 ? "s" : "") + " à lire" : ""); }
   document.getElementById("d-plan").textContent = S.impaye ? "Impayé" : enEssai() ? "Essai" : n + " place" + (n > 1 ? "s" : "");
@@ -1062,10 +1066,10 @@ function uFilter(f){ UF = (UF === f) ? null : f; drawUsers(); }
 function drawUsers(){
   permMatrix();
   S.users.forEach(u => { if(u.role === "Technicien" || u.role === "Polyvalent") u.role = "Opérateur"; else if(u.role === "Commercial") u.role = "Manager"; });
-  { const n = nbU(), inv = S.users.filter(u => u.st === "invite").length, off = S.users.filter(u => u.st === "inactif").length; const e = document.getElementById("u-sub"); if(e) e.textContent = n + " utilisateur" + (n > 1 ? "s" : "") + (inv ? " · " + inv + " invitation" + (inv > 1 ? "s" : "") + " en attente" : "") + " · " + seatBreak(n) + " par mois";
+  { const n = nbU(), inv = S.users.filter(u => u.st === "invite").length, off = S.users.filter(u => u.st === "inactif").length; const e = document.getElementById("u-sub"); if(e) e.textContent = S.users.filter(u => u.st === "actif").length + " utilisateur" + (S.users.filter(u => u.st === "actif").length > 1 ? "s" : "") + (inv ? " · " + inv + " invitation" + (inv > 1 ? "s" : "") + " en attente" : "") + " · " + seatBreak(n) + " par mois";
     const unit = S.bill === "a" ? "an" : "mois"; document.getElementById("ub-seats").textContent = n;
-    document.getElementById("ub-sub").textContent = seatBreak(n) + " · " + eur0(seatCost(n) * (S.bill === "a" ? 12 : 1)) + " HT / " + unit;
-    document.getElementById("ub-act").textContent = n; document.getElementById("ub-inv").textContent = inv; document.getElementById("ub-off").textContent = off;
+    document.getElementById("ub-sub").textContent = (nbLibres() ? nbLibres() + " libre" + (nbLibres() > 1 ? "s" : "") + " à attribuer · " : seatBreak(n) + " · ") + "" + eur0(seatCost(n) * (S.bill === "a" ? 12 : 1)) + " HT / " + unit;
+    document.getElementById("ub-act").textContent = S.users.filter(u => u.st === "actif").length; document.getElementById("ub-inv").textContent = inv; document.getElementById("ub-off").textContent = off;
     document.getElementById("ub-inv-s").textContent = inv ? (inv > 1 ? "En attente de leur réponse" : "En attente de sa réponse") : "Aucune invitation en cours";
     document.getElementById("ub-off-s").textContent = off ? (off + " place" + (off > 1 ? "s" : "") + " libérée" + (off > 1 ? "s" : "") + " · réactivables") : "Aucun accès retiré"; }
   const DESC = { Administrateur:"tout, y compris cet espace", Manager:"bureau : planning, clients, devis, factures", "Opérateur":"terrain : appli mobile, encaissement sur place" };
@@ -1126,7 +1130,7 @@ function sendInvite(){
 /* société */
 function drawSoc(){
   const set = (id, v) => { const e = document.getElementById(id); if(document.activeElement !== e) e.value = v || ""; };
-  set("f-nom", REG.nom || SOC.nom); set("f-site", REG.site); set("f-mail", REG.email || ADMIN_MAIL); set("f-tel", REG.tel);
+  set("f-nom", REG.nom || SOC.nom); set("f-site", REG.site); set("f-mail", REG.email || ADMIN_MAIL); set("f-tel", REG.tel || T.tel);
   set("f-adr", REG.adresse || SOC.adresse); set("f-cp", REG.cp || SOC.cp); set("f-ville", REG.ville || SOC.ville);
   set("f-siret", REG.siret || SOC.siret); set("f-tva", REG.tvaNum || SOC.tva);
   document.getElementById("f-tid").textContent = "TF-" + String(SOC.siret || "000000000").slice(0, 9);
