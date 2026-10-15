@@ -433,8 +433,8 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
   <div class="tiers" id="tiers"></div>
   <details class="cmp"><summary>Comparer les formules en détail</summary>
     <table class="cmpt"><thead><tr><th></th><th>Gratuit</th><th>Starter</th><th>Pro</th><th>Business</th></tr></thead><tbody>
-      <tr><td>Prix mensuel · par utilisateur</td><td>0 €</td><td>29 €</td><td>49 €</td><td>69 €</td></tr>
-      <tr><td>Prix annuel · par utilisateur / mois (−25 %)</td><td>0 €</td><td>22 €</td><td>37 €</td><td>52 €</td></tr>
+      <tr><td>Prix mensuel · par utilisateur</td><td>0 €</td><td>29 €</td><td>49 €</td><td>Sur devis</td></tr>
+      <tr><td>Prix annuel · par utilisateur / mois (−25 %)</td><td>0 €</td><td>22 €</td><td>37 €</td><td>Sur devis</td></tr>
       <tr><td>Devis, factures et avoirs illimités</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
       <tr><td>Devis transformé en facture en 1 clic</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
       <tr><td>TVA, numérotation et mentions légales (Certibiocide)</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
@@ -459,6 +459,7 @@ select.mini{width:auto;border:1px solid var(--line);background:#F6F7F9;border-ra
       <tr><td>Signature électronique des contrats</td><td style="color:#C3C7D1">—</td><td style="color:#C3C7D1">—</td><td style="color:#C3C7D1">—</td><td>✓</td></tr>
       <tr><td>Historique de vos devis, factures et interventions</td><td>90 jours</td><td>Illimité</td><td>Illimité</td><td>Illimité</td></tr>
       <tr><td>Vos documents sans mention « Fait avec TigerFlow »</td><td style="color:#C3C7D1">—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Bientôt : devis par IA, relance automatique, plan d'appâtage interactif</td><td style="color:#C3C7D1">—</td><td style="color:#C3C7D1">—</td><td style="color:#C3C7D1">—</td><td>Bientôt</td></tr>
       <tr><td>Votre propre nom de domaine</td><td style="color:#C3C7D1">—</td><td style="color:#C3C7D1">—</td><td style="color:#C3C7D1">—</td><td>✓</td></tr>
       <tr><td>Support</td><td>E-mail</td><td>E-mail</td><td>Prioritaire</td><td>Interlocuteur dédié</td></tr>
     </tbody></table>
@@ -779,7 +780,7 @@ const TR = [
   { k:"gratuit",  n:"Gratuit",  m:0,  a:0,  who:"Pour essayer, seul",               pts:["Devis et factures illimités","Agenda en glisser-déposer","Appli technicien","10 signatures électroniques / mois","1 personne · historique 90 jours"] },
   { k:"starter",  n:"Starter",  m:29, a:22, who:"Pour se lancer",                   pts:["Toute l'équipe, techniciens et tâches","Suivi des paiements","Rapport d'intervention au client","100 signatures électroniques / mois","Import de vos clients"] },
   { k:"pro",      n:"Pro",      m:49, a:37, who:"Pour gagner du temps et de l'argent", pts:["Encaissement CB des devis et factures","Contrats et passages récurrents","300 signatures électroniques / mois","Support prioritaire"] },
-  { k:"business", n:"Business", m:69, a:52, who:"10 personnes et plus",              pts:["Signature électronique des contrats","1 000 signatures électroniques / mois","Votre propre nom de domaine","Interlocuteur dédié"] }
+  { k:"business", n:"Business", m:69, a:52, who:"À partir de 10 utilisateurs",              pts:["Signature électronique des contrats","1 000 signatures électroniques / mois","Votre propre nom de domaine","Interlocuteur dédié","Bientôt : devis par IA, relances automatiques, plan d'appâtage interactif"] }
 ];
 let PLAN = T.plan || "pro";
 function tranche(){ return TR.find(t => t.k === PLAN) || TR[2]; }
@@ -796,11 +797,11 @@ function drawTiers(){
   document.getElementById("b-m").classList.toggle("on", BILL === "m"); document.getElementById("b-a").classList.toggle("on", BILL === "a");
   if(document.activeElement !== document.getElementById("n")) document.getElementById("n").value = N;
   const cur = tranche();
-  document.getElementById("tiers").innerHTML = TR.map(t => '<div class="tier' + (t === cur ? " on" : "") + (t.k === "pro" ? " best" : "") + '" onclick="setPlan(\'' + t.k + '\')">' +
+  document.getElementById("tiers").innerHTML = TR.map(t => '<div class="tier' + (t === cur ? " on" : "") + (t.k === "pro" ? " best" : "") + '" onclick="' + (t.k === "business" ? "location.href='mailto:hello@tigerflow.io?subject=TigerFlow%20Business%20-%20devis'" : "setPlan(\'" + t.k + "\')") + '">' +
     '<span class="pill">Votre choix</span>' + (t.k === "pro" ? '<span class="bestp">Le plus choisi</span>' : '') +
     '<div class="tr">' + t.n + '</div>' +
-    '<div class="pr">' + t[BILL] + ' € <small>' + (t.m ? '/ utilisateur / mois' : 'pour toujours') + '</small></div>' +
-    '<div class="who">' + t.who + (t.m && BILL === "a" ? " · " + (t.a * 12) + " € par an" : t.m ? " · sans engagement" : "") + '</div>' +
+    '<div class="pr">' + (t.k === "business" ? 'Sur devis' : t[BILL] + ' € <small>' + (t.m ? '/ utilisateur / mois' : 'pour toujours') + '</small>') + '</div>' +
+    '<div class="who">' + t.who + (t.k === "business" ? " · on vous rappelle sous 24 h" : t.m && BILL === "a" ? " · " + (t.a * 12) + " € par an" : t.m ? " · sans engagement" : "") + '</div>' +
     '<ul>' + t.pts.map(p => '<li><svg class="i" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>' + p + '</li>').join("") + '</ul></div>').join("");
   const u = N + " utilisateur" + (N > 1 ? "s" : "");
   if(BILL === "m"){
