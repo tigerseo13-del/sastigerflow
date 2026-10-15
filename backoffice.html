@@ -621,17 +621,17 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
       <a class="kt cash" href="#abonnements" onclick="openTab('abo','tarifs');return false"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/></svg>Places facturées</div><b id="ab-k4">—</b><div class="ks" id="ab-k4-ft">—</div><span class="go">Tarifs →</span></a>
     </div>
     <div class="tabs" data-tabs="abo">
-      <button data-t="tarifs" class="on" onclick="openTab('abo','tarifs')">Tarifs</button>
+      <button data-t="tarifs" class="on" onclick="openTab('abo','tarifs')">Formules</button>
       <button data-t="liste" onclick="openTab('abo','liste')">Abonnements</button>
       <button data-t="options" onclick="openTab('abo','options')">Codes promo</button>
     </div>
     <div class="tp on" data-tp="abo-tarifs">
-      <div class="hint" style="margin:0 0 14px"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg><span>Un seul produit, un prix par place qui baisse par palier. Modifier un prix ne change rien aux places déjà prises : la nouvelle grille s'applique aux nouvelles places et aux nouveaux clients, après un préavis de 30 jours.</span></div>
+      <div class="hint" style="margin:0 0 14px"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5h.01"/></svg><span>4 formules, un prix par utilisateur et par mois. Le prix annuel se calcule tout seul (−25 %). Un changement de prix s'applique aux nouveaux clients tout de suite et aux clients existants après un préavis de 30 jours.</span></div>
       <div class="card" oninput="document.getElementById('tar-save').className='btn o';dirtyOn(saveTarifs, drawTarifs)">
-        <table class="tbl"><thead><tr><th>Palier</th><th>Places</th><th>Mensuel (HT / place / mois)</th><th>Annuel (HT / place / mois) · 1 mois offert</th><th>Support inclus</th><th>Statut</th></tr></thead><tbody id="tar-rows"></tbody></table>
-        <div class="act" style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn g" onclick="dirtyOff();drawTarifs()">Annuler</button><button class="btn g" id="tar-save" onclick="saveTarifs()">Enregistrer la grille</button></div>
+        <table class="tbl"><thead><tr><th>Formule</th><th>Utilisateurs</th><th>Mensuel (HT / util. / mois)</th><th>Annuel (HT / util. / mois) · −25 %</th><th>Ce qui est inclus</th><th>Clients</th><th>Statut</th></tr></thead><tbody id="tar-rows"></tbody></table>
+        <div class="act" style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn g" onclick="dirtyOff();drawTarifs()">Annuler</button><button class="btn g" id="tar-save" onclick="saveTarifs()">Enregistrer les formules</button></div>
       </div>
-      <div class="card mt"><div class="hdr"><div><h3>Inclus pour toutes les places</h3><div class="sub">Ce que chaque utilisateur a, quel que soit le palier</div></div></div>
+      <div class="card mt"><div class="hdr"><div><h3>Inclus dans toutes les formules</h3><div class="sub">Ce que chaque client a, quelle que soit sa formule</div></div></div>
         <div class="cats" id="incl-list"></div></div>
     </div>
     <div class="tp" data-tp="abo-liste">
@@ -783,10 +783,12 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
 <script>
 /* ───────── données de démonstration (maquette) ───────── */
 const KEY = "tigerflow-bo";
-const TR = [ {min:1,max:5,lab:"1 à 5",m:49,a:49*11/12,sup:"Support par e-mail"}, {min:6,max:10,lab:"6 à 10",m:39,a:39*11/12,sup:"Support prioritaire"}, {min:11,max:999,lab:"11 et +",m:29,a:29*11/12,sup:"Interlocuteur dédié"} ];
-function tr(i){ return TR.find(t => i >= t.min && i <= t.max) || TR[2]; }
-function seatCost(n, b){ let c = 0; for(let i = 1; i <= n; i++) c += tr(i)[b]; return c; }
-function seatBreak(n, b){ const p = []; TR.forEach(t => { const k = Math.max(0, Math.min(n, t.max) - t.min + 1); if(k > 0) p.push(k + " × " + t.m + " €"); }); return p.join(" + "); }
+/* 15/10 patron : formules comme InterFast (Sheet l.17-19) — prix par utilisateur selon la formule, annuel −25 % */
+const TR = [ {k:"gratuit",n:"Gratuit",m:0,a:0,lim:"1 utilisateur",sup:"Devis, factures, bons d'intervention"}, {k:"starter",n:"Starter",m:29,a:22,lim:"Illimité",sup:"Planning, appli technicien, rapports automatiques"}, {k:"pro",n:"Pro",m:49,a:37,lim:"Illimité",sup:"Relances de devis, carte sur place, contrats, plan d'appâtage"}, {k:"business",n:"Business",m:69,a:52,lim:"Illimité",sup:"Plusieurs agences, nom de domaine, interlocuteur dédié"} ];
+function plan(k){ return TR.find(p => p.k === (k || "pro")) || TR[2]; }
+function tr(){ return plan(); }
+function seatCost(n, b, k){ return n * plan(k)[b]; }
+function seatBreak(n, b, k){ return n + " × " + plan(k)[b] + " €"; }
 const D0 = {
   tenants:[
     { id:1, nom:"Agence Antinuisible", sub:"agence-antinuisible", mail:"contact@agenceantinuisible.fr", tel:"06 11 22 33 44", wa:"06 11 22 33 44", st:"actif", bill:"m", n:4, tech:2, sto:1.2, reg:"2026-09-19", last:"Aujourd'hui, 9 h 40", ville:"Paris", carte:"4242", dom:"" },
@@ -797,20 +799,20 @@ const D0 = {
     { id:6, nom:"Rat&Co", sub:"rat-and-co", mail:"jo@ratandco.fr", tel:"06 98 76 54 32", wa:"06 98 76 54 32", st:"annule", fin_abo:"2026-09-12", bill:"m", n:0, tech:0, sto:0.4, reg:"2026-05-02", last:"Ven. 12 sept.", ville:"Bordeaux", carte:"3030", dom:"" }
   ],
   pays:[
-    { no:"PAY-2026-0142", t:3, amt:3553, d:"2026-10-01", st:"ok", moy:"Visa •••• 1881" },
-    { no:"PAY-2026-0141", t:5, amt:498, d:"2026-10-01", st:"ok", moy:"Visa •••• 7719" },
+    { no:"PAY-2026-0142", t:3, amt:3108, d:"2026-10-01", st:"ok", moy:"Visa •••• 1881" },
+    { no:"PAY-2026-0141", t:5, amt:828, d:"2026-10-01", st:"ok", moy:"Visa •••• 7719" },
     { no:"PAY-2026-0140", t:1, amt:196, d:"2026-10-01", st:"ok", moy:"Visa •••• 4242" },
     { no:"PAY-2026-0139", t:4, amt:147, d:"2026-09-30", st:"ko", moy:"Visa •••• 0005" },
-    { no:"PAY-2026-0131", t:5, amt:498, d:"2026-09-01", st:"ok", moy:"Visa •••• 7719" },
+    { no:"PAY-2026-0131", t:5, amt:828, d:"2026-09-01", st:"ok", moy:"Visa •••• 7719" },
     { no:"PAY-2026-0130", t:1, amt:147, d:"2026-09-01", st:"ok", moy:"Visa •••• 4242" },
     { no:"PAY-2026-0129", t:4, amt:147, d:"2026-09-01", st:"ok", moy:"Visa •••• 0005" },
-    { no:"PAY-2026-0118", t:5, amt:440, d:"2026-08-01", st:"ok", moy:"Visa •••• 7719" },
-    { no:"PAY-2026-0117", t:6, amt:98, d:"2026-08-01", st:"att", moy:"Visa •••• 3030" },
-    { no:"PAY-2026-0104", t:5, amt:440, d:"2026-07-01", st:"ok", moy:"Visa •••• 7719" },
-    { no:"PAY-2026-0103", t:6, amt:98, d:"2026-07-01", st:"ok", moy:"Visa •••• 3030" },
-    { no:"PAY-2026-0092", t:5, amt:284, d:"2026-06-11", st:"ok", moy:"Visa •••• 7719" },
-    { no:"PAY-2026-0091", t:6, amt:98, d:"2026-06-02", st:"ok", moy:"Visa •••• 3030" },
-    { no:"PAY-2026-0080", t:6, amt:98, d:"2026-05-02", st:"ok", moy:"Visa •••• 3030" }
+    { no:"PAY-2026-0118", t:5, amt:690, d:"2026-08-01", st:"ok", moy:"Visa •••• 7719" },
+    { no:"PAY-2026-0117", t:6, amt:58, d:"2026-08-01", st:"att", moy:"Visa •••• 3030" },
+    { no:"PAY-2026-0104", t:5, amt:690, d:"2026-07-01", st:"ok", moy:"Visa •••• 7719" },
+    { no:"PAY-2026-0103", t:6, amt:58, d:"2026-07-01", st:"ok", moy:"Visa •••• 3030" },
+    { no:"PAY-2026-0092", t:5, amt:414, d:"2026-06-11", st:"ok", moy:"Visa •••• 7719" },
+    { no:"PAY-2026-0091", t:6, amt:58, d:"2026-06-02", st:"ok", moy:"Visa •••• 3030" },
+    { no:"PAY-2026-0080", t:6, amt:58, d:"2026-05-02", st:"ok", moy:"Visa •••• 3030" }
   ],
   hooks:[
     { id:1, nom:"Impayé J+1 — rappel", trig:"stripe_ko", cond:["Statut paiement : échoué"], act:["Envoyer un e-mail au client","Journaliser"], last:"30 sept., 06:10", on:true, sys:true },
@@ -830,7 +832,7 @@ const D0 = {
     { id:1, cat:"pay", t:"Paiement échoué", d:"Nuisibles Express · 147,00 € · Visa •••• 0005 refusée", w:"Il y a 2 h", un:true },
     { id:2, cat:"sup", t:"Nouvelle demande depuis la landing", d:"Marc · SOS Guêpes 77 : « Est-ce que ça gère les contrats annuels ? »", w:"Il y a 3 h", un:true },
     { id:3, cat:"new", t:"Nouvelle inscription", d:"Dératek Lyon a démarré son essai (2 utilisateurs, annuel)", w:"Hier", un:true },
-    { id:4, cat:"pay", t:"Paiements du 1er octobre", d:"3 prélèvements réussis · 4 247,00 €", w:"1 oct.", un:false },
+    { id:4, cat:"pay", t:"Paiements du 1er octobre", d:"3 prélèvements réussis · 4 132,00 €", w:"1 oct.", un:false },
     { id:5, cat:"sup", t:"Demande résolue", d:"ProDésinfection · Signature des devis sur tablette", w:"29 sept.", un:false }
   ],
   team:[
@@ -847,11 +849,13 @@ const D0 = {
 };
 let S; try{ S = JSON.parse(localStorage.getItem(KEY)); }catch(e){} if(!S || !S.tenants) S = JSON.parse(JSON.stringify(D0));
 /* 13/10 : la société inscrite sur inscription.html apparaît dans la liste des clients */ (function(){ let T = null; try{ T = JSON.parse(localStorage.getItem("tigerflow-tenant")); }catch(e){} if(!T || T.etape !== "cree" || !T.soc) return; if(S.tenants.some(t => t.sub === T.sub)) return; const id = Math.max(...S.tenants.map(t => t.id)) + 1, today = new Date().toISOString().slice(0, 10);
-  S.tenants.unshift({ id, nom:T.soc.nom, sub:T.sub, mail:T.email, tel:T.tel || "", wa:T.wa || T.tel || "", st:"essai", bill:T.bill || "m", n:+T.n || 1, tech:0, sto:0, reg:today, last:"À l'instant", ville:T.soc.ville || "", carte:T.carte ? T.carte.fin : "", fin:String(T.finEssai || "").slice(0, 10), dom:"", vu:today });
+  S.tenants.unshift({ id, plan:T.plan || "pro", nom:T.soc.nom, sub:T.sub, mail:T.email, tel:T.tel || "", wa:T.wa || T.tel || "", st:"essai", bill:T.bill || "m", n:+T.n || 1, tech:0, sto:0, reg:today, last:"À l'instant", ville:T.soc.ville || "", carte:T.carte ? T.carte.fin : "", fin:String(T.finEssai || "").slice(0, 10), dom:"", vu:today });
   S.nots.unshift({ id:Date.now(), cat:"new", t:"Nouvelle inscription", d:T.soc.nom + " a démarré son essai (" + (+T.n || 1) + " utilisateur" + ((+T.n || 1) > 1 ? "s" : "") + ", " + (T.bill === "a" ? "annuel" : "mensuel") + ")", w:"À l'instant", un:true, t2:id }); })();
+/* 15/10 : formule de chaque client (démo) */ (function(){ const PK = { 1:"pro", 2:"starter", 3:"pro", 4:"pro", 5:"business", 6:"starter" }; S.tenants.forEach(t => { if(!t.plan) t.plan = PK[t.id] || "pro"; });
+  const P = {"PAY-2026-0142":3108,"PAY-2026-0141":828,"PAY-2026-0131":828,"PAY-2026-0118":690,"PAY-2026-0117":58,"PAY-2026-0104":690,"PAY-2026-0103":58,"PAY-2026-0092":414,"PAY-2026-0091":58,"PAY-2026-0080":58}; S.pays.forEach(p => { if(P[p.no] != null) p.amt = P[p.no]; }); S.nots.forEach(n => { if(n.d) n.d = n.d.replace("4 247,00 €", "4 132,00 €"); }); })();
 /* 13/10 : dernière connexion (vu) + l'essai de démo finit toujours demain */ (function(){ const iso = d => { const x = new Date(); x.setDate(x.getDate() - d); return x.toISOString().slice(0, 10); }, VU = { 1:iso(0), 2:iso(1), 3:iso(0), 4:"2026-09-29", 5:iso(0), 6:"2026-09-12" };
   S.tenants.forEach(t => { if(t.id === 1 && t.tech === 3) t.tech = 2; if(!t.vu) t.vu = VU[t.id] || iso(0); if(t.st === "essai" && new Date(t.fin) < new Date(iso(0))){ t.fin = iso(-1); } }); })();
-/* 13/10 : montants passés à 49/39/29 € */ (function(){ const P = {"PAY-2026-0142": 3553, "PAY-2026-0141": 498, "PAY-2026-0140": 196, "PAY-2026-0139": 147, "PAY-2026-0131": 498, "PAY-2026-0130": 147, "PAY-2026-0129": 147, "PAY-2026-0118": 440, "PAY-2026-0117": 98, "PAY-2026-0104": 440, "PAY-2026-0103": 98, "PAY-2026-0092": 284, "PAY-2026-0091": 98, "PAY-2026-0080": 98}; S.pays.forEach(p => { if(P[p.no] != null) p.amt = P[p.no]; }); S.nots.forEach(n => { if(n.d) n.d = n.d.replace("248,40 €", "147,00 €").replace("3 865,00 €", "4 247,00 €"); }); })();
+/* 13/10 : montants passés à 49/39/29 € */ (function(){ const P = {"PAY-2026-0142": 3108, "PAY-2026-0141": 828, "PAY-2026-0140": 196, "PAY-2026-0139": 147, "PAY-2026-0131": 828, "PAY-2026-0130": 147, "PAY-2026-0129": 147, "PAY-2026-0118": 690, "PAY-2026-0117": 58, "PAY-2026-0104": 690, "PAY-2026-0103": 58, "PAY-2026-0092": 414, "PAY-2026-0091": 58, "PAY-2026-0080": 58}; S.pays.forEach(p => { if(P[p.no] != null) p.amt = P[p.no]; }); S.nots.forEach(n => { if(n.d) n.d = n.d.replace("248,40 €", "147,00 €").replace("3 865,00 €", "4 132,00 €").replace("4 247,00 €", "4 132,00 €"); }); })();
 /* 06/10 : téléphone de l'administrateur (patron : « si le mec churn, j'aurai pas son numéro ») — complète les données déjà en localStorage */
 S.tenants.forEach(t => { if(t.tel === undefined || typeof t.wa !== "string"){ const d = D0.tenants.find(x => x.id === t.id); if(d){ t.tel = d.tel; t.wa = d.wa; } } });
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -864,7 +868,7 @@ function eur0(v){ return Math.round(v).toLocaleString("fr-FR") + " €"; }
 function fdate(s){ const d = new Date(s); return d.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}); }
 function ini(n){ return n.split(/\s+/).map(x => x[0]).join("").slice(0,2).toUpperCase(); }
 function ten(id){ return S.tenants.find(t => t.id === id); }
-function ht(t){ return seatCost(t.n, t.bill) * (t.bill === "a" ? 12 : 1); }
+function ht(t){ return seatCost(t.n, t.bill, t.plan) * (t.bill === "a" ? 12 : 1); }
 function stPill(t, small){ return '<span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span>' + (t.st === "suspendu" && t.impaye ? '<small style="display:block;color:var(--red);font-size:.72rem;margin-top:3px">impayé depuis le ' + fdate(t.impaye) + '</small>' : t.st === "essai" && t.fin && !small ? '<small style="display:block;color:var(--muted);font-size:.72rem;margin-top:3px">fin le ' + fdate(t.fin) + '</small>' : ""); }
 const STT = { actif:["Actif","g"], essai:["Essai","b"], suspendu:["Suspendu","r"], annule:["Annulé","r"] };
 const IC = { ok:'<svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M5 12.5l4.5 4.5L19 7"/></svg>', clip:'<svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M21 11.5l-8.5 8.5a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"/></svg>' };
@@ -910,7 +914,7 @@ function drawAll(){ drawDash(); drawTenants(); drawTarifs(); drawAbos(); drawPay
 function rel(w){ const m = /Aujourd'hui, (\d+) h (\d+)/.exec(w); if(!m) return w.replace("Hier, ", "hier à "); const now = new Date(), d = (now.getHours() * 60 + now.getMinutes()) - (+m[1] * 60 + +m[2]); if(d < 0) return w; if(d < 60) return "il y a " + Math.max(1, d) + " min"; return "il y a " + Math.round(d / 60) + " h"; }
 function drawDash(){
   const T = S.tenants, act = T.filter(t => t.st === "actif"), ess = T.filter(t => t.st === "essai"), ko = S.pays.filter(p => p.st === "ko");
-  const mrr = act.reduce((s, t) => s + seatCost(t.n, t.bill), 0);
+  const mrr = act.reduce((s, t) => s + seatCost(t.n, t.bill, t.plan), 0);
   document.getElementById("d-sub").textContent = new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"}).replace(/^./, c => c.toUpperCase());
   document.getElementById("d-ten").textContent = T.length; document.getElementById("d-ten-ft").textContent = act.length + " actifs · " + ess.length + " en essai · " + T.filter(t => t.st === "suspendu").length + " suspendu";
   document.getElementById("d-abo").textContent = act.length; document.getElementById("d-abo-ft").textContent = eur0(mrr) + " HT / mois de revenu récurrent";
@@ -937,7 +941,7 @@ function setTF(k){ TF = k; drawTenants(); }
 function drawTenants(){
   const T = S.tenants, q = (document.getElementById("ten-q").value || "").trim().toLowerCase();
   { const act = T.filter(t => t.st === "actif"), ess = T.filter(t => t.st === "essai"), ann = T.filter(t => t.st === "annule"), sus = T.filter(t => t.st === "suspendu");
-    const mrr = act.reduce((x, t) => x + seatCost(t.n, t.bill), 0), conv = T.filter(t => t.st !== "essai" && t.st !== "annule" && new Date(t.reg) > new Date("2026-08-01")).length;
+    const mrr = act.reduce((x, t) => x + seatCost(t.n, t.bill, t.plan), 0), conv = T.filter(t => t.st !== "essai" && t.st !== "annule" && new Date(t.reg) > new Date("2026-08-01")).length;
     const k = (i, v, f) => { document.getElementById("t-k" + i).textContent = v; document.getElementById("t-k" + i + "-ft").textContent = f; };
     const pl = L => L.reduce((x, t) => x + t.n, 0), churn = T.length ? Math.round(ann.length / T.length * 100) : 0;
     k(1, act.length, pl(act) + " places · " + eur0(mrr) + " HT / mois");
@@ -954,7 +958,7 @@ function drawTenants(){
   const L = T.filter(t => (TF === "all" || t.st === TF) && (!q || (t.nom + " " + t.sub + " " + t.mail + " " + (t.tel || "") + " " + (t.wa || "") + " " + t.ville).toLowerCase().includes(q)));
   document.getElementById("ten-rows").innerHTML = L.length ? L.map(t => '<tr class="clk" onclick="location.hash=\'#tenants?t=' + t.id + '\'"><td><div class="who"><span class="av" style="' + (t.st === "actif" ? "" : "background:#D7DAE1;color:#6C7285") + '">' + ini(t.nom) + '</span><div><b>' + esc(t.nom) + '</b><small>' + esc(t.sub) + '.tigerflow.io · ' + esc(t.ville) + '</small></div></div></td>' +
     '<td><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span>' + (t.st === "essai" ? '<small style="display:block;color:var(--muted);font-size:.72rem;margin-top:3px">fin le ' + fdate(t.fin) + '</small>' : t.st === "suspendu" ? '<small style="display:block;color:var(--red);font-size:.72rem;margin-top:3px">impayé depuis le ' + fdate(t.impaye) + '</small>' : '') + '</td>' +
-    '<td>' + (t.st === "essai" ? "Essai" : t.bill === "a" ? "Annuel" : "Mensuel") + '<small style="display:block;color:var(--muted);font-size:.72rem">' + (t.n ? eur0(seatCost(t.n, t.bill)) + " HT / mois" : "—") + '</small></td>' +
+    '<td>' + plan(t.plan).n + ' · ' + (t.st === "essai" ? "essai" : t.bill === "a" ? "annuel" : "mensuel") + '<small style="display:block;color:var(--muted);font-size:.72rem">' + (t.n ? eur0(seatCost(t.n, t.bill, t.plan)) + " HT / mois" : "—") + '</small></td>' +
     '<td><b>' + t.n + '</b> <small style="color:var(--muted)">dont ' + t.tech + ' opérateur' + (t.tech > 1 ? 's' : '') + '</small></td><td>' + t.sto.toLocaleString("fr-FR") + ' Go</td><td style="color:var(--muted)">' + fdate(t.reg) + '</td>' +
     '<td><div class="acts"><button class="btn g sm" onclick="event.stopPropagation();impers(' + t.id + ')" title="Se connecter en tant que">Se connecter</button></div></td></tr>').join("") : '<tr><td colspan="7"><div class="empty" style="padding:36px 16px"><div><b style="color:var(--ink)">Aucun client</b><br>ne correspond à ce filtre</div></div></td></tr>';
 }
@@ -968,16 +972,16 @@ function openTenant(id){
     '<div class="ph"><div><h1>' + esc(t.nom) + ' <span class="pill ' + STT[t.st][1] + '" style="vertical-align:middle;margin-left:6px">' + STT[t.st][0] + '</span></h1><p>' + esc(t.sub) + '.tigerflow.io' + (t.dom ? ' · ' + esc(t.dom) : '') + ' · ' + esc(t.ville) + ' · inscrit le ' + fdate(t.reg) + ' · dernière activité ' + esc(t.last) + '</p></div>' +
     '<div class="act"><a class="btn g" href="#support" onclick="CUR=' + (S.convs.find(c => c.t === id) || {id:null}).id + '">Historique support</a><button class="btn o" onclick="impers(' + id + ')">Se connecter en tant que</button>' +
     (t.st === "suspendu" ? '<button class="btn g" onclick="setStatus(' + id + ',\'actif\')">Rétablir</button>' : t.st === "annule" ? '<button class="btn g" onclick="setStatus(' + id + ',\'actif\')">Réactiver</button>' : '<button class="btn g" style="color:var(--red)" onclick="setStatus(' + id + ',\'suspendu\')">Suspendre</button>') + '</div></div>' +
-    (t.st === "suspendu" ? '<div class="alertbar on" style="margin:0 0 16px"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span><b>Suspendu pour impayé</b> depuis le ' + fdate(t.impaye) + ' · ' + eur(seatCost(t.n, "m")) + ' dus · prochaine tentative automatique J+7, puis lecture seule.</span><button class="btn g sm" onclick="toast(\'Nouvelle tentative de prélèvement lancée\')">Relancer le prélèvement</button></div>' : '') +
+    (t.st === "suspendu" ? '<div class="alertbar on" style="margin:0 0 16px"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span><b>Suspendu pour impayé</b> depuis le ' + fdate(t.impaye) + ' · ' + eur(seatCost(t.n, "m", t.plan)) + ' dus · prochaine tentative automatique J+7, puis lecture seule.</span><button class="btn g sm" onclick="toast(\'Nouvelle tentative de prélèvement lancée\')">Relancer le prélèvement</button></div>' : '') +
     '<div class="g21"><div>' +
     '<div class="card"><div class="hdr"><div><h3>Fiche</h3></div></div><div class="fgrid" style="font-size:.86rem"><div><small class="lbl2">Société</small><b>' + esc(t.nom) + '</b></div><div><small class="lbl2">E-mail de facturation</small><b>' + esc(t.mail) + '</b></div><div><small class="lbl2">Téléphone de l\'administrateur</small><b>' + (t.tel ? '<a href="tel:' + t.tel.replace(/\s/g, "") + '" style="text-decoration:none">' + esc(t.tel) + '</a>' : '—') + '</b></div><div><small class="lbl2">WhatsApp</small><b>' + (t.wa ? '<a href="https://wa.me/33' + t.wa.replace(/\s/g, "").replace(/^0/, "") + '" target="_blank" rel="noopener" style="text-decoration:none">' + esc(t.wa) + '</a> <a class="pill g" href="https://wa.me/33' + t.wa.replace(/\s/g, "").replace(/^0/, "") + '" target="_blank" rel="noopener" style="text-decoration:none">Écrire</a>' : '—') + '</b></div><div><small class="lbl2">Adresse d\'espace</small><b>' + esc(t.sub) + '.tigerflow.io</b></div><div><small class="lbl2">Domaine personnalisé</small><b>' + (t.dom ? esc(t.dom) + ' <span class="pill g">actif · 9 €/mois</span>' : '—') + '</b></div></div></div>' +
     '<div class="card mt"><div class="hdr"><div><h3>Usage</h3><div class="sub">Ce qui est facturé et ce qui est consommé</div></div></div>' +
-    '<div class="kv"><span>Places (' + t.n + ')</span><b>' + (t.n ? seatBreak(t.n, "m") + ' = ' + eur0(seatCost(t.n, "m")) + ' HT / mois' + (t.bill === "a" ? ' · ' + eur0(ht(t)) + ' / an, 1 mois offert' : '') : '—') + '</b></div><div class="pbar">' + TR.map((r, i) => { const k = Math.max(0, Math.min(t.n, r.max) - r.min + 1); return k ? '<span class="p' + i + '" style="flex:' + k + '" title="' + k + ' place(s) à ' + r.m + ' €">' + k + ' × ' + r.m + ' €</span>' : ''; }).join("") + (t.n < 10 ? '<span class="nx" style="flex:' + Math.max(1, 10 - t.n) + '">prochaine place : ' + tr(t.n + 1).m + ' €</span>' : '') + '</div>' +
+    '<div class="kv"><span>Places (' + t.n + ')</span><b>' + (t.n ? seatBreak(t.n, t.bill, t.plan) + ' = ' + eur0(seatCost(t.n, t.bill, t.plan)) + ' HT / mois' + (t.bill === "a" ? ' · ' + eur0(ht(t)) + ' / an' : '') : '—') + '</b></div><div class="pbar">' + (t.n ? '<span class="p0" style="flex:' + t.n + '">' + t.n + ' × ' + plan(t.plan)[t.bill] + ' €</span><span class="nx" style="flex:' + Math.max(1, 10 - t.n) + '">place suivante : ' + plan(t.plan)[t.bill] + ' €</span>' : '') + '</div>' +
     '<div class="kv"><span>Opérateurs (appli mobile)</span><b>' + t.tech + '</b></div><div class="kv"><span>Stockage</span><b>' + t.sto.toLocaleString("fr-FR") + ' Go</b></div><div class="bar"><span style="width:' + Math.min(100, t.sto / 10 * 100) + '%"></span></div></div>' +
     '<div class="card mt"><div class="hdr"><div><h3>Utilisateurs du tenant</h3><div class="sub">Lecture seule · aucune donnée métier n\'est visible d\'ici</div></div></div><table class="tbl">' + users.map(u => '<tr><td><div class="who"><span class="av" style="width:28px;height:28px;font-size:.65rem">' + ini(u.nom) + '</span><div><b>' + esc(u.nom) + '</b><small>' + esc(u.mail) + '</small></div></div></td><td><span class="pill n">' + u.role + '</span></td><td><span class="pill g">Actif</span></td></tr>').join("") + '</table></div>' +
     '</div><div>' +
     '<div class="card"><div class="hdr"><div><h3>Abonnement</h3></div></div>' +
-    '<div class="kv"><span>Statut</span><b><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></b></div><div class="kv"><span>Cycle</span><b>' + (t.bill === "a" ? "Annuel · 1 mois offert" : "Mensuel") + '</b></div><div class="kv"><span>Montant</span><b>' + (t.n ? eur(ht(t)) + ' HT / ' + (t.bill === "a" ? "an" : "mois") : "—") + '</b></div>' +
+    '<div class="kv"><span>Statut</span><b><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></b></div><div class="kv"><span>Formule</span><b>' + plan(t.plan).n + '</b></div><div class="kv"><span>Cycle</span><b>' + (t.bill === "a" ? "Annuel · −25 %" : "Mensuel") + '</b></div><div class="kv"><span>Montant</span><b>' + (t.n ? eur(ht(t)) + ' HT / ' + (t.bill === "a" ? "an" : "mois") : "—") + '</b></div>' +
     '<div class="kv"><span>' + (t.st === "essai" ? "Fin de l'essai" : "Prochain prélèvement") + '</span><b>' + (t.st === "essai" ? fdate(t.fin) : t.bill === "a" ? "1er oct. 2027" : "1er nov. 2026") + '</b></div><div class="kv"><span>Carte</span><b>' + (t.carte ? 'Visa •••• ' + t.carte : '<span style="color:var(--amber)">Aucune</span>') + '</b></div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">' + (t.st === "essai" ? '<button class="btn g sm" onclick="extendTrial(' + id + ')">Prolonger l\'essai de 14 j</button>' : '') + '<button class="btn g sm" onclick="toast(\'Ouvert dans Stripe\')">Voir dans Stripe</button>' + (t.st !== "annule" ? '<button class="btn g sm" style="color:var(--red)" onclick="setStatus(' + id + ',\'annule\')">Annuler l\'abonnement</button>' : '') + '</div></div>' +
     '<div class="card mt"><div class="hdr"><div><h3>Derniers paiements</h3></div><a class="lk" href="#paiements">Tous ›</a></div>' + (pays.length ? pays.slice(0, 4).map(p => '<div class="kv"><span>' + fdate(p.d) + '<small style="display:block;font-size:.72rem;font-family:ui-monospace,monospace">' + p.no + '</small></span><b>' + eur(p.amt) + ' <span class="pill ' + (p.st === "ok" ? "g" : p.st === "ko" ? "r" : "a") + '">' + (p.st === "ok" ? "Payé" : p.st === "ko" ? "Échoué" : "En attente") + '</span></b></div>').join("") : '<div class="empty">Aucun paiement (essai)</div>') + '</div>' +
@@ -999,22 +1003,22 @@ let AF = "all";
 function setAF(k){ AF = k; drawAbos(); }
 function drawTarifs(){
   if(DIRTY && DIRTY.saveFn === saveTarifs && document.activeElement && document.activeElement.closest && document.activeElement.closest("#tar-rows")) return;
-  document.getElementById("tar-rows").innerHTML = TR.map((t, i) => '<tr><td><b>Palier ' + (i + 1) + '</b></td><td>' + (t.max > 100 ? "À partir de la 11ᵉ" : "Places " + t.lab) + '</td><td><input class="mini-in" data-k="m" data-i="' + i + '" value="' + t.m + '"> €</td><td><span style="color:var(--muted)" title="Calculé : mensuel × 11 / 12 (1 mois offert)">' + (Math.round(t.a * 100) / 100).toLocaleString("fr-FR") + ' €</span></td><td>' + t.sup + '</td><td><label class="tg"><input type="checkbox"' + (t.off ? "" : " checked") + ' onchange="TR[' + i + '].off=!this.checked;save();drawTarifs();toast(this.checked?\'Palier activé\':\'Palier désactivé · ses places passent au palier précédent\')"><i></i>' + (t.off ? "Inactif" : "Actif") + '</label></td></tr>').join("");
+  document.getElementById("tar-rows").innerHTML = TR.map((t, i) => '<tr><td><b>' + t.n + '</b></td><td>' + t.lim + '</td><td>' + (t.m || t.k !== "gratuit" ? '<input class="mini-in" data-k="m" data-i="' + i + '" value="' + t.m + '"> €' : '<b>0 €</b>') + '</td><td><span style="color:var(--muted)" title="Calculé : mensuel − 25 %">' + t.a + ' €</span></td><td style="font-size:.8rem;color:var(--ink2)">' + t.sup + '</td><td>' + S.tenants.filter(x => x.plan === t.k && x.st !== "annule").length + '</td><td><label class="tg"><input type="checkbox"' + (t.off ? "" : " checked") + ' onchange="TR[' + i + '].off=!this.checked;save();drawTarifs();toast(this.checked?\'Formule ' + t.n + ' proposée\':\'Formule ' + t.n + ' retirée des nouvelles inscriptions · les clients actuels la gardent\')"><i></i>' + (t.off ? "Inactive" : "Active") + '</label></td></tr>').join("");
   document.getElementById("tar-save").className = "btn g";
-  document.getElementById("incl-list").innerHTML = ["Toutes les fonctionnalités","Devis, factures, rapports illimités","Appli technicien mobile","Mises à jour","Support","Export des données","Hébergement en UE"].map(x => '<label><input type="checkbox" checked disabled><span>' + x + '</span></label>').join("");
+  document.getElementById("incl-list").innerHTML = ["Devis et factures illimités","Bons d'intervention","Facturation électronique","Mises à jour","Export des données","Hébergement en UE","Sans engagement"].map(x => '<label><input type="checkbox" checked disabled><span>' + x + '</span></label>').join("");
 }
-function saveTarifs(){ dirtyOff(); document.querySelectorAll("#tar-rows input[data-k]").forEach(i => { TR[+i.dataset.i][i.dataset.k] = +i.value.replace(",", ".") || TR[+i.dataset.i][i.dataset.k]; }); TR.forEach(r => r.a = r.m * 11 / 12); document.getElementById("tar-save").className = "btn g"; log("Grille tarifaire modifiée", "—"); save(); toast("Grille enregistrée · applicable aux nouvelles places après 30 jours de préavis"); drawAll(); }
+function saveTarifs(){ dirtyOff(); document.querySelectorAll("#tar-rows input[data-k]").forEach(i => { TR[+i.dataset.i][i.dataset.k] = +i.value.replace(",", ".") || TR[+i.dataset.i][i.dataset.k]; }); TR.forEach(r => r.a = Math.round(r.m * 0.75)); document.getElementById("tar-save").className = "btn g"; log("Grille tarifaire modifiée", "—"); save(); toast("Formules enregistrées · nouveaux clients tout de suite, clients actuels après 30 jours de préavis"); drawAll(); }
 function drawAbos(){
-  { const act = S.tenants.filter(t => t.st === "actif"), m = act.filter(t => t.bill === "m"), a = act.filter(t => t.bill === "a"), mrr = act.reduce((x, t) => x + seatCost(t.n, t.bill), 0), pl = act.reduce((x, t) => x + t.n, 0);
+  { const act = S.tenants.filter(t => t.st === "actif"), m = act.filter(t => t.bill === "m"), a = act.filter(t => t.bill === "a"), mrr = act.reduce((x, t) => x + seatCost(t.n, t.bill, t.plan), 0), pl = act.reduce((x, t) => x + t.n, 0);
     const k = (i, v, f) => { document.getElementById("ab-k" + i).textContent = v; document.getElementById("ab-k" + i + "-ft").textContent = f; };
     k(1, eur0(mrr) + " HT / mois", eur0(mrr * 12) + " HT par an · " + act.length + " clients actifs");
-    k(2, m.length, m.length ? eur0(m.reduce((x, t) => x + seatCost(t.n, "m"), 0)) + " HT prélevés chaque mois" : "Aucun");
-    k(3, a.length, a.length ? eur0(a.reduce((x, t) => x + ht(t), 0)) + " HT par an · 1 mois offert" : "Aucun");
+    k(2, m.length, m.length ? eur0(m.reduce((x, t) => x + seatCost(t.n, "m", t.plan), 0)) + " HT prélevés chaque mois" : "Aucun");
+    k(3, a.length, a.length ? eur0(a.reduce((x, t) => x + ht(t), 0)) + " HT par an · −25 %" : "Aucun");
     k(4, pl, act.length ? String(Math.round(pl / act.length * 10) / 10).replace(".", ",") + " places par client en moyenne" : "—"); }
   const q = (document.getElementById("abo-q").value || "").trim().toLowerCase();
   chips("abo-f", [["all","Tous"],["actif","Actifs"],["essai","En essai"],["suspendu","Suspendus"],["annule","Annulés"]], AF, "setAF");
   const L = S.tenants.filter(t => (AF === "all" || t.st === AF) && (!q || t.nom.toLowerCase().includes(q)));
-  document.getElementById("abo-rows").innerHTML = L.map(t => '<tr class="clk" onclick="location.hash=\'#tenants?t=' + t.id + '\'"><td><b>' + esc(t.nom) + '</b><small style="display:block;color:var(--muted);font-size:.72rem">' + esc(t.sub) + '</small></td><td><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></td><td>' + (t.st === "essai" ? "Essai → " + (t.bill === "a" ? "annuel" : "mensuel") : t.bill === "a" ? "Annuel" : "Mensuel") + '</td><td>' + t.n + '</td><td><b>' + (t.n ? eur0(ht(t)) : "—") + '</b><small style="display:block;color:var(--muted);font-size:.72rem">' + (t.n ? seatBreak(t.n, t.bill) + (t.bill === "a" ? " × 11 mois" : "") : "") + '</small></td><td>' + (t.st === "essai" ? "Fin d'essai " + fdate(t.fin) : t.st === "annule" ? "—" : t.bill === "a" ? "1er oct. 2027" : "1er nov. 2026") + '</td><td><div class="acts"><a class="btn g sm" href="#tenants?t=' + t.id + '" onclick="event.stopPropagation()">Fiche ›</a></div></td></tr>').join("");
+  document.getElementById("abo-rows").innerHTML = L.map(t => '<tr class="clk" onclick="location.hash=\'#tenants?t=' + t.id + '\'"><td><b>' + esc(t.nom) + '</b><small style="display:block;color:var(--muted);font-size:.72rem">' + esc(t.sub) + '</small></td><td><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span></td><td>' + (t.st === "essai" ? "Essai → " + (t.bill === "a" ? "annuel" : "mensuel") : t.bill === "a" ? "Annuel" : "Mensuel") + '</td><td>' + t.n + '</td><td><b>' + (t.n ? eur0(ht(t)) : "—") + '</b><small style="display:block;color:var(--muted);font-size:.72rem">' + (t.n ? plan(t.plan).n + " · " + seatBreak(t.n, t.bill, t.plan) + (t.bill === "a" ? " × 12 mois" : "") : "") + '</small></td><td>' + (t.st === "essai" ? "Fin d'essai " + fdate(t.fin) : t.st === "annule" ? "—" : t.bill === "a" ? "1er oct. 2027" : "1er nov. 2026") + '</td><td><div class="acts"><a class="btn g sm" href="#tenants?t=' + t.id + '" onclick="event.stopPropagation()">Fiche ›</a></div></td></tr>').join("");
   document.getElementById("promo-rows").innerHTML = S.promos.map((p, i) => '<tr><td><code>' + esc(p.code) + '</code></td><td>−' + p.pct + ' %</td><td>' + fdate(p.fin) + '</td><td>' + p.used + ' / ' + p.max + '</td><td><label class="tg"><input type="checkbox"' + (p.on ? " checked" : "") + ' onchange="S.promos[' + i + '].on=this.checked;save();toast(\'Code ' + (p.on ? "désactivé" : "activé") + '\')"><i></i>' + (p.on ? "Actif" : "Inactif") + '</label></td></tr>').join("");
 }
 function addPromo(){ const c = document.getElementById("pr-code").value.trim().toUpperCase(); if(!c) return toast("Indiquez un code"); S.promos.unshift({ code:c, pct:parseInt(document.getElementById("pr-pct").value) || 10, fin:document.getElementById("pr-fin").value || "2026-12-31", used:0, max:parseInt(document.getElementById("pr-max").value) || 100, on:true }); save(); closeOv(); toast("Code " + c + " créé"); drawAbos(); }
