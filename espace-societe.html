@@ -745,7 +745,7 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
         <div id="aide-none" style="display:none;padding:24px 0;color:var(--muted);font-size:.84rem">Pas de réponse là-dessus. <a href="#support" onclick="newTicket()" style="color:var(--ink);font-weight:700;text-decoration:underline">Posez la question au support</a>, on répond sous 24 h.</div>
         <details open><summary>Comment ajouter un technicien ?</summary><p><a href="#utilisateurs" onclick="setTimeout(openInvite,50)">Utilisateurs → Inviter un utilisateur</a>. Il reçoit un e-mail, choisit son mot de passe et installe l'appli mobile. Il compte dans votre abonnement dès qu'il accepte.</p></details>
         <details><summary>Un technicien quitte l'entreprise, je fais quoi ?</summary><p><a href="#utilisateurs">Utilisateurs</a> → Désactiver sur sa ligne. Il perd l'accès tout de suite, ses interventions et documents restent, et la place se libère dans votre abonnement. Vous pouvez le réactiver plus tard.</p></details>
-        <details><summary>Combien je paie si j'ajoute quelqu'un ?</summary><p>Le prix d'une place dans votre formule : 29 € par mois en Starter, 49 € en Pro, 69 € en Business (−25 % en annuel). Une personne de plus = une place de plus.</p></details>
+        <details><summary>Combien je paie si j'ajoute quelqu'un ?</summary><p>Le prix d'une place dans votre formule : 29 € par mois en Starter, 49 € en Pro, 69 € en Business (1 mois offert en annuel). Une personne de plus = une place de plus.</p></details>
         <details><summary>Que se passe-t-il si ma carte est refusée ?</summary><p>On réessaie 1, 3 et 7 jours après, et on vous prévient par e-mail à chaque fois. Sans paiement au bout de 7 jours, le compte passe en lecture seule : vous voyez tout, mais vous ne pouvez plus créer. Tout revient dès que le paiement passe.</p></details>
         <details><summary>Je peux résilier quand je veux ?</summary><p>Oui, sans engagement. <a href="#abonnement" onclick="setTimeout(()=>openTab('abo','resilier'),50)">Abonnement → Résilier</a>. Vous gardez l'accès jusqu'à la fin de la période payée et vos données 30 jours de plus.</p></details>
         <details><summary>Où sont mes factures ?</summary><p><a href="#abonnement" onclick="setTimeout(()=>openTab('abo','factures'),50)">Abonnement → Factures</a>. Chaque facture est téléchargeable en PDF, avec la TVA.</p></details>
@@ -850,7 +850,7 @@ const DEF = {
     { id:2, cat:"sup", t:"Nouvelle réponse du support", d:"Votre demande « Importer mes clients depuis Excel » a une réponse.", w:"Il y a 3 h", un:true },
     { id:3, cat:"equ", t:"Invitation envoyée", d:"thomas@exemple.fr a été invité comme Opérateur.", w:"Hier", un:true },
     { id:4, cat:"equ", t:"Invitation acceptée", d:"Mehdi Rahal a rejoint votre équipe.", w:"Lun. 29 sept." },
-    { id:5, cat:"usg", t:"Économisez 25 % en annuel", d:"En annuel, votre place Pro passe de 49 € à 37 € par mois.", w:"Lun. 29 sept." },
+    { id:5, cat:"usg", t:"1 mois offert en annuel", d:"En annuel, votre place Pro coûte 539 € par an au lieu de 588 €.", w:"Lun. 29 sept." },
     { id:6, cat:"fac", t:"Carte mise à jour", d:"La carte •••• 4242 est maintenant utilisée pour vos prélèvements.", w:"Ven. 26 sept." }
   ]
 };
@@ -863,8 +863,8 @@ S.nots = S.nots.filter(x => !(x.t === "Facture payée" && T.finEssai && new Date
 function save(){ try{ localStorage.setItem(EKEY, JSON.stringify(S)); }catch(e){} }
 
 /* ── tarif : celui d'abonnement.html et de l'inscription ── */
-/* 15/10 patron : formules comme InterFast — prix PAR UTILISATEUR selon la formule, annuel −25 % (cahier l.17 : plusieurs formules) */
-const PLANS = [ {k:"gratuit",n:"Gratuit",m:0,a:0,max:1,sup:"30 devis et factures / mois, agenda, appli technicien · 1 personne · historique 90 jours · mention TigerFlow sur les documents"}, {k:"starter",n:"Starter",m:29,a:22,max:999,sup:"Toute l'équipe : techniciens, tâches, notifications, rapports clients, 30 signatures / mois"}, {k:"pro",n:"Pro",m:49,a:37,max:999,sup:"Paiement CB (sur place, lien, QR code), contrats signés en ligne, stats et performances des techniciens, relance auto des impayés, exports"}, {k:"business",n:"Business",m:69,a:52,max:999,sup:"En préparation : plusieurs agences, devis rédigés par l'IA, relance automatique des devis"} ];
+/* 15/10 patron : formules comme InterFast — prix PAR UTILISATEUR selon la formule, annuel = 1 mois offert (cahier l.17 : plusieurs formules) */
+const PLANS = [ {k:"gratuit",n:"Gratuit",m:0,a:0,max:1,sup:"30 devis et factures / mois, agenda, appli technicien · 1 personne · historique 90 jours · mention TigerFlow sur les documents"}, {k:"starter",n:"Starter",m:29,a:29*11/12,max:999,sup:"Toute l'équipe : techniciens, tâches, notifications, rapports clients, 30 signatures / mois"}, {k:"pro",n:"Pro",m:49,a:49*11/12,max:999,sup:"Paiement CB (sur place, lien, QR code), contrats signés en ligne, stats et performances des techniciens, relance auto des impayés, exports"}, {k:"business",n:"Business",m:69,a:69*11/12,max:999,sup:"En préparation : plusieurs agences, devis rédigés par l'IA, relance automatique des devis"} ];
 const TR = PLANS;
 function PL(){ return PLANS.find(p => p.k === (S.plan || T.plan || "pro")) || PLANS[2]; }
 function tr(){ return PL(); }
@@ -873,10 +873,10 @@ function nbLibres(){ return Math.max(0, nbU() - S.users.filter(u => u.st === "ac
 function nbAll(){ return S.users.length; }
 function seatPrice(i, b){ b = b || S.bill; return PL()[b]; }
 function seatCost(n, b){ b = b || S.bill; return n * PL()[b]; }
-function seatBreak(n, b){ return n + " × " + PL()[b || S.bill] + " €"; }
+function seatBreak(n, b){ b = b || S.bill; return n + " × " + (b === "a" ? PL().m * 11 + " € / an" : PL().m + " € / mois"); }
 function ht(n){ n = n || nbU(); return seatCost(n, S.bill) * (S.bill === "a" ? 12 : 1); }
-function eur(v){ return v.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €"; }
-function eur0(v){ return v.toLocaleString("fr-FR") + " €"; }
+function eur(v){ v = Math.round(v * 100) / 100; return v.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €"; }
+function eur0(v){ return (Math.round(v * 100) / 100).toLocaleString("fr-FR",{maximumFractionDigits:2}) + " €"; }
 const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 function fdate(d){ return d.getDate() + (d.getDate() === 1 ? "ᵉʳ" : "") + " " + MOIS[d.getMonth()] + " " + d.getFullYear(); }
 function nextDate(){ if(T.finEssai){ const f = new Date(T.finEssai); if(f > new Date()) return f; } const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 1); return d; }
@@ -1037,7 +1037,7 @@ function drawDash(unread, open){
   
   document.getElementById("d-plan-ft").textContent = S.impaye ? "Carte refusée, à mettre à jour" : enEssai() ? "Gratuit jusqu'au " + fdate(new Date(T.finEssai)) : seatBreak(n) + " · " + (S.bill === "a" ? "annuel" : "mensuel");
   document.getElementById("d-not").textContent = unread; document.getElementById("d-not").parentElement.className = "kt " + (unread ? "amber" : "cash");
-  document.getElementById("d-tr-sub").textContent = "Formule " + PL().n + " · " + seatBreak(n) + " par mois · " + (S.bill === "a" ? "annuel" : "mensuel");
+  document.getElementById("d-tr-sub").textContent = "Formule " + PL().n + " · " + seatBreak(n) + " · " + (S.bill === "a" ? "annuel" : "mensuel");
   const cap = t.max > 100 ? n + 3 : t.max;
   document.getElementById("d-seats").className = "pbar";
   document.getElementById("d-seats").className = "pbar"; document.getElementById("d-seats").innerHTML = '<span class="p0" style="flex:' + Math.max(1, n) + '">' + n + ' × ' + PL().m + ' €</span><span class="nx" style="flex:' + Math.max(1, 10 - n) + '">place suivante : ' + PL().m + ' €</span>';
@@ -1114,7 +1114,7 @@ function inviteRecap(){
   const now = seatCost(n) * mult, after = seatCost(n2) * mult;
   const nx = nextDate(), today = new Date(), days = Math.max(1, Math.round((nx - today) / 864e5)), period = S.bill === "a" ? 365 : 30;
   const pro = Math.round(((after - now) * days / period) * 100) / 100;
-  let h = '<div class="kv"><span>Aujourd\'hui<small>' + seatBreak(n) + ' par mois</small></span><b>' + eur0(now) + ' HT / ' + unit + '</b></div>' +
+  let h = '<div class="kv"><span>Aujourd\'hui<small>' + seatBreak(n) + '</small></span><b>' + eur0(now) + ' HT / ' + unit + '</b></div>' +
     '<div class="kv"><span>Dès que ' + esc(who) + ' accepte<small>' + n2 + ' places · formule ' + PL().n + ' à ' + PL().m + ' € par mois</small></span><b>' + eur0(after) + ' HT / ' + unit + '</b></div>';
   h += enEssai() ? '<div class="kv tot"><span>Pendant l\'essai<small>Gratuit jusqu\'au ' + fdate(nx) + ', puis ' + eur0(after) + ' HT / ' + unit + '</small></span><b>0 €</b></div>'
     : '<div class="kv tot"><span>Sur votre prochaine facture<small>prorata jusqu\'au ' + fdate(nx) + ' · rien n\'est débité aujourd\'hui</small></span><b>+ ' + eur(pro) + ' HT</b></div>';
@@ -1173,7 +1173,7 @@ function setBill(b){
       : "<b>" + eur(tot) + "</b> seront prélevés sur " + card + " aujourd'hui, pour 12 mois à partir de ce jour. Votre abonnement mensuel en cours est déduit au prorata. Vous économisez " + eur0(eco) + " sur l'année.";
   } else {
     document.getElementById("bill-h").textContent = "Repasser en mensuel ?";
-    document.getElementById("bill-p").innerHTML = "Votre année payée reste valable jusqu'à son terme. Ensuite, vous serez prélevé chaque mois : <b>" + eur(seatCost(n, "m")) + "</b> par mois au lieu de " + eur(seatCost(n, "a")) + " en annuel.";
+    document.getElementById("bill-p").innerHTML = "Votre année payée reste valable jusqu'à son terme. Ensuite, vous serez prélevé chaque mois : <b>" + eur(seatCost(n, "m")) + "</b> par mois au lieu de " + eur(seatCost(n, "a") * 12) + " par an en annuel (1 mois offert).";
   }
   document.getElementById("bill-ok").onclick = () => { closeOv(); S.bill = b; save(); drawAll(); toast(b === "a" ? "Abonnement annuel activé" : "Retour au mensuel enregistré"); };
   openOv("ov-bill");
@@ -1182,13 +1182,13 @@ function setPlan(k){
   const p = PLANS.find(x => x.k === k), n = nbU(), up = p.m > PL().m;
   if(k === "gratuit" && S.users.filter(u => u.st === "actif" || u.st === "invite").length > 1) return toast("La formule Gratuit est pour une seule personne : désactivez d'abord les autres utilisateurs");
   document.getElementById("bill-h").textContent = (up ? "Passer en " : "Revenir en ") + p.n + " ?";
-  document.getElementById("bill-p").innerHTML = "<b>" + p.n + "</b> : " + p.sup.toLowerCase() + ".<br>" + n + " utilisateur" + (n > 1 ? "s" : "") + " × " + p[S.bill] + " € = <b>" + eur0(n * p[S.bill] * (S.bill === "a" ? 12 : 1)) + " HT / " + (S.bill === "a" ? "an" : "mois") + "</b>. " + (up ? "Actif tout de suite, la différence est ajoutée au prorata sur votre prochaine facture." : "La nouvelle formule démarre le " + fdate(nextDate()) + ", vous gardez " + PL().n + " d'ici là.");
+  document.getElementById("bill-p").innerHTML = "<b>" + p.n + "</b> : " + p.sup.toLowerCase() + ".<br>" + n + " utilisateur" + (n > 1 ? "s" : "") + " × " + (S.bill === "a" ? p.m * 11 : p.m) + " € = <b>" + eur0(n * p[S.bill] * (S.bill === "a" ? 12 : 1)) + " HT / " + (S.bill === "a" ? "an" : "mois") + "</b>. " + (up ? "Actif tout de suite, la différence est ajoutée au prorata sur votre prochaine facture." : "La nouvelle formule démarre le " + fdate(nextDate()) + ", vous gardez " + PL().n + " d'ici là.");
   document.getElementById("bill-ok").onclick = () => { closeOv(); const was = S.plan || T.plan || "pro"; S.plan = k; save(); drawAll(); toastUndo("Formule " + p.n + (up ? " activée" : " programmée"), () => { S.plan = was; save(); drawAll(); }); };
   openOv("ov-bill");
 }
 function drawAbo(){
   const n = nbU(), t = tr(), nx = nextDate();
-  document.getElementById("ba-eco").textContent = "−25 %";
+  document.getElementById("ba-eco").textContent = "1 mois offert";
   document.getElementById("bm").classList.toggle("on", S.bill === "m"); document.getElementById("ba").classList.toggle("on", S.bill === "a");
   document.getElementById("a-tr").textContent = (enEssai() ? "Essai · " : "") + PL().n + " · " + n + " place" + (n > 1 ? "s" : "") + " · " + eur0(ht()) + " HT / " + (S.bill === "a" ? "an" : "mois");
   document.getElementById("a-m").textContent = seatBreak(n) + " · facturation " + (S.bill === "a" ? "annuelle" : "mensuelle") + " · TVA autoliquidée";
