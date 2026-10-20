@@ -180,7 +180,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .li .r{margin-left:auto}
 .pill{display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-weight:800;border-radius:99px;padding:3px 9px;white-space:nowrap}
 .pill.o{background:#EEF0F3;color:var(--ink2)}.pill.g{background:var(--green-bg);color:var(--green-d)}.pill.b{background:var(--blue-bg);color:var(--blue)}
-.pill.a{background:var(--amber-bg);color:var(--amber)}.pill.r{background:var(--red-bg);color:var(--red)}.pill.n{background:#EEF0F3;color:var(--ink2)}
+.pkv{padding:16px 18px}.pkh{display:flex;align-items:center;gap:18px;margin-bottom:10px}.pkh>div:first-child{flex:1}.pkh b{font-family:'Sora'}.pkh small{display:block;font-size:.74rem;color:var(--muted)}.pkt{text-align:right}.pkt span{display:block;font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}.pkt b{font-size:1.15rem}.pkt.g b{color:var(--green-d)}@media(max-width:760px){.pkh{flex-wrap:wrap}}.pill.a{background:var(--amber-bg);color:var(--amber)}.pill.r{background:var(--red-bg);color:var(--red)}.pill.n{background:#EEF0F3;color:var(--ink2)}
 
 /* tableaux */
 .tbl{width:100%;border-collapse:collapse;font-size:.84rem}
@@ -620,6 +620,9 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
       <a class="kt slate" href="#abonnements" onclick="openTab('abo','liste');setAF('all');return false"><div class="kl"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Annuels</div><b id="ab-k3">—</b><div class="ks" id="ab-k3-ft">—</div><span class="go">Voir →</span></a>
       <a class="kt cash" href="#abonnements" onclick="openTab('abo','tarifs');return false"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/></svg>Places facturées</div><b id="ab-k4">—</b><div class="ks" id="ab-k4-ft">—</div><span class="go">Formules →</span></a>
     </div>
+    <!-- 20/10 patron : ventes de packs SMS / signatures (démo) -->
+    <div class="card mt pkv"><div class="pkh"><div><b>Ventes de packs · octobre</b><small>SMS (Sweego 0,040 €) et signatures (Firma 0,029 €) · chiffres de démonstration</small></div><div class="pkt"><span>Encaissé</span><b id="pk-ca">—</b></div><div class="pkt"><span>Coût</span><b id="pk-co">—</b></div><div class="pkt g"><span>Marge</span><b id="pk-mg">—</b></div></div>
+      <table class="tbl"><thead><tr><th>Pack</th><th>Vendus</th><th>Encaissé HT</th><th>Coût</th><th>Marge</th></tr></thead><tbody id="pk-rows"></tbody></table></div>
     <div class="tabs" data-tabs="abo">
       <button data-t="tarifs" class="on" onclick="openTab('abo','tarifs')">Formules</button>
       <button data-t="liste" onclick="openTab('abo','liste')">Abonnements</button>
@@ -1008,7 +1011,13 @@ function drawTarifs(){
   document.getElementById("incl-list").innerHTML = ["Fiche client : montant dû, CA","Devis et factures (30 / mois en Gratuit)","Catalogue par type de prestation","Photos sur devis et factures","Facturation électronique","Agenda glisser-déposer","Techniciens par compétence, congés, véhicule et matériel","Tâches liées à un client, contrat, facture","Appli technicien par type d'intervention","Rapport technicien par type d'intervention","Devis → facture en 1 clic","Envoi e-mail avec PDF et RIB","Notifications à l'équipe","Cycle de vie du devis","3 types de clients","Modèles devis, facture, avoir, contrat, rapport","Performance et comparaison des techniciens","Types d'intervention","Agenda : nuisible, type, argent à récupérer","Appeler / WhatsApp / tournée du technicien","Création client par SIRET","CA par canal d'acquisition","Signature client sur téléphone","WhatsApp, appel, SMS au client","Hébergement en UE","Sans engagement"].map(x => '<label><input type="checkbox" checked disabled><span>' + x + '</span></label>').join("");
 }
 function saveTarifs(){ dirtyOff(); document.querySelectorAll("#tar-rows input[data-k]").forEach(i => { TR[+i.dataset.i][i.dataset.k] = +i.value.replace(",", ".") || TR[+i.dataset.i][i.dataset.k]; }); TR.forEach(r => r.a = r.m * 11 / 12); document.getElementById("tar-save").className = "btn g"; log("Grille tarifaire modifiée", "—"); save(); toast("Formules enregistrées · nouveaux clients tout de suite, clients actuels après 30 jours de préavis"); drawAll(); }
+/* 20/10 : ventes de packs (démo) */
+function drawPacks(){ const el = document.getElementById("pk-rows"); if(!el) return;
+  const R = [["100 SMS",9,100*0.04,14],["500 SMS",39,500*0.04,6],["1 000 SMS",69,1000*0.04,4],["5 000 SMS",290,5000*0.04,1],["20 signatures",9,20*0.029,9],["50 signatures",19,50*0.029,5],["100 signatures",29,100*0.029,3],["500 signatures",99,500*0.029,1],["Pack Démarrage (100 SMS + 20 sig.)",9,100*0.04+20*0.029,11]];
+  let ca = 0, co = 0; el.innerHTML = R.map(r => { const c = r[1] * r[3], k = r[2] * r[3]; ca += c; co += k; return '<tr><td><b>' + r[0] + '</b><small style="display:block;color:var(--muted);font-size:.72rem">' + r[1] + ' € le pack</small></td><td>' + r[3] + '</td><td>' + eur(c) + '</td><td style="color:var(--muted)">' + eur(k) + '</td><td><b style="color:var(--green-d)">' + eur(c - k) + '</b></td></tr>'; }).join("");
+  document.getElementById("pk-ca").textContent = eur0(ca); document.getElementById("pk-co").textContent = eur0(co); document.getElementById("pk-mg").textContent = eur0(ca - co) + " (" + Math.round((ca - co) / ca * 100) + " %)"; }
 function drawAbos(){
+  drawPacks();
   { const act = S.tenants.filter(t => t.st === "actif"), m = act.filter(t => t.bill === "m"), a = act.filter(t => t.bill === "a"), mrr = act.reduce((x, t) => x + seatCost(t.n, t.bill, t.plan), 0), pl = act.reduce((x, t) => x + t.n, 0);
     const k = (i, v, f) => { document.getElementById("ab-k" + i).textContent = v; document.getElementById("ab-k" + i + "-ft").textContent = f; };
     k(1, eur0(mrr) + " HT / mois", eur0(mrr * 12) + " HT par an · " + act.length + " clients actifs");
