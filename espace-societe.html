@@ -254,7 +254,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .plt{position:relative;border:1.5px solid var(--line);border-radius:14px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:4px;background:#fff}
 .plt.best:not(.on){border-color:#FFC4AC}.plt.on{border-color:var(--green);background:var(--green-bg)}
 .plt .pn{font-family:'Sora';font-size:.95rem}.plt .pp{font-family:'Sora';font-size:1.5rem;font-weight:800;letter-spacing:-.4px}.plt .pp small{font-family:Inter;font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:0}
-.plt p{margin:2px 0 10px;font-size:.78rem;color:var(--ink2);line-height:1.4;flex:1}.plt .btn{align-self:flex-start}
+.plt p{margin:2px 0 12px;font-size:.8rem;color:var(--muted);line-height:1.4;flex:1}.plt .btn{align-self:flex-start}
 .plt .ptot{font-size:.76rem;color:var(--green-d)}.plt .ptot b{font-weight:800}
 .plt .plon{position:absolute;top:14px;right:14px}.plt .plbest{position:absolute;top:14px;right:14px;background:#FFF1EA;color:#EA4A10;font-size:.64rem;font-weight:800;padding:3px 8px;border-radius:99px}
 .plia{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;font-size:.78rem;color:var(--ink2)}.plia span:nth-child(2){flex:1}.plia a{font-weight:800;color:var(--green-d);text-decoration:none;white-space:nowrap}
@@ -725,7 +725,7 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
         <div class="phead"><div><b id="a-tr">—</b><small id="a-m">—</small><div id="a-bar" style="display:none"></div></div>
           <div class="bill" style="margin:0"><button id="bm" class="on" onclick="setBill('m')">Mensuel</button><button id="ba" onclick="setBill('a')">Annuel<span class="eco" id="ba-eco"></span></button></div></div>
         <div class="tr2s" id="tiers"></div>
-        <div class="pfoot">Prix par utilisateur. En montant, la différence est ajoutée au prorata ; en descendant, la nouvelle formule démarre à la prochaine échéance.</div>
+        
       </div>
       <div>
         <div class="card nx"><div class="kl2"><span id="a-nx-l">Prochain prélèvement</span></div><div class="nxd" id="a-nx">—</div>
@@ -735,7 +735,7 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
       </div>
       <!-- 20/10 patron : SMS et signatures (version allégée) -->
       <div class="card crd" id="crd" style="grid-column:1/-1">
-        <div class="hdr" style="padding:0"><div><h3>SMS et signatures électroniques</h3><div class="sub">Inclus chaque mois dans votre formule, pour toute la société. Besoin de plus ? Un pack, valable 12 mois.</div></div><div class="crdh" id="crd-h"></div></div>
+        <div class="hdr" style="padding:0"><div><h3>SMS et signatures électroniques</h3><div class="sub">Inclus chaque mois. Besoin de plus ? Un pack.</div></div><div class="crdh" id="crd-h"></div></div>
         <div id="crd-start"></div>
         <div class="crd2"><div class="crdb" id="crd-sms"></div><div class="crdb" id="crd-sig"></div></div>
         <div id="crd-packs"></div>
@@ -1267,15 +1267,15 @@ function drawCred(){
   const ICS = { sms:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/></svg>', sig:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3 0 4-6 6-6s1 5 3 5 2-3 4-3 2 2 5 2"/><path d="M3 21h18"/></svg>' };
   const tile = (k, t, unit) => { const i = inc[k], u = Math.min(c[k].used, i), left = Math.max(0, i - c[k].used), pct = i ? Math.round(u / i * 100) : 100, low = i > 0 && left <= Math.ceil(i * 0.1) && c[k].buy === 0;
     if(low) crdAlert(k, left, i);
-    return '<div class="ct"><span class="ci">' + ICS[k] + '</span><div class="cn"><b>' + t + '</b><small>' + u + ' / ' + i + ' inclus ce mois · remis à zéro le 1er' + (c[k].buy ? ' · ' + c[k].buy.toLocaleString("fr-FR") + ' en pack' : '') + '</small></div><div class="bal"><b>' + (left + c[k].buy).toLocaleString("fr-FR") + '</b><small>dispo.</small></div></div>' +
+    return '<div class="ct"><span class="ci">' + ICS[k] + '</span><div class="cn"><b>' + t + '</b><small>' + u + ' / ' + i + ' inclus ce mois' + (c[k].buy ? ' · ' + c[k].buy.toLocaleString("fr-FR") + ' en pack' : '') + '</small></div><div class="bal"><b>' + (left + c[k].buy).toLocaleString("fr-FR") + '</b><small>dispo.</small></div></div>' +
       '<div class="crdbar"><i class="' + (low || pct >= 100 ? "full" : "") + '" style="width:' + pct + '%"></i></div>' +
       (low ? '<div class="crdlow"><span>Plus que <b>' + left + '</b> inclus ce mois-ci · e-mail envoyé</span></div>' : '') +
-      '<div class="packs">' + PACKS[k].map((x, j) => '<button class="pk needwrite' + (x.best ? " best" : "") + '" onclick="buyPack(\'' + k + '\',' + j + ')">' + (x.best ? '<span class="tag">Le plus pris</span>' : '') + '<div class="q">' + x.q.toLocaleString("fr-FR") + '<small>' + unit + '</small></div><div class="pr">' + x.p + ' €</div><div class="u">' + (x.p / x.q).toLocaleString("fr-FR",{maximumFractionDigits:3}) + ' € l\'unité</div></button>').join("") + '</div>' +
-      (k === "sms" ? '<label class="crdauto"><input type="checkbox" class="needwrite"' + (c.auto ? " checked" : "") + ' onchange="crdS().auto=this.checked;save();toast(this.checked?\'Recharge automatique activée : 500 SMS (39 €) quand il en reste moins de 20\':\'Recharge automatique désactivée\')"> Recharger automatiquement 500 SMS quand il en reste moins de 20</label>' : ''); };
+      '<div class="packs">' + PACKS[k].map((x, j) => '<button class="pk needwrite' + (x.best ? " best" : "") + '" onclick="buyPack(\'' + k + '\',' + j + ')">' + (x.best ? '<span class="tag">Le plus pris</span>' : '') + '<div class="q">' + x.q.toLocaleString("fr-FR") + '<small>' + unit + '</small></div><div class="pr">' + x.p + ' €</div>'+'</button>').join("") + '</div>' +
+      (k === "sms" ? '<label class="crdauto"><input type="checkbox" class="needwrite"' + (c.auto ? " checked" : "") + ' onchange="crdS().auto=this.checked;save();toast(this.checked?\'Recharge automatique activée : 500 SMS (39 €) quand il en reste moins de 20\':\'Recharge automatique désactivée\')"> Recharge auto : 500 SMS quand il en reste moins de 20</label>' : ''); };
   el.innerHTML = tile("sms", "SMS", "SMS");
   document.getElementById("crd-sig").innerHTML = tile("sig", "Signatures électroniques", "signatures");
   document.getElementById("crd-packs").innerHTML = "";
-  { const st = document.getElementById("crd-start"); st.innerHTML = (!c.startDone && firstMonth()) ? '<div class="crdst"><span class="tag2">Bienvenue</span><div><b>Pack Démarrage : 100 SMS + 20 signatures · 9 €</b><small>au lieu de 18 € (−50 %) · une seule fois, pendant votre premier mois</small></div><button class="btn o sm needwrite" onclick="buyStart()">Prendre le pack</button></div>' : ''; }
+  { const st = document.getElementById("crd-start"); st.innerHTML = (!c.startDone && firstMonth()) ? '<div class="crdst"><span class="tag2">Bienvenue</span><div><b>Pack Démarrage · 100 SMS + 20 signatures · 9 €</b><small>−50 %, une seule fois</small></div><button class="btn o sm needwrite" onclick="buyStart()">Prendre le pack</button></div>' : ''; }
   document.getElementById("crd-h").innerHTML = c.hist.length ? "Dernier achat : <b>" + (h => (h.k === "start" ? "Pack Démarrage" : h.q.toLocaleString("fr-FR") + " " + (h.k === "sms" ? "SMS" : "signatures")) + "</b> · " + h.p + " € HT · " + fdate(new Date(h.d)))(c.hist[c.hist.length - 1]) : "";
 }
 function buyStart(){
@@ -1310,7 +1310,7 @@ function drawStart(){
 }
 function drawAbo(){
   drawCred();
-  { const tw = document.getElementById("trialwin"); if(tw) tw.innerHTML = (enEssai() && PL().k === "pro") ? '<div class="trw"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12.5l5 5 10-11"/></svg></span><div><b>Pendant votre essai Pro</b><small>' + (T.etape === "cree" ? "Mis à jour chaque jour pendant vos 14 jours." : "Ce que Pro vous a déjà apporté.") + ' En Équipe, vous perdez l\'encaissement sur place, les contrats signés en ligne et la relance des impayés.</small></div><div class="trk"><b>' + (T.etape === "cree" ? "0 €" : "1 840 €") + '</b><small>encaissés sur place</small></div><div class="trk"><b>' + (T.etape === "cree" ? 0 : 3) + '</b><small>contrats signés en ligne</small></div><div class="trk"><b>' + (T.etape === "cree" ? 0 : 2) + '</b><small>impayés relancés et réglés</small></div></div>' : ""; }
+  { const tw = document.getElementById("trialwin"); if(tw) tw.innerHTML = (enEssai() && PL().k === "pro") ? '<div class="trw"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12.5l5 5 10-11"/></svg></span><div><b>Pendant votre essai Pro</b><small>Ce que Pro vous rapporte</small></div><div class="trk"><b>' + (T.etape === "cree" ? "0 €" : "1 840 €") + '</b><small>encaissés sur place</small></div><div class="trk"><b>' + (T.etape === "cree" ? 0 : 3) + '</b><small>contrats signés en ligne</small></div><div class="trk"><b>' + (T.etape === "cree" ? 0 : 2) + '</b><small>impayés relancés et réglés</small></div></div>' : ""; }
   const n = nbU(), t = tr(), nx = nextDate();
   document.getElementById("ba-eco").textContent = "1 mois offert";
   document.getElementById("bm").classList.toggle("on", S.bill === "m"); document.getElementById("ba").classList.toggle("on", S.bill === "a");
@@ -1322,9 +1322,9 @@ function drawAbo(){
   document.getElementById("a-nx").textContent = fdate(nx);
   { const c = S.cards.find(x => x.def); document.getElementById("a-nx-c").innerHTML = c ? (S.impaye ? '<span style="color:var(--red)">Visa •••• ' + c.fin + ' · refusée</span>' : "Visa •••• " + c.fin) : '<span style="color:var(--amber)">Aucune carte enregistrée</span>'; }
   document.getElementById("r-end").textContent = fdate(nx);
-  { const SH = { gratuit:"Devis, factures, facture électronique · 1 personne", starter:"Agenda, appli mobile technicien (devis, rapport, Google Maps), équipe · 20 SMS et 20 signatures par société", pro:"Le technicien encaisse sur place (QR, lien, Tap to Pay), contrats, relance des impayés, stats · 40 SMS et 40 signatures" };
+  { const SH = { gratuit:"Facturation seule", starter:"Agenda + appli technicien", pro:"Encaissement CB + contrats" };
     document.getElementById("tiers").innerHTML = '<div class="pl3">' + PLANS.map(x => { const on = x === PL(); return '<div class="plt' + (on ? " on" : "") + (x.k === "pro" ? " best" : "") + '">' + (on ? '<span class="pill g plon">Votre formule</span>' : x.k === "pro" ? '<span class="plbest">Le plus choisi</span>' : '') + '<b class="pn">' + x.n + '</b><div class="pp">' + (S.bill === "a" ? x.m * 11 : x.m) + ' €<small>' + (x.m ? (S.bill === "a" ? " / util. / an" : " / util. / mois") : " pour toujours") + '</small></div><p>' + SH[x.k] + '</p>' + (on ? '<div class="ptot">' + seatBreak(n) + ' = <b>' + eur0(seatCost(n) * (S.bill === "a" ? 12 : 1)) + (S.bill === "a" ? " / an" : " / mois") + '</b></div>' : '<button class="btn g sm needwrite" onclick="setPlan(\'' + x.k + '\')">' + (x.m > PL().m ? "Passer en " : "Revenir en ") + x.n + '</button>') + '</div>'; }).join("") + '</div>' +
-      '<div class="plia"><span class="pill a">Bientôt</span><span><b>Options IA</b> · relance automatique des devis, devis rédigés par l\'IA · dès 29 € par société</span><a href="#support" onclick="location.hash=\'support\';setTimeout(()=>{newTicket();const e=document.getElementById(\'n-suj\');if(e)e.value=\'Me prévenir de l\\\'arrivée des options IA\'},80);return false">Être prévenu ›</a></div>'; }
+      '<div class="plia"><span class="pill a">Bientôt</span><span><b>Options IA</b> · dès 29 € / mois</span><a href="#support" onclick="location.hash=\'support\';setTimeout(()=>{newTicket();const e=document.getElementById(\'n-suj\');if(e)e.value=\'Me prévenir de l\\\'arrivée des options IA\'},80);return false">Être prévenu ›</a></div>'; }
   const now = new Date(); const rows = [];
   if(!enEssai()) for(let k = 1; k <= 4; k++){ const d = new Date(now.getFullYear(), now.getMonth() - k + 1, 1); rows.push({ d, no:"TF-" + d.getFullYear() + "-" + String(12 - k).padStart(4, "0"), n: k === 1 ? n : Math.max(1, n - (k > 2 ? 1 : 0)) }); }
   document.getElementById("inv").innerHTML = rows.map((r, i) => { const v = seatCost(r.n, "m"), ko = S.impaye && i === 0;
