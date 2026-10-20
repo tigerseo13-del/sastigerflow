@@ -726,7 +726,7 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
       </div>
       <!-- 20/10 patron : SMS et signatures (version allégée) -->
       <div class="card crd" id="crd" style="grid-column:1/-1">
-        <div class="hdr" style="padding:0"><div><h3>SMS et signatures électroniques</h3><div class="sub">Inclus chaque mois dans votre formule. Besoin de plus ? Un pack, valable 12 mois.</div></div><div class="crdh" id="crd-h"></div></div>
+        <div class="hdr" style="padding:0"><div><h3>SMS et signatures électroniques</h3><div class="sub">Inclus chaque mois dans votre formule, pour toute la société. Besoin de plus ? Un pack, valable 12 mois.</div></div><div class="crdh" id="crd-h"></div></div>
         <div id="crd-start"></div>
         <div class="crd2"><div class="crdb" id="crd-sms"></div><div class="crdb" id="crd-sig"></div></div>
         <div id="crd-packs"></div>
@@ -917,7 +917,7 @@ function save(){ try{ localStorage.setItem(EKEY, JSON.stringify(S)); }catch(e){}
 
 /* ── tarif : celui d'abonnement.html et de l'inscription ── */
 /* 15/10 patron : formules comme InterFast — prix PAR UTILISATEUR selon la formule, annuel = 1 mois offert (cahier l.17 : plusieurs formules) */
-const PLANS = [ {k:"gratuit",n:"Gratuit",m:0,a:0,max:1,sup:"Devis, factures et facture électronique · 30 par mois · 1 personne · historique 90 jours · mention TigerFlow sur les documents"}, {k:"starter",n:"Équipe",m:39,a:39*11/12,max:999,sup:"Agenda et appli mobile technicien (devis sur place, rapport avec photos, Google Maps), toute l'équipe, tâches · 20 signatures et 20 SMS inclus / mois"}, {k:"pro",n:"Pro",m:49,a:49*11/12,max:999,sup:"Paiement CB (sur place, lien, QR code), contrats signés en ligne, relance auto des impayés, stats des techniciens · 40 signatures et 50 SMS inclus / mois"} ];
+const PLANS = [ {k:"gratuit",n:"Gratuit",m:0,a:0,max:1,sup:"Devis, factures et facture électronique · 30 par mois · 1 personne · historique 90 jours · mention TigerFlow sur les documents"}, {k:"starter",n:"Équipe",m:39,a:39*11/12,max:999,sup:"Agenda et appli mobile technicien (devis sur place, rapport avec photos, Google Maps), toute l'équipe, tâches · 20 SMS et 20 signatures inclus / mois par société"}, {k:"pro",n:"Pro",m:49,a:49*11/12,max:999,sup:"Paiement CB (sur place, lien, QR code), contrats signés en ligne, relance auto des impayés, stats des techniciens · 40 SMS et 40 signatures inclus / mois par société"} ];
 const TR = PLANS;
 function PL(){ return PLANS.find(p => p.k === (S.plan || T.plan || "pro")) || PLANS[2]; }
 function tr(){ return PL(); }
@@ -1243,7 +1243,7 @@ function setPlan(k){
 }
 /* 20/10 patron : packs SMS et signatures électroniques (inclus du mois + packs achetés, valables 12 mois) */
 const PACKS = { sms:[{q:100,p:9},{q:500,p:39},{q:1000,p:69,best:1},{q:5000,p:290}], sig:[{q:20,p:9},{q:50,p:19},{q:100,p:29,best:1},{q:500,p:99}] };
-const INC = { gratuit:{sms:0,sig:0}, starter:{sms:20,sig:20}, pro:{sms:50,sig:40} };
+const INC = { gratuit:{sms:0,sig:0}, starter:{sms:20,sig:20}, pro:{sms:40,sig:40} };
 function crdS(){ if(!S.cred) S.cred = { sms:{used:46, buy:0}, sig:{used:9, buy:0}, auto:false, hist:[] }; if(!S.cred.alert) S.cred.alert = {}; return S.cred; }
 function firstMonth(){ if(!T.finEssai) return true; const d0 = new Date(T.finEssai).getTime() - 14 * 864e5; return Date.now() - d0 < 30 * 864e5; }
 /* 20/10 patron : alerte à 10 % de l'inclus (notif + e-mail) */
@@ -1257,7 +1257,7 @@ function drawCred(){
   const ICS = { sms:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/></svg>', sig:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3 0 4-6 6-6s1 5 3 5 2-3 4-3 2 2 5 2"/><path d="M3 21h18"/></svg>' };
   const tile = (k, t, unit) => { const i = inc[k], u = Math.min(c[k].used, i), left = Math.max(0, i - c[k].used), pct = i ? Math.round(u / i * 100) : 100, low = i > 0 && left <= Math.ceil(i * 0.1) && c[k].buy === 0;
     if(low) crdAlert(k, left, i);
-    return '<div class="ct"><span class="ci">' + ICS[k] + '</span><div class="cn"><b>' + t + '</b><small>' + u + ' / ' + i + ' inclus utilisés ce mois' + (c[k].buy ? ' · ' + c[k].buy.toLocaleString("fr-FR") + ' en pack' : '') + '</small></div><div class="bal"><b>' + (left + c[k].buy).toLocaleString("fr-FR") + '</b><small>dispo.</small></div></div>' +
+    return '<div class="ct"><span class="ci">' + ICS[k] + '</span><div class="cn"><b>' + t + '</b><small>' + u + ' / ' + i + ' inclus ce mois · remis à zéro le 1er' + (c[k].buy ? ' · ' + c[k].buy.toLocaleString("fr-FR") + ' en pack' : '') + '</small></div><div class="bal"><b>' + (left + c[k].buy).toLocaleString("fr-FR") + '</b><small>dispo.</small></div></div>' +
       '<div class="crdbar"><i class="' + (low || pct >= 100 ? "full" : "") + '" style="width:' + pct + '%"></i></div>' +
       (low ? '<div class="crdlow"><span>Plus que <b>' + left + '</b> inclus ce mois-ci · e-mail envoyé</span></div>' : '') +
       '<div class="packs">' + PACKS[k].map((x, j) => '<button class="pk needwrite' + (x.best ? " best" : "") + '" onclick="buyPack(\'' + k + '\',' + j + ')">' + (x.best ? '<span class="tag">Le plus pris</span>' : '') + '<div class="q">' + x.q.toLocaleString("fr-FR") + '<small>' + unit + '</small></div><div class="pr">' + x.p + ' €</div><div class="u">' + (x.p / x.q).toLocaleString("fr-FR",{maximumFractionDigits:3}) + ' € l\'unité</div></button>').join("") + '</div>' +
@@ -1296,7 +1296,7 @@ function drawAbo(){
   document.getElementById("a-nx").textContent = fdate(nx);
   { const c = S.cards.find(x => x.def); document.getElementById("a-nx-c").innerHTML = c ? (S.impaye ? '<span style="color:var(--red)">Visa •••• ' + c.fin + ' · refusée</span>' : "Visa •••• " + c.fin) : '<span style="color:var(--amber)">Aucune carte enregistrée</span>'; }
   document.getElementById("r-end").textContent = fdate(nx);
-  { const SH = { gratuit:"Devis, factures, facture électronique · 1 personne", starter:"Agenda, appli mobile technicien (devis, rapport, Google Maps), équipe · 20 SMS et 20 signatures", pro:"Le technicien encaisse sur place (QR, lien, Tap to Pay), contrats, relance des impayés, stats · 50 SMS et 40 signatures" };
+  { const SH = { gratuit:"Devis, factures, facture électronique · 1 personne", starter:"Agenda, appli mobile technicien (devis, rapport, Google Maps), équipe · 20 SMS et 20 signatures par société", pro:"Le technicien encaisse sur place (QR, lien, Tap to Pay), contrats, relance des impayés, stats · 40 SMS et 40 signatures" };
     document.getElementById("tiers").innerHTML = '<div class="pl3">' + PLANS.map(x => { const on = x === PL(); return '<div class="plt' + (on ? " on" : "") + (x.k === "pro" ? " best" : "") + '">' + (on ? '<span class="pill g plon">Votre formule</span>' : x.k === "pro" ? '<span class="plbest">Le plus choisi</span>' : '') + '<b class="pn">' + x.n + '</b><div class="pp">' + (S.bill === "a" ? x.m * 11 : x.m) + ' €<small>' + (x.m ? (S.bill === "a" ? " / util. / an" : " / util. / mois") : " pour toujours") + '</small></div><p>' + SH[x.k] + '</p>' + (on ? '<div class="ptot">' + seatBreak(n) + ' = <b>' + eur0(seatCost(n) * (S.bill === "a" ? 12 : 1)) + (S.bill === "a" ? " / an" : " / mois") + '</b></div>' : '<button class="btn g sm needwrite" onclick="setPlan(\'' + x.k + '\')">' + (x.m > PL().m ? "Passer en " : "Revenir en ") + x.n + '</button>') + '</div>'; }).join("") + '</div>' +
       '<div class="plia"><span class="pill a">Bientôt</span><span><b>Options IA</b> · relance automatique des devis, devis rédigés par l\'IA · dès 29 € par société</span><a href="#support" onclick="location.hash=\'support\';setTimeout(()=>{newTicket();const e=document.getElementById(\'n-suj\');if(e)e.value=\'Me prévenir de l\\\'arrivée des options IA\'},80);return false">Être prévenu ›</a></div>'; }
   const now = new Date(); const rows = [];
