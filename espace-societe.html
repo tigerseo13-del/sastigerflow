@@ -890,7 +890,7 @@ function save(){ try{ localStorage.setItem(EKEY, JSON.stringify(S)); }catch(e){}
 
 /* ── tarif : celui d'abonnement.html et de l'inscription ── */
 /* 15/10 patron : formules comme InterFast — prix PAR UTILISATEUR selon la formule, annuel = 1 mois offert (cahier l.17 : plusieurs formules) */
-const PLANS = [ {k:"gratuit",n:"Gratuit",m:0,a:0,max:1,sup:"30 devis et factures / mois, agenda, appli technicien · 1 personne · historique 90 jours · mention TigerFlow sur les documents"}, {k:"starter",n:"Équipe",m:39,a:39*11/12,max:999,sup:"Techniciens, tâches, notifications, rapports clients, photos et modèles · 20 signatures et 20 SMS inclus / mois"}, {k:"pro",n:"Pro",m:49,a:49*11/12,max:999,sup:"Paiement CB (sur place, lien, QR code), contrats signés en ligne, relance auto des impayés, stats des techniciens · 40 signatures et 50 SMS inclus / mois"} ];
+const PLANS = [ {k:"gratuit",n:"Gratuit",m:0,a:0,max:1,sup:"Devis, factures et facture électronique · 30 par mois · 1 personne · historique 90 jours · mention TigerFlow sur les documents"}, {k:"starter",n:"Équipe",m:39,a:39*11/12,max:999,sup:"Agenda et appli technicien, toute l'équipe, tâches, rapports clients, photos et modèles · 20 signatures et 20 SMS inclus / mois"}, {k:"pro",n:"Pro",m:49,a:49*11/12,max:999,sup:"Paiement CB (sur place, lien, QR code), contrats signés en ligne, relance auto des impayés, stats des techniciens · 40 signatures et 50 SMS inclus / mois"} ];
 const TR = PLANS;
 function PL(){ return PLANS.find(p => p.k === (S.plan || T.plan || "pro")) || PLANS[2]; }
 function tr(){ return PL(); }
@@ -1214,7 +1214,7 @@ function setPlan(k){
 }
 /* 20/10 patron : packs SMS et signatures électroniques (inclus du mois + packs achetés, valables 12 mois) */
 const PACKS = { sms:[{q:100,p:9},{q:500,p:39},{q:1000,p:69,best:1},{q:5000,p:290}], sig:[{q:20,p:9},{q:50,p:19},{q:100,p:29,best:1},{q:500,p:99}] };
-const INC = { gratuit:{sms:0,sig:5}, starter:{sms:20,sig:20}, pro:{sms:50,sig:40} };
+const INC = { gratuit:{sms:0,sig:0}, starter:{sms:20,sig:20}, pro:{sms:50,sig:40} };
 function crdS(){ if(!S.cred) S.cred = { sms:{used:46, buy:0}, sig:{used:9, buy:0}, auto:false, hist:[] }; if(!S.cred.alert) S.cred.alert = {}; return S.cred; }
 function firstMonth(){ if(!T.finEssai) return true; const d0 = new Date(T.finEssai).getTime() - 14 * 864e5; return Date.now() - d0 < 30 * 864e5; }
 /* 20/10 patron : alerte à 10 % de l'inclus (notif + e-mail) */
@@ -1222,6 +1222,8 @@ function crdAlert(k, left, inc){ const c = crdS(), mo = new Date().toISOString()
 function drawCred(){
   const el = document.getElementById("crd-sms"); if(!el) return;
   const c = crdS(), inc = INC[PL().k] || INC.pro;
+  if(PL().k === "gratuit"){ el.parentNode.style.display = "none"; document.getElementById("crd-start").innerHTML = '<div class="crdst"><span class="tag2">Équipe et Pro</span><div><b>SMS et signatures électroniques</b><small>Envoyez des SMS à vos clients et faites signer vos devis en ligne à partir de la formule Équipe (20 SMS et 20 signatures inclus chaque mois).</small></div><button class="btn g sm needwrite" onclick="setPlan(\'starter\')">Passer en Équipe</button></div>'; document.getElementById("crd-h").innerHTML = ""; return; }
+  el.parentNode.style.display = "";
   const box = (k, t, sub, ic, unit) => { const i = inc[k], u = Math.min(c[k].used, i), left = Math.max(0, i - c[k].used), pct = i ? Math.round(u / i * 100) : 100;
     const low = i > 0 && left <= Math.ceil(i * 0.1) && c[k].buy === 0; if(low) crdAlert(k, left, i);
     return (low ? '<div class="crdlow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span>Plus que <b>' + left + ' ' + unit + '</b> inclus ce mois-ci. Un e-mail vous a été envoyé.</span><a href="#abonnement" onclick="document.querySelector(\'#crd-' + k + ' .pk.best\').focus();buyPack(\'' + k + '\',' + PACKS[k].findIndex(x => x.best) + ');return false">Acheter un pack ›</a></div>' : '') + '<div class="ct"><span class="ci">' + ic + '</span><div><b>' + t + '</b><small>' + sub + '</small></div><div class="bal"><b>' + (left + c[k].buy) + '</b><small>disponibles</small></div></div>' +
