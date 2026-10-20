@@ -1079,7 +1079,7 @@ function drawAlert(){
 }
 function drawDash(unread, open){
   const n = nbU(), t = tr(), inv = S.users.filter(u => u.st === "invite").length;
-  document.getElementById("hello").textContent = "Bonjour, " + SOC.nom;
+  document.getElementById("hello").textContent = "Bonjour " + ((jget("tigerflow-compte") || {}).nom || SOC.nom);
   document.getElementById("hello-sub").textContent = new Date().toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"}).replace(/^./, c => c.toUpperCase()) + " · " + (S.impaye ? "Paiement en attente" : enEssai() ? "Essai gratuit en cours" : "Compte à jour");
   const act = S.users.filter(u => u.st === "actif").length, lib = nbLibres();
   document.getElementById("d-users").textContent = act;
@@ -1093,9 +1093,9 @@ function drawDash(unread, open){
   document.getElementById("d-tr-sub").textContent = "Formule " + PL().n + " · " + seatBreak(n) + " · " + (S.bill === "a" ? "annuel" : "mensuel");
   const cap = t.max > 100 ? n + 3 : t.max;
   document.getElementById("d-seats").className = "pbar";
-  document.getElementById("d-seats").className = "pbar"; document.getElementById("d-seats").innerHTML = '<span class="p0" style="flex:' + Math.max(1, n) + '">' + n + ' × ' + PL().m + ' €</span><span class="nx" style="flex:' + Math.max(1, 10 - n) + '">place suivante : ' + PL().m + ' €</span>';
+  document.getElementById("d-seats").className = "pbar"; document.getElementById("d-seats").innerHTML = '<span class="p0" style="flex:' + Math.max(1, n) + '">' + seatBreak(n) + '</span><span class="nx" style="flex:' + Math.max(1, 10 - n) + '">place suivante : ' + (S.bill === "a" ? PL().m * 11 + ' € / an' : PL().m + ' € / mois') + '</span>';
   const nx = TR[TR.indexOf(t) + 1];
-  document.getElementById("d-hint-t").textContent = "Formule " + PL().n + " : " + PL().sup.toLowerCase() + ". Vous changez de formule quand vous voulez.";
+  document.getElementById("d-hint-t").textContent = "Formule " + PL().n + " : " + PL().sup.charAt(0).toLowerCase() + PL().sup.slice(1) + ". Vous changez de formule quand vous voulez.";
   document.getElementById("d-amt").textContent = eur(ht()) + " HT" + (S.bill === "a" ? " / an" : " / mois");
   document.getElementById("d-date-l").textContent = enEssai() ? "Fin de l'essai, 1er prélèvement" : "Date";
   document.getElementById("d-date").textContent = fdate(nextDate());
@@ -1244,7 +1244,7 @@ function setPlan(k){
 /* 20/10 patron : packs SMS et signatures électroniques (inclus du mois + packs achetés, valables 12 mois) */
 const PACKS = { sms:[{q:100,p:9},{q:500,p:39},{q:1000,p:69,best:1},{q:5000,p:290}], sig:[{q:20,p:9},{q:50,p:19},{q:100,p:29,best:1},{q:500,p:99}] };
 const INC = { gratuit:{sms:0,sig:0}, starter:{sms:20,sig:20}, pro:{sms:40,sig:40} };
-function crdS(){ if(!S.cred) S.cred = { sms:{used:46, buy:0}, sig:{used:9, buy:0}, auto:false, hist:[] }; if(!S.cred.alert) S.cred.alert = {}; return S.cred; }
+function crdS(){ if(!S.cred) S.cred = T.etape === "cree" ? { sms:{used:0, buy:0}, sig:{used:0, buy:0}, auto:false, hist:[] } : { sms:{used:46, buy:0}, sig:{used:9, buy:0}, auto:false, hist:[] }; if(!S.cred.alert) S.cred.alert = {}; return S.cred; }
 function firstMonth(){ if(!T.finEssai) return true; const d0 = new Date(T.finEssai).getTime() - 14 * 864e5; return Date.now() - d0 < 30 * 864e5; }
 /* 20/10 patron : alerte à 10 % de l'inclus (notif + e-mail) */
 function crdAlert(k, left, inc){ const c = crdS(), mo = new Date().toISOString().slice(0, 7), lab = k === "sms" ? "SMS" : "signatures électroniques"; if(c.alert[k] === mo) return; c.alert[k] = mo; S.nots.unshift({ id:Date.now() + (k === "sms" ? 1 : 2), cat:"usg", t:"Plus que " + left + " " + lab + " inclus ce mois-ci", d:"Il vous reste 10 % de l'inclus de votre formule. Un e-mail vous a aussi été envoyé. Achetez un pack pour ne rien bloquer.", w:"À l'instant", un:true }); save(); }
@@ -1284,7 +1284,7 @@ function buyPack(k, j){
 }
 function drawAbo(){
   drawCred();
-  { const tw = document.getElementById("trialwin"); if(tw) tw.innerHTML = (enEssai() && PL().k === "pro") ? '<div class="trw"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12.5l5 5 10-11"/></svg></span><div><b>Pendant votre essai Pro</b><small>Ce que Pro vous a déjà apporté. En Équipe, vous perdez l\'encaissement sur place, les contrats signés en ligne et la relance des impayés.</small></div><div class="trk"><b>1 840 €</b><small>encaissés sur place</small></div><div class="trk"><b>3</b><small>contrats signés en ligne</small></div><div class="trk"><b>2</b><small>impayés relancés et réglés</small></div></div>' : ""; }
+  { const tw = document.getElementById("trialwin"); if(tw) tw.innerHTML = (enEssai() && PL().k === "pro") ? '<div class="trw"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 12.5l5 5 10-11"/></svg></span><div><b>Pendant votre essai Pro</b><small>' + (T.etape === "cree" ? "Mis à jour chaque jour pendant vos 14 jours." : "Ce que Pro vous a déjà apporté.") + ' En Équipe, vous perdez l\'encaissement sur place, les contrats signés en ligne et la relance des impayés.</small></div><div class="trk"><b>' + (T.etape === "cree" ? "0 €" : "1 840 €") + '</b><small>encaissés sur place</small></div><div class="trk"><b>' + (T.etape === "cree" ? 0 : 3) + '</b><small>contrats signés en ligne</small></div><div class="trk"><b>' + (T.etape === "cree" ? 0 : 2) + '</b><small>impayés relancés et réglés</small></div></div>' : ""; }
   const n = nbU(), t = tr(), nx = nextDate();
   document.getElementById("ba-eco").textContent = "1 mois offert";
   document.getElementById("bm").classList.toggle("on", S.bill === "m"); document.getElementById("ba").classList.toggle("on", S.bill === "a");
