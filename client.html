@@ -2535,6 +2535,48 @@ function toast(msg, undoFn){
   /* le bouton « Nouveau devis » part avec le bon client présélectionné */
   var nd = document.querySelector('.hero .actions a[href^="devis.html"]');
   if(nd) nd.href = "devis.html?c=" + encodeURIComponent(q);
+    /* 29/10 (patron : « la relance auto, on la voit où sur la fiche client ? ») — sous le
+       statut de chaque devis envoyé, la prochaine relance (ou pause / pas de relance),
+       mêmes règles que la liste des devis et la page Relance devis. Clic = pause / reprise. */
+    window.relMini = function(d, statut){
+      try{
+        if(statut !== "envoye") return "";
+        var J = function(k, df){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? df : v; }catch(e){ return df; } };
+        var REL = J("tigerflow-relance-devis-v2", null) || {on:true, part:[{j:3},{j:7},{j:14}], pro:[{j:5},{j:12},{j:21}], syn:[{j:7},{j:15},{j:30}]}; if(REL.on === false) return "";
+        var ON = J("tigerflow-relance-on", {}), G = J("tigerflow-relance-garde-v1", {}), RC = J("tigerflow-relance-cat-v1", {});
+        var P = J("tigerflow-relance-devis-v2-pause", []);
+        var qui = d.payeur || d.client || "";
+        var f = (J("tigerflow-inbox-clients", []).concat(J("tigerflow-clients-cache", []))).find(function(c){ return c && c.nom === qui; });
+        var t = f ? String(f.type || "").toLowerCase() : "";
+        var pub = t === "syndic" ? "syn" : t === "particulier" ? "part" : t ? "pro" : (/syndic|copropri|r[ée]sidence/i.test(qui) ? "syn" : "part");
+        var tag = function(txt, gris){ return '<div onclick="event.stopPropagation();relMiniTog(\'' + d.ref + '\')" title="Cliquer pour mettre en pause / reprendre" style="margin-top:4px;cursor:pointer;font:700 .66rem Inter,sans-serif;color:' + (gris ? "#8A8F9E" : "#D2450A") + '">' + txt + '</div>'; };
+        var EX = J("tigerflow-relance-exclus", []);
+        if(EX.indexOf(d.payeur || d.client) > -1 || EX.indexOf(d.client) > -1) return tag("⏸ client exclu des relances", true);
+        if(ON[pub] === false) return tag("⏸ relance coupée", true);
+        var txt = [d.titre].concat((d.lignes || []).map(function(l){ return (l.designation || "") + " " + (l.desc || ""); })).join(" ");
+        var CATS = [["rongeur",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],["cafard",/cafard|blatte/i],["punaise",/punaise/i],["guepe",/gu[êe]pe|frelon|nid/i],["desinf",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon",/pigeon|volatile|oiseau/i],["chenille",/chenille|processionnaire/i],["fourmi",/fourmi/i]];
+        var c = CATS.find(function(x){ return x[1].test(txt); });
+        if(c && RC[c[0]] && RC[c[0]].off) return tag("⏸ pas de relance (nuisible)", true);
+        if((+G.plancher || 0) > 0 && (+d.montant || 0) < +G.plancher) return tag("⏸ sous le plancher", true);
+        if(P.indexOf(d.ref) > -1) return tag("⏸ relance en pause", true);
+        var seq = REL[pub] || REL.part || [];
+        var d0 = new Date(((J("tigerflow-devis-dates", {})[d.ref] || {}).envoye || d.date || "") + "T00:00:00");
+        if(isNaN(d0)) return "";
+        var age = Math.floor((new Date() - d0) / 864e5);
+        var k = seq.findIndex(function(x){ return x.j > age; });
+        if(k < 0) return tag("🔁 relances terminées", true);
+        var q = new Date(d0); q.setDate(q.getDate() + seq[k].j);
+        if(G.ouvres !== false){ while(q.getDay() === 0 || q.getDay() === 6) q.setDate(q.getDate() + 1); }
+        return tag("🔁 Relance " + (k + 1) + "/" + seq.length + " · " + q.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"}));
+      }catch(e){ return ""; }
+    };
+    window.relMiniTog = function(ref){
+      var P = []; try{ P = JSON.parse(localStorage.getItem("tigerflow-relance-devis-v2-pause") || "[]"); }catch(e){}
+      var i = P.indexOf(ref); if(i > -1) P.splice(i, 1); else P.push(ref);
+      try{ localStorage.setItem("tigerflow-relance-devis-v2-pause", JSON.stringify(P)); }catch(e){}
+      if(typeof toast === "function") toast(i > -1 ? "▶ Relances reprises pour " + ref : "⏸ Relances en pause pour " + ref);
+      setTimeout(function(){ location.reload(); }, 700);
+    };
   if(NEUF){
     var _a2 = document.getElementById("h-adr");
     if(_a2) _a2.innerHTML = f.adr
@@ -2726,7 +2768,7 @@ function toast(msg, undoFn){
       if(dv.length){
         pose("devis", dv.map(function(d){
           var st = stD[STD[d.ref] || d.statut] || ["Envoy\u00e9","st-envoye"];
-          return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + (d.site ? ' <span class="obsite">\u00b7 ' + d.site + '</span>' : '') + quiTag(d) + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
+          return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + (d.site ? ' <span class="obsite">\u00b7 ' + d.site + '</span>' : '') + quiTag(d) + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span>' + relMini(d, STD[d.ref] || d.statut) + '</td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 devis</th><th>Objet</th><th class="amt">Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>');
         var nd = document.getElementById("n-devis"); if(nd){ var tbx = document.getElementById("devis-tb"); nd.textContent = tbx ? tbx.rows.length : dv.length; }
       }
@@ -2931,7 +2973,7 @@ function toast(msg, undoFn){
       };
       mets("devis-tb", JD("tigerflow-inbox-devis").filter(conc).map(function(d){
         var st = stDd[STDd[d.ref] || d.statut] || stDd.envoye;
-        return '<tr data-ref="' + escD(d.ref) + '"><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + escD(d.ref) + '</a></td><td>' + escD(d.titre || "\u2014") + tagD(d) + '</td><td class="amt">' + eurD(d.montant) + '</td><td>' + fdD(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
+        return '<tr data-ref="' + escD(d.ref) + '"><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + escD(d.ref) + '</a></td><td>' + escD(d.titre || "\u2014") + tagD(d) + '</td><td class="amt">' + eurD(d.montant) + '</td><td>' + fdD(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span>' + (window.relMini ? relMini(d, STDd[d.ref] || d.statut) : "") + '</td><td><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
       }), "n-devis");
       var auj = new Date().toISOString().slice(0, 10);
       mets("fact-tb", JD("tigerflow-inbox-factures").filter(conc).map(function(f){
@@ -4305,6 +4347,38 @@ document.addEventListener("click", function(e){
      faire reapparaitre une carte que le patron a coupee. */
   setTimeout(appliquer, 400);
   window.addEventListener("focus", appliquer);
+})();
+</script>
+
+<script>
+/* 29/10 (patron : « on décide de ne pas activer la relance sur ce client ») —
+   « Relance auto des devis : Oui / Jamais pour ce client », dans la carte Contacts.
+   Clé tigerflow-relance-exclus (liste de noms), lue par la liste des devis, la fiche
+   du devis et la page Relance devis. La règle vaut pour les devis où ce client est
+   le lieu OU celui qui paie. */
+(function(){
+  var nom = ""; try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
+  if(!nom) return;
+  var K = "tigerflow-relance-exclus";
+  var lire = function(){ try{ return JSON.parse(localStorage.getItem(K) || "[]"); }catch(e){ return []; } };
+  var peindre = function(){
+    var cl = document.getElementById("clist"); if(!cl) return;
+    var card = cl.closest(".card"); if(!card) return;
+    var el = document.getElementById("relex");
+    if(!el){ el = document.createElement("div"); el.id = "relex"; el.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid #F0F1F5;font:700 .78rem Inter,sans-serif;color:var(--ink-2)"; card.appendChild(el); }
+    var ex = lire().indexOf(nom) > -1;
+    var bt = function(on, txt, v){ return '<button type="button" onclick="relexSet(' + v + ')" style="border:0;padding:6px 11px;font:700 .74rem Inter,sans-serif;cursor:pointer;background:' + (on ? "#EEF2F8" : "#fff") + ';color:' + (on ? "#1E3350" : "#6B7280") + '">' + txt + '</button>'; };
+    el.innerHTML = '<span style="flex:1;min-width:150px">Relance auto des devis<small style="display:block;font-weight:500;color:var(--muted);font-size:.7rem">' + (ex ? "aucun devis de ce client n'est relancé automatiquement" : "ses devis envoyés suivent la séquence") + '</small></span>'
+      + '<span style="display:inline-flex;border:1.5px solid #E2E5EB;border-radius:9px;overflow:hidden">' + bt(!ex, "Oui", "false") + bt(ex, "Jamais pour ce client", "true") + '</span>';
+  };
+  window.relexSet = function(jamais){
+    var L = lire().filter(function(n){ return n !== nom; });
+    if(jamais) L.push(nom);
+    try{ localStorage.setItem(K, JSON.stringify(L)); }catch(e){}
+    if(typeof toast === "function") toast(jamais ? "⏸ " + nom + " : plus aucune relance automatique" : "▶ " + nom + " : relances automatiques actives");
+    setTimeout(function(){ location.reload(); }, 700);
+  };
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(peindre, 60); }); else setTimeout(peindre, 60);
 })();
 </script>
 </body>

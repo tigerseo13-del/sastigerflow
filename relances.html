@@ -1140,6 +1140,7 @@ function relWeekRender(){
   const typeDe = n => { const c = fiches.find(z => z && z.nom === n); return c ? String(c.type || "").toLowerCase() : ""; };
   const pubDe = n => { const t = typeDe(n); return t === "syndic" ? "syn" : t === "particulier" ? "part" : t ? "pro" : (/syndic|copropri|r[ée]sidence/i.test(n) ? "syn" : "part"); };
   const P = relPausedSet();
+  const EXCL = J("tigerflow-relance-exclus") || [];
   const auj = new Date(); auj.setHours(0, 0, 0, 0);
   const fin = new Date(auj); fin.setDate(fin.getDate() + 7);
   const JF = ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
@@ -1148,6 +1149,7 @@ function relWeekRender(){
     if(!d || !d.ref) return;
     if((stx[d.ref] || d.statut) !== "envoye") return;
     const qui = d.payeur || d.client || "";
+    if(EXCL.indexOf(qui) > -1 || EXCL.indexOf(d.client) > -1) return;   /* client exclu (fiche client) */
     const pub = pubDe(qui);
     if(!RELON[pub]) return;
     const mnt = +d.montant || 0;
