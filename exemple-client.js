@@ -19,6 +19,14 @@
         });
         S.setItem("tigerflow-exemple-v2", "1");
       }
+      /* v3 (29/10) : la SCI devient le payeur par défaut (★) de François Durand */
+      if(S.getItem("tigerflow-exemple-v3") !== "1"){
+        try{ var RL = JSON.parse(S.getItem("tigerflow-relations")) || [];
+          var aDef = RL.some(function(z){ return z && z.b === "François Durand" && z.def; });
+          if(!aDef) RL.forEach(function(z){ if(z && z.a === "SCI Durand Patrimoine" && z.b === "François Durand") z.def = true; });
+          S.setItem("tigerflow-relations", JSON.stringify(RL)); }catch(e){}
+        S.setItem("tigerflow-exemple-v3", "1");
+      }
       return;
     }
 
@@ -34,7 +42,7 @@
    {sb:1,nom:"Résidence Les Martyrs",type:"pro",adresse:"7 rue des Martyrs",cp:"75009",ville:"Paris",tel:"0148740000",mail:"gestion@vernet-syndic.fr"},
    {sb:1,nom:"Résidence Trudaine",type:"pro",adresse:"15 avenue Trudaine",cp:"75009",ville:"Paris",tel:"0148740000",mail:"gestion@vernet-syndic.fr"},
    {sb:1,nom:"Résidence Rochechouart",type:"pro",adresse:"40 boulevard de Rochechouart",cp:"75009",ville:"Paris",tel:"0148740000",mail:"gestion@vernet-syndic.fr"}]);
-  s('tigerflow-relations',[{a:"Cabinet Vernet Syndic",t:"gere",b:"Résidence Les Martyrs"},{a:"Cabinet Vernet Syndic",t:"gere",b:"Résidence Trudaine"},{a:"Cabinet Vernet Syndic",t:"gere",b:"Résidence Rochechouart"},{a:"Cabinet Vernet Syndic",t:"gere",b:"François Durand",site:"Résidence Les Martyrs"},{a:"SCI Durand Patrimoine",t:"possede",b:"François Durand"}]);
+  s('tigerflow-relations',[{a:"Cabinet Vernet Syndic",t:"gere",b:"Résidence Les Martyrs"},{a:"Cabinet Vernet Syndic",t:"gere",b:"Résidence Trudaine"},{a:"Cabinet Vernet Syndic",t:"gere",b:"Résidence Rochechouart"},{a:"Cabinet Vernet Syndic",t:"gere",b:"François Durand",site:"Résidence Les Martyrs"},{a:"SCI Durand Patrimoine",t:"possede",b:"François Durand",def:true}]);
   const L=(d,desc,pu,tva,emo,qte=1)=>({designation:d,desc,qte,pu,tva,emo,img:""});
   const devis=[
    {ref:"DEV-2026-70001",client:"François Durand",payeur:"SCI Durand Patrimoine",titre:"Traitement punaises de lit — 2 passages, 3 pièces",date:"2026-10-06",statut:"gagne",remise:0,montant:528,lignes:[L("Traitement punaises de lit — 1er passage","Pulvérisation + vapeur, 3 pièces.",300,10,"🛏️"),L("2e passage à J+15","Contrôle.",150,10,"🔁")],frais:[{n:"Déplacement",m:30,tva:10,img:""}]},
@@ -60,6 +68,6 @@
    I("1793100000000-6","Résidence Les Martyrs","7 rue des Martyrs","75009","Paris","2026-11-04",9,2,"rongeur","encais","Pablo","Dératisation caves")]);
   s('tigerflow-inbox-contrats',[{ref:"CTR-2026-70001",client:"Cabinet Vernet Syndic",titre:"Contrat dératisation parties communes — 3 résidences",statut:"actif",deb:"2026-11-01",fin:"2027-10-31",freq:"Trimestrielle",ht:1800,tva:20,montant:2160,cats:[],materiel:[],checklist:[],nbint:12,freqint:"",jours:[],creneaux:[],renouv:true,renech:12,notes:""}]);
 
-    S.setItem("tigerflow-exemple-v1", "1"); S.setItem("tigerflow-exemple-v2", "1");
+    S.setItem("tigerflow-exemple-v1", "1"); S.setItem("tigerflow-exemple-v2", "1"); S.setItem("tigerflow-exemple-v3", "1");
   }catch(e){}
 })();

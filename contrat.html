@@ -1320,7 +1320,7 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
       const r = box.find(x => x.ref === ref);
       if(!r) return null;
       return {
-        numero: r.ref, client: r.client, titre: r.titre,
+        numero: r.ref, client: r.client, payeur: r.payeur, titre: r.titre,
         montant_ttc: r.montant, frequence: r.freq,
         passages_faits: r.faits || 0, passages_prevus: r.nbint || 0,
         renouvellement: r.fin, statut: r.statut
@@ -1360,6 +1360,10 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
 
     const h1 = q1(".hero h1");
     if(h1 && h1.childNodes.length) h1.childNodes[0].nodeValue = (c.client || "Contrat") + " ";
+    /* 29/10 : « Facturé à » sur le contrat, comme sur la facture */
+    if(c.payeur && c.payeur !== c.client && h1 && !document.getElementById("h-payeur")){
+      h1.insertAdjacentHTML("afterend", '<div id="h-payeur" style="margin:4px 0 2px"><span style="font-size:.74rem;font-weight:800;color:#B4470F;background:#FDEEE3;border:1px solid #F6D3BC;border-radius:7px;padding:3px 9px">Facturé à : ' + String(c.payeur).replace(/&/g, "&amp;").replace(/</g, "&lt;") + '</span></div>');
+    }
     if(c.statut){
       const b = q1(".hero h1 .badge");
       if(b && b.lastChild) b.lastChild.nodeValue = c.statut === "brouillon" ? "Brouillon" : "Actif";

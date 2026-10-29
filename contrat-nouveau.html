@@ -668,6 +668,13 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
             <a class="newcli" href="client-nouveau.html"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nouveau client</a>
           </div>
           <div class="cliadr" id="cliadr">L'adresse du client s'affichera ici</div>
+          <!-- 29/10 (patron, GO « payeur par défaut ») : le contrat connaît le PAYEUR.
+               Une résidence sous contrat payée par son syndic : les factures du
+               contrat partent au syndic. Pré-rempli avec le ★ de la fiche. -->
+          <div id="g-vpayeur" style="display:none;margin-top:14px">
+            <label class="lab" for="v-payeur">Facturer à</label>
+            <select id="v-payeur"></select>
+          </div>
         </div>
         <div class="full">
           <label class="lab" for="v-titre">Intitulé du contrat <em>*</em></label>
@@ -991,6 +998,23 @@ function pickCli(){
   const c = CLIENTS[g("v-client").value];
   g("cliadr").innerHTML = c ? '<svg class="bic" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + c.adr + " · " + c.tel : "L'adresse du client s'affichera ici";
   titreSmart();
+  payeurPeindre();
+}
+/* les relations entrantes du client (syndic, propriétaire / société, donneur d'ordre) */
+function payeurPeindre(){
+  try{
+    const gp = g("g-vpayeur"), selp = g("v-payeur"); if(!gp || !selp) return;
+    const nomC = g("v-client").value;
+    const REL = JSON.parse(localStorage.getItem("tigerflow-relations") || "[]");
+    const LT = {gere: "son syndic / gérant", possede: "son propriétaire / sa société", ordonne: "son donneur d'ordre"};
+    const pay = REL.filter(r => r && r.b === nomC && LT[r.t]);
+    if(!pay.length){ gp.style.display = "none"; selp.innerHTML = ""; return; }
+    selp.innerHTML = '<option value="">Le client lui-même</option>'
+      + pay.map(r => '<option value="' + String(r.a).replace(/"/g, "&quot;") + '">' + r.a + ' — ' + LT[r.t] + '</option>').join("");
+    const pdef = pay.find(r => r.def);
+    if(pdef) selp.value = pdef.a; else if(pay.length === 1) selp.value = pay[0].a;
+    gp.style.display = "";
+  }catch(e){}
 }
 function typePick(el){
   g("v-type").value = el.value;
@@ -1077,6 +1101,8 @@ function ctrRemplir(c){
   var set = function(id, v){ var e = g(id); if(!e || v == null || v === "") return;
     e.value = v; e.dispatchEvent(new Event("input", {bubbles:true})); e.dispatchEvent(new Event("change", {bubbles:true})); };
   set("v-client", c.client); set("v-titre", c.titre); set("v-type", c.type);
+  /* la reprise garde le payeur enregistré — y compris « le client lui-même » */
+  if(typeof payeurPeindre === "function"){ payeurPeindre(); var sp = g("v-payeur"); if(sp && sp.options.length) sp.value = c.payeur || ""; }
   set("v-deb", c.deb); set("v-fin", c.fin); set("v-freqfac", c.freq);
   set("v-ht", c.ht); set("v-tva", c.tva);
   set("v-freqint", c.freqint); set("v-nbint", c.nbint); if(c.nbint) NBEDIT = true;
@@ -1289,6 +1315,7 @@ function saveContrat(statut){
   const ref = EDITREF || ("CTR-2026-" + String(10000 + Math.floor(Math.random() * 89999)));   /* 12/08 : en modification, la référence NE CHANGE PAS */
   const rec = {
     ref, client: g("v-client").value, ct: "",
+    payeur: (g("v-payeur") || {value:""}).value || undefined,
     titre: g("v-titre").value.trim(),
     type: g("v-type").value, notes: g("v-notes").value.trim(),
     deb: g("v-deb").value, fin: g("v-fin").value,

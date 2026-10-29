@@ -3686,8 +3686,11 @@ document.addEventListener("click", function(e){
     gere: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 8h1.6M13.4 8h1.6M9 12h1.6M13.4 12h1.6M10 21v-4h4v4"/>',
     ordonne: '<path d="M9 3h6v3H9z"/><path d="M15 4h3a1 1 0 011 1v15a1 1 0 01-1 1H6a1 1 0 01-1-1V5a1 1 0 011-1h3"/><path d="M9 12h6M9 16h4"/>'
   };
-  function ligne(lbl, autre, i, site, t, chef){
+  function ligne(lbl, autre, i, site, t, chef, star){
     var sous = [adrOf(autre), site || ""].filter(Boolean).join(" · ");
+    /* 29/10 (patron, GO « payeur par défaut ») : l'étoile = « paie d'habitude ».
+       Elle décide de « Facturer à » sur les devis, factures ET contrats. */
+    var etoile = star == null ? "" : '<span onclick="relDef(' + i + ')" title="' + (star ? "Payeur par défaut — devis, factures et contrats partent à son nom" : "En faire le payeur par défaut") + '" style="flex:none;cursor:pointer;font-size:1.05rem;line-height:1;padding:4px;color:' + (star ? "#D9A408" : "#D3D7DF") + '">' + (star ? "★" : "☆") + '</span>';
     return '<div style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #E9EBF0;border-radius:12px;padding:10px 13px">'
       + '<span style="flex:none;width:38px;height:38px;border-radius:11px;background:' + (chef ? "#FDEEE3" : "#F3F4F6") + ';display:flex;align-items:center;justify-content:center">'
       + '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:' + (chef ? "var(--orange)" : "#6B7280") + '">' + (ICO[t] || ICO.gere) + '</svg></span>'
@@ -3695,7 +3698,8 @@ document.addEventListener("click", function(e){
       + '<span style="display:block;font:800 .6rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">' + esc(lbl) + '</span>'
       + '<a href="client.html?c=' + encodeURIComponent(autre) + '" style="font:800 .88rem Inter,sans-serif;color:var(--ink);text-decoration:none">' + esc(autre) + ' →</a>'
       + (sous ? '<span style="display:block;font:600 .74rem Inter,sans-serif;color:var(--muted);margin-top:1px">' + esc(sous) + '</span>' : "")
-      + '</span>'
+      + (star ? '<span style="display:block;font:700 .7rem Inter,sans-serif;color:#9A7400;margin-top:2px">★ Paie d\'habitude</span>' : "")
+      + '</span>' + etoile
       + '<span onclick="relDel(' + i + ')" style="flex:none;cursor:pointer;color:#C3C7D0;font-weight:800;padding:4px" title="Retirer ce lien">✕</span></div>';
   }
   /* 30/08 : la fiche s'adaptait — sans relation les Notes prenaient le centre
@@ -3729,7 +3733,8 @@ document.addEventListener("click", function(e){
       else if(r.a === nom) sort.push([r, i]);
     });
     /* fiche du locataire : « Géré par FONCIA \u2192 · Résidence Les Lilas » */
-    entr.forEach(function(p2){ h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site, p2[0].t, true); });
+    var aDef = entr.some(function(p2){ return p2[0].def; });
+    entr.forEach(function(p2){ var st = aDef ? !!p2[0].def : entr.length === 1; h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site, p2[0].t, true, st); });
     /* 29/10 (patron : « c'est où les sites ? ») : plus de titres « immeuble » /
        « Sans immeuble » — restes de la bêta Sites annulée le 30/08, ils
        laissaient croire qu'il existait encore deux façons de faire. Une liste
@@ -3743,6 +3748,17 @@ document.addEventListener("click", function(e){
     relLayout();
   }
   window.relDel = function(i){ var R = lire(); R.splice(i, 1); localStorage.setItem(K, JSON.stringify(R)); paint(); };
+  /* ★ : un seul payeur par défaut par fiche — cliquer l'étoile d'un autre le remplace,
+     re-cliquer la sienne l'enlève (on revient à « le seul relié, sinon le bureau choisit »). */
+  window.relDef = function(i){
+    var R = lire(), r = R[i]; if(!r) return;
+    var deja = !!r.def;
+    R.forEach(function(z){ if(z && z.b === r.b) delete z.def; });
+    if(!deja) r.def = true;
+    localStorage.setItem(K, JSON.stringify(R));
+    paint();
+    if(typeof toast === "function") toast(deja ? "Plus de payeur par défaut" : "★ " + r.a + " paie d'habitude pour " + r.b);
+  };
   window.relStop = function(){ document.getElementById("rel-form").style.display = "none"; var ab = document.getElementById("rel-add"); if(ab) ab.hidden = false; var rl0 = document.getElementById("rel-list"); if(rl0) rl0.style.display = ""; };
   /* « Ce n'est pas lui qui paie ? » : on vide la case et on recommence */
   window.relPasLui = function(e){ if(e) e.preventDefault(); var i = document.getElementById("rel-qui"); if(!i) return; i.value = ""; NEWF = ""; var aw = document.getElementById("rel-adrw"); if(aw) aw.style.display = "none"; relPhrase(); if(typeof quiPanel === "function") quiPanel(); i.focus(); };
