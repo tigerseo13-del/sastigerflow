@@ -710,7 +710,16 @@ function relBadge(d){
   /* 31/08 : le badge dit LA VÉRITÉ — public coupé ou devis sous le plancher,
      la séquence ne tourne pas, on l'annonce au lieu d'afficher une fausse
      prochaine relance. */
-  const pub = relPublic(d.client);
+  const pub = relPublic(d.payeur || d.client);
+  /* 29/10 : les règles « Par nuisible » de la page Relance devis */
+  try{
+    const RC = JSON.parse(localStorage.getItem("tigerflow-relance-cat-v1") || "{}");
+    const CATS = [["rongeur","Rongeurs",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],["cafard","Cafards",/cafard|blatte/i],["punaise","Punaises",/punaise/i],["guepe","Guêpes",/gu[êe]pe|frelon|nid/i],["desinf","Désinfection",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon","Pigeons",/pigeon|volatile|oiseau/i],["chenille","Chenilles",/chenille|processionnaire/i],["fourmi","Fourmis",/fourmi/i]];
+    const txt = [d.titre].concat((d.lignes || []).map(l => (l.designation || "") + " " + (l.desc || ""))).join(" ");
+    const c = CATS.find(x => x[2].test(txt));
+    if(c && RC[c[0]] && RC[c[0]].off)
+      return `<span class="relbadge pause" title="Pas de relance automatique pour ce nuisible (Relance devis → Par nuisible)">⏸ ${c[1]} — pas de relance</span>`;
+  }catch(e){}
   if(!_RELON[pub])
     return `<span class="relbadge pause" title="La relance automatique est coupée pour ce public (Réglages → Relance devis automatique → onglet ${RELPUB[pub]})">⏸ ${RELPUB[pub]} — relance coupée</span>`;
   if(_RGARDE.plancher > 0 && (+d.montant || 0) < _RGARDE.plancher)
@@ -775,10 +784,23 @@ try{
      remonte le plus ancien : avec deux documents crees a la suite, c'est le
      precedent qui sortait en tete. Meme piege que sur les paiements. */
   const _boite = JSON.parse(localStorage.getItem("tigerflow-inbox-devis") || "[]");
+  /* 29/10 (parcours bureau) : un devis créé dans l'appli affichait « undefined »
+     sous le nom et toujours « Particulier ». On lit la fiche : type réel, et si
+     quelqu'un d'autre paie, « facturé à … » à la place du contact. */
+  const _fiches = (JSON.parse(localStorage.getItem("tigerflow-inbox-clients") || "[]")).concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache") || "[]"));
+  const _fiche = n => _fiches.find(c => c && c.nom === n) || null;
+  const _complete = r => {
+    const o = {...r};
+    const f = _fiche(o.payeur || o.client);
+    if(o.pro === undefined) o.pro = !!(f && f.type && String(f.type).toLowerCase() !== "particulier");
+    if(f && String(f.type || "").toLowerCase() === "syndic") o.syn = true;
+    if(o.ct === undefined || o.ct === null) o.ct = (o.payeur && o.payeur !== o.client) ? "facturé à " + o.payeur : "";
+    return o;
+  };
   _boite.forEach((rec, k) => {
     const i = DEVIS.findIndex(d => d.ref === rec.ref);
-    if(i > -1) DEVIS[i] = {...DEVIS[i], ...rec};
-    else DEVIS.unshift({...rec, _cree: _boite.length - k});
+    if(i > -1) DEVIS[i] = _complete({...DEVIS[i], ...rec});
+    else DEVIS.unshift(_complete({...rec, _cree: _boite.length - k}));
   });
 }catch(e){}
 /* ===== les statuts changés depuis la liste ou le tiroir SURVIVENT au rechargement ===== */
@@ -946,10 +968,10 @@ function render(){
   const slice = pageDe(list);
   document.getElementById('tbody').innerHTML = slice.length ? slice.map(d=>`
     <tr onclick="ouvrirDevis('${d.ref}')">
-      <td class="cl"><b>${d.client}</b><small>${d.ct}</small><span class="pubtag ${d.pro ? "pe" : "pp"}">${d.pro ? "Entreprise" : "Particulier"}</span></td>
+      <td class="cl"><b>${d.client}</b>${d.ct ? `<small>${d.ct}</small>` : ""}<span class="pubtag ${d.pro ? "pe" : "pp"}">${d.syn ? "Syndic" : d.pro ? "Entreprise" : "Particulier"}</span></td>
       <td>${d.titre}</td>
       <td class="amt">${eur(d.montant)}</td>
-      <td><span class="st st-${d.statut}">${LBL[d.statut]}</span></td>
+      <td><span class="st st-${d.statut}">${LBL[d.statut]}</span>${relBadge(d) ? `<div style="margin-top:5px">${relBadge(d)}</div>` : ""}</td>
       <td class="dte">${fdate(d.date)}${expChip(d)}</td>
       <!-- 28/07 : qui a fait le devis. Vide = le bureau, et c'est une reponse,
            pas une donnee manquante — d'ou le tiret plutot qu'un blanc. -->
@@ -968,7 +990,7 @@ function render(){
     <a class="fmc" href="devis-detail.html?ref=${encodeURIComponent(d.ref)}">
       <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${d.statut}">${LBL[d.statut]}</span></div>
       <b class="t">${d.titre}</b>
-      <div class="cl">${d.client} · ${d.ct}</div>
+      <div class="cl">${d.client}${d.ct ? " · " + d.ct : ""}</div>
       <div class="l2"><span class="amt">${eur(d.montant)}</span><span class="dte">${fdate(d.date)} ${expChip(d)}</span></div>
       
     </a>`).join("")

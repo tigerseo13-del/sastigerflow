@@ -911,6 +911,10 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
       <div class="kpi k-green" id="k-etat-tile"><div class="lbl">État</div><div class="num" id="k-etat">—</div><span class="sub" id="k-etat-sub"></span></div>
       <!-- 12/08 (patron) : « si tu veux pas le faire, le stopper — tu le mets où ? »
            ICI : l'interrupteur des relances de CE devis, même clé que la liste. -->
+      <!-- 29/10 (parcours bureau) : la tuile avait disparu — on ne voyait plus, sur la
+           fiche du devis, quand part la prochaine relance ni comment la mettre en pause. -->
+      <div class="kpi" id="k-rel-tile" hidden><div class="lbl">Relance auto</div><div class="num" id="k-rel" style="font-size:1.05rem">—</div><span class="sub" id="k-rel-sub"></span>
+        <button type="button" id="k-rel-btn" onclick="relDetTog()" style="margin-top:8px;border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;padding:6px 11px;font:700 .74rem Inter,sans-serif;color:#3D434E;cursor:pointer">⏸ Mettre en pause</button></div>
     </div>
 
     <!-- onglets -->
@@ -2699,6 +2703,54 @@ document.addEventListener("click", function(e){
   document.head.appendChild(st);
   document.body.appendChild(v);
   window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
+})();
+</script>
+
+<script>
+/* 29/10 : la relance de CE devis — mêmes règles que la page Relance devis et la liste */
+(function(){
+  var J = function(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
+  window.relDetPaint = function(){
+    var tile = document.getElementById("k-rel-tile"); if(!tile || typeof REC === "undefined" || !REC) return;
+    var ref = REC.ref || (typeof REF !== "undefined" ? REF : ""); if(!ref) return;
+    var st = (J("tigerflow-devis-statuts", {})[ref]) || REC.statut;
+    if(st !== "envoye"){ tile.hidden = true; return; }
+    tile.hidden = false;
+    var REL = J("tigerflow-relance-devis-v2", null) || {part:[{j:3,rem:0,mail:true,sms:true},{j:7,rem:5,mail:true,sms:true},{j:14,rem:10,mail:true,sms:false}], pro:[{j:5,rem:0,mail:true},{j:12,rem:5,mail:true},{j:21,rem:8,mail:true}], syn:[{j:7,rem:0,mail:true},{j:15,rem:0,mail:true},{j:30,rem:5,mail:true}]};
+    var ON = J("tigerflow-relance-on", {}), G = J("tigerflow-relance-garde-v1", {}), RC = J("tigerflow-relance-cat-v1", {});
+    var P = new Set(J("tigerflow-relance-devis-v2-pause", []));
+    var qui = REC.payeur || REC.client || "";
+    var f = (J("tigerflow-inbox-clients", []).concat(J("tigerflow-clients-cache", []))).find(function(c){ return c && c.nom === qui; });
+    var t = f ? String(f.type || "").toLowerCase() : "";
+    var pub = t === "syndic" ? "syn" : t === "particulier" ? "part" : t ? "pro" : (/syndic|copropri|r[ée]sidence/i.test(qui) ? "syn" : "part");
+    var CATS = [["rongeur","rongeurs",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],["cafard","cafards",/cafard|blatte/i],["punaise","punaises",/punaise/i],["guepe","guêpes",/gu[êe]pe|frelon|nid/i],["desinf","désinfection",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon","pigeons",/pigeon|volatile|oiseau/i],["chenille","chenilles",/chenille|processionnaire/i],["fourmi","fourmis",/fourmi/i]];
+    var txt = [REC.titre].concat((REC.lignes || []).map(function(l){ return (l.designation || "") + " " + (l.desc || ""); })).join(" ");
+    var cat = CATS.find(function(c){ return c[2].test(txt); });
+    var N = document.getElementById("k-rel"), S = document.getElementById("k-rel-sub"), B = document.getElementById("k-rel-btn");
+    var pas = function(txtN, txtS, btn){ N.textContent = txtN; S.textContent = txtS || ""; B.hidden = !btn; };
+    if(ON[pub] === false) return pas("Coupée", "relance coupée pour ce type de client", false);
+    if(cat && RC[cat[0]] && RC[cat[0]].off) return pas("Pas de relance", "règle « Par nuisible » : " + cat[1], false);
+    if((+G.plancher || 0) > 0 && (+REC.montant || 0) < +G.plancher) return pas("Pas de relance", "devis sous " + G.plancher + " € HT", false);
+    if(P.has(ref)){ pas("En pause", "le client ne sera plus relancé", true); B.textContent = "▶ Reprendre"; return; }
+    var seq = REL[pub] || REL.part || [];
+    var d0 = new Date(((J("tigerflow-devis-dates", {})[ref] || {}).envoye || REC.date || "") + "T00:00:00");
+    var age = isNaN(d0) ? 0 : Math.floor((new Date() - d0) / 864e5);
+    var k = seq.findIndex(function(x){ return x.j > age; });
+    if(k < 0) return pas("Terminée", "les " + seq.length + " relances sont parties — au téléphone", false);
+    var x = seq[k], q = new Date(d0); q.setDate(q.getDate() + x.j);
+    if(G.ouvres !== false){ while(q.getDay() === 0 || q.getDay() === 6) q.setDate(q.getDate() + 1); }
+    var can = [x.mail ? "email" : "", x.sms ? "SMS" : ""].filter(Boolean).join(" + ") || "aucun canal";
+    pas((k + 1) + "/" + seq.length + " le " + q.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"}), can + (x.rem ? " · −" + x.rem + " %" : ""), true);
+    B.textContent = "⏸ Mettre en pause";
+  };
+  window.relDetTog = function(){
+    var ref = REC.ref || REF; var P = new Set(J("tigerflow-relance-devis-v2-pause", []));
+    if(P.has(ref)) P.delete(ref); else P.add(ref);
+    try{ localStorage.setItem("tigerflow-relance-devis-v2-pause", JSON.stringify([...P])); }catch(e){}
+    relDetPaint();
+    if(typeof toast === "function") toast(P.has(ref) ? "⏸ Relances en pause pour " + ref : "▶ Relances reprises pour " + ref);
+  };
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(relDetPaint, 50); }); else setTimeout(relDetPaint, 50);
 })();
 </script>
 </body>
