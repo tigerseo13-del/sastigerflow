@@ -1896,6 +1896,21 @@ try{
        On dédoublonne sur l'identifiant de l'intervention, qui est le seul
        élément réellement unique. */
     if(x.uid && PENDING.some(p => p.uid === x.uid)) return;
+    /* 28/10 (patron : « le calendrier est une vitrine, mes interventions ne
+       s'affichent pas ») : une intervention créée AVEC une date, une heure ET
+       un technicien connu se pose directement sur l'agenda. Sans l'un des
+       trois, elle va au bac « À planifier » comme avant. */
+    const tiX = TECHS.findIndex(t => t.nom === x.tech);
+    if(x.date && x.start != null && x.start !== "" && tiX > -1){
+      if(x.uid && INTERVS.some(k => k.uid === x.uid)) return;
+      const vX = IV(x.date, +x.start, +x.dur || 2, tiX, x.type || "rongeur", x.client || "\u2014", x.cp || "", x.ville || "");
+      vX.uid = x.uid; vX.fromTray = true;   /* vraie date : pas de décalage démo */
+      vX.mode = x.mode ? NMODE(x.mode) : "devis"; vX.note = x.note || "";
+      if(x.rue) vX.rue = x.rue; if(x.typeLibre) vX.typeLibre = x.typeLibre;
+      if(x.montant) vX.montant = x.montant; if(x.site) vX.site = x.site;
+      INTERVS.push(vX);
+      return;
+    }
     PENDING.push({pid:PID++, uid:x.uid, type:x.type, typeLibre:x.typeLibre || "", client:x.client, rue:x.rue || "", cp:x.cp, ville:x.ville, dur:x.dur || 2,
       mode: x.mode ? NMODE(x.mode) : "", montant: x.montant || "", encm: x.encm || "",
       since: (x.uid || "").split("-")[0] ? new Date(+(x.uid || "").split("-")[0]).toISOString().slice(0,10) : undefined,

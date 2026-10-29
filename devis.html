@@ -1076,11 +1076,17 @@ function pickCli(){
     const gp = g("g-vpayeur"), selp = g("v-payeur");
     if(gp && selp){
       const REL = JSON.parse(localStorage.getItem("tigerflow-relations") || "[]");
-      const LT = {gere: "son gestionnaire / syndic", ordonne: "son donneur d'ordre", possede: "son propriétaire"};
+      const LT = {gere: "son gestionnaire / syndic", ordonne: "son donneur d'ordre", possede: "paie pour lui"};
       const pay = REL.filter(r => r && r.b === g("v-client").value && LT[r.t]);
       if(pay.length){
         selp.innerHTML = '<option value="">Le client lui-même</option>'
           + pay.map(r => '<option value="' + String(r.a).replace(/"/g, "&quot;") + '">' + r.a + ' — ' + LT[r.t] + '</option>').join("");
+        /* 28/10 (patron, « valide tout ») : UN seul payeur relié → il est
+           pré-sélectionné. Avant, le menu restait sur « Le client lui-même »
+           et un oubli envoyait la facture au nom de l'immeuble. Le bureau
+           peut toujours remettre « lui-même ». La reprise d'un document
+           (rec.payeur) repasse derrière et garde ce qui a été enregistré. */
+        if(pay.length === 1) selp.value = pay[0].a;
         gp.style.display = "";
       } else { gp.style.display = "none"; selp.innerHTML = ""; }
     }
@@ -2352,7 +2358,7 @@ else ensSuivreClient();
       if(typeof pickCli === "function") pickCli();
       /* 30/08 : la reprise restaure aussi le payeur et le site — sans ça, un
          ré-enregistrement PERDAIT le « Facturer à » en silence. */
-      if(rec.payeur){ const sp9 = document.getElementById("v-payeur"); if(sp9) sp9.value = rec.payeur; }
+      { const sp9 = document.getElementById("v-payeur"); if(sp9) sp9.value = rec.payeur || ""; }
       if(rec.site){ const ss9 = document.getElementById("v-site"); if(ss9) ss9.value = rec.site; }
       /* 02/09 : et son ENSEIGNE — sinon rouvrir un devis émis sous un nom
          commercial le renvoyait au nom de la société sans prévenir. */

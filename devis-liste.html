@@ -1587,7 +1587,15 @@ async function sbSession(){ try{ const {data} = await SB.auth.getSession(); retu
     try{
       const {data, error} = await SB.from("devis").select("*").order("created_at", {ascending:false});
       if(error || !data || !data.length) return;
-      DEVIS.length = 0;
+      /* 28/10 : connecté, la base REMPLAÇAIT toute la liste — les devis créés
+         dans le logiciel (boîte locale, marqués _cree) disparaissaient de la
+         liste alors qu'ils existaient sur la fiche client. On ne retire que
+         les lignes de démonstration ; un devis local déjà en base est
+         remplacé par sa version base (même numéro). */
+      const _refsBase = new Set(data.map(d => d.numero));
+      for(let i = DEVIS.length - 1; i >= 0; i--){
+        if(!DEVIS[i]._cree || _refsBase.has(DEVIS[i].ref)) DEVIS.splice(i, 1);
+      }
       data.forEach(d => DEVIS.push({
         ref: d.numero || "DEV-????", pro: true, client: d.client || "—", ct: "",
         titre: d.titre || "—", montant: +d.montant_ttc || 0,

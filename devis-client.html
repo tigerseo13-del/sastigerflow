@@ -525,7 +525,7 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
     <ul>
       <li>Devis valable 30 jours à compter de sa date d'émission. Paiement à réception de facture.</li>
       <li>Intervention planifiée sous 5 jours ouvrés après réception du devis signé, sur créneau convenu ensemble. Urgence possible sous 24 h sur demande.</li>
-      <li>Pas d'escompte pour règlement anticipé. En cas de retard, pénalité égale à 3 fois le taux d'intérêt légal (article L441-10 du Code de commerce) et indemnité forfaitaire de 40&nbsp;€ pour frais de recouvrement.</li>
+      <li id="cond-pro">Pas d'escompte pour règlement anticipé. En cas de retard, pénalité égale à 3 fois le taux d'intérêt légal (article L441-10 du Code de commerce) et indemnité forfaitaire de 40&nbsp;€ pour frais de recouvrement.</li>
       <li>Intervention réalisée par un technicien certifié, dans le respect de la réglementation biocide en vigueur.</li>
     </ul>
   </div>
@@ -811,11 +811,13 @@ function pdfImprimer(nom){
   put("cli-nom", rec.client || "—");
   (function(){
     var tl = F("cli-tel"), ml = F("cli-mail");
-    var cl0 = J("tigerflow-clients-cache").find(function(x){ return x && x.nom === rec.client; }) || {};
+    var cl0 = J("tigerflow-clients-cache").find(function(x){ return x && x.nom === rec.client; })
+           || J("tigerflow-inbox-clients").find(function(x){ return x && x.nom === rec.client; }) || {};
     if(tl){ if(cl0.tel) tl.textContent = cl0.tel; else tl.closest("span").hidden = true; }
     if(ml){ if(cl0.mail) ml.textContent = cl0.mail; else ml.closest("span").hidden = true; }
   })();
-  var cl = J("tigerflow-clients-cache").find(function(x){ return x && x.nom === rec.client; }) || {};
+  var cl = J("tigerflow-clients-cache").find(function(x){ return x && x.nom === rec.client; })
+        || J("tigerflow-inbox-clients").find(function(x){ return x && x.nom === rec.client; }) || {};
   var coord = F("cli-coord");
   /* 11/08 (patron, visuels 135-138) : si le client a une adresse de FACTURATION
      dédiée (fiche client, carte Adresses), c'est ELLE qui part sur le devis et
@@ -868,12 +870,30 @@ function pdfImprimer(nom){
     if(coord) coord.innerHTML = pc9
       ? ([pc9.adresse, [pc9.cp, pc9.ville].filter(Boolean).join(" ")].filter(Boolean).join("<br>") || "Coordonnées à compléter")
       : "Coordonnées à compléter";
+    /* 28/10 : le téléphone et l'e-mail de l'en-tête sont ceux du PAYEUR
+       (sa fiche), jamais ceux du client traité ni ceux de l'exemple. */
+    (function(){
+      var tl9 = F("cli-tel"), ml9 = F("cli-mail");
+      if(tl9){ if(pc9 && pc9.tel){ tl9.textContent = pc9.tel; tl9.closest("span").hidden = false; } else tl9.closest("span").hidden = true; }
+      if(ml9){ if(pc9 && pc9.mail){ ml9.textContent = pc9.mail; ml9.closest("span").hidden = false; } else ml9.closest("span").hidden = true; }
+      var sir9 = F("cli-siret");
+      if(sir9 && pc9 && pc9.siret){ sir9.textContent = "SIRET " + pc9.siret; sir9.hidden = false; sir9.style.display = ""; }
+    })();
     if(lieuTxt){
       lieuTxt.innerHTML = (siteObj ? esc2(rec.site) + " \u2014 " : "") + esc2(rec.client || "") + (adr ? "<br>" + adr : "");
       if(lieu){ lieu.hidden = false; lieu.style.display = ""; }
     }
   }
 
+  /* 28/10 (patron) : escompte / pénalités / 40 € — obligatoires entre
+     professionnels (C. com. L441-9), sans objet pour un particulier. La ligne
+     se masque quand celui qui PAIE est un particulier. Type inconnu → on
+     garde (prudence). */
+  (function(){
+    var li = document.getElementById("cond-pro"); if(!li) return;
+    var pay = rec.payeur ? (J("tigerflow-inbox-clients").find(function(x){ return x && x.nom === rec.payeur; }) || J("tigerflow-clients-cache").find(function(x){ return x && x.nom === rec.payeur; }) || {}) : cl;
+    if(pay && pay.type === "particulier") li.hidden = true;
+  })();
   var L = Array.isArray(rec.lignes) ? rec.lignes : [];
   var tb = document.querySelector('[data-f="tbl"] tbody');
   var ht = 0, tva = 0;

@@ -1273,8 +1273,8 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
    CLAIR + bordure + texte foncé (le filtre actif de la liste Devis : #FFF1EA
    sur bordure #FF5A1F). Le vert plein sur une grande surface était seul de son
    espèce, d'où l'impression d'un autre vert. Même vert, motif de la maison. */
-.relchip.on{background:var(--green-bg,#ECFDF5);border-color:var(--green,#10B981);color:var(--green-d,#047857);
-  box-shadow:0 0 0 3px rgba(16,185,129,.12)}.rcourt{display:none}#relcard.relmini .rlong{display:none}#relcard.relmini .rcourt{display:inline}#relcard .rtitl{display:none}/* 02/09 : la carte vit maintenant TOUJOURS dans la colonne etroite (319px) — le sous-titre « syndic, proprietaire, donneur d'ordre » y passait sur 3 lignes et poussait le compteur. Il est explique dans le corps de la carte vide, il n'a plus a etre dans le titre. */#relcard.relmini #rel-list{padding:8px 0 12px}</style>
+.relchip.on{background:#EEF2F8;border-color:#1E3350;color:#1E3350;
+  box-shadow:0 0 0 3px rgba(30,51,80,.12)}.rcourt{display:none}#relcard.relmini .rlong{display:none}#relcard.relmini .rcourt{display:inline}#relcard .rtitl{display:none}/* 02/09 : la carte vit maintenant TOUJOURS dans la colonne etroite (319px) — le sous-titre « syndic, proprietaire, donneur d'ordre » y passait sur 3 lignes et poussait le compteur. Il est explique dans le corps de la carte vide, il n'a plus a etre dans le titre. */#relcard.relmini #rel-list{padding:8px 0 12px}</style>
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:12px;padding:12px 0 14px;align-items:center">
           <span style="position:relative;flex:1 1 190px;max-width:250px"><input id="rel-qui" placeholder="Tape le nom du client…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
           <span id="rel-typ" style="display:flex;gap:6px;flex-wrap:wrap"></span>
@@ -1851,12 +1851,14 @@ function cliDel(e){
      identifie, on n'affiche rien. */
   if(!nom){ el.innerHTML = '<li class="act-vide">Ouvrez la fiche depuis la liste des clients pour voir son activité.</li>'; return; }
   var mien = function(x){ return x && x.client === nom; };
+  /* 28/10 : les devis et factures adressés à cette fiche (payeur) comptent aussi */
+  var concerneA = function(x){ return x && (x.client === nom || x.payeur === nom); };
   var ev = [];
 
-  J("tigerflow-inbox-devis").filter(mien).forEach(function(d){
+  J("tigerflow-inbox-devis").filter(concerneA).forEach(function(d){
     ev.push({d:d.date, ic:"🧾", bg:"var(--blue-bg)", b:"Devis " + d.ref, s:d.titre || "", h:"devis-detail.html?ref=" + encodeURIComponent(d.ref)});
   });
-  J("tigerflow-inbox-factures").filter(mien).forEach(function(f){
+  J("tigerflow-inbox-factures").filter(concerneA).forEach(function(f){
     ev.push({d:f.date, ic:"💶", bg:"var(--green-bg)", b:"Facture " + f.ref, s:f.titre || "", h:"facture-detail.html?ref=" + encodeURIComponent(f.ref)});
   });
   J("tigerflow-inbox-contrats").filter(mien).forEach(function(c){
@@ -1906,7 +1908,9 @@ function cliDel(e){
   var du = 0, nb = 0, retard = false;
   var auj = new Date().toISOString().slice(0, 10);
   A("tigerflow-inbox-factures").forEach(function(f){
-    if(!f || (nom && f.client !== nom)) return;
+    /* 28/10 : l'argent suit le PAYEUR. Une facture adressée à un syndic
+       (f.payeur) compte sur la fiche du syndic, pas sur celle de l'immeuble. */
+    if(!f || (nom && (f.payeur || f.client) !== nom)) return;
     var st = statuts[f.ref] || f.statut || "brouillon";
     if(st === "brouillon" || st === "proforma") return;   /* une pro forma ne se reclame pas */
     var reste = (+f.montant || 0) - somme(paiements[f.ref]) - somme(avoirs[f.ref]);
@@ -2555,12 +2559,17 @@ function toast(msg, undoFn){
     var JZ = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
     var JOZ = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return (v && !Array.isArray(v) && typeof v === "object") ? v : {}; }catch(e){ return {}; } };
     var mienZ = function(x){ return x && x.client === q; };
-    var facZ = JZ("tigerflow-inbox-factures").filter(mienZ);
+    /* 28/10 : le CA suit le payeur (f.payeur), pas le lieu d'intervention */
+    var payeZ = function(x){ return x && (x.payeur || x.client) === q; };
+    var facZ = JZ("tigerflow-inbox-factures").filter(payeZ);
     var pmapZ = JOZ("tigerflow-factures-paiements");
     var caZ = 0, nbpZ = 0;
     facZ.forEach(function(f2){ (Array.isArray(pmapZ[f2.ref]) ? pmapZ[f2.ref] : []).forEach(function(p2){ caZ += (+p2.m || 0); nbpZ++; }); });
     JZ("tigerflow-paiements-perso").filter(mienZ).forEach(function(p2){ if(p2.st === "enc" && !p2.fac){ caZ += (+p2.m || 0); nbpZ++; } });
-    var ivZ = JZ("tigerflow-inbox-interventions").filter(mienZ).concat(JZ("tigerflow-added-interventions").filter(mienZ));
+    var LIEUXZ = {};
+    try{ (JSON.parse(localStorage.getItem("tigerflow-relations")) || []).forEach(function(r){ if(r && r.a === q && r.b) LIEUXZ[r.b] = 1; }); }catch(e){}
+    var lieuZ = function(x){ return x && (x.client === q || LIEUXZ[x.client]); };
+    var ivZ = JZ("tigerflow-inbox-interventions").filter(lieuZ).concat(JZ("tigerflow-added-interventions").filter(lieuZ));
     var ctrZ = JZ("tigerflow-inbox-contrats").filter(mienZ);
     var aujZ = new Date().toISOString().slice(0, 10);
     var futZ = ivZ.map(function(x){ return x.date; }).filter(function(d2){ return d2 && d2 >= aujZ; }).sort()[0];
@@ -2662,6 +2671,20 @@ function toast(msg, undoFn){
       if(!nom) return;
       var J = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
       var mien = function(x){ return x && x.client === nom; };
+      /* 28/10 : un document concerne la fiche s'il y a été fait (client = le
+         lieu) OU s'il lui est adressé (payeur). Un syndic voit ainsi tous les
+         devis et factures de ses immeubles ; l'immeuble garde son historique. */
+      var concerne = function(x){ return x && (x.client === nom || x.payeur === nom); };
+      var LIEUX = {};
+      try{ (JSON.parse(localStorage.getItem("tigerflow-relations")) || []).forEach(function(r){ if(r && r.a === nom && r.b) LIEUX[r.b] = 1; }); }catch(e){}
+      var chezMoiOuMesLieux = function(x){ return x && (x.client === nom || LIEUX[x.client]); };
+      var paieIci = function(x){ return x && (x.payeur || x.client) === nom; };
+      var escT = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+      var quiTag = function(x){
+        if(x.payeur && x.payeur !== nom) return ' <span class="obsite">\u00b7 factur\u00e9 \u00e0 ' + escT(x.payeur) + '</span>';
+        if(x.payeur === nom && x.client !== nom) return ' <span class="obsite">\u00b7 ' + escT(x.client) + '</span>';
+        return '';
+      };
       var fd = function(x){ var p2 = String(x || "").split("-"); return p2.length === 3 ? p2[2] + "/" + p2[1] + "/" + p2[0] : (x || "\u2014"); };
       var eurF = function(m){ m = +m || 0; return m.toLocaleString("fr-FR", {minimumFractionDigits:2}) + "\u00a0\u20ac"; };
       var pose = function(k, rowsHtml, head){
@@ -2686,16 +2709,16 @@ function toast(msg, undoFn){
       var STF = JO("tigerflow-factures-statuts");
       var PMAP = JO("tigerflow-factures-paiements");
 
-      var dv = J("tigerflow-inbox-devis").filter(mien);
+      var dv = J("tigerflow-inbox-devis").filter(concerne);
       if(dv.length){
         pose("devis", dv.map(function(d){
           var st = stD[STD[d.ref] || d.statut] || ["Envoy\u00e9","st-envoye"];
-          return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + (d.site ? ' <span class="obsite">\u00b7 ' + d.site + '</span>' : '') + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
+          return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + (d.site ? ' <span class="obsite">\u00b7 ' + d.site + '</span>' : '') + quiTag(d) + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 devis</th><th>Objet</th><th class="amt">Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>');
         var nd = document.getElementById("n-devis"); if(nd) nd.textContent = dv.length;
       }
 
-      var fc = J("tigerflow-inbox-factures").filter(mien);
+      var fc = J("tigerflow-inbox-factures").filter(concerne);
       if(fc.length){
         var auj2 = new Date().toISOString().slice(0, 10);
         pose("fact", fc.map(function(f){
@@ -2706,13 +2729,13 @@ function toast(msg, undoFn){
                   : (se === "partiel") ? ["Acompte re\u00e7u","st-envoye"]
                   : (se === "brouillon" || se === "proforma") ? ["Pro forma","st-envoye"]
                   : late ? ["En retard","st-perdu"] : ["\u00c0 payer","st-envoye"];
-          return '<tr><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (f.titre || "\u2014") + (f.site ? ' <span class="obsite">\u00b7 ' + f.site + '</span>' : '') + '</td><td class="amt">' + eurF(f.montant) + '</td><td>' + fd(f.valid || f.date) + '</td><td><span class="st ' + lbl[1] + '">' + lbl[0] + '</span></td><td><a class="rlink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
+          return '<tr><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (f.titre || "\u2014") + (f.site ? ' <span class="obsite">\u00b7 ' + f.site + '</span>' : '') + quiTag(f) + '</td><td class="amt">' + eurF(f.montant) + '</td><td>' + fd(f.valid || f.date) + '</td><td><span class="st ' + lbl[1] + '">' + lbl[0] + '</span></td><td><a class="rlink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 facture</th><th>Objet</th><th class="amt">Montant TTC</th><th>\u00c9ch\u00e9ance</th><th>Statut</th><th></th></tr></thead>');
         var nf = document.getElementById("n-fact"); if(nf) nf.textContent = fc.length;
       }
       /* les paiements encaissés sur les factures du client remplissent l'onglet Paiements */
       var prows = [];
-      fc.forEach(function(f){
+      fc.filter(paieIci).forEach(function(f){
         (Array.isArray(PMAP[f.ref]) ? PMAP[f.ref] : []).forEach(function(p2){
           prows.push('<tr><td>' + fd(p2.d) + '</td><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (p2.mode || "\u2014") + '</td><td>' + (p2.note || "\u2014") + '</td><td class="amt"><b>' + eurF(p2.m) + '</b></td><td><span class="st st-payee">Encaiss\u00e9</span></td></tr>');
         });
@@ -2736,7 +2759,7 @@ function toast(msg, undoFn){
         }).join(""), '<thead><tr><th>N\u00b0 contrat</th><th>Objet</th><th class="amt">Montant</th><th>P\u00e9riode</th><th>Statut</th><th></th></tr></thead>');
       }
 
-      var iv = J("tigerflow-inbox-interventions").filter(mien).concat(J("tigerflow-added-interventions").filter(mien));
+      var iv = J("tigerflow-inbox-interventions").filter(chezMoiOuMesLieux).concat(J("tigerflow-added-interventions").filter(chezMoiOuMesLieux));
       if(iv.length){
         /* 30/07 (patron : « la flèche et la date, pas ergonomique ») — visuel
            validé : pastille date (orange si AUJOURD'HUI), nuisible en titre,
@@ -2794,7 +2817,10 @@ function toast(msg, undoFn){
                puis le CP. La decision du 26/08 tient — « cinq boutiques dans
                la meme ville, le CP ne dit rien » — mais maintenant on a LES
                DEUX au lieu de choisir. */
-            + (x.site ? '<span class="ivcl">' + x.site + '</span>' : '')
+            /* 28/10 : sur la fiche du payeur (syndic), chaque ligne dit chez QUEL
+               lieu l'intervention a eu lieu — l'immeuble, puis son site. */
+            + ((x.client !== nom) ? '<span class="ivcl">' + escT(x.client) + (x.site ? ' \u00b7 ' + escT(x.site) : '') + '</span>'
+               : (x.site ? '<span class="ivcl">' + x.site + '</span>' : ''))
             /* ☠☠ 15/09 : le code postal QUITTE le sous-titre — il vit maintenant dans
                la colonne Adresse, ou il tombe toujours a la meme abscisse. Le laisser
                ici EN PLUS l'aurait ecrit deux fois sur la meme ligne. */
@@ -3638,8 +3664,8 @@ document.addEventListener("click", function(e){
   var K = "tigerflow-relations";
   var lire = function(){ try{ return JSON.parse(localStorage.getItem(K)) || []; }catch(e){ return []; } };
   var esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
-  var LBLout = {gere: "Gestionnaire / syndic de", possede: "Propriétaire de", ordonne: "Donneur d'ordre de"};
-  var LBLin = {gere: "Géré par", possede: "Bien de", ordonne: "Donneur d'ordre"};
+  var LBLout = {gere: "Gestionnaire / syndic de", possede: "Paie pour", ordonne: "Donneur d'ordre de"};
+  var LBLin = {gere: "Géré par", possede: "Payé par", ordonne: "Donneur d'ordre"};
   /* 29/08 (« FAIS LE MEME DESIGN QYE LA PHOTO 2 ») : les relations en CARTES,
      comme la carte Sites d'intervention — pastille icône (orange = le chef),
      nom en gras cliquable, adresse en sous-ligne. */
@@ -3713,7 +3739,7 @@ document.addEventListener("click", function(e){
       });
     }
     document.getElementById("rel-list").innerHTML = h ||
-      '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5"><span class="rlong"><b style="color:var(--ink-2)">Qui paie pour ce client ?</b> Lui-même — rien à faire. Un syndic, un propriétaire, sa société ? Relie-le ici : le devis proposera « Facturer à » et la facture partira au bon nom, à la bonne adresse.</span><span class="rcourt"><b style="color:var(--ink-2)">Ce client paie lui-même.</b></span></div>';
+      '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5"><span class="rlong"><b style="color:var(--ink-2)">Qui paie pour ce client ?</b> Lui-même — rien à faire. Un syndic, sa société, sa SCI ? Relie-le ici : le devis proposera « Facturer à » et la facture partira au bon nom.<br><span style="display:block;margin-top:7px;padding:7px 9px;background:#F4F6F9;border-radius:8px;color:var(--ink-2)">Règle simple, une seule façon de faire : <b>une fiche par lieu</b> (l\'immeuble, la maison, la boutique), reliée à celui qui paie. Un syndic avec 3 immeubles = 3 fiches reliées au syndic — tu peux les créer d\'ici, depuis sa fiche.</span></span><span class="rcourt"><b style="color:var(--ink-2)">Ce client paie lui-même.</b></span></div>';
     var relN = document.getElementById("rel-n");
     if(relN){ var nb = entr.length + sort.length; relN.textContent = nb ? nb + " relation" + (nb > 1 ? "s" : "") : ""; }
     relLayout();
@@ -3725,8 +3751,10 @@ document.addEventListener("click", function(e){
      produit), TROIS choix seulement — syndic / propriétaire / donneur d'ordre —
      et la phrase écrite en clair avant d'enregistrer, inversable d'un clic. ── */
   var QUIS = [], TSEL = "gere", SENS = "in", NEWF = "", SLAST = "";
-  var TYP = [["gere", "Syndic / gestionnaire"], ["possede", "Propriétaire"], ["ordonne", "Donneur d'ordre"]];
-  var MOT = {gere: "le syndic / gestionnaire", possede: "le propriétaire", ordonne: "le donneur d'ordre"};
+  var TYP = [["gere", "Syndic / gestionnaire"], ["possede", "Paie pour (société, SCI, propriétaire)"], ["ordonne", "Donneur d'ordre"]];
+  /* 28/10 : « possede » garde sa clé (données existantes) mais se lit
+     « paie pour » — « la SCI est le propriétaire de François » sonnait faux. */
+  var MOT = {gere: "le syndic / gestionnaire", possede: "", ordonne: "le donneur d'ordre"};
   function quiNorm(s){ try{ return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }catch(e){ return String(s || "").toLowerCase().trim(); } }
   function quiRes(){
     var v = quiNorm((document.getElementById("rel-qui") || {value: ""}).value);
@@ -3758,7 +3786,7 @@ document.addEventListener("click", function(e){
     var qui = quiRes();
     if(!qui){ ph.style.display = "none"; return; }
     var chef = SENS === "in" ? qui : nom, de = SENS === "in" ? nom : qui;
-    ph.innerHTML = '<b>' + esc(chef) + '</b> est ' + MOT[TSEL] + ' de <b>' + esc(de) + '</b>'
+    ph.innerHTML = '<b>' + esc(chef) + '</b> ' + (MOT[TSEL] ? 'est ' + MOT[TSEL] + ' de' : 'paie pour') + ' <b>' + esc(de) + '</b>'
       + ' <a href="#" onclick="relSens(event)" style="color:var(--orange);font-weight:800;text-decoration:none;margin-left:8px">⇄ Inverser</a>';
     ph.style.display = "";
   }
@@ -3791,6 +3819,12 @@ document.addEventListener("click", function(e){
     var gest = SENS === "in" ? qui : nom;
     var wrap = document.getElementById("rel-immw"), sel = document.getElementById("rel-imm");
     var sites = [];
+    /* 28/10 (patron, « rends le facile ») : le menu « immeuble / site » ne
+       s'affiche PLUS dans le formulaire de relation (les « sites » sont une
+       bêta ANNULÉE le 30/08). Une seule façon de faire : une fiche par lieu,
+       reliée à celui qui paie. Les relations déjà saisies avec un site
+       restent lues (r.site) et affichées. */
+    if(wrap){ wrap.style.display = "none"; if(sel) sel.innerHTML = ""; return; }
     try{ sites = (JSON.parse(localStorage.getItem("tigerflow-sites")) || {})[gest] || []; }catch(e2){}
     if(gest && sites.length){
       sel.innerHTML = '<option value="">— immeuble / site (facultatif) —</option>'
@@ -4168,7 +4202,7 @@ document.addEventListener("click", function(e){
 <script>
 (function(){
   function relBetaOn(){
-    try{ return localStorage.getItem("tigerflow-beta-relations") === "1"; }catch(e){ return false; }
+    try{ return localStorage.getItem("tigerflow-beta-relations") !== "0"; }catch(e){ return true; }
   }
   window.relBetaOn = relBetaOn;
   function appliquer(){
