@@ -8,7 +8,19 @@
 (function(){
   try{
     var S = window.localStorage;
-    if(S.getItem("tigerflow-exemple-v1") === "1") return;
+    /* v2 (29/10) : la remise est en EUROS dans l'appli — l'exemple avait 10 (lu
+       comme 10 %) au lieu de 28 € sur DEV/FAC-2026-70004. Corrigé une fois. */
+    if(S.getItem("tigerflow-exemple-v1") === "1"){
+      if(S.getItem("tigerflow-exemple-v2") !== "1"){
+        ["tigerflow-inbox-devis","tigerflow-inbox-factures"].forEach(function(k){
+          try{ var L = JSON.parse(S.getItem(k)) || [];
+            L.forEach(function(x){ if(x && /-70004$/.test(x.ref) && +x.remise === 10) x.remise = 28; });
+            S.setItem(k, JSON.stringify(L)); }catch(e){}
+        });
+        S.setItem("tigerflow-exemple-v2", "1");
+      }
+      return;
+    }
 
   
   const s=(k,v)=>{ let cur=null; try{cur=JSON.parse(S.getItem(k));}catch(e){}
@@ -28,13 +40,13 @@
    {ref:"DEV-2026-70001",client:"François Durand",payeur:"SCI Durand Patrimoine",titre:"Traitement punaises de lit — 2 passages, 3 pièces",date:"2026-10-06",statut:"gagne",remise:0,montant:528,lignes:[L("Traitement punaises de lit — 1er passage","Pulvérisation + vapeur, 3 pièces.",300,10,"🛏️"),L("2e passage à J+15","Contrôle.",150,10,"🔁")],frais:[{n:"Déplacement",m:30,tva:10,img:""}]},
    {ref:"DEV-2026-70002",client:"Résidence Les Martyrs",payeur:"Cabinet Vernet Syndic",titre:"Dératisation des parties communes — Résidence Les Martyrs",date:"2026-10-20",statut:"envoye",remise:0,montant:528,lignes:[L("Dératisation caves et local poubelles","8 postes.",360,20,"🐀"),L("Contrôle à 15 jours","Relevé.",80,20,"📋")],frais:[]},
    {ref:"DEV-2026-70003",client:"Résidence Trudaine",payeur:"Cabinet Vernet Syndic",titre:"Destruction nid de guêpes — toiture",date:"2026-09-15",statut:"gagne",remise:0,montant:216,lignes:[L("Destruction nid de guêpes","Toiture.",180,20,"🐝")],frais:[]},
-   {ref:"DEV-2026-70004",client:"Résidence Rochechouart",payeur:"Cabinet Vernet Syndic",titre:"Traitement cafards — local poubelles et gaines",date:"2026-10-13",statut:"gagne",remise:10,montant:302.4,lignes:[L("Traitement cafards — gel + pulvérisation","2 passages.",280,20,"🪳")],frais:[]}];
+   {ref:"DEV-2026-70004",client:"Résidence Rochechouart",payeur:"Cabinet Vernet Syndic",titre:"Traitement cafards — local poubelles et gaines",date:"2026-10-13",statut:"gagne",remise:28,montant:302.4,lignes:[L("Traitement cafards — gel + pulvérisation","2 passages.",280,20,"🪳")],frais:[]}];
   s('tigerflow-inbox-devis',devis);
   s('tigerflow-devis-statuts',{"DEV-2026-70001":"gagne","DEV-2026-70002":"envoye","DEV-2026-70003":"gagne","DEV-2026-70004":"gagne"});
   s('tigerflow-inbox-factures',[
    {ref:"FAC-2026-70001",client:"François Durand",payeur:"SCI Durand Patrimoine",titre:"Traitement punaises de lit — 2 passages, 3 pièces",date:"2026-10-25",valid:"2026-11-24",statut:"payee",remise:0,montant:528,acompte:158.4,deduit:true,depuis:"DEV-2026-70001",lignes:devis[0].lignes,frais:devis[0].frais},
    {ref:"FAC-2026-70003",client:"Résidence Trudaine",payeur:"Cabinet Vernet Syndic",titre:"Destruction nid de guêpes — toiture",date:"2026-09-19",valid:"2026-10-19",statut:"envoyee",remise:0,montant:216,depuis:"DEV-2026-70003",lignes:devis[2].lignes,frais:[]},
-   {ref:"FAC-2026-70004",client:"Résidence Rochechouart",payeur:"Cabinet Vernet Syndic",titre:"Traitement cafards — local poubelles et gaines",date:"2026-10-16",valid:"2026-11-15",statut:"envoyee",remise:10,montant:302.4,depuis:"DEV-2026-70004",lignes:devis[3].lignes,frais:[]}]);
+   {ref:"FAC-2026-70004",client:"Résidence Rochechouart",payeur:"Cabinet Vernet Syndic",titre:"Traitement cafards — local poubelles et gaines",date:"2026-10-16",valid:"2026-11-15",statut:"envoyee",remise:28,montant:302.4,depuis:"DEV-2026-70004",lignes:devis[3].lignes,frais:[]}]);
   s('tigerflow-factures-paiements',{"FAC-2026-70001":[{m:158.4,mode:"CB",t:"acompte",d:"2026-10-07",note:"Acompte 30 %",pj:""},{m:369.6,mode:"CB",t:"solde",d:"2026-10-25",note:"Solde",pj:""}]});
   s('tigerflow-factures-statuts',{"FAC-2026-70001":"payee"});
   const I=(uid,client,rue,cp,ville,date,start,dur,type,mode,tech,note)=>({uid,did:"",client,rue,cp,ville,date,start,dur,type,typeLibre:type==='punaise'?'Punaises de lit':'',mode,tech,montant:"",note});
@@ -46,9 +58,8 @@
    I("1793100000000-4","Résidence Rochechouart","40 boulevard de Rochechouart","75009","Paris","2026-10-15",8,2,"cafard","encais","Fredo","Local poubelles"),
    I("1793100000000-5","Résidence Rochechouart","40 boulevard de Rochechouart","75009","Paris","2026-10-29",8,1,"cafard","suite","Fredo","2e passage"),
    I("1793100000000-6","Résidence Les Martyrs","7 rue des Martyrs","75009","Paris","2026-11-04",9,2,"rongeur","encais","Pablo","Dératisation caves")]);
-  s('tigerflow-sites',{"Cabinet Vernet Syndic":[{id:"vern1",nom:"Résidence Les Martyrs",adresse:"7 rue des Martyrs",cp:"75009",ville:"Paris",acces:""}]});
   s('tigerflow-inbox-contrats',[{ref:"CTR-2026-70001",client:"Cabinet Vernet Syndic",titre:"Contrat dératisation parties communes — 3 résidences",statut:"actif",deb:"2026-11-01",fin:"2027-10-31",freq:"Trimestrielle",ht:1800,tva:20,montant:2160,cats:[],materiel:[],checklist:[],nbint:12,freqint:"",jours:[],creneaux:[],renouv:true,renech:12,notes:""}]);
 
-    S.setItem("tigerflow-exemple-v1", "1");
+    S.setItem("tigerflow-exemple-v1", "1"); S.setItem("tigerflow-exemple-v2", "1");
   }catch(e){}
 })();

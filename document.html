@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<script src="exemple-client.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TigerFlow — Document</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐯</text></svg>">
+<!--
+  29/10 (patron : « mets sur le logiciel les devis et factures au format qu'on a
+  travaillé ensemble, format Saigon, fais un truc propre »).
+  LE document imprimable d'un devis ou d'une facture : la mise en page du modèle
+  Saigon (logo + titre à droite, émetteur | client, bandeau gris, encadré objet,
+  tableau par sections, banque + mentions à gauche, totaux à droite, pied légal)
+  avec NOS corrections :
+   - le titre « Devis » / « Facture » en gros + un seul numéro ;
+   - tout en français, aucune donnée inventée (émetteur = Réglages, payeur = sa fiche) ;
+   - l'en-tête au nom de celui qui PAIE, « Lieu d'intervention » à part ;
+   - totaux : Total HT, une ligne TVA par taux AVEC le taux, Total TTC — pas de « Total TVA » ;
+   - la remise en euros, sur les prestations, avant la TVA ;
+   - escompte / pénalités / 40 € seulement quand le payeur est un pro ;
+   - banque : Titulaire → IBAN → BIC → Banque (la banque en dernier).
+  Lecture : ?ref=DEV-… ou ?ref=FAC-… dans tigerflow-inbox-devis / -factures,
+  sinon la pièce passée par la page détail (sessionStorage tigerflow-doc-tmp).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Inter';font-weight:400;font-display:swap;src:url('vendor/fonts/inter-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:500;font-display:swap;src:url('vendor/fonts/inter-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:600;font-display:swap;src:url('vendor/fonts/inter-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:700;font-display:swap;src:url('vendor/fonts/inter-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Sora';font-weight:700;font-display:swap;src:url('vendor/fonts/sora-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Sora';font-weight:800;font-display:swap;src:url('vendor/fonts/sora-latin-800-normal.woff2') format('woff2')}
+:root{--ink:#171A20;--ink2:#3D434E;--mut:#6B7280;--line:#E6E8EE;--band:#F4F5F8;--or:#FF5A1F;--orsoft:#FEF1E8;--navy:#1E3350;--green:#047857;--greensoft:#ECFDF5}
+*{box-sizing:border-box}
+body{margin:0;background:#E9EBF0;font-family:Inter,system-ui,sans-serif;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line)}
+.bar b{font:700 15px Sora,sans-serif;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt{border:1.5px solid var(--line);background:#fff;color:var(--ink2);font:700 13px Inter,sans-serif;border-radius:10px;padding:9px 14px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.bt.k{background:var(--navy);border-color:var(--navy);color:#fff}
+.page{width:210mm;min-height:297mm;margin:18px auto 30px;background:#fff;padding:14mm 14mm 10mm;box-shadow:0 4px 20px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.logo img{max-height:62px;max-width:230px;display:block}
+.logo .ln{font:800 20px Sora,sans-serif;color:var(--ink)}
+.ttl{text-align:right}
+.ttl h1{font:800 30px Sora,sans-serif;margin:0 0 8px;letter-spacing:-.01em}
+.meta{display:flex;justify-content:flex-end}
+.meta>div{padding:0 0 0 16px;margin-left:16px;border-left:1px solid var(--line);text-align:left}
+.meta>div:first-child{border-left:0;margin-left:0;padding-left:0}
+.lab{font-size:10.5px;color:var(--mut);margin-bottom:3px}
+.val{font-size:12.5px;font-weight:600;color:var(--ink)}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:26px;font-size:12px;line-height:1.75;color:var(--ink2)}
+.parties b.n{display:block;font:600 14.5px Inter,sans-serif;color:var(--ink);text-transform:uppercase;letter-spacing:.01em;margin-bottom:4px}
+.band{display:flex;background:var(--band);border-radius:8px;margin-top:22px;padding:11px 0}
+.band>div{flex:1;padding:0 18px;border-left:1px solid var(--line);min-width:0}
+.band>div:first-child{border-left:0}
+.band .lab{text-transform:uppercase;letter-spacing:.04em;font-size:9.5px}
+.obj{display:flex;align-items:center;gap:14px;background:var(--orsoft);border-radius:10px;margin-top:18px;padding:13px 16px}
+.obj i{flex:none;width:34px;height:34px;border-radius:8px;background:var(--or);display:grid;place-items:center}
+.obj i svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.obj b{font-size:15px}
+table{width:100%;border-collapse:collapse;margin-top:18px;font-size:12px}
+thead th{background:var(--band);font-size:10px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em;text-align:right;padding:9px 10px}
+thead th:first-child{text-align:left;border-radius:6px 0 0 6px}
+thead th:last-child{border-radius:0 6px 6px 0}
+td{padding:11px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top;white-space:nowrap}
+td:first-child{text-align:left;white-space:normal}
+tr.sec td{background:#FAFAFC;font-size:10.5px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em;padding:7px 10px;border-bottom:0}
+tr.sec td span{color:var(--or)}
+.des{display:flex;gap:12px;align-items:flex-start}
+.des img{width:48px;height:48px;border-radius:10px;object-fit:cover;flex:none}
+.des b{font-weight:600;color:var(--ink);display:block}
+.des small{display:block;color:var(--mut);font-size:11px;line-height:1.45;margin-top:2px;max-width:330px}
+tr.rem td{background:var(--greensoft);color:var(--green);font-weight:700;border-bottom:0}
+tr.rem small{display:block;color:var(--green);font-weight:500;opacity:.85;font-size:11px;margin-top:2px}
+.bas{display:grid;grid-template-columns:1fr 300px;gap:28px;margin-top:20px;align-items:start}
+.gauche{font-size:11px;line-height:1.6;color:var(--ink2)}
+.rib{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.rib h3,.sig h3{margin:0 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.rib .r{display:flex;gap:8px}.rib .r span{color:var(--mut);min-width:62px}.rib .r b{font-weight:600;color:var(--ink);word-break:break-all}
+.mention{margin:0 0 8px}
+.tot .l{display:flex;justify-content:space-between;padding:6px 2px;font-size:12px;color:var(--ink2)}
+.tot .l b{font-weight:600;color:var(--ink)}
+.tot .l.g{color:var(--green)}.tot .l.g b{color:var(--green)}
+.tot .l.f{border-top:1px solid var(--line);margin-top:4px;padding-top:10px;font-weight:700;color:var(--ink);text-transform:uppercase;font-size:12px}
+.tot .ttc{display:flex;justify-content:space-between;align-items:center;background:var(--orsoft);border-radius:8px;padding:11px 12px;margin-top:8px;font-weight:700;text-transform:uppercase;font-size:12.5px;color:#C2410C}
+.tot .ttc b{font:800 19px Sora,sans-serif;color:#C2410C}
+.tot .reste{display:flex;justify-content:space-between;padding:9px 12px;margin-top:6px;border:1.5px solid var(--line);border-radius:8px;font-weight:700;font-size:12.5px}
+.tot .reste.ok{border-color:#A7E3C9;color:var(--green);background:var(--greensoft)}
+.sig{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:14px}
+.sig .z{height:70px;border:1px dashed #CBD0DA;border-radius:8px;margin-top:6px;display:flex;align-items:flex-end;padding:6px 8px;font-size:10px;color:var(--mut)}
+.pied{margin-top:auto;padding-top:16px;border-top:1px solid var(--line);text-align:center;font-size:9.5px;color:var(--mut);line-height:1.6}
+.pied b{color:var(--ink2)}
+.vide{max-width:520px;margin:60px auto;background:#fff;border-radius:14px;padding:28px;text-align:center;color:var(--ink2)}
+@page{size:A4;margin:0}
+@media print{
+  body{background:#fff}
+  .bar{display:none}
+  html,body{margin:0;padding:0}
+  .page{margin:0;box-shadow:none;width:auto;min-height:0;min-height:292mm;height:auto}
+  tr,.rib,.sig,.tot{break-inside:avoid}
+}
+@media screen and (max-width:820px){
+  .page{width:auto;margin:10px;padding:18px 16px;min-height:0}
+  .parties,.bas{grid-template-columns:1fr}
+  .band{flex-direction:column;gap:10px}.band>div{border-left:0}
+  .top{flex-direction:column}.ttl{text-align:left}.meta{justify-content:flex-start}
+  table{font-size:11px}td,th{padding:8px 5px}
+  .des img{width:36px;height:36px}
+}
+</style>
+</head>
+<body>
+<div class="bar">
+  <a class="bt" href="javascript:history.length>1?history.back():location.href='index.html'">‹ Retour</a>
+  <b id="bar-t">Document</b>
+  <button class="bt k" onclick="imprimer()">Télécharger le PDF</button>
+</div>
+<div id="doc"></div>
+
+<script>
+(function(){
+  var S; try{ S = window.localStorage; }catch(e){ S = null; }
+  var J = function(k, d){ try{ var v = JSON.parse(S.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
+  var esc = function(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
+  var eur = function(n){ return (Math.round((+n || 0) * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/ /g, " ") + " €"; };
+  var dfr = function(iso){ if(!iso) return ""; var m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + "/" + m[2] + "/" + m[1] : String(iso); };
+
+  var ref = ""; try{ ref = new URLSearchParams(location.search).get("ref") || ""; }catch(e){}
+  var estFac = /^FAC/i.test(ref);
+  var rec = (J(estFac ? "tigerflow-inbox-factures" : "tigerflow-inbox-devis", []) || []).find(function(x){ return x && x.ref === ref; });
+  if(!rec){ try{ var tmp = JSON.parse(sessionStorage.getItem("tigerflow-doc-tmp") || "null"); if(tmp && (tmp.ref === ref || !ref)){ rec = tmp; if(!ref){ ref = tmp.ref || ""; estFac = /^FAC/i.test(ref); } } }catch(e){} }
+  var doc = document.getElementById("doc");
+  if(!rec){
+    doc.innerHTML = '<div class="vide"><b>Document introuvable</b><p>Ouvre-le depuis la fiche du devis ou de la facture.</p></div>';
+    return;
+  }
+  var mot = estFac ? "Facture" : "Devis";
+
+  /* ── l'émetteur : Réglages (mêmes valeurs par défaut que la maquette) ── */
+  var R = (J("tigerflow-reglages", {}) || {}).info || {};
+  var v = function(k, def){ return String(R["f-reglage-" + k] || "").trim() || def; };
+  var SOC = { nom:v(1, "Agence Antinuisible"), adr:v(2, "122 Rue Amelot"), cp:v("2b", "75011"), ville:v("2c", "Paris"),
+              tel:v(3, "01 89 72 43 96"), mail:v(4, "info@agenceantinuisible.fr"), siret:v(6, "10392054200018"), forme:v(25, "") };
+  SOC.tva = (function(){ var s = SOC.siret.replace(/\D/g, "").slice(0, 9); if(s.length !== 9) return ""; return "FR" + String((12 + 3 * (Number(s) % 97)) % 97).padStart(2, "0") + " " + s; })();
+  var logo = ""; try{ logo = S.getItem("tigerflow-logo") || ""; }catch(e){}
+  var B = J("tigerflow-banque", {}) || {};
+
+  /* ── le client : celui qui PAIE ; le lieu d'intervention à part ── */
+  var fiches = (J("tigerflow-inbox-clients", []) || []).concat(J("tigerflow-clients-cache", []) || []);
+  var fiche = function(n){ for(var i = 0; i < fiches.length; i++){ var c = fiches[i]; if(c && (c.nom || c.name) === n) return c; } return null; };
+  var payNom = rec.payeur || rec.client || "";
+  var P = fiche(payNom) || {};
+  var L = fiche(rec.client) || {};
+  var lieu = "";
+  if(rec.site){
+    var sites = (J("tigerflow-sites", {}) || {})[rec.client] || [];
+    var st = sites.find ? sites.find(function(z){ return z && (z.nom === rec.site || z.id === rec.site); }) : null;
+    lieu = rec.site + (st ? " — " + [st.adresse, [st.cp, st.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") : "");
+  } else if(rec.payeur && rec.payeur !== rec.client){
+    lieu = rec.client + (L.adresse ? " — " + [L.adresse, [L.cp, L.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ") : "");
+  }
+  var pro = (P.type || "") !== "particulier";   /* type inconnu → on garde les mentions (prudence) */
+
+  /* ── les montants ── */
+  var lignes = Array.isArray(rec.lignes) ? rec.lignes : [];
+  var frais = Array.isArray(rec.frais) ? rec.frais : [];
+  var parTaux = {}, htP = 0, htF = 0;
+  lignes.forEach(function(l){ var m = (+l.qte || 0) * (+l.pu || 0); htP += m; });
+  var rem = Math.min(+rec.remise || 0, htP);
+  var k = htP > 0 ? (htP - rem) / htP : 1;          /* la remise se répartit sur les prestations, avant TVA */
+  lignes.forEach(function(l){ var tx = (l.tva == null ? 20 : +l.tva); var m = (+l.qte || 0) * (+l.pu || 0) * k; parTaux[tx] = (parTaux[tx] || 0) + m; });
+  frais.forEach(function(f){ var tx = (f.tva == null ? 20 : +f.tva); var m = +f.m || 0; htF += m; parTaux[tx] = (parTaux[tx] || 0) + m; });
+  var totHT = htP - rem + htF, totTVA = 0;
+  var tvaRows = Object.keys(parTaux).map(Number).sort(function(a, b){ return b - a; }).map(function(tx){
+    var t = Math.round(parTaux[tx] * tx) / 100; totTVA += t;
+    return '<div class="l"><span>TVA (' + String(tx).replace(".", ",") + ' %)</span><b>' + eur(t) + '</b></div>';
+  }).join("");
+  var ttc = Math.round((totHT + totTVA) * 100) / 100;
+
+  /* facture : ce qui est déjà réglé */
+  var paye = 0, avoirs = 0;
+  if(estFac){
+    paye = ((J("tigerflow-factures-paiements", {}) || {})[rec.ref] || []).reduce(function(t, p){ return t + (+p.m || 0); }, 0);
+    avoirs = ((J("tigerflow-factures-avoirs", {}) || {})[rec.ref] || []).reduce(function(t, p){ return t + (+p.m || 0); }, 0);
+  }
+  var reste = Math.max(0, Math.round((ttc - paye - avoirs) * 100) / 100);
+
+  /* ── les dates ── */
+  var nj = 30;
+  try{ if(rec.date && rec.valid){ var x = Math.round((new Date(rec.valid) - new Date(rec.date)) / 86400000); if(x > 0) nj = x; } }catch(e){}
+  /* pas de date de fin enregistrée → date d'émission + 30 jours (comme l'appli) */
+  var date2 = rec.valid || "";
+  if(!date2 && rec.date){ try{ var d0 = new Date(rec.date + "T12:00:00"); d0.setDate(d0.getDate() + nj); date2 = d0.toISOString().slice(0, 10); }catch(e){} }
+
+  /* ── le tableau ── */
+  var ico = function(l){ return l.img ? '<img src="' + esc(l.img) + '" alt="" onerror="this.remove()">' : ""; };
+  var corps = "";
+  if(frais.length) corps += '<tr class="sec"><td colspan="5"><span>1.</span> Prestations</td></tr>';
+  corps += lignes.map(function(l){
+    var tx = (l.tva == null ? 20 : +l.tva), m = (+l.qte || 0) * (+l.pu || 0);
+    return '<tr><td><div class="des">' + ico(l) + '<span><b>' + esc(l.designation || "Prestation") + '</b>' + (l.desc ? '<small>' + esc(l.desc) + '</small>' : "") + '</span></div></td>'
+      + '<td>' + String(+l.qte || 0).replace(".", ",") + '</td><td>' + eur(l.pu) + '</td><td>' + String(tx).replace(".", ",") + ' %</td><td>' + eur(m) + '</td></tr>';
+  }).join("");
+  if(frais.length){
+    corps += '<tr class="sec"><td colspan="5"><span>2.</span> Frais</td></tr>';
+    corps += frais.map(function(f){
+      var tx = (f.tva == null ? 20 : +f.tva);
+      return '<tr><td><div class="des">' + ico({img:f.img}) + '<span><b>' + esc(f.n || "Frais") + '</b></span></div></td><td>1</td><td>' + eur(f.m) + '</td><td>' + String(tx).replace(".", ",") + ' %</td><td>' + eur(f.m) + '</td></tr>';
+    }).join("");
+  }
+  if(rem) corps += '<tr class="rem"><td><b>Remise commerciale</b><small>sur les prestations, avant TVA</small></td><td></td><td></td><td></td><td>− ' + eur(rem) + '</td></tr>';
+
+  /* ── assemblage ── */
+  var ville = function(o){ return [o.cp, o.ville].filter(Boolean).join(" "); };
+  var bandeau = [];
+  if(estFac){
+    if(rec.depuis) bandeau.push(["Devis d'origine", rec.depuis]);
+    if(lieu) bandeau.push(["Lieu d'intervention", lieu]);
+    bandeau.push(["Délai de paiement", nj + " jours"]);
+    if(rec.bc) bandeau.push(["Bon de commande", rec.bc]);
+  } else {
+    if(lieu) bandeau.push(["Lieu d'intervention", lieu]);
+    bandeau.push(["Validité", nj + " jours"]);
+    if(rec.bc) bandeau.push(["Bon de commande", rec.bc]);
+  }
+  var ribL = [["Titulaire", SOC.nom], ["IBAN", B.iban || "FR76 1732 8844 0037 2288 9594 658"]];
+  if(B.bic) ribL.push(["BIC", B.bic]);
+  ribL.push(["Banque", B.banque || "Crédit Mutuel Arkéa"]);
+
+  var h = '<div class="page">'
+    + '<div class="top"><div class="logo">' + (logo ? '<img src="' + esc(logo) + '" alt="' + esc(SOC.nom) + '">' : '<img src="logo-agence.png" alt="' + esc(SOC.nom) + '" onerror="this.outerHTML=\'<span class=ln>' + esc(SOC.nom).replace(/'/g, "") + '</span>\'">') + '</div>'
+    + '<div class="ttl"><h1>' + mot + '</h1><div class="meta">'
+    + '<div><div class="lab">N° ' + (estFac ? "de facture" : "de devis") + '</div><div class="val">' + esc(rec.numero || rec.ref) + '</div></div>'
+    + '<div><div class="lab">Date d\'émission</div><div class="val">' + dfr(rec.date) + '</div></div>'
+    + (date2 ? '<div><div class="lab">' + (estFac ? "Date d'échéance" : "Valable jusqu'au") + '</div><div class="val">' + dfr(date2) + '</div></div>' : "")
+    + '</div></div></div>'
+    + '<div class="parties"><div><b class="n">' + esc(SOC.nom) + '</b>' + esc(SOC.adr) + '<br>' + esc(ville(SOC)) + '<br>' + esc(SOC.tel) + '<br>' + esc(SOC.mail) + '</div>'
+    + '<div><b class="n">' + esc(payNom) + '</b>'
+    + [P.adresse, ville(P), P.tel, P.mail, P.siret ? "SIRET " + P.siret : ""].filter(Boolean).map(esc).join("<br>") + '</div></div>'
+    + (bandeau.length ? '<div class="band">' + bandeau.map(function(b){ return '<div><div class="lab">' + b[0] + '</div><div class="val">' + esc(b[1]) + '</div></div>'; }).join("") + '</div>' : "")
+    + (rec.titre ? '<div class="obj"><i><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></i><b>' + esc(rec.titre) + '</b></div>' : "")
+    + '<table><thead><tr><th>Désignation</th><th>Qté</th><th>P.U. HT</th><th>TVA</th><th>Total HT</th></tr></thead><tbody>' + corps + '</tbody></table>'
+    + '<div class="bas"><div class="gauche">'
+    + '<div class="rib"><h3>Coordonnées bancaires</h3>' + ribL.map(function(r){ return '<div class="r"><span>' + r[0] + '</span><b>' + esc(r[1]) + '</b></div>'; }).join("") + '</div>'
+    + (estFac ? '<p class="mention">Paiement à ' + nj + ' jours, avant le ' + dfr(date2) + '.</p>' : '<p class="mention">Devis valable ' + nj + ' jours. Paiement à réception de facture.</p>')
+    + (pro ? '<p class="mention">Pas d\'escompte pour règlement anticipé. En cas de retard de paiement, pénalité égale à 3 fois le taux d\'intérêt légal (article L441-10 du Code de commerce) et indemnité forfaitaire de 40 € pour frais de recouvrement.</p>' : "")
+    + '</div><div class="tot">'
+    + ((htF || rem) ? '<div class="l"><span>Prestations HT</span><b>' + eur(htP) + '</b></div>' : "")
+    + (htF ? '<div class="l"><span>Frais HT</span><b>' + eur(htF) + '</b></div>' : "")
+    + (rem ? '<div class="l g"><span>Remise commerciale</span><b>− ' + eur(rem) + '</b></div>' : "")
+    + '<div class="l f"><span>Total HT</span><b>' + eur(totHT) + '</b></div>'
+    + tvaRows
+    + '<div class="ttc"><span>Total TTC</span><b>' + eur(ttc) + '</b></div>'
+    + (estFac && (paye || avoirs) ? '<div class="l"><span>Déjà réglé</span><b>− ' + eur(paye + avoirs) + '</b></div>'
+        + '<div class="reste' + (reste === 0 ? " ok" : "") + '"><span>' + (reste === 0 ? "Facture réglée ✓" : "Reste à payer") + '</span><b>' + eur(reste) + '</b></div>' : "")
+    + (!estFac ? '<div class="sig"><h3>Bon pour accord</h3><div class="z">Date, nom et signature du client</div></div>' : "")
+    + '</div></div>'
+    + '<div class="pied"><b>' + esc(SOC.nom) + (SOC.forme ? " — " + esc(SOC.forme) : "") + '</b> · ' + esc(SOC.adr) + ', ' + esc(ville(SOC))
+    + ' · SIRET ' + esc(SOC.siret) + (SOC.tva ? ' · TVA intracom. ' + esc(SOC.tva) : "") + '</div>'
+    + '</div>';
+  doc.innerHTML = h;
+
+  var nomFichier = [rec.numero || rec.ref, payNom, eur(ttc)].map(function(s){ return String(s || "").replace(/[\\/:*?"<>|]/g, "-").trim(); }).filter(Boolean).join(" - ");
+  document.title = nomFichier;
+  document.getElementById("bar-t").textContent = mot + " " + (rec.numero || rec.ref) + " · " + payNom;
+  window.imprimer = function(){ window.print(); };
+  try{ if(new URLSearchParams(location.search).get("print") === "1") setTimeout(function(){ window.print(); }, 400); }catch(e){}
+})();
+</script>
+</body>
+</html>

@@ -868,7 +868,7 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
       <span class="badge" id="h-badge"><i></i><span>—</span></span>
       </div><span class="idobj" id="h-obj">—</span></div>
       <div class="btns">
-      <button class="btn2" onclick="window.print()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
+      <button class="btn2" onclick="docOuvrir()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Voir le PDF</button>
       <button class="btn2 encaisser" id="a-encaisser" onclick="goEncaisser()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Encaisser la facture</button>
       <button class="btn2 primary" id="a-primary" onclick="envoyer()"></button>
       <span class="fmenu-wrap">
@@ -1186,6 +1186,14 @@ function showTab(k,btn){ document.querySelectorAll('.tab').forEach(t=>t.classLis
   document.querySelectorAll('[data-tab]').forEach(d=>d.classList.toggle('show', d.dataset.tab===k)); }
 
 /* ===== la facture : depuis le pont (atelier) ou démo ===== */
+/* 29/10 (patron : « les devis et factures au format qu'on a travaillé ») : « Voir le PDF »
+   ouvre LE document (document.html) au lieu d'imprimer l'écran de l'appli. La pièce
+   est passée en sessionStorage : même une pièce de démo (absente du stock) s'affiche. */
+function docOuvrir(){
+  try{ sessionStorage.setItem("tigerflow-doc-tmp", JSON.stringify(REC || {})); }catch(e){}
+  var r = (REC && REC.ref) || REF || "";
+  window.open("document.html?ref=" + encodeURIComponent(r), "_blank");
+}
 let REF = null;
 /* ===== pieces jointes de la facture et justificatifs de paiement (27/07) =====
    Les deux zones affichaient « bientot relie au backend » et ne faisaient rien.

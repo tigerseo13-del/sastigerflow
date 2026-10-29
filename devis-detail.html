@@ -1718,7 +1718,17 @@ function pdfImprimer(nom){
   window.print();
   setTimeout(function(){ document.title = avant; }, 1200);
 }
-function pdfDevis(){
+/* 29/10 (patron : « les devis et factures au format qu'on a travaillé ») : « Voir le PDF »
+   ouvre LE document (document.html) au lieu d'imprimer l'écran de l'appli. La pièce
+   est passée en sessionStorage : même une pièce de démo (absente du stock) s'affiche. */
+function docOuvrir(){
+  try{ sessionStorage.setItem("tigerflow-doc-tmp", JSON.stringify(REC || {})); }catch(e){}
+  var r = (REC && REC.ref) || REF || "";
+  window.open("document.html?ref=" + encodeURIComponent(r), "_blank");
+}
+function pdfDevis(){ docOuvrir(); }
+/* l'ancienne impression de l'écran, gardée en secours */
+function pdfDevisEcran(){
   pdfImprimer(pdfNom(REC.numero || REF, REC.client, eur(REC.montant)));
 }
 function badge(){

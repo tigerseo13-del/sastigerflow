@@ -1279,6 +1279,7 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:12px;padding:12px 0 14px;align-items:center">
           <span style="position:relative;flex:1 1 190px;max-width:250px"><input id="rel-qui" placeholder="Tape le nom du client…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
           <span id="rel-typ" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+          <span style="flex:1 1 100%;font:600 .72rem Inter,sans-serif;color:var(--muted);line-height:1.45">Ex. : le propriétaire paie pour son locataire · la SCI paie pour M. Durand · le syndic gère la résidence.</span>
           <span id="rel-immw" style="display:none"><select id="rel-imm" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:230px"></select></span>
           <span id="rel-adrw" style="display:none;flex:1 1 100%;gap:12px;flex-wrap:wrap;align-items:center">
             <input id="rel-siret" placeholder="SIRET — remplit l'adresse tout seul" autocomplete="off" inputmode="numeric" style="flex:1 1 210px;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
@@ -3728,17 +3729,12 @@ document.addEventListener("click", function(e){
     });
     /* fiche du locataire : « Géré par FONCIA \u2192 · Résidence Les Lilas » */
     entr.forEach(function(p2){ h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site, p2[0].t, true); });
-    /* fiche du syndic : ses clients regroupés PAR IMMEUBLE */
-    if(sort.length){
-      var grp = {};
-      sort.forEach(function(p2){ var k2 = p2[0].site || ""; (grp[k2] = grp[k2] || []).push(p2); });
-      var cles = Object.keys(grp).sort(function(a2, b2){ return (a2 === "" ? "\uffff" : a2).localeCompare(b2 === "" ? "\uffff" : b2, "fr"); });
-      cles.forEach(function(k2){
-        if(k2) h += '<div style="font:800 .62rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:5px 2px 0">' + esc(k2) + '</div>';
-        else if(cles.length > 1) h += '<div style="font:800 .62rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:5px 2px 0">Sans immeuble</div>';
-        grp[k2].forEach(function(p2){ h += ligne(LBLout[p2[0].t] || p2[0].t, p2[0].b, p2[1], null, p2[0].t, false); });
-      });
-    }
+    /* 29/10 (patron : « c'est où les sites ? ») : plus de titres « immeuble » /
+       « Sans immeuble » — restes de la bêta Sites annulée le 30/08, ils
+       laissaient croire qu'il existait encore deux façons de faire. Une liste
+       simple : chaque lieu relié, son immeuble rappelé sur la ligne s'il y en a un. */
+    sort.slice().sort(function(x, y){ return String(x[0].b).localeCompare(String(y[0].b), "fr"); })
+      .forEach(function(p2){ h += ligne(LBLout[p2[0].t] || p2[0].t, p2[0].b, p2[1], p2[0].site, p2[0].t, false); });
     document.getElementById("rel-list").innerHTML = h ||
       '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5"><span class="rlong"><b style="color:var(--ink-2)">Qui paie pour ce client ?</b> Lui-même — rien à faire. Un syndic, sa société, sa SCI ? Relie-le ici : le devis proposera « Facturer à » et la facture partira au bon nom.<br><span style="display:block;margin-top:7px;padding:7px 9px;background:#F4F6F9;border-radius:8px;color:var(--ink-2)">Règle simple, une seule façon de faire : <b>une fiche par lieu</b> (l\'immeuble, la maison, la boutique), reliée à celui qui paie. Un syndic avec 3 immeubles = 3 fiches reliées au syndic — tu peux les créer d\'ici, depuis sa fiche.</span></span><span class="rcourt"><b style="color:var(--ink-2)">Ce client paie lui-même.</b></span></div>';
     var relN = document.getElementById("rel-n");
@@ -3804,7 +3800,13 @@ document.addEventListener("click", function(e){
     TSEL = "gere";
     /* le sens malin : une fiche déjà « chef » quelque part (syndic, siège…)
        propose d'abord « CETTE fiche est le … de l'autre » ; sinon l'inverse. */
-    SENS = lire().some(function(z){ return z.a === nom; }) ? "out" : "in";
+    /* 29/10 (patron perdu : « John Thompson paie pour Cabinet Vernet ») : la carte
+       pose la question « Qui paie pour ce client ? » — la phrase part donc TOUJOURS
+       dans ce sens : « <l'autre> paie pour <cette fiche> ». Seule exception : une
+       fiche syndic (ou déjà « chef » d'une relation) relie SES lieux. */
+    var typF = ""; try{ (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).forEach(function(c){ if(c && c.nom === nom && !typF) typF = c.type || ""; }); }catch(e2){}
+    SENS = (typF === "syndic" || lire().some(function(z){ return z.a === nom; })) ? "out" : "in";
+    TSEL = SENS === "out" ? "gere" : "possede";
     var inp = document.getElementById("rel-qui"); if(inp) inp.value = "";
     NEWF = "";
     var aw0 = document.getElementById("rel-adrw"); if(aw0) aw0.style.display = "none";
