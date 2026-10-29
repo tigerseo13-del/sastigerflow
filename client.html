@@ -4,6 +4,7 @@
 <link rel="preload" as="image" href="logo-tigre.png">
 <meta charset="UTF-8">
 <script src="exemple-client.js"></script>
+<script src="relance-plan.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>TigerFlow — Ironwood Solutions</title>
@@ -2540,34 +2541,15 @@ function toast(msg, undoFn){
        mêmes règles que la liste des devis et la page Relance devis. Clic = pause / reprise. */
     window.relMini = function(d, statut){
       try{
-        if(statut !== "envoye") return "";
-        var J = function(k, df){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? df : v; }catch(e){ return df; } };
-        var REL = J("tigerflow-relance-devis-v2", null) || {on:true, part:[{j:3},{j:7},{j:14}], pro:[{j:5},{j:12},{j:21}], syn:[{j:7},{j:15},{j:30}]}; if(REL.on === false) return "";
-        var ON = J("tigerflow-relance-on", {}), G = J("tigerflow-relance-garde-v1", {}), RC = J("tigerflow-relance-cat-v1", {});
-        var P = J("tigerflow-relance-devis-v2-pause", []);
-        var qui = d.payeur || d.client || "";
-        var f = (J("tigerflow-inbox-clients", []).concat(J("tigerflow-clients-cache", []))).find(function(c){ return c && c.nom === qui; });
-        var t = f ? String(f.type || "").toLowerCase() : "";
-        var pub = t === "syndic" ? "syn" : t === "particulier" ? "part" : t ? "pro" : (/syndic|copropri|r[ée]sidence/i.test(qui) ? "syn" : "part");
+        if(typeof relPlan !== "function") return "";
+        var R = relPlan(d, statut);
+        if(R.etat === "horsjeu" || R.etat === "expire") return "";
         var tag = function(txt, gris){ return '<div onclick="event.stopPropagation();relMiniTog(\'' + d.ref + '\')" title="Cliquer pour mettre en pause / reprendre" style="margin-top:4px;cursor:pointer;font:700 .66rem Inter,sans-serif;color:' + (gris ? "#8A8F9E" : "#D2450A") + '">' + txt + '</div>'; };
-        var EX = J("tigerflow-relance-exclus", []);
-        if(EX.indexOf(d.payeur || d.client) > -1 || EX.indexOf(d.client) > -1) return tag("⏸ client exclu des relances", true);
-        if(ON[pub] === false) return tag("⏸ relance coupée", true);
-        var txt = [d.titre].concat((d.lignes || []).map(function(l){ return (l.designation || "") + " " + (l.desc || ""); })).join(" ");
-        var CATS = [["rongeur",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],["cafard",/cafard|blatte/i],["punaise",/punaise/i],["guepe",/gu[êe]pe|frelon|nid/i],["desinf",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon",/pigeon|volatile|oiseau/i],["chenille",/chenille|processionnaire/i],["fourmi",/fourmi/i]];
-        var c = CATS.find(function(x){ return x[1].test(txt); });
-        if(c && RC[c[0]] && RC[c[0]].off) return tag("⏸ pas de relance (nuisible)", true);
-        if((+G.plancher || 0) > 0 && (+d.montant || 0) < +G.plancher) return tag("⏸ sous le plancher", true);
-        if(P.indexOf(d.ref) > -1) return tag("⏸ relance en pause", true);
-        var seq = REL[pub] || REL.part || [];
-        var d0 = new Date(((J("tigerflow-devis-dates", {})[d.ref] || {}).envoye || d.date || "") + "T00:00:00");
-        if(isNaN(d0)) return "";
-        var age = Math.floor((new Date() - d0) / 864e5);
-        var k = seq.findIndex(function(x){ return x.j > age; });
-        if(k < 0) return tag("🔁 relances terminées", true);
-        var q = new Date(d0); q.setDate(q.getDate() + seq[k].j);
-        if(G.ouvres !== false){ while(q.getDay() === 0 || q.getDay() === 6) q.setDate(q.getDate() + 1); }
-        return tag("🔁 Relance " + (k + 1) + "/" + seq.length + " · " + q.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"}));
+        if(R.etat === "exclu") return tag("⏸ client exclu des relances", true);
+        if(R.etat === "pause") return tag("⏸ relance en pause", true);
+        if(R.etat === "fini") return tag("🔁 relances terminées", true);
+        if(R.etat !== "actif") return tag("⏸ " + R.motif, true);
+        return tag(relLabel(R));
       }catch(e){ return ""; }
     };
     window.relMiniTog = function(ref){

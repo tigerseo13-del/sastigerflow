@@ -4,6 +4,7 @@
 <link rel="preload" as="image" href="logo-tigre.png">
 <meta charset="UTF-8">
 <script src="exemple-client.js"></script>
+<script src="relance-plan.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>TigerFlow — Devis</title>
@@ -702,38 +703,17 @@ function relEligible(nom, montant){
 }
 const RELPUB = {part: "Particuliers", pro: "Entreprises", syn: "Syndics"};
 function relBadge(d){
-  /* 12/08 : le badge était défini mais jamais appelé dans le rendu — il est
-     désormais affiché sous le statut, au format « Relance x/n ». */
-  if(!REL.on || d.statut !== "envoye") return "";
-  if(PAUSED.has(d.ref))
+  /* 29/10 : le calcul vit dans relance-plan.js — le même que la fiche du devis,
+     la fiche client et la page Relance devis. */
+  if(typeof relPlan !== "function") return "";
+  const R = relPlan(d, d.statut);
+  if(R.etat === "horsjeu" || R.etat === "expire") return "";
+  if(R.etat === "pause")
     return `<span class="relbadge pause" onclick="relTog(event,'${d.ref}')" title="Relances en pause pour ce devis — cliquer pour reprendre">⏸ en pause</span>`;
-  /* 31/08 : le badge dit LA VÉRITÉ — public coupé ou devis sous le plancher,
-     la séquence ne tourne pas, on l'annonce au lieu d'afficher une fausse
-     prochaine relance. */
-  const pub = relPublic(d.payeur || d.client);
-  try{ const EX = JSON.parse(localStorage.getItem("tigerflow-relance-exclus") || "[]");
-    if(EX.indexOf(d.payeur || d.client) > -1 || EX.indexOf(d.client) > -1)
-      return `<span class="relbadge pause" title="Ce client est exclu des relances automatiques (fiche client)">⏸ client exclu</span>`; }catch(e){}
-  /* 29/10 : les règles « Par nuisible » de la page Relance devis */
-  try{
-    const RC = JSON.parse(localStorage.getItem("tigerflow-relance-cat-v1") || "{}");
-    const CATS = [["rongeur","Rongeurs",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],["cafard","Cafards",/cafard|blatte/i],["punaise","Punaises",/punaise/i],["guepe","Guêpes",/gu[êe]pe|frelon|nid/i],["desinf","Désinfection",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon","Pigeons",/pigeon|volatile|oiseau/i],["chenille","Chenilles",/chenille|processionnaire/i],["fourmi","Fourmis",/fourmi/i]];
-    const txt = [d.titre].concat((d.lignes || []).map(l => (l.designation || "") + " " + (l.desc || ""))).join(" ");
-    const c = CATS.find(x => x[2].test(txt));
-    if(c && RC[c[0]] && RC[c[0]].off)
-      return `<span class="relbadge pause" title="Pas de relance automatique pour ce nuisible (Relance devis → Par nuisible)">⏸ ${c[1]} — pas de relance</span>`;
-  }catch(e){}
-  if(!_RELON[pub])
-    return `<span class="relbadge pause" title="La relance automatique est coupée pour ce public (Réglages → Relance devis automatique → onglet ${RELPUB[pub]})">⏸ ${RELPUB[pub]} — relance coupée</span>`;
-  if(_RGARDE.plancher > 0 && (+d.montant || 0) < _RGARDE.plancher)
-    return `<span class="relbadge pause" title="Sous le plancher de rentabilité (${_RGARDE.plancher} € HT) — à relancer à la main si vous y tenez">⏸ sous le plancher · ${_RGARDE.plancher} €</span>`;
-  const seq = REL[pub] || REL.part;
-  const age = Math.floor((new Date() - new Date(d.date)) / 864e5);
-  const next = seq.find(st => st.j > age);
-  if(!next) return `<span class="relbadge pause" onclick="relTog(event,'${d.ref}')">${RELSVG} séquence terminée</span>`;
-  const dans = next.j - age;
-  const idx = seq.indexOf(next) + 1;
-  return `<span class="relbadge" onclick="relTog(event,'${d.ref}')" title="${d.pro ? "Séquence entreprise" : "Séquence particulier"} · relance ${next.mail ? "email" : ""}${next.mail && next.sms ? " + " : ""}${next.sms ? "SMS" : ""}${next.rem ? " avec −" + next.rem + " %" : " sans remise"} · cliquer pour mettre en pause">${RELSVG}<b style="font-weight:800;letter-spacing:.05em;font-size:.9em;opacity:.75">BÊTA</b> · Relance ${idx}/${seq.length} · J+${next.j}${next.rem ? " · −" + next.rem + " %" : ""} · ${dans <= 0 ? "aujourd\u2019hui" : "dans " + dans + " j"}</span>`;
+  if(R.etat === "fini") return `<span class="relbadge pause" title="${R.motif}">${RELSVG} relances terminées</span>`;
+  if(R.etat !== "actif") return `<span class="relbadge pause" title="${R.motif}">⏸ ${R.motif}</span>`;
+  const s = R.next;
+  return `<span class="relbadge" onclick="relTog(event,'${d.ref}')" title="Relance ${s.mail ? "email" : ""}${s.mail && s.sms ? " + " : ""}${s.sms ? "SMS" : ""}${s.rem ? " avec −" + s.rem + " %" : " sans remise"} · cliquer pour mettre en pause">${RELSVG}Relance ${s.i + 1}/${s.n} · ${relJour(s.date)}${s.derniere ? " · dernière" : ""}</span>`;
 }
 function relTog(e, ref){
   e.stopPropagation();

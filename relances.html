@@ -4,6 +4,7 @@
 <link rel="preload" as="image" href="logo-tigre.png">
 <meta charset="UTF-8">
 <script src="exemple-client.js"></script>
+<script src="relance-plan.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>TigerFlow — Relance devis automatique</title>
@@ -1146,32 +1147,23 @@ function relWeekRender(){
   const JF = ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
   const lignes = [];
   box.forEach(d => {
-    if(!d || !d.ref) return;
-    if((stx[d.ref] || d.statut) !== "envoye") return;
-    const qui = d.payeur || d.client || "";
-    if(EXCL.indexOf(qui) > -1 || EXCL.indexOf(d.client) > -1) return;   /* client exclu (fiche client) */
-    const pub = pubDe(qui);
-    if(!RELON[pub]) return;
-    const mnt = +d.montant || 0;
-    if(RGARDE.plancher > 0 && mnt < RGARDE.plancher) return;
-    const d0 = new Date(((dts[d.ref] || {}).envoye || d.date || "") + "T00:00:00"); if(isNaN(d0)) return;
-    const seq = REL[pub] || [];
-    seq.forEach((st, i) => {
-      const q = new Date(d0); q.setDate(q.getDate() + (+st.j || 0));
-      /* jours ouvrés : un samedi / dimanche glisse au lundi, comme l'envoi réel */
-      if(RGARDE.ouvres){ while(q.getDay() === 0 || q.getDay() === 6) q.setDate(q.getDate() + 1); }
-      if(q < auj || q >= fin) return;
-      const cat = relCatDe(d);
-      if(cat && rcatRegle(cat).off) return;
-      const R = relRemEff(pub, i, mnt / 1.2, cat);
-      lignes.push({q, d, qui, i, n: seq.length, st, R, pz: P.has(d.ref), cat});
+    if(!d || !d.ref || typeof relPlan !== "function") return;
+    /* 29/10 : même calendrier que la liste et la fiche (relance-plan.js) —
+       relance manuelle comptée, rien après l'échéance */
+    const R = relPlan(d, stx[d.ref] || d.statut);
+    if(R.etat !== "actif" && R.etat !== "pause") return;
+    const mnt = +d.montant || 0, cat = relCatDe(d);
+    R.steps.forEach(s => {
+      if(s.fait || s.date < auj || s.date >= fin) return;
+      const R2 = relRemEff(R.pub, s.i, mnt / 1.2, cat);
+      lignes.push({q: s.date, d, qui: R.qui, i: s.i, n: s.n, st: s, R: R2, pz: R.etat === "pause", cat, der: s.derniere, valid: R.valid});
     });
   });
   lignes.sort((a, b) => a.q - b.q);
   const esc = t => String(t || "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   el.innerHTML = `<div class="rgh"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Cette semaine : ${lignes.length} relance${lignes.length > 1 ? "s" : ""} prévue${lignes.length > 1 ? "s" : ""} <small style="font:600 .7rem Inter,sans-serif;color:var(--muted)">— dans l'ordre d'envoi</small></div>`
     + (lignes.length ? lignes.map(x => `<div class="wr${x.pz ? " pz" : ""}"><span class="wd">${JF[x.q.getDay()]} ${String(x.q.getDate()).padStart(2, "0")}/${String(x.q.getMonth() + 1).padStart(2, "0")}</span>
-        <span class="wc">${esc(x.qui)}<small>${esc(x.d.titre || x.d.ref)} · ${relEur(+x.d.montant || 0)} · ${x.i === x.n - 1 ? "dernière relance" : (x.i + 1) + (x.i === 0 ? "ʳᵉ" : "ᵉ") + " relance"}${x.R > 0 ? " · −" + String(x.R).replace(".", ",") + " %" : ""}${x.pz ? " · en pause" : ""}</small></span>
+        <span class="wc">${esc(x.qui)}<small>${esc(x.d.titre || x.d.ref)} · ${relEur(+x.d.montant || 0)} · ${x.der ? "dernière relance · expire le " + x.valid.toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit"}) : (x.i + 1) + (x.i === 0 ? "ʳᵉ" : "ᵉ") + " relance"}${x.R > 0 ? " · −" + String(x.R).replace(".", ",") + " %" : ""}${x.pz ? " · en pause" : ""}</small></span>
         ${x.st.mail ? '<span class="wp">Email</span>' : ""}${x.st.sms ? '<span class="wp s">SMS</span>' : ""}
         <button class="wb" onclick="relWeekPause('${esc(x.d.ref)}')">${x.pz ? "▶ Reprendre" : "⏸ Pause"}</button></div>`).join("")
       : `<div style="font-size:.76rem;color:var(--muted);padding:4px 0">Aucune relance dans les 7 prochains jours. Les devis envoyés et non signés apparaissent ici.</div>`);

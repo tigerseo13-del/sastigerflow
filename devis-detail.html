@@ -4,6 +4,7 @@
 <link rel="preload" as="image" href="logo-tigre.png">
 <meta charset="UTF-8">
 <script src="exemple-client.js"></script>
+<script src="relance-plan.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>TigerFlow — Devis</title>
@@ -1641,16 +1642,32 @@ function fdate(iso){ if(!iso) return "—"; const [y,m,d] = iso.split("-"); retu
 function stamp(){ const d = new Date(); const p = x => String(x).padStart(2,"0"); return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes()); }
 
 /* ===== rendu ===== */
+/* affichage : la même échéance par défaut (envoi + 30 j) pour « Échéance », la relance… */
+function echDefaut(){
+  if(REC.valid) return;
+  let d0 = ""; try{ d0 = ((JSON.parse(localStorage.getItem("tigerflow-devis-dates")) || {})[REC.ref] || {}).envoye || ""; }catch(e){}
+  d0 = d0 || REC.date; if(!d0) return;
+  const t = new Date(d0 + "T00:00:00"); t.setDate(t.getDate() + 30);
+  REC.valid = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+}
+echDefaut();
 function joursEch(){
-  if(!REC.valid) return null;
-  const [y,m,d] = REC.valid.split("-").map(Number);
+  /* 29/10 (parcours relance) : sans date de validité, null <= 0 valait VRAI en JS —
+     un devis envoyé le jour même s'affichait « Expiré ». On retombe sur 30 jours
+     après l'envoi (ou la date du devis), comme le dit la tuile État. */
+  let v = REC.valid;
+  if(!v){ let d0 = ""; try{ d0 = ((JSON.parse(localStorage.getItem("tigerflow-devis-dates")) || {})[REC.ref] || {}).envoye || ""; }catch(e){}
+    d0 = d0 || REC.date; if(!d0) return null;
+    const t = new Date(d0 + "T00:00:00"); t.setDate(t.getDate() + 30); v = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0"); }
+  const [y,m,d] = v.split("-").map(Number);
   return Math.ceil((new Date(y, m-1, d) - new Date()) / 86400000);
 }
 function effStatut(){
   const st = statutGet();
   /* un devis envoye dont la validite est passee devient « expire » tout seul —
      personne ne va le marquer a la main. Gagne ou perdu restent figes. */
-  if(st === "envoye" && joursEch() <= 0) return "expire";
+  const jx = joursEch();
+  if(st === "envoye" && jx !== null && jx <= 0) return "expire";
   return st;
 }
 /* 28/07 — le bouton principal de l'en-tete etait VIDE : aucun libelle dans le
@@ -2000,7 +2017,10 @@ function vieDraw(){
     S.push({t:"Expiré" + (j !== null && j < 0 ? " · " + (-j) + " j" : ""), s:"renvoyer une offre", k:"now", late:true, fn:"envoyer()", h:"Renvoyer une offre au client"});
     S.push({t:"Facturation", k:"todo"});
   } else if(sent || st === "envoye"){
-    S.push({t:"Réponse du client", s:(j !== null && j > 0 ? "valide encore " + j + " j · relancer" : "relancer"), k:"now", fn:"envoyer()", h:"Relancer le client"});
+    var RPv = typeof relPlan === "function" ? relPlan(REC, st) : null;
+    var faitsV = RPv ? RPv.steps.filter(function(x){ return x.fait; }).map(function(x){ return "relance " + (x.i + 1) + " le " + relJour(x.date); }) : [];
+    var suiteV = RPv && RPv.etat === "actif" ? "relance auto " + relJour(RPv.next.date) : RPv && RPv.etat === "fini" ? "relances terminées — appeler" : "relancer";
+    S.push({t:"Réponse du client", s:(j !== null && j > 0 ? "valide encore " + j + " j · " : "") + faitsV.concat([suiteV]).join(" · "), k:"now", fn:"envoyer()", h:"Relancer le client maintenant"});
     S.push({t:"Facturation", k:"todo"});
   } else {
     S.push({t:"Réponse du client", k:"todo"});
@@ -2025,19 +2045,33 @@ let PPJ = null;
 const CLIMAILS = {"Ironwood Solutions":"john.thompson@ironwood.com","Boulangerie Dupont":"contact@boulangerie-dupont.fr",
   "Pharmacie Centrale":"pharmacie.centrale@orange.fr","Hôtel du Parc":"reception@hotelduparc.fr","Mme Perrin":"perrin.marie@gmail.com"};
 function envoyer(){
+  /* 29/10 : RELMODE n'était jamais mis à vrai — relancer un devis envoyé
+     écrasait la date d'envoi au lieu de tracer une relance. */
+  RELMODE = statutGet() === "envoye";
   const solde = REC.montant - pays().reduce((a,p) => a + p.m, 0);
   g('srecap').innerHTML =
     '<div class="srow"><span>Client</span><b>' + (REC.client || "—") + '</b></div>' +
     '<div class="srow"><span>Référence</span><b>' + REF + '</b></div>' +
     '<div class="srow sttc"><span>Total TTC</span><b>' + eur(REC.montant) + '</b></div>';
-  g('s-to').value = CLIMAILS[REC.client] || ((REC.client || "client").toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr");
+  /* 29/10 : le devis part à celui qui PAIE (la SCI, le syndic), pas au lieu */
+  let qmail = ""; try{ const qn = REC.payeur || REC.client; const qf = (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).find(c => c && c.nom === qn); qmail = qf && qf.mail || ""; }catch(e){}
+  g('s-to').value = qmail || CLIMAILS[REC.client] || ((REC.client || "client").toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr");
   g('s-obj').value = "Votre devis " + REF + " — " + societe();
-  g('s-body').value = "Bonjour " + (REC.client || "") + ",\n\n" +
+  g('s-body').value = "Bonjour " + (REC.payeur || REC.client || "") + ",\n\n" +
     "Veuillez trouver ci-joint votre devis " + REF + " d'un montant de " + eur(REC.montant) + " TTC" +
     (solde < REC.montant ? " (reste à payer : " + eur(Math.max(0, solde)) + ")" : "") + ".\n" +
     (REC.bc ? "Référence bon de commande : " + REC.bc + "\n" : "") +
-    "\nElle est payable avant le " + fdate(REC.valid) + ", par virement ou en ligne via le lien inclus. Merci de rappeler la référence dans le libellé.\n\n" +
+    "\nIl est valable jusqu'au " + fdate(REC.valid) + " et peut être signé en ligne via le lien inclus.\n\n" +
     "Bien cordialement,\nL'équipe " + societe();
+  /* 29/10 : une RELANCE n'est pas un renvoi du devis — autre objet, autre texte.
+     (Et un devis ne se « paie » pas avant une date : il est valable jusqu'à.) */
+  if(RELMODE){
+    g('s-obj').value = "Relance — votre devis " + REF + " — " + societe();
+    g('s-body').value = "Bonjour " + (REC.payeur || REC.client || "") + ",\n\n" +
+      "Je reviens vers vous au sujet de notre devis " + REF + (REC.titre ? " (" + REC.titre + ")" : "") + " d'un montant de " + eur(REC.montant) + " TTC.\n" +
+      "Il reste valable jusqu'au " + fdate(REC.valid) + " et peut être signé en ligne via le lien inclus. Une question ? Répondez simplement à ce message.\n\n" +
+      "Bien cordialement,\nL'équipe " + societe();
+  }
   g('sendveil').classList.add('open');
   setTimeout(() => { const f = g('s-to'); if(f){ f.focus(); f.select(); } }, 120);
 }
@@ -2052,6 +2086,8 @@ function sendConfirm(){
     if(RELMODE){
       m[REF] = m[REF] || {};
       m[REF].relance = stamp(); m[REF].to = m[REF].to || to;
+      /* 29/10 : la relance à la main compte comme la prochaine relance auto */
+      if(typeof relManuel === "function") relManuel(REF);
     } else {
       m[REF] = {date: stamp(), to: to, pay: g('sw-pay').classList.contains('on'), sign: g('sw-sign').classList.contains('on')};
       /* 28/07 — BUG. On envoyait le devis au client et il restait affiche
@@ -2064,7 +2100,9 @@ function sendConfirm(){
     localStorage.setItem(ENVKEY, JSON.stringify(m));
   }catch(e){}
   sendClose();
-  toast(RELMODE ? "✉ Relance envoyée à " + to + " — tracée dans l'historique" : "📤 Devis " + REF + " envoyé à " + to);
+  var relSuite = "";
+  if(RELMODE && typeof relPlan === "function"){ var RP = relPlan(REC, statutGet()); relSuite = RP.next ? " · relance auto suivante le " + relJour(RP.next.date) : " · plus de relance auto prévue"; }
+  toast(RELMODE ? "✉ Relance envoyée à " + to + relSuite : "📤 Devis " + REF + " envoyé à " + to);
   RELMODE = false;
   renderAll();
 }
@@ -2712,48 +2750,36 @@ document.addEventListener("click", function(e){
 (function(){
   var J = function(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
   window.relDetPaint = function(){
-    var tile = document.getElementById("k-rel-tile"); if(!tile || typeof REC === "undefined" || !REC) return;
-    var ref = REC.ref || (typeof REF !== "undefined" ? REF : ""); if(!ref) return;
-    var st = (J("tigerflow-devis-statuts", {})[ref]) || REC.statut;
-    if(st !== "envoye"){ tile.hidden = true; return; }
-    tile.hidden = false;
-    var REL = J("tigerflow-relance-devis-v2", null) || {part:[{j:3,rem:0,mail:true,sms:true},{j:7,rem:5,mail:true,sms:true},{j:14,rem:10,mail:true,sms:false}], pro:[{j:5,rem:0,mail:true},{j:12,rem:5,mail:true},{j:21,rem:8,mail:true}], syn:[{j:7,rem:0,mail:true},{j:15,rem:0,mail:true},{j:30,rem:5,mail:true}]};
-    var ON = J("tigerflow-relance-on", {}), G = J("tigerflow-relance-garde-v1", {}), RC = J("tigerflow-relance-cat-v1", {});
-    var P = new Set(J("tigerflow-relance-devis-v2-pause", []));
-    var qui = REC.payeur || REC.client || "";
-    var f = (J("tigerflow-inbox-clients", []).concat(J("tigerflow-clients-cache", []))).find(function(c){ return c && c.nom === qui; });
-    var t = f ? String(f.type || "").toLowerCase() : "";
-    var pub = t === "syndic" ? "syn" : t === "particulier" ? "part" : t ? "pro" : (/syndic|copropri|r[ée]sidence/i.test(qui) ? "syn" : "part");
-    var CATS = [["rongeur","rongeurs",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],["cafard","cafards",/cafard|blatte/i],["punaise","punaises",/punaise/i],["guepe","guêpes",/gu[êe]pe|frelon|nid/i],["desinf","désinfection",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon","pigeons",/pigeon|volatile|oiseau/i],["chenille","chenilles",/chenille|processionnaire/i],["fourmi","fourmis",/fourmi/i]];
-    var txt = [REC.titre].concat((REC.lignes || []).map(function(l){ return (l.designation || "") + " " + (l.desc || ""); })).join(" ");
-    var cat = CATS.find(function(c){ return c[2].test(txt); });
-    var N = document.getElementById("k-rel"), S = document.getElementById("k-rel-sub"), B = document.getElementById("k-rel-btn");
-    var pas = function(txtN, txtS, btn){ N.textContent = txtN; S.textContent = txtS || ""; B.hidden = !btn; var bx = document.getElementById("k-rel-ex"); if(bx) bx.style.marginLeft = btn ? "6px" : "0"; };
-    var EX = J("tigerflow-relance-exclus", []), BX = document.getElementById("k-rel-ex");
-    var exclu = EX.indexOf(qui) > -1 || EX.indexOf(REC.client) > -1;
-    if(BX){ BX.hidden = !qui; BX.textContent = exclu ? "▶ Réactiver ce client" : "🚫 Jamais pour ce client"; BX.title = exclu ? "Les devis de " + qui + " seront de nouveau relancés" : "Plus aucun devis de " + qui + " ne sera relancé automatiquement"; }
-    if(exclu) return pas("Client exclu", "aucun devis de " + qui + " n'est relancé", false);
-    if(ON[pub] === false) return pas("Coupée", "relance coupée pour ce type de client", false);
-    if(cat && RC[cat[0]] && RC[cat[0]].off) return pas("Pas de relance", "règle « Par nuisible » : " + cat[1], false);
-    if((+G.plancher || 0) > 0 && (+REC.montant || 0) < +G.plancher) return pas("Pas de relance", "devis sous " + G.plancher + " € HT", false);
-    if(P.has(ref)){ pas("En pause", "le client ne sera plus relancé", true); B.textContent = "▶ Reprendre"; return; }
-    var seq = REL[pub] || REL.part || [];
-    var d0 = new Date(((J("tigerflow-devis-dates", {})[ref] || {}).envoye || REC.date || "") + "T00:00:00");
-    var age = isNaN(d0) ? 0 : Math.floor((new Date() - d0) / 864e5);
-    var k = seq.findIndex(function(x){ return x.j > age; });
-    if(k < 0) return pas("Terminée", "les " + seq.length + " relances sont parties — au téléphone", false);
-    var x = seq[k], q = new Date(d0); q.setDate(q.getDate() + x.j);
-    if(G.ouvres !== false){ while(q.getDay() === 0 || q.getDay() === 6) q.setDate(q.getDate() + 1); }
-    var can = [x.mail ? "email" : "", x.sms ? "SMS" : ""].filter(Boolean).join(" + ") || "aucun canal";
-    var qtxt = q.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"});
-    pas((k + 1) + "/" + seq.length + " le " + qtxt, can + (x.rem ? " · −" + x.rem + " %" : ""), true);
-    B.textContent = "⏸ Pause ce devis";
-    /* 29/10 : la tuile « État » ne pousse plus à relancer à la main quand la machine s'en charge */
+    /* 29/10 (patron, « FAIS TOUT ») : la relance vit DANS la tuile État — une seule
+       case au lieu de deux. Calcul : relance-plan.js (le même partout). */
+    var old = document.getElementById("k-rel-tile"); if(old) old.hidden = true;
+    var tuile = document.getElementById("k-etat-tile"); if(!tuile || typeof REC === "undefined" || !REC || typeof relPlan !== "function") return;
+    var box = document.getElementById("k-rel-in");
+    var R = relPlan(REC, statutGet());
+    if(R.etat === "horsjeu" || R.etat === "expire"){ if(box) box.remove(); return; }
+    if(!box){ box = document.createElement("div"); box.id = "k-rel-in"; box.onclick = function(e){ e.stopPropagation(); };
+      box.style.cssText = "margin-top:10px;padding-top:10px;border-top:1px dashed rgba(30,51,80,.18);display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:700 .78rem Inter,sans-serif;color:#1E3350;cursor:default";
+      tuile.appendChild(box); }
+    var bt = function(txt, fn, tip){ return '<button type="button" onclick="event.stopPropagation();' + fn + '()" title="' + tip + '" style="border:1.5px solid #E2E5EB;border-radius:8px;background:#fff;padding:5px 10px;font:700 .72rem Inter,sans-serif;color:#3D434E;cursor:pointer">' + txt + '</button>'; };
+    var faits = R.steps.filter(function(s){ return s.fait; });
+    var hist = faits.length ? '<small style="display:block;font-weight:600;color:#6B7280">' + faits.map(function(s){ return "relance " + (s.i + 1) + (s.manuel ? " à la main" : "") + " le " + relJour(s.date); }).join(" · ") + '</small>' : "";
+    var txt, b = "";
+    var ex = bt("🚫 Jamais pour ce client", "relDetEx", "Plus aucun devis de " + (R.qui || "ce client") + " ne sera relancé automatiquement");
+    if(R.etat === "actif"){
+      var s = R.next, can = [s.mail ? "email" : "", s.sms ? "SMS" : ""].filter(Boolean).join(" + ") || "aucun canal";
+      txt = "🔁 Relance " + (s.i + 1) + "/" + s.n + " le " + relJour(s.date) + " · " + can + (s.rem ? " · −" + s.rem + " %" : "") + (s.derniere ? " · dernière avant l'échéance" : "");
+      b = bt("⏸ Pause ce devis", "relDetTog", "Ce devis ne sera plus relancé automatiquement") + ex;
+    } else if(R.etat === "pause"){ txt = "⏸ Relance en pause"; b = bt("▶ Reprendre", "relDetTog", "Reprendre les relances de ce devis") + ex; }
+    else if(R.etat === "exclu"){ txt = "⏸ Client exclu : aucun devis de " + R.qui + " n'est relancé"; b = bt("▶ Réactiver ce client", "relDetEx", "Les devis de " + R.qui + " seront de nouveau relancés"); }
+    else if(R.etat === "fini"){ txt = "✓ Relances terminées — à appeler"; }
+    else txt = "⏸ " + R.motif.charAt(0).toUpperCase() + R.motif.slice(1);
+    box.innerHTML = '<span style="flex:1 1 220px">' + txt + hist + '</span>' + b;
+    /* la phrase du dessous ne redit plus la relance : elle est juste en dessous */
     var ke = document.getElementById("k-etat"), ks = document.getElementById("k-etat-sub");
     if(ke && /relancer|Relancer le client/.test(ke.textContent)){
       ke.innerHTML = ke.innerHTML.replace(/ — relancer/, " de validité").replace(/Relancer le client/, "En attente");
-      if(ks) ks.textContent = "relance auto le " + qtxt + " — ou relancer maintenant";
     }
+    if(ks && R.valid) ks.textContent = "expire le " + R.valid.toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit", year:"numeric"}) + " · ou relancer maintenant";
   };
   window.relDetTog = function(){
     var ref = REC.ref || REF; var P = new Set(J("tigerflow-relance-devis-v2-pause", []));
@@ -2774,6 +2800,7 @@ document.addEventListener("click", function(e){
     relDetPaint();
     if(typeof toast === "function") toast(exclu ? "▶ " + qui + " : relances automatiques actives" : "⏸ " + qui + " : plus aucune relance automatique");
   };
+  if(typeof renderAll === "function"){ var _ra = renderAll; renderAll = function(){ _ra(); try{ relDetPaint(); }catch(e){} }; }
   var go = function(){ setTimeout(relDetPaint, 50); setTimeout(relDetPaint, 500); };
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
 })();
