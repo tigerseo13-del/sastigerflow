@@ -680,6 +680,7 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
         <!-- 18/08 (patron, GO 1-2-3) : les deux garde-fous qui protègent
              l'argent et l'image — plafond de remise auto, fenêtre d'envoi. -->
         <div class="rgard" id="rel-garde"></div>
+        <div class="rgard" id="rel-cat"></div>
         <details class="rav rmore" id="rel-avance"></details>
         <p class="rtip">💡 Conseil de vente : garde le premier rappel <b>sans remise</b> — beaucoup signent juste parce qu'on leur rappelle. La remise est ta dernière carte, pas la première. Et <b>devis par devis</b> : clique le badge 🔁 d'un devis dans la liste pour mettre SES relances en pause (le client qui a dit « je réfléchis »).</p>
         <button class="rok" onclick="relSave();toast('🔁 Séquence enregistrée — appliquée aux devis en attente')">Enregistrer la séquence</button>
@@ -750,6 +751,10 @@ let APC = {g: "part", i: 0};   /* la rangée dont on montre l'aperçu */
       mauvaise remise. Un délai est maintenant borné par ses voisins : au
       moins un jour après le précédent, au plus un jour avant le suivant.
       On ne refuse pas la saisie en silence : on la ramène et on le dit. */
+/* 29/10 : une séquence enregistrée avant la vérification pouvait avoir J+10 puis J+7
+   (« -3 jours après la précédente »). Au chargement on remet chaque relance au moins
+   un jour après la précédente. */
+["part", "pro", "syn"].forEach(k => { const l = REL[k] || []; for(let i = 1; i < l.length; i++){ if(+l[i].j <= +l[i - 1].j) l[i].j = +l[i - 1].j + 1; } });
 function relBornes(key, i){
   const l = REL[key];
   return {min: (i === 0) ? 1 : l[i - 1].j + 1,
@@ -986,8 +991,46 @@ function relRemBrute(g, i){
   }
   return +st.rem || 0;
 }
-/* la remise RÉELLEMENT envoyée pour un devis de « mnt » € HT */
-function relRemEff(g, i, mnt){
+/* ═══ 29/10 (patron : « si c'est un nuisible où ça coûte cher, la relance doit être
+   différente ») : RÈGLES PAR NUISIBLE. Vide = règle générale. Le nuisible d'un devis
+   se lit dans son titre et ses lignes. ═══ */
+const RCATKEY = "tigerflow-relance-cat-v1";
+const RCATS = [["rongeur","Rongeurs (dératisation)",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],
+               ["cafard","Cafards",/cafard|blatte/i],
+               ["punaise","Punaises de lit",/punaise/i],
+               ["guepe","Guêpes et frelons",/gu[êe]pe|frelon|nid/i],
+               ["desinf","Désinfection",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],
+               ["pigeon","Pigeons",/pigeon|volatile|oiseau/i],
+               ["chenille","Chenilles",/chenille|processionnaire/i],
+               ["fourmi","Fourmis",/fourmi/i]];
+let RCAT = {};
+try{ const sv = JSON.parse(localStorage.getItem(RCATKEY)); if(sv && typeof sv === "object") RCAT = sv; }catch(e){}
+function rcatSave(){ try{ localStorage.setItem(RCATKEY, JSON.stringify(RCAT)); }catch(e){} }
+function rcatRegle(c){ return RCAT[c] || {}; }
+function relCatDe(d){
+  const txt = [d && d.titre].concat(((d && d.lignes) || []).map(l => (l.designation || "") + " " + (l.desc || ""))).join(" ");
+  const hit = RCATS.find(c => c[2].test(txt));
+  return hit ? hit[0] : "";
+}
+function rcatSet(c, k, v){
+  const r = Object.assign({}, rcatRegle(c));
+  if(k === "off") r.off = !v; else { const n = String(v).trim(); if(n === "") delete r[k]; else r[k] = Math.max(0, +n || 0); }
+  RCAT[c] = r; rcatSave(); relRender(); if(typeof relPrev === "function") relPrev();
+  const L = (RCATS.find(x => x[0] === c) || [, c])[1];
+  toast(k === "off" ? (r.off ? "⏸ " + L + " : plus de relance automatique" : L + " : relances actives") : L + " : règle enregistrée");
+}
+/* la remise RÉELLEMENT envoyée pour un devis de « mnt » € HT (cat = nuisible, facultatif) */
+function relRemEff(g, i, mnt, cat){
+  if(cat){ const rc = rcatRegle(cat);
+    if(rc.off) return 0;
+    if(rc.plaf > 0 && mnt > rc.plaf) return 0;
+    let R0 = relRemEffG(g, i, mnt);
+    if(rc.rem !== undefined) R0 = Math.min(R0, rc.rem);
+    return R0;
+  }
+  return relRemEffG(g, i, mnt);
+}
+function relRemEffG(g, i, mnt){
   let R = relRemBrute(g, i);
   if(!(R > 0)) return 0;
   if(RGARDE.plafond > 0 && mnt > RGARDE.plafond) return 0;                 /* garde-fou : aucune remise auto */
@@ -1016,7 +1059,26 @@ function ravExpAdd(){
 }
 function ravExpDef(n){ RAV.exped.forEach((e, k) => e.def = k === n); ravSave(); relRender(); toast("Les relances partent de " + RAV.exped[n].m); }
 function ravExpDel(n){ const was = RAV.exped[n] && RAV.exped[n].def; RAV.exped.splice(n, 1); if(was && RAV.exped[0]) RAV.exped[0].def = true; ravSave(); relRender(); }
+function relCatRender(){
+  const el = document.getElementById("rel-cat"); if(!el) return;
+  const inp = (c, k, ph, w) => { const v = rcatRegle(c)[k]; return `<input type="number" inputmode="decimal" min="0" placeholder="${ph}" value="${v === undefined ? "" : v}" style="width:${w}px" onchange="rcatSet('${c}','${k}',this.value)">`; };
+  el.innerHTML = `
+    <div class="rgh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>Par nuisible</div>
+    <div class="rgs">Pour les traitements qui coûtent cher : moins de remise, ou pas de relance du tout. <b>Case vide = règle générale.</b></div>
+    <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:6px 12px;align-items:center;font-size:.76rem">
+      <span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Nuisible</span>
+      <span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Relancer</span>
+      <span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Remise max</span>
+      <span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pas de remise au-dessus de</span>
+      ${RCATS.map(c => { const r = rcatRegle(c[0]); return `
+        <b style="font-weight:700;${r.off ? "color:var(--muted);text-decoration:line-through" : ""}">${c[1]}</b>
+        <label class="rgsw"><input type="checkbox" ${r.off ? "" : "checked"} onchange="rcatSet('${c[0]}','off',this.checked)">${r.off ? "non" : "oui"}</label>
+        <span class="rgi">${inp(c[0], "rem", "—", 58)}%</span>
+        <span class="rgi">${inp(c[0], "plaf", "—", 78)}€ HT</span>`; }).join("")}
+    </div>`;
+}
 function relAvanceRender(){
+  relCatRender();
   const el = document.getElementById("rel-avance"); if(!el) return;
   const esc = t => String(t || "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const ouvert = el.open;
@@ -1085,8 +1147,10 @@ function relWeekRender(){
       /* jours ouvrés : un samedi / dimanche glisse au lundi, comme l'envoi réel */
       if(RGARDE.ouvres){ while(q.getDay() === 0 || q.getDay() === 6) q.setDate(q.getDate() + 1); }
       if(q < auj || q >= fin) return;
-      const R = relRemEff(pub, i, mnt / 1.2);
-      lignes.push({q, d, qui, i, n: seq.length, st, R, pz: P.has(d.ref)});
+      const cat = relCatDe(d);
+      if(cat && rcatRegle(cat).off) return;
+      const R = relRemEff(pub, i, mnt / 1.2, cat);
+      lignes.push({q, d, qui, i, n: seq.length, st, R, pz: P.has(d.ref), cat});
     });
   });
   lignes.sort((a, b) => a.q - b.q);
@@ -1103,13 +1167,14 @@ function relWeekRender(){
 function relSimRender(){
   const el = document.getElementById("rel-sim"); if(!el) return;
   const g = (typeof APC !== "undefined" && APC.g) ? APC.g : "part";
-  const P = +RAV.simPrix || 0, L = REL[g];
-  const pas = L.map((st, i) => { const R = relRemEff(g, i, P); return {j: st.j, R, prix: Math.round(P * (1 - R / 100) * 100) / 100}; });
-  const hors = RGARDE.plancher > 0 && P < RGARDE.plancher;
+  const P = +RAV.simPrix || 0, L = REL[g], C = RAV.simCat || "";
+  const pas = L.map((st, i) => { const R = relRemEff(g, i, P, C); return {j: st.j, R, prix: Math.round(P * (1 - R / 100) * 100) / 100}; });
+  const hors = (RGARDE.plancher > 0 && P < RGARDE.plancher) || (C && rcatRegle(C).off);
   el.innerHTML = `<div class="rgh"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Simulateur — ${RELGRP[g]}</div>
     <div class="rgs">Le prix envoyé à chaque relance, avec tous les réglages appliqués.</div>
-    <span class="rgi">Devis de <input type="number" inputmode="decimal" min="0" step="50" value="${P}" onchange="RAV.simPrix=+this.value||0;ravSave();relSimRender()">€ HT</span>
-    ${hors ? `<div class="rgs" style="margin:10px 0 0;color:#B4470F;font-weight:700">Sous ${relEur(RGARDE.plancher)} HT, ce devis n'est pas relancé (garde-fou).</div>`
+    <span class="rgi">Devis de <input type="number" inputmode="decimal" min="0" step="50" value="${P}" onchange="RAV.simPrix=+this.value||0;ravSave();relSimRender()">€ HT ·
+      <select onchange="RAV.simCat=this.value;ravSave();relSimRender()"><option value="">tous nuisibles</option>${RCATS.map(c => `<option value="${c[0]}"${C === c[0] ? " selected" : ""}>${c[1]}</option>`).join("")}</select></span>
+    ${hors ? `<div class="rgs" style="margin:10px 0 0;color:#B4470F;font-weight:700">${(C && rcatRegle(C).off) ? "Pas de relance automatique pour ce nuisible." : "Sous " + relEur(RGARDE.plancher) + " HT, ce devis n'est pas relancé."}</div>`
       : `<div class="st"><div><small>J 0 · devis</small><b>${relEur(P)}</b><i style="color:var(--muted)">prix d'origine</i></div>${pas.map((x, i) => `<div class="${i === pas.length - 1 ? "last" : ""}"><small>J+${x.j}${i === pas.length - 1 ? " · dernière" : ""}</small><b>${relEur(x.prix)}</b><i>${x.R > 0 ? "−" + String(x.R).replace(".", ",") + " %" : "sans remise"}</i></div>`).join("")}</div>`}`;
 }
 function relTexte(g, i, ch){
@@ -1321,6 +1386,7 @@ function relSteps(list, key){
           <label class="rchk k-mail" title="${st.mail ? "L'e-mail part à cette étape — cliquer pour le couper" : "E-mail coupé à cette étape — cliquer pour l'allumer"}"><input type="checkbox" ${st.mail ? "checked" : ""} onchange="REL.${key}[${i}].mail=this.checked;relSave();relPrev()">${ICO_MAIL}Email</label>
           <label class="rchk k-sms" title="${st.sms ? "Le SMS part à cette étape — cliquer pour le couper" : "SMS coupé à cette étape — cliquer pour l'allumer"}"><input type="checkbox" ${st.sms ? "checked" : ""} onchange="REL.${key}[${i}].sms=this.checked;relSave();relPrev()">SMS</label>
         </span>
+        ${(!st.mail && !st.sms) ? `<span style="flex:none;font:700 .68rem Inter,sans-serif;color:#B4470F;background:#FDEEE3;border-radius:7px;padding:4px 8px" title="Coche Email ou SMS, sinon cette relance ne part pas">aucun canal</span>` : ""}
         ${list.length > 1 ? `<button class="jdel" title="Retirer cette relance" onclick="relDel('${key}',${i},event)">✕</button>` : ""}
       </div>
     </div>`;

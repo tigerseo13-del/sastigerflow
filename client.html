@@ -2695,7 +2695,17 @@ function toast(msg, undoFn){
         var pane = document.querySelector('[data-tab="' + k + '"]');
         var carte = pane && pane.querySelector(".card");
         var vin = carte && carte.querySelector(".vinner");
-        if(!vin) return 0;
+        if(!vin){
+          /* 29/10 (patron : « le devis fait depuis la fiche de la SCI n'apparaît pas chez
+             Mme Perrin ») — sur une fiche de DÉMO le tableau d'exemple est déjà là :
+             on n'y touchait pas, les vrais documents restaient invisibles. Ils
+             passent maintenant EN TÊTE du tableau existant. */
+          var tb0 = pane && (pane.querySelector("#" + k + "-tb") || pane.querySelector("tbody"));
+          if(!tb0) return 0;
+          tb0.insertAdjacentHTML("afterbegin", rowsHtml);
+          if(typeof oRechInit === "function") oRechInit();
+          return 2;
+        }
         /* 20/08 — BUG TROUVÉ PAR LE PATRON : ce tbody repartait SANS ID, donc
            sur un vrai client la recherche ne trouvait plus sa liste et se
            masquait. Les ids suivent les cles : devis-tb, fact-tb, paie-tb… */
@@ -2718,7 +2728,7 @@ function toast(msg, undoFn){
           var st = stD[STD[d.ref] || d.statut] || ["Envoy\u00e9","st-envoye"];
           return '<tr><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + d.ref + '</a></td><td>' + (d.titre || "\u2014") + (d.site ? ' <span class="obsite">\u00b7 ' + d.site + '</span>' : '') + quiTag(d) + '</td><td class="amt">' + eurF(d.montant) + '</td><td>' + fd(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="rlink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 devis</th><th>Objet</th><th class="amt">Montant TTC</th><th>Date</th><th>Statut</th><th></th></tr></thead>');
-        var nd = document.getElementById("n-devis"); if(nd) nd.textContent = dv.length;
+        var nd = document.getElementById("n-devis"); if(nd){ var tbx = document.getElementById("devis-tb"); nd.textContent = tbx ? tbx.rows.length : dv.length; }
       }
 
       var fc = J("tigerflow-inbox-factures").filter(concerne);
@@ -2734,7 +2744,7 @@ function toast(msg, undoFn){
                   : late ? ["En retard","st-perdu"] : ["\u00c0 payer","st-envoye"];
           return '<tr><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + f.ref + '</a></td><td>' + (f.titre || "\u2014") + (f.site ? ' <span class="obsite">\u00b7 ' + f.site + '</span>' : '') + quiTag(f) + '</td><td class="amt">' + eurF(f.montant) + '</td><td>' + fd(f.valid || f.date) + '</td><td><span class="st ' + lbl[1] + '">' + lbl[0] + '</span></td><td><a class="rlink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
         }).join(""), '<thead><tr><th>N\u00b0 facture</th><th>Objet</th><th class="amt">Montant TTC</th><th>\u00c9ch\u00e9ance</th><th>Statut</th><th></th></tr></thead>');
-        var nf = document.getElementById("n-fact"); if(nf) nf.textContent = fc.length;
+        var nf = document.getElementById("n-fact"); if(nf){ var tbx = document.getElementById("fact-tb"); nf.textContent = tbx ? tbx.rows.length : fc.length; }
       }
       /* les paiements encaissés sur les factures du client remplissent l'onglet Paiements */
       var prows = [];
@@ -2899,6 +2909,38 @@ function toast(msg, undoFn){
       var hist = inf.querySelector(".card.full ul.hist");
       if(hist) hist.innerHTML = '<li><span class="hic" style="background:var(--green-bg)">\u2728</span><div><b>Fiche cr\u00e9\u00e9e</b><small>' + q + " vient d'arriver dans TigerFlow \u2014 son historique s'\u00e9crira ici</small></div></li>";
     }
+  } else {
+    /* 29/10 (patron : « devis créé depuis la fiche de la SCI, je ne le vois pas chez
+       Mme Perrin ») — une fiche de DÉMO gardait son tableau d'exemple et ignorait
+       les vrais devis / factures créés dans l'appli. Ils passent en tête. */
+    try{
+      var nomD = new URLSearchParams(location.search).get("c") || "";
+      var JD = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
+      var JOD = function(k){ try{ var v = JSON.parse(localStorage.getItem(k)); return (v && !Array.isArray(v) && typeof v === "object") ? v : {}; }catch(e){ return {}; } };
+      var escD = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+      var eurD = function(m){ return (+m || 0).toLocaleString("fr-FR", {minimumFractionDigits:2}) + "\u00a0\u20ac"; };
+      var fdD = function(x){ var p2 = String(x || "").split("-"); return p2.length === 3 ? p2[2] + "/" + p2[1] + "/" + p2[0] : (x || "\u2014"); };
+      var tagD = function(x){ if(x.payeur && x.payeur !== nomD) return ' <span class="obsite">\u00b7 factur\u00e9 \u00e0 ' + escD(x.payeur) + '</span>'; if(x.payeur === nomD && x.client !== nomD) return ' <span class="obsite">\u00b7 ' + escD(x.client) + '</span>'; return ""; };
+      var conc = function(x){ return x && (x.client === nomD || x.payeur === nomD); };
+      var STDd = JOD("tigerflow-devis-statuts"), STFd = JOD("tigerflow-factures-statuts");
+      var stDd = {envoye:["Envoy\u00e9","st-envoye"], gagne:["Gagn\u00e9","st-gagne"], perdu:["Perdu","st-perdu"], brouillon:["Brouillon","st-envoye"]};
+      var mets = function(tbId, rows, cnt){
+        var tb = document.getElementById(tbId); if(!tb || !rows.length) return;
+        tb.insertAdjacentHTML("afterbegin", rows.join(""));
+        var n = document.getElementById(cnt); if(n) n.textContent = tb.rows.length;
+      };
+      mets("devis-tb", JD("tigerflow-inbox-devis").filter(conc).map(function(d){
+        var st = stDd[STDd[d.ref] || d.statut] || stDd.envoye;
+        return '<tr data-ref="' + escD(d.ref) + '"><td class="ref"><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">' + escD(d.ref) + '</a></td><td>' + escD(d.titre || "\u2014") + tagD(d) + '</td><td class="amt">' + eurD(d.montant) + '</td><td>' + fdD(d.date) + '</td><td><span class="st ' + st[1] + '">' + st[0] + '</span></td><td><a class="reflink" href="devis.html?draft=' + encodeURIComponent(d.ref) + '">Ouvrir \u2192</a></td></tr>';
+      }), "n-devis");
+      var auj = new Date().toISOString().slice(0, 10);
+      mets("fact-tb", JD("tigerflow-inbox-factures").filter(conc).map(function(f){
+        var se = STFd[f.ref] || f.statut || "attente", paye = se === "payee";
+        var late = !paye && se !== "brouillon" && f.valid && f.valid < auj;
+        var lb = paye ? ["Pay\u00e9e","st-payee"] : late ? ["En retard","st-perdu"] : ["\u00c0 payer","st-envoye"];
+        return '<tr data-ref="' + escD(f.ref) + '"><td class="ref"><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">' + escD(f.ref) + '</a></td><td>' + escD(f.titre || "\u2014") + tagD(f) + '</td><td class="amt">' + eurD(f.montant) + '</td><td>' + fdD(f.valid) + '</td><td><span class="st ' + lb[1] + '">' + lb[0] + '</span></td><td><a class="reflink" href="facture-detail.html?ref=' + encodeURIComponent(f.ref) + '">Ouvrir \u2192</a></td></tr>';
+      }), "n-fact");
+    }catch(e){}
   }
 })();
 </script>

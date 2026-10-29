@@ -812,6 +812,14 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
       </div>
       <!-- 29/08 : les RELATIONS — la facture peut partir au gestionnaire,
            au syndic ou au donneur d'ordre relié sur la fiche client. -->
+      <!-- 29/10 (patron : « je crée le devis depuis la fiche de la SCI, je ne peux pas
+           le mettre chez Mme Perrin ») : quand le client choisi PAIE pour d'autres
+           fiches, on demande où on intervient. Choisir un lieu = le document passe
+           au nom du lieu, « Facturer à » = ce payeur. -->
+      <div class="objrow" id="g-vlieu" style="display:none">
+        <label class="vlab" for="v-lieu">Intervention chez</label>
+        <select class="vfld" id="v-lieu" onchange="lieuPick()"></select>
+      </div>
       <div class="objrow" id="g-vpayeur" style="display:none">
         <label class="vlab" for="v-payeur">Facturer à</label>
         <select class="vfld" id="v-payeur"></select>
@@ -1050,9 +1058,36 @@ function ensSuivreClient(){
   var cs = document.getElementById("v-client");
   /* bêta coupée : un NOUVEAU devis part sous la société. Le devis REPRIS
      garde le sien — c'est la reprise du brouillon qui le repose, plus bas. */
-  var e = ensBeta() ? ensDuClient(cs && cs.value) : null;
+  var e = (typeof ensBeta === "function" && ensBeta()) ? ensDuClient(cs && cs.value) : null;
   if(e){ ENSCUR = e; }
   if(typeof ensBtn === "function") ensBtn();
+}
+/* le client choisi paie-t-il pour d'autres fiches ? (relations sortantes) */
+function lieuPeindre(){
+  try{
+    const gl = g("g-vlieu"), sl = g("v-lieu"); if(!gl || !sl) return;
+    const nomC = g("v-client").value;
+    const REL = JSON.parse(localStorage.getItem("tigerflow-relations") || "[]");
+    const lieux = [...new Set(REL.filter(r => r && r.a === nomC && r.b).map(r => r.b))].sort((x, y) => x.localeCompare(y, "fr"));
+    if(!nomC || !lieux.length){ gl.style.display = "none"; sl.innerHTML = ""; return; }
+    sl.innerHTML = '<option value="">' + nomC.replace(/</g, "&lt;") + ' (ses propres locaux)</option>'
+      + lieux.map(l => '<option value="' + String(l).replace(/"/g, "&quot;") + '">' + l.replace(/</g, "&lt;") + '</option>').join("");
+    gl.style.display = "";
+  }catch(e){}
+}
+function lieuPick(){
+  const sl = g("v-lieu"), payeur = g("v-client").value, lieu = sl ? sl.value : "";
+  if(!lieu) return;
+  const cs = g("v-client");
+  if(![...cs.options].some(o => o.value === lieu)){ const o = document.createElement("option"); o.value = o.textContent = lieu; cs.appendChild(o); }
+  cs.value = lieu;
+  pickCli();
+  const sp = g("v-payeur");
+  if(sp){
+    if(![...sp.options].some(o => o.value === payeur)){ const o = document.createElement("option"); o.value = payeur; o.textContent = payeur; sp.appendChild(o); g("g-vpayeur").style.display = ""; }
+    sp.value = payeur;
+  }
+  if(typeof toast === "function") toast("Devis pour " + lieu + ", facturé à " + payeur);
 }
 function pickCli(){
   setTimeout(ensSuivreClient, 0);
@@ -1094,6 +1129,7 @@ function pickCli(){
       } else { gp.style.display = "none"; selp.innerHTML = ""; }
     }
   }catch(e){}
+  lieuPeindre();
   calc();
 }
 function setStat2(k, el){
