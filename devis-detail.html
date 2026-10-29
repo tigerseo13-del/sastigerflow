@@ -914,7 +914,8 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
       <!-- 29/10 (parcours bureau) : la tuile avait disparu — on ne voyait plus, sur la
            fiche du devis, quand part la prochaine relance ni comment la mettre en pause. -->
       <div class="kpi" id="k-rel-tile" hidden><div class="lbl">Relance auto</div><div class="num" id="k-rel" style="font-size:1.05rem">—</div><span class="sub" id="k-rel-sub"></span>
-        <button type="button" id="k-rel-btn" onclick="relDetTog()" style="margin-top:8px;border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;padding:6px 11px;font:700 .74rem Inter,sans-serif;color:#3D434E;cursor:pointer">⏸ Mettre en pause</button></div>
+        <button type="button" id="k-rel-btn" onclick="relDetTog()" style="margin-top:8px;border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;padding:6px 11px;font:700 .74rem Inter,sans-serif;color:#3D434E;cursor:pointer">⏸ Pause ce devis</button>
+        <button type="button" id="k-rel-ex" onclick="relDetEx()" hidden style="margin-top:8px;margin-left:6px;border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;padding:6px 11px;font:700 .74rem Inter,sans-serif;color:#3D434E;cursor:pointer">🚫 Jamais pour ce client</button></div>
     </div>
 
     <!-- onglets -->
@@ -2727,9 +2728,11 @@ document.addEventListener("click", function(e){
     var txt = [REC.titre].concat((REC.lignes || []).map(function(l){ return (l.designation || "") + " " + (l.desc || ""); })).join(" ");
     var cat = CATS.find(function(c){ return c[2].test(txt); });
     var N = document.getElementById("k-rel"), S = document.getElementById("k-rel-sub"), B = document.getElementById("k-rel-btn");
-    var pas = function(txtN, txtS, btn){ N.textContent = txtN; S.textContent = txtS || ""; B.hidden = !btn; };
-    var EX = J("tigerflow-relance-exclus", []);
-    if(EX.indexOf(qui) > -1 || EX.indexOf(REC.client) > -1) return pas("Client exclu", "« Jamais pour ce client » sur sa fiche", false);
+    var pas = function(txtN, txtS, btn){ N.textContent = txtN; S.textContent = txtS || ""; B.hidden = !btn; var bx = document.getElementById("k-rel-ex"); if(bx) bx.style.marginLeft = btn ? "6px" : "0"; };
+    var EX = J("tigerflow-relance-exclus", []), BX = document.getElementById("k-rel-ex");
+    var exclu = EX.indexOf(qui) > -1 || EX.indexOf(REC.client) > -1;
+    if(BX){ BX.hidden = !qui; BX.textContent = exclu ? "▶ Réactiver ce client" : "🚫 Jamais pour ce client"; BX.title = exclu ? "Les devis de " + qui + " seront de nouveau relancés" : "Plus aucun devis de " + qui + " ne sera relancé automatiquement"; }
+    if(exclu) return pas("Client exclu", "aucun devis de " + qui + " n'est relancé", false);
     if(ON[pub] === false) return pas("Coupée", "relance coupée pour ce type de client", false);
     if(cat && RC[cat[0]] && RC[cat[0]].off) return pas("Pas de relance", "règle « Par nuisible » : " + cat[1], false);
     if((+G.plancher || 0) > 0 && (+REC.montant || 0) < +G.plancher) return pas("Pas de relance", "devis sous " + G.plancher + " € HT", false);
@@ -2744,7 +2747,7 @@ document.addEventListener("click", function(e){
     var can = [x.mail ? "email" : "", x.sms ? "SMS" : ""].filter(Boolean).join(" + ") || "aucun canal";
     var qtxt = q.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"});
     pas((k + 1) + "/" + seq.length + " le " + qtxt, can + (x.rem ? " · −" + x.rem + " %" : ""), true);
-    B.textContent = "⏸ Mettre en pause";
+    B.textContent = "⏸ Pause ce devis";
     /* 29/10 : la tuile « État » ne pousse plus à relancer à la main quand la machine s'en charge */
     var ke = document.getElementById("k-etat"), ks = document.getElementById("k-etat-sub");
     if(ke && /relancer|Relancer le client/.test(ke.textContent)){
@@ -2758,6 +2761,18 @@ document.addEventListener("click", function(e){
     try{ localStorage.setItem("tigerflow-relance-devis-v2-pause", JSON.stringify([...P])); }catch(e){}
     relDetPaint();
     if(typeof toast === "function") toast(P.has(ref) ? "⏸ Relances en pause pour " + ref : "▶ Relances reprises pour " + ref);
+  };
+  /* 29/10 (patron, choix A + C) : exclure le client depuis le devis — même réglage
+     que « Ne plus relancer ses devis » dans le menu ⋯ de la fiche client. */
+  window.relDetEx = function(){
+    var qui = REC.payeur || REC.client || ""; if(!qui) return;
+    var EX = J("tigerflow-relance-exclus", []);
+    var exclu = EX.indexOf(qui) > -1 || EX.indexOf(REC.client) > -1;
+    EX = EX.filter(function(n){ return n !== qui && n !== REC.client; });
+    if(!exclu) EX.push(qui);
+    try{ localStorage.setItem("tigerflow-relance-exclus", JSON.stringify(EX)); }catch(e){}
+    relDetPaint();
+    if(typeof toast === "function") toast(exclu ? "▶ " + qui + " : relances automatiques actives" : "⏸ " + qui + " : plus aucune relance automatique");
   };
   var go = function(){ setTimeout(relDetPaint, 50); setTimeout(relDetPaint, 500); };
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();

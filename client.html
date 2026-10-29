@@ -4352,7 +4352,7 @@ document.addEventListener("click", function(e){
 
 <script>
 /* 29/10 (patron : « on décide de ne pas activer la relance sur ce client ») —
-   « Relance auto des devis : Oui / Jamais pour ce client », dans la carte Contacts.
+   « Ne plus relancer ses devis », dans le menu ⋯ de la fiche (et sur la fiche du devis).
    Clé tigerflow-relance-exclus (liste de noms), lue par la liste des devis, la fiche
    du devis et la page Relance devis. La règle vaut pour les devis où ce client est
    le lieu OU celui qui paie. */
@@ -4361,15 +4361,18 @@ document.addEventListener("click", function(e){
   if(!nom) return;
   var K = "tigerflow-relance-exclus";
   var lire = function(){ try{ return JSON.parse(localStorage.getItem(K) || "[]"); }catch(e){ return []; } };
+  /* 29/10 (patron, choix A + C) : le réglage vit dans le menu ⋯ de la fiche
+     (à côté de « Couper les notifications ») et sur la fiche du devis. */
   var peindre = function(){
-    var cl = document.getElementById("clist"); if(!cl) return;
-    var card = cl.closest(".card"); if(!card) return;
-    var el = document.getElementById("relex");
-    if(!el){ el = document.createElement("div"); el.id = "relex"; el.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid #F0F1F5;font:700 .78rem Inter,sans-serif;color:var(--ink-2)"; card.appendChild(el); }
+    var m = document.getElementById("cmenu"); if(!m) return;
     var ex = lire().indexOf(nom) > -1;
-    var bt = function(on, txt, v){ return '<button type="button" onclick="relexSet(' + v + ')" style="border:0;padding:6px 11px;font:700 .74rem Inter,sans-serif;cursor:pointer;background:' + (on ? "#EEF2F8" : "#fff") + ';color:' + (on ? "#1E3350" : "#6B7280") + '">' + txt + '</button>'; };
-    el.innerHTML = '<span style="flex:1;min-width:150px">Relance auto des devis<small style="display:block;font-weight:500;color:var(--muted);font-size:.7rem">' + (ex ? "aucun devis de ce client n'est relancé automatiquement" : "ses devis envoyés suivent la séquence") + '</small></span>'
-      + '<span style="display:inline-flex;border:1.5px solid #E2E5EB;border-radius:9px;overflow:hidden">' + bt(!ex, "Oui", "false") + bt(ex, "Jamais pour ce client", "true") + '</span>';
+    var b = document.getElementById("relex-mi");
+    if(!b){ b = document.createElement("button"); b.id = "relex-mi"; b.type = "button";
+      var sep = m.querySelector(".csep"); m.insertBefore(b, sep || null); }
+    b.onclick = function(){ if(typeof cliMenuClose === "function") cliMenuClose(); relexSet(!lire().some(function(n){ return n === nom; })); };
+    b.innerHTML = ex
+      ? '<svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg> Relancer à nouveau ses devis'
+      : '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg> Ne plus relancer ses devis';
   };
   window.relexSet = function(jamais){
     var L = lire().filter(function(n){ return n !== nom; });
