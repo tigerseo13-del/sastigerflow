@@ -1277,9 +1277,10 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
 .relchip.on{background:#EEF2F8;border-color:#1E3350;color:#1E3350;
   box-shadow:0 0 0 3px rgba(30,51,80,.12)}.rcourt{display:none}#relcard.relmini .rlong{display:none}#relcard.relmini .rcourt{display:inline}#relcard .rtitl{display:none}/* 02/09 : la carte vit maintenant TOUJOURS dans la colonne etroite (319px) — le sous-titre « syndic, proprietaire, donneur d'ordre » y passait sur 3 lignes et poussait le compteur. Il est explique dans le corps de la carte vide, il n'a plus a etre dans le titre. */#relcard.relmini #rel-list{padding:8px 0 12px}</style>
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:12px;padding:12px 0 14px;align-items:center">
-          <span style="position:relative;flex:1 1 190px;max-width:250px"><input id="rel-qui" placeholder="Tape le nom du client…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
-          <span id="rel-typ" style="display:flex;gap:6px;flex-wrap:wrap"></span>
-          <span style="flex:1 1 100%;font:600 .72rem Inter,sans-serif;color:var(--muted);line-height:1.45">Ex. : le propriétaire paie pour son locataire · la SCI paie pour M. Durand · le syndic gère la résidence.</span>
+          <div id="rel-q" style="flex:1 1 100%;font:800 .9rem Inter,sans-serif;color:var(--ink);margin-bottom:-4px">Qui paie pour ce client ?</div>
+          <span style="position:relative;flex:1 1 100%"><button type="button" id="rel-clr" onclick="relPasLui(event)" title="Effacer" aria-label="Effacer" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:1;width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:#9AA1AE;font:700 15px Inter,sans-serif;cursor:pointer">✕</button><input id="rel-qui" placeholder="Nom du payeur…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 38px 11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
+          <span style="flex:1 1 100%;display:flex;align-items:center;gap:10px"><span id="rel-cest" style="flex:none;font:700 .8rem Inter,sans-serif;color:var(--ink-2)">C'est</span>
+          <span id="rel-typ" style="flex:1;min-width:0"></span></span>
           <span id="rel-immw" style="display:none"><select id="rel-imm" style="border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff;max-width:230px"></select></span>
           <span id="rel-adrw" style="display:none;flex:1 1 100%;gap:12px;flex-wrap:wrap;align-items:center">
             <input id="rel-siret" placeholder="SIRET — remplit l'adresse tout seul" autocomplete="off" inputmode="numeric" style="flex:1 1 210px;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
@@ -1289,8 +1290,8 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
             <input id="rel-tel" placeholder="Téléphone" autocomplete="off" inputmode="tel" style="flex:1 1 120px;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
             <input id="rel-mail" placeholder="E-mail" autocomplete="off" inputmode="email" style="flex:1 1 170px;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff">
           </span>
-          <div id="rel-ph" style="display:none;flex:1 1 100%;font:600 .8rem Inter,sans-serif;color:var(--ink-2);background:#FFF8F3;border:1px solid #F3E3D3;border-radius:8px;padding:8px 11px"></div>
-          <div style="flex:1 1 100%;display:flex;gap:8px;justify-content:flex-end">
+          <div id="rel-ph" style="display:none;flex:1 1 100%;font:500 .82rem Inter,sans-serif;color:var(--ink-2);background:#F4F6F9;border-radius:9px;padding:10px 12px;line-height:1.5"></div>
+          <div style="flex:1 1 100%;display:flex;gap:8px;justify-content:flex-end;align-items:center">
             <button onclick="relStop()" style="border:1.5px solid #E2E5EB;border-radius:9px;background:#fff;color:var(--ink-2);font:700 .78rem Inter,sans-serif;padding:8px 12px;cursor:pointer">Annuler</button>
             <button onclick="relSave()" style="border:0;border-radius:9px;background:var(--orange);color:#fff;font:800 .78rem Inter,sans-serif;padding:9px 16px;cursor:pointer">Relier</button>
           </div>
@@ -3742,7 +3743,9 @@ document.addEventListener("click", function(e){
     relLayout();
   }
   window.relDel = function(i){ var R = lire(); R.splice(i, 1); localStorage.setItem(K, JSON.stringify(R)); paint(); };
-  window.relStop = function(){ document.getElementById("rel-form").style.display = "none"; var ab = document.getElementById("rel-add"); if(ab) ab.hidden = false; };
+  window.relStop = function(){ document.getElementById("rel-form").style.display = "none"; var ab = document.getElementById("rel-add"); if(ab) ab.hidden = false; var rl0 = document.getElementById("rel-list"); if(rl0) rl0.style.display = ""; };
+  /* « Ce n'est pas lui qui paie ? » : on vide la case et on recommence */
+  window.relPasLui = function(e){ if(e) e.preventDefault(); var i = document.getElementById("rel-qui"); if(!i) return; i.value = ""; NEWF = ""; var aw = document.getElementById("rel-adrw"); if(aw) aw.style.display = "none"; relPhrase(); if(typeof quiPanel === "function") quiPanel(); i.focus(); };
   /* ── 29/08 (« SA FAUX PAS UNE BARRE DE RECHERCHE ? » + « TU PEUX SIMPLIFIER SA ???? »)
      La nouvelle manière : une RECHERCHE qui filtre en tapant (comme la liste
      produit), TROIS choix seulement — syndic / propriétaire / donneur d'ordre —
@@ -3774,17 +3777,29 @@ document.addEventListener("click", function(e){
     pan.innerHTML = head + list.map(function(q){ return '<div class="relqi" data-v="' + escA(q) + '">' + esc(q) + '</div>'; }).join("");
     pan.hidden = false;
   }
+  /* 29/10 (patron : « c'est dur à comprendre ») : les boutons disent qui est
+     l'AUTRE pour ce client — « son syndic / gérant »… — et sur une fiche
+     « chef » (syndic, SCI déjà reliée), ce que CETTE fiche est pour le lieu. */
+  var TYPin  = {gere: "son syndic / gérant", possede: "son propriétaire / sa société", ordonne: "son donneur d'ordre"};
+  var TYPout = {gere: "le syndic / gérant", possede: "le propriétaire / la société", ordonne: "le donneur d'ordre"};
   function relTypPaint(){
     var w = document.getElementById("rel-typ"); if(!w) return;
-    w.innerHTML = TYP.map(function(x){ return '<button type="button" class="relchip' + (x[0] === TSEL ? " on" : "") + '" onclick="relTyp(\'' + x[0] + '\')">' + x[1] + '</button>'; }).join("");
+    var LB = SENS === "in" ? TYPin : TYPout;
+    var ce = document.getElementById("rel-cest"); if(ce) ce.textContent = SENS === "in" ? "C'est" : "Il en est";
+    /* 29/10 (patron : « le design en 4 lignes c'est pas ouf ») : UNE ligne — un menu
+       déroulant au lieu de 3 boutons empilés dans la colonne étroite. */
+    w.innerHTML = '<select id="rel-tsel" onchange="relTyp(this.value)" style="width:100%;border:1.5px solid #E2E5EB;border-radius:9px;padding:10px 11px;font:700 .8rem Inter,sans-serif;color:var(--navy,#1E3350);background:#fff;cursor:pointer">'
+      + TYP.map(function(x){ return '<option value="' + x[0] + '"' + (x[0] === TSEL ? " selected" : "") + '>' + (LB[x[0]] || x[1]) + '</option>'; }).join("") + '</select>';
+    return;
+    w.innerHTML = TYP.map(function(x){ x = [x[0], LB[x[0]] || x[1]]; return '<button type="button" class="relchip' + (x[0] === TSEL ? " on" : "") + '" onclick="relTyp(\'' + x[0] + '\')">' + x[1] + '</button>'; }).join("");
   }
   function relPhrase(){
     var ph = document.getElementById("rel-ph"); if(!ph) return;
     var qui = quiRes();
     if(!qui){ ph.style.display = "none"; return; }
     var chef = SENS === "in" ? qui : nom, de = SENS === "in" ? nom : qui;
-    ph.innerHTML = '<b>' + esc(chef) + '</b> ' + (MOT[TSEL] ? 'est ' + MOT[TSEL] + ' de' : 'paie pour') + ' <b>' + esc(de) + '</b>'
-      + ' <a href="#" onclick="relSens(event)" style="color:var(--orange);font-weight:800;text-decoration:none;margin-left:8px">⇄ Inverser</a>';
+    /* 29/10 : la phrase dit CE QUI VA SE PASSER, plus le lien en jargon */
+    ph.innerHTML = '<span style="color:#047857;font-weight:800">✓</span> Les devis et factures de <b>' + esc(de) + '</b> partiront au nom de <b>' + esc(chef) + '</b>.';
     ph.style.display = "";
   }
   window.relTyp = function(t){ TSEL = t; relTypPaint(); relPhrase(); relImm(); };
@@ -3807,6 +3822,10 @@ document.addEventListener("click", function(e){
     var typF = ""; try{ (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).forEach(function(c){ if(c && c.nom === nom && !typF) typF = c.type || ""; }); }catch(e2){}
     SENS = (typF === "syndic" || lire().some(function(z){ return z.a === nom; })) ? "out" : "in";
     TSEL = SENS === "out" ? "gere" : "possede";
+    var qq = document.getElementById("rel-q"), inq = document.getElementById("rel-qui");
+    if(qq) qq.textContent = SENS === "in" ? "Qui paie pour " + nom + " ?" : (typF === "syndic" ? "Quel lieu gère " + nom + " ?" : "Pour quel client " + nom + " paie ?");
+    if(inq) inq.placeholder = SENS === "in" ? "Nom du payeur…" : "Nom du lieu ou du client…";
+    var rl0 = document.getElementById("rel-list"); if(rl0 && !lire().some(function(z){ return z.a === nom || z.b === nom; })) rl0.style.display = "none";
     var inp = document.getElementById("rel-qui"); if(inp) inp.value = "";
     NEWF = "";
     var aw0 = document.getElementById("rel-adrw"); if(aw0) aw0.style.display = "none";
