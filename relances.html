@@ -280,7 +280,26 @@ ul{list-style:none}
 .vrow .jbx:hover{border-color:#DDE1EA;box-shadow:0 16px 36px -20px rgba(23,26,32,.22)}
 .vrow .jbx.on{border-color:#F0BCA4;background:#FFFDFB;box-shadow:0 0 0 4px rgba(242,103,34,.09),0 16px 38px -20px rgba(234,74,16,.24)}
 .vt{font:800 .92rem 'Sora',sans-serif;color:var(--ink)}
-.vt small{display:block;font:600 .73rem Inter,sans-serif;color:#8A8F9E;margin-top:3px}
+.vt small{display:block;font:600 .73rem Inter,sans-serif;color:#8A8F9E;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt{flex:1;min-width:0}
+.vrow .jbx{min-width:0}
+.vrow .jbx .jch{flex:none;gap:6px}
+.vrow .jbx .rchk{padding:5px 10px!important;min-width:0!important;width:auto!important;font-size:.72rem!important}
+.vrow .jbx{gap:14px}
+/* 29/10 : la semaine à venir */
+.rweek{margin-bottom:16px;border:1px solid #ECEDF2;border-radius:14px;background:#fff;padding:13px 15px}
+.rweek .wr{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #F4F5F8;font-size:.8rem}
+.rweek .wr:first-of-type{border-top:0}
+.rweek .wd{flex:none;width:78px;font-weight:700;color:var(--ink-2)}
+.rweek .wc{flex:1;min-width:0;font-weight:800}
+.rweek .wc small{display:block;font-weight:500;color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rweek .wp{font-size:.66rem;font-weight:800;border-radius:99px;padding:3px 9px;background:#EEF2FF;color:#3B4FD8}
+.rweek .wp.s{background:#E7F8EE;color:#0E7A54}
+.rweek .wb{border:1.5px solid var(--line);border-radius:8px;background:#fff;padding:5px 10px;font:700 .72rem Inter,sans-serif;color:var(--ink-2);cursor:pointer}
+.rweek .wr.pz{opacity:.55}
+.rmore summary{cursor:pointer;font:700 .8rem Inter,sans-serif;color:var(--ink-2);list-style:none;display:flex;justify-content:space-between}
+.rmore summary::-webkit-details-marker{display:none}
+.rmore[open] summary{margin-bottom:8px}
 .jbx .jrm{display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:800;color:var(--ink-2)}
 .jbx .jrm input{width:52px;border:1.5px solid #E9EBF0;border-radius:9px;padding:7px 4px;font-size:.92rem;font-family:'Sora';font-weight:800;font-variant-numeric:tabular-nums;text-align:center;background:#FAFBFD;color:var(--ink);transition:.14s}
 .jbx .jrm input:focus{outline:none;border-color:var(--orange);background:#fff;box-shadow:0 0 0 3px rgba(242,103,34,.10)}
@@ -656,12 +675,12 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
     <div class="relwrap">
       <!-- gauche : les 3 séquences -->
       <div class="card" style="margin-bottom:0">
+        <div class="rweek" id="rel-week"></div>
         <div id="rel-steps"></div>
         <!-- 18/08 (patron, GO 1-2-3) : les deux garde-fous qui protègent
              l'argent et l'image — plafond de remise auto, fenêtre d'envoi. -->
         <div class="rgard" id="rel-garde"></div>
-        <div class="rav" id="rel-avance"></div>
-        <div class="rsim" id="rel-sim"></div>
+        <details class="rav rmore" id="rel-avance"></details>
         <p class="rtip">💡 Conseil de vente : garde le premier rappel <b>sans remise</b> — beaucoup signent juste parce qu'on leur rappelle. La remise est ta dernière carte, pas la première. Et <b>devis par devis</b> : clique le badge 🔁 d'un devis dans la liste pour mettre SES relances en pause (le client qui a dit « je réfléchis »).</p>
         <button class="rok" onclick="relSave();toast('🔁 Séquence enregistrée — appliquée aux devis en attente')">Enregistrer la séquence</button>
       </div>
@@ -676,6 +695,7 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
         <div class="ptabs" id="rel-tabs"></div>
         <div id="rel-pane"></div>
         <p class="prevnote">Cliquez une étape à gauche, puis l'onglet du canal : son message s'affiche ici et suit vos réglages — délai, remise (affichée seulement si vous en donnez une). <b>« ✎ Modifier ce texte »</b> pour écrire le vôtre, <b>« ↺ Texte d'origine »</b> pour revenir.</p>
+        <div class="rsim" id="rel-sim"></div>
       </div>
     </div>
   </div>
@@ -953,6 +973,9 @@ function relRemiseAuto(g, i){ return relRemEff(g, i, +RELCAS[g].mnt || 0); }
 const RAVKEY = "tigerflow-relance-avance-v1";
 let RAV = {prixMin: 0, grosSeuil: 1000, grosRem: 10, douce: 0, libelle: "Remise commerciale", sign: true, notif: "", exped: [], simPrix: 1000};
 try{ const sv = JSON.parse(localStorage.getItem(RAVKEY)); if(sv && typeof sv === "object") RAV = Object.assign(RAV, sv); }catch(e){}
+/* 29/10 (patron, GO « simplifie ») : « prix minimum après remise » et « remise douce »
+   RETIRÉS de l'écran (doublons qui embrouillaient). Forcés à 0 : sans effet. */
+RAV.prixMin = 0; RAV.douce = 0;
 function ravSave(){ try{ localStorage.setItem(RAVKEY, JSON.stringify(RAV)); }catch(e){} }
 /* la remise de l'étape AVANT les garde-fous de montant (sert à la remise douce) */
 function relRemBrute(g, i){
@@ -996,25 +1019,9 @@ function ravExpDel(n){ const was = RAV.exped[n] && RAV.exped[n].def; RAV.exped.s
 function relAvanceRender(){
   const el = document.getElementById("rel-avance"); if(!el) return;
   const esc = t => String(t || "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const ouvert = el.open;
   el.innerHTML = `
-    <div class="rgh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages avancés</div>
-    <div class="rgs">La remise, la signature et les expéditeurs — réglés une fois pour toutes les séquences.</div>
-    <div class="rgrow">
-      <span class="rgl">Prix minimum après remise<small>La remise ne fait jamais passer un devis sous ce prix. Mets 0 pour ne pas en avoir.</small></span>
-      <span class="rgi"><input type="number" inputmode="decimal" min="0" step="10" value="${RAV.prixMin}" onchange="ravSet('prixMin', this.value)">€ HT</span>
-    </div>
-    <div class="rgrow">
-      <span class="rgl">Remise réduite pour les gros devis<small>Au-dessus de ce montant, la remise est plafonnée. Au-dessus du garde-fou (${relEur(RGARDE.plafond)}), il n'y a plus de remise du tout.</small></span>
-      <span class="rgi">au plus <input type="number" inputmode="decimal" min="0" max="50" value="${RAV.grosRem}" onchange="ravSet('grosRem', this.value)">% au-dessus de <input type="number" inputmode="decimal" min="0" step="100" value="${RAV.grosSeuil}" onchange="ravSet('grosSeuil', this.value)">€ HT</span>
-    </div>
-    <div class="rgrow">
-      <span class="rgl">Dernière relance : remise douce<small>La dernière relance baisse seulement de ce % par rapport au prix de la précédente. 0 = elle garde sa propre remise.</small></span>
-      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="50" value="${RAV.douce}" onchange="ravSet('douce', this.value)">% du prix précédent</span>
-    </div>
-    <div class="rgrow">
-      <span class="rgl">Libellé sur le devis<small>Le nom de la ligne de remise ajoutée au devis quand le client signe avec la remise.</small></span>
-      <span class="rgi"><input type="text" maxlength="40" value="${esc(RAV.libelle)}" onchange="ravSet('libelle', this.value)"></span>
-    </div>
+    <summary><span>Plus d'options <small style="font-weight:600;color:var(--muted)">— signature, devis signés, expéditeurs e-mail, libellé</small></span><span>${ouvert ? "▾" : "›"}</span></summary>
     <div class="rgrow">
       <span class="rgl">Signature électronique<small>Avec : chaque relance porte le lien pour signer en ligne. Sans : le PDF du devis reste joint, le client répond par e-mail.</small></span>
       <span class="rgi"><span class="seg"><button class="${RAV.sign ? "" : "on"}" onclick="ravSet('sign', false)">Sans lien</button><button class="${RAV.sign ? "on" : ""}" onclick="ravSet('sign', true)">Avec lien de signature</button></span></span>
@@ -1029,8 +1036,67 @@ function relAvanceRender(){
         ${RAV.exped.length ? RAV.exped.map((e, n) => `<div class="e"><span style="cursor:pointer" onclick="ravExpDef(${n})">${esc(e.m)}</span>${e.def ? '<span class="d">par défaut</span>' : ""}<a onclick="ravExpDel(${n})">Retirer</a></div>`).join("") : '<div style="font-size:.74rem;color:var(--muted)">Aucune adresse : les relances partent de l\'e-mail de la société (Réglages).</div>'}
         <span class="rgi" style="margin-top:2px"><input type="email" id="rav-exp-new" placeholder="nouvelle@adresse.fr" onkeydown="if(event.key==='Enter')ravExpAdd()"><button class="seg" style="border:1.5px solid #1E3350;background:#1E3350;color:#fff;padding:7px 12px;font:700 .74rem Inter,sans-serif;border-radius:9px;cursor:pointer" onclick="ravExpAdd()">+ Ajouter</button></span>
       </div>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Libellé de la remise sur le devis<small>Le nom de la ligne ajoutée au devis quand le client signe avec la remise.</small></span>
+      <span class="rgi"><input type="text" maxlength="40" value="${esc(RAV.libelle)}" onchange="ravSet('libelle', this.value)"></span>
     </div>`;
+  if(ouvert) el.open = true;
+  if(!el._tg){ el._tg = 1; el.addEventListener("toggle", () => { const sp = el.querySelector("summary > span:last-child"); if(sp) sp.textContent = el.open ? "▾" : "›"; }); }
   relSimRender();
+  relWeekRender();
+}
+/* ═══ 29/10 (patron, GO) : « CETTE SEMAINE : X RELANCES PRÉVUES » ═══
+   Les devis envoyés et non signés, leur prochaine relance dans les 7 jours,
+   avec le canal et la remise réellement envoyée. ⏸ = même pause que le badge
+   🔁 de la liste des devis (clé tigerflow-relance-devis-v2-pause). */
+const PAUSEK = RELKEY + "-pause";
+function relPausedSet(){ try{ return new Set(JSON.parse(localStorage.getItem(PAUSEK) || "[]")); }catch(e){ return new Set(); } }
+function relWeekPause(ref){
+  const P = relPausedSet();
+  if(P.has(ref)){ P.delete(ref); toast("▶️ Relances reprises pour " + ref); } else { P.add(ref); toast("⏸ Relances en pause pour " + ref); }
+  try{ localStorage.setItem(PAUSEK, JSON.stringify([...P])); }catch(e){}
+  relWeekRender();
+}
+function relWeekRender(){
+  const el = document.getElementById("rel-week"); if(!el) return;
+  const J = k => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? null : v; }catch(e){ return null; } };
+  const box = J("tigerflow-inbox-devis") || [], stx = J("tigerflow-devis-statuts") || {}, dts = J("tigerflow-devis-dates") || {};
+  const fiches = (J("tigerflow-inbox-clients") || []).concat(J("tigerflow-clients-cache") || []);
+  const typeDe = n => { const c = fiches.find(z => z && z.nom === n); return c ? String(c.type || "").toLowerCase() : ""; };
+  const pubDe = n => { const t = typeDe(n); return t === "syndic" ? "syn" : t === "particulier" ? "part" : t ? "pro" : (/syndic|copropri|r[ée]sidence/i.test(n) ? "syn" : "part"); };
+  const P = relPausedSet();
+  const auj = new Date(); auj.setHours(0, 0, 0, 0);
+  const fin = new Date(auj); fin.setDate(fin.getDate() + 7);
+  const JF = ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
+  const lignes = [];
+  box.forEach(d => {
+    if(!d || !d.ref) return;
+    if((stx[d.ref] || d.statut) !== "envoye") return;
+    const qui = d.payeur || d.client || "";
+    const pub = pubDe(qui);
+    if(!RELON[pub]) return;
+    const mnt = +d.montant || 0;
+    if(RGARDE.plancher > 0 && mnt < RGARDE.plancher) return;
+    const d0 = new Date(((dts[d.ref] || {}).envoye || d.date || "") + "T00:00:00"); if(isNaN(d0)) return;
+    const seq = REL[pub] || [];
+    seq.forEach((st, i) => {
+      const q = new Date(d0); q.setDate(q.getDate() + (+st.j || 0));
+      /* jours ouvrés : un samedi / dimanche glisse au lundi, comme l'envoi réel */
+      if(RGARDE.ouvres){ while(q.getDay() === 0 || q.getDay() === 6) q.setDate(q.getDate() + 1); }
+      if(q < auj || q >= fin) return;
+      const R = relRemEff(pub, i, mnt / 1.2);
+      lignes.push({q, d, qui, i, n: seq.length, st, R, pz: P.has(d.ref)});
+    });
+  });
+  lignes.sort((a, b) => a.q - b.q);
+  const esc = t => String(t || "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  el.innerHTML = `<div class="rgh"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Cette semaine : ${lignes.length} relance${lignes.length > 1 ? "s" : ""} prévue${lignes.length > 1 ? "s" : ""} <small style="font:600 .7rem Inter,sans-serif;color:var(--muted)">— dans l'ordre d'envoi</small></div>`
+    + (lignes.length ? lignes.map(x => `<div class="wr${x.pz ? " pz" : ""}"><span class="wd">${JF[x.q.getDay()]} ${String(x.q.getDate()).padStart(2, "0")}/${String(x.q.getMonth() + 1).padStart(2, "0")}</span>
+        <span class="wc">${esc(x.qui)}<small>${esc(x.d.titre || x.d.ref)} · ${relEur(+x.d.montant || 0)} · ${x.i === x.n - 1 ? "dernière relance" : (x.i + 1) + (x.i === 0 ? "ʳᵉ" : "ᵉ") + " relance"}${x.R > 0 ? " · −" + String(x.R).replace(".", ",") + " %" : ""}${x.pz ? " · en pause" : ""}</small></span>
+        ${x.st.mail ? '<span class="wp">Email</span>' : ""}${x.st.sms ? '<span class="wp s">SMS</span>' : ""}
+        <button class="wb" onclick="relWeekPause('${esc(x.d.ref)}')">${x.pz ? "▶ Reprendre" : "⏸ Pause"}</button></div>`).join("")
+      : `<div style="font-size:.76rem;color:var(--muted);padding:4px 0">Aucune relance dans les 7 prochains jours. Les devis envoyés et non signés apparaissent ici.</div>`);
 }
 /* le SIMULATEUR : le prix envoyé à chaque relance, pour un devis de X € HT,
    sur la séquence affichée — avec TOUS les garde-fous appliqués */
@@ -1254,7 +1320,6 @@ function relSteps(list, key){
         <span class="jch">
           <label class="rchk k-mail" title="${st.mail ? "L'e-mail part à cette étape — cliquer pour le couper" : "E-mail coupé à cette étape — cliquer pour l'allumer"}"><input type="checkbox" ${st.mail ? "checked" : ""} onchange="REL.${key}[${i}].mail=this.checked;relSave();relPrev()">${ICO_MAIL}Email</label>
           <label class="rchk k-sms" title="${st.sms ? "Le SMS part à cette étape — cliquer pour le couper" : "SMS coupé à cette étape — cliquer pour l'allumer"}"><input type="checkbox" ${st.sms ? "checked" : ""} onchange="REL.${key}[${i}].sms=this.checked;relSave();relPrev()">SMS</label>
-          <label class="rchk k-wa" title="${st.wa ? "WhatsApp part à cette étape (même texte que le SMS) — cliquer pour le couper" : "WhatsApp coupé à cette étape — cliquer pour l'allumer (même texte que le SMS)"}"><input type="checkbox" ${st.wa ? "checked" : ""} onchange="REL.${key}[${i}].wa=this.checked;relSave();relPrev()">WhatsApp</label>
         </span>
         ${list.length > 1 ? `<button class="jdel" title="Retirer cette relance" onclick="relDel('${key}',${i},event)">✕</button>` : ""}
       </div>
@@ -1304,30 +1369,42 @@ const RELSOUS = {
    machine s'interdit — le plafond de remise et la fenêtre d'envoi. */
 function relGardeRender(){
   const el = document.getElementById("rel-garde"); if(!el) return;
-  const remisesAuto = ["part","pro","syn"].reduce((a, k) => a + REL[k].filter(x => +x.rem > 0).length, 0);
+  const e0 = n => relEur(n).replace(",00", "");
+  /* 29/10 (patron, GO) : UN seul encadré « Remises et horaires » (avant : Garde-fous
+     + Réglages avancés qui se marchaient dessus), et la phrase « En clair » qui dit
+     quelle règle gagne. */
+  const P = RGARDE.plafond, G = RAV.grosSeuil, GR = RAV.grosRem, M = RGARDE.plancher;
+  const clair = [
+    M > 0 ? "les devis de moins de " + e0(M) + " HT ne sont pas relancés" : "tous les devis sont relancés",
+    (G > 0 && (!P || G < P)) ? "jusqu'à " + e0(G) + " la remise de la séquence s'applique" : "la remise de la séquence s'applique",
+    (G > 0 && (!P || G < P)) ? (P ? "de " + e0(G) + " à " + e0(P) : "au-dessus de " + e0(G)) + " elle est limitée à " + GR + " %" : "",
+    P > 0 ? "au-delà de " + e0(P) + ", aucune remise" : "",
+    RGARDE.ouvres ? "envois du lundi au vendredi, de " + RGARDE.h1 + " h à " + RGARDE.h2 + " h" : "envois tous les jours, de " + RGARDE.h1 + " h à " + RGARDE.h2 + " h"
+  ].filter(Boolean).join(" · ");
   el.innerHTML = `
-    <div class="rgh"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Garde-fous</div>
-    <div class="rgs">Ce que la machine <b>ne fera jamais</b> toute seule — deux réglages qui protègent la marge et l'image.</div>
+    <div class="rgh"><svg viewBox="0 0 24 24"><path d="M20.6 13.4L12 22l-9-9V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.4"/></svg>Remises et horaires</div>
     <div class="rgrow">
-      <span class="rgl">Pas de remise automatique au-dessus de
-        <small>${remisesAuto} étape${remisesAuto > 1 ? "s" : ""} de la séquence offre${remisesAuto > 1 ? "nt" : ""} une remise. Au-delà du plafond, le message part <b>sans remise</b> : sur un gros devis, le geste commercial reste une décision humaine.</small></span>
-      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="100000" step="100" value="${RGARDE.plafond}" onchange="rgSet('plafond', this.value)">€ HT</span>
+      <span class="rgl">Pas de remise sur les devis de plus de</span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="100000" step="100" value="${P}" onchange="rgSet('plafond', this.value)">€ HT</span>
     </div>
     <div class="rgrow">
-      <span class="rgl">Pas de relance en dessous de
-        <small>Courir après un petit devis coûte plus qu'il ne rapporte — SMS, temps, image. Sous ce montant, le devis <b>n'entre pas dans la séquence</b> : tu le relances à la main si tu y tiens. Mets 0 pour tout relancer.</small></span>
-      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="100000" step="10" value="${RGARDE.plancher}" onchange="rgSet('plancher', this.value)">€ HT</span>
+      <span class="rgl">Au-dessus de <span class="rgi" style="margin:0 4px"><input type="number" inputmode="decimal" min="0" step="100" value="${G}" onchange="ravSet('grosSeuil', this.value)">€ HT</span>, remise maximum</span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="50" value="${GR}" onchange="ravSet('grosRem', this.value)">%</span>
     </div>
     <div class="rgrow">
-      <span class="rgl">Envoyer seulement pendant les heures ouvrables
-        <small>Un SMS le dimanche à 7 h, c'est un client agacé. Hors fenêtre, l'envoi glisse au <b>prochain jour ouvré</b> — les jalons ci-dessus affichent déjà la date réelle.</small></span>
-      <label class="rgsw"><input type="checkbox" ${RGARDE.ouvres ? "checked" : ""} onchange="rgSet('ouvres', this.checked)">Jours ouvrés</label>
+      <span class="rgl">Ne pas relancer les devis de moins de</span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="100000" step="10" value="${M}" onchange="rgSet('plancher', this.value)">€ HT</span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Envoyer seulement en semaine</span>
+      <label class="rgsw"><input type="checkbox" ${RGARDE.ouvres ? "checked" : ""} onchange="rgSet('ouvres', this.checked)">Lun.–ven.</label>
       <span class="rgi">de
         <select onchange="rgSet('h1', this.value)">${[7,8,9,10,11].map(h => `<option value="${h}"${RGARDE.h1 === h ? " selected" : ""}>${h} h</option>`).join("")}</select>
         à
         <select onchange="rgSet('h2', this.value)">${[16,17,18,19,20].map(h => `<option value="${h}"${RGARDE.h2 === h ? " selected" : ""}>${h} h</option>`).join("")}</select>
       </span>
-    </div>`;
+    </div>
+    <div class="rgs" style="margin:10px 0 0;background:#F4F6F9;border-radius:10px;padding:10px 12px;color:var(--ink-2);font-size:.76rem"><b style="color:#0E7A54">✓ En clair :</b> ${clair}.</div>`;
 }
 function rgSet(k, v){
   if(k === "ouvres") RGARDE.ouvres = !!v;
