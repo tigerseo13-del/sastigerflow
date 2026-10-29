@@ -3775,8 +3775,10 @@ document.addEventListener("click", function(e){
       else if(r.a === nom) sort.push([r, i]);
     });
     /* fiche du locataire : « Géré par FONCIA \u2192 · Résidence Les Lilas » */
-    var aDef = entr.some(function(p2){ return p2[0].def; });
-    entr.forEach(function(p2){ var st = aDef ? !!p2[0].def : entr.length === 1; h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site, p2[0].t, true, st); });
+    /* 29/10 (patron : « on ne peut pas enlever l'étoile ») : def === true = ★ choisie ;
+       def === false = ★ retirée volontairement ; absent = ★ d'office s'il est le seul. */
+    var aDef = entr.some(function(p2){ return p2[0].def === true; });
+    entr.forEach(function(p2){ var st = aDef ? p2[0].def === true : (entr.length === 1 && p2[0].def !== false); h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site, p2[0].t, true, st); });
     /* 29/10 (patron : « c'est où les sites ? ») : plus de titres « immeuble » /
        « Sans immeuble » — restes de la bêta Sites annulée le 30/08, ils
        laissaient croire qu'il existait encore deux façons de faire. Une liste
@@ -3794,9 +3796,12 @@ document.addEventListener("click", function(e){
      re-cliquer la sienne l'enlève (on revient à « le seul relié, sinon le bureau choisit »). */
   window.relDef = function(i){
     var R = lire(), r = R[i]; if(!r) return;
-    var deja = !!r.def;
-    R.forEach(function(z){ if(z && z.b === r.b) delete z.def; });
-    if(!deja) r.def = true;
+    var soeurs = R.filter(function(z){ return z && z.b === r.b; });
+    var choisie = soeurs.some(function(z){ return z.def === true; });
+    /* l'étoile est-elle affichée sur cette ligne ? (choisie, ou d'office car seule) */
+    var deja = r.def === true || (!choisie && soeurs.length === 1 && r.def !== false);
+    soeurs.forEach(function(z){ delete z.def; });
+    if(deja) r.def = false; else r.def = true;
     localStorage.setItem(K, JSON.stringify(R));
     paint();
     if(typeof toast === "function") toast(deja ? "Plus de payeur par défaut" : "★ " + r.a + " paie d'habitude pour " + r.b);
