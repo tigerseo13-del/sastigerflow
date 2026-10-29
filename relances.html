@@ -682,8 +682,8 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
         <div class="rgard" id="rel-garde"></div>
         <div class="rgard" id="rel-cat"></div>
         <details class="rav rmore" id="rel-avance"></details>
-        <p class="rtip">💡 Conseil de vente : garde le premier rappel <b>sans remise</b> — beaucoup signent juste parce qu'on leur rappelle. La remise est ta dernière carte, pas la première. Et <b>devis par devis</b> : clique le badge 🔁 d'un devis dans la liste pour mettre SES relances en pause (le client qui a dit « je réfléchis »).</p>
-        <button class="rok" onclick="relSave();toast('🔁 Séquence enregistrée — appliquée aux devis en attente')">Enregistrer la séquence</button>
+        <p class="rtip">💡 Garde la 1ʳᵉ relance <b>sans remise</b> : beaucoup signent juste avec un rappel.</p>
+        <div id="rel-saved" style="text-align:right;font:700 .76rem Inter,sans-serif;color:#047857;margin-top:12px">✓ Tout est enregistré automatiquement</div>
       </div>
 
       <!-- droite : l'aperçu qui suit -->
@@ -783,7 +783,13 @@ function relSetJ(key, i, v){
 const RGKEY = "tigerflow-relance-garde-v1";
 let RGARDE = {plafond: 1500, plancher: 100, ouvres: true, h1: 9, h2: 18};
 try{ const sv = JSON.parse(localStorage.getItem(RGKEY)); if(sv && typeof sv === "object") RGARDE = Object.assign(RGARDE, sv); }catch(e){}
-function rgSave(){ try{ localStorage.setItem(RGKEY, JSON.stringify(RGARDE)); }catch(e){} }
+function rgSave(){ try{ localStorage.setItem(RGKEY, JSON.stringify(RGARDE)); }catch(e){} relSavedFlash(); }
+/* 29/10 : plus de bouton « Enregistrer » (tout l'était déjà à chaque changement) — on le DIT */
+function relSavedFlash(){
+  const el = document.getElementById("rel-saved"); if(!el) return;
+  const d = new Date(), hh = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  el.textContent = "✓ Enregistré à " + hh + " — appliqué aux devis en attente";
+}
 
 /* 3. LA FENÊTRE D'ENVOI. Un J+3 qui tombe un dimanche à 7 h, le SMS partait
       quand même. On décale au prochain jour ouvré, dans la plage choisie. */
@@ -981,7 +987,7 @@ try{ const sv = JSON.parse(localStorage.getItem(RAVKEY)); if(sv && typeof sv ===
 /* 29/10 (patron, GO « simplifie ») : « prix minimum après remise » et « remise douce »
    RETIRÉS de l'écran (doublons qui embrouillaient). Forcés à 0 : sans effet. */
 RAV.prixMin = 0; RAV.douce = 0;
-function ravSave(){ try{ localStorage.setItem(RAVKEY, JSON.stringify(RAV)); }catch(e){} }
+function ravSave(){ try{ localStorage.setItem(RAVKEY, JSON.stringify(RAV)); }catch(e){} relSavedFlash(); }
 /* la remise de l'étape AVANT les garde-fous de montant (sert à la remise douce) */
 function relRemBrute(g, i){
   const L = REL[g].length, st = REL[g][i];
@@ -1005,7 +1011,7 @@ const RCATS = [["rongeur","Rongeurs (dératisation)",/rongeur|rat\b|rats\b|souri
                ["fourmi","Fourmis",/fourmi/i]];
 let RCAT = {};
 try{ const sv = JSON.parse(localStorage.getItem(RCATKEY)); if(sv && typeof sv === "object") RCAT = sv; }catch(e){}
-function rcatSave(){ try{ localStorage.setItem(RCATKEY, JSON.stringify(RCAT)); }catch(e){} }
+function rcatSave(){ try{ localStorage.setItem(RCATKEY, JSON.stringify(RCAT)); }catch(e){} relSavedFlash(); }
 function rcatRegle(c){ return RCAT[c] || {}; }
 function relCatDe(d){
   const txt = [d && d.titre].concat(((d && d.lignes) || []).map(l => (l.designation || "") + " " + (l.desc || ""))).join(" ");
@@ -1061,22 +1067,28 @@ function ravExpDef(n){ RAV.exped.forEach((e, k) => e.def = k === n); ravSave(); 
 function ravExpDel(n){ const was = RAV.exped[n] && RAV.exped[n].def; RAV.exped.splice(n, 1); if(was && RAV.exped[0]) RAV.exped[0].def = true; ravSave(); relRender(); }
 function relCatRender(){
   const el = document.getElementById("rel-cat"); if(!el) return;
-  const inp = (c, k, ph, w) => { const v = rcatRegle(c)[k]; return `<input type="number" inputmode="decimal" min="0" placeholder="${ph}" value="${v === undefined ? "" : v}" style="width:${w}px" onchange="rcatSet('${c}','${k}',this.value)">`; };
+  /* 29/10 (patron, GO) : seulement les nuisibles réglés, + « Ajouter une règle ».
+     Avant : 8 lignes × 3 cases pour en régler 1 ou 2. */
+  const poses = RCATS.filter(c => RCAT[c[0]]);
+  const libres = RCATS.filter(c => !RCAT[c[0]]);
+  const inp = (c, k, w) => { const v = rcatRegle(c)[k]; return `<input type="number" inputmode="decimal" min="0" placeholder="—" value="${v === undefined ? "" : v}" style="width:${w}px" onchange="rcatSet('${c}','${k}',this.value)">`; };
+  const H = t => `<span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">${t}</span>`;
   el.innerHTML = `
-    <div class="rgh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>Par nuisible</div>
-    <div class="rgs">Pour les traitements qui coûtent cher : moins de remise, ou pas de relance du tout. <b>Case vide = règle générale.</b></div>
-    <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:6px 12px;align-items:center;font-size:.76rem">
-      <span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Nuisible</span>
-      <span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Relancer</span>
-      <span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Remise max</span>
-      <span style="font:800 .62rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Pas de remise au-dessus de</span>
-      ${RCATS.map(c => { const r = rcatRegle(c[0]); return `
-        <b style="font-weight:700;${r.off ? "color:var(--muted);text-decoration:line-through" : ""}">${c[1]}</b>
+    <div class="rgh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>Règles par nuisible <small style="font:600 .7rem Inter,sans-serif;color:var(--muted)">— ${poses.length ? poses.length + " règle" + (poses.length > 1 ? "s" : "") : "aucune : la règle générale s'applique partout"}</small></div>
+    ${poses.length ? `<div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:6px 12px;align-items:center;font-size:.76rem;margin:8px 0 4px">
+      ${H("Nuisible")}${H("Relancer")}${H("Remise max")}${H("Pas de remise au-dessus de")}<span></span>
+      ${poses.map(c => { const r = rcatRegle(c[0]); return `
+        <b style="font-weight:700">${c[1]}</b>
         <label class="rgsw"><input type="checkbox" ${r.off ? "" : "checked"} onchange="rcatSet('${c[0]}','off',this.checked)">${r.off ? "non" : "oui"}</label>
-        <span class="rgi">${inp(c[0], "rem", "—", 58)}%</span>
-        <span class="rgi">${inp(c[0], "plaf", "—", 78)}€ HT</span>`; }).join("")}
-    </div>`;
+        <span class="rgi">${inp(c[0], "rem", 58)}%</span>
+        <span class="rgi">${inp(c[0], "plaf", 78)}€ HT</span>
+        <a onclick="rcatDel('${c[0]}')" style="cursor:pointer;font-size:.72rem;font-weight:700;color:var(--muted)">Retirer</a>`; }).join("")}
+    </div>` : ""}
+    ${libres.length ? `<span class="rgi" style="margin-top:6px"><select id="rcat-new"><option value="">+ Ajouter une règle pour…</option>${libres.map(c => `<option value="${c[0]}">${c[1]}</option>`).join("")}</select></span>` : ""}`;
+  const sel = document.getElementById("rcat-new");
+  if(sel) sel.onchange = () => { if(sel.value){ RCAT[sel.value] = {}; rcatSave(); relRender(); relSavedFlash(); } };
 }
+function rcatDel(c){ delete RCAT[c]; rcatSave(); relRender(); relSavedFlash(); toast("Règle retirée — la règle générale s'applique"); }
 function relAvanceRender(){
   relCatRender();
   const el = document.getElementById("rel-avance"); if(!el) return;
@@ -1518,6 +1530,7 @@ function relSave(){
   const c = document.getElementById("rel-on");
   if(c) REL.on = c.checked;
   try{ localStorage.setItem(RELKEY, JSON.stringify(REL)); }catch(e){}
+  if(typeof relSavedFlash === "function" && document.getElementById("rel-week")) relSavedFlash();
   relPrev();   /* l'aperçu suit chaque réglage : délai, remise, canaux */
 }
 document.getElementById("rel-on").checked = REL.on;

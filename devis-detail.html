@@ -2740,8 +2740,15 @@ document.addEventListener("click", function(e){
     var x = seq[k], q = new Date(d0); q.setDate(q.getDate() + x.j);
     if(G.ouvres !== false){ while(q.getDay() === 0 || q.getDay() === 6) q.setDate(q.getDate() + 1); }
     var can = [x.mail ? "email" : "", x.sms ? "SMS" : ""].filter(Boolean).join(" + ") || "aucun canal";
-    pas((k + 1) + "/" + seq.length + " le " + q.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"}), can + (x.rem ? " · −" + x.rem + " %" : ""), true);
+    var qtxt = q.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"});
+    pas((k + 1) + "/" + seq.length + " le " + qtxt, can + (x.rem ? " · −" + x.rem + " %" : ""), true);
     B.textContent = "⏸ Mettre en pause";
+    /* 29/10 : la tuile « État » ne pousse plus à relancer à la main quand la machine s'en charge */
+    var ke = document.getElementById("k-etat"), ks = document.getElementById("k-etat-sub");
+    if(ke && /relancer|Relancer le client/.test(ke.textContent)){
+      ke.innerHTML = ke.innerHTML.replace(/ — relancer/, " de validité").replace(/Relancer le client/, "En attente");
+      if(ks) ks.textContent = "relance auto le " + qtxt + " — ou relancer maintenant";
+    }
   };
   window.relDetTog = function(){
     var ref = REC.ref || REF; var P = new Set(J("tigerflow-relance-devis-v2-pause", []));
@@ -2750,7 +2757,8 @@ document.addEventListener("click", function(e){
     relDetPaint();
     if(typeof toast === "function") toast(P.has(ref) ? "⏸ Relances en pause pour " + ref : "▶ Relances reprises pour " + ref);
   };
-  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(relDetPaint, 50); }); else setTimeout(relDetPaint, 50);
+  var go = function(){ setTimeout(relDetPaint, 50); setTimeout(relDetPaint, 500); };
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
 })();
 </script>
 </body>

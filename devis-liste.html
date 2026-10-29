@@ -792,9 +792,12 @@ try{
   const _complete = r => {
     const o = {...r};
     const f = _fiche(o.payeur || o.client);
-    if(o.pro === undefined) o.pro = !!(f && f.type && String(f.type).toLowerCase() !== "particulier");
-    if(f && String(f.type || "").toLowerCase() === "syndic") o.syn = true;
-    if(o.ct === undefined || o.ct === null) o.ct = (o.payeur && o.payeur !== o.client) ? "facturé à " + o.payeur : "";
+    const autrePayeur = o.payeur && o.payeur !== o.client;
+    /* le type affiché et la relance suivent celui qui PAIE quand il est connu */
+    if(f && f.type){ o.pro = String(f.type).toLowerCase() !== "particulier"; o.syn = String(f.type).toLowerCase() === "syndic"; }
+    else if(o.pro === undefined) o.pro = false;
+    if(autrePayeur) o.ct = "facturé à " + o.payeur;
+    else if(o.ct === undefined || o.ct === null || o.ct === "undefined") o.ct = "";
     return o;
   };
   _boite.forEach((rec, k) => {
