@@ -177,6 +177,24 @@ ul{list-style:none}
 .rchk input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .rchk.k-mail:has(input:checked){background:#EEF2FF;color:#3B4FD8;border-color:#D9DFFB;border-style:solid}
 .rchk.k-sms:has(input:checked){background:var(--green,#10B981);color:#fff;border-color:var(--green,#10B981);border-style:solid}
+.rchk.k-wa:has(input:checked){background:#E7F8EE;color:#128C4B;border-color:#BDEBD0;border-style:solid}
+/* 29/10 (patron, GO GO GO) : réglages avancés + simulateur */
+.rav{margin-top:14px;border:1px solid #ECEDF2;border-radius:14px;background:#fff;padding:13px 15px 14px}
+.rav .rgi input[type=text],.rav .rgi input[type=email]{width:230px;border:1.5px solid var(--line);border-radius:9px;padding:7px 9px;font-size:.8rem;font-family:inherit;background:#fff}
+.rav .seg{display:inline-flex;border:1.5px solid var(--line);border-radius:9px;overflow:hidden}
+.rav .seg button{border:0;background:#fff;padding:7px 12px;font:700 .74rem Inter,sans-serif;color:var(--ink-2);cursor:pointer}
+.rav .seg button.on{background:#EEF2F8;color:#1E3350}
+.rexp{display:flex;flex-direction:column;gap:6px;flex:1 1 100%}
+.rexp .e{display:flex;align-items:center;gap:8px;border:1px solid #ECEDF2;border-radius:9px;padding:7px 10px;font-size:.78rem;font-weight:600}
+.rexp .e .d{font-size:.66rem;font-weight:800;color:#1E3350;background:#EEF2F8;border-radius:99px;padding:2px 8px}
+.rexp .e a{margin-left:auto;font-size:.72rem;font-weight:700;color:var(--muted);text-decoration:none;cursor:pointer}
+.rsim{margin-top:14px;border:1px solid #ECEDF2;border-radius:14px;background:#FAFBFD;padding:13px 15px 14px}
+.rsim .st{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:10px}
+.rsim .st div{background:#fff;border:1px solid #ECEDF2;border-radius:10px;padding:9px 10px;text-align:center}
+.rsim .st div small{display:block;font-size:.66rem;font-weight:700;color:var(--muted)}
+.rsim .st div b{display:block;font:800 .95rem Sora,sans-serif;margin-top:2px}
+.rsim .st div i{display:block;font-style:normal;font-size:.68rem;font-weight:700;color:#0E7A54;margin-top:2px}
+.rsim .st div.last{border-color:#F4CF7D;background:#FFF8E6}
 .rdel{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:none;border:0;color:#C4C8D0;font-size:.8rem;cursor:pointer;flex:none;font-family:inherit;transition:.12s}
 .rdel:hover{background:var(--red-bg);color:var(--red)}
 .raddl{display:inline-flex;align-items:center;gap:5px;background:none;border:0;font-family:inherit;font-size:.74rem;font-weight:700;color:var(--muted);cursor:pointer;padding:2px 4px;margin:-3px 0 3px 2px}
@@ -642,6 +660,8 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
         <!-- 18/08 (patron, GO 1-2-3) : les deux garde-fous qui protègent
              l'argent et l'image — plafond de remise auto, fenêtre d'envoi. -->
         <div class="rgard" id="rel-garde"></div>
+        <div class="rav" id="rel-avance"></div>
+        <div class="rsim" id="rel-sim"></div>
         <p class="rtip">💡 Conseil de vente : garde le premier rappel <b>sans remise</b> — beaucoup signent juste parce qu'on leur rappelle. La remise est ta dernière carte, pas la première. Et <b>devis par devis</b> : clique le badge 🔁 d'un devis dans la liste pour mettre SES relances en pause (le client qui a dit « je réfléchis »).</p>
         <button class="rok" onclick="relSave();toast('🔁 Séquence enregistrée — appliquée aux devis en attente')">Enregistrer la séquence</button>
       </div>
@@ -893,6 +913,9 @@ function relMsg(g, i){
      échéance — vrai à 2 relances comme à 4 */
   const L = REL[g].length;
   const ti = i === 0 ? 0 : (i === L - 1 ? 2 : 1);
+  /* 29/10 : « Sans lien » (Réglages avancés) — la relance ne porte plus de lien de signature */
+  if(typeof RAV !== "undefined" && !RAV.sign)
+    return TXT[g][ti].replace(/(Signature et paiement en ligne en 2[\s  ]min|Signer en ligne|Signer et régler en 2[\s  ]min|[Ss]ignature en ligne|Signer)[\s  ]*:[\s  ]*<span[^>]*>tigerflow\.fr\/d\/x7Kp2m<\/span>\.?/g, "Le devis est joint : renvoyez-le simplement signé par e-mail.");
   return TXT[g][ti];
 }
 /* 20/08 (patron, 311b) — L'EXTRAIT S'EN VA, et la fonction avec lui.
@@ -912,17 +935,116 @@ function relSmsDef(g, i){
      tout le message en UCS-2 (limite 70 au lieu de 160) : chaque relance
      coûtait 2 SMS au lieu d'1. Le texte d'usine ne doit plus produire le bug
      qu'on vient de corriger — sinon « Tout remettre d'origine » le ramène. */
+  if(typeof RAV !== "undefined" && !RAV.sign) return "Tiger Hygiène 3D - votre devis (" + relEur(cas.mnt) + cas.ht + ")" + rem + fin + ". Devis envoye par e-mail.";
   return "Tiger Hygiène 3D - votre devis (" + relEur(cas.mnt) + cas.ht + ")" + rem + fin + " : tigerflow.fr/d/x7Kp2m";
 }
 /* le texte affiché : celui de l'utilisateur s'il en a écrit un, sinon l'original */
 /* le plafond s'applique à l'aperçu : si le devis de démonstration dépasse le
    plafond, la remise n'apparaît pas dans le message — c'est exactement ce que
    fera l'envoi réel. */
-function relRemiseAuto(g, i){
-  const st = REL[g][i], cas = RELCAS[g];
-  if(!(+st.rem > 0)) return 0;
-  if(RGARDE.plafond > 0 && (+cas.mnt || 0) > RGARDE.plafond) return 0;
-  return +st.rem;
+function relRemiseAuto(g, i){ return relRemEff(g, i, +RELCAS[g].mnt || 0); }
+/* ═══ 29/10 (patron, GO GO GO) : RÉGLAGES AVANCÉS ═══
+   Repris de son outil de relance : prix minimum, remise réduite sur les gros
+   devis, remise douce à la dernière relance, libellé, signature, notification,
+   expéditeurs. Volontairement LAISSÉS DE CÔTÉ : « anti-flag / anti-ban »
+   (contourner les filtres anti-spam — un numéro WhatsApp bloqué est perdu ;
+   la voie propre = API officielle WhatsApp Business), rétention d'affichage
+   (technique) et remise / rattrapage du stock (fonction V2). */
+const RAVKEY = "tigerflow-relance-avance-v1";
+let RAV = {prixMin: 0, grosSeuil: 1000, grosRem: 10, douce: 0, libelle: "Remise commerciale", sign: true, notif: "", exped: [], simPrix: 1000};
+try{ const sv = JSON.parse(localStorage.getItem(RAVKEY)); if(sv && typeof sv === "object") RAV = Object.assign(RAV, sv); }catch(e){}
+function ravSave(){ try{ localStorage.setItem(RAVKEY, JSON.stringify(RAV)); }catch(e){} }
+/* la remise de l'étape AVANT les garde-fous de montant (sert à la remise douce) */
+function relRemBrute(g, i){
+  const L = REL[g].length, st = REL[g][i];
+  if(RAV.douce > 0 && i === L - 1 && i > 0){
+    const prev = relRemBrute(g, i - 1);
+    return Math.round((1 - (1 - prev / 100) * (1 - RAV.douce / 100)) * 10000) / 100;
+  }
+  return +st.rem || 0;
+}
+/* la remise RÉELLEMENT envoyée pour un devis de « mnt » € HT */
+function relRemEff(g, i, mnt){
+  let R = relRemBrute(g, i);
+  if(!(R > 0)) return 0;
+  if(RGARDE.plafond > 0 && mnt > RGARDE.plafond) return 0;                 /* garde-fou : aucune remise auto */
+  if(RAV.grosSeuil > 0 && mnt > RAV.grosSeuil) R = Math.min(R, RAV.grosRem); /* gros devis : remise réduite */
+  if(RAV.prixMin > 0 && mnt > 0) R = Math.min(R, Math.max(0, (1 - RAV.prixMin / mnt) * 100)); /* jamais sous le prix minimum */
+  return Math.max(0, Math.round(R * 100) / 100);
+}
+function ravSet(k, v){
+  if(k === "libelle" || k === "notif") RAV[k] = String(v || "").trim();
+  else if(k === "sign") RAV.sign = !!v;
+  else RAV[k] = Math.max(0, +v || 0);
+  if(k === "grosRem" || k === "douce") RAV[k] = Math.min(50, RAV[k]);
+  ravSave(); relRender(); if(typeof relPrev === "function") relPrev();
+  const T = {prixMin: RAV.prixMin ? "Prix minimum : la remise ne descend jamais sous " + relEur(RAV.prixMin) + " HT" : "Prix minimum coupé",
+             grosRem: "Gros devis : remise limitée à " + RAV.grosRem + " %", grosSeuil: "Gros devis : au-dessus de " + relEur(RAV.grosSeuil) + " HT",
+             douce: RAV.douce ? "Dernière relance : " + RAV.douce + " % de moins que la précédente" : "Remise douce coupée — la dernière relance garde sa remise",
+             libelle: "Libellé enregistré", sign: RAV.sign ? "Les relances portent le lien de signature" : "Relances sans lien — le PDF du devis reste joint", notif: RAV.notif ? "Les devis signés arriveront sur " + RAV.notif : "Notification coupée"};
+  if(T[k]) toast(T[k]);
+}
+function ravExpAdd(){
+  const i = document.getElementById("rav-exp-new"); if(!i) return;
+  const m = i.value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)){ i.style.borderColor = "#C0362C"; toast("Adresse e-mail invalide"); return; }
+  if(RAV.exped.some(e => e.m.toLowerCase() === m.toLowerCase())){ toast("Cette adresse est déjà là"); return; }
+  RAV.exped.push({m, def: !RAV.exped.length}); ravSave(); relRender(); toast("Expéditeur ajouté");
+}
+function ravExpDef(n){ RAV.exped.forEach((e, k) => e.def = k === n); ravSave(); relRender(); toast("Les relances partent de " + RAV.exped[n].m); }
+function ravExpDel(n){ const was = RAV.exped[n] && RAV.exped[n].def; RAV.exped.splice(n, 1); if(was && RAV.exped[0]) RAV.exped[0].def = true; ravSave(); relRender(); }
+function relAvanceRender(){
+  const el = document.getElementById("rel-avance"); if(!el) return;
+  const esc = t => String(t || "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  el.innerHTML = `
+    <div class="rgh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages avancés</div>
+    <div class="rgs">La remise, la signature et les expéditeurs — réglés une fois pour toutes les séquences.</div>
+    <div class="rgrow">
+      <span class="rgl">Prix minimum après remise<small>La remise ne fait jamais passer un devis sous ce prix. Mets 0 pour ne pas en avoir.</small></span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" step="10" value="${RAV.prixMin}" onchange="ravSet('prixMin', this.value)">€ HT</span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Remise réduite pour les gros devis<small>Au-dessus de ce montant, la remise est plafonnée. Au-dessus du garde-fou (${relEur(RGARDE.plafond)}), il n'y a plus de remise du tout.</small></span>
+      <span class="rgi">au plus <input type="number" inputmode="decimal" min="0" max="50" value="${RAV.grosRem}" onchange="ravSet('grosRem', this.value)">% au-dessus de <input type="number" inputmode="decimal" min="0" step="100" value="${RAV.grosSeuil}" onchange="ravSet('grosSeuil', this.value)">€ HT</span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Dernière relance : remise douce<small>La dernière relance baisse seulement de ce % par rapport au prix de la précédente. 0 = elle garde sa propre remise.</small></span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="50" value="${RAV.douce}" onchange="ravSet('douce', this.value)">% du prix précédent</span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Libellé sur le devis<small>Le nom de la ligne de remise ajoutée au devis quand le client signe avec la remise.</small></span>
+      <span class="rgi"><input type="text" maxlength="40" value="${esc(RAV.libelle)}" onchange="ravSet('libelle', this.value)"></span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Signature électronique<small>Avec : chaque relance porte le lien pour signer en ligne. Sans : le PDF du devis reste joint, le client répond par e-mail.</small></span>
+      <span class="rgi"><span class="seg"><button class="${RAV.sign ? "" : "on"}" onclick="ravSet('sign', false)">Sans lien</button><button class="${RAV.sign ? "on" : ""}" onclick="ravSet('sign', true)">Avec lien de signature</button></span></span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Devis signés : prévenir<small>Cette adresse reçoit le PDF signé à chaque signature. Vide = l'expéditeur par défaut.</small></span>
+      <span class="rgi"><input type="email" placeholder="bureau@monentreprise.fr" value="${esc(RAV.notif)}" onchange="ravSet('notif', this.value)"></span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Expéditeurs e-mail<small>Les adresses qui envoient les relances. Clique une adresse pour en faire celle par défaut.</small></span>
+      <div class="rexp">
+        ${RAV.exped.length ? RAV.exped.map((e, n) => `<div class="e"><span style="cursor:pointer" onclick="ravExpDef(${n})">${esc(e.m)}</span>${e.def ? '<span class="d">par défaut</span>' : ""}<a onclick="ravExpDel(${n})">Retirer</a></div>`).join("") : '<div style="font-size:.74rem;color:var(--muted)">Aucune adresse : les relances partent de l\'e-mail de la société (Réglages).</div>'}
+        <span class="rgi" style="margin-top:2px"><input type="email" id="rav-exp-new" placeholder="nouvelle@adresse.fr" onkeydown="if(event.key==='Enter')ravExpAdd()"><button class="seg" style="border:1.5px solid #1E3350;background:#1E3350;color:#fff;padding:7px 12px;font:700 .74rem Inter,sans-serif;border-radius:9px;cursor:pointer" onclick="ravExpAdd()">+ Ajouter</button></span>
+      </div>
+    </div>`;
+  relSimRender();
+}
+/* le SIMULATEUR : le prix envoyé à chaque relance, pour un devis de X € HT,
+   sur la séquence affichée — avec TOUS les garde-fous appliqués */
+function relSimRender(){
+  const el = document.getElementById("rel-sim"); if(!el) return;
+  const g = (typeof APC !== "undefined" && APC.g) ? APC.g : "part";
+  const P = +RAV.simPrix || 0, L = REL[g];
+  const pas = L.map((st, i) => { const R = relRemEff(g, i, P); return {j: st.j, R, prix: Math.round(P * (1 - R / 100) * 100) / 100}; });
+  const hors = RGARDE.plancher > 0 && P < RGARDE.plancher;
+  el.innerHTML = `<div class="rgh"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Simulateur — ${RELGRP[g]}</div>
+    <div class="rgs">Le prix envoyé à chaque relance, avec tous les réglages appliqués.</div>
+    <span class="rgi">Devis de <input type="number" inputmode="decimal" min="0" step="50" value="${P}" onchange="RAV.simPrix=+this.value||0;ravSave();relSimRender()">€ HT</span>
+    ${hors ? `<div class="rgs" style="margin:10px 0 0;color:#B4470F;font-weight:700">Sous ${relEur(RGARDE.plancher)} HT, ce devis n'est pas relancé (garde-fou).</div>`
+      : `<div class="st"><div><small>J 0 · devis</small><b>${relEur(P)}</b><i style="color:var(--muted)">prix d'origine</i></div>${pas.map((x, i) => `<div class="${i === pas.length - 1 ? "last" : ""}"><small>J+${x.j}${i === pas.length - 1 ? " · dernière" : ""}</small><b>${relEur(x.prix)}</b><i>${x.R > 0 ? "−" + String(x.R).replace(".", ",") + " %" : "sans remise"}</i></div>`).join("")}</div>`}`;
 }
 function relTexte(g, i, ch){
   const sur = RTXT[rtxtId(g, i, ch)];
@@ -1126,10 +1248,13 @@ function relSteps(list, key){
       <span class="vj" title="Envoi le ${q.txt}${q.glisse ? " — tombait un week-end, glisse au jour ouvré" : ""} · délai réglable entre J+${relBornes(key, i).min} et J+${relBornes(key, i).max}"><i>J +</i><input type="number" inputmode="decimal" min="${relBornes(key, i).min}" max="${relBornes(key, i).max}" value="${st.j}" onfocus="relPick('${key}',${i})" onclick="event.stopPropagation()" onchange="relSetJ('${key}',${i},this.value)"></span>
       <div class="jbx${APC.g === key && APC.i === i ? " on" : ""}" data-g="${key}" data-i="${i}" onclick="relPick('${key}',${i},event)" title="Cliquer pour voir et modifier le message de cette étape">
         <span class="vt">${i + 1}${i === 0 ? "ʳᵉ" : "ᵉ"} relance<small>${ecart} jour${ecart > 1 ? "s" : ""} après ${i === 0 ? "l'envoi du devis" : "la précédente"}${q.glisse ? " · ↷ glisse au jour ouvré" : ""}</small></span>
-        <span class="jrm"><label>remise</label><input type="number" inputmode="decimal" min="0" max="50" value="${st.rem}" onclick="event.stopPropagation()" onchange="REL.${key}[${i}].rem=+this.value;relSave();relRender()"><label>%</label></span>
+        ${(RAV.douce > 0 && i === list.length - 1 && i > 0)
+          ? `<span class="jrm" title="Dernière relance : remise douce — ${RAV.douce} % de moins que le prix de la relance précédente (Réglages avancés)"><label>remise</label><b style="font-size:.8rem">−${String(relRemBrute(key, i)).replace(".", ",")}</b><label>% · douce</label></span>`
+          : `<span class="jrm"><label>remise</label><input type="number" inputmode="decimal" min="0" max="50" value="${st.rem}" onclick="event.stopPropagation()" onchange="REL.${key}[${i}].rem=+this.value;relSave();relRender()"><label>%</label></span>`}
         <span class="jch">
           <label class="rchk k-mail" title="${st.mail ? "L'e-mail part à cette étape — cliquer pour le couper" : "E-mail coupé à cette étape — cliquer pour l'allumer"}"><input type="checkbox" ${st.mail ? "checked" : ""} onchange="REL.${key}[${i}].mail=this.checked;relSave();relPrev()">${ICO_MAIL}Email</label>
           <label class="rchk k-sms" title="${st.sms ? "Le SMS part à cette étape — cliquer pour le couper" : "SMS coupé à cette étape — cliquer pour l'allumer"}"><input type="checkbox" ${st.sms ? "checked" : ""} onchange="REL.${key}[${i}].sms=this.checked;relSave();relPrev()">SMS</label>
+          <label class="rchk k-wa" title="${st.wa ? "WhatsApp part à cette étape (même texte que le SMS) — cliquer pour le couper" : "WhatsApp coupé à cette étape — cliquer pour l'allumer (même texte que le SMS)"}"><input type="checkbox" ${st.wa ? "checked" : ""} onchange="REL.${key}[${i}].wa=this.checked;relSave();relPrev()">WhatsApp</label>
         </span>
         ${list.length > 1 ? `<button class="jdel" title="Retirer cette relance" onclick="relDel('${key}',${i},event)">✕</button>` : ""}
       </div>
@@ -1226,6 +1351,7 @@ function relRender(){
       `<button class="pubt${APC.g === k ? " on" : ""}" data-g="${k}" onclick="relTab('${k}')"><span class="gic">${GICO[k]}</span>${RELGRP[k]}</button>`).join("")}</div>`
     + relGrpFrise("part") + relGrpFrise("pro") + relGrpFrise("syn");
   relGardeRender();
+  relAvanceRender();
 }
 function relDel(key, i, ev){
   if(ev) ev.stopPropagation();
