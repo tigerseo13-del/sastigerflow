@@ -3,6 +3,7 @@
 <head>
 <link rel="preload" as="image" href="logo-tigre.png">
 <meta charset="UTF-8">
+<script src="exemple-client.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>TigerFlow — Clients</title>
@@ -854,12 +855,36 @@ document.addEventListener("click", e => {
   const p = document.getElementById("f-datepop");
   if(p && p.classList.contains("open") && !e.target.closest(".fdate")) p.classList.remove("open");
 });
+/* 29/10 : l'argent RÉEL (factures, paiements, contrats créés dans l'appli), ajouté au socle démo.
+   Partagé par la liste ET les cartouches du haut — avant, les cartouches ignoraient tout ce qui
+   avait été créé dans l'appli. L'argent va à celui qui PAIE (f.payeur), comme sur la fiche. */
+function argentReel(){
+  const JX = k => { try{ const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
+  const JOX = k => { try{ const v = JSON.parse(localStorage.getItem(k)); return (v && !Array.isArray(v) && typeof v === "object") ? v : {}; }catch(e){ return {}; } };
+  const pm = JOX("tigerflow-factures-paiements"), stx = JOX("tigerflow-factures-statuts"), avx = JOX("tigerflow-factures-avoirs");
+  const CAX = {}, DUEX = {}, CTX = {};
+  JX("tigerflow-inbox-factures").forEach(f => {
+    if(!f || !f.client) return;
+    const qui = f.payeur || f.client;
+    const paye = (Array.isArray(pm[f.ref]) ? pm[f.ref] : []).reduce((t, p) => t + (+p.m || 0), 0);
+    const avr  = (Array.isArray(avx[f.ref]) ? avx[f.ref] : []).reduce((t, p) => t + (+p.m || 0), 0);
+    CAX[qui] = (CAX[qui] || 0) + paye;
+    const st2 = stx[f.ref] || f.statut || "attente";
+    if(st2 !== "payee" && st2 !== "annulee" && st2 !== "brouillon")
+      DUEX[qui] = (DUEX[qui] || 0) + Math.max(0, (+f.montant || 0) - paye - avr);
+  });
+  JX("tigerflow-paiements-perso").forEach(p => {
+    if(p && p.client && p.st === "enc" && !p.fac) CAX[p.client] = (CAX[p.client] || 0) + (+p.m || 0);
+  });
+  JX("tigerflow-inbox-contrats").forEach(k => { if(k && k.client && k.statut !== "resilie" && k.statut !== "termine") CTX[k.client] = (CTX[k.client] || 0) + 1; });
+  return {CAX, DUEX, CTX};
+}
 function render(){
   const q = document.getElementById("q").value.toLowerCase().trim();
   const TYPMAP = {"Particulier":"Particulier","Société":"Pro","Société de gestion immobilière":"Syndic"};
   let list = CLIENTS.filter(c =>
-    (KFIL !== "due" || (c.due || 0) > 0) &&
-    (KFIL !== "ctr" || (c.nb || 0) > 0) &&
+    (KFIL !== "due" || (c.due || 0) + (argentReel().DUEX[c.nom] || 0) > 0) &&
+    (KFIL !== "ctr" || (c.nb || 0) + (argentReel().CTX[c.nom] || 0) > 0) &&
     (!F.type   || c.type === TYPMAP[F.type]) &&
     (!F.stat   || (F.stat === "Inactif" ? c.st === "inactif" : c.st !== "inactif")) &&
     (!F.source || c.source === F.source) &&
@@ -874,31 +899,15 @@ function render(){
   /* mu-clients valide : les colonnes CA / a-encaisser AJOUTENT le reel (registres) au socle demo —
      un client cree aujourd'hui n'affiche plus 0 € une fois sa premiere facture payee. */
   (function(){
-    const JX = k => { try{ const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : []; }catch(e){ return []; } };
-    const JOX = k => { try{ const v = JSON.parse(localStorage.getItem(k)); return (v && !Array.isArray(v) && typeof v === "object") ? v : {}; }catch(e){ return {}; } };
-    const pm = JOX("tigerflow-factures-paiements"), stx = JOX("tigerflow-factures-statuts"), avx = JOX("tigerflow-factures-avoirs");
-    const CAX = {}, DUEX = {};
-    JX("tigerflow-inbox-factures").forEach(f => {
-      if(!f || !f.client) return;
-      const paye = (Array.isArray(pm[f.ref]) ? pm[f.ref] : []).reduce((t, p) => t + (+p.m || 0), 0);
-      const avr  = (Array.isArray(avx[f.ref]) ? avx[f.ref] : []).reduce((t, p) => t + (+p.m || 0), 0);
-      CAX[f.client] = (CAX[f.client] || 0) + paye;
-      const st2 = stx[f.ref] || f.statut || "attente";
-      if(st2 !== "payee" && st2 !== "annulee" && st2 !== "brouillon"){
-        DUEX[f.client] = (DUEX[f.client] || 0) + Math.max(0, (+f.montant || 0) - paye - avr);
-      }
-    });
-    JX("tigerflow-paiements-perso").forEach(p => {
-      if(p && p.client && p.st === "enc" && !p.fac) CAX[p.client] = (CAX[p.client] || 0) + (+p.m || 0);
-    });
-    list.forEach(c => { c.caV = (+c.ca || 0) + (CAX[c.nom] || 0); c.dueV = (+c.due || 0) + (DUEX[c.nom] || 0); });
+    const X = argentReel();
+    list.forEach(c => { c.caV = (+c.ca || 0) + (X.CAX[c.nom] || 0); c.dueV = (+c.due || 0) + (X.DUEX[c.nom] || 0); c.nbV = (+c.nb || 0) + (X.CTX[c.nom] || 0); });
   })();
   document.getElementById("cards").innerHTML = list.map(c => {
     const [cls, lbl] = STL[c.st];
     return `<a class="mcard" href="client.html?c=${encodeURIComponent(c.nom)}">
       <div class="m1"><span class="mref">${c.type}</span><span class="st ${cls}">${lbl}</span></div>
       <b class="mt">${c.nom}</b>
-      <div class="msub">${c.cp} · ${c.ville}${c.nb ? " · " + c.nb + " contrat" + (c.nb > 1 ? "s" : "") : ""}</div>
+      <div class="msub">${c.cp} · ${c.ville}${c.nbV ? " · " + c.nbV + " contrat" + (c.nbV > 1 ? "s" : "") : ""}</div>
       <div class="m2"><span class="mamt">${euro(c.caV)}</span><span class="mmeta">${c.dueV ? "à encaisser : " + euro(c.dueV) : "rien à encaisser"}</span></div>
     </a>`;
   }).join("");
@@ -911,7 +920,7 @@ function render(){
       <td><span class="cl"><span><b>${c.nom}</b><small>${c.cp} · ${c.ville}</small></span></span></td>
       <td><span class="typ ${tk}">${c.type}</span></td>
       <td><span class="st ${REL(c)[0]}">${REL(c)[1]}</span></td>
-      <td class="num c-ctr">${c.nb || "—"}</td>
+      <td class="num c-ctr">${c.nbV || "—"}</td>
       <td class="amt num">${euro(c.caV)}</td>
       <td class="num ${c.dueV ? "due" : "due zero"}">${c.dueV ? euro(c.dueV) : "—"}</td>
       <td><span class="st ${PAY(c)[0]}">${PAY(c)[1]}</span></td>
@@ -933,7 +942,7 @@ function exportCSV(){
   const list = window._LIST || CLIENTS;
   const esc = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
   const rows = [["Nom","Type","Source","Code postal","Ville","Téléphone","E-mail","Contrats","CA total (€)","À encaisser (€)","Statut","Paiement"]]
-    .concat(list.map(c => [c.nom, c.type, c.source || "", c.cp, c.ville, c.tel || "", c.mail || "", c.nb || 0, (c.caV != null ? c.caV : c.ca) || 0, (c.dueV != null ? c.dueV : c.due) || 0, REL(c)[1], PAY(c)[1]]));
+    .concat(list.map(c => [c.nom, c.type, c.source || "", c.cp, c.ville, c.tel || "", c.mail || "", c.nbV || c.nb || 0, (c.caV != null ? c.caV : c.ca) || 0, (c.dueV != null ? c.dueV : c.due) || 0, REL(c)[1], PAY(c)[1]]));
   const csv = "\ufeff" + rows.map(r => r.map(esc).join(";")).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
@@ -1267,16 +1276,18 @@ function statsC(){
   if(_part) parts.push(_part + " particulier" + (_part > 1 ? "s" : ""));
   putC("k-n-s", parts.join(" · ") || "—");
 
-  const _ca = CLIENTS.reduce((a, c) => a + (c.ca || 0), 0);
+  const X = argentReel();
+  const caR = c => (c.ca || 0) + (X.CAX[c.nom] || 0), dueR = c => (c.due || 0) + (X.DUEX[c.nom] || 0), nbR = c => (c.nb || 0) + (X.CTX[c.nom] || 0);
+  const _ca = CLIENTS.reduce((a, c) => a + caR(c), 0);
   g("k-ca").textContent = eurC(_ca);
-  const _actifs = CLIENTS.filter(c => (c.ca || 0) > 0).length;
+  const _actifs = CLIENTS.filter(c => caR(c) > 0).length;
   putC("k-ca-s", _actifs ? "sur " + _actifs + " client" + (_actifs > 1 ? "s" : "") + " facturé" + (_actifs > 1 ? "s" : "") : "—");
-  const dues = CLIENTS.filter(c => (c.due || 0) > 0);
-  g("k-due").textContent = eurC(dues.reduce((a, c) => a + c.due, 0));
+  const dues = CLIENTS.filter(c => dueR(c) > 0);
+  g("k-due").textContent = eurC(dues.reduce((a, c) => a + dueR(c), 0));
   putC("k-due-s", dues.length ? dues.length + " client" + (dues.length > 1 ? "s" : "") + " à relancer" : "tout est encaissé ✓");
 
-  g("k-nb").textContent = CLIENTS.reduce((a, c) => a + (c.nb || 0), 0);
-  const _sc = CLIENTS.filter(c => (c.nb || 0) > 0).length;
+  g("k-nb").textContent = CLIENTS.reduce((a, c) => a + nbR(c), 0);
+  const _sc = CLIENTS.filter(c => nbR(c) > 0).length;
   putC("k-nb-s", _sc ? "chez " + _sc + " client" + (_sc > 1 ? "s" : "") : "—");
   const ST = [["actif","Actif","#0E8A68"],["attente","En attente","#D9A408"],["retard","Retard de paiement","#D63B33"],["inactif","Inactif","#C6CCD8"]];
   const tot = CLIENTS.reduce((a, c) => a + (c.ca || 0), 0) || 1;
