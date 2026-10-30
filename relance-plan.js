@@ -16,7 +16,7 @@
   var jour = function(s){ var x = new Date(String(s).slice(0, 10) + "T00:00:00"); return isNaN(x) ? null : x; };
   var DEF = {part:[{j:3,rem:0,mail:true,sms:true},{j:7,rem:5,mail:true,sms:true},{j:14,rem:10,mail:true,sms:false}],
              pro:[{j:5,rem:0,mail:true},{j:12,rem:5,mail:true},{j:21,rem:8,mail:true}],
-             syn:[{j:7,rem:0,mail:true},{j:15,rem:0,mail:true},{j:30,rem:5,mail:true}]};
+             syn:[{j:7,rem:0,mail:true},{j:15,rem:0,mail:true},{j:28,rem:5,mail:true}]};
   var CATS = [["rongeur","Rongeurs",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],["cafard","Cafards",/cafard|blatte/i],["punaise","Punaises",/punaise/i],["guepe","Guêpes",/gu[êe]pe|frelon|nid/i],["desinf","Désinfection",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon","Pigeons",/pigeon|volatile|oiseau/i],["chenille","Chenilles",/chenille|processionnaire/i],["fourmi","Fourmis",/fourmi/i]];
   window.relPub = function(nom, d){
     var f = (J("tigerflow-inbox-clients", []).concat(J("tigerflow-clients-cache", []))).find(function(c){ return c && c.nom === nom; });
@@ -91,5 +91,29 @@
     if(R.etat !== "actif") return "⏸ " + R.motif;
     var s = R.next;
     return "🔁 Relance " + (s.i + 1) + "/" + s.n + " · " + relJour(s.date) + (s.derniere ? " · dernière" : "");
+  };
+  /* RÉSULTATS : devis signés rangés par nombre de relances parties avant la signature
+     (page Relance devis + tableau de bord). per : mois | 3m | 12m */
+  window.relStats = function(PER){
+    var box = J("tigerflow-inbox-devis", []), stx = J("tigerflow-devis-statuts", {}), dts = J("tigerflow-devis-dates", {});
+    var auj = new Date(); auj.setHours(0, 0, 0, 0);
+    var deb = new Date(auj); if(PER === "mois") deb.setDate(1); else if(PER === "3m") deb.setMonth(deb.getMonth() - 3); else deb.setFullYear(deb.getFullYear() - 1);
+    var B = [0, 1, 2, 3].map(function(){ return {n:0, m:0}; }), rem = 0, env = 0, att = 0, sig = 0;
+    box.forEach(function(d){
+      if(!d || !d.ref) return;
+      var st = stx[d.ref] || d.statut, dd = dts[d.ref] || {};
+      var e = jour(dd.envoye || d.date);
+      if(e && e >= deb && st !== "brouillon") env++;
+      if(st === "envoye") att++;
+      if(st !== "gagne") return;
+      var g = jour(dd.gagne) || e; if(!g || g < deb) return;
+      sig++;
+      var R = relPlan(d, "envoye");
+      var avant = (R.steps || []).filter(function(s){ return s.date <= g; });
+      var k = Math.min(avant.length, 3);
+      B[k].n++; B[k].m += +d.montant || 0;
+      if(k > 0 && avant[k - 1].rem) rem += (+d.montant || 0) * avant[k - 1].rem / (100 - avant[k - 1].rem);
+    });
+    return {B:B, rem:rem, env:env, att:att, sig:sig, gr:B[1].n + B[2].n + B[3].n, grm:B[1].m + B[2].m + B[3].m};
   };
 })();

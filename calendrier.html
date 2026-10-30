@@ -4,6 +4,7 @@
 <link rel="preload" as="image" href="logo-tigre.png">
 <meta charset="UTF-8">
 <script src="exemple-client.js"></script>
+<script src="relance-plan.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>TigerFlow — Calendrier</title>
@@ -2717,7 +2718,26 @@ try{
   }
     const _t12 = d => new Date(d + "T12:00:00");
     let _chg2 = false;
-    DEVAT.forEach(x => {
+    /* 30/10 (tour complet relance devis) : l'agenda lisait SA copie du calcul —
+       il ignorait la pause, le client exclu, la règle par nuisible, la relance
+       faite à la main et la fin de validité. Il lit maintenant relance-plan.js,
+       comme la liste, la fiche du devis, la fiche client et la page Relance. */
+    const _inb = (() => { try{ return JSON.parse(localStorage.getItem("tigerflow-inbox-devis")) || []; }catch(e){ return []; } })();
+    if(typeof relPlan === "function") DEVAT.forEach(x => {
+      if(!x || x.etat !== "attente" || !x.envoye) return;
+      const d = _inb.find(z => z && z.ref === x.ref) || {ref: x.ref, client: x.client, montant: x.montant, date: x.envoye, titre: x.note || ""};
+      const R = relPlan(Object.assign({}, d, {date: x.envoye}), "envoye");
+      if(R.etat !== "actif" && R.etat !== "fini"){ if(x.autoN){ x.autoN = 0; x.autoR = null; _chg2 = true; } return; }
+      const faits = R.steps.filter(z => z.fait);
+      if(faits.length !== (x.autoN || 0)){
+        x.autoN = faits.length;
+        x.autoR = faits.length ? faits[faits.length - 1].iso : null;
+        x.tent = Math.max(x.tent || 1, faits.length + 1);
+        _chg2 = true;
+      }
+      if(R.next && R.next.iso > (x.relance || "")){ x.relance = R.next.iso; _chg2 = true; }
+    });
+    else DEVAT.forEach(x => {
       if(!x || x.etat !== "attente" || !x.envoye) return;
       /* public coupé ou devis sous le plancher : aucun cycle auto, la relance
          reste HUMAINE (la ligne garde sa date de rappel, pas de ✉️) */

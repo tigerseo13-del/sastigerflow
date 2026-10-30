@@ -288,6 +288,21 @@ ul{list-style:none}
 .vrow .jbx .rchk{padding:5px 10px!important;min-width:0!important;width:auto!important;font-size:.72rem!important}
 .vrow .jbx{gap:14px}
 /* 29/10 : la semaine à venir */
+#rel-res .rrh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+#rel-res .rrh b{font-family:'Sora';font-size:.95rem}
+#rel-res .rrh select{margin-left:auto;border:1.5px solid #E2E5EB;border-radius:9px;padding:6px 10px;font:700 .76rem Inter,sans-serif;color:#1E3350;background:#fff}
+#rel-res .rrbig{display:flex;gap:26px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:#F4F6FA;margin-bottom:14px}
+#rel-res .rrbig div{min-width:150px}#rel-res .rrbig small{display:block;font:700 .7rem Inter,sans-serif;color:#6B7280;text-transform:uppercase;letter-spacing:.05em}
+#rel-res .rrbig strong{font:800 1.45rem Sora,Inter,sans-serif;color:#1E3350}#rel-res .rrbig i{font-style:normal;font:600 .74rem Inter,sans-serif;color:#6B7280;display:block}
+#rel-res .rrg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#rel-res .rrc{border:1px solid #ECEDF2;border-radius:12px;padding:11px 13px}
+#rel-res .rrc small{font:700 .72rem Inter,sans-serif;color:#6B7280}#rel-res .rrc b{display:block;font:800 1.2rem Sora,Inter,sans-serif;color:#1E3350;margin:3px 0 1px}
+#rel-res .rrc span{font:600 .74rem Inter,sans-serif;color:#4A5263}
+#rel-res .rrbar{height:6px;border-radius:4px;background:#EEF0F4;margin-top:8px;overflow:hidden}#rel-res .rrbar i{display:block;height:100%;background:#1E3350;border-radius:4px}
+#rel-res .rrc.z .rrbar i{background:#AEB4C0}
+#rel-res .rrc.best{border-color:#1E3350;box-shadow:0 0 0 1px #1E3350 inset}
+#rel-res .rrtip{margin-top:10px;font:600 .78rem Inter,sans-serif;color:#4A5263}
+@media (max-width:820px){#rel-res .rrg{grid-template-columns:1fr 1fr}}
 .rweek{margin-bottom:16px;border:1px solid #ECEDF2;border-radius:14px;background:#fff;padding:13px 15px}
 .rweek .wr{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #F4F5F8;font-size:.8rem}
 .rweek .wr:first-of-type{border-top:0}
@@ -665,13 +680,17 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
       <span class="rhic"><svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg></span>
       <div>
         <h1>Relance devis automatique</h1>
-        <div class="rhsub">Chaque devis <b>envoyé</b> et non signé entre dans la séquence — elle s'arrête net dès que le client signe ou paie. Le lien du message ouvre la page de signature (paiement Stripe compris).</div>
+        <div class="rhsub">Chaque devis <b>envoyé</b> et non signé entre dans la séquence — elle s'arrête net dès que le client signe ou refuse, et rien ne part après la fin de validité du devis. Le lien du message ouvre la page de signature (paiement Stripe compris).</div>
       </div>
       <label class="relswitch"><input type="checkbox" id="rel-on" checked onchange="relSave()"> <b>Séquence active</b></label>
     </div>
   </div>
 
   <div class="page">
+
+    <!-- 29/10 (patron) : « savoir si on gagne en relance 1, 2 ou 3 » — le tableau
+         des résultats, en tête de page. Calcul : relance-plan.js. -->
+    <div class="card" id="rel-res" style="margin-bottom:16px"></div>
 
     <div class="relwrap">
       <!-- gauche : les 3 séquences -->
@@ -735,7 +754,7 @@ function relOnSet(k, on){
   relRender(); relPrev();
   toast(on ? "▶ " + RELGRP[k] + " — la séquence reprend pour ce public" : "⏸ " + RELGRP[k] + " — plus aucune relance pour ce public, les autres continuent");
 }
-const RELSYNDEF = [{j:7, rem:0, mail:true, sms:false}, {j:15, rem:0, mail:true, sms:false}, {j:30, rem:5, mail:true, sms:false}];
+const RELSYNDEF = [{j:7, rem:0, mail:true, sms:false}, {j:15, rem:0, mail:true, sms:false}, {j:28, rem:5, mail:true, sms:false}];
 let REL = {
   on: true,
   part: [{j:3, rem:0, mail:true, sms:true}, {j:7, rem:5, mail:true, sms:true}, {j:14, rem:10, mail:true, sms:false}],
@@ -913,6 +932,8 @@ const RELCAS = {
   pro:  {qui: "Mme Garnier", objet: "dératisation de vos locaux", obj: "Votre devis — dératisation de vos locaux", mnt: 1240.00, ht: " HT"},
   syn:  {qui: "M. Barros", objet: "traitement des parties communes — Résidence Les Glycines", obj: "Devis — parties communes, Résidence Les Glycines", mnt: 2180.00, ht: " HT"}
 };
+/* 30/10 : la date de fin de validité citée dans le message (exemple : envoi + 30 j) */
+function relValEx(g, i){ const st = REL[g][i]; const d = new Date(); d.setDate(d.getDate() + Math.max(1, 30 - (+st.j || 0))); return d.toLocaleDateString("fr-FR", {day:"numeric", month:"long"}); }
 function relEur(x){ return x.toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " €"; }
 function relMsg(g, i){
   /* le texte COMPLET d'une étape — sert à l'aperçu ET aux extraits de la frise */
@@ -928,17 +949,17 @@ function relMsg(g, i){
     part: [
       `Bonjour ${cas.qui}, petit rappel : votre devis ${cas.objet} (${M}) est prêt. ${remD}Signature et paiement en ligne en 2 min : ${lien} — Tiger Hygiène 3D`,
       `Bonjour ${cas.qui}, votre devis ${cas.objet} (${M}) est toujours disponible. ${remD}Une question ? Répondez simplement à ce message. Signer en ligne : ${lien} — Tiger Hygiène 3D`,
-      `Bonjour ${cas.qui}, votre devis ${cas.objet} (${M}) expire bientôt. ${remD}Signer et régler en 2 min : ${lien} — Tiger Hygiène 3D`
+      `Bonjour ${cas.qui}, votre devis ${cas.objet} (${M}) expire le ${relValEx(g, i)}. ${remD}Signer et régler en 2 min : ${lien} — Tiger Hygiène 3D`
     ],
     pro: [
       `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) vous est bien parvenu ? Le PDF est joint, signature en ligne : ${lien}. Nous restons disponibles pour toute précision technique. — Tiger Hygiène 3D`,
       `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) reste valable. Si la validation passe par un autre interlocuteur, transférez-lui simplement ce message. ${remP}Signature en ligne : ${lien} — Tiger Hygiène 3D`,
-      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) arrive à échéance. ${remP}Un passage de repérage avant validation reste possible : répondez à ce message. Signer : ${lien} — Tiger Hygiène 3D`
+      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) arrive à échéance le ${relValEx(g, i)}. ${remP}Un passage de repérage avant validation reste possible : répondez à ce message. Signer : ${lien} — Tiger Hygiène 3D`
     ],
     syn: [
       `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) est à votre disposition pour transmission au conseil syndical. Le PDF est joint, signature en ligne : ${lien}. — Tiger Hygiène 3D`,
       `Bonjour ${cas.qui}, en vue du prochain conseil : plan d'intervention, attestations et n° Certibiocide sont disponibles sur simple demande. Notre devis (${M}) reste valable. ${remP}Signature en ligne : ${lien} — Tiger Hygiène 3D`,
-      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) arrive à échéance. Si le passage en conseil demande un délai, dites-le nous : nous prolongeons la validité. ${remP}Signature en ligne : ${lien} — Tiger Hygiène 3D`
+      `Bonjour ${cas.qui}, notre devis ${cas.objet} (${M}) arrive à échéance le ${relValEx(g, i)}. Si le passage en conseil demande un délai, dites-le nous : nous prolongeons la validité. ${remP}Signature en ligne : ${lien} — Tiger Hygiène 3D`
     ]
   };
   /* le ton suit la place : première douce, intermédiaires milieu, DERNIÈRE
@@ -962,7 +983,7 @@ function relSmsDef(g, i){
   const cas = RELCAS[g], st = REL[g][i], L = REL[g].length;
   const R = relRemiseAuto(g, i);
   const rem = (R > 0) ? " (-" + R + "%)" : "";
-  const fin = (i === L - 1) ? " expire bientôt" : " attend votre signature";
+  const fin = (i === L - 1) ? " expire le " + relValEx(g, i) : " attend votre signature";
   /* 01/09 : tiret SIMPLE, pas de cadratin. Le « — » d'origine faisait basculer
      tout le message en UCS-2 (limite 70 au lieu de 160) : chaque relance
      coûtait 2 SMS au lieu d'1. Le texte d'usine ne doit plus produire le bug
@@ -1220,7 +1241,7 @@ function relPrev(){
       + `<textarea class="pta${ch === "sms" ? " sms" : ""}" id="pta" rows="${ch === "sms" ? 4 : 5}"
            oninput="relCnt()">${txt.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</textarea>
          <div class="pvars">
-           ${["{prénom}", "{montant}", "{lien}", "{remise}", "{entreprise}"].map(v =>
+           ${["{prénom}", "{montant}", "{lien}", "{remise}", "{entreprise}", "{validité}"].map(v =>
              `<button class="pvar" onclick="relVar('${v}')" title="Insérer dans le texte">＋ <b>${v}</b></button>`).join("")}
          </div>`
       + (ch === "sms" ? relCntHTML(txt, true) : "")
@@ -1296,7 +1317,7 @@ function relVar(v){
 /* 31/08 (GO 2) — LES GARDE-FOUS DU TEXTE. Ce qu'on écrit ici part chez le
    client : une variable mal tapée ({clientt}) partait telle quelle, et un SMS
    de 3 segments se facturait sans que personne ne le dise. */
-const RELVARS = ["prénom", "prenom", "montant", "lien", "remise", "entreprise", "client", "date", "référence", "reference"];
+const RELVARS = ["prénom", "prenom", "montant", "lien", "remise", "entreprise", "client", "date", "référence", "reference", "validité", "validite"];
 function relVarsKO(t){
   const trouves = String(t || "").match(/\{[^{}]{1,30}\}/g) || [];
   const norm = v => v.replace(/[{}]/g, "").trim().toLowerCase();
@@ -1398,6 +1419,13 @@ function relSteps(list, key){
     </div>`;
   }).join("");
 }
+/* 30/10 : une relance prévue à J+30 ou plus tombe à la fin de validité du devis
+   (30 jours par défaut) — relance-plan.js ne l'envoie pas après l'échéance. On le dit. */
+function relHorsVal(key){
+  const l = REL[key] || []; const k = l.findIndex(x => (+x.j || 0) >= 30);
+  if(k < 0) return "";
+  return `<div class="lnoff" style="background:#FFF7E8;border-color:#F3D9A4;color:#8A5A00">⚠ La ${k + 1}${k ? "ᵉ" : "ʳᵉ"} relance (J+${l[k].j}) tombe à la fin de validité du devis (30 jours) : si c'est un week-end, elle ne partira pas. Conseil : J+28 au plus tard.</div>`;
+}
 /* « bouclé en X jours » : le dernier jalon de la séquence, en trois mots */
 function relDuree(key){
   const l = REL[key]; if(!l || !l.length) return "";
@@ -1406,7 +1434,7 @@ function relDuree(key){
 function relGrpFrise(key){
   return `<div class="lane g-${key}${APC.g === key ? " on" : ""}${RELON[key] ? "" : " offrel"}" data-g="${key}">
       <div class="lnh"><span class="gic">${GICO[key]}</span>${RELGRP[key]} <small>— ${RELSOUS[key]}</small><label class="lnsw${RELON[key] ? " on" : ""}" onclick="event.stopPropagation()" title="${RELON[key] ? "La séquence tourne pour ce public — décocher pour la couper" : "Séquence coupée pour ce public — cocher pour la relancer"}"><input type="checkbox" ${RELON[key] ? "checked" : ""} onchange="relOnSet('${key}', this.checked)">${RELON[key] ? "Relance active" : "Relance coupée"}</label><span class="cad">${relDuree(key)}</span></div>
-      ${RELON[key] ? "" : `<div class="lnoff">⏸ Ce public n'est plus relancé — ses devis n'entrent plus dans la séquence. Les deux autres publics continuent normalement.</div>`}
+      ${relHorsVal(key)}${RELON[key] ? "" : `<div class="lnoff">⏸ Ce public n'est plus relancé — ses devis n'entrent plus dans la séquence. Les deux autres publics continuent normalement.</div>`}
       <div class="vwrap">
         <div class="vrow"><span class="vj z">J 0</span><div class="vzc">Devis envoyé<small>— le départ de la séquence</small></div></div>
         ${relSteps(REL[key], key)}
@@ -2256,6 +2284,38 @@ document.addEventListener("click", function(e){
   document.head.appendChild(st);
   document.body.appendChild(v);
   window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
+})();
+</script>
+<script>
+/* 29/10 (patron) : RÉSULTATS DES RELANCES — combien de devis signés sans relance,
+   après la relance 1, 2 ou 3, pour combien d'euros, et ce que les remises ont coûté.
+   Un devis signé est rangé selon le nombre de relances parties AVANT sa signature
+   (date « gagne » de tigerflow-devis-dates, sinon la date d'envoi). */
+(function(){
+  var J = function(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
+  var jour = function(s){ var x = new Date(String(s || "").slice(0, 10) + "T00:00:00"); return isNaN(x) ? null : x; };
+  var eur = function(n){ return (Math.round(n * 100) / 100).toLocaleString("fr-FR", {style:"currency", currency:"EUR", maximumFractionDigits:0}).replace(/\u202f/g, "\u00a0"); };
+  var PER = J("tigerflow-relance-res-per", "mois");
+  window.relResPer = function(v){ PER = v; try{ localStorage.setItem("tigerflow-relance-res-per", JSON.stringify(v)); }catch(e){} relResRender(); };
+  window.relResRender = function(){
+    var el = document.getElementById("rel-res"); if(!el || typeof relPlan !== "function") return;
+    var T = relStats(PER), B = T.B, rem = T.rem, env = T.env, att = T.att, sig = T.sig;
+    var gr = B[1].n + B[2].n + B[3].n, grm = B[1].m + B[2].m + B[3].m;
+    var max = Math.max(1, B[0].n, B[1].n, B[2].n, B[3].n);
+    var best = [1, 2, 3].reduce(function(a, k){ return B[k].n > B[a].n ? k : a; }, 1);
+    var lib = {mois:"ce mois-ci", "3m":"sur 3 mois", "12m":"sur 12 mois"}[PER];
+    var carte = function(k, t){ var x = B[k]; return '<div class="rrc' + (k === 0 ? " z" : "") + (k > 0 && k === best && x.n ? " best" : "") + '"><small>' + t + '</small><b>' + x.n + ' signé' + (x.n > 1 ? "s" : "") + '</b><span>' + eur(x.m) + ' TTC</span><div class="rrbar"><i style="width:' + Math.round(x.n / max * 100) + '%"></i></div></div>'; };
+    el.innerHTML = '<div class="rrh"><span class="rhic" style="width:30px;height:30px"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span><b>Résultats des relances</b>'
+      + '<select onchange="relResPer(this.value)"><option value="mois"' + (PER === "mois" ? " selected" : "") + '>Ce mois-ci</option><option value="3m"' + (PER === "3m" ? " selected" : "") + '>3 derniers mois</option><option value="12m"' + (PER === "12m" ? " selected" : "") + '>12 derniers mois</option></select></div>'
+      + '<div class="rrbig"><div><small>Gagné grâce aux relances</small><strong>' + eur(grm) + '</strong><i>' + gr + ' devis signé' + (gr > 1 ? "s" : "") + ' après une relance</i></div>'
+      + '<div><small>Devis signés</small><strong>' + sig + (env ? ' / ' + env : "") + '</strong><i>' + (env ? Math.round(sig / env * 100) + " % des devis envoyés " + lib : lib) + '</i></div>'
+      + '<div><small>Remises accordées</small><strong>' + (rem ? "−" + eur(rem) : "0 €") + '</strong><i>sur les devis signés après relance</i></div>'
+      + '<div><small>En attente</small><strong>' + att + '</strong><i>devis envoyés, pas encore signés</i></div></div>'
+      + '<div class="rrg">' + carte(0, "Sans relance") + carte(1, "Après la relance 1") + carte(2, "Après la relance 2") + carte(3, "Après la relance 3") + '</div>'
+      + '<div class="rrtip">' + (gr ? "C'est la <b>relance " + best + "</b> qui fait signer le plus " + lib + "." + (B[3].n === 0 && B[2].n + B[1].n > 0 ? " La relance 3 n'a rien fait signer : sa remise vous coûte peut-être pour rien." : "") : "Aucun devis signé après une relance " + lib + " pour l'instant — les chiffres se remplissent tout seuls.") + '</div>';
+  };
+  var go = function(){ setTimeout(relResRender, 80); };
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
 })();
 </script>
 </body>

@@ -4,6 +4,7 @@
 <link rel="preload" as="image" href="logo-tigre.png">
 <meta charset="UTF-8">
 <script src="exemple-client.js"></script>
+<script src="relance-plan.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>TigerFlow — Tableau de bord</title>
@@ -700,6 +701,8 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
             <p>C'est le nerf de la guerre : chaque point gagné ici, c'est du CA direct.</p>
             <span class="gnote">Aucune donnée antérieure</span><br>
             <a href="devis-liste.html">Voir les devis signés →</a>
+            <!-- 29/10 (patron) : ce que les relances ont fait signer ce mois-ci -->
+            <div id="idx-rel" hidden style="margin-top:10px;padding:9px 11px;border-radius:10px;background:#F4F6FA;font:600 .76rem Inter,sans-serif;color:#1E3350"></div>
           </div>
         </div>
       </div>
@@ -1514,6 +1517,19 @@ document.addEventListener("click", function(e){
   document.head.appendChild(st);
   document.body.appendChild(v);
   window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
+})();
+</script>
+<script>
+(function(){
+  var go = function(){
+    var el = document.getElementById("idx-rel"); if(!el || typeof relStats !== "function") return;
+    var T = relStats("mois"); if(!T.sig) return;
+    var eur = function(n){ return Math.round(n).toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0") + "\u00a0€"; };
+    el.innerHTML = '🔁 <span style="font-weight:800">' + T.gr + " devis signé" + (T.gr > 1 ? "s" : "") + " grâce aux relances</span> ce mois-ci · " + eur(T.grm)
+      + '<span style="display:block;color:#6B7280;font-weight:600;margin-top:2px">relance 1 : ' + T.B[1].n + " · relance 2 : " + T.B[2].n + " · relance 3 : " + T.B[3].n + ' — <a href="relances.html" style="color:inherit;font-weight:700">détail →</a></span>';
+    el.hidden = false;
+  };
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(go, 80); }); else setTimeout(go, 80);
 })();
 </script>
 </body>
