@@ -1373,11 +1373,17 @@ function sendV2(){
     '<div class="srow"><span>Client</span><b>' + cli + '</b></div>' +
     '<div class="srow sttc"><span>Total TTC</span><b>' + tot + '</b></div>';
   /* l'e-mail s'écrit tout seul — modifiable avant envoi */
-  const realMail = (typeof CLIENTS !== "undefined" && CLIENTS[cli] && CLIENTS[cli].mail) ? CLIENTS[cli].mail : "";
-  document.getElementById("s-to").value = realMail || (cli.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@exemple.fr");
+  /* 30/10 (parcours relance) : le devis part à celui qui PAIE (la SCI, le syndic) —
+     avant, l'adresse était fabriquée à partir du nom du lieu (« fran.ois.durand@exemple.fr »)
+     alors que la fiche du payeur avait la vraie. */
+  const qui = (document.getElementById("v-payeur") || {value:""}).value || cli;
+  let fMail = ""; try{ const f = (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).find(c => c && c.nom === qui); fMail = f && f.mail || ""; }catch(e){}
+  const realMail = fMail || ((typeof CLIENTS !== "undefined" && CLIENTS[qui] && CLIENTS[qui].mail) ? CLIENTS[qui].mail : "");
+  document.getElementById("s-to").value = realMail;
+  if(qui !== cli) document.getElementById("srecap").innerHTML += '<div class="srow"><span>Facturé à</span><b>' + qui + '</b></div>';
   document.getElementById("s-obj").value = "Votre devis " + ((document.getElementById("dref2") || {}).textContent || "").trim() + " — " + societe();
   document.getElementById("s-body").value =
-"Bonjour " + cli + ",\n\n" +
+"Bonjour " + qui + ",\n\n" +
 "Veuillez trouver ci-joint votre devis" + (tot ? " d'un montant de " + tot + " TTC" : "") + ".\n\n" +
 "Il est valable " + ((document.getElementById("v-valid") || {value:"30"}).value) + " jours. Vous pouvez le signer directement en ligne via le lien inclus — n'hésitez pas à nous appeler pour toute question.\n\n" +
 "Bien cordialement,\nL'équipe " + societe();
