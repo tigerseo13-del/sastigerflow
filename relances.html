@@ -1208,7 +1208,7 @@ function relAvanceRender(){
       <span class="rgi"><input type="text" maxlength="40" value="${esc(RAV.libelle)}" onchange="ravSet('libelle', this.value)"></span>
     </div>`;
   if(ouvert) el.open = true;
-  if(!el._tg){ el._tg = 1; el.addEventListener("toggle", () => { const sp = el.querySelector("summary > span:last-child"); if(sp) sp.textContent = el.open ? "▾" : "›"; }); }
+  /* 30/10 : l'ancien chevron écrasait le titre « 3 · Signature et e-mails » — le bloc est toujours ouvert, plus de chevron */
   relSimRender();
   relWeekRender();
 }
@@ -1569,20 +1569,26 @@ function relGardeRender(){
   ].filter(Boolean).join(" · ");
   RREGL.garde = [M > 0 ? "pas de relance sous " + e0(M) + " HT" : "", P > 0 ? "aucune remise au-delà de " + e0(P) + " HT" : "", (RGARDE.ouvres ? "lun.–ven. " : "tous les jours ") + RGARDE.h1 + " h–" + RGARDE.h2 + " h"].filter(Boolean).join(" · ");
   el.innerHTML = `<div class="rsec"><div class="rsech"><i>1</i>Remises et horaires</div>
+    <!-- 30/10 (patron : « c'est mieux écrit comme avant, juste changer les termes ») :
+         même présentation (texte à gauche, chiffre à droite), du petit au très gros devis. -->
     <div class="rgrow">
-      <span class="rgl">Pas de remise sur les devis de plus de</span>
-      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="100000" step="100" value="${P}" onchange="rgSet('plafond', this.value)">€ HT</span>
-    </div>
-    <div class="rgrow">
-      <span class="rgl">Au-dessus de <span class="rgi" style="margin:0 4px"><input type="number" inputmode="decimal" min="0" step="100" value="${G}" onchange="ravSet('grosSeuil', this.value)">€ HT</span>, remise maximum</span>
-      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="50" value="${GR}" onchange="ravSet('grosRem', this.value)">%</span>
-    </div>
-    <div class="rgrow">
-      <span class="rgl">Ne pas relancer les devis de moins de</span>
+      <span class="rgl">Montant minimum pour relancer un devis<small>En dessous, le devis n'est pas relancé.</small></span>
       <span class="rgi"><input type="number" inputmode="decimal" min="0" max="100000" step="10" value="${M}" onchange="rgSet('plancher', this.value)">€ HT</span>
     </div>
     <div class="rgrow">
-      <span class="rgl">Envoyer seulement en semaine</span>
+      <span class="rgl">Remise plafonnée à partir de<small>Au-dessus de ce montant, la remise ne dépasse pas le maximum ci-dessous.</small></span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" step="100" value="${G}" onchange="ravSet('grosSeuil', this.value)">€ HT</span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Remise maximum sur ces devis</span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="50" value="${GR}" onchange="ravSet('grosRem', this.value)">%</span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Aucune remise à partir de<small>Les très gros devis sont relancés sans remise.</small></span>
+      <span class="rgi"><input type="number" inputmode="decimal" min="0" max="100000" step="100" value="${P}" onchange="rgSet('plafond', this.value)">€ HT</span>
+    </div>
+    <div class="rgrow">
+      <span class="rgl">Jours et heures d'envoi</span>
       <label class="rgsw"><input type="checkbox" ${RGARDE.ouvres ? "checked" : ""} onchange="rgSet('ouvres', this.checked)">Lun.–ven.</label>
       <span class="rgi">de
         <select onchange="rgSet('h1', this.value)">${[7,8,9,10,11].map(h => `<option value="${h}"${RGARDE.h1 === h ? " selected" : ""}>${h} h</option>`).join("")}</select>
