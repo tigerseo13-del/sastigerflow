@@ -61,9 +61,11 @@
     var man = (J("tigerflow-relance-manuel", {})[d.ref] || []).map(jour).filter(Boolean).sort(function(a, b){ return a - b; });
     var auj = new Date(); auj.setHours(0, 0, 0, 0);
     var ouvres = G.ouvres !== false;
-    var base = d0, baseJ = 0;
+    var base = d0, baseJ = 0; var remAcq = 0;
     seq.forEach(function(x, i){
-      var s = {i:i, n:seq.length, mail:!!x.mail, sms:!!x.sms, rem:+x.rem || 0, fait:false, manuel:false};
+      /* une remise déjà proposée reste acquise : jamais moins que la relance précédente */
+      remAcq = Math.max(remAcq, +x.rem || 0);
+      var s = {i:i, n:seq.length, mail:!!x.mail, sms:!!x.sms, rem:remAcq, fait:false, manuel:false};
       if(i < man.length){ s.date = man[i]; s.fait = true; s.manuel = true; base = man[i]; baseJ = +x.j || 0; }
       else {
         var q = new Date(base); q.setDate(q.getDate() + (+x.j || 0) - baseJ);
