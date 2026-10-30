@@ -298,6 +298,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .relbadge.call{background:#FFF1EA;color:#C2410C}
 .relcall{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:#1E3350;text-decoration:none;padding:9px 12px;border:1.5px solid var(--line);border-radius:11px;background:#fff;white-space:nowrap}
 .relcall:hover{border-color:#1E3350}
+.relcall{cursor:pointer;font-family:inherit}
+.relpwrap{position:relative;display:inline-block}
+.relp{display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:60;width:520px;max-width:calc(100vw - 32px);background:#fff;border:1px solid #E2E5EB;border-radius:16px;box-shadow:0 22px 50px -18px rgba(23,26,32,.35);padding:16px 18px}
+.relp.open{display:block}
+.relp .rph{display:flex;align-items:center;gap:8px;margin-bottom:10px}.relp .rph b{font-size:.92rem}
+.relp .rph select{margin-left:auto;border:1.5px solid #E2E5EB;border-radius:8px;padding:5px 8px;font:700 .72rem Inter,sans-serif;color:#1E3350;background:#fff}
+.relp .rpbig{display:flex;gap:22px;padding:10px 12px;border-radius:12px;background:#F4F6FA;margin-bottom:12px}
+.relp .rpbig small{display:block;font:700 .64rem Inter,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:#6B7280}
+.relp .rpbig strong{font:800 1.25rem Inter,sans-serif;color:#1E3350}
+.relp .rpl{display:grid;grid-template-columns:110px 1fr 120px;gap:7px 12px;align-items:center;font-size:.8rem}
+.relp .rpl i{display:block;height:7px;border-radius:5px;background:#1E3350}.relp .rpl .z i{background:#AEB4C0}
+.relp .rpl span.b{height:7px;border-radius:5px;background:#EEF0F4;display:block}
+.relp .rpf{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #F0F1F5;font-size:.76rem;color:#6B7280}
+.relp .rpf a{color:#1E3350;font-weight:700;text-decoration:none}
+@media(max-width:640px){.relp{position:fixed;left:16px;right:16px;top:auto;bottom:84px;width:auto}}
+
 .relbadge svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .relrow{margin-top:5px}
 .pubtag{display:inline-block;font-size:.6rem;font-weight:800;border-radius:6px;padding:2px 7px;margin-top:3px}
@@ -633,7 +649,10 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
       </select></div>
       <!-- 30/10 (patron) : l'entrée principale vers la page Relance devis — le nom dit
            qu'on y trouve les RÉSULTATS (signés après relance 1, 2, 3), pas seulement des réglages -->
-      <a class="relcall" href="relances.html" title="Devis signés après la relance 1, 2 ou 3 · séquences, remises et textes">📊 Résultats des relances →</a>
+      <!-- 30/10 (patron) : « ici mettre Relance devis et on verrait » — un bouton qui
+           ouvre les RÉSULTATS sur place ; les réglages restent dans Réglages. -->
+      <span class="relpwrap"><button type="button" class="relcall" id="relp-btn" onclick="relPanel(event)" aria-expanded="false">🔁 Relance devis <span style="font-size:.7rem">▾</span></button>
+        <div class="relp" id="relp" onclick="event.stopPropagation()"></div></span>
       <button class="expbtn" onclick="exportCSV()" title="Télécharger la liste affichée au format CSV (Excel)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exporter</button>
     </div>
 
@@ -2093,6 +2112,36 @@ document.addEventListener("click", function(e){
   document.head.appendChild(st);
   document.body.appendChild(v);
   window.apLiberer = function(id){ apOublier(u, id); location.reload(); };
+})();
+</script>
+<script>
+/* 30/10 (patron) : le panneau « Relance devis » de la liste — les résultats sur place */
+(function(){
+  var PER = "mois";
+  var eur = function(n){ return Math.round(n).toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0") + "\u00a0€"; };
+  window.relPanelPaint = function(){
+    var el = document.getElementById("relp"); if(!el || typeof relStats !== "function") return;
+    var T = relStats(PER), max = Math.max(1, T.B[0].n, T.B[1].n, T.B[2].n, T.B[3].n);
+    var lib = {mois:"ce mois-ci", "3m":"sur 3 mois", "12m":"sur 12 mois"}[PER];
+    var ligne = function(k, t){ var x = T.B[k]; return '<span' + (k ? "" : ' class="z"') + '>' + t + '</span><span class="b' + (k ? "" : " z") + '"><i style="width:' + Math.round(x.n / max * 100) + '%"></i></span><b>' + x.n + " signé" + (x.n > 1 ? "s" : "") + " · " + eur(x.m) + '</b>'; };
+    el.innerHTML = '<div class="rph"><b>Résultats des relances</b><select onchange="relPanelPer(this.value)">'
+      + [["mois","Ce mois-ci"],["3m","3 derniers mois"],["12m","12 derniers mois"]].map(function(o){ return '<option value="' + o[0] + '"' + (PER === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select></div>'
+      + '<div class="rpbig"><div><small>Gagné grâce aux relances</small><strong>' + eur(T.grm) + '</strong></div><div><small>Signés après relance</small><strong>' + T.gr + '</strong></div><div><small>Remises accordées</small><strong>' + (T.rem ? "−" + eur(T.rem) : "0 €") + '</strong></div></div>'
+      + '<div class="rpl">' + ligne(0, "Sans relance") + ligne(1, "Après la relance 1") + ligne(2, "Après la relance 2") + ligne(3, "Après la relance 3") + '</div>'
+      + '<div class="rpf"><span>' + (T.gr ? "" : "Aucun devis signé après une relance " + lib + ".") + '</span><a href="relances.html">⚙ Réglages des relances →</a></div>';
+  };
+  window.relPanelPer = function(v){ PER = v; relPanelPaint(); };
+  window.relPanel = function(e){
+    e.stopPropagation();
+    var el = document.getElementById("relp"), b = document.getElementById("relp-btn");
+    var open = !el.classList.contains("open");
+    if(open) relPanelPaint();
+    el.classList.toggle("open", open); if(b) b.setAttribute("aria-expanded", open);
+  };
+  document.addEventListener("click", function(){ var el = document.getElementById("relp"); if(el) el.classList.remove("open"); });
+  /* arrivée depuis le tableau de bord ou la page Relance devis : le panneau s'ouvre tout seul */
+  if(location.hash === "#relances") setTimeout(function(){ var b = document.getElementById("relp-btn"); if(b){ b.scrollIntoView({block:"center"}); relPanel({stopPropagation:function(){}}); } }, 400);
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ var el = document.getElementById("relp"); if(el) el.classList.remove("open"); } });
 })();
 </script>
 </body>
