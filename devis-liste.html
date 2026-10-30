@@ -145,7 +145,7 @@ h1,.num{font-family:'Sora',sans-serif}
 
 
 .kpi{display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
 .kpi{border-radius:18px;padding:16px 18px;border:1px solid transparent}
 .kpi.k-orange{background:var(--orange-soft);border-color:#FFD9C4}
 .kpi.k-green{background:var(--green-bg);border-color:#BFE5D8}
@@ -294,13 +294,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(pointer:coarse){
   .aic,.dclose,.px,.rpx,.dnbtn,.tourbtn,.helpbtn,.hidebtn,.zoombtns button,.acti button{min-width:42px;min-height:42px}
 }
-.relbadge{display:inline-flex;align-items:center;gap:5px;font-size:.64rem;font-weight:800;background:#FFF1EA;color:#D2450A;padding:4px 9px;border-radius:8px;white-space:nowrap;cursor:pointer}
+.relbadge{display:inline-flex;align-items:center;gap:5px;font-size:.64rem;font-weight:800;background:#EEF2F8;color:#1E3350;padding:4px 9px;border-radius:8px;white-space:nowrap}
+.relbadge.call{background:#FFF1EA;color:#C2410C}
+.relcall{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:#1E3350;text-decoration:none;padding:9px 12px;border:1.5px solid var(--line);border-radius:11px;background:#fff;white-space:nowrap}
+.relcall:hover{border-color:#1E3350}
 .relbadge svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .relrow{margin-top:5px}
 .pubtag{display:inline-block;font-size:.6rem;font-weight:800;border-radius:6px;padding:2px 7px;margin-top:3px}
 .pubtag.pp{background:var(--blue-bg);color:var(--blue)}
 .pubtag.pe{background:#F3EEFD;color:#7C3AED}
-.relbadge:hover{filter:brightness(.94)}
+
 .relbadge.pause{background:var(--bg);color:var(--muted)}
 @media(pointer:coarse){.rx{min-width:42px;min-height:42px}}
 @media(max-width:760px){.gsbtn{width:40px;padding:0;justify-content:center}.gsbtn > :not(svg){display:none}}
@@ -592,6 +595,9 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
            vrai sous-ensemble. Le clic mene donc aux 14 TRAITES (gagnés +
            perdus + expirés), pas au pourcentage — et l'infobulle le dit,
            au lieu du « Filtrer la liste » des trois autres. -->
+      <!-- 30/10 (patron, parcours bureau) : les devis dont les relances auto sont
+           finies sans signature — c'est au téléphone de jouer. Orange : une action. -->
+      <div class="kpi k-orange" role="button" tabindex="0" title="Les relances auto sont terminées sans signature : un appel fait souvent signer" onclick="kfil('rel-appeler')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('rel-appeler')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.7a2 2 0 01-.5 2.1L8 9.8a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.7.7a2 2 0 011.7 2z"/></svg></div><div class="lbl">À appeler</div><div class="num" id="k-call-n">0</div><div class="ksub" id="k-call-m">relances terminées</div></div>
       <div class="kpi k-cash" role="button" tabindex="0" title="Voir les devis signés" id="kpi-taux" onclick="kfil('gagne')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();kfil('gagne')}"><div class="kico"><svg viewBox="0 0 24 24"><path d="M17 3a2.8 2.8 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></div><div class="lbl">Taux de signature</div><div class="num" id="k-taux">0</div><div class="ksub" id="k-taux-s">—</div></div>
     </div>
 
@@ -608,6 +614,9 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
         <button class="chip" data-f="gagne">Gagné <span class="n" id="n-gagne"></span></button>
         <button class="chip" data-f="perdu">Perdu <span class="n" id="n-perdu"></span></button>
         <button class="chip" data-f="expire">Expiré <span class="n" id="n-expire"></span></button>
+        <button class="chip" data-f="rel-cours">Relance en cours <span class="n" id="n-rel-cours"></span></button>
+        <button class="chip" data-f="rel-appeler">À appeler <span class="n" id="n-rel-appeler"></span></button>
+        <button class="chip" data-f="rel-pause">En pause / exclu <span class="n" id="n-rel-pause"></span></button>
       </div>
       <!-- 02/09 (patron) : le menu pilote les pastilles, qui restent le moteur. -->
       <div class="fsel"><select id="f-stat-sel" onchange="fselGo(this.value)" aria-label="Tous les statuts">
@@ -616,7 +625,13 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
         <option value="gagne">Gagné</option>
         <option value="perdu">Perdu</option>
         <option value="expire">Expiré</option>
+        <optgroup label="Relance auto">
+          <option value="rel-cours">Relance en cours</option>
+          <option value="rel-appeler">À appeler (relances terminées)</option>
+          <option value="rel-pause">En pause / client exclu</option>
+        </optgroup>
       </select></div>
+      <a class="relcall" href="relances.html" title="Séquences, remises, textes et résultats des relances">🔁 Réglages des relances →</a>
       <button class="expbtn" onclick="exportCSV()" title="Télécharger la liste affichée au format CSV (Excel)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exporter</button>
     </div>
 
@@ -709,11 +724,11 @@ function relBadge(d){
   const R = relPlan(d, d.statut);
   if(R.etat === "horsjeu" || R.etat === "expire") return "";
   if(R.etat === "pause")
-    return `<span class="relbadge pause" onclick="relTog(event,'${d.ref}')" title="Relances en pause pour ce devis — cliquer pour reprendre">⏸ en pause</span>`;
-  if(R.etat === "fini") return `<span class="relbadge pause" title="${R.motif}">${RELSVG} relances terminées</span>`;
+    return `<span class="relbadge pause" title="Relances en pause pour ce devis — reprendre depuis la fiche du devis">⏸ en pause</span>`;
+  if(R.etat === "fini") return `<span class="relbadge call" title="Les relances auto sont terminées sans signature : un appel fait souvent signer">📞 à appeler · relances terminées</span>`;
   if(R.etat !== "actif") return `<span class="relbadge pause" title="${R.motif}">⏸ ${R.motif}</span>`;
   const s = R.next;
-  return `<span class="relbadge" onclick="relTog(event,'${d.ref}')" title="Relance ${s.mail ? "email" : ""}${s.mail && s.sms ? " + " : ""}${s.sms ? "SMS" : ""}${s.rem ? " avec −" + s.rem + " %" : " sans remise"} · cliquer pour mettre en pause">${RELSVG}Relance ${s.i + 1}/${s.n} · ${relJour(s.date)}${s.derniere ? " · dernière" : ""}</span>`;
+  return `<span class="relbadge" title="Relance ${s.mail ? "email" : ""}${s.mail && s.sms ? " + " : ""}${s.sms ? "SMS" : ""}${s.rem ? " avec −" + s.rem + " %" : " sans remise"} · pause : depuis la fiche du devis">${RELSVG}Relance ${s.i + 1}/${s.n} · ${relJour(s.date)}${s.derniere ? " · dernière" : ""}</span>`;
 }
 function relTog(e, ref){
   e.stopPropagation();
@@ -870,12 +885,21 @@ function stats(){
   g('k-taux').textContent = (traites ? Math.round(sig.length / traites * 100) : 0) + " %";
   g('k-taux-s').textContent = traites ? "sur " + traites + " devis traités" : "aucun devis traité";
   // compteurs des puces
-  const cnt = f => f==="all" ? DEVIS.length : DEVIS.filter(d=>d.statut===f).length;
-  ["all","envoye","envoye","gagne","perdu","expire"].forEach(f=>{
+  const cnt = f => f==="all" ? DEVIS.length : f.indexOf("rel-") === 0 ? DEVIS.filter(d=>relEtatF(d)===f).length : DEVIS.filter(d=>d.statut===f).length;
+  const call = DEVIS.filter(d => relEtatF(d) === "rel-appeler");
+  g('k-call-n').textContent = nb(call.length, "devis").replace("deviss","devis");
+  g('k-call-m').textContent = call.length ? som(call) : "relances terminées";
+  ["all","envoye","envoye","gagne","perdu","expire","rel-cours","rel-appeler","rel-pause"].forEach(f=>{
     document.getElementById('n-'+f).textContent = "(" + cnt(f) + ")";
   });
 }
 
+/* 30/10 : le filtre « relance » d'un devis — même calcul que partout (relance-plan.js) */
+function relEtatF(d){
+  if(d.statut !== "envoye" || typeof relPlan !== "function") return "";
+  const e = relPlan(d, d.statut).etat;
+  return e === "actif" ? "rel-cours" : e === "fini" ? "rel-appeler" : (e === "pause" || e === "exclu" || e === "coupe" || e === "nuisible" || e === "plancher") ? "rel-pause" : "";
+}
 /* ===== tuile → filtre : la tuile clique la chip correspondante ===== */
 function kfil(f){
   /* 26/08 (patron : « ça affiche les perdus — répare ») : le clic sur le TAUX
@@ -901,7 +925,7 @@ function kringSync(f){
      les deux était cassé : la table pointait « k-orange », couleur disparue
      depuis la grammaire du 04/08 (la tuile Taux est passée en k-cash), et
      « Expire bientôt » n'était jamais surlignée. Cliquer l'une allume l'autre. */
-  const map = {gagne:"k-green", envoye:"k-amber", "expire-proche":"k-red"};
+  const map = {gagne:"k-green", envoye:"k-amber", "expire-proche":"k-red", "rel-appeler":"k-orange"};
   document.querySelectorAll(".kpi").forEach(k => k.classList.remove("on"));
   if(map[f]){ const el = document.querySelector(".kpi." + map[f]); if(el) el.classList.add("on"); }
 }
@@ -942,6 +966,7 @@ function render(){
         ? (d.statut==="envoye" && (()=>{ if(!d.valid) return false;
              const f=new Date(d.valid), t=new Date(); f.setHours(0,0,0,0); t.setHours(0,0,0,0);
              return Math.round((f-t)/86400000) <= 7; })())
+        : FILTRE.indexOf("rel-") === 0 ? relEtatF(d) === FILTRE
         : d.statut===FILTRE) &&
     (d.client.toLowerCase().includes(q) || d.ref.toLowerCase().includes(q) || d.titre.toLowerCase().includes(q) || String(d.montant).includes(q.replace(",", ".")))
   );
@@ -974,7 +999,7 @@ function render(){
 
   document.getElementById('cards').innerHTML = slice.length ? slice.map(d=>`
     <a class="fmc" href="devis-detail.html?ref=${encodeURIComponent(d.ref)}">
-      <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${d.statut}">${LBL[d.statut]}</span></div>
+      <div class="l1"><span class="ref">${d.ref}</span><span class="st st-${d.statut}">${LBL[d.statut]}</span></div>${relBadge(d) ? `<div style="margin:2px 0 6px">${relBadge(d)}</div>` : ""}
       <b class="t">${d.titre}</b>
       <div class="cl">${d.client}${d.ct ? " · " + d.ct : ""}</div>
       <div class="l2"><span class="amt">${eur(d.montant)}</span><span class="dte">${fdate(d.date)} ${expChip(d)}</span></div>

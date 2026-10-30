@@ -2544,10 +2544,11 @@ function toast(msg, undoFn){
         if(typeof relPlan !== "function") return "";
         var R = relPlan(d, statut);
         if(R.etat === "horsjeu" || R.etat === "expire") return "";
-        var tag = function(txt, gris){ return '<div onclick="event.stopPropagation();relMiniTog(\'' + d.ref + '\')" title="Cliquer pour mettre en pause / reprendre" style="margin-top:4px;cursor:pointer;font:700 .66rem Inter,sans-serif;color:' + (gris ? "#8A8F9E" : "#D2450A") + '">' + txt + '</div>'; };
+        /* 30/10 : info en bleu marine, plus de pause au clic (elle se fait sur la fiche du devis) */
+        var tag = function(txt, gris){ return '<div title="Relance automatique — pause depuis la fiche du devis" style="margin-top:4px;font:700 .66rem Inter,sans-serif;color:' + (gris ? "#8A8F9E" : "#1E3350") + '">' + txt + '</div>'; };
         if(R.etat === "exclu") return tag("⏸ client exclu des relances", true);
         if(R.etat === "pause") return tag("⏸ relance en pause", true);
-        if(R.etat === "fini") return tag("🔁 relances terminées", true);
+        if(R.etat === "fini") return '<div title="Relances auto terminées sans signature" style="margin-top:4px;font:700 .66rem Inter,sans-serif;color:#C2410C">📞 à appeler · relances terminées</div>';
         if(R.etat !== "actif") return tag("⏸ " + R.motif, true);
         return tag(relLabel(R));
       }catch(e){ return ""; }
