@@ -296,6 +296,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 }
 .relbadge{display:inline-flex;align-items:center;gap:5px;font-size:.64rem;font-weight:800;background:#EEF2F8;color:#1E3350;padding:4px 9px;border-radius:8px;white-space:nowrap}
 .relbadge.call{background:#FFF1EA;color:#C2410C}
+.relbadge.warn{background:#FFF4E5;color:#B45309;text-decoration:none;cursor:pointer}
+.relbadge.warn:hover{text-decoration:underline}
 .relcall{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:#1E3350;text-decoration:none;padding:9px 12px;border:1.5px solid var(--line);border-radius:11px;background:#fff;white-space:nowrap}
 .relcall:hover{border-color:#1E3350}
 .relcall{cursor:pointer;font-family:inherit}
@@ -744,6 +746,7 @@ function relBadge(d){
   if(R.etat === "pause")
     return `<span class="relbadge pause" title="Relances en pause pour ce devis — reprendre depuis la fiche du devis">⏸ en pause</span>`;
   if(R.etat === "fini") return `<span class="relbadge pause" title="Toutes les relances auto sont parties, sans signature">relances terminées</span>`;
+  if(R.etat === "contact") return `<a class="relbadge warn" href="client-nouveau.html?c=${encodeURIComponent(R.qui)}" onclick="event.stopPropagation()" title="Compléter la fiche de ${R.qui} pour que la relance parte">⚠ ${R.motif} · relance impossible</a>`;
   if(R.etat !== "actif") return `<span class="relbadge pause" title="${R.motif}">⏸ ${R.motif}</span>`;
   const s = R.next;
   return `<span class="relbadge" title="Relance ${s.mail ? "email" : ""}${s.mail && s.sms ? " + " : ""}${s.sms ? "SMS" : ""}${s.rem ? " avec −" + s.rem + " %" : " sans remise"} · pause : depuis la fiche du devis">${RELSVG}Relance ${s.i + 1}/${s.n} · ${relJour(s.date)}${s.derniere ? " · dernière" : ""}</span>`;
@@ -913,7 +916,7 @@ function stats(){
 function relEtatF(d){
   if(d.statut !== "envoye" || typeof relPlan !== "function") return "";
   const e = relPlan(d, d.statut).etat;
-  return e === "actif" ? "rel-cours" : e === "fini" ? "rel-appeler" : (e === "pause" || e === "exclu" || e === "coupe" || e === "nuisible" || e === "plancher") ? "rel-pause" : "";
+  return e === "actif" ? "rel-cours" : e === "fini" ? "rel-appeler" : (e === "pause" || e === "exclu" || e === "coupe" || e === "nuisible" || e === "plancher" || e === "contact") ? "rel-pause" : "";
 }
 /* ===== tuile → filtre : la tuile clique la chip correspondante ===== */
 function kfil(f){
