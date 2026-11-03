@@ -41,6 +41,21 @@
     L.push({d: dateIso || iso(new Date()), k: k}); M[ref] = L;
     try{ localStorage.setItem("tigerflow-relance-manuel", JSON.stringify(M)); }catch(e){}
   };
+  /* 03/11 : l'offre de relance en cours pour ce devis (affichée sur la page du devis
+     côté client). Remise de la DERNIÈRE relance partie ; valable 48 h pour un particulier
+     (le texte de la relance le promet), sinon jusqu'à la fin de validité du devis. */
+  window.relOffre = function(d){
+    if(!d || typeof relPlan !== "function") return null;
+    var R = relPlan(d, "envoye"); if(R.etat === "horsjeu") return null;
+    var faits = (R.steps || []).filter(function(s){ return s.fait && s.rem > 0; });
+    if(!faits.length) return null;
+    var s = faits[faits.length - 1], fin;
+    if(R.pub === "part"){ fin = new Date(s.date); fin.setDate(fin.getDate() + 2); if(R.valid && fin > R.valid) fin = R.valid; }
+    else fin = R.valid;
+    var auj = new Date(); auj.setHours(0, 0, 0, 0);
+    if(!fin || fin < auj) return null;
+    return {rem: s.rem, fin: fin, relance: s.i + 1};
+  };
   /* raison du refus donnée par le client (lien « Je ne suis pas intéressé ») */
   window.relRefus = function(ref){ var x = J("tigerflow-devis-refus", {})[ref]; return x ? (x.r || "sans raison") : ""; };
   window.relJour = function(x){ return x.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"}); };
@@ -63,6 +78,8 @@
        (somme des lignes), pas le TTC. Sans lignes : TTC / 1,2 comme la page Relance. */
     var ht = (d.lignes || []).reduce(function(a, l){ return a + (+l.qte || 0) * (+l.pu || 0); }, 0) || ((+d.montant || 0) / 1.2);
     R.ht = ht;
+    /* 03/11 : un devis à 0 € (vide ou de test) n'est jamais relancé */
+    if(!(ht > 0)){ R.etat = "horsjeu"; R.motif = "devis à 0 €"; return R; }
     if((+G.plancher || 0) > 0 && ht < +G.plancher){ R.etat = "plancher"; R.motif = "sous " + G.plancher + " €"; return R; }
     var d0 = jour((J("tigerflow-devis-dates", {})[d.ref] || {}).envoye || d.date || ""); if(!d0) return R;
     var v = d.valid ? jour(d.valid) : null;
@@ -106,12 +123,12 @@
       R.steps.push(s);
     });
     if(R.steps.length) R.steps[R.steps.length - 1].derniere = true;
-    R.steps.forEach(function(s){ s.n = R.steps.length; });
+    /* 03/11 : on garde « 1/3, 2/3 » même si l'échéance coupe la fin — la dernière possible est marquée */
     var P = J("tigerflow-relance-devis-v2-pause", []);
     R.next = R.steps.find(function(s){ return !s.fait; }) || null;
     R.coupees = seq.length - R.steps.length;      /* relances retirées car après l'échéance */
     if(auj > v){ R.etat = "expire"; R.motif = "devis expiré"; return R; }
-    if(P.indexOf(d.ref) > -1){ R.etat = "pause"; R.motif = "en pause"; return R; }
+    if(P.indexOf(d.ref) > -1){ R.etat = "pause"; R.motif = "arrêté"; return R; }
     /* 02/11 : validité trop courte — aucune relance ne tombe avant l'échéance */
     if(!R.steps.length){ R.etat = "court"; R.motif = "validité trop courte : aucune relance avant l'échéance"; return R; }
     if(!R.next){ R.etat = "fini"; R.motif = R.steps.length + " relance" + (R.steps.length > 1 ? "s" : "") + " faite" + (R.steps.length > 1 ? "s" : "") + " — au téléphone"; return R; }

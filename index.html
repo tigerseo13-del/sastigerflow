@@ -1532,5 +1532,44 @@ document.addEventListener("click", function(e){
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(go, 80); }); else setTimeout(go, 80);
 })();
 </script>
+<script>
+/* 03/11 (patron) : la cloche prévient quand une RELANCE a produit quelque chose —
+   devis signé après une relance, ou client qui a cliqué « Je ne suis pas intéressé ».
+   Les 7 derniers jours, dérivés des devis (rien de stocké en plus). */
+(function(){
+  var go = function(){
+    var pop = document.getElementById("bpop"); if(!pop || typeof relPlan !== "function") return;
+    var J = function(k, d){ try{ var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }catch(e){ return d; } };
+    var esc = function(t){ return String(t == null ? "" : t).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
+    var jour = function(x){ var t = new Date(String(x || "").slice(0, 10) + "T00:00:00"); return isNaN(t) ? null : t; };
+    var auj = new Date(); auj.setHours(0, 0, 0, 0); var lim = new Date(auj); lim.setDate(lim.getDate() - 7);
+    var quand = function(t){ var n = Math.round((auj - t) / 864e5); return n <= 0 ? "aujourd'hui" : n === 1 ? "hier" : "il y a " + n + " j"; };
+    var eur = function(n){ return Math.round(n).toLocaleString("fr-FR").replace(/\u202f/g, "\u00a0") + "\u00a0€"; };
+    var box = J("tigerflow-inbox-devis", []), stx = J("tigerflow-devis-statuts", {}), dts = J("tigerflow-devis-dates", {}), RF = J("tigerflow-devis-refus", {});
+    var ev = [];
+    box.forEach(function(d){
+      if(!d || !d.ref) return;
+      var st = stx[d.ref] || d.statut, dd = dts[d.ref] || {};
+      if(st === "gagne"){
+        var g = jour(dd.gagne); if(!g || g < lim) return;
+        var R = relPlan(d, "envoye"), av = (R.steps || []).filter(function(s){ return s.date <= g; });
+        if(!av.length) return;
+        ev.push({t: g, ok: 1, ref: d.ref, b: "Signé après la relance " + Math.min(av.length, 3), s: esc(d.payeur || d.client) + " · " + eur(+d.montant || 0) + ". À planifier en intervention."});
+      }
+      var x = RF[d.ref]; if(x){ var r = jour(x.d); if(r && r >= lim) ev.push({t: r, ok: 0, ref: d.ref, b: "Pas intéressé", s: esc(d.payeur || d.client) + " · " + esc(d.titre || d.ref) + (x.r ? " — « " + esc(x.r) + " »" : "") + ". Relances arrêtées."}); }
+    });
+    if(!ev.length) return;
+    ev.sort(function(a, b){ return b.t - a.t; });
+    var html = ev.slice(0, 5).map(function(e){
+      return '<a class="brow nu" href="devis-detail.html?ref=' + encodeURIComponent(e.ref) + '"><span class="bic" style="background:' + (e.ok ? "var(--green-bg);color:var(--green-d)" : "#FCECEA;color:#B4232A") + '"><svg viewBox="0 0 24 24">' + (e.ok ? '<path d="M20 6L9 17l-5-5"/>' : '<path d="M18 6L6 18M6 6l12 12"/>') + '</svg></span><span class="bb"><b>🔁 ' + e.b + '</b><small>' + e.s + '</small></span><span class="btime">' + quand(e.t) + '</span></a>';
+    }).join("");
+    var h = pop.querySelector(".bph"); if(h) h.insertAdjacentHTML("afterend", html);
+    var n = pop.querySelectorAll(".brow.nu").length;
+    var dot = document.getElementById("bell-dot"); if(dot) dot.textContent = n;
+    var t = document.getElementById("bph-n"); if(t) t.textContent = "Notifications · " + n + " nouvelle" + (n > 1 ? "s" : "");
+  };
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(go, 150); }); else setTimeout(go, 150);
+})();
+</script>
 </body>
 </html>

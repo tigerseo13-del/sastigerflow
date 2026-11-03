@@ -2769,8 +2769,8 @@ document.addEventListener("click", function(e){
     if(R.etat === "actif"){
       var s = R.next, can = [s.mail ? "email" : "", s.sms ? "SMS" : ""].filter(Boolean).join(" + ") || "aucun canal";
       txt = "🔁 Relance " + (s.i + 1) + "/" + s.n + " le " + relJour(s.date) + " · " + can + (s.rem ? " · −" + s.rem + " %" : "") + (s.derniere ? " · dernière relance" : "");
-      b = bt("⏸ Pause ce devis", "relDetTog", "Ce devis ne sera plus relancé automatiquement") + ex;
-    } else if(R.etat === "pause"){ txt = "⏸ Relance en pause"; b = bt("▶ Reprendre", "relDetTog", "Reprendre les relances de ce devis") + ex; }
+      b = bt("⏸ Arrêter", "relDetTog", "Ce devis ne sera plus relancé automatiquement") + ex;
+    } else if(R.etat === "pause"){ txt = "⏸ Relances arrêtées"; b = bt("▶ Réactiver", "relDetTog", "Reprendre les relances de ce devis") + ex; }
     else if(R.etat === "exclu"){ txt = "⏸ Client exclu : aucun devis de " + R.qui + " n'est relancé"; b = bt("▶ Réactiver ce client", "relDetEx", "Les devis de " + R.qui + " seront de nouveau relancés"); }
     else if(R.etat === "fini"){ txt = "✓ Relances terminées — à appeler"; }
     else if(R.etat === "contact"){ txt = '<span style="color:#B45309">⚠ Relance impossible : ' + R.motif + ' pour ' + R.qui + '</span>'; b = '<a href="client-nouveau.html?c=' + encodeURIComponent(R.qui) + '" onclick="event.stopPropagation()" style="border:1.5px solid #E2E5EB;border-radius:8px;background:#fff;padding:5px 10px;font:700 .72rem Inter,sans-serif;color:#3D434E;text-decoration:none">Compléter la fiche</a>' + ex; }
@@ -2788,7 +2788,7 @@ document.addEventListener("click", function(e){
     if(P.has(ref)) P.delete(ref); else P.add(ref);
     try{ localStorage.setItem("tigerflow-relance-devis-v2-pause", JSON.stringify([...P])); }catch(e){}
     relDetPaint();
-    if(typeof toast === "function") toast(P.has(ref) ? "⏸ Relances en pause pour " + ref : "▶ Relances reprises pour " + ref);
+    if(typeof toast === "function") toast(P.has(ref) ? "⏸ Relances arrêtées pour " + ref : "▶ Relances réactivées pour " + ref);
   };
   /* 29/10 (patron, choix A + C) : exclure le client depuis le devis — même réglage
      que « Ne plus relancer ses devis » dans le menu ⋯ de la fiche client. */
@@ -2803,7 +2803,9 @@ document.addEventListener("click", function(e){
     if(typeof toast === "function") toast(exclu ? "▶ " + qui + " : relances automatiques actives" : "⏸ " + qui + " : plus aucune relance automatique");
   };
   if(typeof renderAll === "function"){ var _ra = renderAll; renderAll = function(){ _ra(); try{ relDetPaint(); }catch(e){} }; }
-  var go = function(){ setTimeout(relDetPaint, 50); setTimeout(relDetPaint, 500); };
+  var go = function(){ setTimeout(relDetPaint, 50); setTimeout(relDetPaint, 500);
+    /* 03/11 : « Relancer maintenant » depuis l'onglet Relances en cours ouvre directement la relance */
+    if(location.hash === "#relancer") setTimeout(function(){ if(typeof envoyer === "function") envoyer(); }, 600); };
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go();
 })();
 </script>

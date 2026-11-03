@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script src="exemple-client.js"></script>
+<script src="relance-plan.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light only">
 <title data-f="titre">Devis DEV-2026-01287 — Agence Antinuisible</title>
@@ -32,6 +33,13 @@
 .nonr button.on{border-color:#1E3350;background:#EEF2F8}
 .nonok{width:100%;border:1.5px solid #1E3350;background:#fff;color:#1E3350;border-radius:10px;padding:10px;font:700 .85rem Inter,sans-serif;cursor:pointer}
 .nondone{margin-top:12px;border-radius:12px;padding:14px;background:#E9F6F0;color:#0F6B49;font-size:.88rem;text-align:center}
+
+/* 03/11 : l'offre de la relance, affichée au client */
+.offre{display:flex;align-items:center;gap:14px;margin:0 0 18px;padding:14px 16px;border-radius:14px;background:#ECF8F2;border:1px solid #BFE5D8;color:#0F5E41}
+.offre b{font-size:1.05rem}.offre s{color:#6B7280;margin:0 6px}.offre small{display:block;font-size:.78rem;color:#2F6B54;margin-top:2px}
+.offre .pc{flex:none;background:#0F7B55;color:#fff;font:800 .95rem Inter,sans-serif;border-radius:10px;padding:8px 10px}
+.ttcband.off{flex-wrap:wrap}.ttcband .avant{width:100%;text-align:right;font:600 .8rem Inter,sans-serif!important;color:#6B7280!important;margin-top:4px;text-transform:none!important;letter-spacing:0!important}
+@media print{.offre{break-inside:avoid}}
 </style>
 <style>
 :root{color-scheme:light only}
@@ -830,6 +838,8 @@ function pdfImprimer(nom){
   var o2 = document.getElementById("objet2"); if(o2) o2.hidden = true;
 
   put("lbl-ech", estFacture ? "À régler avant le" : "Valable jusqu'au");
+  /* 03/11 : sans date de validité, le devis est valable 30 jours après l'envoi (même règle que les relances) */
+  if(!rec.valid && !estFacture){ try{ var d0 = ((JSON.parse(localStorage.getItem("tigerflow-devis-dates")) || {})[ref] || {}).envoye || rec.date; if(d0){ var t = new Date(d0 + "T00:00:00"); t.setDate(t.getDate() + 30); rec.valid = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0"); } }catch(e){} }
   put("ech", fdate(rec.valid));
   put("lbl-dur", estFacture ? "Délai de paiement" : "Validité");
 
@@ -1379,6 +1389,25 @@ async function pdf(){
   };
   /* déjà refusé : on le dit tout de suite */
   if(ref && lire()[ref]){ document.getElementById("btn-nonint").hidden = true; document.getElementById("nondone").hidden = false; }
+})();
+</script>
+<script>
+(function(){
+  var ref = ""; try{ ref = new URLSearchParams(location.search).get("ref") || ""; }catch(e){}
+  if(!ref || /^FAC/i.test(ref) || typeof relOffre !== "function") return;
+  var J = function(k){ try{ return JSON.parse(localStorage.getItem(k)) || []; }catch(e){ return []; } };
+  var d = J("tigerflow-inbox-devis").find(function(x){ return x && x.ref === ref; }); if(!d) return;
+  var st = (function(){ try{ return (JSON.parse(localStorage.getItem("tigerflow-devis-statuts")) || {})[ref]; }catch(e){ return ""; } })() || d.statut;
+  if(st !== "envoye") return;
+  var O = relOffre(d); if(!O) return;
+  var eur = function(n){ return n.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/\u202f/g, "\u00a0") + "\u00a0€"; };
+  var ttc = +d.montant || 0, nv = Math.round(ttc * (1 - O.rem / 100) * 100) / 100;
+  var fin = O.fin.toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"});
+  var b = document.createElement("div"); b.className = "offre";
+  b.innerHTML = '<span class="pc">−' + String(O.rem).replace(".", ",") + ' %</span><span><b>Offre : ' + eur(nv) + '</b><s>' + eur(ttc) + '</s> si vous signez avant le ' + fin + '.<small>La remise est appliquée automatiquement à la signature.</small></span>';
+  var tot = document.querySelector(".tot"); if(tot) tot.parentNode.insertBefore(b, tot);
+  var band = document.querySelector(".ttcband"), el = document.getElementById("ttc");
+  if(band && el){ band.classList.add("off"); el.textContent = eur(nv); var av = document.createElement("span"); av.className = "avant"; av.textContent = "au lieu de " + eur(ttc) + " · offre valable jusqu'au " + O.fin.toLocaleDateString("fr-FR"); band.appendChild(av); }
 })();
 </script>
 </body>
