@@ -537,6 +537,8 @@ body.rvmode .kpis,body.rvmode .filters,body.rvmode .tablecard,body.rvmode #cards
 #rv .rvc{font:700 .79rem Inter,sans-serif;padding:8px 14px;border-radius:20px;border:1.5px solid var(--line,#E7E9EF);color:var(--muted,#6B7280);background:#fff;cursor:pointer}
 #rv .rvc.on{border-color:#1E3350;color:#1E3350;background:#EEF2F8}
 #rv .rvsep{width:1px;height:24px;background:#E2E5EB;margin:0 4px}
+#rv .rvsel{border:1.5px solid var(--line,#E7E9EF);border-radius:11px;background:#fff;padding:8px 12px;font:700 .82rem Inter,sans-serif;color:#1E3350}
+#rv th .lg{text-transform:none;letter-spacing:0;font-weight:700;color:#4A5263;cursor:help}
 #rv .rvcard{background:#fff;border:1px solid var(--line,#E7E9EF);border-radius:18px;overflow-x:auto}
 #rv table{width:100%;border-collapse:collapse;font-size:.84rem}
 #rv th{text-align:left;font:700 .66rem Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#6B7280);padding:12px 10px;background:#FAFBFC;border-bottom:1px solid #EEF0F4}
@@ -2206,7 +2208,7 @@ document.addEventListener("click", function(e){
   var fd = function(d){ return d ? d.toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit"}) : "—"; };
   var MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
   var V = "all", F = "toutes", MENU = "";
-  var RES = {m: null, n: 5, pub: "", sel: null};   /* mois affiché, nb de mois, public, segment cliqué */
+  var RES = {m: null, n: 6, pub: "", sel: null};   /* mois affiché, nb de mois, public, segment cliqué */
 
   function statut(d){ return (J("tigerflow-devis-statuts", {})[d.ref]) || d.statut; }
   function cat(d){
@@ -2346,10 +2348,15 @@ document.addEventListener("click", function(e){
     var seg = function(m, mi){ var n = [m.b[0].length, m.b[1].length, m.b[2].length, m.b[3].length], t = n[0] + n[1] + n[2] + n[3];
       if(!t) return '<span class="sm">aucun devis signé</span>';
       return '<span class="seg">' + n.map(function(v, i){ return v ? '<span class="s' + i + (RES.sel && RES.sel[0] === mi && RES.sel[1] === i ? " on" : "") + '" style="flex:' + v + '" title="' + ["Sans relance","Après la relance 1","Après la relance 2","Après la relance 3"][i] + ' — cliquer pour voir les devis" onclick="rvSel(' + mi + ',' + i + ')">' + v + '</span>' : ""; }).join("") + '</span>'; };
+    /* 03/11 (patron : « épure ») : pas de colonne Envoyés (le taux dit « 17 sur 25 »),
+       les mois sans aucun devis sont masqués, l'aide passe en infobulle. */
     var lignes = mois.map(function(m, mi){
+      if(!m.env && !m.cur) return "";
       return '<tr><td><b style="white-space:nowrap">' + nomM(m).charAt(0).toUpperCase() + nomM(m).slice(1) + '</b>' + (m.cur ? ' <span style="font:700 .62rem Inter,sans-serif;padding:2px 7px;border-radius:6px;background:#FFF1E8;color:#C2410C;white-space:nowrap">en cours</span>' : "") + '</td>'
-        + '<td style="text-align:right">' + m.env + '</td><td><b>' + taux(m) + ' %</b><span class="sm">' + m.sig + ' signé' + (m.sig > 1 ? "s" : "") + '</span></td><td>' + seg(m, mi) + '</td><td style="text-align:right"><b style="white-space:nowrap">' + E0(m.net) + '</b></td></tr>';
+        + '<td><b>' + taux(m) + ' %</b><span class="sm">' + m.sig + ' sur ' + m.env + '</span></td><td>' + seg(m, mi) + '</td><td style="text-align:right"><b style="white-space:nowrap">' + E0(m.net) + '</b></td></tr>';
     }).join("");
+    var segTot = function(){ var n = tot.b, t = n[0] + n[1] + n[2] + n[3]; if(!t) return '<span class="sm">aucun devis signé</span>';
+      return '<span class="seg" style="pointer-events:none">' + n.map(function(v, i){ return v ? '<span class="s' + i + '" style="flex:' + v + '">' + v + '</span>' : ""; }).join("") + '</span>'; };
     var detail = "";
     if(RES.sel){
       var m = mois[RES.sel[0]], L = m ? m.b[RES.sel[1]] : [];
@@ -2359,17 +2366,15 @@ document.addEventListener("click", function(e){
         + L.map(function(x){ var j = Math.max(0, Math.round((x.g - x.e) / 864e5)); return '<tr><td class="cl"><b>' + esc(x.d.client) + '</b></td><td class="hm">' + esc(x.d.titre) + '<span class="sm">' + esc(x.d.ref) + '</span></td><td><b>' + eur(+x.d.montant || 0) + '</b><span class="sm">' + (x.rem ? "−" + String(x.rem).replace(".", ",") + " % accordé" : "sans remise") + '</span></td><td style="white-space:nowrap">' + fd(x.e) + ' → <b>' + fd(x.g) + '</b><span class="sm">en ' + j + ' jour' + (j > 1 ? "s" : "") + '</span></td><td style="text-align:right"><a class="relcall" href="devis-detail.html?ref=' + encodeURIComponent(x.d.ref) + '">Voir le devis</a></td></tr>'; }).join("")
         + '</tbody></table></div>';
     }
+    var opt = function(v, t, cur){ return '<option value="' + v + '"' + (v === cur ? " selected" : "") + '>' + t + '</option>'; };
     document.getElementById("rv").innerHTML =
       '<div class="rvbar"><span class="mnav"><button type="button" onclick="rvMois(-1)" title="Mois précédent">‹</button><b>' + NM + '</b><button type="button" onclick="rvMois(1)" title="Mois suivant">›</button></span>'
-      + pill(RES.n === 5, "5 derniers mois", "rvN(5)") + pill(RES.n === 12, "12 derniers mois", "rvN(12)") + '<span class="rvsep"></span>'
-      + pill(!RES.pub, "Tous les clients", "rvPub('')") + pill(RES.pub === "part", "Particuliers", "rvPub('part')") + pill(RES.pub === "pro", "Entreprises", "rvPub('pro')") + pill(RES.pub === "syn", "Syndics", "rvPub('syn')")
-      + '<span style="margin-left:auto;font:600 .72rem Inter,sans-serif;color:var(--muted)">rangés par mois d\'envoi</span></div>'
-      + '<div class="rvk">' + k("k-green", "Signés après une relance · " + nomM(cur), E0(cur.net), "pour 49 € d'option" + (smsN ? " et ≈ " + (smsN * 0.08).toFixed(2).replace(".", ",") + " € de SMS" : ""))
-      + k("k-cash", "Taux de signature", taux(cur) + " %", cur.sig + " signé" + (cur.sig > 1 ? "s" : "") + " sur " + cur.env + " envoyé" + (cur.env > 1 ? "s" : "") + (dlt != null ? " · " + (dlt >= 0 ? "+" : "−") + Math.abs(dlt) + " pts vs " + MOIS[prev.d.getMonth()] : ""))
-      + k("k-cash", "Signés après une relance", gr + " sur " + cur.sig, cur.sig ? Math.round(gr / cur.sig * 100) + " % des devis signés" : "aucun devis signé ce mois-ci") + '</div>'
-      + '<div class="rvcard"><div style="padding:14px 16px 8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap"><b style="font-size:.95rem">📅 Mois par mois</b><span class="lg"><span><i style="background:#C9CDD6"></i>Sans relance</span><span><i style="background:#1E3350"></i>Relance 1</span><span><i style="background:#4A6A96"></i>Relance 2</span><span><i style="background:#8FA6C6"></i>Relance 3</span></span><span class="hm" style="margin-left:auto;font:600 .72rem Inter,sans-serif;color:var(--muted)">cliquez une couleur : la liste des devis s\'ouvre</span></div>'
-      + '<table><thead><tr><th>Mois d\'envoi</th><th style="text-align:right">Envoyés</th><th>Taux</th><th style="width:40%">Signés, et après quelle relance</th><th style="text-align:right">Signés après relance</th></tr></thead><tbody>' + lignes
-      + '<tr style="background:#F4F6FA"><td><b>Total ' + RES.n + ' mois</b></td><td style="text-align:right"><b>' + tot.env + '</b></td><td><b>' + (tot.env ? Math.round(tot.sig / tot.env * 100) : 0) + ' %</b><span class="sm">' + tot.sig + ' signés</span></td><td><span class="sm">sans relance ' + tot.b[0] + ' · relance 1 : ' + tot.b[1] + ' · relance 2 : ' + tot.b[2] + ' · relance 3 : ' + tot.b[3] + '</span></td><td style="text-align:right"><b>' + E0(tot.net) + '</b></td></tr></tbody></table></div>'
+      + '<select class="rvsel" onchange="rvPub(this.value)" aria-label="Type de client">' + opt("", "Tous les clients", RES.pub) + opt("part", "Particuliers", RES.pub) + opt("pro", "Entreprises", RES.pub) + opt("syn", "Syndics", RES.pub) + '</select></div>'
+      + '<div class="rvk" style="grid-template-columns:1.3fr 1fr">' + k("k-green", "Signés après une relance", E0(cur.net), gr + " devis sur " + cur.sig + " signés · pour 49 € d'option" + (smsN ? " + ≈ " + (smsN * 0.08).toFixed(2).replace(".", ",") + " € de SMS" : ""))
+      + k("k-cash", "Taux de signature", taux(cur) + " %", cur.sig + " sur " + cur.env + " envoyés" + (dlt != null ? " · " + (dlt >= 0 ? "+" : "−") + Math.abs(dlt) + " pts vs " + MOIS[prev.d.getMonth()] : "")) + '</div>'
+      + '<div class="rvcard"><table><thead><tr><th title="Chaque devis est rangé dans le mois où il a été envoyé">Mois d\'envoi</th><th>Taux</th><th style="width:46%"><span class="lg" title="Cliquez une couleur : la liste des devis s\'ouvre"><span><i style="background:#C9CDD6"></i>Sans relance</span><span><i style="background:#1E3350"></i>Relance 1</span><span><i style="background:#4A6A96"></i>Relance 2</span><span><i style="background:#8FA6C6"></i>Relance 3</span></span></th><th style="text-align:right">Signés après relance</th></tr></thead><tbody>' + lignes
+      + '<tr style="background:#F4F6FA"><td><b>Total ' + RES.n + ' mois</b></td><td><b>' + (tot.env ? Math.round(tot.sig / tot.env * 100) : 0) + ' %</b><span class="sm">' + tot.sig + ' sur ' + tot.env + '</span></td><td>' + segTot() + '</td><td style="text-align:right"><b>' + E0(tot.net) + '</b></td></tr></tbody></table>'
+      + '<div style="padding:10px 14px;display:flex;justify-content:flex-end;gap:6px">' + pill(RES.n === 6, "6 mois", "rvN(6)") + pill(RES.n === 12, "12 mois", "rvN(12)") + '</div></div>'
       + detail;
   }
   window.rvSel = function(mi, i){ RES.sel = mi < 0 ? null : [mi, i]; paintRes(); };
