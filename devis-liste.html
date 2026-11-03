@@ -567,6 +567,9 @@ body.rvmode .kpis,body.rvmode .filters,body.rvmode .tablecard,body.rvmode #cards
 #rv .rvk{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;margin:0 0 16px}
 #rv .seg{display:flex;height:22px;border-radius:7px;overflow:hidden;min-width:200px}
 #rv .seg span{display:grid;place-items:center;font:800 .68rem Inter,sans-serif;color:#fff;cursor:pointer;min-width:0}
+#rv .rvcas{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 14px}#rv .rvcas .ca{background:#fff;border:1px solid var(--line,#E7E9EF);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;position:relative}#rv .rvcas .ca i{position:absolute;top:14px;right:14px;width:10px;height:10px;border-radius:3px}#rv .rvcas .ca>b{font:800 1.6rem Inter,sans-serif;color:#1E3350}#rv .rvcas .ca span{font:500 .8rem Inter,sans-serif;color:var(--muted,#6B7280)}#rv .rvcas .ca span b{color:#1E3350}#rv .rvcas .ca.hot{border-color:#1E3350;box-shadow:0 0 0 1px #1E3350 inset}#rv .rvcas .ca.z>b{color:#C9CDD6}
+#rv .pbar{height:14px;background:#EEF1F5;border-radius:7px;display:flex;overflow:hidden;min-width:14px}#rv .pbar span{height:100%;cursor:pointer;border-right:2px solid #fff}#rv .pbar span:last-child{border-right:0}#rv .pbar span.on{outline:2px solid #E8711A;outline-offset:-2px}
+@media(max-width:640px){#rv .rvcas{grid-template-columns:1fr 1fr}}
 #rv table.rvres th{white-space:nowrap}#rv td.stt .relbadge svg{margin-right:5px}#rv td.rn{text-align:center}#rv td.rn b{cursor:pointer}#rv td.rn b.r{color:#E8711A}#rv td.rn .z{color:#C9CDD6}#rv td.rn b.on{text-decoration:underline}
 #rv .seg span.s0{background:#C9CDD6;color:#3D434E}#rv .seg span.s1{background:#1E3350}#rv .seg span.s2{background:#4A6A96}#rv .seg span.s3{background:#8FA6C6}
 #rv .seg span.on{outline:2.5px solid var(--orange,#FF5A1F);outline-offset:-2.5px}
@@ -2390,17 +2393,22 @@ document.addEventListener("click", function(e){
       return '<span class="seg">' + n.map(function(v, i){ return v ? '<span class="s' + i + (RES.sel && RES.sel[0] === mi && RES.sel[1] === i ? " on" : "") + '" style="flex:' + v + '" title="' + ["Sans relance","Après la relance 1","Après la relance 2","Après la relance 3"][i] + ' — cliquer pour voir les devis" onclick="rvSel(' + mi + ',' + i + ')">' + v + '</span>' : ""; }).join("") + '</span>'; };
     /* 03/11 (patron : « épure ») : pas de colonne Envoyés (le taux dit « 17 sur 25 »),
        les mois sans aucun devis sont masqués, l'aide passe en infobulle. */
-    /* 03/11 (patron, design A) : tableau tout en chiffres, une colonne par relance.
-       Chaque chiffre est cliquable : la liste des devis s'ouvre dessous. */
-    var cel = function(v, mi, i){ if(!v) return '<td class="rn"><span class="z">–</span></td>';
-      var on = RES.sel && RES.sel[0] === mi && RES.sel[1] === i;
-      return '<td class="rn"><b class="' + (i ? "r" : "") + (on ? " on" : "") + '" title="Voir les devis" onclick="rvSel(' + mi + ',' + i + ')">' + v + '</b></td>'; };
+    /* 03/11 (patron, design C) : 4 cartouches « signés à quel moment » sur la
+       période, puis 1 barre par mois : longueur = devis envoyés, partie
+       remplie = devis signés, colorée selon la relance. Clic → liste. */
+    var maxE = 1; mois.forEach(function(m){ if(m.env > maxE) maxE = m.env; });
+    var COL = ["#AEB7C4", "#1E3350", "#4A6A96", "#8FA6C6"];
+    var LIB = ["Sans relance", "Après la relance 1", "Après la relance 2", "Après la relance 3"];
+    var barre = function(m, mi){
+      var w = Math.max(6, m.env / maxE * 100);
+      return '<div class="pbar" style="width:' + w + '%">' + m.b.map(function(l, i){ if(!l.length) return "";
+        var on = RES.sel && RES.sel[0] === mi && RES.sel[1] === i;
+        return '<span class="' + (on ? "on" : "") + '" style="width:' + (l.length / m.env * 100) + '%;background:' + COL[i] + '" title="' + LIB[i] + ' : ' + l.length + ' devis — cliquer pour voir" onclick="rvSel(' + mi + ',' + i + ')"></span>'; }).join("") + '</div>';
+    };
     var lignes = mois.map(function(m, mi){
       if(!m.env && !m.cur) return "";
-      return '<tr><td><b style="white-space:nowrap">' + nomM(m).charAt(0).toUpperCase() + nomM(m).slice(1) + '</b>' + (m.cur ? ' <span style="font:700 .62rem Inter,sans-serif;padding:2px 7px;border-radius:6px;background:#FFF1E8;color:#C2410C;white-space:nowrap">en cours</span>' : "") + '</td>'
-        + '<td class="rn">' + m.env + '</td><td class="rn"><b>' + (m.sig || '<span class="z">0</span>') + '</b></td>'
-        + m.b.map(function(l, i){ return cel(l.length, mi, i); }).join("")
-        + '<td><b style="font-size:1rem">' + taux(m) + ' %</b></td><td style="text-align:right"><b style="white-space:nowrap">' + E0(m.net) + '</b></td></tr>';
+      return '<tr><td style="width:170px"><b style="white-space:nowrap">' + MOIS[m.d.getMonth()].charAt(0).toUpperCase() + MOIS[m.d.getMonth()].slice(1) + (m.d.getFullYear() !== new Date().getFullYear() ? " " + m.d.getFullYear() : "") + '</b>' + (m.cur ? ' <span style="font:700 .62rem Inter,sans-serif;padding:2px 7px;border-radius:6px;background:#FFF1E8;color:#C2410C;white-space:nowrap">en cours</span>' : "") + '</td>'
+        + '<td>' + barre(m, mi) + '</td><td style="white-space:nowrap;width:110px"><b style="font-size:1.05rem">' + taux(m) + ' %</b> <span class="sm" style="display:inline">' + m.sig + '/' + m.env + '</span></td><td style="text-align:right;width:150px"><b style="white-space:nowrap">' + E0(m.net) + '</b></td></tr>';
     }).join("");
     var segTot = function(){ var n = tot.b, t = n[0] + n[1] + n[2] + n[3]; if(!t) return '<span class="sm">aucun devis signé</span>';
       return '<span class="seg" style="pointer-events:none">' + n.map(function(v, i){ return v ? '<span class="s' + i + '" style="flex:' + v + '">' + v + '</span>' : ""; }).join("") + '</span>'; };
@@ -2419,8 +2427,9 @@ document.addEventListener("click", function(e){
       + '<select class="rvsel" onchange="rvPub(this.value)" aria-label="Type de client">' + opt("", "Tous les clients", RES.pub) + opt("part", "Particuliers", RES.pub) + opt("pro", "Entreprises", RES.pub) + opt("syn", "Syndics", RES.pub) + '</select></div>'
       + '<div class="rvk" style="grid-template-columns:1.3fr 1fr">' + k("k-green", "Signés après une relance", E0(cur.net), gr + " devis sur " + cur.sig + " signés · pour 49 € d'option" + (smsN ? " + ≈ " + (smsN * 0.08).toFixed(2).replace(".", ",") + " € de SMS" : ""))
       + k("k-cash", "Taux de signature", taux(cur) + " %", cur.sig + " sur " + cur.env + " envoyés" + (dlt != null ? " · " + (dlt >= 0 ? "+" : "−") + Math.abs(dlt) + " pts vs " + MOIS[prev.d.getMonth()] : "")) + '</div>'
-      + '<div class="rvcard"><table class="rvres"><thead><tr><th title="Chaque devis est rangé dans le mois où il a été envoyé">Mois d\'envoi</th><th class="rn" style="text-align:center">Envoyés</th><th style="text-align:center">Signés</th><th style="text-align:center">Sans relance</th><th style="text-align:center">Relance 1</th><th style="text-align:center">Relance 2</th><th style="text-align:center">Relance 3</th><th>Taux</th><th style="text-align:right">Signés après relance</th></tr></thead><tbody>' + lignes
-      + '<tr style="background:#F4F6FA"><td><b>Total ' + RES.n + ' mois</b></td><td class="rn"><b>' + tot.env + '</b></td><td class="rn"><b>' + tot.sig + '</b></td>' + tot.b.map(function(v, i){ return '<td class="rn">' + (v ? '<b class="' + (i ? "r" : "") + '" style="cursor:default">' + v + '</b>' : '<span class="z">–</span>') + '</td>'; }).join("") + '<td><b style="font-size:1rem">' + (tot.env ? Math.round(tot.sig / tot.env * 100) : 0) + ' %</b></td><td style="text-align:right"><b>' + E0(tot.net) + '</b></td></tr></tbody></table>'
+      + '<div class="rvcas">' + tot.b.map(function(v, i){ return '<div class="ca' + (v && i ? " hot" : "") + (v ? "" : " z") + '"><i style="background:' + COL[i] + '"></i><b>' + v + '</b><span>' + (i ? 'signé' + (v > 1 ? "s" : "") + ' après la <b>relance ' + i + '</b>' : 'signé' + (v > 1 ? "s" : "") + ' <b>sans relance</b>') + '</span></div>'; }).join("") + '</div>'
+      + '<div class="rvcard"><table class="rvres"><thead><tr><th title="Chaque devis est rangé dans le mois où il a été envoyé">Mois d\'envoi</th><th>Signés sur envoyés <span style="font-weight:600;text-transform:none;letter-spacing:0;color:#9AA0AC">· longueur = devis envoyés · cliquez une couleur</span></th><th>Taux</th><th style="text-align:right">Signés après relance</th></tr></thead><tbody>' + lignes
+      + '<tr style="background:#F4F6FA"><td><b>Total ' + RES.n + ' mois</b></td><td></td><td style="white-space:nowrap"><b style="font-size:1.05rem">' + (tot.env ? Math.round(tot.sig / tot.env * 100) : 0) + ' %</b> <span class="sm" style="display:inline">' + tot.sig + '/' + tot.env + '</span></td><td style="text-align:right"><b>' + E0(tot.net) + '</b></td></tr></tbody></table>'
       + '<div style="padding:10px 14px;display:flex;justify-content:flex-end;gap:6px">' + pill(RES.n === 6, "6 mois", "rvN(6)") + pill(RES.n === 12, "12 mois", "rvN(12)") + '</div></div>'
       + detail;
   }
