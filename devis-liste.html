@@ -567,6 +567,7 @@ body.rvmode .kpis,body.rvmode .filters,body.rvmode .tablecard,body.rvmode #cards
 #rv .rvk{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;margin:0 0 16px}
 #rv .seg{display:flex;height:22px;border-radius:7px;overflow:hidden;min-width:200px}
 #rv .seg span{display:grid;place-items:center;font:800 .68rem Inter,sans-serif;color:#fff;cursor:pointer;min-width:0}
+#rv .rvseg{display:inline-flex;background:#fff;border:1px solid var(--line,#E2E5EB);border-radius:12px;overflow:hidden}#rv .rvseg button{border:0;background:none;padding:10px 16px;font:700 .82rem Inter,sans-serif;color:var(--muted,#6B7280);cursor:pointer}#rv .rvseg button.on{background:#1E3350;color:#fff}
 #rv .rvcas{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 14px}#rv .rvcas .ca{background:#fff;border:1px solid var(--line,#E7E9EF);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;position:relative}#rv .rvcas .ca i{position:absolute;top:14px;right:14px;width:10px;height:10px;border-radius:3px}#rv .rvcas .ca>b{font:800 1.6rem Inter,sans-serif;color:#1E3350}#rv .rvcas .ca span{font:500 .8rem Inter,sans-serif;color:var(--muted,#6B7280)}#rv .rvcas .ca span b{color:#1E3350}#rv .rvcas .ca.hot{border-color:#1E3350;box-shadow:0 0 0 1px #1E3350 inset}#rv .rvcas .ca.z>b{color:#C9CDD6}
 #rv .pbar{height:14px;background:#EEF1F5;border-radius:7px;display:flex;overflow:hidden;min-width:14px}#rv .pbar span{height:100%;cursor:pointer;border-right:2px solid #fff}#rv .pbar span:last-child{border-right:0}#rv .pbar span.on{outline:2px solid #E8711A;outline-offset:-2px}
 @media(max-width:640px){#rv .rvcas{grid-template-columns:1fr 1fr}}
@@ -2379,11 +2380,12 @@ document.addEventListener("click", function(e){
     var mois = stats(), cur = mois[0], prev = mois[1];
     var tot = {env: 0, sig: 0, net: 0, b: [0, 0, 0, 0]};
     mois.forEach(function(m){ tot.env += m.env; tot.sig += m.sig; tot.net += m.net; m.b.forEach(function(l, i){ tot.b[i] += l.length; }); });
-    var gr = cur.b[1].length + cur.b[2].length + cur.b[3].length;
+    RES.m = null;
+    var grT = tot.b[1] + tot.b[2] + tot.b[3];
     var taux = function(m){ return m.env ? Math.round(m.sig / m.env * 100) : 0; };
     var dlt = prev && prev.env ? taux(cur) - taux(prev) : null;
     var smsN = 0;
-    (typeof DEVIS !== "undefined" ? DEVIS : []).forEach(function(d){ if(statut(d) !== "envoye" && statut(d) !== "gagne") return; var R = relPlan(d, "envoye"); (R.steps || []).forEach(function(s){ if(s.fait && s.sms && s.date.getMonth() === cur.d.getMonth() && s.date.getFullYear() === cur.d.getFullYear()) smsN++; }); });
+    (typeof DEVIS !== "undefined" ? DEVIS : []).forEach(function(d){ if(statut(d) !== "envoye" && statut(d) !== "gagne") return; var R = relPlan(d, "envoye"); (R.steps || []).forEach(function(s){ if(s.fait && s.sms && s.date >= mois[mois.length - 1].d) smsN++; }); });
     var nomM = function(m){ return MOIS[m.d.getMonth()] + " " + m.d.getFullYear(); };
     var NM = nomM(cur).charAt(0).toUpperCase() + nomM(cur).slice(1);
     var k = function(cls, l, n, sub){ return '<div class="kpi ' + cls + '"><div class="kico"><svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/></svg></div><div class="lbl">' + l + '</div><div class="num">' + n + '</div><div class="ksub">' + sub + '</div></div>'; };
@@ -2423,14 +2425,14 @@ document.addEventListener("click", function(e){
     }
     var opt = function(v, t, cur){ return '<option value="' + v + '"' + (v === cur ? " selected" : "") + '>' + t + '</option>'; };
     document.getElementById("rv").innerHTML =
-      '<div class="rvbar"><span class="mnav"><button type="button" onclick="rvMois(-1)" title="Mois précédent">‹</button><b>' + NM + '</b><button type="button" onclick="rvMois(1)" title="Mois suivant">›</button></span>'
+      '<div class="rvbar"><span class="rvseg">' + '<button type="button" class="' + (RES.n === 6 ? "on" : "") + '" onclick="rvN(6)">6 derniers mois</button><button type="button" class="' + (RES.n === 12 ? "on" : "") + '" onclick="rvN(12)">12 derniers mois</button></span>'
       + '<select class="rvsel" onchange="rvPub(this.value)" aria-label="Type de client">' + opt("", "Tous les clients", RES.pub) + opt("part", "Particuliers", RES.pub) + opt("pro", "Entreprises", RES.pub) + opt("syn", "Syndics", RES.pub) + '</select></div>'
-      + '<div class="rvk" style="grid-template-columns:1.3fr 1fr">' + k("k-green", "Signés après une relance", E0(cur.net), gr + " devis sur " + cur.sig + " signés · pour 49 € d'option" + (smsN ? " + ≈ " + (smsN * 0.08).toFixed(2).replace(".", ",") + " € de SMS" : ""))
-      + k("k-cash", "Taux de signature", taux(cur) + " %", cur.sig + " sur " + cur.env + " envoyés" + (dlt != null ? " · " + (dlt >= 0 ? "+" : "−") + Math.abs(dlt) + " pts vs " + MOIS[prev.d.getMonth()] : "")) + '</div>'
+      + '<div class="rvk" style="grid-template-columns:1.3fr 1fr">' + k("k-green", "Signés après une relance · " + RES.n + " mois", E0(tot.net), grT + " devis sur " + tot.sig + " signés · pour 49 €/mois d'option" + (smsN ? " + ≈ " + (smsN * 0.08).toFixed(2).replace(".", ",") + " € de SMS" : ""))
+      + k("k-cash", "Taux de signature · " + RES.n + " mois", (tot.env ? Math.round(tot.sig / tot.env * 100) : 0) + " %", tot.sig + " sur " + tot.env + " devis envoyés") + '</div>'
       + '<div class="rvcas">' + tot.b.map(function(v, i){ return '<div class="ca' + (v && i ? " hot" : "") + (v ? "" : " z") + '"><i style="background:' + COL[i] + '"></i><b>' + v + '</b><span>' + (i ? 'signé' + (v > 1 ? "s" : "") + ' après la <b>relance ' + i + '</b>' : 'signé' + (v > 1 ? "s" : "") + ' <b>sans relance</b>') + '</span></div>'; }).join("") + '</div>'
       + '<div class="rvcard"><table class="rvres"><thead><tr><th title="Chaque devis est rangé dans le mois où il a été envoyé">Mois d\'envoi</th><th>Signés sur envoyés <span style="font-weight:600;text-transform:none;letter-spacing:0;color:#9AA0AC">· longueur = devis envoyés · cliquez une couleur</span></th><th>Taux</th><th style="text-align:right">Signés après relance</th></tr></thead><tbody>' + lignes
       + '<tr style="background:#F4F6FA"><td><b>Total ' + RES.n + ' mois</b></td><td></td><td style="white-space:nowrap"><b style="font-size:1.05rem">' + (tot.env ? Math.round(tot.sig / tot.env * 100) : 0) + ' %</b> <span class="sm" style="display:inline">' + tot.sig + '/' + tot.env + '</span></td><td style="text-align:right"><b>' + E0(tot.net) + '</b></td></tr></tbody></table>'
-      + '<div style="padding:10px 14px;display:flex;justify-content:flex-end;gap:6px">' + pill(RES.n === 6, "6 mois", "rvN(6)") + pill(RES.n === 12, "12 mois", "rvN(12)") + '</div></div>'
+      + '</div>'
       + detail;
   }
   window.rvSel = function(mi, i){ RES.sel = mi < 0 ? null : [mi, i]; paintRes(); };
