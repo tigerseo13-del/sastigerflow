@@ -17,7 +17,7 @@
   var DEF = {part:[{j:3,rem:0,mail:true,sms:true},{j:7,rem:5,mail:true,sms:true},{j:14,rem:10,mail:true,sms:false}],
              pro:[{j:5,rem:0,mail:true},{j:12,rem:5,mail:true},{j:21,rem:8,mail:true}],
              syn:[{j:7,rem:0,mail:true},{j:15,rem:0,mail:true},{j:28,rem:5,mail:true}]};
-  var CATS = [["rongeur","Rongeurs",/rongeur|rat\b|rats\b|souris|d[ée]ratis|mulot|taupe/i],["cafard","Cafards",/cafard|blatte/i],["punaise","Punaises",/punaise/i],["guepe","Guêpes",/gu[êe]pe|frelon|nid/i],["desinf","Désinfection",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon","Pigeons",/pigeon|volatile|oiseau/i],["chenille","Chenilles",/chenille|processionnaire/i],["fourmi","Fourmis",/fourmi/i]];
+  var CATS = [["rongeur","Rongeurs",/rongeur|\brats?\b|souris|d[ée]ratis|mulot|taupe/i],["cafard","Cafards",/cafard|blatte/i],["punaise","Punaises",/punaise/i],["guepe","Guêpes",/gu[êe]pe|frelon|nid/i],["desinf","Désinfection",/d[ée]sinfect|bact[ée]r|virus|covid|nettoyage/i],["pigeon","Pigeons",/pigeon|volatile|oiseau/i],["chenille","Chenilles",/chenille|processionnaire/i],["fourmi","Fourmis",/fourmi/i]];
   window.relPub = function(nom, d){
     var f = (J("tigerflow-inbox-clients", []).concat(J("tigerflow-clients-cache", []))).find(function(c){ return c && c.nom === nom; });
     var t = f ? String(f.type || "").toLowerCase() : "";
