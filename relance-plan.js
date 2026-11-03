@@ -41,6 +41,8 @@
     L.push({d: dateIso || iso(new Date()), k: k}); M[ref] = L;
     try{ localStorage.setItem("tigerflow-relance-manuel", JSON.stringify(M)); }catch(e){}
   };
+  /* raison du refus donnée par le client (lien « Je ne suis pas intéressé ») */
+  window.relRefus = function(ref){ var x = J("tigerflow-devis-refus", {})[ref]; return x ? (x.r || "sans raison") : ""; };
   window.relJour = function(x){ return x.toLocaleDateString("fr-FR", {weekday:"short", day:"2-digit", month:"2-digit"}); };
   window.relPlan = function(d, statut){
     var R = {etat:"horsjeu", motif:"", steps:[], next:null};
@@ -159,6 +161,9 @@
       B[k].n++; B[k].m += +d.montant || 0;
       if(k > 0 && avant[k - 1].rem) rem += (+d.montant || 0) * avant[k - 1].rem / (100 - avant[k - 1].rem);
     });
-    return {B:B, rem:rem, env:env, att:att, sig:sig, gr:B[1].n + B[2].n + B[3].n, grm:B[1].m + B[2].m + B[3].m};
+    /* 03/11 : refus donnés par le client avec le lien « Je ne suis pas intéressé » */
+    var RF = J("tigerflow-devis-refus", {}), ref = {n:0, raisons:{}};
+    Object.keys(RF).forEach(function(k){ var x = RF[k], dd = jour(x && x.d); if(!dd || dd < deb) return; ref.n++; var r = x.r || "sans raison"; ref.raisons[r] = (ref.raisons[r] || 0) + 1; });
+    return {B:B, rem:rem, env:env, att:att, sig:sig, gr:B[1].n + B[2].n + B[3].n, grm:B[1].m + B[2].m + B[3].m, refus:ref};
   };
 })();

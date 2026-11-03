@@ -23,6 +23,15 @@
 @font-face{font-family:'Sora';font-style:normal;font-weight:700;font-display:swap;src:url('vendor/fonts/sora-latin-700-normal.woff2') format('woff2')}
 @font-face{font-family:'Sora';font-style:normal;font-weight:800;font-display:swap;src:url('vendor/fonts/sora-latin-800-normal.woff2') format('woff2')}
 @font-face{font-family:'Great Vibes';font-style:normal;font-weight:400;font-display:swap;src:url('vendor/fonts/great-vibes-latin-400-normal.woff2') format('woff2')}
+
+.nonint{display:block;margin:12px auto 0;border:0;background:none;color:#6B7280;font:600 .8rem Inter,sans-serif;text-decoration:underline;cursor:pointer}
+.nonbox{margin-top:12px;border:1px solid #E7E9EF;border-radius:12px;padding:14px;background:#FAFBFC;font-size:.85rem}
+.nonbox span{color:#6B7280;font-size:.78rem}
+.nonr{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.nonr button{border:1.5px solid #E2E5EB;background:#fff;border-radius:9px;padding:8px 12px;font:600 .8rem Inter,sans-serif;color:#1E3350;cursor:pointer}
+.nonr button.on{border-color:#1E3350;background:#EEF2F8}
+.nonok{width:100%;border:1.5px solid #1E3350;background:#fff;color:#1E3350;border-radius:10px;padding:10px;font:700 .85rem Inter,sans-serif;cursor:pointer}
+.nondone{margin-top:12px;border-radius:12px;padding:14px;background:#E9F6F0;color:#0F6B49;font-size:.88rem;text-align:center}
 </style>
 <style>
 :root{color-scheme:light only}
@@ -514,6 +523,21 @@ html{scrollbar-gutter:stable}   /* 30/07 (patron : « pas la meme taille d'ecran
         <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.4 8.3-8 9-4.6-.7-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
         Signer électroniquement
       </button>
+      <!-- 03/11 (patron, option 2) : le client qui ne veut pas le devis le dit en 1 clic —
+           les relances s'arrêtent, le devis passe en « Refusé » avec la raison. Aucun message
+           de plus n'est envoyé au client. -->
+      <button type="button" class="nonint" id="btn-nonint" onclick="nonInt()">Je ne suis pas intéressé</button>
+      <div class="nonbox" id="nonbox" hidden>
+        <b>Dommage ! Une raison ?</b> <span>(facultatif — ça nous aide)</span>
+        <div class="nonr">
+          <button type="button" data-r="Trop cher">Trop cher</button>
+          <button type="button" data-r="Déjà traité ailleurs">Déjà traité par une autre entreprise</button>
+          <button type="button" data-r="Plus besoin">Plus besoin</button>
+          <button type="button" data-r="Autre">Autre</button>
+        </div>
+        <button type="button" class="nonok" onclick="nonOk()">Confirmer : je ne suis pas intéressé</button>
+      </div>
+      <div class="nondone" id="nondone" hidden><b>C'est noté, merci.</b> Vous ne recevrez plus de rappel pour ce devis.</div>
     </div>
   </div>
 
@@ -1326,6 +1350,35 @@ async function pdf(){
     var el = e.target, n = 0;
     while(el && n < 3){ if(coupe(el)) break; el = el.parentElement; n++; }
   }, true);
+})();
+</script>
+<script>
+(function(){
+  var ref = ""; try{ ref = new URLSearchParams(location.search).get("ref") || ""; }catch(e){}
+  var R = "";
+  var K = "tigerflow-devis-refus";
+  var lire = function(){ try{ return JSON.parse(localStorage.getItem(K)) || {}; }catch(e){ return {}; } };
+  window.nonInt = function(){ var b = document.getElementById("nonbox"); b.hidden = !b.hidden; };
+  document.addEventListener("click", function(e){
+    var t = e.target.closest && e.target.closest(".nonr button"); if(!t) return;
+    document.querySelectorAll(".nonr button").forEach(function(x){ x.classList.toggle("on", x === t && !x.classList.contains("on")); });
+    R = t.classList.contains("on") ? t.dataset.r : "";
+  });
+  window.nonOk = function(){
+    var auj = new Date().toISOString().slice(0, 10);
+    if(ref){
+      try{
+        var M = lire(); M[ref] = {r: R, d: auj, src: "lien"}; localStorage.setItem(K, JSON.stringify(M));
+        var S = JSON.parse(localStorage.getItem("tigerflow-devis-statuts")) || {}; S[ref] = "perdu"; localStorage.setItem("tigerflow-devis-statuts", JSON.stringify(S));
+        var D = JSON.parse(localStorage.getItem("tigerflow-devis-dates")) || {}; D[ref] = D[ref] || {}; D[ref].perdu = D[ref].perdu || auj; localStorage.setItem("tigerflow-devis-dates", JSON.stringify(D));
+      }catch(e){}
+    }
+    document.getElementById("nonbox").hidden = true;
+    document.getElementById("btn-nonint").hidden = true;
+    document.getElementById("nondone").hidden = false;
+  };
+  /* déjà refusé : on le dit tout de suite */
+  if(ref && lire()[ref]){ document.getElementById("btn-nonint").hidden = true; document.getElementById("nondone").hidden = false; }
 })();
 </script>
 </body>

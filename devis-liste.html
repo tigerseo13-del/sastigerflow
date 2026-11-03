@@ -1000,7 +1000,7 @@ function render(){
       <td class="cl"><b>${d.client}</b>${d.ct ? `<small>${d.ct}</small>` : ""}<span class="pubtag ${d.pro ? "pe" : "pp"}">${d.syn ? "Syndic" : d.pro ? "Entreprise" : "Particulier"}</span></td>
       <td>${d.titre}</td>
       <td class="amt">${eur(d.montant)}</td>
-      <td><span class="st st-${d.statut}">${LBL[d.statut]}</span>${relBadge(d) ? `<div style="margin-top:5px">${relBadge(d)}</div>` : ""}</td>
+      <td><span class="st st-${d.statut}">${LBL[d.statut]}</span>${relBadge(d) ? `<div style="margin-top:5px">${relBadge(d)}</div>` : ""}${typeof relRefus === "function" && relRefus(d.ref) ? `<div style="margin-top:5px;font:700 .66rem Inter,sans-serif;color:#B4232A" title="Le client a cliqué « Je ne suis pas intéressé » dans une relance">✋ ${relRefus(d.ref)}</div>` : ""}</td>
       <td class="dte">${fdate(d.date)}${expChip(d)}</td>
       <!-- 28/07 : qui a fait le devis. Vide = le bureau, et c'est une reponse,
            pas une donnee manquante — d'ou le tiret plutot qu'un blanc. -->
@@ -2125,6 +2125,7 @@ document.addEventListener("click", function(e){
       + [["mois","Ce mois-ci"],["3m","3 derniers mois"],["12m","12 derniers mois"]].map(function(o){ return '<option value="' + o[0] + '"' + (PER === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select></div>'
       + '<div class="rpbig"><div><small>Gagné grâce aux relances</small><strong>' + eur(T.grm) + '</strong></div><div><small>Signés après relance</small><strong>' + T.gr + '</strong></div><div><small>Remises accordées</small><strong>' + (T.rem ? "−" + eur(T.rem) : "0 €") + '</strong></div></div>'
       + '<div class="rpl">' + ligne(0, "Sans relance") + ligne(1, "Après la relance 1") + ligne(2, "Après la relance 2") + ligne(3, "Après la relance 3") + '</div>'
+      + (T.refus && T.refus.n ? '<div style="margin-top:10px;font-size:.78rem;color:#4A5263"><b style="color:#B4232A">✋ ' + T.refus.n + " refus via le lien</b> « Je ne suis pas intéressé » · " + Object.keys(T.refus.raisons).map(function(r){ return r + " : " + T.refus.raisons[r]; }).join(" · ") + '</div>' : "")
       + '<div class="rpf"><span>' + (T.gr ? "" : "Aucun devis signé après une relance " + lib + ".") + '</span><a href="relances.html">⚙ Réglages des relances →</a></div>';
   };
   window.relPanelPer = function(v){ PER = v; relPanelPaint(); };

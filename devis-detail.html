@@ -2012,7 +2012,8 @@ function vieDraw(){
     S.push({t:"Accepté", k:"done"});
     S.push({t:"À facturer", k:"now", fn:"versFacture()", h:"Transformer le devis en facture — les lignes passent telles quelles"});
   } else if(st === "perdu"){
-    S.push({t:"Refusé", s:"renvoyer une offre ?", k:"ko", fn:"envoyer()", h:"Renvoyer une offre ajustée"});
+    var rfz = typeof relRefus === "function" ? relRefus(REC.ref) : "";
+    S.push({t:"Refusé", s:(rfz ? "par le client via le lien · " + rfz + " · " : "") + "renvoyer une offre ?", k:"ko", fn:"envoyer()", h:"Renvoyer une offre ajustée"});
   } else if(sent && st === "expire"){
     S.push({t:"Expiré" + (j !== null && j < 0 ? " · " + (-j) + " j" : ""), s:"renvoyer une offre", k:"now", late:true, fn:"envoyer()", h:"Renvoyer une offre au client"});
     S.push({t:"Facturation", k:"todo"});
@@ -2767,7 +2768,7 @@ document.addEventListener("click", function(e){
     var ex = bt("🚫 Jamais pour ce client", "relDetEx", "Plus aucun devis de " + (R.qui || "ce client") + " ne sera relancé automatiquement");
     if(R.etat === "actif"){
       var s = R.next, can = [s.mail ? "email" : "", s.sms ? "SMS" : ""].filter(Boolean).join(" + ") || "aucun canal";
-      txt = "🔁 Relance " + (s.i + 1) + "/" + s.n + " le " + relJour(s.date) + " · " + can + (s.rem ? " · −" + s.rem + " %" : "") + (s.derniere ? " · dernière avant l'échéance" : "");
+      txt = "🔁 Relance " + (s.i + 1) + "/" + s.n + " le " + relJour(s.date) + " · " + can + (s.rem ? " · −" + s.rem + " %" : "") + (s.derniere ? " · dernière relance" : "");
       b = bt("⏸ Pause ce devis", "relDetTog", "Ce devis ne sera plus relancé automatiquement") + ex;
     } else if(R.etat === "pause"){ txt = "⏸ Relance en pause"; b = bt("▶ Reprendre", "relDetTog", "Reprendre les relances de ce devis") + ex; }
     else if(R.etat === "exclu"){ txt = "⏸ Client exclu : aucun devis de " + R.qui + " n'est relancé"; b = bt("▶ Réactiver ce client", "relDetEx", "Les devis de " + R.qui + " seront de nouveau relancés"); }
