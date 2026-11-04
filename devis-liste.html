@@ -571,6 +571,19 @@ body.rvmode .kpis,body.rvmode .filters,body.rvmode .tablecard,body.rvmode #cards
 #rv .rvcas{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 14px}#rv .rvcas .ca{background:#fff;border:1px solid var(--line,#E7E9EF);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;position:relative}#rv .rvcas .ca i{position:absolute;top:14px;right:14px;width:10px;height:10px;border-radius:3px}#rv .rvcas .ca>b{font:800 1.6rem Inter,sans-serif;color:#1E3350}#rv .rvcas .ca span{font:500 .8rem Inter,sans-serif;color:var(--muted,#6B7280)}#rv .rvcas .ca span b{color:#1E3350}#rv .rvcas .ca.hot{border-color:#1E3350;box-shadow:0 0 0 1px #1E3350 inset}#rv .rvcas .ca.z>b{color:#C9CDD6}
 #rv .pbar{height:14px;background:#EEF1F5;border-radius:7px;display:flex;overflow:hidden;min-width:14px}#rv .pbar span{height:100%;cursor:pointer;border-right:2px solid #fff}#rv .pbar span:last-child{border-right:0}#rv .pbar span.on{outline:2px solid #E8711A;outline-offset:-2px}
 @media(max-width:640px){#rv .rvcas{grid-template-columns:1fr 1fr}}
+#rv .rhero{display:flex;align-items:center;gap:16px;background:var(--green-bg,#ECFDF5);border:1px solid #BFE5D8;border-radius:18px;padding:18px 22px;margin-bottom:16px}
+#rv .rhi{width:42px!important;height:42px!important;border-radius:12px;background:#D1F2E4;display:flex!important;align-items:center;justify-content:center;flex:none;position:static!important;margin:0!important}#rv .rhi svg{display:block;position:static!important;margin:0!important;width:20px;height:20px;fill:none;stroke:#047857;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+#rv .rhero b{display:block;font:800 1.3rem Inter,sans-serif;color:var(--ink,#171A20);letter-spacing:-.3px}#rv .rhero b em{font-style:normal;color:#047857}#rv .rhero span{display:block;font:600 .82rem Inter,sans-serif;color:var(--muted,#6C7285);margin-top:3px}
+#rv .rtab table{width:100%;border-collapse:collapse}#rv .rtab th{text-align:center;white-space:nowrap;vertical-align:bottom}#rv .rtab td{text-align:center;font-size:.92rem}
+#rv .rtab th.l,#rv .rtab td.l{text-align:left}#rv .rtab th.r,#rv .rtab td.r{text-align:right}
+#rv .rtab th.bl,#rv .rtab th.br,#rv .rtab th.grp+th,#rv .rtab thead tr:last-child th{width:7%}#rv .rtab th.grp{background:#F3F5F9;color:#1E3350;border-left:1px solid var(--line,#EBECF1);border-right:1px solid var(--line,#EBECF1)}
+#rv .rtab .bl{border-left:1px solid var(--line,#EBECF1)}#rv .rtab .br{border-right:1px solid var(--line,#EBECF1)}
+#rv .rtab .rz{color:#C9CDD6}#rv .rtab small{font-size:.76rem;color:var(--muted,#6C7285);font-weight:600}#rv .rtab .rz small{color:#C9CDD6}
+#rv .rnb{border:0;background:none;padding:2px 6px;border-radius:6px;font:800 .95rem Inter,sans-serif;color:var(--ink,#171A20);cursor:pointer}#rv .rnb:hover{background:#F1F2F6}#rv .rnb.g{color:#047857}#rv .rnb.g:hover{background:#ECFDF5}#rv .rnb.on{text-decoration:underline;text-underline-offset:3px}
+#rv .rtot td{background:#F6F8FB;font-weight:800}
+#rv .rcur{font:700 .62rem Inter,sans-serif;padding:2px 7px;border-radius:6px;background:#FFF1E8;color:#C2410C;white-space:nowrap}
+#rv .rhelp{font:500 .78rem Inter,sans-serif;color:var(--muted,#6C7285);padding:10px 16px;border-top:1px solid var(--line,#EBECF1)}
+@media(max-width:820px){#rv .rhero b{font-size:1.05rem}#rv .rtab{overflow-x:auto}#rv .rtab th{font-size:.62rem}}
 #rv .rvb{padding:20px 22px;margin-bottom:16px}
 #rv .rh{display:flex;align-items:center;gap:10px}#rv .rh b{font-size:1rem;font-weight:800;color:var(--ink,#171A20)}
 #rv .rsq{width:30px;height:30px;border-radius:9px;background:#F1F2F6;display:inline-flex;align-items:center;justify-content:center;flex:none}#rv .rsq svg{width:16px;height:16px;fill:none;stroke:#3D434E;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -2398,106 +2411,75 @@ document.addEventListener("click", function(e){
     });
     return mois;
   }
-  /* 03/11 (patron, GO « publie ») : Résultats en 3 blocs, aux couleurs du logiciel —
-     1. Bilan : envoyés (blanc) › pas signés tout de suite (ambre) › signés après une relance (vert + €)
-     2. À quelle relance les devis sont signés : 4 colonnes (sans · 1re · 2e · 3e)
-     3. Taux de signature par mois : courbe navy, point vert = au moins 1 signé après relance.
-     Tout compte TOUS les devis envoyés de la période ; l'orange reste aux actions. */
+  /* 04/11 (patron, GO « version finale ») : Résultats = UNE phrase + UN tableau mois
+     par mois. Chaque ligne s'additionne de gauche à droite : envoyés → signés sans
+     relance → signés après la 1re / 2e / 3e relance → total signés → € après relance.
+     Vert = signé après une relance ; gris = zéro ; chiffres cliquables → liste des devis.
+     Tout compte TOUS les devis envoyés de la période. L'orange reste aux actions. */
   function paintRes(){
     var mois = stats();
-    var tot = {env: 0, sig: 0, net: 0, b: [0, 0, 0, 0], e: [0, 0, 0, 0]};
-    mois.forEach(function(m){ tot.env += m.env; tot.sig += m.sig; tot.net += m.net;
-      m.b.forEach(function(l, i){ tot.b[i] += l.length; l.forEach(function(x){ tot.e[i] += +x.d.montant || 0; }); }); });
+    var tot = {env: 0, sig: 0, net: 0, b: [0, 0, 0, 0]};
+    mois.forEach(function(m){ tot.env += m.env; tot.sig += m.sig; tot.net += m.net; m.b.forEach(function(l, i){ tot.b[i] += l.length; }); });
     RES.m = null;
-    var grT = tot.b[1] + tot.b[2] + tot.b[3], pasTout = Math.max(0, tot.env - tot.b[0]);
-    var taux = function(m){ return m.env ? Math.round(m.sig / m.env * 100) : 0; };
-    var moy = tot.env ? Math.round(tot.sig / tot.env * 100) : 0;
+    var grT = tot.b[1] + tot.b[2] + tot.b[3];
+    var pc = function(s, e){ return e ? Math.round(s / e * 100) : 0; };
     var nomM = function(m){ return MOIS[m.d.getMonth()] + " " + m.d.getFullYear(); };
     var Maj = function(t){ return t.charAt(0).toUpperCase() + t.slice(1); };
     var pl = function(n, a, b){ return n + " " + (n > 1 ? b : a); };
-    var ico = {
-      rel: '<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0114.85-3.36L23 10M1 14l4.65 4.36A9 9 0 0020.5 15"/>',
-      doc: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/>',
-      ok: '<path d="M20 6L9 17l-5-5"/>', col: '<path d="M3 21h18M6 17V9M11 17V5M16 17v-6M21 17v-3"/>', crb: '<path d="M3 17l6-6 4 4 8-8"/>'
+    var isSel = function(a, b){ return RES.sel && RES.sel[0] === a && RES.sel[1] === b; };
+    /* une cellule chiffrée : grise à 0, verte si après relance, cliquable si > 0 */
+    var cel = function(v, a, b, vert, cls){
+      if(!v) return '<td class="' + (cls || "") + ' rz">0</td>';
+      return '<td class="' + (cls || "") + '"><button type="button" class="rnb' + (vert ? " g" : "") + (isSel(a, b) ? " on" : "") + '" onclick="rvSel(' + a + ',' + b + ')" title="Voir les devis">' + v + '</button></td>';
     };
-    var head = function(ic, t, s){ return '<div class="rh"><span class="rsq"><svg viewBox="0 0 24 24">' + ico[ic] + '</svg></span><b>' + t + '</b></div><div class="rs">' + s + '</div>'; };
-    var kp = function(cls, ic, l, n, sub, sel){ return '<div class="kpi ' + cls + (sel ? '" role="button" onclick="' + sel + '"' : '"') + '><div class="kico"><svg viewBox="0 0 24 24">' + ico[ic] + '</svg></div><div class="lbl">' + l + '</div><div class="num">' + n + '</div><div class="ksub">' + sub + '</div></div>'; };
-
-    /* 1. bilan */
-    var b1 = '<div class="rvcard rvb">' + head("rel", "Bilan des relances · " + RES.n + " derniers mois",
-        tot.env ? "Sur " + pl(tot.env, "devis envoyé", "devis envoyés") + ", " + pasTout + (pasTout > 1 ? " n'ont pas été signés" : " n'a pas été signé") + " tout de suite et " + (pasTout > 1 ? "ont été suivis" : "a été suivi") + " par les relances. " + (grT ? grT + (grT > 1 ? " d'entre eux ont été signés" : " a été signé") + " après une relance." : "Aucun n'a encore été signé après une relance.") : "Aucun devis envoyé sur la période.")
-      + '<div class="rfun">'
-      + kp("k-cash", "doc", "Devis envoyés", tot.env, "sur la période")
-      + '<span class="rarr">›</span>'
-      + kp("k-amber", "rel", "Pas signés tout de suite", pasTout, "relancés automatiquement")
-      + '<span class="rarr">›</span>'
-      + kp("k-green", "ok", "Signés après une relance", grT + ' <span class="reur">' + E0(tot.net) + '</span>', (pasTout ? "sur les " + pasTout + " relancés · " : "") + "pour 49 €/mois d'option", grT ? "rvSel(-2,0)" : "")
-      + '</div></div>';
-
-    /* 2. à quelle relance */
-    var COL = ["#C9CDD6", "#1E3350", "#4A6A96", "#8FA6C6"];
-    var LIB = ["Sans relance", "Après la 1re relance", "Après la 2e relance", "Après la 3e relance"];
-    var mx = Math.max(1, tot.b[0], tot.b[1], tot.b[2], tot.b[3]);
-    var b2 = '<div class="rvcard rvb">' + head("col", "À quelle relance les devis sont signés",
-        tot.sig ? "Les " + pl(tot.sig, "devis signé", "devis signés") + " sur la période, rangés selon le moment où le client a signé. Cliquez une colonne pour voir les devis." : "Aucun devis signé sur la période.")
-      + '<div class="rhist">' + tot.b.map(function(v, i){
-          var on = RES.sel && RES.sel[0] === -1 && RES.sel[1] === i;
-          return '<div class="rhc' + (v ? "" : " z") + (on ? " on" : "") + '"' + (v ? ' onclick="rvSel(-1,' + i + ')" title="Voir les devis"' : "") + '><div class="rhn"' + (v && i ? ' style="color:' + COL[i] + '"' : "") + '>' + v + '</div>'
-            + '<div class="rhb" style="height:' + (v ? Math.max(8, Math.round(v / mx * 140)) : 4) + 'px;background:' + (v ? COL[i] : "#E3E7EE") + '"></div>'
-            + '<div class="rhl">' + LIB[i] + '</div><div class="rhs' + (i && v ? " g" : "") + '">' + (i ? E0(tot.e[i]) : "signés avant la 1re relance") + '</div></div>';
-        }).join("") + '</div></div>';
-
-    /* 3. courbe */
-    var M = mois.slice().reverse().filter(function(m){ return m.env || m.cur; });
-    var W = 1000, H = 236, x0 = 70, x1 = W - 70, yb = 160, sc = 1.3;
-    var X = function(i){ return M.length > 1 ? x0 + i * (x1 - x0) / (M.length - 1) : W / 2; };
-    var Y = function(t){ return yb - t * sc; };
-    var idx = {}; mois.forEach(function(m, i){ idx[m.k] = i; });
-    var pts = [], svg = '';
-    svg += '<line x1="20" y1="' + yb + '" x2="' + (W - 20) + '" y2="' + yb + '" stroke="#EBECF1"/>';
-    if(tot.env) svg += '<line x1="20" y1="' + Y(moy) + '" x2="' + (W - 20) + '" y2="' + Y(moy) + '" stroke="#C9CDD6" stroke-dasharray="6 5"/><text x="' + (W - 20) + '" y="' + (Y(moy) - 7) + '" font-size="12" fill="#6C7285" text-anchor="end" font-weight="600">moyenne : ' + moy + ' %</text>';
-    M.forEach(function(m, i){ if(m.env && !m.cur) pts.push(X(i) + "," + Y(taux(m))); });
-    if(pts.length > 1) svg += '<polyline fill="none" stroke="#1E3350" stroke-width="2.5" points="' + pts.join(" ") + '"/>';
-    M.forEach(function(m, i){
-      var x = X(i), mi = idx[m.k], rel = m.b[1].length + m.b[2].length + m.b[3].length;
-      var g = '<g style="cursor:pointer" onclick="rvSel(' + mi + ',-1)"><title>Voir les devis de ' + nomM(m) + '</title>';
-      if(m.cur && !m.env) g += '<circle cx="' + x + '" cy="' + yb + '" r="7" fill="#fff" stroke="#C9CDD6" stroke-width="2" stroke-dasharray="3 2"/>';
-      else { var y = Y(taux(m));
-        g += '<circle cx="' + x + '" cy="' + y + '" r="' + (rel ? 8 : 7) + '" fill="' + (rel ? "#10B981" : (m.cur ? "#fff" : "#1E3350")) + '" stroke="' + (m.cur && !rel ? "#1E3350" : "#fff") + '" stroke-width="2"/>'
-          + '<text x="' + x + '" y="' + (y - 16) + '" font-size="15" font-weight="800" fill="#171A20" text-anchor="middle">' + taux(m) + ' %</text>'; }
-      g += '<text x="' + x + '" y="186" font-size="13.5" font-weight="700" fill="' + (m.cur ? "#6C7285" : "#171A20") + '" text-anchor="middle">' + Maj(MOIS[m.d.getMonth()]) + '</text>'
-        + '<text x="' + x + '" y="204" font-size="12.5" fill="#6C7285" text-anchor="middle">' + (m.env ? pl(m.sig, "signé", "signés") + " sur " + m.env : "") + (m.cur ? (m.env ? " · " : "") + "en cours" : "") + '</text>';
-      if(rel){ var pr = [1, 2, 3].filter(function(r){ return m.b[r].length; }).map(function(r){ return m.b[r].length + " après la " + (r === 1 ? "1re" : r + "e"); }).join(" · ");
-        g += '<text x="' + x + '" y="222" font-size="12.5" font-weight="700" fill="#047857" text-anchor="middle">dont ' + pr + '</text>'; }
-      svg += g + '</g>';
-    });
-    var b3 = '<div class="rvcard rvb">' + head("crb", "Taux de signature par mois", "Sur 100 devis envoyés dans le mois, combien sont signés. Cliquez un mois pour voir ses devis.")
-      /* téléphone : la courbe serait illisible — une ligne par mois, même code couleur */
-      + (window.innerWidth < 700
-        ? '<div class="rmob">' + M.slice().reverse().map(function(m){ var rel = m.b[1].length + m.b[2].length + m.b[3].length, mi = idx[m.k];
-            return '<div class="rmr" onclick="rvSel(' + mi + ',-1)"><i style="background:' + (rel ? "#10B981" : m.env ? "#1E3350" : "#C9CDD6") + '"></i><b>' + Maj(MOIS[m.d.getMonth()]) + (m.cur ? ' <small>en cours</small>' : "") + '</b><span>' + (m.env ? pl(m.sig, "signé", "signés") + " sur " + m.env + (rel ? ' · <em>dont ' + rel + ' après relance</em>' : "") : "aucun devis") + '</span><strong>' + (m.env ? taux(m) + " %" : "–") + '</strong></div>'; }).join("") + '</div>'
-        : '<svg class="rcrb" viewBox="0 0 ' + W + ' ' + H + '" font-family="Inter,sans-serif">' + svg + '</svg>')
-      + '<div class="rleg"><span><i style="background:#10B981"></i>au moins 1 devis signé après une relance ce mois-là</span><span><i style="background:#1E3350"></i>aucun</span></div></div>';
+    var hero = '<div class="rhero"><span class="rhi"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>'
+      + (grT ? '<em>' + pl(grT, "devis", "devis") + '</em> ' + (grT > 1 ? "signés" : "signé") + ' après une relance, soit <em>' + E0(tot.net) + '</em>' : "Aucun devis signé après une relance pour l'instant")
+      + '</b><span>sur les ' + RES.n + ' derniers mois · pour 49 €/mois d\'option</span></div></div>';
+    var lignes = mois.map(function(m, mi){
+      if(!m.env && !m.cur) return "";
+      var rel = m.b[1].length + m.b[2].length + m.b[3].length;
+      return '<tr><td class="l"><b>' + Maj(MOIS[m.d.getMonth()]) + (m.d.getFullYear() !== new Date().getFullYear() ? " " + m.d.getFullYear() : "") + '</b>' + (m.cur ? ' <span class="rcur">en cours</span>' : "") + '</td>'
+        + '<td>' + m.env + '</td>'
+        + cel(m.b[0].length, mi, 0, false)
+        + cel(m.b[1].length, mi, 1, true, "bl") + cel(m.b[2].length, mi, 2, true) + cel(m.b[3].length, mi, 3, true, "br")
+        + (m.sig ? '<td><button type="button" class="rnb' + (isSel(mi, -1) ? " on" : "") + '" onclick="rvSel(' + mi + ',-1)" title="Voir les devis">' + m.sig + '</button> <small>(' + pc(m.sig, m.env) + ' %)</small></td>' : '<td class="rz">0 <small>(0 %)</small></td>')
+        + (rel ? '<td class="r"><button type="button" class="rnb g' + (isSel(mi, -3) ? " on" : "") + '" onclick="rvSel(' + mi + ',-3)" title="Voir les devis">' + E0(m.net) + '</button></td>' : '<td class="r rz">0 €</td>')
+        + '</tr>';
+    }).join("");
+    var table = '<div class="rvcard rtab"><table class="rvres"><thead>'
+      + '<tr><th class="l" rowspan="2">Mois d\'envoi</th><th rowspan="2">Devis envoyés</th><th rowspan="2">Signés sans relance</th><th class="grp" colspan="3">Signés après la relance…</th><th rowspan="2">Total signés</th><th class="r" rowspan="2">€ signés après relance</th></tr>'
+      + '<tr><th class="bl">1re</th><th>2e</th><th class="br">3e</th></tr></thead><tbody>' + lignes
+      + '<tr class="rtot"><td class="l">Total ' + RES.n + ' mois</td><td>' + tot.env + '</td>'
+      + cel(tot.b[0], -1, 0, false) + cel(tot.b[1], -1, 1, true, "bl") + cel(tot.b[2], -1, 2, true) + cel(tot.b[3], -1, 3, true, "br")
+      + '<td>' + tot.sig + ' <small>(' + pc(tot.sig, tot.env) + ' %)</small></td>'
+      + (grT ? '<td class="r"><button type="button" class="rnb g' + (isSel(-2, 0) ? " on" : "") + '" onclick="rvSel(-2,0)" title="Voir les devis">' + E0(tot.net) + '</button></td>' : '<td class="r rz">0 €</td>')
+      + '</tr></tbody></table><div class="rhelp">Cliquez un chiffre pour voir les devis concernés. Un mois sans aucun devis n\'est pas affiché.</div></div>';
 
     /* liste des devis cliqués */
+    var LIB = ["sans relance", "après la 1re relance", "après la 2e relance", "après la 3e relance"];
     var detail = "";
     if(RES.sel){
       var L = [], lib = "", s0 = RES.sel[0], s1 = RES.sel[1];
-      if(s0 === -1){ mois.forEach(function(m){ L = L.concat(m.b[s1]); }); lib = pl(L.length, "devis signé", "devis signés") + " " + LIB[s1].toLowerCase() + " · " + RES.n + " derniers mois"; }
-      else if(s0 === -2){ mois.forEach(function(m){ L = L.concat(m.b[1], m.b[2], m.b[3]); }); lib = pl(L.length, "devis signé", "devis signés") + " après une relance · " + RES.n + " derniers mois"; }
-      else { var m = mois[s0]; if(m){ L = m.b[0].concat(m.b[1], m.b[2], m.b[3]); lib = pl(L.length, "devis signé", "devis signés") + " · envoyés en " + nomM(m); } }
-      L.sort(function(a, b){ return b.g - a.g; });
-      detail = '<div class="rvcard" style="margin-top:16px"><div style="padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b>' + lib + '</b><button type="button" class="rvc" style="margin-left:auto" onclick="rvSel(-9,0)">✕ Fermer</button></div>'
+      var rels = function(m){ return m.b[1].concat(m.b[2], m.b[3]); };
+      if(s0 === -1){ mois.forEach(function(m){ L = L.concat(m.b[s1]); }); lib = pl(L.length, "devis signé", "devis signés") + " " + LIB[s1] + " · " + RES.n + " derniers mois"; }
+      else if(s0 === -2){ mois.forEach(function(m){ L = L.concat(rels(m)); }); lib = pl(L.length, "devis signé", "devis signés") + " après une relance · " + RES.n + " derniers mois"; }
+      else { var m = mois[s0]; if(m){
+        if(s1 >= 0){ L = m.b[s1]; lib = pl(L.length, "devis signé", "devis signés") + " " + LIB[s1]; }
+        else if(s1 === -3){ L = rels(m); lib = pl(L.length, "devis signé", "devis signés") + " après une relance"; }
+        else { L = m.b[0].concat(rels(m)); lib = pl(L.length, "devis signé", "devis signés"); }
+        lib += " · envoyés en " + nomM(m); } }
+      L = L.slice().sort(function(a, b){ return b.g - a.g; });
+      detail = '<div class="rvcard rdet" style="margin-top:16px"><div style="padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b>' + lib + '</b><button type="button" class="rvc" style="margin-left:auto" onclick="rvSel(-9,0)">✕ Fermer</button></div>'
         + (L.length ? '<table><thead><tr><th>Client</th><th class="hm">Devis</th><th>Montant signé</th><th>Envoyé → signé</th><th style="text-align:right"></th></tr></thead><tbody>'
         + L.map(function(x){ var j = Math.max(0, Math.round((x.g - x.e) / 864e5)); return '<tr><td class="cl"><b>' + esc(x.d.client) + '</b></td><td class="hm">' + esc(x.d.titre) + '<span class="sm">' + esc(x.d.ref) + '</span></td><td><b>' + eur(+x.d.montant || 0) + '</b><span class="sm">' + (x.rem ? "−" + String(x.rem).replace(".", ",") + " % accordé" : "sans remise") + '</span></td><td style="white-space:nowrap">' + fd(x.e) + ' → <b>' + fd(x.g) + '</b><span class="sm">en ' + j + ' jour' + (j > 1 ? "s" : "") + '</span></td><td style="text-align:right"><a class="relcall" href="devis-detail.html?ref=' + encodeURIComponent(x.d.ref) + '">Voir le devis</a></td></tr>'; }).join("")
-        + '</tbody></table>' : '<div class="empty">Aucun devis signé.</div>') + '</div>';
+        + '</tbody></table>' : '<div class="empty">Aucun devis.</div>') + '</div>';
     }
     var opt = function(v, t, c){ return '<option value="' + v + '"' + (v === c ? " selected" : "") + '>' + t + '</option>'; };
     document.getElementById("rv").innerHTML =
       '<div class="rvbar"><span class="rvseg"><button type="button" class="' + (RES.n === 6 ? "on" : "") + '" onclick="rvN(6)">6 derniers mois</button><button type="button" class="' + (RES.n === 12 ? "on" : "") + '" onclick="rvN(12)">12 derniers mois</button></span>'
       + '<select class="rvsel" onchange="rvPub(this.value)" aria-label="Type de client">' + opt("", "Tous les clients", RES.pub) + opt("part", "Particuliers", RES.pub) + opt("pro", "Entreprises", RES.pub) + opt("syn", "Syndics", RES.pub) + '</select></div>'
-      + b1 + b2 + b3 + detail;
-    if(RES.sel){ var dz = document.querySelector("#rv > .rvcard:last-child"); if(dz && dz.scrollIntoView) dz.scrollIntoView({behavior: "smooth", block: "nearest"}); }
+      + hero + table + detail;
+    if(RES.sel){ var dz = document.querySelector("#rv .rdet"); if(dz && dz.scrollIntoView) dz.scrollIntoView({behavior: "smooth", block: "nearest"}); }
   }
   window.rvSel = function(mi, i){ RES.sel = mi === -9 ? null : [mi, i]; paintRes(); };
   window.rvN = function(n){ RES.n = n; RES.sel = null; paintRes(); };
