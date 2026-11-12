@@ -944,6 +944,7 @@ function eur0(v){ return (Math.round(v * 100) / 100).toLocaleString("fr-FR",{max
 const MOIS = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 function fdate(d){ return d.getDate() + (d.getDate() === 1 ? "ᵉʳ" : "") + " " + MOIS[d.getMonth()] + " " + d.getFullYear(); }
 function nextDate(){ if(T.finEssai){ const f = new Date(T.finEssai); if(f > new Date()) return f; } const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + 1); return d; }
+function retryDate(){ const d = new Date(); d.setDate(d.getDate() + 1); return d; }
 function enEssai(){ return T.finEssai && new Date(T.finEssai) > new Date(); }
 function ini(s){ return (s || "?").split(/[\s@.]+/).filter(Boolean).slice(0,2).map(x => x[0].toUpperCase()).join(""); }
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -1085,13 +1086,13 @@ function drawUsage(){
 }
 function drawAlert(){
   const a = document.getElementById("alertbar"); a.classList.toggle("on", !!S.impaye);
-  const d = new Date(); d.setDate(d.getDate() + 4);
-  document.getElementById("alert-t").innerHTML = "<b>Paiement refusé le " + fdate(new Date()) + ".</b> Nouvelle tentative dans 2 jours. Sans paiement le " + fdate(d) + ", le compte passera en lecture seule.";
+  const d = new Date(); d.setDate(d.getDate() + 7);
+  document.getElementById("alert-t").innerHTML = "<b>Paiement refusé le " + fdate(new Date()) + ".</b> Nouvelle tentative demain, puis à J+3 et J+7. Sans paiement le " + fdate(d) + ", le compte passera en lecture seule.";
 }
 function drawDash(unread, open){
   const n = nbU(), t = tr(), inv = S.users.filter(u => u.st === "invite").length;
   document.getElementById("hello").textContent = "Bonjour, " + ((jget("tigerflow-compte") || {}).nom || SOC.nom);
-  document.getElementById("hello-sub").textContent = new Date().toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"}).replace(/^./, c => c.toUpperCase()) + " · " + (S.impaye ? "Paiement en attente" : enEssai() ? "Essai gratuit en cours" : "Compte à jour");
+  document.getElementById("hello-sub").textContent = new Date().toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"}).replace(/^./, c => c.toUpperCase()) + " · " + (S.impaye ? "Paiement refusé" : enEssai() ? "Essai gratuit en cours" : "Compte à jour");
   const act = S.users.filter(u => u.st === "actif").length, lib = nbLibres();
   document.getElementById("d-users").textContent = act;
   document.getElementById("d-users-ft").textContent = inv ? inv + " invitation" + (inv > 1 ? "s" : "") + " en attente" : lib ? lib + " place" + (lib > 1 ? "s" : "") + " à attribuer · invitez votre équipe" : "Toute l'équipe est connectée";
@@ -1108,8 +1109,8 @@ function drawDash(unread, open){
   const nx = TR[TR.indexOf(t) + 1];
   document.getElementById("d-hint-t").textContent = "Formule " + PL().n + " : " + PL().sup.charAt(0).toLowerCase() + PL().sup.slice(1) + ". Vous changez de formule quand vous voulez.";
   document.getElementById("d-amt").textContent = eur(ht()) + " HT" + (S.bill === "a" ? " / an" : " / mois");
-  document.getElementById("d-date-l").textContent = enEssai() ? "Fin de l'essai, 1er prélèvement" : "Date";
-  document.getElementById("d-date").textContent = fdate(nextDate());
+  document.getElementById("d-date-l").textContent = S.impaye ? "Nouvelle tentative" : enEssai() ? "Fin de l'essai, 1er prélèvement" : "Date";
+  document.getElementById("d-date").textContent = S.impaye ? fdate(retryDate()) : fdate(nextDate());
   const c = S.cards.find(x => x.def);
   document.getElementById("d-card").innerHTML = c ? (S.impaye ? '<span style="color:var(--red)">Visa •••• ' + c.fin + ' · refusée</span>' : "Visa •••• " + c.fin) : '<span style="color:var(--amber)">À ajouter</span>';
   document.getElementById("d-nots").innerHTML = S.nots.slice(0, 3).map(nt => '<a class="li" href="#notifications" style="color:inherit;text-decoration:none"><span class="ico ' + CATI[nt.cat] + '" style="width:34px;height:34px">' + IC[nt.cat] + '</span><div><b>' + esc(nt.t) + '</b><small>' + esc(nt.w) + '</small></div>' + (nt.un ? '<span class="pill a" style="margin-left:auto">Nouveau</span>' : '') + '</a>').join("");
@@ -1323,8 +1324,8 @@ function drawAbo(){
   document.getElementById("a-m").textContent = "Facturation " + (S.bill === "a" ? "annuelle" : "mensuelle") + " · TVA autoliquidée";
   document.getElementById("a-amt").textContent = eur(ht()) + " HT";
   { const segs = TR.map(x => { const k = Math.max(0, Math.min(n, x.max) - x.min + 1); return k; }); const cap = Math.max(n + 1, 5); document.getElementById("a-bar").innerHTML = '<i style="width:' + Math.min(100, Math.round(n / cap * 100)) + '%"></i>'; }
-  document.getElementById("a-nx-l").textContent = enEssai() ? "Fin de l'essai, 1er prélèvement" : "Prochain prélèvement";
-  document.getElementById("a-nx").textContent = fdate(nx);
+  document.getElementById("a-nx-l").textContent = S.impaye ? "Nouvelle tentative de prélèvement" : enEssai() ? "Fin de l'essai, 1er prélèvement" : "Prochain prélèvement";
+  document.getElementById("a-nx").textContent = S.impaye ? fdate(retryDate()) : fdate(nx);
   { const c = S.cards.find(x => x.def); document.getElementById("a-nx-c").innerHTML = c ? (S.impaye ? '<span style="color:var(--red)">Visa •••• ' + c.fin + ' · refusée</span>' : "Visa •••• " + c.fin) : '<span style="color:var(--amber)">Aucune carte enregistrée</span>'; }
   document.getElementById("r-end").textContent = fdate(nx);
   { const SH = { gratuit:"Facturation seule", starter:"Agenda + appli technicien", pro:"Encaissement CB + contrats" };
