@@ -401,7 +401,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .tg input:checked+i::after{left:16px}
 .roles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .roles>div{background:var(--bg);border-radius:12px;padding:14px}
-.roles b{display:block;font-size:.86rem;margin-bottom:4px}
+.roles b{display:flex;align-items:center;gap:8px;font-size:.86rem;margin-bottom:4px}.roles .rn{margin-left:auto;font-style:normal;font-size:.7rem;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:99px;padding:1px 8px;white-space:nowrap}.roles .rn.z{opacity:.6}.vous{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:var(--green-bg);color:var(--green-d);border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle}#eq-rows tr.off .who b,#eq-rows tr.off td{color:var(--muted)}
 .roles small{display:block;color:var(--ink2);font-size:.78rem;line-height:1.45}
 .row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
 .row:last-child{border:0}
@@ -774,14 +774,14 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
 
   <!-- ═══ ÉQUIPE ═══ -->
   <section class="sec" id="s-equipe">
-    <div class="ph"><div><h1>Équipe TigerFlow</h1><p>Qui a accès à ce back-office, et avec quel rôle.</p></div></div>
+    <div class="ph" style="display:none"><div><h1>Équipe TigerFlow</h1><p>Qui a accès à ce back-office, et avec quel rôle.</p></div></div>
     <div class="card" style="padding:6px 8px"><table class="tbl"><thead><tr><th>Membre</th><th>Rôle</th><th>Titre</th><th>Statut</th><th>Créé le</th><th>Modifié le</th><th></th></tr></thead><tbody id="eq-rows"></tbody></table></div>
     <div class="card mt"><div class="hdr"><div><h3>Les rôles</h3><div class="sub">Ce que chacun peut faire</div></div></div>
       <div class="roles">
-        <div><b>Super Admin</b><small>Tout, y compris l'équipe, les tarifs et les webhooks.</small></div>
-        <div><b>Account Manager</b><small>Tenants, abonnements, support. Pas les tarifs ni l'équipe.</small></div>
-        <div><b>IT</b><small>Webhooks, contenu du site, journal. Pas les paiements.</small></div>
-        <div><b>Finance</b><small>Paiements, abonnements, export. Lecture seule ailleurs.</small></div>
+        <div><b>Super Admin<i class="rn" data-role="Super Admin"></i></b><small>Tout, y compris l'équipe, les tarifs et les webhooks.</small></div>
+        <div><b>Account Manager<i class="rn" data-role="Account Manager"></i></b><small>Clients, abonnements, support. Pas les tarifs ni l'équipe.</small></div>
+        <div><b>IT<i class="rn" data-role="IT"></i></b><small>Webhooks, contenu du site, journal. Pas les paiements.</small></div>
+        <div><b>Finance<i class="rn" data-role="Finance"></i></b><small>Paiements, abonnements, export. Lecture seule ailleurs.</small></div>
       </div></div>
   </section>
 
@@ -1213,7 +1213,8 @@ function readAll(){ S.nots.forEach(n => n.un = false); save(); drawNots(); toast
 
 /* ───────── équipe ───────── */
 function drawTeam(){
-  document.getElementById("eq-rows").innerHTML = S.team.map((u, i) => '<tr><td><div class="who"><span class="av" style="' + (u.st === "actif" ? "" : "background:#D7DAE1;color:#6C7285") + '">' + ini(u.nom) + '</span><div><b>' + esc(u.nom) + '</b><small>' + esc(u.mail) + '</small></div></div></td><td>' + (i === 0 ? '<b>Super Admin</b>' : '<select onchange="S.team[' + i + '].role=this.value;S.team[' + i + '].m=\'2026-10-03\';save();drawTeam();toast(\'Rôle modifié\')">' + ["Super Admin","Account Manager","IT","Finance"].map(r => '<option' + (r === u.role ? " selected" : "") + '>' + r + '</option>').join("") + '</select>') + '</td><td>' + esc(u.titre) + ((u.docs || []).length ? '<small style="display:block;color:var(--muted)">' + u.docs.length + ' document(s)</small>' : '') + '</td><td><span class="pill ' + (u.st === "actif" ? "g" : "n") + '">' + (u.st === "actif" ? "Actif" : "Inactif") + '</span></td><td style="color:var(--muted)">' + fdate(u.c) + '</td><td style="color:var(--muted)">' + fdate(u.m) + '</td><td><div class="acts"><button class="btn g sm" onclick="editUser(' + i + ')">Modifier</button>' + (i === 0 ? '' : u.st === "actif" ? '<button class="btn g sm" onclick="offUser(' + i + ')">Désactiver</button>' : '<button class="btn g sm" onclick="S.team[' + i + '].st=\'actif\';save();drawTeam();toast(\'Accès rétabli\')">Réactiver</button>') + '</div></td></tr>').join("");
+  document.getElementById("eq-rows").innerHTML = S.team.map((u, i) => '<tr' + (u.st === "actif" ? '' : ' class="off"') + '><td><div class="who"><span class="av" style="' + (u.st === "actif" ? "" : "background:#D7DAE1;color:#6C7285") + '">' + ini(u.nom) + '</span><div><b>' + esc(u.nom) + (i === 0 ? '<span class="vous">Vous</span>' : '') + '</b><small>' + esc(u.mail) + '</small></div></div></td><td>' + (i === 0 ? '<b>Super Admin</b>' : '<select onchange="S.team[' + i + '].role=this.value;S.team[' + i + '].m=\'2026-10-03\';save();drawTeam();toast(\'Rôle modifié\')">' + ["Super Admin","Account Manager","IT","Finance"].map(r => '<option' + (r === u.role ? " selected" : "") + '>' + r + '</option>').join("") + '</select>') + '</td><td>' + esc(u.titre) + ((u.docs || []).length ? '<small style="display:block;color:var(--muted)">' + u.docs.length + ' document(s)</small>' : '') + '</td><td><span class="pill ' + (u.st === "actif" ? "g" : "n") + '">' + (u.st === "actif" ? "Actif" : "Inactif") + '</span></td><td style="color:var(--muted)">' + fdate(u.c) + '</td><td style="color:var(--muted)">' + fdate(u.m) + '</td><td><div class="acts"><button class="btn g sm" onclick="editUser(' + i + ')">Modifier</button>' + (i === 0 ? '' : u.st === "actif" ? '<button class="btn g sm" onclick="offUser(' + i + ')">Désactiver</button>' : '<button class="btn g sm" onclick="S.team[' + i + '].st=\'actif\';save();drawTeam();toast(\'Accès rétabli\')">Réactiver</button>') + '</div></td></tr>').join("");
+  document.querySelectorAll(".roles .rn").forEach(e => { const n = S.team.filter(u => u.role === e.dataset.role && u.st === "actif").length; e.textContent = n ? n + " actif" + (n > 1 ? "s" : "") : "aucun actif"; e.classList.toggle("z", !n); });
 }
 let EQATT = [], EQEDIT = null, EQOFF = null;
 function pubNow(b){ const d = new Date(), t = "Publié le " + d.getDate() + " " + d.toLocaleDateString("fr-FR",{month:"short"}) + ", " + d.getHours() + " h " + String(d.getMinutes()).padStart(2, "0"); document.querySelectorAll(".pubat").forEach(x => x.textContent = t); toast("Publié sur le site · visible immédiatement"); }
