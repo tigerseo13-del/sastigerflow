@@ -441,7 +441,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .tk{position:relative}.tk .selbox{position:absolute;right:12px;bottom:12px;accent-color:var(--green);width:15px;height:15px;cursor:pointer;opacity:.35}.tk:hover .selbox,.tk .selbox:checked{opacity:1}.tk.sel{background:var(--green-bg)}
 .tbl tr.ko td{background:#FFF5F5}.tbl tr.ko td:first-child{box-shadow:inset 3px 0 0 var(--red)}
 .mb{margin-bottom:16px}
-.mbars{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end;height:170px;padding:6px 4px 0}
+.mbars{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;align-items:end;height:170px;padding:6px 4px 0}#t-mois{height:118px;padding-top:2px}
 .mbars button{border:0;background:none;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px;padding:0;color:var(--ink)}
 .mbars .v{font-size:.78rem;font-weight:800}.mbars .bar2{width:100%;max-width:64px;border-radius:8px 8px 3px 3px;background:#D1FAE5;position:relative;transition:.15s}.mbars .bar2 i{position:absolute;left:0;right:0;bottom:0;border-radius:0 0 3px 3px;background:var(--red)}
 .mbars button.on .bar2,.mbars button:hover .bar2{background:var(--green)}.mbars .l{font-size:.72rem;color:var(--muted);font-weight:600}.mbars button.on .l{color:var(--ink)}
@@ -451,7 +451,7 @@ body.mini .brand{justify-content:center;padding:18px 0 6px}
 .pbar span{display:grid;place-items:center;font-size:.72rem;font-weight:800;border-radius:7px;white-space:nowrap;overflow:hidden;padding:0 6px}
 .pbar .p0{background:var(--green);color:#fff}.pbar .p1{background:#6EE7B7;color:#064E3B}.pbar .p2{background:#D1FAE5;color:#065F46}
 .pbar .nx{background:var(--bg);color:var(--muted);font-weight:600;border:1px dashed var(--line)}
-.tbl tr.clk{cursor:pointer}
+.tbl tr.clk{cursor:pointer}.tbl tr.off td{color:var(--muted)}.tbl tr.off .who b{color:#6C7285}.tcount{margin-left:auto;font-size:.8rem;color:var(--muted);font-weight:600}
 .tbl tr.clk:hover td{background:#FAFBFC}
 .kgrid.k3{grid-template-columns:repeat(3,1fr)}
 .ibtn{display:inline-flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);color:var(--ink2);text-decoration:none}
@@ -617,7 +617,7 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
   <!-- ═══ TENANTS ═══ -->
   <section class="sec" id="s-tenants">
     <div id="ten-list">
-      <div class="ph"><div><h1>Clients</h1><p id="ten-sub">—</p></div></div>
+      <div class="ph" style="display:none"><div><h1>Clients</h1><p id="ten-sub">—</p></div></div>
       <div class="kgrid" id="t-tiles">
         <a class="kt green" href="#tenants" data-tf="actif" onclick="setTF(TF==='actif'?'all':'actif');return false"><div class="kl"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg>Actifs</div><b id="t-k1">—</b><div class="ks" id="t-k1-ft">—</div><span class="go">Filtrer →</span></a>
         <a class="kt amber" href="#tenants" data-tf="essai" onclick="setTF(TF==='essai'?'all':'essai');return false"><div class="kl"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>En essai</div><b id="t-k2">—</b><div class="ks" id="t-k2-ft">—</div><span class="go">Filtrer →</span></a>
@@ -628,9 +628,9 @@ body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
       <div class="card" style="padding:14px 16px">
         <div class="fbar">
           <label class="search" style="flex:1;max-width:360px"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="ten-q" placeholder="Nom, adresse d'espace, e-mail…" oninput="drawTenants()"></label>
-          <div class="cats" id="ten-f" style="display:none"></div>
+          <select class="mini-sel" id="ten-p" onchange="drawTenants()" aria-label="Formule"></select><span class="tcount" id="ten-n"></span><div class="cats" id="ten-f" style="display:none"></div>
         </div>
-        <table class="tbl" style="margin-top:12px"><thead><tr><th>Société</th><th>Statut</th><th>Facturation</th><th>Places</th><th>Stockage</th><th>Inscrit le</th><th></th></tr></thead><tbody id="ten-rows"></tbody></table>
+        <table class="tbl" style="margin-top:12px"><thead><tr><th>Société</th><th>Statut</th><th>Formule</th><th>Places</th><th>Stockage</th><th>Inscrit le</th><th></th></tr></thead><tbody id="ten-rows"></tbody></table>
       </div>
     </div>
     <div id="ten-detail" style="display:none"></div>
@@ -968,6 +968,7 @@ function drawDash(){
 
 /* ───────── tenants ───────── */
 let TF = "all";
+const MC = ["","janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
 function setTF(k){ TF = k; drawTenants(); }
 function drawTenants(){
   const T = S.tenants, q = (document.getElementById("ten-q").value || "").trim().toLowerCase();
@@ -983,14 +984,18 @@ function drawTenants(){
     const MN = ["","janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre"], MS = ["05","06","07","08","09","10"];
     const nw = MS.map(k => T.filter(t => t.reg.slice(5, 7) === k).length), rs = MS.map(k => T.filter(t => t.fin_abo && t.fin_abo.slice(5, 7) === k).length), mx = Math.max(...nw, 1);
     let cum = 0;
-    document.getElementById("t-mois").innerHTML = MS.map((k, i) => { cum += nw[i] - rs[i]; return '<button onclick="document.getElementById(\'ten-q\').value=\'\';setTF(\'all\')" title="' + cum + ' client(s) fin ' + MN[+k] + '"><span class="v">+' + nw[i] + (rs[i] ? ' <span style="color:var(--red)">−' + rs[i] + '</span>' : '') + '</span><span class="bar2" style="height:' + Math.max(6, Math.round(nw[i] / mx * 100)) + 'px">' + (rs[i] ? '<i style="height:' + Math.round(rs[i] / mx * 100) + 'px"></i>' : '') + '</span><span class="l">' + MN[+k].slice(0, 4) + '.</span><span class="d">' + cum + ' au total</span></button>'; }).join(""); }
+    document.getElementById("t-mois").innerHTML = MS.map((k, i) => { cum += nw[i] - rs[i]; return '<button onclick="document.getElementById(\'ten-q\').value=\'\';setTF(\'all\')" title="' + cum + ' client(s) fin ' + MN[+k] + '"><span class="v">+' + nw[i] + (rs[i] ? ' <span style="color:var(--red)">−' + rs[i] + '</span>' : '') + '</span><span class="bar2" style="height:' + Math.max(6, Math.round(nw[i] / mx * 56)) + 'px">' + (rs[i] ? '<i style="height:' + Math.round(rs[i] / mx * 56) + 'px"></i>' : '') + '</span><span class="l">' + MC[+k] + '</span><span class="d">' + cum + ' au total</span></button>'; }).join(""); }
   chips("ten-f", [["all","Tous " + T.length],["actif","Actifs " + T.filter(t => t.st === "actif").length],["essai","En essai " + T.filter(t => t.st === "essai").length],["suspendu","Suspendus " + T.filter(t => t.st === "suspendu").length],["annule","Annulés " + T.filter(t => t.st === "annule").length]], TF, "setTF");
   document.getElementById("ten-sub").textContent = T.length + " sociétés · " + T.filter(t => t.st === "actif").reduce((s, t) => s + t.n, 0) + " places facturées";
-  const L = T.filter(t => (TF === "all" || t.st === TF) && (!q || (t.nom + " " + t.sub + " " + t.mail + " " + (t.tel || "") + " " + (t.wa || "") + " " + t.ville).toLowerCase().includes(q)));
-  document.getElementById("ten-rows").innerHTML = L.length ? L.map(t => '<tr class="clk" onclick="location.hash=\'#tenants?t=' + t.id + '\'"><td><div class="who"><span class="av" style="' + (t.st === "actif" ? "" : "background:#D7DAE1;color:#6C7285") + '">' + ini(t.nom) + '</span><div><b>' + esc(t.nom) + '</b><small>' + esc(t.sub) + '.tigerflow.io · ' + esc(t.ville) + '</small></div></div></td>' +
+  { const sel = document.getElementById("ten-p"), cur = sel.value || "all", ks = [...new Set(T.map(t => t.plan || "pro"))];
+    sel.innerHTML = '<option value="all">Toutes les formules</option>' + ks.map(k => '<option value="' + k + '">' + plan(k).n + ' (' + T.filter(t => (t.plan || "pro") === k).length + ')</option>').join(""); sel.value = ks.includes(cur) ? cur : "all"; }
+  const PF2 = document.getElementById("ten-p").value;
+  const L = T.filter(t => (TF === "all" || t.st === TF) && (PF2 === "all" || (t.plan || "pro") === PF2) && (!q || (t.nom + " " + t.sub + " " + t.mail + " " + (t.tel || "") + " " + (t.wa || "") + " " + t.ville).toLowerCase().includes(q)));
+  document.getElementById("ten-n").textContent = L.length === T.length ? T.length + " sociétés" : L.length + " sur " + T.length + " sociétés";
+  document.getElementById("ten-rows").innerHTML = L.length ? L.map(t => '<tr class="clk' + (t.st === "annule" ? " off" : "") + '" onclick="location.hash=\'#tenants?t=' + t.id + '\'"><td><div class="who"><span class="av" style="' + (t.st === "actif" ? "" : "background:#D7DAE1;color:#6C7285") + '">' + ini(t.nom) + '</span><div><b>' + esc(t.nom) + '</b><small>' + esc(t.sub) + '.tigerflow.io · ' + esc(t.ville) + '</small></div></div></td>' +
     '<td><span class="pill ' + STT[t.st][1] + '">' + STT[t.st][0] + '</span>' + (t.st === "essai" ? '<small style="display:block;color:var(--muted);font-size:.72rem;margin-top:3px">fin le ' + fdate(t.fin) + '</small>' : t.st === "suspendu" ? '<small style="display:block;color:var(--red);font-size:.72rem;margin-top:3px">impayé depuis le ' + fdate(t.impaye) + '</small>' : '') + '</td>' +
-    '<td>' + plan(t.plan).n + ' · ' + (t.st === "essai" ? "essai" : t.bill === "a" ? "annuel" : "mensuel") + '<small style="display:block;color:var(--muted);font-size:.72rem">' + (t.n ? eur0(seatCost(t.n, t.bill, t.plan)) + " HT / mois" : "—") + '</small></td>' +
-    '<td><b>' + t.n + '</b> <small style="color:var(--muted)">dont ' + t.tech + ' opérateur' + (t.tech > 1 ? 's' : '') + '</small></td><td>' + t.sto.toLocaleString("fr-FR") + ' Go</td><td style="color:var(--muted)">' + fdate(t.reg) + '</td>' +
+    '<td>' + plan(t.plan).n + ' · ' + (t.st === "essai" ? "essai" : t.bill === "a" ? "annuel" : "mensuel") + '<small style="display:block;color:var(--muted);font-size:.72rem">' + (t.n ? eur0(seatCost(t.n, t.bill, t.plan)) + " HT / mois" : t.st === "annule" ? "résilié" : "—") + '</small></td>' +
+    '<td>' + (t.n ? '<b>' + t.n + '</b> <small style="color:var(--muted)">dont ' + t.tech + ' opérateur' + (t.tech > 1 ? 's' : '') + '</small>' : '<span style="color:var(--muted)">—</span>') + '</td><td>' + t.sto.toLocaleString("fr-FR") + ' Go</td><td style="color:var(--muted)">' + fdate(t.reg) + '</td>' +
     '<td><div class="acts"><button class="btn g sm" onclick="event.stopPropagation();impers(' + t.id + ')" title="Se connecter en tant que">Se connecter</button></div></td></tr>').join("") : '<tr><td colspan="7"><div class="empty" style="padding:36px 16px"><div><b style="color:var(--ink)">Aucun client</b><br>ne correspond à ce filtre</div></div></td></tr>';
 }
 function closeTenant(){ CURT = null; document.getElementById("ten-list").style.display = ""; document.getElementById("ten-detail").style.display = "none"; }
@@ -1071,7 +1076,7 @@ function drawPays(){
   document.getElementById("p-rev-l").textContent = m === "all" ? "Encaissé en 2026" : m === "10" ? "Encaissé ce mois" : "Encaissé en " + MN[+m];
   document.getElementById("p-rev").textContent = eur(mois.filter(p => p.st === "ok").reduce((s, p) => s + p.amt, 0)); document.getElementById("p-rev-ft").textContent = m === "all" ? "HT · de mai à aujourd'hui" : "HT · " + MN[+m] + " 2026";
   const MS = ["05","06","07","08","09","10"], tot = MS.map(k => S.pays.filter(p => p.d.slice(5, 7) === k && p.st === "ok").reduce((s, p) => s + p.amt, 0)), kos = MS.map(k => S.pays.filter(p => p.d.slice(5, 7) === k && p.st === "ko").reduce((s, p) => s + p.amt, 0)), mx = Math.max(...tot, 1);
-  document.getElementById("p-mois").innerHTML = MS.map((k, i) => { const prev = i ? tot[i - 1] : 0, dlt = prev ? Math.round((tot[i] - prev) / prev * 100) : null; return '<button class="' + (m === String(+k) ? "on" : "") + '" onclick="document.getElementById(\'pay-m\').value=\'' + (+k) + '\';drawPays()"><span class="v">' + eur0(Math.round(tot[i])) + '</span><span class="bar2" style="height:' + Math.max(6, Math.round(tot[i] / mx * 100)) + 'px">' + (kos[i] ? '<i style="height:' + Math.max(4, Math.round(kos[i] / mx * 100)) + 'px" title="échoué : ' + eur0(Math.round(kos[i])) + '"></i>' : '') + '</span><span class="l">' + MN[+k].slice(0, 4) + '.</span>' + (dlt != null ? '<span class="d" style="color:' + (dlt >= 0 ? "var(--green-d)" : "var(--red)") + '">' + (dlt >= 0 ? "+" : "") + dlt + ' %</span>' : '<span class="d">&nbsp;</span>') + '</button>'; }).join("");
+  document.getElementById("p-mois").innerHTML = MS.map((k, i) => { const prev = i ? tot[i - 1] : 0, dlt = prev ? Math.round((tot[i] - prev) / prev * 100) : null; return '<button class="' + (m === String(+k) ? "on" : "") + '" onclick="document.getElementById(\'pay-m\').value=\'' + (+k) + '\';drawPays()"><span class="v">' + eur0(Math.round(tot[i])) + '</span><span class="bar2" style="height:' + Math.max(6, Math.round(tot[i] / mx * 100)) + 'px">' + (kos[i] ? '<i style="height:' + Math.max(4, Math.round(kos[i] / mx * 100)) + 'px" title="échoué : ' + eur0(Math.round(kos[i])) + '"></i>' : '') + '</span><span class="l">' + MC[+k] + '</span>' + (dlt != null ? '<span class="d" style="color:' + (dlt >= 0 ? "var(--green-d)" : "var(--red)") + '">' + (dlt >= 0 ? "+" : "") + dlt + ' %</span>' : '<span class="d">&nbsp;</span>') + '</button>'; }).join("");
   { const y = document.getElementById("p-year"); y.textContent = "Année 2026 : " + eur0(S.pays.filter(p => p.st === "ok").reduce((x, p) => x + p.amt, 0)) + " HT"; y.className = "btn sm g"; y.style.cssText = "margin-left:auto;align-self:flex-start" + (m === "all" ? ";background:var(--green-bg);border-color:var(--green);color:var(--green-d)" : ""); }
   document.getElementById("p-tx").textContent = mois.length; document.getElementById("p-tx-ft").textContent = mois.filter(p => p.st === "ok").length + " réussies";
   const ko = S.pays.filter(p => p.st === "ko"); document.getElementById("p-ko").textContent = ko.length; document.getElementById("p-ko").parentElement.className = "kt " + (ko.length ? "red" : "cash"); document.getElementById("p-ko-ft").textContent = ko.length ? eur(ko.reduce((s, p) => s + p.amt, 0)) + " à récupérer" : "Aucun";
