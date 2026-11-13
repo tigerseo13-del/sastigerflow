@@ -1278,6 +1278,14 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
 .relchip.on{background:#EEF2F8;border-color:#1E3350;color:#1E3350;
   box-shadow:0 0 0 3px rgba(30,51,80,.12)}.rcourt{display:none}#relcard.relmini .rlong{display:none}#relcard.relmini .rcourt{display:inline}#relcard .rtitl{display:none}/* 02/09 : la carte vit maintenant TOUJOURS dans la colonne etroite (319px) — le sous-titre « syndic, proprietaire, donneur d'ordre » y passait sur 3 lignes et poussait le compteur. Il est explique dans le corps de la carte vide, il n'a plus a etre dans le titre. */#relcard.relmini #rel-list{padding:8px 0 12px}</style>
         <div id="rel-form" style="display:none;flex-wrap:wrap;gap:12px;padding:12px 0 14px;align-items:center">
+          <!-- 13/11 (Saigon/Van, validé patron) : le SENS du lien se choisit. Avant il
+               venait du seul type de la fiche ouverte : depuis Foncia (entreprise) on
+               reliait ses immeubles A L'ENVERS, et un syndic ne pouvait pas avoir de payeur. -->
+          <div id="rel-dir" style="flex:1 1 100%;display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#F4F6F9;padding:4px;border-radius:11px">
+            <button type="button" data-s="in" onclick="relDir('in')">Qui paie pour ce client ?</button>
+            <button type="button" data-s="out" onclick="relDir('out')">Ce client paie pour…</button>
+          </div>
+          <style>#rel-dir button{border:1.5px solid transparent;background:transparent;color:#7A8699;border-radius:8px;font:700 .74rem Inter,sans-serif;padding:9px 6px;cursor:pointer;line-height:1.25}#rel-dir button.on{border-color:#1E3350;background:#fff;color:#1E3350;box-shadow:0 1px 3px rgba(30,51,80,.15)}</style>
           <div id="rel-q" style="flex:1 1 100%;font:800 .9rem Inter,sans-serif;color:var(--ink);margin-bottom:-4px">Qui paie pour ce client ?</div>
           <span style="position:relative;flex:1 1 100%"><button type="button" id="rel-clr" onclick="relPasLui(event)" title="Effacer" aria-label="Effacer" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:1;width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:#9AA1AE;font:700 15px Inter,sans-serif;cursor:pointer">✕</button><input id="rel-qui" placeholder="Nom du payeur…" autocomplete="off" style="width:100%;box-sizing:border-box;border:1.5px solid #E2E5EB;border-radius:9px;padding:11px 38px 11px 12px;font:600 .8rem Inter,sans-serif;color:var(--ink);background:#fff"><div id="rel-quip" hidden></div></span>
           <span style="flex:1 1 100%;display:flex;align-items:center;gap:10px"><span id="rel-cest" style="flex:none;font:700 .8rem Inter,sans-serif;color:var(--ink-2)">C'est</span>
@@ -3764,7 +3772,7 @@ document.addEventListener("click", function(e){
       + '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:' + (chef ? "var(--orange)" : "#6B7280") + '">' + (ICO[t] || ICO.gere) + '</svg></span>'
       + '<span style="flex:1;min-width:0">'
       + '<span style="display:block;font:800 .6rem Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)">' + esc(lbl) + '</span>'
-      + '<a href="client.html?c=' + encodeURIComponent(autre) + '" style="font:800 .88rem Inter,sans-serif;color:var(--ink);text-decoration:none">' + esc(autre) + ' →</a>'
+      + '<a href="client.html?c=' + encodeURIComponent(autre) + '" style="font:800 .88rem Inter,sans-serif;color:var(--ink);text-decoration:none">' + esc(autre) + '&nbsp;→</a>'
       + (sous ? '<span style="display:block;font:600 .74rem Inter,sans-serif;color:var(--muted);margin-top:1px">' + esc(sous) + '</span>' : "")
       + (star ? '<span style="display:block;font:700 .7rem Inter,sans-serif;color:#9A7400;margin-top:2px">★ Paie d\'habitude</span>' : "")
       + '</span>' + etoile
@@ -3804,13 +3812,22 @@ document.addEventListener("click", function(e){
     /* 29/10 (patron : « on ne peut pas enlever l'étoile ») : def === true = ★ choisie ;
        def === false = ★ retirée volontairement ; absent = ★ d'office s'il est le seul. */
     var aDef = entr.some(function(p2){ return p2[0].def === true; });
-    entr.forEach(function(p2){ var st = aDef ? p2[0].def === true : (entr.length === 1 && p2[0].def !== false); h += ligne(LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site, p2[0].t, true, st); });
+    /* 13/11 (Saigon/Van, validé patron) : DEUX parties titrées — « Payé par »
+       (les payeurs, ceux de « Facturer à », seuls à porter l'étoile) puis
+       « Paie pour » (les lieux de cette fiche, sans étoile). Partie vide = cachée. */
+    var ROLEin  = {gere: "syndic / gérant", possede: "propriétaire", ordonne: "donneur d'ordre"};
+    var ROLEout = {gere: "syndic / gérant", possede: "propriétaire / société", ordonne: "donneur d'ordre"};
+    var titre = function(t, s){ return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:4px 2px 0"><span style="font:800 .8rem Inter,sans-serif;color:var(--navy,#1E3350)">' + t + '</span><span style="font:600 .7rem Inter,sans-serif;color:var(--muted)">' + s + '</span></div>'; };
+    if(entr.length) h += titre("Payé par", "qui paie pour ce client");
+    entr.forEach(function(p2){ var st = aDef ? p2[0].def === true : (entr.length === 1 && p2[0].def !== false); h += ligne(ROLEin[p2[0].t] || LBLin[p2[0].t] || p2[0].t, p2[0].a, p2[1], p2[0].site, p2[0].t, true, st); });
+    if(entr.length > 1 && !aDef) h += '<div style="font:600 .72rem Inter,sans-serif;color:#9A7400;background:#FFF8E1;border-radius:8px;padding:7px 10px;line-height:1.4">Aucun payeur habituel : clique ★ sur celui qui paie d\'habitude. Sinon, tu choisiras sur chaque devis.</div>';
+    if(sort.length) h += titre("Paie pour", sort.length + " client" + (sort.length > 1 ? "s" : ""));
     /* 29/10 (patron : « c'est où les sites ? ») : plus de titres « immeuble » /
        « Sans immeuble » — restes de la bêta Sites annulée le 30/08, ils
        laissaient croire qu'il existait encore deux façons de faire. Une liste
        simple : chaque lieu relié, son immeuble rappelé sur la ligne s'il y en a un. */
     sort.slice().sort(function(x, y){ return String(x[0].b).localeCompare(String(y[0].b), "fr"); })
-      .forEach(function(p2){ h += ligne(LBLout[p2[0].t] || p2[0].t, p2[0].b, p2[1], p2[0].site, p2[0].t, false); });
+      .forEach(function(p2){ h += ligne(ROLEout[p2[0].t] || LBLout[p2[0].t] || p2[0].t, p2[0].b, p2[1], p2[0].site, p2[0].t, false); });
     document.getElementById("rel-list").innerHTML = h ||
       '<div style="font-size:.8rem;color:var(--muted);font-weight:600;line-height:1.5"><span class="rlong"><b style="color:var(--ink-2)">Qui paie pour ce client ?</b> Lui-même — rien à faire. Un syndic, sa société, sa SCI ? Relie-le ici : le devis proposera « Facturer à » et la facture partira au bon nom.<br><span style="display:block;margin-top:7px;padding:7px 9px;background:#F4F6F9;border-radius:8px;color:var(--ink-2)">Règle simple, une seule façon de faire : <b>une fiche par lieu</b> (l\'immeuble, la maison, la boutique), reliée à celui qui paie. Un syndic avec 3 immeubles = 3 fiches reliées au syndic — tu peux les créer d\'ici, depuis sa fiche.</span></span><span class="rcourt"><b style="color:var(--ink-2)">Ce client paie lui-même.</b></span></div>';
     var relN = document.getElementById("rel-n");
@@ -3870,11 +3887,11 @@ document.addEventListener("click", function(e){
      l'AUTRE pour ce client — « son syndic / gérant »… — et sur une fiche
      « chef » (syndic, SCI déjà reliée), ce que CETTE fiche est pour le lieu. */
   var TYPin  = {gere: "son syndic / gérant", possede: "son propriétaire / sa société", ordonne: "son donneur d'ordre"};
-  var TYPout = {gere: "le syndic / gérant", possede: "le propriétaire / la société", ordonne: "le donneur d'ordre"};
+  var TYPout = {gere: "syndic / gérant", possede: "propriétaire / société", ordonne: "donneur d'ordre"};
   function relTypPaint(){
     var w = document.getElementById("rel-typ"); if(!w) return;
     var LB = SENS === "in" ? TYPin : TYPout;
-    var ce = document.getElementById("rel-cest"); if(ce) ce.textContent = SENS === "in" ? "C'est" : "Il en est";
+    var ce = document.getElementById("rel-cest"); if(ce) ce.textContent = SENS === "in" ? "C'est" : nom + " est";
     /* 29/10 (patron : « le design en 4 lignes c'est pas ouf ») : UNE ligne — un menu
        déroulant au lieu de 3 boutons empilés dans la colonne étroite. */
     w.innerHTML = '<select id="rel-tsel" onchange="relTyp(this.value)" style="width:100%;border:1.5px solid #E2E5EB;border-radius:9px;padding:10px 11px;font:700 .8rem Inter,sans-serif;color:var(--navy,#1E3350);background:#fff;cursor:pointer">'
@@ -3892,7 +3909,27 @@ document.addEventListener("click", function(e){
     ph.style.display = "";
   }
   window.relTyp = function(t){ TSEL = t; relTypPaint(); relPhrase(); relImm(); };
-  window.relSens = function(e){ if(e) e.preventDefault(); SENS = SENS === "in" ? "out" : "in"; relPhrase(); relImm(); };
+  window.relSens = function(e){ if(e) e.preventDefault(); relDir(SENS === "in" ? "out" : "in"); };
+  /* 13/11 : les deux boutons du sens. La question, le menu « C'est / Il en est »
+     et la phrase verte suivent : on voit le résultat AVANT de cliquer « Relier ». */
+  var TYPF = "";
+  function relQPaint(){
+    var qq = document.getElementById("rel-q"), inq = document.getElementById("rel-qui");
+    if(qq) qq.textContent = SENS === "in" ? "Qui paie pour " + nom + " ?" : (TYPF === "syndic" ? "Quel lieu gère " + nom + " ?" : "Pour quel client " + nom + " paie ?");
+    if(inq) inq.placeholder = SENS === "in" ? "Nom du payeur…" : "Nom du lieu ou du client…";
+    /* 13/11 (patron : « t'es sûr c'est compréhensible ? ») : le NOM dans les
+       boutons, et plus de question répétée en dessous. */
+    Array.prototype.forEach.call(document.querySelectorAll("#rel-dir button"), function(b){
+      var sx = b.getAttribute("data-s");
+      b.textContent = sx === "in" ? "Qui paie pour " + nom + " ?" : nom + " paie pour…";
+      b.classList.toggle("on", sx === SENS); });
+    if(qq) qq.style.display = "none";
+  }
+  window.relDir = function(sx){
+    if(sx !== "in" && sx !== "out") return;
+    if(sx !== SENS){ SENS = sx; TSEL = SENS === "out" ? "gere" : "possede"; }
+    relQPaint(); relTypPaint(); relPhrase(); relImm();
+  };
   window.relForm = function(e){
     if(e) e.preventDefault();
     QUIS = []; var vus = {};
@@ -3911,9 +3948,7 @@ document.addEventListener("click", function(e){
     var typF = ""; try{ (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).forEach(function(c){ if(c && c.nom === nom && !typF) typF = c.type || ""; }); }catch(e2){}
     SENS = (typF === "syndic" || lire().some(function(z){ return z.a === nom; })) ? "out" : "in";
     TSEL = SENS === "out" ? "gere" : "possede";
-    var qq = document.getElementById("rel-q"), inq = document.getElementById("rel-qui");
-    if(qq) qq.textContent = SENS === "in" ? "Qui paie pour " + nom + " ?" : (typF === "syndic" ? "Quel lieu gère " + nom + " ?" : "Pour quel client " + nom + " paie ?");
-    if(inq) inq.placeholder = SENS === "in" ? "Nom du payeur…" : "Nom du lieu ou du client…";
+    TYPF = typF; relQPaint();
     var rl0 = document.getElementById("rel-list"); if(rl0 && !lire().some(function(z){ return z.a === nom || z.b === nom; })) rl0.style.display = "none";
     var inp = document.getElementById("rel-qui"); if(inp) inp.value = "";
     NEWF = "";
