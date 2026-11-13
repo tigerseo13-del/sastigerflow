@@ -8,6 +8,31 @@
 (function(){
   try{
     var S = window.localStorage;
+    /* v4 (13/11, patron : « que Van les voie aussi ») : les 3 cas des RELATIONS
+       pour tout le monde, nouveaux ET anciens visiteurs. Fusion, jamais d'écrasement. */
+    if(S.getItem("tigerflow-exemple-v4") !== "1"){
+      try{
+        var mg = function(k, v, same){ var L = []; try{ L = JSON.parse(S.getItem(k)) || []; }catch(e){}
+          v.forEach(function(x){ if(!L.some(function(y){ return y && same(x, y); })) L.push(x); }); S.setItem(k, JSON.stringify(L)); };
+        mg("tigerflow-inbox-clients", [
+          {sb:1,nom:"Foncia Gestion",type:"entreprise",adresse:"8 rue de Rome",cp:"75008",ville:"Paris",tel:"0144556677",mail:"gestion@foncia-exemple.fr",siret:"301 245 778 00021"},
+          {sb:1,nom:"Résidence Les Lilas",type:"particulier",adresse:"12 rue des Lilas",cp:"75019",ville:"Paris",tel:"0142001122",mail:""},
+          {sb:1,nom:"Résidence Belleville",type:"particulier",adresse:"48 rue de Belleville",cp:"75020",ville:"Paris",tel:"0142003344",mail:""},
+          {sb:1,nom:"Groupe Immo SA",type:"entreprise",adresse:"3 avenue Foch",cp:"75016",ville:"Paris",tel:"0145001020",mail:"compta@groupe-immo-exemple.fr",siret:"412 330 905 00018"},
+          {sb:1,nom:"Cabinet Vernet Syndic",type:"syndic",adresse:"22 rue de Clichy",cp:"75009",ville:"Paris",tel:"0148740000",mail:"gestion@vernet-syndic.fr",siret:"552 081 317 00042"},
+          {sb:1,nom:"Boulangerie Martin",type:"entreprise",adresse:"15 rue Oberkampf",cp:"75011",ville:"Paris",tel:"0143550011",mail:"contact@boulangerie-martin.fr"},
+          {sb:1,nom:"SCI Martin Patrimoine",type:"entreprise",adresse:"15 rue Oberkampf",cp:"75011",ville:"Paris",tel:"0612003344",mail:"sci.martin@gmail.com"}
+        ], function(x, y){ return x.nom === y.nom; });
+        mg("tigerflow-relations", [
+          {a:"Foncia Gestion",t:"gere",b:"Résidence Les Lilas"},
+          {a:"Foncia Gestion",t:"gere",b:"Résidence Belleville"},
+          {a:"Groupe Immo SA",t:"possede",b:"Cabinet Vernet Syndic"},
+          {a:"SCI Martin Patrimoine",t:"possede",b:"Boulangerie Martin"},
+          {a:"Foncia Gestion",t:"gere",b:"Boulangerie Martin"}
+        ], function(x, y){ return x.a === y.a && x.b === y.b; });
+      }catch(e){}
+      S.setItem("tigerflow-exemple-v4", "1");
+    }
     /* v2 (29/10) : la remise est en EUROS dans l'appli — l'exemple avait 10 (lu
        comme 10 %) au lieu de 28 € sur DEV/FAC-2026-70004. Corrigé une fois. */
     if(S.getItem("tigerflow-exemple-v1") === "1"){
