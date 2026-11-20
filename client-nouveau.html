@@ -536,7 +536,7 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
             </div>
             <div class="fgroup">
               <label for="f-p2role">Qui est-ce&nbsp;?</label>
-              <select id="f-p2role"></select>
+              <select id="f-p2role" onchange="var d=document.getElementById('f-p2docs');if(d&&!d.dataset.touch)d.checked=!/gardien/i.test(this.value)"></select>
             </div>
           </div>
           <div class="frow">
@@ -549,6 +549,7 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
               <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input id="f-p2mail" autocomplete="off" inputmode="email" placeholder="facultatif"></div>
             </div>
           </div>
+          <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#F4F6F9;border-radius:10px;padding:10px 13px;margin:2px 0 10px;font-size:.84rem;font-weight:700;color:#1E3350;cursor:pointer">Reçoit les devis et factures<input type="checkbox" id="f-p2docs" checked onchange="this.dataset.touch=1" style="width:18px;height:18px;accent-color:#1E3350"></label>
           <button class="rmlink" onclick="blocFerme('more-pers')">✕ Retirer</button>
         </div>
       </div>
@@ -746,7 +747,7 @@ function contactsExtra(nom){
   const t2 = g("f-tel2"), m2 = g("f-email2");
   if(t2 || m2) ajouts.push({nom: nom, role: "2ᵉ contact", tel: t2, mail: m2});
   const pn = g("f-p2nom"), pt = g("f-p2tel"), pm = g("f-p2mail");
-  if(pn || pt) ajouts.push({nom: pn || "Personne à joindre", role: g("f-p2role") || "Contact", tel: pt, mail: pm});
+  if(pn || pt){ const dk = document.getElementById("f-p2docs"); ajouts.push({nom: pn || "Personne à joindre", role: g("f-p2role") || "Contact", tel: pt, mail: pm, docs: dk ? dk.checked : true}); }
   if(!ajouts.length) return;
   try{
     const k = "tigerflow-contacts-" + nom;

@@ -1246,9 +1246,10 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
         </div>
         <div class="addform" id="addcform">
           <input id="ac-nom" placeholder="Nom du contact">
-          <input id="ac-role" placeholder="Fonction (ex. comptable)">
+          <input id="ac-role" list="ac-roles" placeholder="Fonction (choisir ou écrire)" oninput="ctDocsAuto()"><datalist id="ac-roles"></datalist>
           <input type="tel" autocomplete="tel" id="ac-tel" placeholder="Téléphone" inputmode="tel">
           <input type="email" autocomplete="email" id="ac-mail" placeholder="Email" inputmode="email">
+          <label id="ac-docsw" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#F4F6F9;border-radius:9px;padding:9px 12px;font-size:.8rem;font-weight:700;color:#1E3350;cursor:pointer">Reçoit les devis et factures<input type="checkbox" id="ac-docs" checked onchange="this.dataset.touch=1" style="width:18px;height:18px;accent-color:#1E3350"></label>
           <div class="ctactions"><a id="ct-del" href="#" style="display:none" onclick="event.preventDefault();ctDelEdit()">Retirer ce contact</a><button class="save" onclick="saveContact()">✓ Enregistrer le contact</button></div>
         </div>
       </div>
@@ -1992,7 +1993,7 @@ function ctRowHTML(c, i){
   const svgPen = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>';
   return `<div class="contact" data-ci="${i}">
     <span class="cph" style="background:var(--green-d)">${ini}</span>
-    <div><b>${c.nom}</b><small>${[c.role || "Contact", c.tel || "", c.mail || ""].filter(Boolean).join(" · ")}</small></div>
+    <div><b>${c.nom}</b><small>${[c.role || "Contact", c.tel || "", c.mail || ""].filter(Boolean).join(" · ")}</small>${c.docs === false ? '<small style="display:block;color:#8A94A6">Ne reçoit pas les devis et factures</small>' : (c.mail ? '<small style="display:block;color:#1E3350;font-weight:700">✉ Reçoit les devis et factures</small>' : "")}</div>
     <span class="cbtns"><a href="#" title="Modifier ce contact" class="ctpen" onclick="event.preventDefault();ctEdit(${i})">${svgPen}</a>${telC && telC !== "—" ? btn("tel:" + telC, "Appeler", svgTel) + btn("https://wa.me/33" + telC.replace(/^0/, ""), "WhatsApp", svgWa, 'target="_blank" rel="noopener" style="color:#1FAF5E"') : ""}${c.mail ? btn("mailto:" + c.mail, "Email", svgMail) : ""}</span>
   </div>`;
 }
@@ -2013,6 +2014,35 @@ function ctDel(i){
   ctDraw(); toast("Contact " + n + " retiré");
 }
 document.addEventListener("DOMContentLoaded", ctDraw);
+/* 20/11 (patron : « il manque la fonction de la personne ») — la fonction
+   se choisit dans une liste qui dépend du type de client (même liste que
+   « Qui est-ce ? » à la création), et chaque contact dit s'il REÇOIT les
+   devis et factures : c'est ce drapeau qui décidera qui est proposé en copie
+   à l'envoi. Un gardien ne les reçoit pas par défaut. */
+var CTROLES = {
+  part: ["Conjoint·e", "Enfant", "Parent", "Locataire", "Voisin·e", "Gardien d'immeuble", "Autre"],
+  pro:  ["Gérant", "Responsable technique", "Responsable QHSE", "Assistant·e", "Comptabilité", "Autre"],
+  syn:  ["Gestionnaire de copropriété", "Assistant·e de copropriété", "Gardien", "Conseil syndical", "Autre"]
+};
+function ctTypeCli(){
+  var nom = cliNom(), t = "";
+  try{ (JSON.parse(localStorage.getItem("tigerflow-inbox-clients")) || []).concat(JSON.parse(localStorage.getItem("tigerflow-clients-cache")) || []).forEach(function(c){ if(c && c.nom === nom && !t) t = c.type || ""; }); }catch(e){}
+  if(t !== "part" && t !== "particulier" && /syndic|gestion|foncia|cabinet|copro|r[ée]gie/i.test(nom)) t = "syndic";
+  return t === "part" || t === "particulier" ? "part" : (t === "syndic" ? "syn" : (t ? "pro" : ""));
+}
+function ctRolesFill(){
+  var dl = document.getElementById("ac-roles"); if(!dl) return;
+  var k = ctTypeCli();
+  var l = k ? CTROLES[k] : CTROLES.pro.concat(CTROLES.syn).filter(function(r, i, a){ return a.indexOf(r) === i; });
+  dl.innerHTML = l.filter(function(r){ return r !== "Autre"; }).map(function(r){ return '<option value="' + r + '">'; }).join("");
+}
+function ctDocsAuto(){
+  var r = document.getElementById("ac-role"), d = document.getElementById("ac-docs");
+  if(!r || !d || d.dataset.touch) return;
+  d.checked = !/gardien/i.test(r.value);
+}
+document.addEventListener("DOMContentLoaded", ctRolesFill);
+
 function saveContact(){
   const nom = document.getElementById('ac-nom').value.trim();
   const role = document.getElementById('ac-role').value.trim() || "Contact";
@@ -2021,8 +2051,10 @@ function saveContact(){
   if(!nom){ toast("Indique au moins le nom du contact"); return; }
   const l = ctLoad();
   const edit = (CTEDIT >= 0 && l[CTEDIT]);
-  if(edit) l[CTEDIT] = {nom, role, tel, mail};
-  else l.push({nom, role, tel, mail});
+  const dcb = document.getElementById('ac-docs');
+  const docs = dcb ? dcb.checked : true;
+  if(edit) l[CTEDIT] = {nom, role, tel, mail, docs};
+  else l.push({nom, role, tel, mail, docs});
   try{ localStorage.setItem(ctKey(), JSON.stringify(l)); }catch(e){}
   ctDraw();
   document.getElementById('addcform').classList.remove('open');
@@ -2038,7 +2070,7 @@ function ctEdit(i){
   const c = ctLoad()[i]; if(!c) return;
   CTEDIT = i;
   const set = (id, v) => { const e = document.getElementById(id); if(e) e.value = v || ""; };
-  set('ac-nom', c.nom); set('ac-role', c.role === "Contact" ? "" : c.role); set('ac-tel', c.tel); set('ac-mail', c.mail);
+  set('ac-nom', c.nom); set('ac-role', c.role === "Contact" ? "" : c.role); set('ac-tel', c.tel); set('ac-mail', c.mail); const dk = document.getElementById('ac-docs'); if(dk){ dk.checked = c.docs !== false; dk.dataset.touch = 1; }
   const f = document.getElementById('addcform');
   if(f) f.classList.add('open');
   const b = f ? f.querySelector('.save') : null;
@@ -2056,6 +2088,7 @@ function ctFormReset(){
   const d = document.getElementById('ct-del');
   if(d) d.style.display = "none";
   ['ac-nom','ac-role','ac-tel','ac-mail'].forEach(id => { const e = document.getElementById(id); if(e) e.value = ""; });
+  const dk = document.getElementById('ac-docs'); if(dk){ dk.checked = true; delete dk.dataset.touch; }
 }
 function ctDelEdit(){
   if(CTEDIT >= 0) ctDel(CTEDIT);
