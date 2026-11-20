@@ -505,7 +505,8 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
           </div>
           <div class="fgroup">
             <label for="f-crole">Fonction</label>
-            <select id="f-crole" onchange="var d=document.getElementById('f-cdocs');if(d&&!d.dataset.touch)d.checked=!/gardien/i.test(this.value)"></select>
+            <select id="f-crole" onchange="var d=document.getElementById('f-cdocs');if(d&&!d.dataset.touch)d.checked=!/gardien/i.test(this.value);autreVoir('f-crole')"></select>
+            <input id="f-crole-autre" autocomplete="off" placeholder="Précisez la fonction (ex. Directeur d'agence)" style="display:none;margin-top:8px">
           </div>
         </div>
       </div>
@@ -555,7 +556,8 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
             </div>
             <div class="fgroup">
               <label for="f-p2role">Qui est-ce&nbsp;?</label>
-              <select id="f-p2role" onchange="var d=document.getElementById('f-p2docs');if(d&&!d.dataset.touch)d.checked=!/gardien/i.test(this.value)"></select>
+              <select id="f-p2role" onchange="var d=document.getElementById('f-p2docs');if(d&&!d.dataset.touch)d.checked=!/gardien/i.test(this.value);autreVoir('f-p2role')"></select>
+              <input id="f-p2role-autre" autocomplete="off" placeholder="Précisez (ex. Concierge)" style="display:none;margin-top:8px">
             </div>
           </div>
           <div class="frow">
@@ -708,6 +710,19 @@ const P2ROLES = {
   pro:  ["Gérant", "Responsable technique", "Responsable QHSE", "Assistant·e", "Comptabilité", "Autre"],
   syn:  ["Gestionnaire de copropriété", "Assistant·e de copropriété", "Gardien", "Conseil syndical", "Autre"]
 };
+/* 20/11 (patron : « Autre → ajoute une case, on écrit ») */
+function autreVoir(id){
+  const s = document.getElementById(id), t = document.getElementById(id + "-autre");
+  if(!s || !t) return;
+  const on = s.value === "Autre";
+  t.style.display = on ? "" : "none";
+  if(on) t.focus();
+}
+function roleVal(id){
+  const s = document.getElementById(id); if(!s) return "";
+  if(s.value === "Autre"){ const t = document.getElementById(id + "-autre"); return (t && t.value.trim()) || "Autre"; }
+  return s.value;
+}
 function p2Liste(){
   const sel = document.getElementById("f-p2role");
   if(!sel) return;
@@ -719,6 +734,7 @@ function p2Liste(){
   if(garde && P2ROLES[cle].indexOf(garde) > -1) sel.value = garde;
   const cs = document.getElementById("f-crole");
   if(cs){ const g2 = cs.value; cs.innerHTML = '<option value="">Sélectionner…</option>' + P2ROLES[cle].map(r => '<option>' + r + '</option>').join(""); if(g2 && P2ROLES[cle].indexOf(g2) > -1) cs.value = g2; }
+  autreVoir("f-crole"); autreVoir("f-p2role");
   const pro2 = !(typeof TYPE !== "undefined" && TYPE === "part");
   const gp = document.getElementById("g-cpers"); if(gp) gp.style.display = pro2 ? "" : "none";
   const gd = document.getElementById("g-cdocs"); if(gd) gd.style.display = pro2 ? "flex" : "none";
@@ -769,11 +785,11 @@ function contactsExtra(nom){
   const g = id => { const el = document.getElementById(id); return el ? (el.value || "").trim() : ""; };
   const ajouts = [];
   const cn = g("f-cnom");
-  if(cn && TYPE !== "part"){ const dk = document.getElementById("f-cdocs"); ajouts.push({nom: cn, role: g("f-crole") || "Contact", tel: g("f-tel1"), mail: g("f-email"), docs: dk ? dk.checked : true}); }
+  if(cn && TYPE !== "part"){ const dk = document.getElementById("f-cdocs"); ajouts.push({nom: cn, role: roleVal("f-crole") || "Contact", tel: g("f-tel1"), mail: g("f-email"), docs: dk ? dk.checked : true}); }
   const t2 = g("f-tel2"), m2 = g("f-email2");
   if(t2 || m2) ajouts.push({nom: nom, role: "2ᵉ contact", tel: t2, mail: m2});
   const pn = g("f-p2nom"), pt = g("f-p2tel"), pm = g("f-p2mail");
-  if(pn || pt){ const dk = document.getElementById("f-p2docs"); ajouts.push({nom: pn || "Personne à joindre", role: g("f-p2role") || "Contact", tel: pt, mail: pm, docs: dk ? dk.checked : true}); }
+  if(pn || pt){ const dk = document.getElementById("f-p2docs"); ajouts.push({nom: pn || "Personne à joindre", role: roleVal("f-p2role") || "Contact", tel: pt, mail: pm, docs: dk ? dk.checked : true}); }
   if(!ajouts.length) return;
   try{
     const k = "tigerflow-contacts-" + nom;
