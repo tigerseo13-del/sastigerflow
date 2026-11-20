@@ -493,6 +493,23 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
     <div class="card">
       <div class="card-h"><span class="tick"></span>Contact</div>
 
+      <!-- 20/11 (patron : « quand tu crées le contact pro il manque la fonction ») :
+           pour une entreprise ou un syndic, la personne à joindre a un nom ET une
+           fonction (même liste que « Qui est-ce ? »), et on dit si elle reçoit
+           les devis et factures. Caché pour un particulier (le client EST le contact). -->
+      <div id="g-cpers" style="display:none">
+        <div class="frow">
+          <div class="fgroup">
+            <label for="f-cnom">Nom du contact</label>
+            <input id="f-cnom" autocomplete="off" placeholder="Prénom et nom">
+          </div>
+          <div class="fgroup">
+            <label for="f-crole">Fonction</label>
+            <select id="f-crole" onchange="var d=document.getElementById('f-cdocs');if(d&&!d.dataset.touch)d.checked=!/gardien/i.test(this.value)"></select>
+          </div>
+        </div>
+      </div>
+
       <div class="frow">
         <div class="fgroup">
           <label>Téléphone <span class="req">*</span></label>
@@ -505,6 +522,8 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
           <div class="iw"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg><input id="f-email" autocomplete="off" inputmode="email"></div>
         </div>
       </div>
+
+      <label id="g-cdocs" style="display:none;align-items:center;justify-content:space-between;gap:10px;background:#F4F6F9;border-radius:10px;padding:10px 13px;margin:4px 0 10px;font-size:.84rem;font-weight:700;color:#1E3350;cursor:pointer">Reçoit les devis et factures<input type="checkbox" id="f-cdocs" checked onchange="this.dataset.touch=1" style="width:18px;height:18px;accent-color:#1E3350"></label>
 
       <div class="morerow">
         <button class="morelink" data-bloc="more-num" onclick="reveal('more-num', this)">+ Un 2ᵉ téléphone / e-mail</button>
@@ -698,6 +717,11 @@ function p2Liste(){
   sel.innerHTML = '<option value="">Sélectionner…</option>'
     + P2ROLES[cle].map(r => '<option>' + r + '</option>').join("");
   if(garde && P2ROLES[cle].indexOf(garde) > -1) sel.value = garde;
+  const cs = document.getElementById("f-crole");
+  if(cs){ const g2 = cs.value; cs.innerHTML = '<option value="">Sélectionner…</option>' + P2ROLES[cle].map(r => '<option>' + r + '</option>').join(""); if(g2 && P2ROLES[cle].indexOf(g2) > -1) cs.value = g2; }
+  const pro2 = !(typeof TYPE !== "undefined" && TYPE === "part");
+  const gp = document.getElementById("g-cpers"); if(gp) gp.style.display = pro2 ? "" : "none";
+  const gd = document.getElementById("g-cdocs"); if(gd) gd.style.display = pro2 ? "flex" : "none";
 }
 function setType(card){
   document.querySelectorAll(".tcard").forEach(c=>c.classList.remove("on"));
@@ -744,6 +768,8 @@ function saveClient(){
 function contactsExtra(nom){
   const g = id => { const el = document.getElementById(id); return el ? (el.value || "").trim() : ""; };
   const ajouts = [];
+  const cn = g("f-cnom");
+  if(cn && TYPE !== "part"){ const dk = document.getElementById("f-cdocs"); ajouts.push({nom: cn, role: g("f-crole") || "Contact", tel: g("f-tel1"), mail: g("f-email"), docs: dk ? dk.checked : true}); }
   const t2 = g("f-tel2"), m2 = g("f-email2");
   if(t2 || m2) ajouts.push({nom: nom, role: "2ᵉ contact", tel: t2, mail: m2});
   const pn = g("f-p2nom"), pt = g("f-p2tel"), pm = g("f-p2mail");
