@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<link rel="preload" as="image" href="logo-tigre.png">
+<meta charset="UTF-8">
+<script src="exemple-client.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light only">
+<title>TigerFlow — Stock</title>
+<meta name="theme-color" content="#FF5A1F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light only}
+html{background:#F7F8FA}
+
+:root{
+  --orange:#FF5A1F;
+  --orange-deep:#EA4A10;
+  --orange-soft:#FFF1EA;
+  --orange-border:#FFD9C7;
+  --ink:#16181D;
+  --ink-2:#3D434E;
+  --muted:#6C7285;
+  /* ☠️ 09/09 (patron) : suite de l'harmonisation des fonds. AUDIT --line :
+   CINQ valeurs. #EBECF1 (24 pages), #ECEDF1 (3), #E9EBF0 (2), #E8EAF0 et
+   #E6E8EE. MESURE en clarte L* : tous les ecarts sont SOUS 1 — invisibles.
+   Ce ne sont pas des choix, ce sont des fautes de frappe recopiees. On
+   ramene tout le SaaS sur #EBECF1, la valeur des 24 autres pages.
+   rapport-client.html garde le sien : page vue par le CLIENT, hors SaaS. */
+  --line:#EBECF1;
+  /* ☠️ 09/09 (patron) : « maintenant tu dois choisir la couleur de fond
+   partout ». AUDIT : le SaaS portait CINQ fonds de page. #F4F5F8 (23 pages,
+   et la valeur du Figma Saigon), #F5F6F8 (4), #F5F6F9 (2), plus deux pages
+   hors-SaaS. MESURE en clarte L* : entre les trois premiers l'ecart est de
+   0,32 — sous le seuil du visible. Ce n'etaient pas trois choix de design,
+   c'etait le meme gris tape trois fois. On garde #F4F5F8, celui de Saigon.
+   NE PAS confondre avec « .tdrow:active{background:#F5F6F9} » : celui-la est
+   l'etat « ligne pressee », identique sur les 26 pages qui l'ont. On n'y
+   touche pas. */
+  --bg:#F4F5F8;
+  --card:#FFFFFF;
+  --green:#10B981; --green-d:#047857; --green-bg:#ECFDF5;
+  --amber:#A16207; --amber-bg:#FBF3D9;
+  --red:#DC2626;   --red-bg:#FDE8E8;
+  --blue:#2453C6;  --blue-bg:#EAF1FE;
+  --r:14px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:15px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+ul{list-style:none}
+.app{display:flex;min-height:100vh}
+
+/* ============ SIDEBAR ============ */
+.sidebar{width:238px;background:#0E0F12;color:#C7CBD4;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:60;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:0}
+.brand{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;position:sticky;top:0;background:#0E0F12;z-index:2}
+.brand .logo{width:46px;height:46px;border-radius:50%;background:#0A0B0E;border:1.5px solid #262A32;display:grid;place-items:center;flex:none}
+.brand .logo svg{width:22px;height:22px}
+.brand .name{font-family:'Sora';font-weight:800;font-size:1.28rem;letter-spacing:.4px;color:#fff}
+.brand .name em{font-style:normal;color:var(--orange)}
+/* 31/08 (patron : « enlève le mot Général, ça sert à rien ») : la puce de
+   section a disparu du menu. La règle reste pour l'air qu'elle donnait. */
+.nav-label{display:none}
+.nav a:first-of-type{margin-top:12px}
+.nav{display:flex;flex-direction:column;gap:4px;padding:0 12px}
+.nav a{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:10px;font-size:.9rem;font-weight:500;color:#B4B9C4;transition:.13s}
+/* 02/09 : le raccourci vers les fonctions en beta, sous Connexion. Volontairement
+   plus petit et plus gris que les vraies rubriques : c'est un atelier, pas une
+   page du produit. */
+.nav a.nbeta{font-size:.78rem;padding:8px 13px;color:#7E8593;gap:10px}
+.nav a.nbeta svg{width:15px;height:15px;opacity:.85}
+.nav a.nbeta:hover{color:#FFB68F;background:#1D2027}
+.nav a.nbeta .nbt{margin-left:auto;font-size:.6rem;font-weight:800;letter-spacing:.06em;
+  background:#2A2E38;color:#FF8A5B;border-radius:6px;padding:2px 7px}
+.nav a:hover{background:#1B1D22;color:#fff}
+.nav a.active{background:var(--orange);color:#fff;font-weight:600}
+.nav svg{width:17px;height:17px;flex:none}
+.side-user{display:flex;align-items:center;gap:11px;padding:16px 20px;border-top:1px solid #1E2026;margin-top:auto}
+.ph{border-radius:50%;background:var(--orange);display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.side-user .ph{width:38px;height:38px;font-size:.8rem}
+.side-user b{color:#fff;font-size:.88rem;display:block}
+.side-user span{font-size:.74rem;color:#7E838F}
+
+/* ============ TOPBAR ============ */
+.main{flex:1;margin-left:238px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 26px;position:sticky;top:0;z-index:50;
+  /* 05/08 (patron) : « trop blanche — un petit peu plus, pas comme avant ». Le
+     voile revient a un tiers de son ancienne force, halos compris. Le filet
+     orange de 3 px reste : c'est lui qui signe la page.
+     01/09 : essai « barre blanche » (commit 0170744) ANNULE le meme jour —
+     « c'etait pas plus joli avant ? remets comme avant ». On revient au voile
+     exactement comme il etait. */
+  background:radial-gradient(circle at 8% 140%, rgba(255,90,31,.07) 0, transparent 45%),
+  radial-gradient(circle at 92% -60%, rgba(255,90,31,.05) 0, transparent 45%),
+  linear-gradient(115deg,#FFFCFB,#FFF9F6 55%,#FFFBF8);
+  border-bottom:1px solid #F7EDE6;
+  box-shadow:inset 0 3px 0 -1px var(--orange);backdrop-filter:blur(12px)}
+/* 05/08 : le quadrillage orange partait avec le voile — il n'a plus de sens
+   sur un fond blanc. */
+.topbar::before{display:none}
+.topbar>*{position:relative}
+
+.back-m{display:none}
+.crumbs{font-size:.9rem;color:var(--muted);display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+/* icone de page dans la barre du haut (27/07) : inline-grid + vertical-align
+   pour ne pas casser l'ellipse du titre ni son alignement. */
+.pgico{display:inline-grid;place-items:center;vertical-align:middle;width:26px;height:26px;border-radius:8px;background:var(--orange-soft);color:var(--orange-deep);margin-right:9px;flex:none}
+.pgico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
+
+.crumbs .sep{color:#C4C8D0}
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
+.title-m{display:none;font-weight:700;font-size:1.02rem}
+.spacer{flex:1}
+.bell{position:relative;width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink-2)}
+.bell svg{width:19px;height:19px}
+.bell .dot{position:absolute;top:2px;right:2px;background:var(--orange);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg)}
+.top-user .ph{width:40px;height:40px;font-size:.8rem}
+
+.page{padding:24px 30px 90px}
+
+/* ============ EN-TÊTE ============ */
+.head{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:20px 24px;margin-bottom:14px;display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.head .ic{width:52px;height:52px;border-radius:13px;background:var(--orange-soft);display:grid;place-items:center;flex:none}
+.head .ic svg{width:25px;height:25px;stroke:var(--orange)}
+.head h1{font-size:1.3rem;font-weight:800;letter-spacing:-.2px}
+.head .sub{font-size:.82rem;color:var(--muted);margin-top:3px}
+.head .actions{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:11px;font-size:.87rem;font-weight:600;transition:.15s}
+.btn svg{width:16px;height:16px}
+.btn.outline{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.btn.outline:hover{border-color:#D5D8DF}
+.btn.primary{background:var(--orange);color:#fff;box-shadow:none}
+.btn.primary:hover{background:var(--orange-deep)}
+
+/* Stats de relève */
+.relstats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.rs{background:var(--card);border-radius:13px;box-shadow:0 1px 3px rgba(20,20,30,.05);padding:14px 16px;display:flex;align-items:center;gap:12px;border-left:4px solid transparent}
+.rs b{font-size:1.35rem;font-weight:800;display:block;letter-spacing:-.3px}
+.rs small{font-size:.76rem;color:var(--muted);font-weight:500}
+.rs.ok{border-color:var(--green)} .rs.ok b{color:var(--green-d)}
+.rs.conso{border-color:var(--amber)} .rs.conso b{color:var(--amber)}
+.rs.alerte{border-color:var(--red)} .rs.alerte b{color:var(--red)}
+.relstats .rs{cursor:pointer;transition:.13s}
+.relstats .rs:hover{box-shadow:0 4px 12px rgba(16,18,24,.09)}
+.relstats .rs.on{outline:2px solid #F26722;outline-offset:-2px}
+.relstats .rs.zero{border-left-color:#E8EAF0}
+.relstats .rs.zero b{color:#C3C7D0}
+.rs.tot{border-color:var(--orange)} .rs.tot b{color:var(--orange)}
+
+/* ============ ZONE PLAN ============ */
+.wrap{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+.plancard{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,20,30,.05);padding:18px;position:relative}
+.plancard .bar{display:flex;align-items:center;gap:10px;margin-bottom:13px;flex-wrap:wrap}
+.plancard .bar b{font-size:.99rem}
+.filters{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap}
+.f{font-size:.76rem;font-weight:700;padding:7px 12px;border-radius:18px;border:1.5px solid var(--line);color:var(--muted);background:#fff}
+.f.on{border-color:var(--orange);color:var(--orange-deep);background:var(--orange-soft)}
+.zoom{position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;gap:6px;z-index:5}
+.zoom button{width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:1.15rem;font-weight:700;color:var(--ink-2);box-shadow:0 2px 8px rgba(20,20,30,.1)}
+.planview{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#FBFBFC;max-height:560px}
+.planview svg{display:block;transform-origin:0 0;transition:transform .18s ease}
+
+/* Postes sur le plan */
+.poste{cursor:pointer}
+.poste circle.halo{fill:transparent;transition:.15s}
+.poste:hover circle.halo,.poste.sel circle.halo{fill:rgba(255,90,31,.14)}
+.poste.sel circle.core{stroke:var(--ink);stroke-width:2.5}
+.poste text{font-family:'Inter';font-weight:800;font-size:10.5px;fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.c-ok{fill:var(--green)} .c-conso{fill:#E8930C} .c-alerte{fill:var(--red)} .c-div{fill:var(--blue)}
+
+/* Légende */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:.79rem;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.pastille{width:14px;height:14px;border-radius:5px;display:inline-block}
+
+/* ============ PANNEAU DÉTAIL ============ */
+.detail{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,20,30,.05);padding:19px;position:sticky;top:76px}
+.detail .empty{text-align:center;color:var(--muted);padding:36px 12px}
+.detail .empty .eic{width:50px;height:50px;border-radius:14px;background:var(--orange-soft);display:grid;place-items:center;margin:0 auto 12px}
+.detail .empty svg{width:23px;height:23px;stroke:var(--orange)}
+.detail .empty b{display:block;color:var(--ink);margin-bottom:4px}
+.detail .empty p{font-size:.84rem}
+.d-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.d-num{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.95rem;flex:none}
+.d-head b{font-size:1.02rem;display:block}
+.d-head small{color:var(--muted);font-size:.79rem}
+.st-badge{margin-left:auto;font-size:.72rem;font-weight:700;padding:5px 11px;border-radius:8px}
+.sb-ok{background:var(--green-bg);color:var(--green-d)}
+.sb-conso{background:var(--amber-bg);color:var(--amber)}
+.sb-alerte{background:var(--red-bg);color:var(--red)}
+.sb-div{background:var(--blue-bg);color:var(--blue)}
+.d-rows{border-top:1px solid var(--line)}
+.d-row{display:flex;justify-content:space-between;gap:10px;padding:9.5px 0;border-bottom:1px dashed var(--line);font-size:.86rem}
+.d-row .k{color:var(--muted)}
+.d-row .v{font-weight:600;text-align:right}
+.conso-bar{height:8px;border-radius:5px;background:#F0F1F4;margin:8px 0 4px;overflow:hidden}
+.conso-bar i{display:block;height:100%;border-radius:5px}
+.d-hist{margin-top:14px}
+.d-hist .t{font-size:.8rem;font-weight:700;margin-bottom:8px}
+.d-hist li{display:flex;gap:9px;font-size:.8rem;padding:6.5px 0;border-bottom:1px dashed var(--line);align-items:baseline}
+.d-hist li:last-child{border:0}
+.d-hist .dte{color:var(--muted);flex:none;width:74px}
+.d-actions{display:flex;gap:9px;margin-top:14px}
+.d-actions .btn{flex:1;justify-content:center;padding:11px 8px;font-size:.83rem}
+
+/* ============ TABLE POSTES ============ */
+.tablecard{background:var(--card);border-radius:var(--r);box-shadow:0 1px 3px rgba(20,20,30,.05);padding:19px;margin-top:14px}
+.tablecard .card-h{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.99rem;margin-bottom:13px}
+.tablecard .card-h svg{width:18px;height:18px;stroke:var(--orange)}
+.pt{width:100%;border-collapse:collapse;font-size:.86rem}
+.pt th{text-align:left;font-size:.73rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+.pt td{padding:11px 10px;border-bottom:1px solid var(--line)}
+.pt tr:last-child td{border:0}
+.pt tr{cursor:pointer}
+.pt tr:hover td{background:#FBFBFC}
+.pt .num{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;color:#fff;font-weight:800;font-size:.72rem}
+.pt .ref{font-weight:700}
+
+/* Feuille mobile détail */
+.msheet{display:none}
+
+/* 27/08 (patron, GO « plan réel ») : le vrai plan du client. Le débordement
+   60 px venait du min-width:auto des enfants de grille (piège documenté). */
+.wrap > *{min-width:0}
+.plsel{height:40px;border:1px solid var(--line);border-radius:11px;background:#fff;font:600 .84rem Inter,sans-serif;color:var(--ink-2);padding:0 11px;max-width:300px;cursor:pointer}
+.btn.primary.arm{background:#16181D}
+.rview{position:relative;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#FBFBFC;max-height:560px}
+.rin{position:relative;width:100%}
+.rin img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.rin.addmode{cursor:crosshair}
+.rdot{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:8px;border:2.5px solid #fff;color:#fff;font:800 .68rem Inter,sans-serif;display:grid;place-items:center;box-shadow:0 2px 8px rgba(16,18,22,.3);cursor:pointer;padding:0}
+.rdot.sel{outline:2.5px solid var(--ink);outline-offset:1px}
+.plvide[hidden]{display:none}   /* le piège documenté : display:block bat l'attribut hidden */
+.plvide{display:block;text-align:center;border:2px dashed #D8DAE1;border-radius:14px;background:#FBFBFC;padding:56px 20px;cursor:pointer;width:100%;font-family:inherit}
+.plvide:hover{border-color:var(--orange);background:var(--orange-soft)}
+.plvide b{display:block;font-size:1rem;margin:10px 0 4px;color:var(--ink)}
+.plvide p{font-size:.82rem;color:var(--muted);max-width:420px;margin:0 auto}
+.plvide svg{width:34px;height:34px;stroke:var(--orange);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.plchg{display:inline-flex;align-items:center;font:700 .72rem Inter,sans-serif;color:var(--ink-2);background:#fff;border:1.5px solid #E2E5EB;border-radius:9px;padding:5px 10px;cursor:pointer;margin-left:8px;white-space:nowrap;text-decoration:none;transition:.12s}
+.plchg:hover{border-color:#F26722;color:#C2410C}
+.plchg:hover{color:var(--ink-2)}
+.plform label{display:block;font-size:.7rem;font-weight:700;color:var(--ink-2);margin:11px 0 5px}
+.plform input[type=text],.plform input[type=number],.plform select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font:600 .84rem Inter,sans-serif;color:var(--ink);background:#fff}
+.plform input:focus,.plform select:focus{outline:none;border-color:var(--orange)}
+.plrad{display:flex;gap:8px;flex-wrap:wrap}
+.plrad label{flex:1 1 auto;margin:0;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--ink-2)}
+.plrad input{accent-color:var(--orange)}
+.plrad label:has(input:checked){border-color:var(--orange);background:var(--orange-soft);color:var(--orange-deep)}
+.plmini{display:flex;gap:14px;margin-top:11px;font-size:.76rem;font-weight:700}
+.plmini span{color:var(--muted);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.plmini span:hover{color:var(--ink-2)}
+.plmini .danger{color:#B3261E}
+/* pointer-events:none — un toast INFORME, il n'avale jamais le clic (trouvé au test : il couvrait le plan pendant « Déplacer »). */
+.tst2{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#16181D;color:#fff;font-size:.84rem;font-weight:600;padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.3);z-index:200;display:none;max-width:min(92vw,560px);text-align:center;pointer-events:none}
+/* 27/08 (« FAIS LES 7 ») : niveaux, tendance, retard, lot, photos, QR */
+.plnivs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 11px}
+.plnivs .f.add{border-style:dashed;color:#8A90A0}
+.tdn{font-weight:800;margin-left:5px}
+.tdn.up{color:#DC2626}.tdn.down{color:#1B8A46}.tdn.flat{color:#B4B9C4}
+.plfreq{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--muted);margin-left:12px;white-space:nowrap}
+.plfreq select{border:1.5px solid var(--line);border-radius:8px;padding:3px 5px;font:700 .72rem Inter,sans-serif;color:var(--ink-2);background:#fff;cursor:pointer}
+.plret{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;border-radius:7px;padding:3px 10px;margin-left:9px;white-space:nowrap;vertical-align:1px}
+.plret.ko{background:var(--red-bg);color:var(--red)}
+.plret.ok{background:var(--green-bg);color:var(--green-d)}
+.phstrip{display:flex;gap:8px;margin:11px 0 2px}
+.phstrip img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:zoom-in}
+.pllb{position:fixed;inset:0;background:rgba(10,12,16,.78);z-index:300;display:none;place-items:center;padding:30px;cursor:zoom-out}
+.pllb.open{display:grid}
+.pllb img{max-width:92vw;max-height:88vh;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.pt.synth td{padding:7px 10px}
+.synthc{display:inline-block;min-width:52px;text-align:center;border-radius:8px;padding:4px 7px;font-weight:800;font-size:.7rem}
+.sv0{background:#E8F6EE;color:#1B8A46}.sv1{background:#FEF6E7;color:#A16207}.sv2{background:#FDEBD7;color:#C2410C}.sv3{background:#FBE5E3;color:#C0362C}
+.svn{color:#C3C7D0;font-weight:600}
+.qrov{position:fixed;inset:0;background:#fff;z-index:290;display:none;overflow:auto;padding:26px}
+.qrov.open{display:block}
+.qrbar{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.qrbar b{font-family:'Sora';font-size:1.05rem}
+.qrbar .btn.outline{margin-left:auto}
+.qrgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.qrlab{border:1.5px dashed #C9CCD4;border-radius:12px;padding:14px 10px;text-align:center;break-inside:avoid;page-break-inside:avoid;background:#fff}
+.qrlab img{width:110px;height:110px;image-rendering:pixelated}
+.qrlab .qn{font-family:'Sora';font-weight:800;font-size:1.25rem;margin-top:6px}
+.qrlab .qz{font-size:.7rem;font-weight:700;color:var(--ink-2);min-height:2.1em}
+.qrlab .qs{font-size:.6rem;color:var(--muted);font-weight:600;margin-top:3px}
+/* 27/08 (« FAIT TOUT » poste) : un poste RETIRÉ garde son historique */
+.sb-ret{background:#EEF0F4;color:#6C7285}
+tr.retrow td{opacity:.55}
+tr.retrow .st-badge{opacity:1}
+
+/* ============ MOBILE ============ */
+@media(max-width:980px){
+  .wrap{grid-template-columns:1fr}
+  .detail{display:none}
+  .msheet{display:none;position:fixed;inset:0;z-index:80}
+  .msheet.open{display:block}
+  .msheet .veil{position:absolute;inset:0;background:rgba(10,12,16,.45)}
+  .msheet .panel{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + var(--safe-b));box-shadow:0 -8px 40px rgba(0,0,0,.22);animation:up .22s ease;max-height:78vh;overflow-y:auto}
+  @keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+  .msheet .grab{width:42px;height:4.5px;border-radius:3px;background:#DADDE3;margin:0 auto 14px}
+}
+@media(max-width:760px){
+  html{font-size:15.5px}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:10px 14px;gap:8px}
+  .back-m{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:var(--ink)}
+  .back-m svg{width:21px;height:21px}
+  .crumbs{display:none}
+  .title-m{display:block}
+  .page{padding:14px 13px calc(100px + var(--safe-b))}
+  .head{padding:15px;gap:12px}
+  .head .ic{width:44px;height:44px}
+  .head h1{font-size:1.08rem}
+  .head .actions{width:100%;margin-left:0}
+  .head .actions .btn{flex:1;justify-content:center;font-size:.82rem;padding:11px 6px}
+  .relstats{grid-template-columns:1fr 1fr;gap:9px}
+  .rs{padding:11px 13px}
+  .rs b{font-size:1.15rem}
+  .planview{max-height:440px}
+  .pt th:nth-child(3),.pt td:nth-child(3){display:none}
+  .pt th:nth-child(5),.pt td:nth-child(5){display:none}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:8px}
+@media(max-width:760px){input,select,textarea{font-size:16px}}
+@media(pointer:coarse){
+  .aic,.dclose,.px,.rpx,.dnbtn,.tourbtn,.helpbtn,.hidebtn,.zoombtns button,.acti button{min-width:42px;min-height:42px}
+}
+@media(max-width:760px){.gsbtn{width:40px;padding:0;justify-content:center}.gsbtn > :not(svg){display:none}}
+a,button,input,select,textarea,label,summary{touch-action:manipulation}
+.crumbs{font-size:.95rem}
+.crumbs .cur{font-family:'Sora';font-size:1.05rem;font-weight:800;color:var(--ink);letter-spacing:-.2px}
+.crumbs a{font-weight:600}
+.title-m{font-size:1.08rem}
+
+/* ===== recherche : champ visible + touche / ===== */
+@media(min-width:980px){
+  .gsbtn{min-width:250px;justify-content:flex-start;background:#fff}
+  .gsbtn span{flex:1;text-align:left}
+  .gsbtn kbd.slash{margin-left:0}
+}
+
+/* ===== polissage UX transversal ===== */
+/* 1. focus clavier visible : accessibilité + navigation Tab */
+:focus-visible{outline:2.5px solid var(--orange,var(--orange));outline-offset:2px;border-radius:6px}
+button:focus:not(:focus-visible), a:focus:not(:focus-visible){outline:none}
+/* 2. retour tactile universel : tout ce qui se presse se comprime */
+button:active, .chip:active, .fchip:active, .skchip:active, .rchip:active, .bcat:active,
+a.btn:active, .btn:active, .qbig:active, .qsec:active, .dbig:active, .addline:active{transform:scale(.97)}
+/* 3. les lignes cliquables se déclarent : curseur + fond au survol */
+tbody tr[onclick]{cursor:pointer;transition:background .12s}
+tbody tr[onclick]:hover{background:#FAFAFC}
+tbody tr[onclick]:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange,var(--orange))}
+/* 4. les chiffres s'alignent en colonnes (tableaux, montants, KPI) */
+td, .amt, .num, .qamt, .kpi, .dte{font-variant-numeric:tabular-nums}
+/* 5. pas de surlignage accidentel sur l'interactif */
+button, .chip, .fchip, .skchip, .rchip, .seg, .bnv, .bcat, .st{-webkit-user-select:none;user-select:none}
+/* sélection de texte aux couleurs de la maison */
+::selection{background:#FFD9C4;color:#171A20}
+/* 6. barres de défilement fines et discrètes partout */
+*{scrollbar-width:thin;scrollbar-color:#D8DAE1 transparent}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-thumb{background:#D8DAE1;border-radius:5px}
+*::-webkit-scrollbar-thumb:hover{background:#C2C6CE}
+*::-webkit-scrollbar-track{background:transparent}
+/* respect du mode « réduire les animations » du système */
+@media(prefers-reduced-motion:reduce){
+  *, *::before, *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+.navbot{margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}
+.side-user{margin-top:0!important}
+
+/* ===== rythme des en-têtes + tableaux raffinés ===== */
+.hero h1, .page > .hello h1{font-family:'Sora'!important;font-size:1.32rem!important;letter-spacing:-.4px!important;font-weight:800!important}
+tbody tr:nth-child(even){background:#FBFBFD}
+tbody tr[onclick]:hover{background:#F6F7FA!important}
+tbody td{padding-top:14px!important;padding-bottom:14px!important}
+thead th{position:sticky;top:0;background:#fff;z-index:3;box-shadow:0 1.5px 0 var(--line)}
+
+/* ===== ergonomie : anti-zoom iOS · hitbox 44px · densité ===== */
+@media(max-width:760px){
+  input, select, textarea{font-size:16px!important}
+}
+@media(pointer:coarse){
+}
+
+/* ===== anti-saut entre les pages : la gouttière de défilement est réservée ===== */
+html{overflow-y:scroll;scrollbar-gutter:stable}
+.icq.on{background:#FFF1E9;border-color:var(--orange);color:#D63B05}
+
+/* ── AUDIT GRAS 28/08 : la règle des listes, suite du tour ── */
+.pt .ref{font-weight:600!important}
+.st-badge{font-weight:600!important}
+
+/* logo complet (patron 04/10 : « ce logo partout ») */
+.brand .bl{display:block;line-height:0}.brand .blogo{height:38px;width:auto;display:block}.brand .bmini{display:none;width:40px;height:40px;border-radius:50%}
+body.mini .brand .blogo{display:none}body.mini .brand .bmini{display:block}
+@media (max-width:980px){.brand .blogo{height:30px}}
+
+/* LP 1 · 2 · 3 côte à côte (patron 04/10) */
+.lprow{display:flex;align-items:center;gap:7px;padding:8px 13px;color:#AEB4C0;font-size:.9rem;font-weight:500}
+.lprow svg{width:18px;height:18px;flex:none;margin-right:6px}.lprow .lpl{margin-right:4px}
+.lprow a{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:28px;padding:0 9px;white-space:nowrap;border-radius:8px;background:rgba(255,255,255,.07);color:#fff;font-size:.74rem;font-weight:800;text-decoration:none;transition:.13s}
+.lprow a:hover{background:var(--orange)}
+body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}body.mini .lprow svg,body.mini .lprow .lpl{display:none}body.mini .lprow a{min-width:30px;padding:0 4px;font-size:.66rem}
+/* ===== 24/11 — Stock (bêta) : dépôt + camions, 3 pastilles, zéro comptage ===== */
+.sk{padding:22px 28px 90px;max-width:1280px}
+.sk-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sk-top h1{font-family:'Sora',sans-serif;font-size:1.35rem;color:#1E3350;margin:0}
+.sk-top h1 small{font-family:'Inter';font-size:.78rem;font-weight:600;color:#5B677A;margin-left:8px}
+.skb{border:0;cursor:pointer;font:inherit;padding:9px 14px;border-radius:10px;font-weight:700;font-size:.82rem;white-space:nowrap}
+.skb.o{background:#FF5B1F;color:#fff}.skb.w{background:#fff;border:1px solid #D9DEE6;color:#1E3350}
+.skb.s{padding:6px 11px;font-size:.76rem}.skb:disabled{opacity:.45;cursor:default}
+.sk-k{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.sk-kc{border-radius:12px;padding:11px 14px;border:1px solid #E3E7EE;background:#fff}
+.sk-kc small{display:block;font-size:.72rem;color:#5B677A;font-weight:600}.sk-kc b{display:block;font-size:1.3rem;color:#1E3350}
+.sk-kc.kr{background:#FFF5F4;border-color:#F5B5AE}.sk-kc.kr b{color:#B42318}
+.sk-kc.kg{background:#F1FAF4;border-color:#BBE5CB}.sk-kc.kg b{color:#157F3C}
+.sk-kc.kn{background:#EAF0F7;border-color:#C7D5E6}
+.sk-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.sk-tabs button{font:inherit;cursor:pointer;padding:7px 13px;border-radius:9px;font-size:.8rem;border:1px solid #E3E7EE;color:#5B677A;background:#fff;font-weight:600}
+.sk-tabs button.on{border-color:#1E3350;color:#1E3350;font-weight:800}
+.sk-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.sk-p{border:1px solid #E3E7EE;border-radius:14px;padding:14px;background:#fff;display:flex;flex-direction:column}
+.sk-p.dep{background:#EAF0F7;border-color:#C7D5E6}
+.sk-p h4{margin:0;font-size:.95rem;color:#1E3350}.sk-p small{color:#5B677A;font-size:.72rem}
+.sk-l{margin:10px 0 12px;font-size:.8rem;color:#3B4A63;line-height:1.75;flex:1}
+.sk-l em{font-style:normal;color:#5B677A;font-size:.72rem}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:7px;flex:none}
+.d0{background:#16A34A}.d1{background:#F59E0B}.d2{background:#DC2626}
+.sk-sec{font-size:.7rem;font-weight:800;letter-spacing:.04em;margin:14px 0 6px}
+.sk-r{display:grid;grid-template-columns:220px 1fr auto;align-items:center;gap:12px;padding:10px 13px;border:1px solid #E3E7EE;border-radius:11px;margin-bottom:6px;font-size:.82rem;background:#fff}
+.sk-r b{color:#1E3350}.sk-r small{color:#5B677A;display:block;font-size:.72rem}
+.sk-fold{border:1px solid #BBE5CB;background:#F1FAF4;border-radius:11px;padding:11px 13px;font-size:.82rem;color:#157F3C;cursor:pointer}
+.sk-add{border:1.5px dashed #C9D0DA;border-radius:14px;padding:13px;margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.82rem;color:#5B677A}
+.sk-add input,.sk-in{font:inherit;border:1px solid #D9DEE6;border-radius:9px;padding:8px 11px;font-size:.82rem;min-width:200px}
+.sk-seg2{display:inline-flex;border:1px solid #D9DEE6;border-radius:9px;overflow:hidden}
+.sk-seg2 button{font:inherit;border:0;background:#fff;padding:8px 12px;font-size:.78rem;cursor:pointer;color:#5B677A;font-weight:600}.sk-seg2 button.on{background:#1E3350;color:#fff}
+table.sk-t{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid #E3E7EE;border-radius:12px;overflow:hidden;font-size:.82rem}
+.sk-t th{text-align:left;font-size:.68rem;color:#6B7280;padding:9px 11px;border-bottom:1px solid #EEF1F5;letter-spacing:.03em;white-space:nowrap}
+.sk-t td{padding:9px 11px;border-bottom:1px solid #EEF1F5;vertical-align:middle}.sk-t tr:last-child td{border-bottom:0}
+.sk-t td b{color:#1E3350}.sk-t td small{display:block;color:#8A94A6;font-size:.7rem}
+.sk-pd{cursor:pointer;display:inline-flex;align-items:center;padding:4px 6px;border-radius:7px}.sk-pd:hover{background:#F4F6F9}
+.sk-cmd{font-size:.72rem;font-weight:700;color:#1E3350;background:#EAF0F7;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.sk-h{background:#fff;border:1px solid #E3E7EE;border-radius:12px;padding:12px 14px;margin-top:16px;font-size:.78rem}
+.sk-h b{color:#1E3350}.sk-h div{padding:5px 0;border-bottom:1px solid #F1F3F6;display:flex;justify-content:space-between;gap:10px}.sk-h div:last-child{border:0}
+.sk-h span:last-child{color:#8A94A6;white-space:nowrap}
+.sk-ov{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:300;display:none;align-items:flex-start;justify-content:center;padding:6vh 14px;overflow:auto}
+.sk-ov.on{display:flex}
+.sk-m{background:#fff;border-radius:16px;width:100%;max-width:520px;padding:20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.sk-m h3{margin:0 0 3px;font-size:1.05rem;color:#1E3350}.sk-m p{margin:0 0 12px;font-size:.8rem;color:#5B677A}
+.sk-li{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F1F3F6;font-size:.84rem}
+.sk-li:last-of-type{border-bottom:0}
+.sk-li input[type=checkbox]{width:19px;height:19px;accent-color:#1E3350;flex:none}
+.sk-li span.nm{flex:1}.sk-li small{display:block;color:#8A94A6;font-size:.72rem}
+.sk-s3{display:inline-grid;grid-template-columns:repeat(3,auto);gap:4px}
+.sk-s3 button{font:inherit;cursor:pointer;border:1.5px solid #E3E7EE;background:#fff;border-radius:8px;padding:6px 9px;font-size:.72rem;font-weight:700;color:#5B677A}
+.sk-s3 button.a0{border-color:#16A34A;background:#F1FAF4;color:#157F3C}.sk-s3 button.a1{border-color:#F59E0B;background:#FFFBEB;color:#92400E}.sk-s3 button.a2{border-color:#DC2626;background:#FFF5F4;color:#B42318}
+.sk-mb{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.sk-sub{font-size:.7rem;font-weight:800;color:#5B677A;letter-spacing:.04em;margin:12px 0 2px}
+.sk-warn{color:#B42318;font-size:.72rem;font-weight:600}
+.sk-note{font-size:.74rem;color:#5B677A;margin-top:14px}
+.sk-note a{color:#5B677A}
+#sk-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1E3350;color:#fff;padding:11px 18px;border-radius:11px;font-size:.84rem;font-weight:600;z-index:400;opacity:0;pointer-events:none;transition:opacity .2s}
+#sk-toast.on{opacity:1}
+@media(max-width:900px){.sk{padding:14px 13px 100px}.sk-k{grid-template-columns:1fr 1fr}.sk-r{grid-template-columns:1fr auto}.sk-r .mid{grid-column:1/-1;order:3}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <a href="index.html" class="bl" title="TigerFlow"><img class="blogo" src="logo-tigerflow.png" alt="TigerFlow"><img class="bmini" src="logo-tigre.png" alt=""></a>
+  </div>
+  <nav class="nav">
+    <a href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/></svg>Tableau de bord</a>
+    <a href="calendrier.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Calendrier</a>
+    <a href="clients.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Clients</a>
+    <a href="devis-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>Devis</a>
+    <a href="facture-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Factures</a>
+    <a href="paiements.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M14.8 9A3.5 3.5 0 008 12a3.5 3.5 0 006.8 3M7 10.5h5M7 13.5h5"/></svg>Paiements</a>
+    <a href="contrats-liste.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M9 15l2 2 4-4"/></svg>Contrats</a>
+    <a href="techniciens.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg>Techniciens</a>
+    <a href="stock.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-6 9 6v11a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M8 21v-7h8v7M8 14h8"/></svg>Stock<span style="margin-left:auto;font-size:.6rem;font-weight:800;background:rgba(255,255,255,.22);border-radius:6px;padding:2px 6px">BÊTA</span></a>
+    <a href="taches.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Tâches</a>
+    <a href="reglages.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</a>
+  </nav>
+  <nav class="nav navbot">
+    <a href="tech-mobile.html" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18.5h2"/></svg>Appli mobile<span style="font-size:.62rem;font-weight:800;background:rgba(255,255,255,.22);color:#fff;border-radius:6px;padding:2px 6px;margin-left:auto;letter-spacing:.05em">TEC</span></a>
+    <a href="connexion.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg>Connexion</a>
+    <a href="inscription.html" title="Tenant : inscription d'une société (l'avant)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2.5 21h19"/></svg>Tenant connexion</a>
+    <a href="espace-societe.html" title="Tenant : espace société (l'intérieur)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Tenant intérieur</a>
+    <div class="lprow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><a href="landing-v1.html" title="Landing page 1 (ancienne)">LP 1</a><a href="landing.html" title="Landing page 2 — OFFICIELLE" style="background:var(--orange)">LP 2</a><a href="landing-v3.html" title="Landing page 3 (proposition)">LP 3</a><a href="landing-v4.html" title="Landing page 4 (le meilleur des 3)">LP 4</a></div><a href="backoffice.html" title="Back-office éditeur (équipe TigerFlow)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 13h4M8 17h8"/></svg>Back-office</a>
+    <!-- 02/09 (patron) : « marre d'aller chercher la bêta dans Réglages a chaque
+         fois » — un raccourci sous Connexion. Discret : petit, gris, il ouvre
+         directement la boite « Fonctions en beta » (reglages.html#beta). -->
+    <a href="reglages.html#beta" class="nbeta" title="Les fonctions en bêta — Version 2 et Version 3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6M10 2v6.5L5.2 18a2 2 0 001.8 3h10a2 2 0 001.8-3L14 8.5V2"/><path d="M7.5 14h9"/></svg>Bêta<span class="nbt">V2</span></a>
+  </nav>
+  <div class="side-user" id="side-user" onclick="userMenu(event)" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" title="Mon compte">
+    <span class="ph">JJ</span>
+    <div><b>Jo Jo</b><span>Administrateur</span></div>
+    <svg class="uchev" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    <div class="umenu" id="umenu">
+      <button type="button" onclick="event.stopPropagation();location.href='reglages.html?moi=1'">
+        <span class="uic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/></svg></span>Mon compte</button>
+      <button type="button" onclick="event.stopPropagation();location.href='espace-societe.html'" title="Abonnement, utilisateurs, factures, support">
+        <span class="uic"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-5h6v5"/><path d="M9 11h.01M15 11h.01M9 15h.01M15 15h.01"/></svg></span>Espace société</button>
+      <button type="button" class="udanger" onclick="event.stopPropagation();logout()">
+        <span class="uic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></span>Déconnexion</button>
+    </div>
+  </div>
+</aside>
+<main class="main">
+<div class="sk">
+  <div class="sk-top">
+    <h1>Stock <small>où est le matériel</small></h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="skb w" id="sk-prep" onclick="skPrep()" style="display:none">Préparer tous les camions</button>
+      <button class="skb o" onclick="skRecu()">+ J'ai reçu une commande</button>
+    </div>
+  </div>
+  <div class="sk-k" id="sk-k"></div>
+  <div class="sk-tabs"><button id="skt-l" class="on" onclick="skVue('l')">Par lieu</button><button id="skt-p" onclick="skVue('p')">Par produit</button><span id="sk-fd" style="display:flex;gap:6px;margin-left:8px"></span></div>
+  <div id="sk-body"></div>
+  <div class="sk-h" id="sk-hist"></div>
+  <div class="sk-note">Bêta. Pas de quantités à saisir : chaque produit est vert, orange ou rouge. Dans le logiciel final, un camion est créé tout seul pour chaque technicien et le technicien répond « il t'en reste ? » à la fin de son rapport. · <a href="#" onclick="event.preventDefault();skReset()">Remettre l'exemple</a></div>
+</div>
+</main>
+</div>
+<div class="sk-ov" id="sk-ov" onclick="if(event.target===this)skClose()"><div class="sk-m" id="sk-m"></div></div>
+<div id="sk-toast"></div>
+
+<script>
+function userMenu(e){ if(e) e.stopPropagation(); var u=document.getElementById("side-user"); if(!u) return; var o=u.classList.toggle("open"); u.setAttribute("aria-expanded", o?"true":"false"); }
+function logout(){ location.href="connexion.html"; }
+document.addEventListener("click", function(){ var u=document.getElementById("side-user"); if(u) u.classList.remove("open"); });
+(function(){
+var K="tigerflow-stock-v1", S, VUE="l", FD="", OPEN=false, QUEUE=[];
+var LBL=["Assez","Bientôt fini","Plus rien"], LB2=["OK","bientôt fini","plus rien"];
+function esc(x){ return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function demo(){
+  return {v:1,
+   produits:[{id:"p1",nom:"Bloc rodenticide 20 g",u:"seau de 5 kg"},{id:"p2",nom:"Gel anti-cafards 30 g",u:"cartouche"},{id:"p3",nom:"Plaque de glu rongeurs",u:"boîte de 50"},{id:"p4",nom:"Poste d'appâtage sécurisé",u:"unité"},{id:"p5",nom:"Insecticide punaises de lit 1 L",u:"bidon"},{id:"p6",nom:"Piège à guêpes",u:"unité"},{id:"p7",nom:"Poudre insecticide",u:"flacon"},{id:"p8",nom:"Gants et masques",u:"boîte"}],
+   lieux:[{id:"d1",nom:"Dépôt",t:"d"},{id:"c1",nom:"Camion de Pablo",t:"c",dep:"d1"},{id:"c2",nom:"Camion d'Otman",t:"c",dep:"d1"},{id:"c3",nom:"Camion de Fredo",t:"c",dep:"d1"}],
+   niv:{d1:{p3:2,p1:1},c1:{p1:2},c3:{p2:1}}, cmd:{p3:{d:today(-2),l:"d1"}}, hist:[{d:today(-2),t:"Plaque de glu rongeurs commandé"}]};
+}
+function today(n){ var d=new Date(); d.setDate(d.getDate()+(n||0)); return d.toISOString().slice(0,10); }
+function fr(iso){ var p=String(iso||"").split("-"); return p.length===3 ? p[2]+"/"+p[1] : ""; }
+function load(){ try{ S=JSON.parse(localStorage.getItem(K)); }catch(e){ S=null; } if(!S||!S.produits||!S.lieux) S=demo(); S.niv=S.niv||{}; S.cmd=S.cmd||{}; S.hist=S.hist||[]; }
+function save(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} }
+function nv(l,p){ return (S.niv[l]&&S.niv[l][p])||0; }
+function setNv(l,p,v){ S.niv[l]=S.niv[l]||{}; if(v) S.niv[l][p]=v; else delete S.niv[l][p]; }
+function prod(id){ return S.produits.filter(function(p){return p.id===id;})[0]; }
+function lieu(id){ return S.lieux.filter(function(l){return l.id===id;})[0]; }
+function deps(){ return S.lieux.filter(function(l){return l.t==="d";}); }
+function cams(){ return S.lieux.filter(function(l){return l.t==="c" && (!FD || l.dep===FD);}); }
+function pire(l){ var m=0; S.produits.forEach(function(p){ m=Math.max(m,nv(l.id,p.id)); }); return m; }
+function manques(l){ return S.produits.filter(function(p){ return nv(l.id,p.id)>0; }).sort(function(a,b){ return nv(l.id,b.id)-nv(l.id,a.id); }); }
+function log(t){ S.hist.unshift({d:today(),t:t}); S.hist=S.hist.slice(0,12); }
+function toast(t){ var e=document.getElementById("sk-toast"); e.textContent=t; e.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(function(){ e.classList.remove("on"); },2600); }
+window.skReset=function(){ S=demo(); save(); paint(); toast("Exemple remis"); };
+window.skVue=function(v){ VUE=v; paint(); };
+window.skFD=function(id){ FD=id; paint(); };
+
+function lignes(l){
+  var m=manques(l);
+  if(!m.length) return '<span class="dot d0"></span>'+(l.t==="c"?"Prêt, rien ne manque":"Tout va bien");
+  var h=m.slice(0,4).map(function(p){ var c=(l.t==="d"&&S.cmd[p.id]) ? ' <span class="sk-cmd">commandé le '+fr(S.cmd[p.id].d)+'</span>' : ''; return '<span class="dot d'+nv(l.id,p.id)+'"></span>'+esc(p.nom)+' : '+(l.t==="c"&&nv(l.id,p.id)===2?"il en manque":LB2[nv(l.id,p.id)])+c; }).join("<br>");
+  if(m.length>4) h+='<br><em>+ '+(m.length-4)+' autre'+(m.length-4>1?"s":"")+'</em>';
+  return h;
+}
+function paint(){
+  var C=cams(), D=deps().filter(function(d){return !FD||d.id===FD;});
+  var aCh=C.filter(function(c){return pire(c)>0;}), ok=C.filter(function(c){return pire(c)===0;});
+  var aCmd=0, att=Object.keys(S.cmd).length;
+  S.produits.forEach(function(p){ if(!S.cmd[p.id] && D.some(function(d){return nv(d.id,p.id)>0;})) aCmd++; });
+  document.getElementById("sk-k").innerHTML=
+    '<div class="sk-kc '+(aCh.length?"kr":"")+'"><small>Camions à charger</small><b>'+aCh.length+'</b></div>'+
+    '<div class="sk-kc kg"><small>Camions prêts</small><b>'+ok.length+'</b></div>'+
+    '<div class="sk-kc '+(aCmd?"kr":"")+'"><small>À commander</small><b>'+aCmd+' produit'+(aCmd>1?"s":"")+'</b></div>'+
+    '<div class="sk-kc kn"><small>Commandes en attente</small><b>'+att+'</b></div>';
+  document.getElementById("sk-prep").style.display = aCh.length>1 ? "" : "none";
+  document.getElementById("skt-l").className = VUE==="l"?"on":""; document.getElementById("skt-p").className = VUE==="p"?"on":"";
+  var dd=deps(); document.getElementById("sk-fd").innerHTML = dd.length>1 ? ['<button class="'+(!FD?"on":"")+'" onclick="skFD(\'\')">Tous les dépôts</button>'].concat(dd.map(function(d){ return '<button class="'+(FD===d.id?"on":"")+'" onclick="skFD(\''+d.id+'\')">'+esc(d.nom)+'</button>'; })).join("") : "";
+  var h="";
+  if(VUE==="l"){
+    if(C.length<=5){
+      h+='<div class="sk-g">'+D.map(function(d){ return '<div class="sk-p dep"><h4>🏠 '+esc(d.nom)+'</h4><small>les commandes arrivent ici</small><div class="sk-l">'+lignes(d)+'</div><div><button class="skb w s" onclick="skOuvre(\''+d.id+'\')">Ouvrir</button></div></div>'; }).join("")+
+        C.map(function(c){ var b=pire(c)>0; return '<div class="sk-p"><h4>🚐 '+esc(c.nom)+'</h4><small>'+esc((lieu(c.dep)||{}).nom||"")+'</small><div class="sk-l">'+lignes(c)+'</div><div style="display:flex;gap:6px">'+(b?'<button class="skb o s" onclick="skCharge(\''+c.id+'\')">Charger</button>':'')+'<button class="skb w s" onclick="skOuvre(\''+c.id+'\')">Ouvrir</button></div></div>'; }).join("")+'</div>';
+    }else{
+      h+='<div class="sk-sec" style="color:#B42318">À CHARGER · '+aCh.length+'</div>'+(aCh.length?aCh.map(function(c){ return '<div class="sk-r"><span><b>🚐 '+esc(c.nom)+'</b><small>'+esc((lieu(c.dep)||{}).nom||"")+'</small></span><span class="mid">'+lignes(c).replace(/<br>/g," &nbsp; ")+'</span><span style="display:flex;gap:6px"><button class="skb o s" onclick="skCharge(\''+c.id+'\')">Charger</button><button class="skb w s" onclick="skOuvre(\''+c.id+'\')">Ouvrir</button></span></div>'; }).join(""):'<div class="sk-fold" style="cursor:default">Aucun camion à charger</div>');
+      h+='<div class="sk-sec" style="color:#157F3C">PRÊTS · '+ok.length+'</div>'+(OPEN?ok.map(function(c){ return '<div class="sk-r"><span><b>🚐 '+esc(c.nom)+'</b><small>'+esc((lieu(c.dep)||{}).nom||"")+'</small></span><span class="mid"><span class="dot d0"></span>Prêt</span><span><button class="skb w s" onclick="skOuvre(\''+c.id+'\')">Ouvrir</button></span></div>'; }).join("")+'<div class="sk-fold" onclick="skFold()">Replier ▴</div>':'<div class="sk-fold" onclick="skFold()"><span class="dot d0"></span>'+(ok.map(function(c){return esc(c.nom.replace(/^Camion d[e\']\s?/,""));}).join(" · ")||"aucun")+' <span style="float:right">voir ▾</span></div>');
+      h+='<div class="sk-sec" style="color:#1E3350">DÉPÔTS · '+D.length+'</div>'+D.map(function(d){ return '<div class="sk-r"><span><b>🏠 '+esc(d.nom)+'</b></span><span class="mid">'+lignes(d).replace(/<br>/g," &nbsp; ")+'</span><span><button class="skb w s" onclick="skOuvre(\''+d.id+'\')">Ouvrir</button></span></div>'; }).join("");
+    }
+    h+='<div class="sk-add"><b style="color:#1E3350">+ Ajouter un lieu</b><input id="sk-nl" placeholder="Nom (ex. Dépôt Lyon, Camion de Karim)" onkeydown="if(event.key===\'Enter\')skAddLieu()"><span class="sk-seg2"><button id="sk-td" onclick="skTL(\'d\')">Dépôt</button><button id="sk-tc" class="on" onclick="skTL(\'c\')">Camion</button></span><button class="skb w s" onclick="skAddLieu()">Ajouter</button></div>';
+  }else{
+    var L=D.concat(C);
+    h+='<table class="sk-t"><tr><th>PRODUIT</th>'+L.map(function(l){ return '<th>'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.nom.replace(/^Camion d[e\']\s?/,""))+'</th>'; }).join("")+'<th></th></tr>'+
+      S.produits.map(function(p){ var bas=D.some(function(d){return nv(d.id,p.id)>0;}); var a = S.cmd[p.id] ? '<span class="sk-cmd">commandé le '+fr(S.cmd[p.id].d)+'</span>' : (bas ? '<button class="skb o s" onclick="skCmd(\''+p.id+'\')">Commandé</button>' : '');
+        return '<tr><td><b>'+esc(p.nom)+'</b><small>'+esc(p.u||"")+'</small></td>'+L.map(function(l){ var v=nv(l.id,p.id); return '<td><span class="sk-pd" title="Cliquer pour changer" onclick="skCyc(\''+l.id+'\',\''+p.id+'\')"><span class="dot d'+v+'"></span>'+LB2[v]+'</span></td>'; }).join("")+'<td style="text-align:right">'+a+'</td></tr>'; }).join("")+'</table>'+
+      '<div class="sk-add"><b style="color:#1E3350">+ Ajouter un produit</b><input id="sk-np" placeholder="Nom du produit" onkeydown="if(event.key===\'Enter\')skAddProd()"><input id="sk-nu" placeholder="Conditionnement (ex. bidon 1 L)" style="min-width:170px" onkeydown="if(event.key===\'Enter\')skAddProd()"><button class="skb w s" onclick="skAddProd()">Ajouter</button><button class="skb w s" style="margin-left:auto" onclick="skCopie()">Copier la liste à commander</button></div>';
+  }
+  document.getElementById("sk-body").innerHTML=h;
+  document.getElementById("sk-hist").innerHTML='<b>Derniers changements</b>'+(S.hist.length?S.hist.slice(0,6).map(function(x){ return '<div><span>'+esc(x.t)+'</span><span>'+fr(x.d)+'</span></div>'; }).join(""):'<div><span>Rien pour l\'instant</span><span></span></div>');
+}
+var TL="c";
+window.skTL=function(t){ TL=t; document.getElementById("sk-td").className=t==="d"?"on":""; document.getElementById("sk-tc").className=t==="c"?"on":""; };
+window.skFold=function(){ OPEN=!OPEN; paint(); };
+window.skAddLieu=function(){ var i=document.getElementById("sk-nl"), n=(i.value||"").trim(); if(!n){ toast("Donne un nom au lieu"); i.focus(); return; }
+  if(S.lieux.some(function(l){return l.nom.toLowerCase()===n.toLowerCase();})){ toast("Ce lieu existe déjà"); return; }
+  var id=(TL==="d"?"d":"c")+Date.now(); var o={id:id,nom:n,t:TL}; if(TL==="c") o.dep=FD||deps()[0].id; S.lieux.push(o); log(n+" ajouté"); save(); TL="c"; paint(); toast("✓ "+n+" ajouté"); };
+window.skAddProd=function(){ var i=document.getElementById("sk-np"), n=(i.value||"").trim(); if(!n){ toast("Donne un nom au produit"); i.focus(); return; }
+  if(S.produits.some(function(p){return p.nom.toLowerCase()===n.toLowerCase();})){ toast("Ce produit existe déjà"); return; }
+  S.produits.push({id:"p"+Date.now(),nom:n,u:(document.getElementById("sk-nu").value||"").trim()}); log(n+" ajouté au stock"); save(); paint(); toast("✓ "+n+" ajouté"); };
+window.skCyc=function(l,p){ var v=(nv(l,p)+1)%3; setNv(l,p,v); log(prod(p).nom+" · "+lieu(l).nom+" : "+LB2[v]); save(); paint(); };
+window.skCmd=function(p){ var d=deps().filter(function(x){return nv(x.id,p)>0;})[0]||deps()[0]; S.cmd[p]={d:today(),l:d.id}; log(prod(p).nom+" commandé"); save(); paint(); if(document.getElementById("sk-ov").classList.contains("on")&&CUR) skOuvre(CUR); toast("Noté : "+prod(p).nom+" est commandé"); };
+window.skCopie=function(){ var l=[]; S.produits.forEach(function(p){ if(!S.cmd[p.id] && deps().some(function(d){return nv(d.id,p.id)>0;})) l.push("- "+p.nom+(p.u?" ("+p.u+")":"")); });
+  if(!l.length){ toast("Rien à commander pour l'instant"); return; } var t="À commander :\n"+l.join("\n");
+  try{ navigator.clipboard.writeText(t).then(function(){ toast("Liste copiée ("+l.length+" produit"+(l.length>1?"s":"")+")"); }, function(){ toast("Copie impossible sur ce navigateur"); }); }catch(e){ toast("Copie impossible sur ce navigateur"); } };
+function show(h){ document.getElementById("sk-m").innerHTML=h; document.getElementById("sk-ov").classList.add("on"); }
+window.skClose=function(){ document.getElementById("sk-ov").classList.remove("on"); CUR=""; QUEUE=[]; };
+var CUR="";
+/* ---- Ouvrir un lieu : les 3 boutons, comme le technicien sur son téléphone ---- */
+window.skOuvre=function(id){ var l=lieu(id); if(!l) return; CUR=id;
+  show('<h3>'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.nom)+'</h3><p>'+(l.t==="c"?"C'est ce que le technicien répond à la fin de son rapport : « il t'en reste ? »":"Ce qu'il reste au dépôt. Un clic pour changer.")+'</p>'+
+    S.produits.map(function(p){ var v=nv(id,p.id); var ex=(l.t==="d"&&v>0) ? (S.cmd[p.id] ? '<small>commandé le '+fr(S.cmd[p.id].d)+'</small>' : '<small><a href="#" style="color:#FF5B1F;font-weight:700" onclick="event.preventDefault();skCmd(\''+p.id+'\')">Marquer « commandé »</a></small>') : '<small>'+esc(p.u||"")+'</small>';
+      return '<div class="sk-li"><span class="nm">'+esc(p.nom)+ex+'</span><span class="sk-s3">'+[0,1,2].map(function(k){ return '<button class="'+(v===k?"a"+k:"")+'" onclick="skSet(\''+id+'\',\''+p.id+'\','+k+')">'+LBL[k]+'</button>'; }).join("")+'</span></div>'; }).join("")+
+    '<div class="sk-mb"><span></span><span style="display:flex;gap:8px">'+(l.t==="c"&&pire(l)>0?'<button class="skb o" onclick="skCharge(\''+id+'\')">Charger ce camion</button>':'')+'<button class="skb w" onclick="skClose()">Fermer</button></span></div>'); };
+window.skSet=function(l,p,v){ if(nv(l,p)===v) return; setNv(l,p,v); log(prod(p).nom+" · "+lieu(l).nom+" : "+LB2[v]); save(); paint(); skOuvre(l); };
+/* ---- Charger un camion : pré-coché avec ce qui lui manque ---- */
+window.skCharge=function(id){ var c=lieu(id); if(!c) return; CUR=""; var m=manques(c), dep=lieu(c.dep)||deps()[0];
+  var autres=S.produits.filter(function(p){ return nv(id,p.id)===0; });
+  function li(p,ck){ var vide=nv(dep.id,p.id)===2; return '<label class="sk-li"><input type="checkbox" data-p="'+p.id+'" '+(ck&&!vide?"checked":"")+'><span class="nm">'+esc(p.nom)+(vide?'<small class="sk-warn">le '+esc(dep.nom)+' n\'en a plus</small>':'<small>'+(ck?(nv(id,p.id)===2?"il en manque":"bientôt fini"):esc(p.u||""))+'</small>')+'</span></label>'; }
+  show('<h3>Charger · '+esc(c.nom)+'</h3><p>Pris sur : <b>'+esc(dep.nom)+'</b>. Déjà coché : ce qui lui manque.</p>'+
+    (m.length?m.map(function(p){return li(p,true);}).join(""):'<div class="sk-li"><span class="nm">Rien ne manque dans ce camion.</span></div>')+
+    '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.8rem;color:#1E3350;font-weight:700">+ Charger autre chose</summary>'+autres.map(function(p){return li(p,false);}).join("")+'</details>'+
+    '<div class="sk-mb"><span style="font-size:.74rem;color:#5B677A">'+(QUEUE.length?"Encore "+QUEUE.length+" camion"+(QUEUE.length>1?"s":"")+" après":"")+'</span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skChargeOk(\''+id+'\')">C\'est chargé</button></span></div>'); };
+window.skChargeOk=function(id){ var c=lieu(id), n=0; document.querySelectorAll('#sk-m input[data-p]:checked').forEach(function(i){ setNv(id,i.dataset.p,0); n++; });
+  if(!n){ toast("Coche au moins un produit"); return; } log(c.nom+" chargé ("+n+" produit"+(n>1?"s":"")+")"); save(); paint();
+  if(QUEUE.length){ var nx=QUEUE.shift(); toast("✓ "+c.nom+" chargé"); skCharge(nx); } else { document.getElementById("sk-ov").classList.remove("on"); toast("✓ "+c.nom+" chargé"); } };
+window.skPrep=function(){ var l=cams().filter(function(c){return pire(c)>0;}).map(function(c){return c.id;}); if(!l.length) return; QUEUE=l.slice(1); skCharge(l[0]); };
+/* ---- J'ai reçu une commande : pré-rempli avec ce qui est attendu ---- */
+window.skRecu=function(){ CUR=""; var dd=deps(), att=Object.keys(S.cmd).map(prod).filter(Boolean);
+  var bas=S.produits.filter(function(p){ return !S.cmd[p.id] && dd.some(function(d){return nv(d.id,p.id)>0;}); });
+  var reste=S.produits.filter(function(p){ return att.indexOf(p)<0 && bas.indexOf(p)<0; });
+  function li(p,ck,sub){ return '<label class="sk-li"><input type="checkbox" data-p="'+p.id+'" '+(ck?"checked":"")+'><span class="nm">'+esc(p.nom)+'<small>'+sub+'</small></span></label>'; }
+  show('<h3>J\'ai reçu une commande</h3><p>Coche ce qui est arrivé. Ce qui n\'est pas coché reste « en attente ».</p>'+
+    (dd.length>1?'<div class="sk-li" style="border:0;padding-top:0"><span class="nm" style="font-weight:700;color:#1E3350">Rangé où ?</span><select id="sk-rd" class="sk-in" style="min-width:0">'+dd.map(function(d){ return '<option value="'+d.id+'" '+((FD||dd[0].id)===d.id?"selected":"")+'>'+esc(d.nom)+'</option>'; }).join("")+'</select></div>':'')+
+    (att.length?'<div class="sk-sub">CE QUE TU ATTENDS · '+att.length+'</div>'+att.map(function(p){ return li(p,true,"commandé le "+fr(S.cmd[p.id].d)); }).join(""):'<div class="sk-li" style="color:#5B677A"><span class="nm">Aucune commande notée « en attente ».</span></div>')+
+    (bas.length?'<div class="sk-sub">BIENTÔT FINI AU DÉPÔT</div>'+bas.map(function(p){ return li(p,false,"pas encore noté « commandé »"); }).join(""):'')+
+    '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.8rem;color:#1E3350;font-weight:700">+ Autre chose est arrivé</summary>'+reste.map(function(p){ return li(p,false,esc(p.u||"")); }).join("")+'</details>'+
+    '<div class="sk-mb"><a href="#" style="font-size:.78rem;color:#1E3350;font-weight:700" onclick="event.preventDefault();skTout()">Tout cocher</a><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skRecuOk()">C\'est rangé</button></span></div>'); };
+window.skTout=function(){ document.querySelectorAll('#sk-m .sk-sub ~ label input[data-p]').forEach(function(i){ i.checked=true; }); };
+window.skRecuOk=function(){ var sel=document.getElementById("sk-rd"), d=sel?sel.value:deps()[0].id, n=0, noms=[];
+  document.querySelectorAll('#sk-m input[data-p]:checked').forEach(function(i){ setNv(d,i.dataset.p,0); delete S.cmd[i.dataset.p]; n++; noms.push(prod(i.dataset.p).nom); });
+  if(!n){ toast("Coche ce qui est arrivé"); return; }
+  log("Commande reçue · "+lieu(d).nom+" : "+(n<=2?noms.join(", "):n+" produits")); save(); paint(); document.getElementById("sk-ov").classList.remove("on");
+  var reste=Object.keys(S.cmd).length; toast("✓ "+n+" produit"+(n>1?"s":"")+" rangé"+(n>1?"s":"")+" · "+lieu(d).nom+(reste?" · "+reste+" encore en attente":"")); };
+document.addEventListener("keydown", function(e){ if(e.key==="Escape") skClose(); });
+load(); paint();
+})();
+</script>
+</body>
+</html>
