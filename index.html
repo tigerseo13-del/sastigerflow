@@ -1558,11 +1558,28 @@ document.addEventListener("click", function(e){
       }
       var x = RF[d.ref]; if(x){ var r = jour(x.d); if(r && r >= lim) ev.push({t: r, ok: 0, ref: d.ref, b: "Pas intéressé", s: esc(d.payeur || d.client) + " · " + esc(d.titre || d.ref) + (x.r ? " — « " + esc(x.r) + " »" : "") + ". Relances arrêtées."}); }
     });
-    if(!ev.length) return;
+    /* 24/11 — Stock (bêta) : la cloche dit quels camions charger et quoi commander.
+       Seulement si la page Stock a déjà été ouverte (clé présente). */
+    var skh = "";
+    try{
+      var SK = J("tigerflow-stock-v1", null);
+      if(SK && SK.lieux && SK.produits){
+        var nv = function(l, q){ return (SK.niv && SK.niv[l] && SK.niv[l][q]) || 0; };
+        var skrow = function(b, sm){ return '<a class="brow nu" href="stock.html"><span class="bic" style="background:#EAF0F7;color:#1E3350"><svg viewBox="0 0 24 24"><path d="M3 9l9-6 9 6v11H3z"/></svg></span><span class="bb"><b>' + b + '</b><small>' + sm + '</small></span><span class="btime">Stock</span></a>'; };
+        var ch = SK.lieux.filter(function(l){ if(l.t !== "c") return false; var need = []; ((SK.tour || {})[l.id] || []).forEach(function(i){ (i.p || []).forEach(function(q){ need.push(q); }); }); return SK.produits.some(function(q){ var v = nv(l.id, q.id); return v === 2 || (v === 1 && need.indexOf(q.id) > -1); }); });
+        var cm = SK.produits.filter(function(q){ return !(SK.cmd || {})[q.id] && SK.lieux.some(function(l){ return l.t === "d" && nv(l.id, q.id) > 0; }); });
+        var lt = Object.keys(SK.cmd || {}).filter(function(q){ var t = jour(SK.cmd[q].d); return t && (auj - t) / 864e5 >= 7; });
+        if(ch.length) skh += skrow("🚐 " + ch.length + " camion" + (ch.length > 1 ? "s" : "") + " à charger pour demain", esc(ch.map(function(l){ return l.nom.replace(/^Camion d[e']\s?/, ""); }).join(", ")));
+        if(cm.length) skh += skrow("📦 " + cm.length + " produit" + (cm.length > 1 ? "s" : "") + " à commander", esc(cm.slice(0, 3).map(function(q){ return q.nom; }).join(", ")));
+        if(lt.length) skh += skrow("⏰ " + lt.length + " commande" + (lt.length > 1 ? "s" : "") + " en retard", "Commandé il y a plus de 7 jours, toujours pas reçu.");
+      }
+    }catch(e){}
+    if(!ev.length && !skh) return;
     ev.sort(function(a, b){ return b.t - a.t; });
     var html = ev.slice(0, 5).map(function(e){
       return '<a class="brow nu" href="devis-detail.html?ref=' + encodeURIComponent(e.ref) + '"><span class="bic" style="background:' + (e.ok ? "var(--green-bg);color:var(--green-d)" : "#FCECEA;color:#B4232A") + '"><svg viewBox="0 0 24 24">' + (e.ok ? '<path d="M20 6L9 17l-5-5"/>' : '<path d="M18 6L6 18M6 6l12 12"/>') + '</svg></span><span class="bb"><b>🔁 ' + e.b + '</b><small>' + e.s + '</small></span><span class="btime">' + quand(e.t) + '</span></a>';
     }).join("");
+    html = skh + html;
     var h = pop.querySelector(".bph"); if(h) h.insertAdjacentHTML("afterend", html);
     var n = pop.querySelectorAll(".brow.nu").length;
     var dot = document.getElementById("bell-dot"); if(dot) dot.textContent = n;
