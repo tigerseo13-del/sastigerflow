@@ -498,6 +498,44 @@ table.sk-t{width:100%;border-collapse:separate;border-spacing:0;background:#fff;
 #sk-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#1E3350;color:#fff;padding:11px 18px;border-radius:11px;font-size:.84rem;font-weight:600;z-index:400;opacity:0;pointer-events:none;transition:opacity .2s}
 #sk-toast.on{opacity:1}
 @media(max-width:900px){.sk-mob{display:inline}.sk{padding:14px 13px 100px}.sk-k{grid-template-columns:1fr 1fr}.sk-r{grid-template-columns:1fr auto}.sk-r .mid{grid-column:1/-1;order:3}}
+
+/* ===== 24/11 — Stock v3 : vraies quantités + un seul bouton « Que s'est-il passé ? » ===== */
+.sk-tw{overflow-x:auto;border-radius:12px}
+.sk-t th.n,.sk-t td.n{text-align:center;white-space:nowrap}
+.sk-t td.pn{cursor:pointer;min-width:190px}.sk-t td.pn:hover b{text-decoration:underline}
+.sk-q{display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:5px 8px;border-radius:8px;cursor:pointer;font-weight:800;color:#1E3350;font-variant-numeric:tabular-nums}
+.sk-q:hover{background:#EAF0F7}
+.st{font-size:.7rem;font-weight:800;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.st.sr{color:#B42318;background:#FDECEC}.st.sy{color:#92400E;background:#FEF3C7}
+.sk-strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.sk-chip{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;background:#fff;border:1px solid #F5B5AE;border-radius:11px;padding:7px 8px 7px 11px;font-size:.8rem;color:#3B4A63}
+.sk-chip b{color:#1E3350}
+.sk-card{background:#fff;border:1px solid #E3E7EE;border-radius:14px;padding:14px 16px}
+.sk-ch{display:flex;align-items:center;gap:13px;border:1.5px solid #E3E7EE;border-radius:13px;padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .12s,background .12s}
+.sk-ch:hover{border-color:#1E3350;background:#F7F9FC}
+.sk-ch.on{border-color:#1E3350;background:#EAF0F7}
+.sk-ch i{font-style:normal;font-size:1.5rem;flex:none}
+.sk-ch b{display:block;color:#1E3350;font-size:.9rem}.sk-ch small{display:block;color:#5B677A;font-size:.75rem;margin-top:1px}
+.sk-pm{display:inline-flex;align-items:center;border:1px solid #D9DEE6;border-radius:10px;overflow:hidden;flex:none}
+.sk-pm button{font:inherit;border:0;background:#F4F6F9;width:38px;height:38px;font-size:1.15rem;font-weight:700;color:#1E3350;cursor:pointer}
+.sk-pm button:hover{background:#EAF0F7}
+.sk-pm input{font:inherit;border:0;width:52px;height:38px;text-align:center;font-weight:800;font-size:.95rem;color:#1E3350;outline:none}
+.sk-li small.sk-warn{color:#B42318}
+.sk-lot{margin-left:0}
+/* 24/11 — Stock généraliste : matériel, minimum par véhicule, recherche, achat chantier */
+.st.sg{color:#157F3C;background:#E7F6EC}
+.sk-f{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.sk-f input{flex:0 1 260px;min-width:160px}
+.sk-f button{font:inherit;cursor:pointer;padding:6px 11px;border-radius:999px;font-size:.76rem;border:1px solid #E3E7EE;color:#5B677A;background:#fff;font-weight:600}
+.sk-f button.on{border-color:#1E3350;background:#1E3350;color:#fff}
+.sk-mr{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:10px 4px;border-top:1px solid #F1F3F6;font-size:.82rem;cursor:pointer}
+.sk-mr:hover{background:#F7F9FC}
+.sk-mr b{color:#1E3350}.sk-mr small{display:block;color:#8A94A6;font-size:.7rem}.sk-mr .ou{color:#3B4A63;white-space:nowrap}
+.sk-set{margin-top:10px;font-size:.82rem;color:#1E3350;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sk-set input{min-width:0;width:74px;text-align:center}
+.sk-note select{font:inherit;font-size:.74rem;border:1px solid #D9DEE6;border-radius:7px;padding:3px 6px;color:#1E3350;background:#fff}
+@media(max-width:600px){.sk-mr{grid-template-columns:1fr auto}.sk-mr .ou{grid-column:1;grid-row:2;font-size:.74rem}}
+@media(max-width:900px){.sk-t{font-size:.78rem}.sk-t th,.sk-t td{padding:8px 7px}.sk-m{padding:16px 14px}.sk-pm button{width:34px}.sk-pm input{width:44px}}
 </style>
 </head>
 <body>
@@ -549,280 +587,319 @@ table.sk-t{width:100%;border-collapse:separate;border-spacing:0;background:#fff;
 <main class="main">
 <div class="sk">
   <div class="sk-top">
-    <h1><a class="sk-mob" href="index.html">‹ Menu</a>Stock <small>où est le matériel</small></h1>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="skb w" onclick="skLieuNew()">+ Lieu</button>
-      <button class="skb w" id="sk-prep" onclick="skPrep()" style="display:none">Préparer tous les camions</button>
-      <button class="skb o" onclick="skRecu()">+ J'ai reçu une commande</button>
-    </div>
+    <h1><a class="sk-mob" href="index.html">‹ Menu</a>Stock <small>combien il en reste, et où</small></h1>
+    <button class="skb o" style="padding:11px 18px;font-size:.88rem" onclick="skMenu()">+ Que s'est-il passé ?</button>
   </div>
   <div class="sk-k" id="sk-k"></div>
-  <div class="sk-tabs"><button id="skt-l" class="on" onclick="skVue('l')">Par lieu</button><button id="skt-p" onclick="skVue('p')">Par produit</button><span id="sk-fd" style="display:flex;gap:6px;margin-left:8px"></span></div>
+  <div class="sk-tabs" id="sk-tabs"></div>
   <div id="sk-body"></div>
   <div class="sk-h" id="sk-hist"></div>
-  <div class="sk-note">Bêta. Pas de quantités à saisir : chaque produit est vert, orange ou rouge. Les camions, les tournées de demain et le rapport du technicien (bouton 📱) sont des exemples : dans le logiciel final ils viendront des techniciens, de l'agenda et de l'appli mobile. · <a href="#" onclick="event.preventDefault();skReset()">Remettre l'exemple</a> · <a href="#" onclick="event.preventDefault();skVide()">Partir de zéro</a></div>
+  <div class="sk-note">Bêta. Tu ne comptes qu'une fois au départ : ensuite les chiffres bougent tout seuls (commande reçue, véhicule chargé, rapport du technicien). Les véhicules, les interventions de demain et le rapport du technicien (bouton 📱) sont des exemples : dans le logiciel final ils viendront des techniciens, de l'agenda et de l'appli mobile. · Exemple pour <select id="sk-met" onchange="skMetier(this.value)"><option value="nuisibles">Nuisibles</option><option value="plomberie">Plomberie</option><option value="assainissement">Assainissement</option><option value="nettoyage">Nettoyage</option></select> · <a href="#" onclick="event.preventDefault();skReset()">Remettre l'exemple</a> · <a href="#" onclick="event.preventDefault();skVide()">Partir de zéro</a></div>
 </div>
 </main>
 </div>
 <div class="sk-ov" id="sk-ov" onclick="if(event.target===this)skClose()"><div class="sk-m" id="sk-m"></div></div>
 <div id="sk-toast"></div>
-
 <script>
 function userMenu(e){ if(e) e.stopPropagation(); var u=document.getElementById("side-user"); if(!u) return; var o=u.classList.toggle("open"); u.setAttribute("aria-expanded", o?"true":"false"); }
 function logout(){ location.href="connexion.html"; }
 document.addEventListener("click", function(){ var u=document.getElementById("side-user"); if(u) u.classList.remove("open"); });
 (function(){
-var K="tigerflow-stock-v1", S, VUE="l", FD="", OPEN=false, QUEUE=[];
-var LBL=["Assez","Bientôt fini","Plus rien"], LB2=["OK","bientôt fini","plus rien"];
+var K="tigerflow-stock-v2", S, TAB="", UNDO="", LN=[], CTX={}, DEL="", Q="", CAT="", PK="c";
 function esc(x){ return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-function demo(){
-  return {v:3,
-   produits:[{id:"p1",nom:"Bloc rodenticide 20 g",u:"seau de 5 kg"},{id:"p2",nom:"Gel anti-cafards 30 g",u:"cartouche"},{id:"p3",nom:"Plaque de glu rongeurs",u:"boîte de 50"},{id:"p4",nom:"Poste d'appâtage sécurisé",u:"unité"},{id:"p5",nom:"Insecticide punaises de lit 1 L",u:"bidon"},{id:"p6",nom:"Piège à guêpes",u:"unité"},{id:"p7",nom:"Poudre insecticide",u:"flacon"},{id:"p8",nom:"Gants et masques",u:"boîte"}],
-   lieux:[{id:"d1",nom:"Dépôt",t:"d"},{id:"c1",nom:"Camion de Pablo",t:"c",dep:"d1"},{id:"c2",nom:"Camion d'Otman",t:"c",dep:"d1"},{id:"c3",nom:"Camion de Fredo",t:"c",dep:"d1"}],
-   niv:{d1:{p3:2,p1:1},c1:{p1:2},c3:{p2:1,p6:1}}, cmd:{p3:{d:today(-9),l:"d1"}}, lot:{p2:{lot:"G-7741",per:perDans(20)},p5:{lot:"P-2209",per:"2027-06"}}, tour:demoTour(), hist:[{d:today(-9),t:"Plaque de glu rongeurs commandé"}]};
-}
-function plein(o){ o.lieux.forEach(function(l){ o.niv[l.id]=o.niv[l.id]||{}; o.produits.forEach(function(p){ if(o.niv[l.id][p.id]==null) o.niv[l.id][p.id]=0; }); }); o.v=3; return o; }
-function demoTour(){ return {
-   c1:[{c:"Résidence Les Lilas",t:"Dératisation",p:["p1","p4"]},{c:"Boulangerie Martin",t:"Cafards",p:["p2"]},{c:"M. Durand",t:"Punaises de lit",p:["p5"]},{c:"Cabinet Vernet Syndic",t:"Dératisation",p:["p1","p4"]},{c:"Mme Perrin",t:"Guêpes",p:["p6"]}],
-   c2:[{c:"Résidence Belleville",t:"Dératisation",p:["p1","p4"]},{c:"SCI Martin Patrimoine",t:"Cafards",p:["p2"]}],
-   c3:[{c:"Groupe Immo SA",t:"Cafards",p:["p2","p7"]},{c:"Foncia Gestion",t:"Dératisation",p:["p1"]},{c:"M. Leroy",t:"Punaises de lit",p:["p5"]}]}; }
-function perDans(j){ var d=new Date(); d.setDate(d.getDate()+j); return d.toISOString().slice(0,7); }
-function jours(iso){ var a=new Date(String(iso).slice(0,10)+"T00:00:00"), b=new Date(); b.setHours(0,0,0,0); return Math.round((b-a)/864e5); }
 function today(n){ var d=new Date(); d.setDate(d.getDate()+(n||0)); return d.toISOString().slice(0,10); }
 function fr(iso){ var p=String(iso||"").split("-"); return p.length===3 ? p[2]+"/"+p[1] : ""; }
-function load(){ try{ S=JSON.parse(localStorage.getItem(K)); }catch(e){ S=null; } if(!S||!S.produits||!S.lieux) S=plein(demo()); S.niv=S.niv||{}; S.cmd=S.cmd||{}; S.hist=S.hist||[]; S.lot=S.lot||{}; if(!S.tour){ S.tour={}; var T=demoTour(); S.lieux.forEach(function(l){ if(T[l.id]) S.tour[l.id]=T[l.id]; }); } if(!(S.v>=3)) plein(S); }
+function jours(iso){ var a=new Date(String(iso).slice(0,10)+"T00:00:00"), b=new Date(); b.setHours(0,0,0,0); return Math.round((b-a)/864e5); }
+function perDans(j){ var d=new Date(); d.setDate(d.getDate()+j); return d.toISOString().slice(0,7); }
+function pl(n,m){ return n+" "+m+(n>1?"s":""); }
+function court(n){ return String(n).replace(/^(Camion|Véhicule|Utilitaire|Fourgon) d[e']\s?/,""); }
+function demo(m){ m=m||"nuisibles"; var o={v:2,metier:m,produits:[],lieux:[],q:{},cmd:{},lot:{},tour:{},mat:{},achats:[],hist:[]}, L=[];
+  function lieux(a){ a.forEach(function(n,i){ var id=i?"c"+i:"d1"; L.push(id); o.lieux.push(i?{id:id,nom:n,t:"c",dep:"d1"}:{id:id,nom:n,t:"d"}); o.q[id]={}; }); }
+  function C(id,nom,u,cat,seuil,min,qs){ o.produits.push({id:id,nom:nom,u:u,cat:cat,seuil:seuil,min:min}); qs.forEach(function(n,i){ o.q[L[i]][id]=n; }); }
+  function M(id,nom,cat,l,e){ o.produits.push({id:id,nom:nom,cat:cat,k:"m"}); o.mat[id]={l:l,e:e||0}; }
+  if(m==="plomberie"){ lieux(["Dépôt","Camion de Karim","Camion de Sofiane"]);
+    C("p1","Mitigeur lavabo","pièce","Robinetterie",4,2,[6,2,1]); C("p2","Flexible inox 50 cm","pièce","Robinetterie",10,4,[18,5,4]); C("p3","Tube cuivre 14 mm","mètre","Tubes et raccords",20,6,[32.5,8,4.5]);
+    C("p4","Raccord laiton 15/21","pièce","Tubes et raccords",30,10,[22,14,10]); C("p5","Siphon PVC 40 mm","pièce","Tubes et raccords",6,2,[9,2,2]); C("p6","Joints fibre (assortiment)","boîte","Tubes et raccords",3,1,[4,1,0]);
+    C("p7","Groupe de sécurité","pièce","Chauffe-eau",3,1,[2,1,1]); C("p8","Chauffe-eau 200 L","pièce","Chauffe-eau",1,0,[2,0,0]);
+    M("m1","Caméra d'inspection","Outillage","c1",0); M("m2","Furet électrique","Outillage","c2",1); M("m3","Sertisseuse","Outillage","c2",0); M("m4","Poste à souder","Outillage","d1",0);
+    o.cmd={p4:{d:today(-2),l:"d1",n:50}}; o.hist=[{d:today(-2),t:"Commandé : 50 × Raccord laiton 15/21"}];
+  }else if(m==="assainissement"){ lieux(["Dépôt","Hydrocureur 1","Hydrocureur 2"]);
+    C("p1","Gants étanches","paire","Protection",6,2,[10,2,1]); C("p2","Produit bactérien fosse 5 L","bidon","Produits",4,1,[3,1,1]); C("p3","Joint de raccord 100 mm","pièce","Pièces",6,2,[8,3,2]); C("p4","Tampon de regard","pièce","Pièces",2,0,[3,0,0]);
+    M("m1","Caméra d'inspection 30 m","Inspection","c1",0); M("m2","Tête de curage rotative","Curage","c1",0); M("m3","Flexible haute pression 60 m","Curage","c2",1); M("m4","Détecteur de gaz","Sécurité","c2",0); M("m5","Pompe de relevage de prêt","Pompage","d1",2);
+    o.hist=[{d:today(-1),t:"Flexible haute pression 60 m : en panne"}];
+  }else if(m==="nettoyage"){ lieux(["Dépôt","Véhicule de Nadia","Véhicule de Lucas"]);
+    C("p1","Détergent sols 5 L","bidon","Produits",4,1,[7,1,1]); C("p2","Désinfectant surfaces 1 L","flacon","Produits",8,2,[5,2,1]); C("p3","Sacs poubelle 110 L","rouleau","Consommables",10,3,[14,4,2]);
+    C("p4","Lavettes microfibre","lot de 10","Consommables",3,1,[6,1,1]); C("p5","Papier essuie-mains","carton","Consommables",4,0,[0,0,0]); C("p6","Gants nitrile","boîte","Protection",3,1,[5,1,1]);
+    M("m1","Autolaveuse","Machines","c1",0); M("m2","Monobrosse","Machines","d1",0); M("m3","Aspirateur eau et poussière","Machines","c2",0); M("m4","Nettoyeur vapeur","Machines","c2",1);
+    o.cmd={p5:{d:today(-8),l:"d1",n:6}}; o.hist=[{d:today(-8),t:"Commandé : 6 × Papier essuie-mains"}];
+    o.tour={c2:[{c:"Cabinet Vernet Syndic",t:"Remise en état",p:{p3:3,p2:2}},{c:"Résidence Les Lilas",t:"Parties communes",p:{p1:1}}]};
+  }else{ o.metier="nuisibles"; lieux(["Dépôt","Camion de Pablo","Camion d'Otman","Camion de Fredo"]);
+    C("p1","Bloc rodenticide 20 g","seau de 5 kg","Rongeurs",3,0,[2,0,1,1]); C("p2","Gel anti-cafards 30 g","cartouche","Insectes",6,2,[12,4,3,1]); C("p3","Plaque de glu rongeurs","boîte de 50","Rongeurs",2,0,[0,1,1,1]); C("p4","Poste d'appâtage sécurisé","pièce","Rongeurs",20,4,[38,8,7,7]);
+    C("p5","Insecticide punaises de lit 1 L","bidon","Insectes",4,0,[9,2,2,1]); C("p6","Piège à guêpes","pièce","Insectes",5,0,[12,3,2,1]); C("p7","Poudre insecticide","flacon","Insectes",3,0,[6,1,1,1]); C("p8","Gants et masques","boîte","Protection",2,1,[5,1,1,1]);
+    M("m1","Pulvérisateur 5 L","Matériel","c1",0); M("m2","Nébulisateur","Matériel","d1",1); M("m3","Caméra endoscope","Matériel","c2",0);
+    o.cmd={p3:{d:today(-9),l:"d1",n:4}}; o.lot={p2:{lot:"G-7741",per:perDans(20)},p5:{lot:"P-2209",per:"2027-06"}}; o.hist=[{d:today(-9),t:"Commandé : 4 × Plaque de glu rongeurs"}];
+    o.tour={c1:[{c:"Résidence Les Lilas",t:"Dératisation",p:{p1:1,p4:2}},{c:"Boulangerie Martin",t:"Cafards",p:{p2:1}},{c:"M. Durand",t:"Punaises de lit",p:{p5:1}},{c:"Cabinet Vernet Syndic",t:"Dératisation",p:{p1:1,p4:4}},{c:"Mme Perrin",t:"Guêpes",p:{p6:1}}],
+      c2:[{c:"Résidence Belleville",t:"Dératisation",p:{p1:1,p4:2}},{c:"SCI Martin Patrimoine",t:"Cafards",p:{p2:1}}],
+      c3:[{c:"Groupe Immo SA",t:"Cafards",p:{p2:2,p7:1}},{c:"Foncia Gestion",t:"Dératisation",p:{p1:1}},{c:"M. Leroy",t:"Punaises de lit",p:{p5:1}}]}; }
+  return o; }
+function load(){ try{ S=JSON.parse(localStorage.getItem(K)); }catch(e){ S=null; } if(!S||!S.produits||!S.lieux) S=demo(); S.q=S.q||{}; S.cmd=S.cmd||{}; S.lot=S.lot||{}; S.tour=S.tour||{}; S.hist=S.hist||[]; S.mat=S.mat||{}; S.achats=S.achats||[]; S.produits.forEach(function(p){ if(p.k==="m"&&!S.mat[p.id]) S.mat[p.id]={l:(S.lieux[0]||{}).id,e:0}; }); }
 function save(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} }
-/* -1 = pas encore renseigné (neutre) · 0 assez · 1 bientôt fini · 2 plus rien */
-function nv(l,p){ var v=S.niv[l]&&S.niv[l][p]; return (v===0||v===1||v===2)?v:-1; }
-function setNv(l,p,v){ S.niv[l]=S.niv[l]||{}; S.niv[l][p]=v; }
-function inconnus(l){ return S.produits.filter(function(p){ return nv(l.id,p.id)<0; }); }
-function dotc(v){ return v<0?"dn":"d"+v; }
-function lb(v){ return v<0?"à vérifier":LB2[v]; }
+function q(l,p){ var v=S.q[l]&&S.q[l][p]; return (typeof v==="number"&&v>0)?v:0; }
+function setQ(l,p,n){ S.q[l]=S.q[l]||{}; S.q[l][p]=Math.max(0,Math.round((+n||0)*100)/100); }
 function prod(id){ return S.produits.filter(function(p){return p.id===id;})[0]; }
 function lieu(id){ return S.lieux.filter(function(l){return l.id===id;})[0]; }
 function deps(){ return S.lieux.filter(function(l){return l.t==="d";}); }
-function cams(){ return S.lieux.filter(function(l){return l.t==="c" && (!FD || l.dep===FD);}); }
-function pire(l){ var m=0; S.produits.forEach(function(p){ m=Math.max(m,nv(l.id,p.id)); }); return m; }
-function manques(l){ return S.produits.filter(function(p){ return nv(l.id,p.id)>0; }).sort(function(a,b){ return nv(l.id,b.id)-nv(l.id,a.id); }); }
-function besoin(c){ var o=[]; (S.tour[c.id]||[]).forEach(function(i){ (i.p||[]).forEach(function(p){ if(o.indexOf(p)<0 && prod(p)) o.push(p); }); }); return o; }
-function pb(c){ var b=besoin(c); return S.produits.filter(function(p){ var v=nv(c.id,p.id); return v===2 || (v===1 && b.indexOf(p.id)>-1); }); }
+function cams(){ return S.lieux.filter(function(l){return l.t==="c";}); }
+function cons(){ return S.produits.filter(function(p){return p.k!=="m";}); }
+function mats(){ return S.produits.filter(function(p){return p.k==="m";}); }
+function nf(n){ return String(Math.round((+n||0)*100)/100).replace(".",","); }
+function num(v){ return Math.max(0,Math.round((parseFloat(String(v).replace(",","."))||0)*100)/100); }
+function cats(){ var o=[]; S.produits.forEach(function(p){ if(p.cat&&o.indexOf(p.cat)<0) o.push(p.cat); }); return o; }
+function vis(p){ return (!CAT||p.cat===CAT) && (!Q || (p.nom+" "+(p.cat||"")).toLowerCase().indexOf(Q.toLowerCase())>-1); }
+function bes(c,p){ return Math.max(need(c,p),(prod(p)||{}).min||0); }
+function ic(l){ return l.t==="d"?"🏠 ":"🚐 "; }
+function need(c,p){ var n=0; (S.tour[c]||[]).forEach(function(i){ n+=(i.p&&i.p[p])||0; }); return n; }
+/* 2 = rouge (plus rien / il en manque) · 1 = orange (sous le seuil / pas assez) · 0 = vert · -1 = neutre */
+function etat(l,p){ var L=lieu(l), n=q(l,p); if(!L) return 0;
+  if(L.t==="d"){ var s=(prod(p)||{}).seuil||0; return n===0?2:(n<s?1:0); }
+  var b=bes(l,p); if(b>0) return n===0?2:(n<b?1:0); return n===0?-1:0; }
+function dot(v){ return '<i class="dot '+(v<0?"dn":"d"+v)+'"></i>'; }
+function aCharger(c){ return cons().filter(function(p){ return bes(c.id,p.id)>q(c.id,p.id); }); }
+function aCmd(d){ return cons().filter(function(p){ return !S.cmd[p.id] && etat(d.id,p.id)>0; }); }
 function retard(p){ return S.cmd[p] && jours(S.cmd[p].d)>=7; }
 function perEtat(p){ var x=S.lot[p]; if(!x||!x.per) return 0; var fin=new Date(x.per+"-01T00:00:00"); fin.setMonth(fin.getMonth()+1); var j=Math.round((fin-new Date())/864e5); return j<0?2:(j<=45?1:0); }
-function perTxt(p){ var x=S.lot[p]; if(!x) return ""; var a=[]; if(x.lot) a.push("lot "+x.lot); if(x.per){ var q=x.per.split("-"); a.push("périme "+q[1]+"/"+q[0]); } return a.join(" · "); }
-function aCmdDe(d){ return S.produits.filter(function(p){ return !S.cmd[p.id] && nv(d.id,p.id)>0; }); }
-function log(t){ S.hist.unshift({d:today(),t:t}); S.hist=S.hist.slice(0,12); }
-function toast(t){ var e=document.getElementById("sk-toast"); e.textContent=t; e.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(function(){ e.classList.remove("on"); },2600); }
-window.skReset=function(){ S=plein(demo()); save(); paint(); toast("Exemple remis"); };
-window.skVue=function(v){ VUE=v; paint(); };
-window.skFD=function(id){ FD=id; paint(); };
-
-function lignes(l){
-  var m=manques(l);
-  var inc=inconnus(l), tin=inc.length ? '<span class="dot dn"></span>'+(inc.length===S.produits.length?"Pas encore renseigné":inc.length+" produit"+(inc.length>1?"s":"")+" à vérifier") : "";
-  if(!m.length) return (inc.length===S.produits.length ? tin : '<span class="dot d0"></span>'+(l.t==="c"?"Prêt, rien ne manque":"Tout va bien")+(tin?"<br>"+tin:""))+perLignes(l);
-  var h=m.slice(0,4).map(function(p){ var c=(l.t==="d"&&S.cmd[p.id]) ? (retard(p.id) ? ' <span class="sk-late">en retard · commandé il y a '+jours(S.cmd[p.id].d)+' j</span>' : ' <span class="sk-cmd">commandé le '+fr(S.cmd[p.id].d)+'</span>') : ''; var dm=(l.t==="c"&&besoin(l).indexOf(p.id)>-1) ? ' <em>· utile demain</em>' : ''; return '<span class="dot d'+nv(l.id,p.id)+'"></span>'+esc(p.nom)+' : '+(l.t==="c"&&nv(l.id,p.id)===2?"il en manque":lb(nv(l.id,p.id)))+dm+c; }).join("<br>");
-  if(m.length>4) h+='<br><em>+ '+(m.length-4)+' autre'+(m.length-4>1?"s":"")+'</em>';
-  return h+(tin?"<br>"+tin:"")+perLignes(l);
-}
-function perLignes(l){ if(l.t!=="d") return ""; return S.produits.filter(function(p){ return perEtat(p.id)>0; }).map(function(p){ return '<br><span class="dot d'+perEtat(p.id)+'"></span>'+esc(p.nom)+' : <span class="sk-per">'+(perEtat(p.id)===2?"périmé":"périme bientôt")+'</span>'; }).join(""); }
-function sousCam(c){ var n=(S.tour[c.id]||[]).length; return n ? n+' intervention'+(n>1?'s':'')+' demain' : 'aucune intervention demain'; }
+function perTxt(p){ var x=S.lot[p]; if(!x) return ""; var a=[]; if(x.lot) a.push("lot "+x.lot); if(x.per){ var z=x.per.split("-"); a.push("périme "+z[1]+"/"+z[0]); } return a.join(" · "); }
+function log(t){ S.hist.unshift({d:today(),t:t}); S.hist=S.hist.slice(0,15); }
+function toast(t,undo){ var e=document.getElementById("sk-toast"); e.textContent=t; clearTimeout(toast.t);
+  if(undo){ e.insertAdjacentHTML("beforeend",' &nbsp;<a href="#" style="color:#FFB79C;font-weight:800" onclick="event.preventDefault();skUndo()">Annuler</a>'); e.style.pointerEvents="auto"; } else e.style.pointerEvents="none";
+  e.classList.add("on"); toast.t=setTimeout(function(){ e.classList.remove("on"); e.style.pointerEvents="none"; }, undo?7000:2600); }
+window.skUndo=function(){ if(!UNDO) return; try{ S=JSON.parse(UNDO); }catch(e){ return; } UNDO=""; save(); if(TAB&&!lieu(TAB)) TAB=""; paint(); toast("Annulé"); };
+function fait(av,msg){ save(); hide(); paint(); UNDO=av; toast(msg,true); }
+window.skReset=function(){ S=demo(S.metier); Q=""; CAT=""; TAB=""; save(); paint(); toast("Exemple remis"); };
+window.skVide=function(){ var av=JSON.stringify(S); S={v:2,metier:S.metier,produits:[],lieux:[{id:"d1",nom:"Dépôt",t:"d"}],q:{},cmd:{},lot:{},tour:{},mat:{},achats:[],hist:[]}; Q=""; CAT=""; TAB=""; save(); paint(); UNDO=av; toast("Stock vide : à toi de jouer",true); };
+window.skTab=function(t){ TAB=t; paint(); };
+function show(h){ document.getElementById("sk-m").innerHTML=h; document.getElementById("sk-ov").classList.add("on"); }
+function hide(){ document.getElementById("sk-ov").classList.remove("on"); CTX={}; LN=[]; DEL=""; }
+window.skClose=hide;
+/* ============ ÉCRAN ============ */
+function tagProd(p){ var D=deps(), c=S.cmd[p.id];
+  if(c) return retard(p.id) ? '<span class="sk-late">en retard · commandé il y a '+jours(c.d)+' j</span>' : '<span class="sk-cmd">'+nf(c.n)+' commandé'+(c.n>1?"s":"")+' le '+fr(c.d)+'</span>';
+  var w=0, dd=null; D.forEach(function(d){ var e=etat(d.id,p.id); if(e>w){ w=e; dd=d; } });
+  if(w>0) return '<span class="st '+(w===2?"sr":"sy")+'">'+(w===2?"plus rien au dépôt":"bientôt fini")+'</span> <button class="skb o s" onclick="event.stopPropagation();skCommande(\''+dd.id+'\')">Commander</button>';
+  return ""; }
 function paint(){
-  var C=cams(), D=deps().filter(function(d){return !FD||d.id===FD;});
-  var aCh=C.filter(function(c){return pb(c).length>0;}), ok=C.filter(function(c){return pb(c).length===0;});
-  var late=Object.keys(S.cmd).filter(retard).length;
-  var aCmd=0, att=Object.keys(S.cmd).length;
-  S.produits.forEach(function(p){ if(!S.cmd[p.id] && D.some(function(d){return nv(d.id,p.id)>0;})) aCmd++; });
+  var C=cams(), D=deps(), aCh=C.filter(function(c){return aCharger(c).length>0;});
+  var nCmd=cons().filter(function(p){ return !S.cmd[p.id] && D.some(function(d){return etat(d.id,p.id)>0;}); }).length;
+  var att=Object.keys(S.cmd).length, late=Object.keys(S.cmd).filter(retard).length;
   document.getElementById("sk-k").innerHTML=
-    '<div class="sk-kc '+(aCh.length?"kr":"")+'"><small>Camions à charger pour demain</small><b>'+aCh.length+'</b></div>'+
-    '<div class="sk-kc kg"><small>Camions prêts</small><b>'+ok.length+'</b></div>'+
-    '<div class="sk-kc '+(aCmd?"kr":"")+'"><small>À commander</small><b>'+aCmd+' produit'+(aCmd>1?"s":"")+'</b></div>'+
-    '<div class="sk-kc '+(late?"kr":"kn")+'"><small>Commandes en attente'+(late?' · '+late+' en retard':'')+'</small><b>'+att+'</b></div>';
-  document.getElementById("sk-prep").style.display = aCh.length>1 ? "" : "none";
-  document.getElementById("skt-l").className = VUE==="l"?"on":""; document.getElementById("skt-p").className = VUE==="p"?"on":"";
-  var dd=deps(); document.getElementById("sk-fd").innerHTML = dd.length>1 ? ['<button class="'+(!FD?"on":"")+'" onclick="skFD(\'\')">Tous les dépôts</button>'].concat(dd.map(function(d){ return '<button class="'+(FD===d.id?"on":"")+'" onclick="skFD(\''+d.id+'\')">'+esc(d.nom)+'</button>'; })).join("") : "";
-  var h="";
-  if(VUE==="l"){
-    if(C.length<=5){
-      h+='<div class="sk-g">'+D.map(function(d){ return '<div class="sk-p dep" onclick="skOuvre(\''+d.id+'\')"><h4>🏠 '+esc(d.nom)+'</h4><small>les commandes arrivent ici</small><div class="sk-l">'+lignes(d)+'</div><div style="display:flex;gap:6px">'+(aCmdDe(d).length?'<button class="skb o s" onclick="event.stopPropagation();skCommande(\''+d.id+'\')">Commander ('+aCmdDe(d).length+')</button>':'<span class="sk-hint">Cliquer pour voir les niveaux</span>')+'</div></div>'; }).join("")+
-        C.map(function(c){ var b=pb(c).length>0; return '<div class="sk-p" onclick="skOuvre(\''+c.id+'\')"><h4>🚐 '+esc(c.nom)+'</h4><small>'+sousCam(c)+' · '+esc((lieu(c.dep)||{}).nom||"")+'</small><div class="sk-l">'+lignes(c)+'</div><div style="display:flex;gap:6px">'+(b?'<button class="skb o s" onclick="event.stopPropagation();skCharge(\''+c.id+'\')">Charger</button>':'<span class="sk-hint">Cliquer pour voir les niveaux</span>')+'</div></div>'; }).join("")+'</div>';
-    }else{
-      h+='<div class="sk-sec" style="color:#B42318">À CHARGER · '+aCh.length+'</div>'+(aCh.length?aCh.map(function(c){ return '<div class="sk-r" onclick="skOuvre(\''+c.id+'\')"><span><b>🚐 '+esc(c.nom)+'</b><small>'+sousCam(c)+' · '+esc((lieu(c.dep)||{}).nom||"")+'</small></span><span class="mid">'+lignes(c).replace(/<br>/g," &nbsp; ")+'</span><span><button class="skb o s" onclick="event.stopPropagation();skCharge(\''+c.id+'\')">Charger</button></span></div>'; }).join(""):'<div class="sk-fold" style="cursor:default">Aucun camion à charger</div>');
-      h+='<div class="sk-sec" style="color:#157F3C">PRÊTS · '+ok.length+'</div>'+(OPEN?ok.map(function(c){ return '<div class="sk-r" onclick="skOuvre(\''+c.id+'\')"><span><b>🚐 '+esc(c.nom)+'</b><small>'+esc((lieu(c.dep)||{}).nom||"")+'</small></span><span class="mid">'+lignes(c).replace(/<br>/g," &nbsp; ")+'</span><span class="sk-hint">niveaux ›</span></div>'; }).join("")+'<div class="sk-fold" onclick="skFold()">Replier ▴</div>':'<div class="sk-fold" onclick="skFold()"><span class="dot d0"></span>'+(ok.map(function(c){return esc(c.nom.replace(/^Camion d[e\']\s?/,""));}).join(" · ")||"aucun")+' <span style="float:right">voir ▾</span></div>');
-      h+='<div class="sk-sec" style="color:#1E3350">DÉPÔTS · '+D.length+'</div>'+D.map(function(d){ return '<div class="sk-r" onclick="skOuvre(\''+d.id+'\')"><span><b>🏠 '+esc(d.nom)+'</b></span><span class="mid">'+lignes(d).replace(/<br>/g," &nbsp; ")+'</span><span>'+(aCmdDe(d).length?'<button class="skb o s" onclick="event.stopPropagation();skCommande(\''+d.id+'\')">Commander ('+aCmdDe(d).length+')</button>':'<span class="sk-hint">niveaux ›</span>')+'</span></div>'; }).join("");
-    }
+    '<div class="sk-kc '+(nCmd?"kr":"")+'"><small>À commander</small><b>'+pl(nCmd,"article")+'</b></div>'+
+    '<div class="sk-kc '+(late?"kr":"kn")+'"><small>Commandes en attente'+(late?' · '+late+' en retard':'')+'</small><b>'+att+'</b></div>'+
+    '<div class="sk-kc '+(aCh.length?"kr":"")+'"><small>Véhicules à charger</small><b>'+aCh.length+'</b></div>'+
+    '<div class="sk-kc kg"><small>Véhicules prêts</small><b>'+(C.length-aCh.length)+'</b></div>';
+  var L=D.concat(C);
+  document.getElementById("sk-tabs").innerHTML='<button class="'+(!TAB?"on":"")+'" onclick="skTab(\'\')">Tout</button>'+
+    (L.length<=8 ? L.map(function(l){ return '<button class="'+(TAB===l.id?"on":"")+'" onclick="skTab(\''+l.id+'\')">'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.t==="c"?court(l.nom):l.nom)+(l.t==="c"&&aCharger(l).length?' <i class="dot d2" style="margin:0 0 0 4px"></i>':'')+'</button>'; }).join("")
+      : '<select class="sk-in" style="min-width:0" onchange="skTab(this.value)"><option value="">Voir un lieu…</option>'+L.map(function(l){ return '<option value="'+l.id+'" '+(TAB===l.id?"selected":"")+'>'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.nom)+(l.t==="c"&&aCharger(l).length?" · à charger":"")+'</option>'; }).join("")+'</select>');
+  var h="", P=cons().filter(vis), ms=document.getElementById("sk-met"); if(ms) ms.value=S.metier||"nuisibles";
+  if(!S.produits.length || !C.length){ var ok1=S.produits.length>0, ok2=C.length>0;
+    h+='<div class="sk-card" style="margin-bottom:12px"><b style="color:#1E3350">Pour commencer · 3 étapes</b><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px;font-size:.82rem">'+
+      '<div><b>'+(ok1?"✓":"1.")+' Tes articles</b><br><span style="color:#5B677A">Ce que tu consommes, et ton matériel.</span><br><button class="skb '+(ok1?"w":"o")+' s" style="margin-top:8px" onclick="skProd()">+ Article</button></div>'+
+      '<div><b>'+(ok2?"✓":"2.")+' Tes véhicules</b><br><span style="color:#5B677A">Un par technicien. Le dépôt existe déjà.</span><br><button class="skb '+(ok1&&!ok2?"o":"w")+' s" style="margin-top:8px" onclick="skLieuNew()">+ Lieu</button></div>'+
+      '<div><b>3. Compte une fois</b><br><span style="color:#5B677A">« Que s\'est-il passé ? » › « Je recompte ». Ensuite les chiffres bougent tout seuls.</span></div></div></div>'; }
+  if(!TAB){
+    if(aCh.length) h+='<div class="sk-strip">'+aCh.slice(0,6).map(function(c){ var m=aCharger(c); return '<span class="sk-chip"><i class="dot d2"></i><b>'+esc(court(c.nom))+'</b> · il lui manque '+esc(m.slice(0,2).map(function(p){return p.nom;}).join(", "))+(m.length>2?" +"+(m.length-2):"")+' <button class="skb o s" onclick="skCharge(\''+c.id+'\')">Charger</button></span>'; }).join("")+(aCh.length>6?'<span class="sk-hint">+ '+(aCh.length-6)+' autres</span>':'')+'</div>';
+    var large=C.length>5, cols=large?D:L;
+    h+=filtres()+'<div class="sk-tw"><table class="sk-t"><tr><th>CONSOMMABLE</th>'+cols.map(function(l){ return '<th class="n" style="cursor:pointer" onclick="skTab(\''+l.id+'\')">'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.t==="c"?court(l.nom):l.nom)+'</th>'; }).join("")+(large?'<th class="n">🚐 VÉHICULES ('+C.length+')</th>':'')+'<th class="n">TOTAL</th><th></th></tr>'+
+      (P.length?P.map(function(p){ var tot=0; L.forEach(function(l){ tot+=q(l.id,p.id); }); var sc=0; C.forEach(function(c){ sc+=q(c.id,p.id); });
+        var sub=[p.u||"", "alerte dépôt sous "+nf(p.seuil||0), p.min?"minimum "+nf(p.min)+" par véhicule":"", perTxt(p.id)].filter(Boolean).join(" · ");
+        return '<tr><td class="pn" title="Modifier ce produit" onclick="skProd(\''+p.id+'\')"><b>'+esc(p.nom)+'</b>'+(perEtat(p.id)?' <span class="sk-per">'+(perEtat(p.id)===2?"périmé":"périme bientôt")+'</span>':'')+'<small>'+esc(sub)+'</small></td>'+
+          cols.map(function(l){ return '<td class="n"><span class="sk-q" title="Corriger ce chiffre" onclick="skCell(\''+l.id+'\',\''+p.id+'\')">'+dot(etat(l.id,p.id))+nf(q(l.id,p.id))+'</span></td>'; }).join("")+(large?'<td class="n"><b>'+nf(sc)+'</b></td>':'')+
+          '<td class="n"><b>'+nf(tot)+'</b></td><td style="text-align:right;white-space:nowrap">'+tagProd(p)+'</td></tr>'; }).join(""):'<tr><td colspan="9" style="color:#5B677A">'+(cons().length?"Aucun article ne correspond.":"Aucun consommable pour l\'instant.")+'</td></tr>')+'</table></div>'+matCard()+
+      '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center"><button class="skb w s" onclick="skProd()">+ Article</button><button class="skb w s" onclick="skLieuNew()">+ Lieu</button><span class="sk-hint">Clique sur un chiffre pour le corriger, sur un article pour le modifier, sur un lieu pour le détail.</span></div>';
   }else{
-    var L=D.concat(C);
-    h+='<table class="sk-t"><tr><th>PRODUIT</th>'+L.map(function(l){ return '<th>'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.nom.replace(/^Camion d[e\']\s?/,""))+'</th>'; }).join("")+'<th></th></tr>'+
-      S.produits.map(function(p){ var bas=D.some(function(d){return nv(d.id,p.id)>0;}); var a = S.cmd[p.id] ? (retard(p.id) ? '<span class="sk-late">en retard · il y a '+jours(S.cmd[p.id].d)+' j</span>' : '<span class="sk-cmd">commandé le '+fr(S.cmd[p.id].d)+'</span>') : (bas ? '<button class="skb o s" onclick="skCmd(\''+p.id+'\')">Commandé</button>' : '');
-        return '<tr><td style="cursor:pointer" title="Modifier ce produit" onclick="skProd(\''+p.id+'\')"><b>'+esc(p.nom)+'</b>'+(perEtat(p.id)?' <span class="sk-per">'+(perEtat(p.id)===2?"périmé":"périme bientôt")+'</span>':'')+'<small>'+esc([p.u||"",perTxt(p.id)].filter(Boolean).join(" · "))+'</small></td>'+L.map(function(l){ var v=nv(l.id,p.id); return '<td><span class="sk-pd" title="Changer le niveau" onclick="skPick(\''+l.id+'\',\''+p.id+'\')"><span class="dot '+dotc(v)+'"></span>'+lb(v)+'</span></td>'; }).join("")+'<td style="text-align:right">'+a+'</td></tr>'; }).join("")+'</table>'+
-      '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="skb w s" onclick="skProd()">+ Produit</button><button class="skb w s" onclick="skCopie()">Copier la liste à commander</button><span class="sk-hint" style="align-self:center">Clique sur un produit pour le modifier, sur une pastille pour changer son niveau.</span></div>';
+    var l=lieu(TAB); if(!l){ TAB=""; return paint(); }
+    var T=S.tour[l.id]||[], m=l.t==="c"?aCharger(l):aCmd(l);
+    h+='<div class="sk-card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start"><div><b style="font-size:1.05rem;color:#1E3350">'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.nom)+'</b> <a href="#" class="sk-lk" style="margin-left:6px" onclick="event.preventDefault();skLieuEdit(\''+l.id+'\')">modifier</a><div class="sk-hint" style="margin-top:3px">'+(l.t==="d"?"Les commandes arrivent ici.":(T.length?"Demain : "+pl(T.length,"intervention")+" · "+T.map(function(i){return esc(i.c);}).join(" · "):"Aucune intervention prévue demain")+" · pris sur "+esc((lieu(l.dep)||{}).nom||"le dépôt"))+'</div></div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+(l.t==="c"?'<button class="skb '+(m.length?"o":"w")+' s" onclick="skCharge(\''+l.id+'\')">Charger</button><button class="skb w s" onclick="skTech(\''+l.id+'\')">📱 Rapport du technicien</button>':(m.length?'<button class="skb o s" onclick="skCommande(\''+l.id+'\')">Commander ('+m.length+')</button>':''))+'<button class="skb w s" onclick="skCount(\''+l.id+'\')">Recompter</button></div></div>'+
+      (cons().length?'<div class="sk-tw" style="margin-top:12px"><table class="sk-t" style="border:0"><tr><th>CONSOMMABLE</th><th class="n">ICI</th>'+(l.t==="c"?'<th class="n">IL LUI EN FAUT</th>':'<th class="n">ALERTE SOUS</th>')+'<th></th></tr>'+
+      P.map(function(p){ var e=etat(l.id,p.id), b=l.t==="c"?bes(l.id,p.id):(p.seuil||0);
+        var tg = l.t==="c" ? (e===2?'<span class="st sr">il en manque '+nf(b)+'</span>':e===1?'<span class="st sy">pas assez · il en manque '+nf(b-q(l.id,p.id))+'</span>':'') : tagProd(p);
+        return '<tr><td><b>'+esc(p.nom)+'</b><small>'+esc(p.u||"")+'</small></td><td class="n"><span class="sk-q" onclick="skCell(\''+l.id+'\',\''+p.id+'\')">'+dot(e)+nf(q(l.id,p.id))+'</span></td><td class="n">'+(l.t==="c"?(b?nf(b):"–"):nf(b))+'</td><td style="text-align:right;white-space:nowrap">'+tg+'</td></tr>'; }).join("")+'</table></div>':'')+'</div>'+matCard(l.id);
   }
   document.getElementById("sk-body").innerHTML=h;
-  document.getElementById("sk-hist").innerHTML='<b>Derniers changements</b>'+(S.hist.length?S.hist.slice(0,6).map(function(x){ return '<div><span>'+esc(x.t)+'</span><span>'+fr(x.d)+'</span></div>'; }).join(""):'<div><span>Rien pour l\'instant</span><span></span></div>');
+  document.getElementById("sk-hist").innerHTML='<b>Derniers mouvements</b>'+(S.hist.length?S.hist.slice(0,6).map(function(x){ return '<div><span>'+esc(x.t)+'</span><span>'+fr(x.d)+'</span></div>'; }).join(""):'<div><span>Rien pour l\'instant</span><span></span></div>');
 }
-var TL="c";
-window.skTL=function(t){ TL=t; document.getElementById("sk-td").className=t==="d"?"on":""; document.getElementById("sk-tc").className=t==="c"?"on":""; };
-window.skFold=function(){ OPEN=!OPEN; paint(); };
-window.skAddLieu=function(){ var i=document.getElementById("sk-nl"), n=(i.value||"").trim(); if(!n){ toast("Donne un nom au lieu"); i.focus(); return; }
-  if(S.lieux.some(function(l){return l.nom.toLowerCase()===n.toLowerCase();})){ toast("Ce lieu existe déjà"); return; }
-  var id=(TL==="d"?"d":"c")+Date.now(); var o={id:id,nom:n,t:TL}; if(TL==="c") o.dep=FD||deps()[0].id; S.lieux.push(o); log(n+" ajouté"); save(); TL="c"; paint(); toast("✓ "+n+" ajouté"); };
-window.skAddProd=function(){ var i=document.getElementById("sk-np"), n=(i.value||"").trim(); if(!n){ toast("Donne un nom au produit"); i.focus(); return; }
-  if(S.produits.some(function(p){return p.nom.toLowerCase()===n.toLowerCase();})){ toast("Ce produit existe déjà"); return; }
-  S.produits.push({id:"p"+Date.now(),nom:n,u:(document.getElementById("sk-nu").value||"").trim()}); log(n+" ajouté au stock"); save(); paint(); toast("✓ "+n+" ajouté"); };
-window.skCyc=function(l,p){ var v=(nv(l,p)+1)%3; setNv(l,p,v); log(prod(p).nom+" · "+lieu(l).nom+" : "+LB2[v]); save(); paint(); };
-window.skCmd=function(p){ var d=deps().filter(function(x){return nv(x.id,p)>0;})[0]||deps()[0]; S.cmd[p]={d:today(),l:d.id}; log(prod(p).nom+" commandé"); save(); paint(); if(document.getElementById("sk-ov").classList.contains("on")&&CUR) skOuvre(CUR); toast("Noté : "+prod(p).nom+" est commandé"); };
-window.skCopie=function(){ var l=[]; S.produits.forEach(function(p){ if(!S.cmd[p.id] && deps().some(function(d){return nv(d.id,p.id)>0;})) l.push("- "+p.nom+(p.u?" ("+p.u+")":"")); });
-  if(!l.length){ toast("Rien à commander pour l'instant"); return; } var t="À commander :\n"+l.join("\n");
-  try{ navigator.clipboard.writeText(t).then(function(){ toast("Liste copiée ("+l.length+" produit"+(l.length>1?"s":"")+")"); }, function(){ toast("Copie impossible sur ce navigateur"); }); }catch(e){ toast("Copie impossible sur ce navigateur"); } };
-function show(h){ document.getElementById("sk-m").innerHTML=h; document.getElementById("sk-ov").classList.add("on"); }
-window.skClose=function(){ document.getElementById("sk-ov").classList.remove("on"); CUR=""; QUEUE=[]; DELC=""; };
-var CUR="";
-/* ---- Ouvrir un lieu : les 3 boutons, comme le technicien sur son téléphone ---- */
-window.skOuvre=function(id){ var l=lieu(id); if(!l) return; CUR=id;
-  show('<h3>'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.nom)+'</h3><p>'+(l.t==="c"?"C'est ce que le technicien répond à la fin de son rapport : « il t'en reste ? »":"Ce qu'il reste au dépôt. Un clic pour changer.")+(inconnus(l).length?" Rien n'est coché tant que personne n'a répondu.":"")+'</p>'+
-    S.produits.map(function(p){ var v=nv(id,p.id); var ex=(l.t==="d"&&v>0) ? (S.cmd[p.id] ? '<small>commandé le '+fr(S.cmd[p.id].d)+'</small>' : '<small><a href="#" style="color:#FF5B1F;font-weight:700" onclick="event.preventDefault();skCmd(\''+p.id+'\')">Marquer « commandé »</a></small>') : '<small>'+esc(p.u||"")+'</small>';
-      return '<div class="sk-li"><span class="nm">'+esc(p.nom)+ex+'</span><span class="sk-s3">'+[0,1,2].map(function(k){ return '<button class="'+(v===k?"a"+k:"")+'" onclick="skSet(\''+id+'\',\''+p.id+'\','+k+')">'+LBL[k]+'</button>'; }).join("")+'</span></div>'; }).join("")+
-    '<div class="sk-mb"><span>'+((l.t==="d"&&deps().length<2)?(inconnus(l).length?'<a href="#" class="sk-lk" onclick="event.preventDefault();skToutOk(\''+id+'\')">Le reste : « Assez »</a>':''):'<a href="#" class="sk-lk" style="margin-right:14px;'+(inconnus(l).length?'':'display:none')+'" onclick="event.preventDefault();skToutOk(\''+id+'\')">Le reste : « Assez »</a><a href="#" class="sk-lk" style="color:#B42318" onclick="event.preventDefault();skDel(\''+id+'\')">'+(DELC===id?"Confirmer la suppression":"Supprimer ce "+(l.t==="d"?"dépôt":"camion"))+'</a>')+'</span><span style="display:flex;gap:8px">'+(l.t==="c"&&manques(l).length>0?'<button class="skb o" onclick="skCharge(\''+id+'\')">Charger ce camion</button>':'')+'<button class="skb w" onclick="skClose()">Fermer</button></span></div>'); };
-window.skToutOk=function(id){ var l=lieu(id), n=0; inconnus(l).forEach(function(p){ setNv(id,p.id,0); n++; }); if(n){ log(l.nom+" : "+n+" produit"+(n>1?"s":"")+" notés « assez »"); save(); paint(); } skOuvre(id); };
-var DELC="";
-window.skDel=function(id){ var l=lieu(id); if(!l) return;
-  if(DELC!==id){ DELC=id; skOuvre(id); toast("Clique encore une fois pour confirmer"); return; }
-  DELC="";
-  if(l.t==="d"){ var autre=deps().filter(function(d){return d.id!==id;})[0]; if(!autre){ toast("Il faut garder au moins un dépôt"); return; }
-    S.lieux.forEach(function(x){ if(x.t==="c"&&x.dep===id) x.dep=autre.id; }); Object.keys(S.cmd).forEach(function(q){ if(S.cmd[q].l===id) S.cmd[q].l=autre.id; }); if(FD===id) FD=""; }
-  S.lieux=S.lieux.filter(function(x){return x.id!==id;}); delete S.niv[id]; if(S.tour) delete S.tour[id];
-  log(l.nom+" supprimé"); save(); document.getElementById("sk-ov").classList.remove("on"); CUR=""; paint(); toast(l.nom+" supprimé"+(l.t==="d"?" · ses camions sont rattachés à "+autre.nom:"")); };
-window.skSet=function(l,p,v){ if(nv(l,p)===v) return; setNv(l,p,v); log(prod(p).nom+" · "+lieu(l).nom+" : "+LB2[v]); save(); paint(); skOuvre(l); };
-/* ---- Charger un camion : pré-coché avec ce qui lui manque ---- */
-window.skCharge=function(id){ var c=lieu(id); if(!c) return; CUR=""; var m=manques(c), dep=lieu(c.dep)||deps()[0];
-  var autres=S.produits.filter(function(p){ return nv(id,p.id)<=0; });
-  function li(p,ck){ var vide=nv(dep.id,p.id)===2; return '<label class="sk-li"><input type="checkbox" data-p="'+p.id+'" '+(ck&&!vide?"checked":"")+'><span class="nm">'+esc(p.nom)+(vide?'<small class="sk-warn">le '+esc(dep.nom)+' n\'en a plus</small>':'<small>'+(ck?(nv(id,p.id)===2?"il en manque":"bientôt fini")+(besoin(c).indexOf(p.id)>-1?" · utile demain":""):esc(p.u||""))+'</small>')+'</span></label>'; }
-  var T=S.tour[id]||[], B=besoin(c);
-  show('<h3>Charger · '+esc(c.nom)+'</h3><p>Pris sur : <b>'+esc(dep.nom)+'</b>. Déjà coché : ce qui lui manque.</p>'+
-    (T.length?'<div class="sk-tour"><b>Demain : '+T.length+' intervention'+(T.length>1?'s':'')+'</b> · '+T.map(function(i){return esc(i.c)+' ('+esc(i.t.toLowerCase())+')';}).join(" · ")+'<br>Il lui faut : '+B.map(function(x){return esc(prod(x).nom);}).join(", ")+'</div>':'')+
-    (m.length?m.map(function(p){return li(p,true);}).join(""):'<div class="sk-li"><span class="nm">Rien ne manque dans ce camion.</span></div>')+
-    '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.8rem;color:#1E3350;font-weight:700">+ Charger autre chose</summary>'+autres.map(function(p){return li(p,false);}).join("")+'</details>'+
-    '<div class="sk-mb"><span style="font-size:.74rem;color:#5B677A">'+(QUEUE.length?"Encore "+QUEUE.length+" camion"+(QUEUE.length>1?"s":"")+" après":"")+'</span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skChargeOk(\''+id+'\')">C\'est chargé</button></span></div>'); };
-window.skChargeOk=function(id){ var c=lieu(id), n=0; document.querySelectorAll('#sk-m input[data-p]:checked').forEach(function(i){ setNv(id,i.dataset.p,0); n++; });
-  if(!n){ toast("Coche au moins un produit"); return; } log(c.nom+" chargé ("+n+" produit"+(n>1?"s":"")+")"); save(); paint();
-  if(QUEUE.length){ var nx=QUEUE.shift(); toast("✓ "+c.nom+" chargé"); skCharge(nx); } else { document.getElementById("sk-ov").classList.remove("on"); toast("✓ "+c.nom+" chargé"); } };
-window.skPrep=function(){ var l=cams().filter(function(c){return pb(c).length>0;}).map(function(c){return c.id;}); if(!l.length) return; QUEUE=l.slice(1); skCharge(l[0]); };
-/* ---- J'ai reçu une commande : pré-rempli avec ce qui est attendu ---- */
-window.skRecu=function(){ CUR=""; var dd=deps(), att=Object.keys(S.cmd).map(prod).filter(Boolean);
-  var bas=S.produits.filter(function(p){ return !S.cmd[p.id] && dd.some(function(d){return nv(d.id,p.id)>0;}); });
-  var reste=S.produits.filter(function(p){ return att.indexOf(p)<0 && bas.indexOf(p)<0; });
-  function li(p,ck,sub){ var x=S.lot[p.id]||{}; return '<div style="border-bottom:1px solid #F1F3F6;padding-bottom:6px"><label class="sk-li" style="border:0;padding-bottom:2px"><input type="checkbox" data-p="'+p.id+'" '+(ck?"checked":"")+'><span class="nm">'+esc(p.nom)+'<small>'+sub+'</small></span><span class="sk-lk" onclick="event.preventDefault();this.parentNode.nextSibling.classList.toggle(\'on\')">lot / péremption</span></label><div class="sk-lot"><input placeholder="N° de lot" data-lot="'+p.id+'" value="'+esc(x.lot||"")+'"><input type="month" title="Péremption" data-per="'+p.id+'" value="'+esc(x.per||"")+'"></div></div>'; }
-  show('<h3>J\'ai reçu une commande</h3><p>Coche ce qui est arrivé. Ce qui n\'est pas coché reste « en attente ».</p>'+
-    (dd.length>1?'<div class="sk-li" style="border:0;padding-top:0"><span class="nm" style="font-weight:700;color:#1E3350">Rangé où ?</span><select id="sk-rd" class="sk-in" style="min-width:0">'+dd.map(function(d){ return '<option value="'+d.id+'" '+((FD||dd[0].id)===d.id?"selected":"")+'>'+esc(d.nom)+'</option>'; }).join("")+'</select></div>':'')+
-    (att.length?'<div class="sk-sub">CE QUE TU ATTENDS · '+att.length+'</div>'+att.map(function(p){ return li(p,true,"commandé le "+fr(S.cmd[p.id].d)); }).join(""):'<div class="sk-li" style="color:#5B677A"><span class="nm">Aucune commande notée « en attente ».</span></div>')+
-    (bas.length?'<div class="sk-sub">BIENTÔT FINI AU DÉPÔT</div>'+bas.map(function(p){ return li(p,false,"pas encore noté « commandé »"); }).join(""):'')+
-    '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.8rem;color:#1E3350;font-weight:700">+ Autre chose est arrivé</summary>'+reste.map(function(p){ return li(p,false,esc(p.u||"")); }).join("")+'</details>'+
-    '<div class="sk-mb"><a href="#" style="font-size:.78rem;color:#1E3350;font-weight:700" onclick="event.preventDefault();skTout()">Tout cocher</a><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skRecuOk()">C\'est rangé</button></span></div>'); };
-window.skTout=function(){ document.querySelectorAll('#sk-m > div > label input[data-p]').forEach(function(i){ if(!i.closest("details")) i.checked=true; }); };
-window.skRecuOk=function(){ var sel=document.getElementById("sk-rd"), d=sel?sel.value:deps()[0].id, n=0, noms=[];
-  document.querySelectorAll('#sk-m input[data-p]:checked').forEach(function(i){ var q=i.dataset.p; setNv(d,q,0); delete S.cmd[q]; n++; noms.push(prod(q).nom);
-    var lo=document.querySelector('#sk-m input[data-lot="'+q+'"]'), pe=document.querySelector('#sk-m input[data-per="'+q+'"]'); var lv=lo?lo.value.trim():"", pv=pe?pe.value:""; if(lv||pv) S.lot[q]={lot:lv,per:pv}; });
-  if(!n){ toast("Coche ce qui est arrivé"); return; }
-  log("Commande reçue · "+lieu(d).nom+" : "+(n<=2?noms.join(", "):n+" produits")); save(); paint(); document.getElementById("sk-ov").classList.remove("on");
-  var reste=Object.keys(S.cmd).length; toast("✓ "+n+" produit"+(n>1?"s":"")+" rangé"+(n>1?"s":"")+" · "+lieu(d).nom+(reste?" · "+reste+" encore en attente":"")); };
-/* ---- Commander : la liste est prête, le message aussi ---- */
-window.skCommande=function(id){ var d=lieu(id); if(!d) return; CUR=""; var L=aCmdDe(d);
-  show('<h3>Commander · '+esc(d.nom)+'</h3><p>Déjà coché : ce qui est rouge ou orange et pas encore commandé.</p>'+
-    L.map(function(p){ return '<label class="sk-li"><input type="checkbox" data-p="'+p.id+'" checked onchange="skMsg()"><span class="nm">'+esc(p.nom)+'<small>'+lb(nv(id,p.id))+(p.u?" · "+esc(p.u):"")+'</small></span></label>'; }).join("")+
-    '<textarea class="sk-ta" id="sk-msg"></textarea>'+
-    '<div class="sk-mb"><button class="skb w" onclick="skMsgCopie()">Copier le message</button><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skCommandeOk(\''+id+'\')">C\'est commandé</button></span></div>'); skMsg(); };
-window.skMsg=function(){ var l=[]; document.querySelectorAll('#sk-m input[data-p]:checked').forEach(function(i){ var p=prod(i.dataset.p); l.push("- "+p.nom+(p.u?" ("+p.u+")":"")+" : quantité habituelle"); });
-  var t=document.getElementById("sk-msg"); if(t) t.value="Bonjour,\n\nMerci de nous livrer :\n"+(l.join("\n")||"- …")+"\n\nCordialement"; };
+/* ============ LIGNES AVEC − / + ============ */
+function ligne(x,i){ var p=prod(x.p); if(!p) return ""; var sub=typeof x.sub==="function"?x.sub():(x.sub||"");
+  return '<div class="sk-li"><span class="nm">'+esc(p.nom)+'<small'+(x.warn&&x.warn()?' class="sk-warn"':'')+'>'+esc(sub)+'</small>'+(CTX.lot?'<span class="sk-lk" style="font-size:.7rem" onclick="skLot('+i+')">lot / péremption</span>':'')+'</span>'+
+    '<span class="sk-pm"><button onclick="skQ('+i+',-1)">−</button><input inputmode="decimal" value="'+nf(x.n)+'" onchange="skQs('+i+',this.value)" onfocus="this.select()"><button onclick="skQ('+i+',1)">+</button></span></div>'+
+    (CTX.lot&&x.open?'<div class="sk-lot on"><input placeholder="N° de lot" value="'+esc(x.lot||"")+'" onchange="skLv('+i+',\'lot\',this.value)"><input type="month" title="Péremption" value="'+esc(x.per||"")+'" onchange="skLv('+i+',\'per\',this.value)"></div>':''); }
+function lignes(vide){ var dispo=cons().filter(function(p){ return !LN.some(function(x){return x.p===p.id;}); });
+  return (LN.length?LN.map(ligne).join(""):'<div class="sk-li" style="color:#5B677A"><span class="nm">'+(vide||"Ajoute un produit ci-dessous.")+'</span></div>')+
+    (CTX.add!==false&&dispo.length?'<select class="sk-in" style="width:100%;margin-top:8px;color:#1E3350;font-weight:700" onchange="skAddLn(this.value)"><option value="">+ Autre article…</option>'+dispo.map(function(p){ return '<option value="'+p.id+'">'+esc(p.nom)+'</option>'; }).join("")+'</select>':''); }
+window.skQ=function(i,d){ LN[i].n=Math.max(0,Math.round(((LN[i].n||0)+d)*100)/100); CTX.draw(); };
+window.skQs=function(i,v){ LN[i].n=num(v); CTX.draw(); };
+window.skAddLn=function(p){ if(!p) return; LN.push(CTX.mk?CTX.mk(p):{p:p,n:1}); CTX.draw(); };
+window.skLot=function(i){ LN[i].open=!LN[i].open; CTX.draw(); };
+window.skLv=function(i,k,v){ LN[i][k]=v; };
+function pied(ok,txt){ return '<div class="sk-mb"><a href="#" class="sk-lk" onclick="event.preventDefault();skMenu()">‹ Retour</a><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="'+ok+'()">'+txt+'</button></span></div>'; }
+function selLieu(id,cur,filtre,fn){ var L=S.lieux.filter(filtre||function(){return true;}); if(L.length<2) return '<b style="color:#1E3350">'+(L[0]?(L[0].t==="d"?"🏠 ":"🚐 ")+esc(L[0].nom):"")+'</b>';
+  return '<select class="sk-in" style="min-width:0;font-weight:700;color:#1E3350" onchange="'+fn+'(this.value)">'+L.map(function(l){ return '<option value="'+l.id+'" '+(l.id===cur?"selected":"")+'>'+(l.t==="d"?"🏠 ":"🚐 ")+esc(l.nom)+'</option>'; }).join("")+'</select>'; }
+/* ============ QUE S'EST-IL PASSÉ ? ============ */
+window.skMenu=function(){ CTX={}; LN=[];
+  function ch(ic,t,s,fn,on){ return '<div class="sk-ch'+(on?" on":"")+'" onclick="'+fn+'()"><i>'+ic+'</i><span><b>'+t+'</b><small>'+s+'</small></span></div>'; }
+  var att=Object.keys(S.cmd).length, ach=cams().filter(function(c){return aCharger(c).length;}).length;
+  show('<h3>Que s\'est-il passé ?</h3><p>Choisis, puis un seul écran à remplir.</p>'+
+    ch("📦","J'ai reçu une commande",att?pl(att,"commande")+" en attente":"Ça arrive au dépôt","skRecu",att>0)+
+    ch("🚐","J'ai chargé un véhicule",ach?pl(ach,"véhicule")+" à charger":"Du dépôt vers un véhicule","skCharge",!att&&ach>0)+
+    ch("🗑️","J'ai utilisé ou cassé quelque chose","En dehors d'un rapport d'intervention","skUse")+
+    ch("🧾","J'ai acheté pour un chantier","Pris chez le fournisseur, posé direct chez le client","skAchat")+
+    ch("🔢","Je recompte","Corriger les chiffres d'un lieu","skCount")+
+    (mats().length?ch("🔧","Un matériel a bougé ou est en panne","Changer de véhicule, signaler une panne","skMatList"):"")+
+    '<div class="sk-mb"><span></span><button class="skb w" onclick="skClose()">Fermer</button></div>'); };
+/* ---- Reçu ---- */
+window.skRecu=function(){ var dd=deps(); CTX={k:"recu",lot:true,dep:(TAB&&lieu(TAB)&&lieu(TAB).t==="d")?TAB:dd[0].id};
+  LN=Object.keys(S.cmd).filter(prod).map(function(p){ return {p:p,n:S.cmd[p].n||1,sub:"commandé le "+fr(S.cmd[p].d)+" · attendu : "+(S.cmd[p].n||1)}; });
+  CTX.draw=function(){ show('<h3>📦 J\'ai reçu une commande</h3><p>Rangé au '+selLieu("sk-rd",CTX.dep,function(l){return l.t==="d";},"skDep")+'. '+(LN.length?"Déjà rempli avec ce qui était commandé : corrige si la livraison est incomplète.":"")+'</p>'+lignes("Aucune commande en attente : ajoute ce qui est arrivé.")+pied("skRecuOk","C'est rangé")); };
+  CTX.draw(); };
+window.skDep=function(v){ CTX.dep=v; };
+window.skRecuOk=function(){ var L=LN.filter(function(x){return x.n>0;}); if(!L.length){ toast("Indique ce qui est arrivé"); return; } var av=JSON.stringify(S), d=CTX.dep, rest=0;
+  L.forEach(function(x){ setQ(d,x.p,q(d,x.p)+x.n); var c=S.cmd[x.p]; if(c){ if(x.n>=(c.n||1)) delete S.cmd[x.p]; else { c.n=Math.round((c.n-x.n)*100)/100; rest++; } } if(x.lot||x.per) S.lot[x.p]={lot:(x.lot||"").trim(),per:x.per||""}; });
+  log("Reçu · "+lieu(d).nom+" : "+L.map(function(x){return nf(x.n)+" × "+prod(x.p).nom;}).join(", "));
+  fait(av,"✓ "+pl(L.length,"article")+" rangé"+(L.length>1?"s":"")+" · "+lieu(d).nom+(rest?" · "+rest+" encore incomplet"+(rest>1?"s":""):"")); };
+/* ---- Chargé ---- */
+window.skCharge=function(id){ var C=cams(); if(!C.length){ toast("Ajoute d'abord un véhicule"); return; }
+  var c=(id&&lieu(id)&&lieu(id).t==="c")?id:((TAB&&lieu(TAB)&&lieu(TAB).t==="c")?TAB:(C.filter(function(x){return aCharger(x).length;})[0]||C[0]).id);
+  CTX={k:"charge",c:c}; chargeLn();
+  CTX.mk=function(p){ return mkCh(p,1); };
+  CTX.draw=function(){ var cc=lieu(CTX.c), dep=lieu(cc.dep)||deps()[0], T=S.tour[CTX.c]||[];
+    show('<h3>🚐 J\'ai chargé un véhicule</h3><p>'+selLieu("sk-cc",CTX.c,function(l){return l.t==="c";},"skCam")+' · pris sur <b>'+esc(dep.nom)+'</b>'+(T.length?' · '+pl(T.length,"intervention")+' demain':'')+'</p>'+lignes("Ce véhicule a déjà tout ce qu'il lui faut.")+pied("skChargeOk","C'est chargé")); };
+  CTX.draw(); };
+function mkCh(p,n){ return {p:p,n:n,sub:function(){ var cc=lieu(CTX.c), dep=lieu(cc.dep)||deps()[0], b=bes(CTX.c,p); return "il en a "+nf(q(CTX.c,p))+(b?" · il lui en faut "+nf(b)+(need(CTX.c,p)>=b?" demain":" (son minimum)"):"")+" · "+dep.nom+" : "+nf(q(dep.id,p)); }, warn:function(){ var cc=lieu(CTX.c), dep=lieu(cc.dep)||deps()[0]; return this.n>q(dep.id,p); }}; }
+function chargeLn(){ var cc=lieu(CTX.c), dep=lieu(cc.dep)||deps()[0]; LN=aCharger(cc).map(function(p){ return mkCh(p.id, Math.round(Math.min(bes(cc.id,p.id)-q(cc.id,p.id), q(dep.id,p.id))*100)/100); }); }
+window.skCam=function(v){ CTX.c=v; chargeLn(); CTX.draw(); };
+window.skChargeOk=function(){ var cc=lieu(CTX.c), dep=lieu(cc.dep)||deps()[0], av=JSON.stringify(S), n=0, court2=0, det=[];
+  LN.forEach(function(x){ var k=Math.min(x.n,q(dep.id,x.p)); if(x.n>k) court2++; if(k>0){ setQ(dep.id,x.p,q(dep.id,x.p)-k); setQ(cc.id,x.p,q(cc.id,x.p)+k); n++; det.push(nf(k)+" × "+prod(x.p).nom); } });
+  if(!n){ toast(court2?"Le dépôt n'en a plus : commande d'abord":"Indique ce que tu as chargé"); return; }
+  log("Chargé · "+cc.nom+" : "+det.join(", ")); fait(av,"✓ "+cc.nom+" chargé"+(court2?" · le dépôt n'avait pas tout":"")); };
+/* ---- Utilisé / cassé ---- */
+window.skUse=function(){ CTX={k:"use",l:TAB&&lieu(TAB)?TAB:deps()[0].id,m:"Utilisé"}; LN=[];
+  CTX.mk=function(p){ return {p:p,n:1,sub:function(){ return "il y en a "+nf(q(CTX.l,p)); }, warn:function(){ return this.n>q(CTX.l,p); }}; };
+  CTX.draw=function(){ show('<h3>🗑️ J\'ai utilisé ou cassé quelque chose</h3><p>Où ? '+selLieu("sk-ul",CTX.l,null,"skUl")+'</p><div class="sk-seg2" style="margin-bottom:8px">'+["Utilisé","Cassé","Perdu","Périmé"].map(function(m){ return '<button class="'+(CTX.m===m?"on":"")+'" onclick="skUm(\''+m+'\')">'+m+'</button>'; }).join("")+'</div>'+lignes("Choisis le produit ci-dessous.")+pied("skUseOk","Enregistrer")); };
+  CTX.draw(); };
+window.skUl=function(v){ CTX.l=v; CTX.draw(); };
+window.skUm=function(m){ CTX.m=m; CTX.draw(); };
+window.skUseOk=function(){ var L=LN.filter(function(x){return x.n>0;}); if(!L.length){ toast("Choisis un produit"); return; } var av=JSON.stringify(S), l=CTX.l;
+  L.forEach(function(x){ setQ(l,x.p,q(l,x.p)-x.n); }); log(CTX.m+" · "+lieu(l).nom+" : "+L.map(function(x){return nf(x.n)+" × "+prod(x.p).nom;}).join(", ")); fait(av,"✓ Enregistré · "+lieu(l).nom); };
+/* ---- Recompte ---- */
+window.skCount=function(id){ CTX={k:"count",add:false,l:(id&&lieu(id))?id:(TAB&&lieu(TAB)?TAB:deps()[0].id)}; countLn();
+  CTX.draw=function(){ show('<h3>🔢 Je recompte</h3><p>'+selLieu("sk-kl",CTX.l,null,"skKl")+' · tape ce que tu vois sur l\'étagère.</p>'+lignes("Aucun produit.")+pied("skCountOk","Enregistrer")); };
+  CTX.draw(); };
+function countLn(){ LN=cons().map(function(p){ var a=q(CTX.l,p.id); return {p:p.id,n:a,sub:"le logiciel pense : "+nf(a)}; }); }
+window.skKl=function(v){ CTX.l=v; countLn(); CTX.draw(); };
+window.skCountOk=function(){ var av=JSON.stringify(S), l=CTX.l, ch=[]; LN.forEach(function(x){ if(q(l,x.p)!==x.n){ ch.push(prod(x.p).nom+" "+nf(q(l,x.p))+" → "+nf(x.n)); setQ(l,x.p,x.n); } });
+  if(!ch.length){ hide(); toast("Rien à corriger : tout est juste"); return; } log("Recompté · "+lieu(l).nom+" : "+ch.join(", ")); fait(av,"✓ "+pl(ch.length,"chiffre")+" corrigé"+(ch.length>1?"s":"")+" · "+lieu(l).nom); };
+/* ---- Corriger une case ---- */
+window.skCell=function(l,p){ var L=lieu(l), P=prod(p); if(!L||!P) return; CTX={k:"cell",add:false,l:l,p:p}; LN=[{p:p,n:q(l,p),sub:"le logiciel pense : "+nf(q(l,p))}];
+  CTX.draw=function(){ show('<h3>'+esc(P.nom)+'</h3><p>'+(L.t==="d"?"🏠 ":"🚐 ")+esc(L.nom)+' · combien il y en a vraiment ?</p>'+LN.map(ligne).join("")+'<div class="sk-mb"><span></span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skCellOk()">Enregistrer</button></span></div>'); };
+  CTX.draw(); };
+window.skCellOk=function(){ var l=CTX.l, p=CTX.p, n=LN[0].n, a=q(l,p); if(n===a){ hide(); return; } var av=JSON.stringify(S); setQ(l,p,n); log("Corrigé · "+lieu(l).nom+" : "+prod(p).nom+" "+nf(a)+" → "+nf(n)); fait(av,"✓ "+prod(p).nom+" : "+nf(n)); };
+/* ---- Commander ---- */
+window.skCommande=function(id){ var d=lieu(id); if(!d) return; CTX={k:"cmd",d:id};
+  CTX.mk=function(p){ var P=prod(p); return {p:p,n:Math.max(Math.ceil((P.seuil||1)*2-q(id,p)),1),sub:function(){ return "il en reste "+nf(q(id,p))+" · alerte sous "+nf(P.seuil||0); }}; };
+  LN=aCmd(d).map(function(p){ return CTX.mk(p.id); });
+  CTX.draw=function(){ var l=LN.filter(function(x){return x.n>0;}).map(function(x){ var P=prod(x.p); return "- "+nf(x.n)+" × "+P.nom+(P.u?" ("+P.u+")":""); });
+    show('<h3>Commander · '+esc(d.nom)+'</h3><p>Déjà rempli avec ce qui est rouge ou orange. Ajuste les quantités.</p>'+lignes("Rien à commander pour l'instant.")+
+      '<textarea class="sk-ta" id="sk-msg">Bonjour,\n\nMerci de nous livrer :\n'+esc(l.join("\n")||"- …")+'\n\nCordialement</textarea>'+
+      '<div class="sk-mb"><button class="skb w" onclick="skMsgCopie()">Copier le message</button><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skCommandeOk()">C\'est commandé</button></span></div>'); };
+  CTX.draw(); };
 window.skMsgCopie=function(){ var t=document.getElementById("sk-msg"); try{ navigator.clipboard.writeText(t.value).then(function(){ toast("Message copié"); }, function(){ t.select(); toast("Sélectionné : fais Ctrl + C"); }); }catch(e){ t.select(); toast("Sélectionné : fais Ctrl + C"); } };
-window.skCommandeOk=function(id){ var n=0; document.querySelectorAll('#sk-m input[data-p]:checked').forEach(function(i){ S.cmd[i.dataset.p]={d:today(),l:id}; n++; });
-  if(!n){ toast("Coche au moins un produit"); return; } log(n+" produit"+(n>1?"s":"")+" commandé"+(n>1?"s":"")+" · "+lieu(id).nom); save(); paint(); document.getElementById("sk-ov").classList.remove("on"); toast("✓ Noté : "+n+" produit"+(n>1?"s":"")+" en attente de livraison"); };
-/* ---- Côté technicien : la question à la fin du rapport (simulation) ---- */
-var TMP={};
-window.skTech=function(id){ var c=lieu(id); if(!c) return; CUR=""; var T=S.tour[id]||[], it=T[0]||{c:"Client d'exemple",t:"Intervention",p:S.produits.slice(0,2).map(function(p){return p.id;})};
-  var P=(it.p||[]).map(prod).filter(Boolean); TMP={}; P.forEach(function(p){ TMP[p.id]=nv(id,p.id); });
-  window.skTechDraw=function(){ document.getElementById("sk-m").innerHTML='<div class="sk-phone" style="margin:0 auto"><small style="color:#5B677A;font-size:.72rem">Téléphone de '+esc(c.nom.replace(/^Camion d[e\']\s?/,""))+' · fin du rapport</small><h3 style="margin-top:4px">'+esc(it.c)+'</h3><p>'+esc(it.t)+' · produits utilisés</p>'+
-      P.map(function(p){ return '<div class="sk-pq"><b>'+esc(p.nom)+'</b> · il t\'en reste ?<div class="sk-s3">'+[0,1,2].map(function(k){ return '<button class="'+(TMP[p.id]===k?"a"+k:"")+'" onclick="skTechSet(\''+p.id+'\','+k+')">'+LBL[k]+'</button>'; }).join("")+'</div></div>'; }).join("")+
-      '<button class="skb o" style="width:100%;margin-top:14px;padding:12px" onclick="skTechOk(\''+id+'\')">Envoyer le rapport</button><button class="skb w" style="width:100%;margin-top:8px" onclick="skClose()">Fermer</button></div><p style="margin:12px 0 0;text-align:center">Simulation : dans l\'appli, cette question arrive à la fin du vrai rapport.</p>'; };
-  document.getElementById("sk-ov").classList.add("on"); skTechDraw(); };
-window.skTechSet=function(p,k){ TMP[p]=k; skTechDraw(); };
-window.skTechOk=function(id){ var c=lieu(id), ch=[]; Object.keys(TMP).forEach(function(p){ if(TMP[p]>=0 && nv(id,p)!==TMP[p]){ setNv(id,p,TMP[p]); ch.push(prod(p).nom+" : "+LB2[TMP[p]]); } });
-  log("Rapport de "+c.nom.replace(/^Camion d[e']\s?/,"")+(ch.length?" · "+ch.join(", "):" · rien n'a changé")); save(); paint(); document.getElementById("sk-ov").classList.remove("on"); toast(ch.length?"✓ Rapport envoyé · stock du camion mis à jour":"✓ Rapport envoyé"); };
-document.addEventListener("keydown", function(e){ if(e.key==="Escape") skClose(); });
-/* ===== 24/11 — ergonomie : une carte = un clic, « + Lieu », choix explicite, Annuler ===== */
-var UNDO="", REN="", DELP="";
-toast=function(t){ var e=document.getElementById("sk-toast"); e.textContent=t; e.style.pointerEvents="none"; e.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(function(){ e.classList.remove("on"); },2600); };
-function offreAnnuler(){ var e=document.getElementById("sk-toast"); e.insertAdjacentHTML("beforeend",' &nbsp;<a href="#" style="color:#FFB79C;font-weight:800" onclick="event.preventDefault();skUndo()">Annuler</a>'); e.style.pointerEvents="auto"; clearTimeout(toast.t); toast.t=setTimeout(function(){ e.classList.remove("on"); e.style.pointerEvents="none"; },7000); }
-window.skUndo=function(){ if(!UNDO) return; try{ S=JSON.parse(UNDO); }catch(e){ return; } UNDO=""; save(); paint(); toast("Annulé"); };
-["skChargeOk","skRecuOk","skCommandeOk","skTechOk"].forEach(function(n){ var f=window[n]; window[n]=function(){ var av=JSON.stringify(S); f.apply(null,arguments); if(JSON.stringify(S)!==av){ UNDO=av; if(!document.getElementById("sk-ov").classList.contains("on")) offreAnnuler(); } }; });
-/* ---- Ouvrir un lieu ---- */
-window.skOuvre=function(id){ var l=lieu(id); if(!l) return; CUR=id; var ic=l.t==="d"?"🏠 ":"🚐 ";
-  var tete = REN===id ? '<div style="display:flex;gap:8px;margin-bottom:8px"><input id="sk-ren" class="sk-in" style="flex:1" value="'+esc(l.nom)+'" onkeydown="if(event.key===\'Enter\')skRenOk(\''+id+'\')"><button class="skb w s" onclick="skRenOk(\''+id+'\')">OK</button></div>'
-    : '<h3>'+ic+esc(l.nom)+' <a href="#" class="sk-lk" style="font-size:.72rem;margin-left:6px" onclick="event.preventDefault();skRen(\''+id+'\')">renommer</a></h3>';
-  var liens=[];
-  if(inconnus(l).length) liens.push('<a href="#" class="sk-lk" onclick="event.preventDefault();skToutOk(\''+id+'\')">Le reste : « Assez »</a>');
-  if(l.t==="c") liens.push('<a href="#" class="sk-lk" onclick="event.preventDefault();skTech(\''+id+'\')">📱 Rapport du technicien</a>');
-  if(!(l.t==="d"&&deps().length<2)) liens.push('<a href="#" class="sk-lk" style="color:#B42318" onclick="event.preventDefault();skDel(\''+id+'\')">'+(DELC===id?"Confirmer la suppression":"Supprimer")+'</a>');
-  show(tete+'<p>'+(l.t==="c"?"Le niveau de chaque produit dans ce camion.":"Le niveau de chaque produit au dépôt.")+(inconnus(l).length?" Rien n'est coché tant que personne n'a répondu.":"")+'</p>'+
-    (S.produits.length?S.produits.map(function(p){ var v=nv(id,p.id); var ex=(l.t==="d"&&v>0&&S.cmd[p.id]) ? '<small>commandé le '+fr(S.cmd[p.id].d)+'</small>' : '<small>'+esc(p.u||"")+'</small>';
-      return '<div class="sk-li"><span class="nm">'+esc(p.nom)+ex+'</span><span class="sk-s3">'+[0,1,2].map(function(k){ return '<button class="'+(v===k?"a"+k:"")+'" onclick="skSet(\''+id+'\',\''+p.id+'\','+k+')">'+LBL[k]+'</button>'; }).join("")+'</span></div>'; }).join(""):'<div class="sk-li"><span class="nm">Aucun produit pour l\'instant.</span></div>')+
-    '<div class="sk-mb"><span style="display:flex;gap:14px;flex-wrap:wrap">'+liens.join("")+'</span><span style="display:flex;gap:8px">'+
-      (l.t==="c"&&manques(l).length?'<button class="skb o" onclick="skCharge(\''+id+'\')">Charger ce camion</button>':'')+
-      (l.t==="d"&&aCmdDe(l).length?'<button class="skb o" onclick="skCommande(\''+id+'\')">Commander ('+aCmdDe(l).length+')</button>':'')+
-      '<button class="skb w" onclick="skClose()">Fermer</button></span></div>');
-  if(REN===id){ var i=document.getElementById("sk-ren"); if(i){ i.focus(); i.select(); } } };
-window.skRen=function(id){ REN=id; skOuvre(id); };
-window.skRenOk=function(id){ var l=lieu(id), n=(document.getElementById("sk-ren").value||"").trim(); if(!n){ toast("Donne un nom"); return; }
-  if(S.lieux.some(function(x){return x.id!==id&&x.nom.toLowerCase()===n.toLowerCase();})){ toast("Ce nom existe déjà"); return; }
-  if(n!==l.nom){ log(l.nom+" renommé en "+n); l.nom=n; save(); paint(); } REN=""; skOuvre(id); };
-window.skDel=function(id){ var l=lieu(id); if(!l) return;
-  if(DELC!==id){ DELC=id; skOuvre(id); return; }
-  DELC=""; var av=JSON.stringify(S), autre=null;
-  if(l.t==="d"){ autre=deps().filter(function(d){return d.id!==id;})[0]; if(!autre){ toast("Il faut garder au moins un dépôt"); return; }
-    S.lieux.forEach(function(x){ if(x.t==="c"&&x.dep===id) x.dep=autre.id; }); Object.keys(S.cmd).forEach(function(q){ if(S.cmd[q].l===id) S.cmd[q].l=autre.id; }); if(FD===id) FD=""; }
-  S.lieux=S.lieux.filter(function(x){return x.id!==id;}); delete S.niv[id]; if(S.tour) delete S.tour[id];
-  log(l.nom+" supprimé"); save(); document.getElementById("sk-ov").classList.remove("on"); CUR=""; paint();
-  toast(l.nom+" supprimé"+(autre?" · ses camions passent à "+autre.nom:"")); UNDO=av; offreAnnuler(); };
-var _close=window.skClose; window.skClose=function(){ REN=""; DELP=""; _close(); };
-/* ---- Changer un niveau depuis « Par produit » : choix explicite, pas de clic à l'aveugle ---- */
-window.skPick=function(l,p){ var L=lieu(l), P=prod(p); if(!L||!P) return; CUR=""; var v=nv(l,p);
-  show('<h3>'+esc(P.nom)+'</h3><p>'+(L.t==="d"?"🏠 ":"🚐 ")+esc(L.nom)+' · il en reste ?</p><div class="sk-s3" style="display:grid;grid-template-columns:1fr 1fr 1fr;width:100%">'+[0,1,2].map(function(k){ return '<button style="padding:14px 6px;font-size:.84rem" class="'+(v===k?"a"+k:"")+'" onclick="skPickOk(\''+l+'\',\''+p+'\','+k+')">'+LBL[k]+'</button>'; }).join("")+'</div><div class="sk-mb"><span></span><button class="skb w" onclick="skClose()">Fermer</button></div>'); };
-window.skPickOk=function(l,p,k){ if(nv(l,p)!==k){ setNv(l,p,k); log(prod(p).nom+" · "+lieu(l).nom+" : "+LB2[k]); save(); paint(); } document.getElementById("sk-ov").classList.remove("on"); };
-/* ---- + Lieu ---- */
-window.skLieuNew=function(){ CUR=""; TL="c"; var dd=deps();
-  show('<h3>Ajouter un lieu</h3><p>Un camion par technicien, un dépôt par local. Juste un nom.</p>'+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="sk-seg2"><button id="sk-td" onclick="skTL(\'d\')">🏠 Dépôt</button><button id="sk-tc" class="on" onclick="skTL(\'c\')">🚐 Camion</button></span></div>'+
-    '<input id="sk-nl" class="sk-in" style="width:100%;margin-top:10px" placeholder="Nom (ex. Camion de Karim, Dépôt Lyon)" onkeydown="if(event.key===\'Enter\')skAddLieu()">'+
-    (dd.length>1?'<div id="sk-ndw" style="margin-top:10px;font-size:.8rem;color:#5B677A">Rattaché à <select id="sk-nd" class="sk-in" style="min-width:0">'+dd.map(function(d){ return '<option value="'+d.id+'" '+(FD===d.id?"selected":"")+'>'+esc(d.nom)+'</option>'; }).join("")+'</select></div>':'')+
-    '<div class="sk-mb"><span></span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skAddLieu()">Ajouter</button></span></div>');
-  document.getElementById("sk-nl").focus(); };
+window.skCommandeOk=function(){ var L=LN.filter(function(x){return x.n>0;}); if(!L.length){ toast("Indique au moins une quantité"); return; } var av=JSON.stringify(S);
+  L.forEach(function(x){ S.cmd[x.p]={d:today(),l:CTX.d,n:x.n}; }); log("Commandé : "+L.map(function(x){return nf(x.n)+" × "+prod(x.p).nom;}).join(", ")); fait(av,"✓ Noté : "+pl(L.length,"article")+" en attente de livraison"); };
+/* ---- Rapport du technicien (simulation) ---- */
+window.skTech=function(id){ var c=lieu(id); if(!c) return; var T=S.tour[id]||[], it=T[0]||{c:"Client d'exemple",t:"Intervention",p:{}}; if(!T[0]) cons().slice(0,2).forEach(function(p){ it.p[p.id]=1; });
+  CTX={k:"tech",c:id,it:it}; CTX.mk=function(p){ return {p:p,n:1,sub:function(){ return "il en a "+nf(q(id,p))+" dans le véhicule"; }, warn:function(){ return this.n>q(id,p); }}; };
+  LN=Object.keys(it.p).filter(prod).map(function(p){ var x=CTX.mk(p); x.n=it.p[p]; return x; });
+  CTX.draw=function(){ show('<div class="sk-phone" style="margin:0 auto"><small style="color:#5B677A;font-size:.72rem">Téléphone de '+esc(court(c.nom))+' · fin du rapport</small><h3 style="margin-top:4px">'+esc(it.c)+'</h3><p>'+esc(it.t)+' · produits utilisés</p>'+lignes("Aucun produit utilisé.")+
+    '<button class="skb o" style="width:100%;margin-top:14px;padding:12px" onclick="skTechOk()">Envoyer le rapport</button><button class="skb w" style="width:100%;margin-top:8px" onclick="skClose()">Fermer</button></div><p style="margin:12px 0 0;text-align:center">Simulation : dans l\'appli, les produits utilisés viennent du vrai rapport.</p>'); };
+  CTX.draw(); };
+window.skTechOk=function(){ var id=CTX.c, c=lieu(id), L=LN.filter(function(x){return x.n>0;}), av=JSON.stringify(S);
+  L.forEach(function(x){ setQ(id,x.p,q(id,x.p)-x.n); }); log("Rapport de "+court(c.nom)+" · "+CTX.it.c+(L.length?" : − "+L.map(function(x){return nf(x.n)+" "+prod(x.p).nom;}).join(", − "):"")); fait(av,L.length?"✓ Rapport envoyé · le véhicule de "+court(c.nom)+" est à jour":"✓ Rapport envoyé"); };
+/* ============ LIEUX ET PRODUITS ============ */
+var TL="c";
+window.skTL=function(t){ TL=t; document.getElementById("sk-td").className=t==="d"?"on":""; document.getElementById("sk-tc").className=t==="c"?"on":""; var w=document.getElementById("sk-ndw"); if(w) w.style.display=t==="c"?"":"none"; };
+window.skLieuNew=function(){ CTX={}; TL="c"; var dd=deps();
+  show('<h3>Ajouter un lieu</h3><p>Un véhicule par technicien, un dépôt par local. Juste un nom.</p><span class="sk-seg2"><button id="sk-td" onclick="skTL(\'d\')">🏠 Dépôt</button><button id="sk-tc" class="on" onclick="skTL(\'c\')">🚐 Véhicule</button></span>'+
+    '<input id="sk-nl" class="sk-in" style="width:100%;margin-top:10px" placeholder="Nom (ex. Véhicule de Karim, Dépôt Lyon)" onkeydown="if(event.key===\'Enter\')skAddLieu()">'+
+    (dd.length>1?'<div id="sk-ndw" style="margin-top:10px;font-size:.8rem;color:#5B677A">Rattaché à <select id="sk-nd" class="sk-in" style="min-width:0">'+dd.map(function(d){ return '<option value="'+d.id+'">'+esc(d.nom)+'</option>'; }).join("")+'</select></div>':'')+
+    '<div class="sk-mb"><span></span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skAddLieu()">Ajouter</button></span></div>'); document.getElementById("sk-nl").focus(); };
 window.skAddLieu=function(){ var i=document.getElementById("sk-nl"), n=(i.value||"").trim(); if(!n){ toast("Donne un nom au lieu"); i.focus(); return; }
   if(S.lieux.some(function(l){return l.nom.toLowerCase()===n.toLowerCase();})){ toast("Ce lieu existe déjà"); return; }
-  var o={id:(TL==="d"?"d":"c")+Date.now(),nom:n,t:TL}; if(TL==="c"){ var sel=document.getElementById("sk-nd"); o.dep=sel?sel.value:(FD||deps()[0].id); }
-  S.lieux.push(o); log(n+" ajouté"); save(); document.getElementById("sk-ov").classList.remove("on"); paint(); toast("✓ "+n+" ajouté · clique dessus pour noter ses niveaux"); };
-/* ---- Produit : ajouter, renommer, supprimer ---- */
-window.skProd=function(id){ CUR=""; var P=id?prod(id):null;
-  show('<h3>'+(P?"Modifier le produit":"Ajouter un produit")+'</h3><p>Seulement le vrai matériel (appâts, pièges, insecticides), pas les prestations.</p>'+
-    '<input id="sk-np" class="sk-in" style="width:100%" placeholder="Nom du produit" value="'+esc(P?P.nom:"")+'" onkeydown="if(event.key===\'Enter\')skProdOk(\''+(id||"")+'\')">'+
-    '<input id="sk-nu" class="sk-in" style="width:100%;margin-top:8px" placeholder="Conditionnement (ex. bidon 1 L, seau de 5 kg)" value="'+esc(P?(P.u||""):"")+'" onkeydown="if(event.key===\'Enter\')skProdOk(\''+(id||"")+'\')">'+
-    '<div class="sk-mb"><span>'+(P?'<a href="#" class="sk-lk" style="color:#B42318" onclick="event.preventDefault();skProdDel(\''+id+'\')">'+(DELP===id?"Confirmer la suppression":"Supprimer ce produit")+'</a>':'')+'</span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skProdOk(\''+(id||"")+'\')">'+(P?"Enregistrer":"Ajouter")+'</button></span></div>');
-  if(!DELP) document.getElementById("sk-np").focus(); };
-window.skProdOk=function(id){ var n=(document.getElementById("sk-np").value||"").trim(), u=(document.getElementById("sk-nu").value||"").trim(); if(!n){ toast("Donne un nom au produit"); return; }
-  if(S.produits.some(function(p){return p.id!==id&&p.nom.toLowerCase()===n.toLowerCase();})){ toast("Ce produit existe déjà"); return; }
-  if(id){ var P=prod(id); if(P.nom!==n) log(P.nom+" renommé en "+n); P.nom=n; P.u=u; } else { S.produits.push({id:"p"+Date.now(),nom:n,u:u}); log(n+" ajouté au stock"); }
-  save(); document.getElementById("sk-ov").classList.remove("on"); DELP=""; paint(); toast(id?"✓ Produit modifié":"✓ "+n+" ajouté"); };
-window.skProdDel=function(id){ var P=prod(id); if(!P) return; if(DELP!==id){ DELP=id; skProd(id); return; }
-  DELP=""; var av=JSON.stringify(S); S.produits=S.produits.filter(function(p){return p.id!==id;}); Object.keys(S.niv).forEach(function(l){ delete S.niv[l][id]; }); delete S.cmd[id]; delete S.lot[id];
-  Object.keys(S.tour||{}).forEach(function(c){ S.tour[c].forEach(function(i){ i.p=(i.p||[]).filter(function(q){return q!==id;}); }); });
-  log(P.nom+" supprimé"); save(); document.getElementById("sk-ov").classList.remove("on"); paint(); toast(P.nom+" supprimé"); UNDO=av; offreAnnuler(); };
-/* ---- Partir de zéro + guide en 3 étapes ---- */
-window.skVide=function(){ UNDO=JSON.stringify(S); S={v:3,produits:[],lieux:[{id:"d1",nom:"Dépôt",t:"d"}],niv:{},cmd:{},lot:{},tour:{},hist:[]}; save(); VUE="l"; FD=""; paint(); toast("Stock vide : à toi de jouer"); offreAnnuler(); };
-var _paint=paint; paint=function(){ _paint(); var nc=S.lieux.filter(function(l){return l.t==="c";}).length;
-  if(!S.produits.length || !nc){ var ok1=S.produits.length>0, ok2=nc>0;
-    document.getElementById("sk-body").insertAdjacentHTML("afterbegin",'<div style="background:#fff;border:1px solid #E3E7EE;border-radius:14px;padding:16px 18px;margin-bottom:12px"><b style="color:#1E3350">Pour commencer · 3 étapes</b><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px;font-size:.82rem">'+
-      '<div><b>'+(ok1?"✓":"1.")+' Tes produits</b><br><span style="color:#5B677A">Appâts, pièges, insecticides…</span><br><button class="skb '+(ok1?"w":"o")+' s" style="margin-top:8px" onclick="skProd()">+ Produit</button></div>'+
-      '<div><b>'+(ok2?"✓":"2.")+' Tes camions</b><br><span style="color:#5B677A">Un par technicien. Le dépôt existe déjà.</span><br><button class="skb '+(ok1&&!ok2?"o":"w")+' s" style="margin-top:8px" onclick="skLieuNew()">+ Lieu</button></div>'+
-      '<div><b>3. C\'est tout</b><br><span style="color:#5B677A">Clique sur un lieu pour noter ce qu\'il reste. Ensuite le rouge et l\'orange te disent quoi faire.</span></div></div></div>'); } };
-
+  var o={id:(TL==="d"?"d":"c")+Date.now(),nom:n,t:TL}; if(TL==="c"){ var s=document.getElementById("sk-nd"); o.dep=s?s.value:deps()[0].id; } S.lieux.push(o); log(n+" ajouté"); save(); hide(); TAB=o.id; paint(); toast("✓ "+n+" ajouté · « Recompter » pour mettre ses chiffres"); };
+window.skLieuEdit=function(id){ var l=lieu(id); if(!l) return; CTX={}; var peut=!(l.t==="d"&&deps().length<2);
+  show('<h3>Modifier le lieu</h3><p>'+(l.t==="d"?"Dépôt":"Véhicule")+'</p><input id="sk-nl" class="sk-in" style="width:100%" value="'+esc(l.nom)+'" onkeydown="if(event.key===\'Enter\')skLieuOk(\''+id+'\')">'+
+    '<div class="sk-mb"><span>'+(peut?'<a href="#" class="sk-lk" style="color:#B42318" onclick="event.preventDefault();skLieuDel(\''+id+'\')">'+(DEL===id?"Confirmer la suppression":"Supprimer ce "+(l.t==="d"?"dépôt":"véhicule"))+'</a>':'')+'</span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skLieuOk(\''+id+'\')">Enregistrer</button></span></div>'); };
+window.skLieuOk=function(id){ var l=lieu(id), n=(document.getElementById("sk-nl").value||"").trim(); if(!n){ toast("Donne un nom"); return; }
+  if(S.lieux.some(function(x){return x.id!==id&&x.nom.toLowerCase()===n.toLowerCase();})){ toast("Ce nom existe déjà"); return; } if(n!==l.nom){ log(l.nom+" renommé en "+n); l.nom=n; save(); } hide(); paint(); };
+window.skLieuDel=function(id){ var l=lieu(id); if(!l) return; if(DEL!==id){ DEL=id; skLieuEdit(id); return; }
+  var av=JSON.stringify(S), autre=null; if(l.t==="d"){ autre=deps().filter(function(d){return d.id!==id;})[0]; if(!autre){ toast("Il faut garder au moins un dépôt"); return; }
+    S.lieux.forEach(function(x){ if(x.t==="c"&&x.dep===id) x.dep=autre.id; }); Object.keys(S.cmd).forEach(function(z){ if(S.cmd[z].l===id) S.cmd[z].l=autre.id; }); }
+  var rep=(autre||lieu(l.dep)||deps().filter(function(d){return d.id!==id;})[0]||{}).id; Object.keys(S.mat).forEach(function(z){ if(S.mat[z].l===id) S.mat[z].l=rep; });
+  S.lieux=S.lieux.filter(function(x){return x.id!==id;}); delete S.q[id]; delete S.tour[id]; if(TAB===id) TAB=""; log(l.nom+" supprimé"); fait(av,l.nom+" supprimé"+(autre?" · ses véhicules passent à "+autre.nom:"")); };
+window.skPK=function(k){ PK=k; var a=document.getElementById("sk-kc"), b=document.getElementById("sk-km"); if(a) a.className=k==="c"?"on":""; if(b) b.className=k==="m"?"on":""; document.getElementById("sk-bc").style.display=k==="c"?"":"none"; document.getElementById("sk-bm").style.display=k==="m"?"":"none"; };
+window.skProd=function(id){ CTX={}; var P=id?prod(id):null; PK=P?(P.k==="m"?"m":"c"):PK; var M=P&&S.mat[id];
+  show('<h3>'+(P?"Modifier l'article":"Ajouter un article")+'</h3><p>'+(P?(PK==="m"?"Matériel : pas de quantité, juste où il est et s'il marche.":"Consommable : on compte ce qu'il reste."):"Consommable = ce qui se compte et se rachète. Matériel = un outil ou une machine, sans quantité.")+'</p>'+
+    (P?'':'<span class="sk-seg2" style="margin-bottom:10px"><button id="sk-kc" class="'+(PK==="c"?"on":"")+'" onclick="skPK(\'c\')">📦 Consommable</button><button id="sk-km" class="'+(PK==="m"?"on":"")+'" onclick="skPK(\'m\')">🔧 Matériel</button></span>')+
+    '<input id="sk-np" class="sk-in" style="width:100%" placeholder="Nom de l\'article" value="'+esc(P?P.nom:"")+'">'+
+    '<input id="sk-nc" class="sk-in" list="sk-dc" style="width:100%;margin-top:8px" placeholder="Catégorie (facultatif)" value="'+esc(P?(P.cat||""):"")+'"><datalist id="sk-dc">'+cats().map(function(c){ return '<option value="'+esc(c)+'">'; }).join("")+'</datalist>'+
+    '<div id="sk-bc" style="display:'+(PK==="c"?"":"none")+'"><input id="sk-nu" class="sk-in" list="sk-du" style="width:100%;margin-top:8px" placeholder="Unité (pièce, mètre, litre, bidon 5 L…)" value="'+esc(P?(P.u||""):"")+'"><datalist id="sk-du"><option value="pièce"><option value="mètre"><option value="litre"><option value="kg"><option value="boîte"><option value="bidon"><option value="rouleau"><option value="carton"></datalist>'+
+      '<div class="sk-set">M\'alerter quand le dépôt en a moins de <input id="sk-ns" class="sk-in" inputmode="decimal" value="'+nf(P?(P.seuil||0):2)+'"></div>'+
+      '<div class="sk-set">Minimum à avoir dans chaque véhicule <input id="sk-nm" class="sk-in" inputmode="decimal" value="'+nf(P?(P.min||0):0)+'"></div><div class="sk-hint">0 = pas de minimum. Sous le minimum, le véhicule passe « à charger ».</div></div>'+
+    '<div id="sk-bm" style="display:'+(PK==="m"?"":"none")+'"><div class="sk-set">Où est-il ? <select id="sk-nw" class="sk-in" style="width:auto;min-width:0;flex:1">'+S.lieux.map(function(l){ return '<option value="'+l.id+'" '+(M&&M.l===l.id?"selected":"")+'>'+ic(l)+esc(l.nom)+'</option>'; }).join("")+'</select></div></div>'+
+    '<div class="sk-mb"><span>'+(P?'<a href="#" class="sk-lk" style="color:#B42318" onclick="event.preventDefault();skProdDel(\''+id+'\')">'+(DEL===id?"Confirmer la suppression":"Supprimer cet article")+'</a>':'')+'</span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skProdOk(\''+(id||"")+'\')">'+(P?"Enregistrer":"Ajouter")+'</button></span></div>'); };
+window.skProdOk=function(id){ var g=function(i){ return (document.getElementById(i).value||"").trim(); }, n=g("sk-np"), c=g("sk-nc"); if(!n){ toast("Donne un nom à l'article"); return; }
+  if(S.produits.some(function(p){return p.id!==id&&p.nom.toLowerCase()===n.toLowerCase();})){ toast("Cet article existe déjà"); return; }
+  var P=id?prod(id):{id:"p"+Date.now()}; P.nom=n; P.cat=c;
+  if(PK==="m"){ P.k="m"; S.mat[P.id]=S.mat[P.id]||{e:0}; S.mat[P.id].l=g("sk-nw"); } else { P.u=g("sk-nu"); P.seuil=num(g("sk-ns")); P.min=num(g("sk-nm")); }
+  if(!id){ S.produits.push(P); log(n+" ajouté"); } save(); hide(); paint(); toast(id?"✓ Article modifié":"✓ "+n+" ajouté"); };
+window.skProdDel=function(id){ var P=prod(id); if(!P) return; if(DEL!==id){ DEL=id; skProd(id); return; }
+  var av=JSON.stringify(S); S.produits=S.produits.filter(function(p){return p.id!==id;}); Object.keys(S.q).forEach(function(l){ delete S.q[l][id]; }); delete S.cmd[id]; delete S.lot[id]; delete S.mat[id]; Object.keys(S.tour).forEach(function(c){ S.tour[c].forEach(function(i){ if(i.p) delete i.p[id]; }); }); log(P.nom+" supprimé"); fait(av,P.nom+" supprimé"); };
+/* ============ RECHERCHE, CATÉGORIES, MÉTIER ============ */
+function filtres(){ var c=cats(); if(S.produits.length<6&&!Q&&!CAT) return "";
+  return '<div class="sk-f"><input id="sk-find" class="sk-in" placeholder="🔎 Chercher un article…" value="'+esc(Q)+'" oninput="skFind(this.value)">'+(c.length>1?'<button class="'+(!CAT?"on":"")+'" onclick="skCat(-1)">Tout</button>'+c.map(function(x,i){ return '<button class="'+(CAT===x?"on":"")+'" onclick="skCat('+i+')">'+esc(x)+'</button>'; }).join(""):'')+'</div>'; }
+window.skFind=function(v){ Q=v; paint(); var e=document.getElementById("sk-find"); if(e){ e.focus(); try{ e.setSelectionRange(v.length,v.length); }catch(x){} } };
+window.skCat=function(i){ CAT=i<0?"":(cats()[i]||""); paint(); };
+window.skMetier=function(m){ S=demo(m); TAB=""; Q=""; CAT=""; UNDO=""; save(); paint(); toast("Exemple : "+({nuisibles:"nuisibles",plomberie:"plomberie",assainissement:"assainissement",nettoyage:"nettoyage"})[S.metier]); };
+/* ============ MATÉRIEL (pas de quantité : où il est, s'il marche) ============ */
+var ME=["OK","En panne","Introuvable"];
+function matCard(L){ if(!mats().length) return ""; var M=mats().filter(vis).filter(function(p){ return !L||(S.mat[p.id]||{}).l===L; }); if(L&&!M.length) return "";
+  var pb=mats().filter(function(p){ return (S.mat[p.id]||{}).e>0; }).length;
+  return '<div class="sk-card" style="margin-top:12px;padding:12px 14px 6px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><b style="color:#1E3350">🔧 Matériel'+(L?" ici":"")+' · '+M.length+'</b><span class="sk-hint">'+(!L&&pb?pl(pb,"problème")+" · ":"")+'pas de quantité : juste où il est et s\'il marche</span></div>'+
+    (M.length?M.map(function(p){ var m=S.mat[p.id]||{l:"",e:0}, l=lieu(m.l); return '<div class="sk-mr" onclick="skMat(\''+p.id+'\')"><span class="nm"><b>'+esc(p.nom)+'</b>'+(p.cat?'<small>'+esc(p.cat)+'</small>':'')+'</span><span class="ou">'+(l?ic(l)+esc(l.nom):"–")+'</span><span class="st '+(m.e?"sr":"sg")+'">'+ME[m.e||0]+'</span></div>'; }).join(""):'<div class="sk-mr" style="cursor:default;color:#5B677A">Aucun matériel ne correspond.</div>')+'</div>'; }
+window.skMatList=function(){ CTX={}; show('<h3>🔧 Quel matériel ?</h3><p>Choisis-le, puis dis où il est et s\'il marche.</p>'+mats().map(function(p){ var m=S.mat[p.id]||{}, l=lieu(m.l); return '<div class="sk-mr" onclick="skMat(\''+p.id+'\')"><span class="nm"><b>'+esc(p.nom)+'</b></span><span class="ou">'+(l?ic(l)+esc(l.nom):"–")+'</span><span class="st '+(m.e?"sr":"sg")+'">'+ME[m.e||0]+'</span></div>'; }).join("")+'<div class="sk-mb"><a href="#" class="sk-lk" onclick="event.preventDefault();skMenu()">‹ Retour</a><button class="skb w" onclick="skClose()">Fermer</button></div>'); };
+window.skMat=function(id){ var P=prod(id), m=S.mat[id]; if(!P||!m) return; CTX={k:"mat",id:id,l:m.l,e:m.e||0};
+  CTX.draw=function(){ show('<h3>🔧 '+esc(P.nom)+'</h3><p>Où est-il, et est-ce qu\'il marche ?</p><div class="sk-set" style="margin-top:0">Il est dans <select class="sk-in" style="width:auto;min-width:0;flex:1;font-weight:700;color:#1E3350" onchange="CTXl(this.value)">'+S.lieux.map(function(l){ return '<option value="'+l.id+'" '+(CTX.l===l.id?"selected":"")+'>'+ic(l)+esc(l.nom)+'</option>'; }).join("")+'</select></div>'+
+    '<div class="sk-seg2" style="margin-top:12px">'+ME.map(function(t,i){ return '<button class="'+(CTX.e===i?"on":"")+'" onclick="skMe('+i+')">'+t+'</button>'; }).join("")+'</div>'+
+    '<div class="sk-mb"><a href="#" class="sk-lk" onclick="event.preventDefault();skProd(\''+id+'\')">Modifier ou supprimer l\'article</a><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skMatOk()">Enregistrer</button></span></div>'); };
+  CTX.draw(); };
+window.CTXl=function(v){ CTX.l=v; };
+window.skMe=function(i){ CTX.e=i; CTX.draw(); };
+window.skMatOk=function(){ var id=CTX.id, P=prod(id), m=S.mat[id], t=[]; if(m.l!==CTX.l) t.push((lieu(m.l)||{nom:"?"}).nom+" → "+lieu(CTX.l).nom); if((m.e||0)!==CTX.e) t.push(ME[CTX.e].toLowerCase());
+  if(!t.length){ hide(); return; } var av=JSON.stringify(S); m.l=CTX.l; m.e=CTX.e; log(P.nom+" : "+t.join(" · ")); fait(av,"✓ "+P.nom+" : "+t.join(" · ")); };
+/* ============ ACHETÉ POUR UN CHANTIER (ne passe pas par le dépôt) ============ */
+window.skAchat=function(){ CTX={k:"achat",c:"",x:"",m:""}; LN=[]; CTX.mk=function(p){ return {p:p,n:1,sub:(prod(p).u||"")}; };
+  CTX.draw=function(){ show('<h3>🧾 J\'ai acheté pour un chantier</h3><p>Pris chez le fournisseur et posé direct chez le client. Ça ne touche pas au stock.</p>'+
+    '<input class="sk-in" style="width:100%" placeholder="Pour quel client ou chantier ?" value="'+esc(CTX.c)+'" oninput="skAv(\'c\',this.value)">'+
+    '<div style="margin-top:6px">'+lignes("Choisis un article de ta liste ci-dessous, ou écris-le à la main.")+'</div>'+
+    '<input class="sk-in" style="width:100%;margin-top:8px" placeholder="Autre chose, pas dans la liste (ex. 1 chauffe-eau 300 L)" value="'+esc(CTX.x)+'" oninput="skAv(\'x\',this.value)">'+
+    '<div class="sk-set">Montant payé HT (facultatif) <input class="sk-in" inputmode="decimal" value="'+esc(CTX.m)+'" oninput="skAv(\'m\',this.value)"> €</div>'+
+    '<div class="sk-hint" style="margin-top:8px">Dans le logiciel final, ces lignes pourront être ajoutées à la facture du client.</div>'+pied("skAchatOk","Enregistrer")); };
+  CTX.draw(); };
+window.skAv=function(k,v){ CTX[k]=v; };
+window.skAchatOk=function(){ var c=(CTX.c||"").trim(), L=LN.filter(function(x){return x.n>0;}), x=(CTX.x||"").trim(), m=num(CTX.m); if(!c){ toast("Indique le client ou le chantier"); return; } if(!L.length&&!x){ toast("Indique ce que tu as acheté"); return; }
+  var av=JSON.stringify(S), d=L.map(function(z){ return nf(z.n)+" × "+prod(z.p).nom; }); if(x) d.push(x);
+  S.achats.unshift({d:today(),c:c,l:d,m:m}); S.achats=S.achats.slice(0,30); log("Acheté pour "+c+" : "+d.join(", ")+(m?" · "+nf(m)+" € HT":"")); fait(av,"✓ Noté pour "+c+" · le stock ne bouge pas"); };
+document.addEventListener("keydown", function(e){ if(e.key==="Escape") hide(); });
 load(); save(); paint();
 })();
 </script>

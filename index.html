@@ -1562,15 +1562,17 @@ document.addEventListener("click", function(e){
        Seulement si la page Stock a déjà été ouverte (clé présente). */
     var skh = "";
     try{
-      var SK = J("tigerflow-stock-v1", null);
+      var SK = J("tigerflow-stock-v2", null);
       if(SK && SK.lieux && SK.produits){
-        var nv = function(l, q){ return (SK.niv && SK.niv[l] && SK.niv[l][q]) || 0; };
+        var qt = function(l, q){ var v = SK.q && SK.q[l] && SK.q[l][q]; return (typeof v === "number" && v > 0) ? v : 0; };
         var skrow = function(b, sm){ return '<a class="brow nu" href="stock.html"><span class="bic" style="background:#EAF0F7;color:#1E3350"><svg viewBox="0 0 24 24"><path d="M3 9l9-6 9 6v11H3z"/></svg></span><span class="bb"><b>' + b + '</b><small>' + sm + '</small></span><span class="btime">Stock</span></a>'; };
-        var ch = SK.lieux.filter(function(l){ if(l.t !== "c") return false; var need = []; ((SK.tour || {})[l.id] || []).forEach(function(i){ (i.p || []).forEach(function(q){ need.push(q); }); }); return SK.produits.some(function(q){ var v = nv(l.id, q.id); return v === 2 || (v === 1 && need.indexOf(q.id) > -1); }); });
-        var cm = SK.produits.filter(function(q){ return !(SK.cmd || {})[q.id] && SK.lieux.some(function(l){ return l.t === "d" && nv(l.id, q.id) > 0; }); });
+        var ch = SK.lieux.filter(function(l){ if(l.t !== "c") return false; var need = {}; ((SK.tour || {})[l.id] || []).forEach(function(i){ Object.keys(i.p || {}).forEach(function(q){ need[q] = (need[q] || 0) + (+i.p[q] || 0); }); }); return SK.produits.some(function(q){ return q.k !== "m" && Math.max(need[q.id] || 0, +q.min || 0) > qt(l.id, q.id); }); });
+        var cm = SK.produits.filter(function(q){ return q.k !== "m" && !(SK.cmd || {})[q.id] && SK.lieux.some(function(l){ return l.t === "d" && (qt(l.id, q.id) === 0 || qt(l.id, q.id) < (q.seuil || 0)); }); });
         var lt = Object.keys(SK.cmd || {}).filter(function(q){ var t = jour(SK.cmd[q].d); return t && (auj - t) / 864e5 >= 7; });
-        if(ch.length) skh += skrow("🚐 " + ch.length + " camion" + (ch.length > 1 ? "s" : "") + " à charger pour demain", esc(ch.map(function(l){ return l.nom.replace(/^Camion d[e']\s?/, ""); }).join(", ")));
-        if(cm.length) skh += skrow("📦 " + cm.length + " produit" + (cm.length > 1 ? "s" : "") + " à commander", esc(cm.slice(0, 3).map(function(q){ return q.nom; }).join(", ")));
+        if(ch.length) skh += skrow("🚐 " + ch.length + " véhicule" + (ch.length > 1 ? "s" : "") + " à charger", esc(ch.map(function(l){ return l.nom.replace(/^(Camion|Véhicule|Utilitaire|Fourgon) d[e']\s?/, ""); }).join(", ")));
+        if(cm.length) skh += skrow("📦 " + cm.length + " article" + (cm.length > 1 ? "s" : "") + " à commander", esc(cm.slice(0, 3).map(function(q){ return q.nom; }).join(", ")));
+        var mp = SK.produits.filter(function(q){ return q.k === "m" && SK.mat && SK.mat[q.id] && SK.mat[q.id].e > 0; });
+        if(mp.length) skh += skrow("🔧 " + mp.length + " matériel" + (mp.length > 1 ? "s" : "") + " en panne ou introuvable" + (mp.length > 1 ? "s" : ""), esc(mp.slice(0, 3).map(function(q){ return q.nom; }).join(", ")));
         if(lt.length) skh += skrow("⏰ " + lt.length + " commande" + (lt.length > 1 ? "s" : "") + " en retard", "Commandé il y a plus de 7 jours, toujours pas reçu.");
       }
     }catch(e){}
