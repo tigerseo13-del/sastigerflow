@@ -238,6 +238,7 @@ ul{list-style:none}
 .plvide[hidden]{display:none}   /* le piège documenté : display:block bat l'attribut hidden */
 .plvide{display:block;text-align:center;border:2px dashed #D8DAE1;border-radius:14px;background:#FBFBFC;padding:56px 20px;cursor:pointer;width:100%;font-family:inherit}
 .plvide:hover{border-color:var(--orange);background:var(--orange-soft)}
+.plsans{text-align:center;font-size:.82rem;color:var(--muted);margin-top:12px}.plsans[hidden]{display:none}.plsans a{color:#1E3350;font-weight:700;text-decoration:underline;cursor:pointer}
 .plvide b{display:block;font-size:1rem;margin:10px 0 4px;color:var(--ink)}
 .plvide p{font-size:.82rem;color:var(--muted);max-width:420px;margin:0 auto}
 .plvide svg{width:34px;height:34px;stroke:var(--orange);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -464,7 +465,7 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
 
   <div class="topbar">
     <button class="back-m" onclick="history.back()" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
-    <div class="crumbs"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span>Clients</span><span class="sep">›</span><span>Ironwood Solutions</span><span class="sep">›</span><span class="cur">Plan d'appâtage</span></div>
+    <div class="crumbs"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span><a href="clients.html" style="color:inherit;text-decoration:none">Clients</a><span class="sep">›</span><a id="pl-crumb" href="client.html" style="color:inherit;text-decoration:none">Ironwood Solutions</a><span class="sep">›</span><span class="cur">Plan d'appâtage</span></div>
     <div class="title-m"><span class="pgico" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Plan d'appâtage</div>
     <div class="spacer"></div>
     <div class="gsbtn" onclick="gsTap()" role="search">
@@ -575,6 +576,8 @@ body.mini .lprow{flex-wrap:wrap;justify-content:center;padding:8px 6px;gap:4px}b
           <b>Pose le plan du local</b>
           <p>Une photo ou un scan du plan (image). Les postes se posent ensuite d'un clic dessus — et ils restent en place même si tu remplaces le fond plus tard.</p>
         </button>
+        <!-- 25/11 (patron) : pas d'image du local = on ne doit pas rester bloqué -->
+        <div class="plsans" id="plsans" hidden>Pas d'image du local ? <a onclick="plSansPlan()">Commencer sans plan</a> — une grille vide, tu poses les postes dessus et tu ajoutes le vrai plan plus tard.</div>
 
         <div class="legend">
           <span><i class="pastille" style="background:var(--green)"></i>Poste rongeurs — RAS</span>
@@ -878,6 +881,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     Object.keys(lireP()).forEach(function(k){
       if(!out.some(function(o){ return o.k === k; })){ var n = nomDe(k); out.push({k: k, lbl: n.client + (n.site ? " — " + n.site : "")}); }
     });
+    if(MODE && !out.some(function(o){ return o.k === MODE; })){ var nm = nomDe(MODE); out.push({k: MODE, lbl: nm.client + (nm.site ? " — " + nm.site : "")}); }
     return out;
   }
   function remplirSel(){
@@ -898,7 +902,9 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     if(NIV >= fonds.length) NIV = 0;
     $("planview").hidden = !demo; var fz = document.querySelector(".plancard .zoom"); if(fz) fz.style.display = demo ? "" : "none"; var ff = $("filters"); if(ff) ff.style.display = demo ? "" : "none";
     $("rview").hidden = demo || !fonds.length;
-    $("plvide").hidden = demo || !!fonds.length;
+    $("plvide").hidden = demo || !!fonds.length; var ps0 = $("plsans"); if(ps0) ps0.hidden = demo || !!fonds.length;
+    var cr0 = $("pl-crumb"); if(cr0){ var nc0 = demo ? "Ironwood Solutions" : nomDe(MODE).client; cr0.textContent = nc0; cr0.href = demo ? "client.html" : "client.html?c=" + encodeURIComponent(nc0); }
+    try{ history.replaceState(null, "", demo ? "plan-appatage.html" : "plan-appatage.html?plan=" + encodeURIComponent(MODE)); }catch(e9){}
     var nv = $("plnivs");
     if(nv){
       nv.hidden = demo || !fonds.length;
@@ -1136,7 +1142,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
           ? '<div class="plrad" style="margin-top:7px">' + t("mec", "Piège mécanique") + t("mon", "Monitoring non toxique") + '</div>'
           : '<a class="plautres" onclick="this.nextElementSibling.hidden = false; this.remove();">+ autres types (piège mécanique, monitoring)</a>'
             + '<div class="plrad" hidden style="margin-top:7px">' + t("mec", "Piège mécanique") + t("mon", "Monitoring non toxique") + '</div>')
-      + '<label>Emplacement</label><input type="text" id="pf-zone" placeholder="Cuisine — angle nord-ouest">'
+      + '<label>Emplacement <span style="color:#DC2626">*</span></label><input type="text" id="pf-zone" placeholder="Cuisine — angle nord-ouest">'
       + '<label>Produit en place</label><input type="text" id="pf-prod" list="plprods" value="' + esc(LASTP || DEFP[LASTT]) + '">'
       + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.78rem"><input type="checkbox" id="pf-serie"' + (SERIE ? " checked" : "") + ' style="width:auto;accent-color:var(--orange)"> Enchaîner — poser le suivant juste après (même type, même produit)</label>'
       + '<div class="d-actions"><button class="btn primary" onclick="plNewSave()">Poser le poste</button><button class="btn outline" onclick="plNewAnnule()">Annuler</button></div></div>';
@@ -1254,7 +1260,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   window.plAdd = function(){
     if(!MODE){ tst("La démo ne s'édite pas — choisis un client dans le sélecteur en haut."); return; }
     var pl = cur();
-    if(!nivDe(pl).length){ tst("Pose d'abord le plan du local (l'image) — le bouton en pointillé."); $("pl-file").click(); return; }
+    if(!nivDe(pl).length){ tst("Pose d'abord le plan du local — ou « Commencer sans plan » juste dessous."); return; }
     ADD = !ADD; MOVE = ""; PENDING = null; PENDNIV = false;
     if(!ADD) SERIE = false;
     paint();
@@ -1383,6 +1389,8 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   window.plNewSave = function(){
     var pl = cur(); if(!pl || !PENDING) return;
     var type = (document.querySelector('input[name="pf-t"]:checked') || {value: "pa"}).value;
+    var zf = $("pf-zone");
+    if(zf && !zf.value.trim()){ zf.style.borderColor = "#DC2626"; zf.placeholder = "Obligatoire — ex. Cuisine, angle nord-ouest"; zf.focus(); tst("Indique l'emplacement du poste — c'est ce que lit le technicien et l'auditeur."); return; }
     SERIE = !!($("pf-serie") || {}).checked;
     pl.seq = (pl.seq || 0) + 1;
     var x = {
@@ -1415,6 +1423,19 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     paint();
   });
 
+  window.plSansPlan = function(){
+    if(!MODE) return;
+    var cv = document.createElement("canvas"); cv.width = 1200; cv.height = 720;
+    var cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, 1200, 720);
+    cx.strokeStyle = "#E3E7EE"; cx.lineWidth = 1;
+    for(var gx = 0; gx <= 1200; gx += 60){ cx.beginPath(); cx.moveTo(gx, 0); cx.lineTo(gx, 720); cx.stroke(); }
+    for(var gy = 0; gy <= 720; gy += 60){ cx.beginPath(); cx.moveTo(0, gy); cx.lineTo(1200, gy); cx.stroke(); }
+    cx.strokeStyle = "#B9C2D0"; cx.lineWidth = 3; cx.strokeRect(2, 2, 1196, 716);
+    cx.fillStyle = "#9AA5B5"; cx.font = "600 22px sans-serif"; cx.fillText("Sans plan — positions indicatives", 24, 40);
+    var pl = cur() || {postes: [], seq: 0};
+    pl.niveaux = [{nom: "Rez-de-chaussée", fond: cv.toDataURL("image/jpeg", .7)}]; pl.sansplan = true; NIV = 0;
+    if(sauve(pl)){ ADD = true; paint(); remplirSel(); tst("✓ Grille prête — clique dessus pour poser le premier poste. « Changer le fond » pour mettre le vrai plan plus tard."); }
+  };
   window.plFile = function(inp){
     var f = inp.files && inp.files[0]; inp.value = "";
     if(!f || !MODE) return;
@@ -1440,7 +1461,7 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
         if(sauve(pl)){ paint(); remplirSel(); tst("✓ Niveau « " + pl.niveaux[NIV].nom + " » posé — ses postes se posent dessus."); }
         return;
       }
-      if(pl.niveaux.length) pl.niveaux[NIV].fond = d;
+      if(pl.niveaux.length){ pl.niveaux[NIV].fond = d; delete pl.sansplan; }
       else { pl.niveaux = [{nom: "Rez-de-chaussée", fond: d}]; NIV = 0; }
       if(sauve(pl)){ paint(); remplirSel(); tst("✓ Plan posé — « Ajouter un poste » puis clique dessus."); }
     };
@@ -1492,7 +1513,8 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
   try{
     var prm = new URLSearchParams(location.search);
     var qp = prm.get("plan");
-    if(qp && lireP()[qp]){ MODE = qp; localStorage.setItem("tigerflow-plan-cur", MODE); }
+    if(prm.get("demo") === "1"){ MODE = ""; }
+    else if(qp && qp.indexOf("|") > 0){ MODE = qp; localStorage.setItem("tigerflow-plan-cur", MODE); }
     else { var m0 = localStorage.getItem("tigerflow-plan-cur"); if(m0 && lireP()[m0]) MODE = m0; }
     var qpo = prm.get("poste");
     /* 29/08 : l'étiquette scannée par un TÉLÉPHONE doit ouvrir le relevé
@@ -2402,6 +2424,7 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
     if(!window.PLMODE){ window.print(); return; }   /* démo : la vitrine s'imprime telle quelle */
     if(window.plZ) plZ(0);                          /* vue entière — le zoom fausserait la page */
     var pl = plDe(); if(!pl){ window.print(); return; }
+    try{ var allx = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}"); if(allx[window.PLMODE]){ var dx = new Date(); allx[window.PLMODE].pdf = String(dx.getDate()).padStart(2, "0") + "/" + String(dx.getMonth() + 1).padStart(2, "0") + "/" + dx.getFullYear(); localStorage.setItem("tigerflow-plans", JSON.stringify(allx)); } }catch(ex){}
     var nivx = (pl.niveaux && pl.niveaux.length) ? pl.niveaux : (pl.fond ? [{nom: "", fond: pl.fond}] : []);
     var act = (pl.postes || []).filter(function(x){ return !x.retire; });
     var nom = String(window.PLMODE).split("|");

@@ -739,6 +739,24 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-off
 textarea.eqin{resize:vertical;font-weight:500}
 #eqveil .ipdrawer{background:var(--bg,#F4F5F8)}
 /* Équipements */
+
+.plc{display:flex;gap:16px;align-items:center;padding:4px 0}
+.plc + .plc{border-top:1px solid var(--line);margin-top:14px;padding-top:18px}
+.plc .pli{width:46px;height:46px;border-radius:13px;background:#EAF0F7;display:grid;place-items:center;flex:none}
+.plc .pli svg{width:22px;height:22px;stroke:#1E3350;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.plc .plm{width:150px;height:92px;border:2px solid #1E3350;border-radius:9px;position:relative;background:#FAFBFC center/cover no-repeat;flex:none;overflow:hidden;cursor:pointer}
+.plc .plm i{position:absolute;width:11px;height:11px;border-radius:3px;margin:-5px 0 0 -5px;border:1.5px solid #fff}
+.plc h3{margin:0;font-size:1rem;color:#1E3350}
+.plc p{margin:3px 0 0;color:var(--muted);font-size:.82rem}
+.plc .plch{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.plc .plch span{padding:3px 10px;border-radius:20px;background:#EAF0F7;color:#1E3350;font-size:.74rem;font-weight:700}
+.plc .plch .g{background:#E4F5EC;color:#14784A}.plc .plch .r{background:#FDE8E6;color:#B3261E}.plc .plch .o{background:#FFF3DC;color:#8A5A00}
+.plc .plb{margin-left:auto;background:var(--orange);color:#fff;border:0;border-radius:11px;padding:11px 16px;font-weight:800;font-family:inherit;font-size:.86rem;cursor:pointer;white-space:nowrap;text-decoration:none}
+.plc .pls{font-size:.78rem;color:var(--muted);margin-top:6px}.plc .pls a{color:#1E3350;font-weight:700;text-decoration:underline;cursor:pointer}
+.eqpl{cursor:pointer}.eqpl .eqn{width:34px;height:34px;border-radius:9px;color:#fff;font-weight:800;font-size:.8rem;display:grid;place-items:center;flex:none}
+.eqpl .eqs{margin-left:auto;font-size:.8rem;color:var(--muted);white-space:nowrap}.eqpl .eqs.r{color:#B3261E;font-weight:700}
+.eqplh{font-size:.78rem;font-weight:700;color:#1E3350;margin-top:6px}
+@media(max-width:700px){.plc{flex-wrap:wrap}.plc .plb{margin-left:0;width:100%;text-align:center}}
 .equip{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:15px;padding:14px;transition:.14s}
 .equip:hover{border-color:#FFD9C4;background:var(--orange-soft)}
 .equip .eic{width:46px;height:46px;border-radius:13px;background:var(--orange-soft);display:grid;place-items:center;font-size:1.25rem;flex:none}
@@ -1392,10 +1410,13 @@ const PANELV = "&v=" + Math.floor(Date.now() / 1000);
     </div>
 
     <div class="grid" data-tab="equip">
+      <!-- 25/11 (patron) : le plan d'appâtage se trouve et se crée DEPUIS le client -->
+      <div class="card full" id="plancard" hidden></div>
       <div class="card full">
         <div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 00-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 005.4-5.4l-2.4 2.4-2.3-.7-.7-2.3z"/></svg></span>Équipements installés<span class="tcpt" id="eqlist-cpt"></span><label class="tsrch" data-for="eqlist"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5l-3.8-3.8"/></svg><input placeholder="Rechercher un équipement…" oninput="oRech('eqlist',this.value)"></label><button class="addbtn" style="margin-left:auto" onclick="eqOpen()">+ Ajouter un équipement</button></div>
-        <!-- 04/08 (patron) : le plan d'appâtage est parti en bêta dans Réglages. -->
+        <!-- 25/11 : les postes du plan d'appâtage s'affichent ici tout seuls (#eqplan) -->
         <div id="eqlist" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
+        <div id="eqplan" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
       </div>
       <!-- 29/07 (patron) : la carte Registre est retiree. -->
     </div>
@@ -1658,8 +1679,16 @@ function cdocRender(){
   const box = document.getElementById("cdocs");
   if(!box) return;
   const list = cdocGet();
-  const n = document.getElementById("n-docs"); if(n) n.textContent = list.length || "";
-  box.innerHTML = list.length ? list.map((d, i) => {
+  let plansDoc = "";
+  try{ if(typeof plansCli === "function"){ const PP = plansCli();
+    plansDoc = PP.liste.filter(o => o.pl && (o.pl.postes || []).some(x => !x.retire)).map(o =>
+      '<figure class="doccard ouvrable" onclick="location.href=\'plan-appatage.html?plan=' + encodeURIComponent(o.k).replace(/'/g, "%27") + '\'" title="Ouvrir le plan — le PDF HACCP s\'exporte depuis le plan, toujours à jour">' +
+      '<div class="docvue"><span class="docext">PDF</span><span class="doctag">HACCP</span></div>' +
+      '<figcaption><b>Plan d\'appâtage' + (o.site ? ' — ' + o.site : '') + '</b><small>' + (o.pl.pdf ? 'exporté le ' + o.pl.pdf : 'toujours à jour') + ' · ' + (o.pl.postes || []).filter(x => !x.retire).length + ' postes</small></figcaption></figure>').join("");
+  } }catch(e){}
+  const n = document.getElementById("n-docs"); if(n) n.textContent = (list.length + (plansDoc ? 1 : 0)) || "";
+  if(plansDoc && !list.length){ box.innerHTML = plansDoc; if(typeof oRechInit === "function") oRechInit(); return; }
+  box.innerHTML = list.length ? plansDoc + list.map((d, i) => {
     const img = /^image\//.test(d.t || "") && d.src;
     const pdf = /pdf/.test(d.t || "") && d.src;
     const ext = (String(d.n).split(".").pop() || "?").toUpperCase().slice(0, 4);
@@ -2709,7 +2738,7 @@ function toast(msg, undoFn){
     Object.keys(PANES).forEach(function(k){
       var p = document.querySelector('[data-tab="' + k + '"]');
       if(!p) return;
-      var carte = p.querySelector(".card"), tete = carte && carte.querySelector(".card-h");
+      var carte = p.querySelector(".card:not(#plancard)"), tete = carte && carte.querySelector(".card-h");
       if(!tete){ p.innerHTML = vide.apply(null, PANES[k]); return; }
       /* l'en-tete reste, le reste de la carte cede la place au message */
       while(tete.nextSibling) carte.removeChild(tete.nextSibling);
@@ -2728,6 +2757,11 @@ function toast(msg, undoFn){
         carte.appendChild(lz);
         if(typeof eqLoad === "function" && eqLoad().length) d.remove();
         if(typeof eqDraw === "function") eqDraw();
+        var lp = document.createElement("div");
+        lp.id = "eqplan";
+        lp.style.cssText = "display:flex;flex-direction:column;gap:10px;margin-top:10px";
+        carte.appendChild(lp);
+        if(typeof planCarte === "function"){ planCarte(); if(lp.children.length) d.remove(); }
       }
       /* les liens d'action de l'en-tete emportent le client courant */
       tete.querySelectorAll("a.addbtn, a.more").forEach(function(a2){
@@ -3341,6 +3375,82 @@ function eqDraw(){
     </div>`).join("");
   if(typeof oRechInit === "function") oRechInit();
 }
+
+/* ===== 25/11 (patron) : le plan d'appâtage depuis la fiche client =====
+   « je pense on devrait le mettre dans la rubrique client ». Le plan est du
+   matériel posé chez le client : il vit dans l'onglet Équipements. La carte
+   ouvre la page du plan déjà réglée sur ce client ; les postes du plan
+   s'affichent dans la liste, sans double saisie. */
+function plansCli(){
+  var nom = "";
+  try{ nom = new URLSearchParams(location.search).get("c") || ""; }catch(e){}
+  var titre = cliNom(); if(!nom) nom = titre;
+  var all = {}; try{ all = JSON.parse(localStorage.getItem("tigerflow-plans")) || {}; }catch(e){}
+  var sites = []; try{ sites = (JSON.parse(localStorage.getItem("tigerflow-sites")) || {})[nom] || []; }catch(e){}
+  var out = [], vus = {};
+  var push = function(k){ if(vus[k]) return; vus[k] = 1; out.push({k: k, site: k.slice(k.indexOf("|") + 1), pl: all[k] || null}); };
+  Object.keys(all).forEach(function(k){ if(k.slice(0, k.indexOf("|")) === nom) push(k); });
+  sites.forEach(function(st){ if(st && st.nom) push(nom + "|" + st.nom); });
+  if(!out.length) push(nom + "|");
+  var demo = (nom === "Ironwood Solutions" || !nom) && !out.some(function(o){ return o.pl; });
+  return {nom: nom, liste: out, demo: demo};
+}
+function planCarte(){
+  var z = document.getElementById("plancard"); if(!z) return;
+  var P = plansCli(), esc = function(v){ return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); };
+  var ICO = '<span class="pli"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></span>';
+  var COL = {ok: "#1B8A46", conso: "#E8930C", alerte: "#DC2626", div: "#2453C6"};
+  var h = '<div class="card-h"><span class="chsq a"><svg viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></span>Plan d\'appâtage</div>';
+  if(P.demo){
+    h += '<div class="plc">' + ICO + '<div><h3>Site rue de la République</h3><p>Dernière relève le 12/06/2026 par Pablo</p>'
+      + '<div class="plch"><span>14 postes</span><span class="g">10 RAS</span><span class="o">3 consommation</span><span class="r">1 à remplacer</span></div></div>'
+      + '<a class="plb" href="plan-appatage.html?demo=1">Ouvrir le plan</a></div>';
+  } else {
+    h += P.liste.map(function(o){
+      var url = "plan-appatage.html?plan=" + encodeURIComponent(o.k);
+      var act = ((o.pl || {}).postes || []).filter(function(x){ return !x.retire; });
+      var fond = o.pl && ((o.pl.niveaux && o.pl.niveaux[0] && o.pl.niveaux[0].fond) || o.pl.fond);
+      if(!o.pl || (!fond && !act.length)){
+        return '<div class="plc">' + ICO + '<div><h3>' + (o.site ? esc(o.site) : "Aucun plan pour ce client") + '</h3>'
+          + '<p>' + (o.site ? "Aucun plan pour ce site. " : "") + 'Place les postes sur le plan du local : le technicien les relève à chaque visite, et le PDF HACCP sort tout seul.</p>'
+          + '<div class="pls">Pas d\'image du local ? La page du plan propose « Commencer sans plan ».</div></div>'
+          + '<a class="plb" href="' + url + '">+ Créer le plan d\'appâtage</a></div>';
+      }
+      var n = {ok: 0, conso: 0, alerte: 0, div: 0}, dern = "";
+      act.forEach(function(x){ n[x.statut] = (n[x.statut] || 0) + 1;
+        var m = /^(\d\d)\/(\d\d)\/(\d\d)$/.exec(x.releve || ""); if(m){ var t = "20" + m[3] + m[2] + m[1]; if(t > dern) dern = t; } });
+      var niv0 = act.filter(function(x){ return !(x.niv > 0); });
+      return '<div class="plc"><div class="plm" onclick="location.href=\'' + url + '\'" title="Ouvrir le plan"' + (fond ? ' style="background-image:url(' + fond + ')"' : "") + '>'
+        + niv0.map(function(x){ return '<i style="left:' + (x.x * 100) + '%;top:' + (x.y * 100) + '%;background:' + (COL[x.statut] || COL.ok) + '"></i>'; }).join("") + '</div>'
+        + '<div><h3>' + esc(o.site || "Plan du local") + '</h3>'
+        + '<p>' + (act.length ? (dern ? "Dernière relève le " + dern.slice(6) + "/" + dern.slice(4, 6) + "/" + dern.slice(0, 4) : "Pas encore relevé") : "Plan posé — aucun poste pour l\'instant") + '</p>'
+        + '<div class="plch"><span>' + act.length + ' poste' + (act.length > 1 ? "s" : "") + '</span>'
+        + (n.ok ? '<span class="g">' + n.ok + ' RAS</span>' : "") + (n.conso ? '<span class="o">' + n.conso + ' consommation</span>' : "")
+        + (n.alerte ? '<span class="r">' + n.alerte + ' à remplacer</span>' : "") + (n.div ? '<span>' + n.div + ' DEIV</span>' : "") + '</div></div>'
+        + '<a class="plb" href="' + url + '">Ouvrir le plan</a></div>';
+    }).join("");
+  }
+  z.innerHTML = h; z.hidden = false;
+  /* les postes du plan, dans la liste des équipements — lecture seule ici */
+  var q = document.getElementById("eqplan"); if(!q) return;
+  var TY = {pa: "Poste d'appâtage", eko: "Ekomille", div: "DEIV", mec: "Piège mécanique", mon: "Monitoring"};
+  var LB = {ok: "RAS", conso: "Consommation", alerte: "À remplacer", div: "En service"};
+  var rows = [];
+  P.liste.forEach(function(o){
+    ((o.pl || {}).postes || []).filter(function(x){ return !x.retire; }).forEach(function(x){
+      rows.push('<div class="equip eqpl" onclick="location.href=\'plan-appatage.html?plan=' + encodeURIComponent(o.k).replace(/'/g, "%27") + '&poste=' + encodeURIComponent(x.id) + '\'" title="Ouvrir ce poste sur le plan">'
+        + '<span class="eqn" style="background:' + (COL[x.statut] || COL.ok) + '">' + esc(x.nom || x.id.split("-")[1]) + '</span>'
+        + '<div><b>' + esc(x.id) + ' — ' + (TY[x.type] || "Poste") + '</b><small>' + esc([o.site, x.zone || "emplacement à préciser", x.produit].filter(Boolean).join(" · ")) + '</small></div>'
+        + '<span class="eqs' + (x.statut === "alerte" ? " r" : "") + '">' + (LB[x.statut] || "") + (x.statut === "conso" && x.conso ? " " + x.conso + " %" : "") + (x.releve ? " · " + x.releve : "") + '</span></div>');
+    });
+  });
+  var vi = q.parentNode && q.parentNode.querySelector(".vinner"); if(vi && rows.length) vi.remove();
+  q.innerHTML = rows.length ? '<div class="eqplh">Postes du plan d\'appâtage (' + rows.length + ') — ils se gèrent sur le plan</div>' + rows.join("") : "";
+  if(typeof oRechInit === "function") oRechInit();
+  if(typeof cdocRender === "function") cdocRender();
+}
+document.addEventListener("DOMContentLoaded", planCarte);
+window.addEventListener("pageshow", planCarte);
 document.addEventListener("DOMContentLoaded", eqDraw);
 </script>
 <div class="ncpveil" id="ncpveil" onclick="if(event.target===this)ncpClose()">
