@@ -724,6 +724,22 @@ table.sk-t{width:100%;border-collapse:separate;border-spacing:0;background:#fff;
 .sk-go{cursor:pointer;text-decoration:underline;text-underline-offset:2px}.sk-go:hover{color:#8F1D14}
 .sk-tabs .sk-tr button.go{background:#FF5B1F;border-color:#FF5B1F;color:#fff}.sk-tabs .sk-tr button.go:hover{background:#E84E16}
 @media(max-width:700px){.sk-or{grid-template-columns:1fr auto}.sk-or .ch{grid-column:1/-1;grid-row:2}}
+.sk-ab{background:#F7F9FC;border:1px solid #E3E7EE;border-radius:13px;padding:12px}
+.sk-ab .sk-seg2{margin-bottom:10px}
+.sk-ab .row{display:flex;gap:8px;align-items:center}
+.sk-ab .row input.sk-in{flex:1;min-width:0;padding:10px 12px;font-size:.9rem;background:#fff}
+.sk-ab .row .skb{padding:11px 16px}
+.sk-ab .sug{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:.74rem;color:#5B677A}
+.sk-ab .sug button{font:inherit;font-size:.76rem;font-weight:600;border:1px solid #D9DEE6;background:#fff;color:#1E3350;border-radius:999px;padding:5px 10px;cursor:pointer}
+.sk-ab .sug button:hover{border-color:#1E3350}
+.sk-ab .dou{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:.8rem;color:#1E3350}
+.sk-ab .dou .sk-seg2{margin:0;width:auto;display:inline-flex}.sk-ab .dou .sk-seg2 button{flex:none;padding:7px 11px;font-size:.76rem}
+.sk-ar{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;background:#F1FAF4;border:1px solid #BBE5CB;margin-bottom:6px;font-size:.86rem}
+.sk-ar .ok{color:#157F3C;font-weight:800}.sk-ar .nm{color:#1E3350;font-weight:600}.sk-ar .nm small{display:block;color:#5B677A;font-weight:500;font-size:.72rem}.sk-ar b{color:#157F3C}
+.sk-ac{max-height:200px;overflow:auto;border:1px solid #EEF1F5;border-radius:10px;padding:2px 10px}
+.sk-ac>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F1F3F6;font-size:.84rem;color:#1F2937}
+.sk-ac>div:last-child{border:0}.sk-ac small{color:#8A94A6;font-size:.72rem}.sk-ac b{color:#1E3350}
+@media(max-width:600px){.sk-ab .row{flex-wrap:wrap}.sk-ab .row input.sk-in{flex:1 1 100%}.sk-ab .row .skb{flex:1}}
 .sk-det{margin-top:10px;border:1px solid #E3E7EE;border-radius:10px;padding:8px 11px}
 .sk-det summary{cursor:pointer;font-size:.8rem;font-weight:700;color:#1E3350}
 .sk-note select{font:inherit;font-size:.74rem;border:1px solid #D9DEE6;border-radius:7px;padding:3px 6px;color:#1E3350;background:#fff}
@@ -1170,28 +1186,45 @@ function ouHTML(){ var f=OU.trim().toLowerCase(), h='<div class="sk-ou"><input i
 window.skOu=function(v){ OU=v; paint(); var e=document.getElementById("sk-ou"); if(e){ e.focus(); try{ e.setSelectionRange(v.length,v.length); }catch(x){} } };
 window.skExp=function(id){ EXP[id]=!EXP[id]; paint(); };
 window.skExpV=function(id){ EXPV[id]=!EXPV[id]; paint(); };
-window.skAddIci=function(id,t){ var l=lieu(id); if(!l) return; CTX={k:"add",l:id,t:(t==="m"&&on("mat"))?"m":"c",n:"",q:1,dp:(l.t==="c"&&!!S.cpt[id])?1:0};
-  CTX.draw=function(){ var ex=(CTX.t==="c"?cons():mats());
-    show(hd("plus","Ajouter dans "+esc(l.nom),false)+lab("Type")+
-      (on("mat")?'<span class="sk-seg2"><button class="'+(CTX.t==="c"?"on":"")+'" onclick="skAt(\'c\')">Consommable</button><button class="'+(CTX.t==="m"?"on":"")+'" onclick="skAt(\'m\')">Matériel</button></span>':'<div class="sk-pl"><span class="on" style="cursor:default">Consommable</span></div>')+
-      ''+lab("Nom")+'<input id="sk-an" class="sk-in" list="sk-ad" style="width:100%" placeholder="'+(CTX.t==="c"?"Nom (ex. gants, joints, sacs…)":"Nom (ex. échelle, perceuse, caméra…)")+'" value="'+esc(CTX.n)+'" oninput="skAv(\'n\',this.value)" onkeydown="if(event.key===\'Enter\')skAddOk()"><datalist id="sk-ad">'+ex.map(function(p){ return '<option value="'+esc(p.nom)+'">'; }).join("")+'</datalist>'+
-      (CTX.t==="c"?'<div class="sk-set">Combien ? <span class="sk-pm"><button onclick="skAq(-1)">−</button><input inputmode="decimal" value="'+nf(CTX.q)+'" onchange="skAq(0,this.value)" onfocus="this.select()"><button onclick="skAq(1)">+</button></span></div>'+(l.t==="c"?lab("D'où ça vient ?")+'<div class="sk-seg2"><button class="'+(CTX.dp?"on":"")+'" onclick="skDp(1)">Pris au dépôt</button><button class="'+(!CTX.dp?"on":"")+'" onclick="skDp(0)">Déjà dans le véhicule</button></div><div class="sk-hint" style="margin-top:6px">'+(CTX.dp?"Le dépôt baisse d'autant.":"Le dépôt ne change pas : à utiliser pour déclarer ce qui s'y trouve déjà.")+'</div>':''):'<div class="sk-hint" style="margin-top:10px">Pas de quantité pour le matériel : on note juste qu\'il est ici. S\'il était ailleurs, il est déplacé.</div>')+
-      '<div class="sk-mb"><span></span><span style="display:flex;gap:8px"><button class="skb w" onclick="skClose()">Annuler</button><button class="skb o" onclick="skAddOk()">Ajouter</button></span></div>'); var e=document.getElementById("sk-an"); if(e&&!CTX.n) e.focus(); };
+/* « + Ajouter ici » : la fenêtre reste ouverte, on ajoute à la suite, on voit ce qu'on vient d'ajouter et ce que le lieu contient */
+window.skAddIci=function(id,t){ var l=lieu(id); if(!l) return; CTX={k:"add",l:id,t:(t==="m"&&on("mat"))?"m":"c",n:"",q:1,dp:(l.t==="c"&&!!S.cpt[id])?1:0,ad:[],av0:JSON.stringify(S)};
+  CTX.draw=function(){ var ex=(CTX.t==="c"?cons():mats()), ici=function(p){ return p.k==="m"?(S.mat[p.id]||{}).l===id:q(id,p.id)>0; };
+    var sug=ex.filter(function(p){ return !ici(p); }).slice(0,8), M=mats().filter(ici), Cn=cons().filter(ici), nA=CTX.ad.length;
+    show(hd("plus","Ajouter dans "+esc(l.nom),false)+
+      '<div class="sk-ab">'+(on("mat")?'<span class="sk-seg2"><button class="'+(CTX.t==="c"?"on":"")+'" onclick="skAt(\'c\')">Consommable</button><button class="'+(CTX.t==="m"?"on":"")+'" onclick="skAt(\'m\')">Matériel</button></span>':'')+
+        '<div class="row"><input id="sk-an" class="sk-in" list="sk-ad" placeholder="'+(CTX.t==="c"?"Nom du consommable (ex. gants, joints, sacs…)":"Nom du matériel (ex. échelle, perceuse, caméra…)")+'" value="'+esc(CTX.n)+'" oninput="skAv(\'n\',this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();skAddOk();}"><datalist id="sk-ad">'+ex.map(function(p){ return '<option value="'+esc(p.nom)+'">'; }).join("")+'</datalist>'+
+        (CTX.t==="c"?'<span class="sk-pm"><button onclick="skAq(-1)">−</button><input inputmode="decimal" value="'+nf(CTX.q)+'" onchange="skAq(0,this.value)" onfocus="this.select()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();skAddOk();}"><button onclick="skAq(1)">+</button></span>':'')+
+        '<button class="skb o" onclick="skAddOk()">Ajouter</button></div>'+
+        (sug.length?'<div class="sug"><span>Déjà dans votre liste :</span>'+sug.map(function(p){ return '<button onclick="skAsug(\''+p.id+'\')">'+esc(p.nom)+'</button>'; }).join("")+'</div>':'')+
+        (CTX.t==="c"&&l.t==="c"?'<div class="dou"><span>D\'où ça vient ?</span><span class="sk-seg2"><button class="'+(CTX.dp?"on":"")+'" onclick="skDp(1)">Pris au dépôt</button><button class="'+(!CTX.dp?"on":"")+'" onclick="skDp(0)">Déjà dans le véhicule</button></span></div>':'')+
+        (CTX.t==="m"?'<div class="sk-hint" style="margin-top:8px">Pas de quantité pour le matériel. S\'il était dans un autre lieu, il est déplacé ici.</div>':'')+
+      '</div>'+
+      (nA?lab("Ajouté à l'instant · "+nA)+CTX.ad.map(function(a,i){ var P=prod(a.p); if(!P) return ""; return '<div class="sk-ar"><span class="ok">✓</span><span class="nm">'+esc(P.nom)+'<small>'+(a.m?(a.de?"matériel · déplacé depuis "+esc(a.de):"matériel"):(a.dd?"pris au dépôt":"déjà dans le véhicule"))+'</small></span>'+(a.m?'':'<b>+ '+nf(a.k)+'</b>')+'<a href="#" class="sk-lk" onclick="event.preventDefault();skAddDel('+i+')">Retirer</a></div>'; }).join(""):'')+
+      lab("Dans ce lieu maintenant · "+(M.length+Cn.length))+
+      (M.length+Cn.length?'<div class="sk-ac">'+(on("mat")?M.map(function(p){ return '<div><span>'+esc(p.nom)+matSub(p.id)+'</span>'+matTag(p.id)+'</div>'; }).join(""):'')+Cn.map(function(p){ return '<div><span>'+esc(p.nom)+(p.u?' <small>'+esc(p.u)+'</small>':'')+'</span><b>'+nf(q(id,p.id))+'</b></div>'; }).join("")+'</div>':'<div class="sk-hint">Rien pour l\'instant. Ajoutez le premier article ci-dessus.</div>')+
+      '<div class="sk-mf"><span class="sk-hint" style="margin-right:auto">'+(nA?pl(nA,"ajout")+" enregistré"+(nA>1?"s":""):"La fenêtre reste ouverte : ajoutez à la suite.")+'</span><button class="skb '+(nA?"o":"w")+'" onclick="skAddFin()">'+(nA?"Terminé":"Fermer")+'</button></div>');
+    document.getElementById("sk-m").style.maxWidth="620px"; };
   CTX.draw(); };
-window.skAt=function(t){ CTX.t=t; CTX.draw(); };
-window.skDp=function(v){ CTX.dp=v; CTX.draw(); };
+window.skAt=function(t){ CTX.t=t; CTX.n=""; CTX.draw(); foc(); };
+window.skAsug=function(p){ CTX.n=prod(p).nom; CTX.draw(); if(CTX.t==="m") skAddOk(); else { var e=document.querySelector("#sk-m .sk-pm input"); if(e){ e.focus(); e.select(); } } };
+function foc(){ var e=document.getElementById("sk-an"); if(e&&window.innerWidth>760){ try{ e.focus(); }catch(x){} } }
 window.skAq=function(d,v){ CTX.q=d?Math.max(0,Math.round(((+CTX.q||0)+d)*100)/100):num(v); if(d) CTX.draw(); else redraw(); };
-window.skAddOk=function(){ var n=(CTX.n||"").trim(), id=CTX.l, l=lieu(id), low=n.toLowerCase(); if(!n){ toast("Saisissez le nom"); return; }
-  var P=S.produits.filter(function(p){ return p.nom.toLowerCase()===low; })[0], av=JSON.stringify(S);
+window.skAddOk=function(){ var n=(CTX.n||"").trim(), id=CTX.l, l=lieu(id), low=n.toLowerCase(); if(!n){ toast("Saisissez le nom"); foc(); return; }
+  var P=S.produits.filter(function(p){ return p.nom.toLowerCase()===low; })[0], a={neuf:!P};
   if(CTX.t==="c"){ if(P&&P.k==="m"){ toast("Ce nom est déjà un matériel"); return; } var k=num(CTX.q); if(!k){ toast("Indiquez la quantité"); return; }
-    var dd=(l.t==="c"&&CTX.dp)?(lieu(l.dep)||deps()[0]):null;
-    if(dd&&!P) dd=null;
-    if(dd){ if(q(dd.id,P.id)<k){ toast(dd.nom+" n'en a que "+nf(q(dd.id,P.id))); return; } }
-    if(!P){ P={id:"p"+Date.now(),nom:n,u:"",cat:"",seuil:0,min:0}; S.produits.push(P); } var a0=q(id,P.id); setQ(id,P.id,a0+k); if(dd) setQ(dd.id,P.id,q(dd.id,P.id)-k);
-    log((dd?"Chargé · ":"Ajouté · ")+l.nom+" : "+nf(k)+" × "+P.nom); fait(av,"✓ "+l.nom+" · "+P.nom+" : "+nf(a0)+" → "+nf(q(id,P.id))+(dd?" · "+dd.nom+" : "+nf(q(dd.id,P.id)):"")); }
-  else { if(P&&P.k!=="m"){ toast("Ce nom est déjà un consommable"); return; } var dep="";
-    if(P){ if(S.mat[P.id].l===id){ toast("Il est déjà ici"); return; } dep=(lieu(S.mat[P.id].l)||{nom:"?"}).nom; S.mat[P.id].l=id; } else { P={id:"p"+Date.now(),nom:n,cat:"",k:"m"}; S.produits.push(P); S.mat[P.id]={l:id,e:0}; }
-    log(P.nom+" : "+(dep?dep+" → "+l.nom:"ajouté · "+l.nom)); fait(av,"✓ "+P.nom+(dep?" déplacé":" ajouté")+" · "+l.nom); } };
+    var dd=(l.t==="c"&&CTX.dp)?(lieu(l.dep)||deps()[0]):null; if(dd&&!P) dd=null;
+    if(dd&&q(dd.id,P.id)<k){ toast(dd.nom+" n'en a que "+nf(q(dd.id,P.id))); return; }
+    if(!P){ P={id:"p"+Date.now(),nom:n,u:"",cat:"",seuil:0,min:0}; S.produits.push(P); } setQ(id,P.id,q(id,P.id)+k); if(dd) setQ(dd.id,P.id,q(dd.id,P.id)-k);
+    a.p=P.id; a.k=k; a.dd=dd?dd.id:""; log((dd?"Chargé · ":"Ajouté · ")+l.nom+" : "+nf(k)+" × "+P.nom); }
+  else { if(P&&P.k!=="m"){ toast("Ce nom est déjà un consommable"); return; }
+    if(P){ if(S.mat[P.id].l===id){ toast("Il est déjà ici"); return; } a.de=(lieu(S.mat[P.id].l)||{nom:"?"}).nom; a.del=S.mat[P.id].l; S.mat[P.id].l=id; } else { P={id:"p"+Date.now(),nom:n,cat:"",k:"m"}; S.produits.push(P); S.mat[P.id]={l:id,e:0}; }
+    a.p=P.id; a.m=1; log(P.nom+" : "+(a.de?a.de+" → "+l.nom:"ajouté · "+l.nom)); }
+  CTX.ad.unshift(a); CTX.n=""; CTX.q=1; save(); var keep=CTX; paint(); CTX=keep; CTX.draw(); foc(); };
+window.skAddDel=function(i){ var a=CTX.ad[i], id=CTX.l, P=a&&prod(a.p); if(!P) return;
+  if(a.m){ if(a.neuf){ S.produits=S.produits.filter(function(p){return p.id!==P.id;}); delete S.mat[P.id]; } else if(a.del){ S.mat[P.id].l=a.del; } }
+  else { setQ(id,P.id,q(id,P.id)-a.k); if(a.dd) setQ(a.dd,P.id,q(a.dd,P.id)+a.k); if(a.neuf&&!S.lieux.some(function(x){ return q(x.id,P.id)>0; })){ S.produits=S.produits.filter(function(p){return p.id!==P.id;}); Object.keys(S.q).forEach(function(z){ delete S.q[z][P.id]; }); } }
+  log("Ajout retiré · "+lieu(id).nom+" : "+P.nom); CTX.ad.splice(i,1); save(); var keep=CTX; paint(); CTX=keep; CTX.draw(); foc(); };
+window.skAddFin=function(){ var n=CTX.ad.length, av=CTX.av0, nom=lieu(CTX.l).nom; hide(); if(n){ UNDO=av; toast("✓ "+pl(n,"ajout")+" dans "+nom,true); } };
 /* ============ FEUILLE DE CHARGEMENT À IMPRIMER ============ */
 function feuille(){ var C=cams().filter(function(c){ return aCharger(c).length; }), d=new Date();
   return '<h1>Feuille de chargement</h1><p class="d">Préparée le '+("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear()+' · '+pl(C.length,"véhicule")+' à charger</p>'+

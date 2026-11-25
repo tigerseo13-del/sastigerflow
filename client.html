@@ -1993,7 +1993,7 @@ function ctRowHTML(c, i){
   const svgPen = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>';
   return `<div class="contact" data-ci="${i}">
     <span class="cph" style="background:var(--green-d)">${ini}</span>
-    <div><b>${c.nom}</b><small>${[c.role || "Contact", c.tel || "", c.mail || ""].filter(Boolean).join(" · ")}</small>${c.docs === false ? '<small style="display:block;color:#8A94A6">Ne reçoit pas les devis et factures</small>' : (c.mail ? '<small style="display:block;color:#1E3350;font-weight:700">✉ Reçoit les devis et factures</small>' : "")}</div>
+    <div><b>${c.nom}</b><small>${c.role || "Contact"}</small>${(c.tel || c.mail) ? `<small style="display:block">${[c.tel || "", c.mail || ""].filter(Boolean).join(" · ")}</small>` : ""}${c.docs === false ? '<small style="display:block;color:#8A94A6">Ne reçoit pas les devis et factures</small>' : (c.mail ? '<small style="display:block;color:#1E3350;font-weight:700">✉ Reçoit les devis et factures</small>' : "")}</div>
     <span class="cbtns"><a href="#" title="Modifier ce contact" class="ctpen" onclick="event.preventDefault();ctEdit(${i})">${svgPen}</a>${telC && telC !== "—" ? btn("tel:" + telC, "Appeler", svgTel) + btn("https://wa.me/33" + telC.replace(/^0/, ""), "WhatsApp", svgWa, 'target="_blank" rel="noopener" style="color:#1FAF5E"') : ""}${c.mail ? btn("mailto:" + c.mail, "Email", svgMail) : ""}</span>
   </div>`;
 }
@@ -2001,11 +2001,18 @@ function ctDraw(){
   document.querySelectorAll('.contact[data-ci]').forEach(e => e.remove());
   const f = document.getElementById('addcform');
   const l = ctLoad();
-  if(f) f.insertAdjacentHTML('beforebegin', l.map((c, i) => ctRowHTML(c, i)).join(""));
+  /* 25/11 (parcours patron) : pour une entreprise, la personne saisie à la création porte
+     le MÊME téléphone que la ligne « contact principal » — on voyait deux fois le même
+     numéro. Si un contact nommé a ce numéro, c'est lui le contact principal : une seule ligne. */
+  const cl0 = document.getElementById('clist'), mt = ((cl0 && cl0.dataset.tel) || "").replace(/\D/g, "");
+  const pi = mt ? l.findIndex(x => x && String(x.tel || "").replace(/\D/g, "") === mt) : -1;
+  if(cl0 && cl0.dataset.tel !== undefined) cl0.style.display = pi >= 0 ? "none" : "";
+  if(f) f.insertAdjacentHTML('beforebegin', l.map((c, i) => ctRowHTML(i === pi ? Object.assign({}, c, {role: (c.role || "Contact") + " · contact principal"}) : c, i)).join(""));
   /* 30/07 : l'etat vide « Aucun contact » restait affiche AU-DESSUS des
      contacts enregistres — il ne vaut que s'il n'y a vraiment rien. */
   const cl = document.getElementById('clist');
   if(cl && /Aucun contact/.test(cl.textContent)) cl.style.display = l.length ? "none" : "";
+  if(cl && pi >= 0) cl.style.display = "none";
 }
 function ctDel(i){
   const l = ctLoad(); const n = (l[i] || {}).nom || "";
@@ -2558,6 +2565,7 @@ function toast(msg, undoFn){
        PRÉNOM (recomposition du formulaire), le contact principal reste le
        nom complet. */
     var _qn = beauTxt((r && r.contact && r.type !== "particulier") ? r.contact : q);
+    _cl.dataset.tel = _telC;
     _cl.innerHTML = true
       ? '<div class="contact"><div><b>' + _qn + '</b><small>' + _sub + '</small></div>'
         + '<span class="cbtns">'
@@ -2567,6 +2575,7 @@ function toast(msg, undoFn){
         + ((!_telC && !_emC) ? '<a href="client-nouveau.html?c=' + encodeURIComponent(q) + '" title="Compléter la fiche"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg></a>' : '')
         + '</span></div>'
       : '';
+    try{ ctDraw(); }catch(e){}
   }
   var tl = document.querySelector('.hero .actions a[href^="tel:"]');
   if(tl) tl.href = "tel:" + f.tel;
