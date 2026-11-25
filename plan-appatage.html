@@ -240,6 +240,15 @@ ul{list-style:none}
 .plvide[hidden]{display:none}   /* le piège documenté : display:block bat l'attribut hidden */
 .plvide{display:block;text-align:center;border:2px dashed #D8DAE1;border-radius:14px;background:#FBFBFC;padding:64px 20px;cursor:pointer;width:100%;font-family:inherit}
 .plvide:hover{border-color:var(--orange);background:var(--orange-soft)}
+.plpw{position:relative;display:inline-block}
+.plplus{position:absolute;left:8px;top:calc(100% + 6px);z-index:30;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(20,20,30,.14);padding:6px;min-width:270px;display:flex;flex-direction:column;font-weight:500}
+.plplus[hidden]{display:none}
+.plplus a{display:block;padding:9px 12px;border-radius:8px;cursor:pointer;text-decoration:none}
+.plplus a:hover{background:#F3F5F8}
+.plplus a b{display:block;font-size:.84rem;color:var(--ink)}
+.plplus a small{font-size:.74rem;color:var(--muted);font-weight:500}
+.plplus .plpf{display:flex;align-items:center;gap:6px;padding:10px 12px;border-top:1px solid var(--line);margin-top:4px;font-size:.8rem;color:var(--ink-2);font-weight:600}
+.plplus .plpf select{border:1.5px solid var(--line);border-radius:8px;padding:3px 5px;font:700 .78rem Inter,sans-serif;background:#fff}
 .plguide{display:flex;align-items:center;gap:12px;background:#1E3350;color:#fff;border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:.9rem;font-weight:600}
 .plguide[hidden]{display:none}
 .plguide.doux{background:#EAF0F7;color:#1E3350}
@@ -968,9 +977,14 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
         : (ri.ech ? ' <span class="plret ok">prochain avant le ' + FDC(ri.ech) + '</span>' : ""))
       : "");
     $("pl-bar").innerHTML = esc(n.site || n.client) + (fonds.length
-      ? ' · plan du client<span class="plchg" onclick="document.getElementById(\'pl-file\').click()">Changer le fond' + (fonds.length > 1 ? " (" + esc((fonds[NIV] || {}).nom || "") + ")" : "") + '</span><span class="plchg" onclick="plPivote()" title="Tourne le plan d\'un quart de tour — les postes suivent">Pivoter \u21bb</span>'
-        + (act.length ? '<span class="plchg" onclick="qrOuvre()" title="Une étiquette par poste, à imprimer et coller — le scan ouvre la fiche du poste">Étiquettes QR</span>' : "")
-        + '<span class="plfreq">relevé tous les <select onchange="plFreq(this.value)">' + [30, 45, 60, 90, 180].map(function(v){ return '<option value="' + v + '"' + (v === ri.f ? " selected" : "") + '>' + v + '</option>'; }).join("") + '</select> jours</span>'
+      ? ' · plan du client<span class="plpw"><span class="plchg" onclick="plPlus(event)" title="Étiquettes QR, changer le fond, pivoter, fréquence de relevé">Plus… \u25be</span>'
+        + '<span class="plplus" id="plplus"' + (window.PLPLUS ? "" : " hidden") + ' onclick="event.stopPropagation()">'
+        + (act.length ? '<a onclick="plPlusFerme();qrOuvre()"><b>Étiquettes QR</b><small>une par poste, à imprimer et coller</small></a>' : "")
+        + (act.length ? '<a onclick="plPlusFerme();plHeatTog()"><b>' + (window.PLHEAT ? "Masquer les zones actives" : "Voir les zones actives") + '</b><small>où ça consomme le plus</small></a>' : "")
+        + '<a onclick="plPlusFerme();document.getElementById(\'pl-file\').click()"><b>Changer le fond' + (fonds.length > 1 ? " (" + esc((fonds[NIV] || {}).nom || "") + ")" : "") + '</b><small>les postes restent en place</small></a>'
+        + '<a onclick="plPivote()"><b>Pivoter le plan \u21bb</b><small>un quart de tour, les postes suivent</small></a>'
+        + '<span class="plpf">Relevé tous les <select onchange="plFreq(this.value)">' + [30, 45, 60, 90, 180].map(function(v){ return '<option value="' + v + '"' + (v === ri.f ? " selected" : "") + '>' + v + '</option>'; }).join("") + '</select> jours</span>'
+        + '</span></span>'
       : "");
     $("pl-reg").textContent = "Registre des postes — " + (n.site || n.client) + (derniere ? " · relève du " + FDC(new Date(derniere)) : "");
     $("rs-tot").textContent = act.length;
@@ -1176,6 +1190,9 @@ document.getElementById('tbody').innerHTML = POSTES.map(p=>`
     return '<div class="plzchips">' + out.map(function(z){ return '<span onclick="plZone(this.textContent)">' + esc(z) + '</span>'; }).join("") + '</div>';
   }
   window.plZone = function(z){ var e = $("pf-zone"); if(!e) return; e.value = z + " — "; e.style.borderColor = ""; e.focus(); try{ e.setSelectionRange(e.value.length, e.value.length); }catch(er){} };
+  window.plPlus = function(e){ if(e) e.stopPropagation(); window.PLPLUS = !window.PLPLUS; var q = $("plplus"); if(q) q.hidden = !window.PLPLUS; };
+  window.plPlusFerme = function(){ window.PLPLUS = false; var q = $("plplus"); if(q) q.hidden = true; };
+  document.addEventListener("click", function(){ if(window.PLPLUS) plPlusFerme(); });
   window.plFin = function(){ ADD = false; MOVE = ""; PENDING = null; SERIE = false; tdiv.style.display = "none"; paint(); };
   function versPlan(){ try{ var c = document.querySelector(".plancard"); if(c && c.getBoundingClientRect().top > 140) c.scrollIntoView({behavior: "smooth", block: "start"}); }catch(e){} }
   function formNouveau(){
@@ -2712,7 +2729,7 @@ if(window.plPaint){ try{ plPaint(); }catch(e){} }
       var nRas = rasRestants().length;
       el.insertAdjacentHTML("beforeend",
         (nRas ? '<button class="rasb' + (RASARM ? " arm" : "") + '" onclick="plRasAll()" title="Tous les postes pas encore relevés aujourd\u2019hui passent RAS d\u2019un coup — chacun garde sa ligne d\u2019historique. Les postes à remplacer ne sont pas touchés.">' + (RASARM ? "Confirmer : " + nRas + " poste" + (nRas > 1 ? "s" : "") + " en RAS ?" : "\u2713 Tout est RAS<i>" + nRas + "</i>") + '</button>' : "")
-        + '<button class="heatb' + (window.PLHEAT ? " on" : "") + '" onclick="plHeatTog()" title="La chaleur du site : plus une zone consomme ou capture, plus elle vire au jaune">Zones actives</button>'
+        + ''
         + (window.PLHEAT ? '<span class="heatleg">0<i></i>100 %</span>' : ""));
     }
     heatApply(demo);

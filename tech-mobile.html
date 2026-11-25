@@ -430,6 +430,14 @@ svg.fillsvg{fill:currentColor;stroke:none}
 .waitb{background:var(--amber-bg);border:1px dashed #E2C56E;color:var(--amber);border-radius:13px;padding:12px 14px;font-size:.79rem;font-weight:700;margin-bottom:10px;line-height:1.45}
 .doneb{display:flex;align-items:center;gap:9px;background:var(--green-bg);color:var(--green-d);border-radius:13px;padding:13px 14px;font-size:.85rem;font-weight:800;margin-bottom:4px}
 .doneb svg{width:17px;height:17px}
+.pbplus{margin-top:12px;border-top:1px dashed #E2E5EB;padding-top:10px}
+.pbplus summary{list-style:none;cursor:pointer;font-weight:800;font-size:.86rem;color:#1E3350;padding:6px 0}
+.pbplus summary::-webkit-details-marker{display:none}
+.pbplus summary small{display:block;font-weight:500;font-size:.74rem;color:var(--muted);margin-top:2px}
+.pbplus[open] summary{margin-bottom:6px}
+.ctamb{width:100%;display:flex;align-items:center;gap:10px;background:#1E3350;color:#fff;border:0;border-radius:16px;padding:12px 16px;font-family:inherit;text-align:left;cursor:pointer;box-shadow:0 6px 18px rgba(30,51,80,.25)}
+.ctamb span{display:flex;flex-direction:column;flex:1;min-width:0}.ctamb b{font-size:.95rem}.ctamb small{font-size:.74rem;opacity:.8;font-weight:500}
+.ctamb i{font-style:normal;font-weight:800;font-size:.8rem;background:rgba(255,255,255,.16);border-radius:10px;padding:7px 11px;white-space:nowrap}
 .cta{position:sticky;bottom:0;padding:16px 0 12px;background:linear-gradient(#F4F5F800,#F4F5F8 12%)}   /* 07/10 : plus de « + » central dans le menu — le pavé d’action se colle en bas, plus de jour en dessous */
 
 /* ============================================================
@@ -1962,7 +1970,7 @@ function ltab(k){
 }
 
 /* ---------- détail ---------- */
-function openM(id){ CURID = id; rdetail(); go("detail"); }
+function openM(id){ CURID = id; window.CTAOPEN = 0; rdetail(); go("detail"); }
 /* 27/08 (patron, étape 2 du plan d'appâtage) : le relevé par CELUI qui est
    devant le poste. Trois taps : le poste → RAS ou Conso → le %. Ça écrit
    DIRECTEMENT dans tigerflow-plans — l'historique du bureau, la fiche du
@@ -2047,6 +2055,9 @@ function pbActs(p){
   return `<div class="pbacts pbdeiv">
     <label class="pbl2">Consommation (%)</label>
     <div class="paseg" id="pbpa-pc" data-v="${[25, 50, 75, 100].includes(p.conso) ? p.conso : 0}" onclick="event.stopPropagation()">${[0, 25, 50, 75, 100].map(n2 => `<b data-n="${n2}" onclick="event.stopPropagation();paSeg(this)">${n2}</b>`).join("")}</div>
+    <button class="pba ok" onclick="event.stopPropagation();pbPaSave('${p.id}')">\u2713 Enregistrer le relev\u00e9</button>
+    <div class="pbrow2"><button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>${nonacc}${photo}${mv}</div>
+    <details class="pbplus" onclick="event.stopPropagation()"><summary>+ Détails si besoin <small>état, produit, n° de lot, fixation, recommandation</small></summary>
     <label class="pbl2">État du poste</label>
     <select id="pbpa-etat" onclick="event.stopPropagation()"><option value="">\u2014</option><option>Ré-alimenté</option><option>Contrôlé</option><option>Nettoyé</option><option>Nouveau</option><option>Déplacé</option><option>Disparu</option><option>Autre</option></select>
     <label class="pbl2">Type d'appâtage</label>
@@ -2059,8 +2070,7 @@ function pbActs(p){
     <select id="pbpa-fix" onclick="event.stopPropagation()"><option value="">\u2014</option><option>Non fixé</option><option>Fixé</option><option>Amarré</option><option>Vissé</option><option>Collé</option></select>
     <label class="pbl2">Recommandation (pour le client)</label>
     <input type="text" id="pbpa-reco" placeholder="boucher le passage sous la porte\u2026" onclick="event.stopPropagation()">
-    <button class="pba ok" onclick="event.stopPropagation();pbPaSave('${p.id}')">\u2713 Enregistrer le relev\u00e9</button>
-    <div class="pbrow2"><button class="pba ko" onclick="event.stopPropagation();pbKo('${p.id}')">À remplacer</button>${nonacc}${photo}${mv}</div>
+    </details>
   </div>`;
 }
 function planBloc(m){
@@ -2261,6 +2271,9 @@ function rdetail(){
   /* 07/10 : cartes Devis complémentaire · Rapport · Facturation · Note (Figma Saigon) */
   const ban = dvsupCard(m) + reportCard(m) + billCard(m) + noteCard(m);
   const cta = ctaOf(m);
+  /* 25/11 : tant qu'il reste des postes à relever, le pavé « Clôturer » ne mange plus la moitié de l'écran — une barre fine, qui s'ouvre d'un tap */
+  const ctaReste = (m.st === "encours" && typeof pbResteARelever === "function") ? pbResteARelever(m.id).length : 0;
+  const ctaMini = ctaReste > 0 && !window.CTAOPEN;
   g("s-detail").innerHTML = `
     <div class="dhead">
       <button class="tico" onclick="go('list')"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -2294,7 +2307,9 @@ function rdetail(){
         <span class="rnd gph" onclick="callC(M[${m.id}],event)"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg></span></div>
       ${m.autres ? `<div class="crow" onclick="toast('${m.autres} autres contacts sur la fiche client')"><span class="cav"><svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/><circle cx="9" cy="7" r="4"/></svg></span><span class="cb"><b style="font-weight:700;color:var(--ink-2)">+ ${m.autres} autres contacts</b></span><span class="chev">›</span></div>` : ""}
     </div>
-    <div class="cta">${cta}</div>`;
+    <div class="cta${ctaMini ? " ctamini" : ""}">${ctaMini
+      ? `<button type="button" class="ctamb" onclick="window.CTAOPEN=1;rdetail()"><span><b>${ctaReste} poste${ctaReste > 1 ? "s" : ""} à relever</b><small>relève-les d’abord, puis clôture</small></span><i>Clôturer ▴</i></button>`
+      : cta + (ctaReste ? `<button type="button" class="lnk" onclick="window.CTAOPEN=0;rdetail()">Réduire — il reste ${ctaReste} poste${ctaReste > 1 ? "s" : ""} à relever ▾</button>` : "")}</div>`;
 }
 
 /* ---------- la fiche : cartes Devis complémentaire · Rapport · Facturation · Note ---------- */
@@ -3918,7 +3933,8 @@ window.pbScanStop = function(){
     var ids = Object.keys(M);
     var cand = ids.filter(function(i){ return cli && M[i].client === cli; });
     if(!cand.length && k) cand = ids.filter(function(i){ return planKeyOf(M[i]) === k; });
-    if(!cand.length) return;
+    /* 25/11 : étiquette scannée sans intervention chez ce client → on le DIT, au lieu d'ouvrir l'accueil sans un mot */
+    if(!cand.length){ setTimeout(function(){ if(typeof toast === "function") toast("Poste " + po + (cli ? " — " + cli : "") + " : aucune intervention chez ce client dans ta tournée. Appelle le bureau pour l'ajouter."); }, 600); return; }
     var id0 = cand.find(function(i){ return M[i].st !== "done"; }) || cand[0];
     openM(id0);
     var P = JSON.parse(localStorage.getItem("tigerflow-plans") || "{}");
